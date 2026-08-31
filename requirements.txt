@@ -1,0 +1,14 @@
+nicegui==3.15.0
+python==3.12
+apscheduler>=3.10,<4
+nh3>=0.2
+pdfplumber>=0.11
+pikepdf>=9.0
+pymupdf>=1.24
+pytesseract>=0.3
+bcrypt>=5.0.0
+pypdf>=5.0
+loguru>=0.7.3
+pytest>=8.0
+mkdocs>=1.6.1
+mkdocs-material>=9.7.7

@@ -1,0 +1,60 @@
+site_name: INTRANET Modular — Documentação Técnica
+site_description: Sistema intranet modularizado em Python + NiceGUI com bancos SQLite independentes por módulo.
+docs_dir: docs
+site_dir: site
+theme:
+  name: readthedocs
+  language: pt
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+nav:
+  - Início: index.md
+  - "Documentação Técnica":
+      - Introdução: intro.md
+      - Visão Geral: visao_geral.md
+      - Guia de Início Rápido: inicio_rapido.md
+      - Requisitos do Sistema: requisitos.md
+      - Configurações e Variáveis de Ambiente: configuracoes.md
+      - Arquitetura: arquitetura.md
+      - Referência de API e Código: api_referencia.md
+      - Convenções de Criação de Código: convencoes_codigo.md
+  - Visão de Produto: visao_de_produto/index.md
+  - Levantamento de Requisitos: 2_levantamento_requisitos/index.md
+  - Arquitetura de Software (DAS): arquitetura_de_software_das/index.md
+  - Guia de API: guia_API/index.md
+  - Padrões de Codificação: padroes_codificacao/index.md
+  - Manuais de Uso:
+      - Instalação: manual_de_uso_instalacao/index.md
+      - Administrador: manual_de_uso_administrador/index.md
+      - Usuário Comum: manual_de_uso_usuario_comum/index.md
+      - Renomeador de Empenho: manual_de_uso_renomear_empenho/index.md
+  - Plano de Projeto: plano_de_projeto/index.md
+  - Registro de Mudanças: registro_de_mudancas/index.md
+  - Versionamento: versionamento/index.md
+  - Análise de Risco: analise_de_risco/index.md
+  - Métricas de Software: metricas_software/index.md
+  - Lições Aprendidas: licoes_aprendida/index.md
+  - Contribuições: contribuicoes/index.md
+  - Testes:
+      - Casos: testes_casos/index.md
+      - Plano: testes_plano/index.md
+      - Relatórios: testes_relatorios/index.md
+  - Módulos (análise):
+      - Intranet (núcleo): analise_mod_intranet.md
+      - Gestão de Usuários: analise_mod_gest_cad_usuario.md
+      - Blog: analise_mod_blog.md
+      - Editor de PDF: analise_mod_edit_pdf.md
+      - Renomear Empenhos: analise_mod_renomear_empenho.md
+      - Auditoria: analise_mod_auditoria.md
+      - Solicitação de Impressão: analise_mod_solicita_impressao.md
+  - Módulos (resumo):
+      - Intranet (núcleo): modulos/intranet.md
+      - Gestão de Usuários: modulos/gest_cad_usuario.md
+      - Blog: modulos/blog.md
+      - Editor de PDF: modulos/edit_pdf.md
+      - Renomear Empenhos: modulos/renomear_empenho.md
+      - Auditoria: modulos/auditoria.md
+      - Solicitação de Impressão: modulos/solicitacao_impressao.md
