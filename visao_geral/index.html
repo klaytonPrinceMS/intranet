@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Visão Geral - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Vis\u00e3o Geral";
+        var mkdocs_page_input_path = "visao_geral.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Visão Geral</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#sumario">Sumário</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#objetivos">Objetivos</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#modulos-do-sistema">Módulos do sistema</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fluxo-de-alto-nivel">Fluxo de alto nível</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#perfis-de-usuario">Perfis de usuário</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#perfis-modulos-visao-resumida">Perfis × módulos (visão resumida)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#autorizacao-por-modulo">Autorização por módulo</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Documentação Técnica</li>
+      <li class="breadcrumb-item active">Visão Geral</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="intranet-modular-visao-geral">Intranet Modular — Visão Geral<a class="headerlink" href="#intranet-modular-visao-geral" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Visão de alto nível da Intranet Modular: os 7 módulos, o fluxo principal de uso (login → dashboard → módulos) e os 3 perfis de usuário (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) com papéis por módulo e validação de acesso.</p>
+</blockquote>
+<h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#objetivos">Objetivos</a></li>
+<li><a href="#modulos-do-sistema">Módulos do sistema</a></li>
+<li><a href="#fluxo-de-alto-nivel">Fluxo de alto nível</a></li>
+<li><a href="#perfis-de-usuario">Perfis de usuário</a></li>
+<li><a href="#autorizacao-por-modulo">Autorização por módulo</a></li>
+</ol>
+<h2 id="objetivos">Objetivos<a class="headerlink" href="#objetivos" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Centralizar serviços internos da prefeitura em <strong>uma única aplicação</strong> acessível pela rede interna.</li>
+<li>Garantir <strong>rastreabilidade</strong> (auditoria central LGPD) de todas as ações relevantes.</li>
+<li>Permitir <strong>evolução incremental</strong>: cada funcionalidade é um módulo independente com banco próprio.</li>
+<li>Operar <strong>sem internet</strong>: interface com Tailwind local, bibliotecas empacotadas e documentação embutida.</li>
+</ul>
+<h2 id="modulos-do-sistema">Módulos do sistema<a class="headerlink" href="#modulos-do-sistema" title="Permanent link">&para;</a></h2>
+<p>O sistema é composto por um <strong>núcleo</strong> (<code>mod_intranet</code>) e <strong>6 módulos de negócio</strong>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Chave</th>
+<th style="text-align: left;">Rota</th>
+<th style="text-align: left;">Banco</th>
+<th style="text-align: left;">Função</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Intranet (núcleo)</strong></td>
+<td style="text-align: left;"><code>intranet</code></td>
+<td style="text-align: left;"><code>/</code>, <code>/login</code>, <code>/configuracoes</code>, <code>/documentacao</code></td>
+<td style="text-align: left;"><code>db_mod_intranet.db</code></td>
+<td style="text-align: left;">autenticação, sessões, auditoria central, configurações, backups, observabilidade</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Gestão de Usuários</strong></td>
+<td style="text-align: left;"><code>usuarios</code></td>
+<td style="text-align: left;"><code>/users</code></td>
+<td style="text-align: left;"><code>db_mod_gest_cad_usuario.db</code></td>
+<td style="text-align: left;">CRUD soft de usuários, perfis, papéis por módulo, sessões ativas</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Blog</strong></td>
+<td style="text-align: left;"><code>blog</code></td>
+<td style="text-align: left;"><code>/blog</code></td>
+<td style="text-align: left;"><code>db_mod_blog.db</code></td>
+<td style="text-align: left;">postagens/comentários HTML sanitizados (<code>nh3</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Editor de PDF</strong></td>
+<td style="text-align: left;"><code>editar_pdf</code></td>
+<td style="text-align: left;"><code>/edit-pdf</code></td>
+<td style="text-align: left;"><code>db_mod_edit_pdf.db</code></td>
+<td style="text-align: left;">reduzir, juntar, cortar, dividir, verificar, ZIP — com cotas e expiração</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Renomear Empenhos</strong></td>
+<td style="text-align: left;"><code>empenhos</code></td>
+<td style="text-align: left;"><code>/renomear-empenho</code></td>
+<td style="text-align: left;"><code>db_mod_renomear_empenho.db</code></td>
+<td style="text-align: left;">extração de texto, regex dinâmicas, FTS5, quarentena, renomeação sequencial, organizador</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Auditoria</strong></td>
+<td style="text-align: left;"><code>auditoria</code></td>
+<td style="text-align: left;"><code>/auditoria</code></td>
+<td style="text-align: left;">— (lê o central)</td>
+<td style="text-align: left;">visualização/filtro/exportação da <code>tb_auditoria</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Solicitação de Impressão</strong></td>
+<td style="text-align: left;"><code>solicita_impressao</code></td>
+<td style="text-align: left;"><code>/solicita-impressao</code></td>
+<td style="text-align: left;"><code>db_mod_solicita_impressao.db</code></td>
+<td style="text-align: left;">envio de PDF, contagem de páginas, cotas mensais, autorização, impressão</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>O cadastro real de módulos vive em <code>tb_modulos</code> (banco central), semeado por <code>MODULOS_SISTEMA</code> em <code>mod_intranet/autenticacao.py:15-22</code>.</p>
+</blockquote>
+<h2 id="fluxo-de-alto-nivel">Fluxo de alto nível<a class="headerlink" href="#fluxo-de-alto-nivel" title="Permanent link">&para;</a></h2>
+<pre><code class="language-text">Usuário ──(/login)──▶ Autenticação bcrypt ──▶ Sessão revogável (tb_sessoes)
+        ──▶ Dashboard &quot;/&quot; ──▶ Drawer lateral (módulos liberados)
+        ──▶ /blog · /users · /edit-pdf · /renomear-empenho · /auditoria · /solicita-impressao
+        ──▶ Auditoria central (tb_auditoria)
+</code></pre>
+<ol>
+<li>O usuário acessa <code>/login</code> e informa usuário/senha (<code>autenticar</code> → bcrypt).</li>
+<li>Login bem-sucedido cria uma <strong>sessão revogável</strong> (<code>registrar_login</code>) amarrada a um cookie HTTP-Only (<code>cookie_hash</code>).</li>
+<li>O usuário é levado ao <strong>Dashboard</strong> <code>/</code> (saudação + feed do Blog + estatísticas).</li>
+<li>A navegação por módulos ocorre pelo <strong>menu lateral</strong> (drawer), que só mostra módulos liberados ao usuário.</li>
+<li>Toda rota de módulo passa pela guarda <code>pagina_restrita</code> (autenticação + permissão + layout de 4 partes).</li>
+<li>Ações relevantes gravam <strong>auditoria central</strong> (<code>audit_log</code>) com IP/user-agent/hash quando aplicável.</li>
+<li>Em segundo plano, <strong>APScheduler</strong> executa backups por módulo, limpezas e monitor de pasta.</li>
+</ol>
+<h2 id="perfis-de-usuario">Perfis de usuário<a class="headerlink" href="#perfis-de-usuario" title="Permanent link">&para;</a></h2>
+<p>Existem <strong>3 perfis globais</strong> (coluna <code>user_perfil</code> de <code>tb_usuarios</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Perfil</th>
+<th style="text-align: left;">Acesso</th>
+<th style="text-align: left;">Exemplos de capacidades</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>comum</code></td>
+<td style="text-align: left;">módulos liberados (papel por módulo)</td>
+<td style="text-align: left;">ler Blog, editar PDFs, renomear/consultar empenhos, solicitar impressão</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>administrador_modulo</code></td>
+<td style="text-align: left;">admin de <strong>módulos específicos</strong></td>
+<td style="text-align: left;">gerenciar o módulo (publicar, imprimir, configurar aparência do módulo)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>administrador_geral</code></td>
+<td style="text-align: left;"><strong>todos</strong> os módulos + auditoria + configurações</td>
+<td style="text-align: left;">ver tudo, excluir usuários (LGPD), configurar sistema, visualizar auditoria</td>
+</tr>
+</tbody>
+</table>
+<p>Além do perfil global, existe o <strong>papel por módulo</strong> (<code>tb_acesso_usuario</code>): vínculo <code>usuário × módulo × papel</code> (ex.: <code>comum</code> ou <code>administrador</code> dentro de <code>solicita_impressao</code>). A combinação perfil global + papel por módulo define o que aparece no menu e o que é aceito pela guarda.</p>
+<h3 id="perfis-modulos-visao-resumida">Perfis × módulos (visão resumida)<a class="headerlink" href="#perfis-modulos-visao-resumida" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: center;"><code>comum</code></th>
+<th style="text-align: center;"><code>administrador_modulo</code></th>
+<th style="text-align: center;"><code>administrador_geral</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Blog</td>
+<td style="text-align: center;">somente leitura</td>
+<td style="text-align: center;">criar/editar/publicar</td>
+<td style="text-align: center;">tudo</td>
+</tr>
+<tr>
+<td style="text-align: left;">Editor de PDF</td>
+<td style="text-align: center;">usar editor</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">cotas/expiração (aba Administração)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Renomear Empenhos</td>
+<td style="text-align: center;">processar/pesquisar/ZIP</td>
+<td style="text-align: center;">regras/quarentena</td>
+<td style="text-align: center;">tudo</td>
+</tr>
+<tr>
+<td style="text-align: left;">Auditoria</td>
+<td style="text-align: center;">✗</td>
+<td style="text-align: center;">✗</td>
+<td style="text-align: center;">somente este perfil</td>
+</tr>
+<tr>
+<td style="text-align: left;">Configurações</td>
+<td style="text-align: center;">✗</td>
+<td style="text-align: center;">✗</td>
+<td style="text-align: center;">somente este perfil</td>
+</tr>
+<tr>
+<td style="text-align: left;">Gestão de Usuários</td>
+<td style="text-align: center;">✗</td>
+<td style="text-align: center;">admin do módulo <code>usuarios</code></td>
+<td style="text-align: center;">tudo</td>
+</tr>
+<tr>
+<td style="text-align: left;">Solicitação de Impressão</td>
+<td style="text-align: center;">solicitar/acompanhar</td>
+<td style="text-align: center;">imprimir/gerenciar</td>
+<td style="text-align: center;">tudo</td>
+</tr>
+</tbody>
+</table>
+<h2 id="autorizacao-por-modulo">Autorização por módulo<a class="headerlink" href="#autorizacao-por-modulo" title="Permanent link">&para;</a></h2>
+<ul>
+<li>A visibilidade no <strong>menu lateral</strong> usa <code>listar_modulos_permitidos</code> / <code>modulos_do_usuario</code>.</li>
+<li>O <strong>gate de rota</strong> usa <code>validar_acesso_modulo</code> (núcleo delega ao manipulador do módulo de usuários).</li>
+<li>Tentativa sem permissão gera <code>acesso_negado</code> na <code>tb_auditoria</code> (<code>layout_tela.pagina_restrita</code> — choke point único).</li>
+<li>Dentro de cada módulo, a tela valida novamente o papel antes de qualquer escrita (dupla camada UI + backend).</li>
+</ul>
+<blockquote>
+<p>Usuários de teste prontos: <code>qacomum</code>/<code>123456</code> (comum) e <code>qamaster</code>/<code>123456</code> (administrador_geral) — ver <a href="../inicio_rapido/">Guia de Início Rápido</a>.</p>
+</blockquote>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../intro/" class="btn btn-neutral float-left" title="Introdução"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../inicio_rapido/" class="btn btn-neutral float-right" title="Guia de Início Rápido">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../intro/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../inicio_rapido/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

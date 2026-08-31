@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Guia de Início Rápido - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Guia de In\u00edcio R\u00e1pido";
+        var mkdocs_page_input_path = "inicio_rapido.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Guia de Início Rápido</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#sumario">Sumário</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#pre-requisitos">Pré-requisitos</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#passo-1-preparar-o-ambiente-virtual">Passo 1 — Preparar o ambiente virtual</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#passo-2-subir-o-servidor">Passo 2 — Subir o servidor</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#passo-3-primeiro-acesso">Passo 3 — Primeiro acesso</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#passo-4-usuarios-de-teste">Passo 4 — Usuários de teste</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#smoke-test">Smoke test</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#solucao-de-problemas">Solução de problemas</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Documentação Técnica</li>
+      <li class="breadcrumb-item active">Guia de Início Rápido</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="intranet-modular-guia-de-inicio-rapido">Intranet Modular — Guia de Início Rápido<a class="headerlink" href="#intranet-modular-guia-de-inicio-rapido" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Passos para rodar a Intranet Modular localmente: criar o <code>.venv</code>, instalar <code>requirements.txt</code>, subir com <code>.venv/bin/python main.py</code>, acessar <code>http://localhost:8080</code>, entrar com o seed <code>master</code>/<code>master</code> (troca de senha obrigatória) e usar as contas de teste <code>qacomum</code>/<code>qamaster</code>.</p>
+</blockquote>
+<h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#pre-requisitos">Pré-requisitos</a></li>
+<li><a href="#passo-1-preparar-o-ambiente-virtual">Passo 1 — Preparar o ambiente virtual</a></li>
+<li><a href="#passo-2-subir-o-servidor">Passo 2 — Subir o servidor</a></li>
+<li><a href="#passo-3-primeiro-acesso">Passo 3 — Primeiro acesso</a></li>
+<li><a href="#passo-4-usuarios-de-teste">Passo 4 — Usuários de teste</a></li>
+<li><a href="#smoke-test">Smoke test</a></li>
+<li><a href="#solucao-de-problemas">Solução de problemas</a></li>
+</ol>
+<h2 id="pre-requisitos">Pré-requisitos<a class="headerlink" href="#pre-requisitos" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Python 3.12</strong> instalado na máquina.</li>
+<li>Acesso ao código-fonte (este repositório).</li>
+<li>Rede interna (o sistema não depende de internet, mas o download de dependências na primeira instalação precisa dela).</li>
+</ul>
+<h2 id="passo-1-preparar-o-ambiente-virtual">Passo 1 — Preparar o ambiente virtual<a class="headerlink" href="#passo-1-preparar-o-ambiente-virtual" title="Permanent link">&para;</a></h2>
+<p>A partir da raiz do projeto:</p>
+<pre><code class="language-bash">python3.12 -m venv .venv
+.venv/bin/pip install --upgrade pip
+.venv/bin/pip install -r requirements.txt
+</code></pre>
+<p>O <code>requirements.txt</code> instala todas as dependências (NiceGUI, APScheduler, nh3, libs de PDF, bcrypt, loguru e mkdocs).</p>
+<h2 id="passo-2-subir-o-servidor">Passo 2 — Subir o servidor<a class="headerlink" href="#passo-2-subir-o-servidor" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">.venv/bin/python main.py
+</code></pre>
+<ul>
+<li>O servidor sobe na porta <strong>8080</strong> (<code>reload=False</code>, <code>show=False</code>).</li>
+<li>No boot, <code>inicializar_bancos()</code> cria os bancos <code>db_mod_*</code> (SQLite WAL) caso não existam e o usuário seed <code>master</code>/<code>master</code>.</li>
+<li>A documentação é compilada (MkDocs) e servida em <code>http://localhost:8080/documentacao</code>.</li>
+</ul>
+<p>Acesse no navegador:</p>
+<pre><code>http://localhost:8080
+</code></pre>
+<h2 id="passo-3-primeiro-acesso">Passo 3 — Primeiro acesso<a class="headerlink" href="#passo-3-primeiro-acesso" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Abra <code>http://localhost:8080</code> (será redirecionado para <code>/login</code>).</li>
+<li>Entre com o usuário <strong>seed</strong>:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Usuário</th>
+<th style="text-align: left;">Senha</th>
+<th style="text-align: left;">Perfil</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>master</code></td>
+<td style="text-align: left;"><code>master</code></td>
+<td style="text-align: left;"><code>administrador_geral</code></td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li><strong>A troca de senha é obrigatória no 1º logon</strong> — o sistema exibe o diálogo de troca e não permite prosseguir no fluxo normal (auto-cura idempotente: enquanto a senha for <code>master</code>, a troca é rearmada a cada boot — <code>mod_gest_cad_usuario/manipulador_bd.py:136-156</code>).</li>
+</ol>
+<blockquote>
+<p>⚠️ <strong>Segurança:</strong> troque a senha do <code>master</code> imediatamente e não use a senha padrão em produção.</p>
+</blockquote>
+<h2 id="passo-4-usuarios-de-teste">Passo 4 — Usuários de teste<a class="headerlink" href="#passo-4-usuarios-de-teste" title="Permanent link">&para;</a></h2>
+<p>Os bancos já vêm com usuários de teste cadastrados (banco <code>db_mod_gest_cad_usuario.db</code>, tabela <code>tb_usuarios</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Usuário</th>
+<th style="text-align: left;">Senha</th>
+<th style="text-align: left;">Perfil</th>
+<th style="text-align: left;">Acesso a módulos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>qacomum</code></td>
+<td style="text-align: left;"><code>123456</code></td>
+<td style="text-align: left;"><code>comum</code></td>
+<td style="text-align: left;">blog, editar_pdf (Edição de PDF), empenhos (Renomear Empenho)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>qamaster</code></td>
+<td style="text-align: left;"><code>123456</code></td>
+<td style="text-align: left;"><code>administrador_geral</code></td>
+<td style="text-align: left;">todos</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Use <strong><code>qacomum</code></strong> para validar fluxos de usuário comum (permissões restritas, somente leitura no Blog, etc.).</li>
+<li>Use <strong><code>qamaster</code></strong> para validar fluxos de administrador geral (vê tudo, acesso à Auditoria e Configurações).</li>
+</ul>
+<h2 id="smoke-test">Smoke test<a class="headerlink" href="#smoke-test" title="Permanent link">&para;</a></h2>
+<p>Teste mínimo de bootstrap do servidor (sobe NiceGUI sem módulos):</p>
+<pre><code class="language-bash">.venv/bin/python test/test_server.py
+</code></pre>
+<p>Testes existentes na pasta <code>test/</code>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Script</th>
+<th style="text-align: left;">Escopo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>test/test_server.py</code></td>
+<td style="text-align: left;">bootstrap mínimo (smoke test)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>test/test_editor_pdf.py</code></td>
+<td style="text-align: left;">editor PDF (32 verificações)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>test/test_auditoria.py</code></td>
+<td style="text-align: left;">filtros/exportação da auditoria</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>test/test_fase1_login.py</code></td>
+<td style="text-align: left;">fase 1: login/autenticação</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>test/test_fresh_install.py</code></td>
+<td style="text-align: left;">instalação limpa</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>test/test_solicita_impressao.py</code></td>
+<td style="text-align: left;">módulo de solicitação de impressão</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>testes/teste_fluxo_blog.py</code></td>
+<td style="text-align: left;">fluxo do Blog (33/33 OK)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="solucao-de-problemas">Solução de problemas<a class="headerlink" href="#solucao-de-problemas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Problema</th>
+<th style="text-align: left;">Causa provável</th>
+<th style="text-align: left;">Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">"no such table: tb_config" na primeira subida</td>
+<td style="text-align: left;">banco central não criado antes de importar módulo</td>
+<td style="text-align: left;">a ordem correta está em <code>inicializar_bancos()</code> (central primeiro) — rodar <code>main.py</code> a partir da raiz</td>
+</tr>
+<tr>
+<td style="text-align: left;">Caracteres estranhos / erro de sintaxe em <code>.py</code></td>
+<td style="text-align: left;">arquivo foi editado por ferramenta que corrompeu caracteres (histórico: PowerShell)</td>
+<td style="text-align: left;">validar com <code>ast.parse</code> (abaixo) e corrigir</td>
+</tr>
+<tr>
+<td style="text-align: left;">Porta 8080 ocupada</td>
+<td style="text-align: left;">outro processo na porta</td>
+<td style="text-align: left;">alterar <code>port</code> em <code>main.py</code> (bloco <code>ui.run</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">"FALTA telas.py em <módulo>"</td>
+<td style="text-align: left;">estrutura do módulo incompleta</td>
+<td style="text-align: left;"><code>main.py:22-24</code> valida <code>telas.py</code> obrigatório em cada <code>mod_*</code></td>
+</tr>
+</tbody>
+</table>
+<p>Validação de sintaxe de qualquer arquivo Python (padrão do projeto):</p>
+<pre><code class="language-bash">.venv/bin/python -c &quot;import ast; ast.parse(open('main.py', encoding='utf-8').read())&quot;
+</code></pre>
+<blockquote>
+<p>Em dúvida sobre configurações (<code>storage_secret</code>, portas, chaves de <code>tb_config</code>), veja <a href="../configuracoes/">Configurações e Variáveis de Ambiente</a>.</p>
+</blockquote>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../visao_geral/" class="btn btn-neutral float-left" title="Visão Geral"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../requisitos/" class="btn btn-neutral float-right" title="Requisitos do Sistema">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../visao_geral/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../requisitos/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

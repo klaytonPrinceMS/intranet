@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Arquitetura - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Arquitetura";
+        var mkdocs_page_input_path = "arquitetura.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Arquitetura</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Documentação Técnica</li>
+      <li class="breadcrumb-item active">Arquitetura</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="intranet-modular-architecture">Intranet Modular — Architecture<a class="headerlink" href="#intranet-modular-architecture" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Technical architecture of the Intranet Modular: single entry point (<code>main.py</code>), modular packages (<code>mod_*</code>), the <code>criador_bd.py</code> / <code>manipulador_bd.py</code> / <code>telas.py</code> pattern, one SQLite (WAL) database per module, centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor and audit pruning).</p>
+</blockquote>
+<hr />
+<h1 id="intranet-modular-arquitetura">Intranet Modular — Arquitetura<a class="headerlink" href="#intranet-modular-arquitetura" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Arquitetura técnica da Intranet Modular: entry point único (<code>main.py</code>), pacotes modulares (<code>mod_*</code>), padrão <code>criador_bd.py</code> / <code>manipulador_bd.py</code> / <code>telas.py</code>, banco SQLite (WAL) por módulo, auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta e poda da auditoria).</p>
+</blockquote>
+<h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#visao-geral">Visão geral</a></li>
+<li><a href="#entry-point-mainpy">Entry point: <code>main.py</code></a></li>
+<li><a href="#pacotes-de-modulo-mod_">Pacotes de módulo (<code>mod_*</code>)</a></li>
+<li><a href="#padrao-interno-de-um-modulo">Padrão interno de um módulo</a></li>
+<li><a href="#bancos-de-dados-um-por-modulo-wal">Bancos de dados (um por módulo, WAL)</a></li>
+<li><a href="#autenticacao-e-sessoes">Autenticação e sessões</a></li>
+<li><a href="#guarda-de-pagina-e-layout">Guarda de página e layout</a></li>
+<li><a href="#agendadores-apscheduler">Agendadores (APScheduler)</a></li>
+<li><a href="#auditoria-centralizada">Auditoria centralizada</a></li>
+<li><a href="#observabilidade-loguru">Observabilidade (loguru)</a></li>
+<li><a href="#documentacao-embutida-documentacao">Documentação embutida (<code>/documentacao</code>)</a></li>
+</ol>
+<h2 id="visao-geral">Visão geral<a class="headerlink" href="#visao-geral" title="Permanent link">&para;</a></h2>
+<pre><code class="language-text">┌────────────────────────────── main.py (único entry point) ──────────────────────────────┐
+│  inicializar_bancos()  →  verifica telas.py  →  iniciar_agendador()  →  ui.run(8080)     │
+└───────────────┬──────────────────────────────────────────────┬──────────────────────────┘
+                │                                              │
+   ┌────────────▼───────────┐                     ┌────────────▼───────────┐
+   │ mod_intranet (núcleo)  │                     │ Módulos de negócio      │
+   │ autenticacao · layout  │◄── importa ────────►│ mod_blog, mod_gest_*,   │
+   │ conexao_bd · rotinas   │                     │ mod_edit_pdf,           │
+   │ observabilidade · etc. │                     │ mod_renomear_*,         │
+   └────────────┬───────────┘                     │ mod_auditoria,          │
+                │                                 │ mod_solicita_impressao  │
+   db_mod_intranet.db (WAL)                       └─────────┬───────────────┘
+   tb_auditoria · tb_config · tb_sessoes · tb_modulos        │ cada um com seu
+                                                             ▼ db_mod_*.db (WAL)
+</code></pre>
+<h2 id="entry-point-mainpy">Entry point: <code>main.py</code><a class="headerlink" href="#entry-point-mainpy" title="Permanent link">&para;</a></h2>
+<p><code>main.py</code> (raiz) é o <strong>único ponto de entrada</strong> — a aplicação não possui outro script de inicialização. Fluxo no boot:</p>
+<ol>
+<li><strong><code>inicializar_bancos()</code></strong> (<code>main.py:16-17</code>) — cria o banco central e os bancos dos módulos <strong>antes</strong> de qualquer import de módulo (ordem crítica; ver <a href="../configuracoes/#bootstrap-inicializar_bancos">Configurações</a>).</li>
+<li><strong>Valida <code>telas.py</code></strong> — aborta com <code>RuntimeError</code> se algum <code>mod_*</code> não tiver <code>telas.py</code> (<code>main.py:22-24</code>).</li>
+<li><strong>Prepara favicon</strong> — copia o favicon nativo para <code>assets/favicon_atual.ico</code> (arquivo vivo, troca sem restart) (<code>main.py:42-48</code>).</li>
+<li><strong>Registra as rotas</strong> de página NiceGUI (<code>@ui.page</code>) e rotas auxiliares FastAPI (<code>@app.get</code>) — ver <a href="../api_referencia/">Referência de API</a>.</li>
+<li><strong><code>iniciar_agendador()</code></strong> (<code>main.py:323</code>) — delega ao <code>rotinas.iniciar_agendador()</code>.</li>
+<li><strong>Observabilidade</strong> — <code>observabilidade.configurar()</code> + <code>instalar_excepthook()</code> (<code>main.py:319-321</code>).</li>
+<li><strong>Documentação</strong> — <code>construir_e_montar_documentacao()</code> (<code>main.py:330-331</code>): build MkDocs <code>docs/</code> → <code>site/</code> e mount em <code>/documentacao</code> (falha nunca derruba o servidor).</li>
+<li><strong><code>ui.run(...)</code></strong> (<code>main.py:333-339</code>) — <code>reload=False</code>, <code>show=False</code>, porta <code>8080</code>, <code>storage_secret</code> placeholder.</li>
+</ol>
+<h2 id="pacotes-de-modulo-mod_">Pacotes de módulo (<code>mod_*</code>)<a class="headerlink" href="#pacotes-de-modulo-mod_" title="Permanent link">&para;</a></h2>
+<p>Cada funcionalidade é um <strong>pacote próprio</strong> na raiz:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Pacote</th>
+<th style="text-align: left;">Banco</th>
+<th style="text-align: left;"><code>telas.py</code></th>
+<th style="text-align: left;">Papel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>mod_intranet/</code></td>
+<td style="text-align: left;"><code>db_mod_intranet.db</code></td>
+<td style="text-align: left;">✗ (rotas no <code>main.py</code>)</td>
+<td style="text-align: left;">núcleo: autenticação, auditoria, config, layout, rotinas, observabilidade</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_gest_cad_usuario/</code></td>
+<td style="text-align: left;"><code>db_mod_gest_cad_usuario.db</code></td>
+<td style="text-align: left;">✓</td>
+<td style="text-align: left;">usuários, perfis, papéis, sessões</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_blog/</code></td>
+<td style="text-align: left;"><code>db_mod_blog.db</code></td>
+<td style="text-align: left;">✓</td>
+<td style="text-align: left;">postagens/comentários</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_edit_pdf/</code></td>
+<td style="text-align: left;"><code>db_mod_edit_pdf.db</code></td>
+<td style="text-align: left;">✓</td>
+<td style="text-align: left;">edição de PDFs</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_renomear_empenho/</code></td>
+<td style="text-align: left;"><code>db_mod_renomear_empenho.db</code></td>
+<td style="text-align: left;">✓</td>
+<td style="text-align: left;">empenhos/FTS5</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_auditoria/</code></td>
+<td style="text-align: left;">— (lê o central)</td>
+<td style="text-align: left;">✓</td>
+<td style="text-align: left;">visualizador da trilha</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_solicita_impressao/</code></td>
+<td style="text-align: left;"><code>db_mod_solicita_impressao.db</code></td>
+<td style="text-align: left;">✓</td>
+<td style="text-align: left;">solicitação de impressão</td>
+</tr>
+</tbody>
+</table>
+<p>Subpacotes/fluxos relevantes do núcleo:</p>
+<ul>
+<li><code>mod_intranet/autenticacao.py</code> — login/sessões/permissões (bcrypt, <code>tb_sessoes</code>, <code>tb_modulos</code>).</li>
+<li><code>mod_intranet/layout_tela.py</code> — guarda <code>pagina_restrita</code> + layout de 4 partes.</li>
+<li><code>mod_intranet/conexao_bd.py</code> — camada mais baixa (banco central, <code>get_config</code>/<code>set_config</code>).</li>
+<li><code>mod_intranet/manipulador_bd.py</code> — auditoria (<code>audit_log</code>) e rastreabilidade.</li>
+<li><code>mod_intranet/rotinas.py</code> — agendadores e backups.</li>
+<li><code>mod_intranet/observabilidade.py</code> — loguru por módulo.</li>
+<li><code>mod_intranet/tela_configuracoes.py</code> — personalização (<code>/configuracoes</code>).</li>
+<li><code>mod_intranet/documentacao.py</code> — build/mount do MkDocs.</li>
+<li><code>mod_intranet/contexto.py</code> — ContextVar com IP/UA por request.</li>
+<li><code>mod_intranet/email_util.py</code> — SMTP (cartão E-mail).</li>
+<li><code>mod_intranet/dialogo_backup.py</code> — diálogo de backup do header.</li>
+<li><code>mod_intranet/aba_modulo.py</code> — cabeçalho/abas padronizadas das telas.</li>
+</ul>
+<h2 id="padrao-interno-de-um-modulo">Padrão interno de um módulo<a class="headerlink" href="#padrao-interno-de-um-modulo" title="Permanent link">&para;</a></h2>
+<pre><code class="language-text">mod_&lt;nome&gt;/
+  __init__.py
+  telas.py            # OBRIGATÓRIO: expõe mostrar_tela(usuario_logado, perfil)
+  manipulador_bd.py   # acesso ao db_mod_&lt;nome&gt;.db (WAL) — criador vigente das tabelas
+  criador_bd.py       # LEGADO/MORTO: aponta para o banco central — NÃO confiar nem executar
+  (outros: monitor, organizador, src/...)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Arquivo</th>
+<th style="text-align: left;">Responsabilidade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>telas.py</code></td>
+<td style="text-align: left;">UI NiceGUI; <code>mostrar_tela(usuario_logado, perfil)</code>; revalida papel antes de qualquer escrita</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>manipulador_bd.py</code></td>
+<td style="text-align: left;">schema (<code>init_db*</code>), queries e regras de negócio; conexão WAL; auditoria via <code>audit_log</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>criador_bd.py</code></td>
+<td style="text-align: left;"><strong>legado/morto</strong> em todos os módulos — usa a conexão do banco central e esquemas divergentes; nunca executar (o padrão real é <code>manipulador_bd.init_db*</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Exceção: <code>mod_auditoria</code> <strong>não tem</strong> <code>manipulador_bd.py</code> — lê <code>tb_auditoria</code> via <code>get_connection()</code> do núcleo (é somente-leitura).</p>
+<h2 id="bancos-de-dados-um-por-modulo-wal">Bancos de dados (um por módulo, WAL)<a class="headerlink" href="#bancos-de-dados-um-por-modulo-wal" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Cada banco é um <strong>arquivo SQLite separado</strong> na raiz (<code>db_mod_*.db</code>).</li>
+<li>Toda conexão aplica <code>PRAGMA journal_mode=WAL</code> + <code>synchronous=NORMAL</code>.</li>
+<li><strong>Convenção:</strong> consultar um banco somente pelo <code>manipulador_bd</code> do seu próprio módulo (evitar cross-query). Exceção conhecida e documentada: a limpeza cruzada LGPD da exclusão de usuário (<code>mod_gest_cad_usuario</code> varre bancos vizinhos para anonimizar/excluir dados — ver <a href="../modulos/gest_cad_usuario/">Módulo de Gestão de Usuários</a>).</li>
+<li>O banco <strong>central</strong> (<code>db_mod_intranet.db</code>) é o único compartilhado: <code>tb_auditoria</code>, <code>tb_config</code>, <code>tb_sessoes</code>, <code>tb_modulos</code>.</li>
+</ul>
+<h2 id="autenticacao-e-sessoes">Autenticação e sessões<a class="headerlink" href="#autenticacao-e-sessoes" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>bcrypt</strong> para hash de senhas (<code>autenticar</code> — <code>autenticacao.py:179</code>).</li>
+<li>Login grava <strong>sessão revogável</strong> em <code>tb_sessoes</code> com <code>cookie_hash = sha256(...)[:16]</code> via <code>secrets</code> (<code>registrar_login</code> — <code>autenticacao.py:224</code>); cookie HTTP-Only definido no nível de framework (NiceGUI/Starlette).</li>
+<li>Guarda de página revalida a sessão a cada request (<code>sessao_ativa</code> — <code>autenticacao.py:257</code>); sessão encerrada pelo admin derruba o navegador na próxima interação.</li>
+<li><strong>Rastreabilidade</strong>: ContextVar do NiceGUI captura IP (prioriza <code>X-Forwarded-For</code>), user-agent, rótulo de dispositivo e MAC best-effort (Linux) em cada request (<code>mod_intranet/contexto.py</code>).</li>
+</ul>
+<h2 id="guarda-de-pagina-e-layout">Guarda de página e layout<a class="headerlink" href="#guarda-de-pagina-e-layout" title="Permanent link">&para;</a></h2>
+<p><code>pagina_restrita(titulo_modulo, chave_modulo)</code> (<code>layout_tela.py:29</code>) é usada por <strong>todas</strong> as rotas de módulos do <code>main.py</code>:</p>
+<ol>
+<li>Sem usuário → redireciona <code>/login</code>.</li>
+<li>Revalida existência/situação ativa do usuário no banco.</li>
+<li>Revalida <code>sessao_ativa</code> (sessões antigas sem hash são adotadas).</li>
+<li>Valida <code>validar_acesso_modulo(nome, chave)</code> — sem permissão: audita <code>acesso_negado</code>, notifica e redireciona <code>/</code>.</li>
+<li>Monta o <strong>layout de 4 partes</strong>: header (hambúrguer, backup, "Meu Perfil", badge de perfil, logout), drawer lateral (módulos liberados), rodapé com versões, área principal.</li>
+<li>Se <code>precisa_trocar_senha</code>, abre o diálogo persistente de troca obrigatória.</li>
+</ol>
+<h2 id="agendadores-apscheduler">Agendadores (APScheduler)<a class="headerlink" href="#agendadores-apscheduler" title="Permanent link">&para;</a></h2>
+<p><code>rotinas.iniciar_agendador()</code> (<code>mod_intranet/rotinas.py:176-232</code>) — <code>BackgroundScheduler(daemon=True)</code>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Job</th>
+<th style="text-align: left;">Intervalo</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>backup:&lt;chave&gt;</code> (1 por módulo)</td>
+<td style="text-align: left;"><code>backup_horas:&lt;chave&gt;</code> (default <strong>12 h</strong>, mín. 1 h)</td>
+<td style="text-align: left;">copia o banco do módulo para <code>backup/</code>, retendo as <strong>10 cópias mais recentes</strong>; reagendável sem restart (<code>reagendar_backup</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>cleanup_pdf</code></td>
+<td style="text-align: left;"><strong>1 min</strong></td>
+<td style="text-align: left;">expira arquivos do editor PDF (<code>expirar_antigos(cfg_expiracao_min())</code>, default 10 min); fallback <code>limpar_editor_pdf(minutos=10)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>cleanup_solicita</code></td>
+<td style="text-align: left;"><strong>1 min</strong></td>
+<td style="text-align: left;">remove rascunhos de impressão não confirmados e impressos vencidos do servidor</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>poda_auditoria</code></td>
+<td style="text-align: left;"><strong>24 h</strong></td>
+<td style="text-align: left;">remove registros de <code>tb_auditoria</code> mais antigos que <code>auditoria_retencao_dias</code> (default 90)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>monitor_empenho</code></td>
+<td style="text-align: left;"><code>empenhos_monitor_intervalo_seg</code> (default <strong>10 s</strong>)</td>
+<td style="text-align: left;">varredura automática da pasta monitorada de empenhos (<code>rodar_monitor("sistema")</code>)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Ajuste fino:</strong> o <code>MAPA_BACKUPS</code> (<code>rotinas.py:16-22</code>) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, empenhos).</p>
+</blockquote>
+<h2 id="auditoria-centralizada">Auditoria centralizada<a class="headerlink" href="#auditoria-centralizada" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>audit_log(usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent)</code></strong> (<code>mod_intranet/manipulador_bd.py:66-95</code>) é a função única de escrita na <code>tb_auditoria</code>.</li>
+<li>Todos os módulos auditam suas ações relevantes: criação/edição/exclusão, autenticação (login/logout/falha), configurações, permissões (inclusive <code>acesso_negado</code>), operações com arquivos (com <strong>hash SHA-256</strong>).</li>
+<li>Colunas de rastreabilidade (<code>ip</code>, <code>user_agent</code>) vêm da migração <code>garantir_rastreabilidade()</code> (<code>manipulador_bd.py:24-63</code>), que também cria índices (<code>modulo</code>, <code>usuario</code>, <code>timestamp</code>).</li>
+<li>Visualização: módulo <code>mod_auditoria</code> (só <code>administrador_geral</code>) — ver <a href="../modulos/auditoria/">Módulo de Auditoria</a>.</li>
+</ul>
+<h2 id="observabilidade-loguru">Observabilidade (loguru)<a class="headerlink" href="#observabilidade-loguru" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>mod_intranet/observabilidade.py</code> configura sinks de arquivo em <code>logs/</code> com rotação/retenção/compressão e captura exceções não tratadas (<code>excepthook</code>).</li>
+<li>Console (stderr) <strong>somente</strong> quando não está congelado (<code>sys.frozen</code>); no executável, logs vão só para arquivo.</li>
+<li><code>get_logger("&lt;modulo&gt;")</code> rotula o logger para o arquivo dedicado (<code>blog_&lt;data&gt;.log</code>, ...); core em <code>intranet_&lt;data&gt;.log</code>.</li>
+<li>Configurável em runtime pela administração (<code>log_ativo</code>, <code>log_nivel</code>, <code>log_rotacao</code>, <code>log_retencao</code>).</li>
+</ul>
+<h2 id="documentacao-embutida-documentacao">Documentação embutida (<code>/documentacao</code>)<a class="headerlink" href="#documentacao-embutida-documentacao" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>mod_intranet/documentacao.py</code> executa <code>python -m mkdocs build</code> (docs/ → site/) e monta <code>site/</code> como rota estática FastAPI (<code>app.mount("/documentacao", StaticFiles(...))</code>).</li>
+<li>O build roda no boot (<code>main.py:330-331</code>) e <strong>falhas nunca derrubam o servidor</strong> (apenas avisam nos logs).</li>
+<li>Tema do MkDocs: <strong><code>readthedocs</code></strong> (definido em <code>mkdocs.yml</code> — não alterar para <code>material</code>).</li>
+</ul>
+<blockquote>
+<p>Pendências conceituais conhecidas: <code>criador_bd.py</code> legado em todos os módulos (não confiar); <code>manipulador_bd.py</code> do núcleo foi reconstruído de <code>*.pyc</code> quando ausente como fonte (ver <a href="../analise_mod_intranet/">Análise do Núcleo</a>).</p>
+</blockquote>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../configuracoes/" class="btn btn-neutral float-left" title="Configurações e Variáveis de Ambiente"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../api_referencia/" class="btn btn-neutral float-right" title="Referência de API e Código">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../configuracoes/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../api_referencia/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

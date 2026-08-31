@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Referência de API e Código - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Refer\u00eancia de API e C\u00f3digo";
+        var mkdocs_page_input_path = "api_referencia.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Referência de API e Código</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Documentação Técnica</li>
+      <li class="breadcrumb-item active">Referência de API e Código</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="intranet-modular-api-and-code-reference">Intranet Modular — API and Code Reference<a class="headerlink" href="#intranet-modular-api-and-code-reference" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>API and code reference of the Intranet Modular: NiceGUI routes (<code>/login</code>, <code>/</code>, <code>/blog</code>, <code>/users</code>, <code>/auditoria</code>, <code>/edit-pdf</code>, <code>/renomear-empenho</code>, <code>/solicita-impressao</code>, <code>/configuracoes</code>) and FastAPI helpers, key functions with <code>file:line</code> references, and the database tables per module.</p>
+</blockquote>
+<hr />
+<h1 id="intranet-modular-referencia-de-api-e-codigo">Intranet Modular — Referência de API e Código<a class="headerlink" href="#intranet-modular-referencia-de-api-e-codigo" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Referência de API e código da Intranet Modular: rotas NiceGUI (<code>/login</code>, <code>/</code>, <code>/blog</code>, <code>/users</code>, <code>/auditoria</code>, <code>/edit-pdf</code>, <code>/renomear-empenho</code>, <code>/solicita-impressao</code>, <code>/configuracoes</code>) e auxiliares FastAPI, funções-chave com referência <code>arquivo:linha</code> e as tabelas de banco por módulo.</p>
+</blockquote>
+<h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#rotas-paginas-e-auxiliares">Rotas (páginas e auxiliares)</a></li>
+<li><a href="#funcoes-chave-nucleo">Funções-chave — núcleo</a></li>
+<li><a href="#funcoes-chave-gestao-de-usuarios">Funções-chave — Gestão de Usuários</a></li>
+<li><a href="#funcoes-chave-blog">Funções-chave — Blog</a></li>
+<li><a href="#funcoes-chave-editor-de-pdf">Funções-chave — Editor de PDF</a></li>
+<li><a href="#funcoes-chave-renomear-empenho">Funções-chave — Renomear Empenho</a></li>
+<li><a href="#funcoes-chave-auditoria">Funções-chave — Auditoria</a></li>
+<li><a href="#funcoes-chave-solicitacao-de-impressao">Funções-chave — Solicitação de Impressão</a></li>
+<li><a href="#tabelas-por-banco">Tabelas por banco</a></li>
+</ol>
+<blockquote>
+<p>Todas as referências foram conferidas contra o código na data desta documentação. Em conflito, prevalece o código executável.</p>
+</blockquote>
+<h2 id="rotas-paginas-e-auxiliares">Rotas (páginas e auxiliares)<a class="headerlink" href="#rotas-paginas-e-auxiliares" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Rota</th>
+<th style="text-align: left;">Tipo</th>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Acesso</th>
+<th style="text-align: left;">Definição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>/login</code></td>
+<td style="text-align: left;"><code>@ui.page</code></td>
+<td style="text-align: left;"><code>mod_intranet</code></td>
+<td style="text-align: left;">público</td>
+<td style="text-align: left;"><code>main.py:51</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/</code></td>
+<td style="text-align: left;"><code>@ui.page</code></td>
+<td style="text-align: left;"><code>mod_intranet</code></td>
+<td style="text-align: left;">usuários ativos</td>
+<td style="text-align: left;"><code>main.py:112</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/blog</code></td>
+<td style="text-align: left;"><code>@ui.page</code></td>
+<td style="text-align: left;"><code>mod_blog</code></td>
+<td style="text-align: left;">liberados (<code>blog</code>)</td>
+<td style="text-align: left;"><code>main.py:188</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/users</code></td>
+<td style="text-align: left;"><code>@ui.page</code></td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario</code></td>
+<td style="text-align: left;">admin do módulo / geral</td>
+<td style="text-align: left;"><code>main.py:198</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/auditoria</code></td>
+<td style="text-align: left;"><code>@ui.page</code></td>
+<td style="text-align: left;"><code>mod_auditoria</code></td>
+<td style="text-align: left;"><code>administrador_geral</code></td>
+<td style="text-align: left;"><code>main.py:208</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/edit-pdf</code></td>
+<td style="text-align: left;"><code>@ui.page</code></td>
+<td style="text-align: left;"><code>mod_edit_pdf</code></td>
+<td style="text-align: left;">liberados (<code>editar_pdf</code>)</td>
+<td style="text-align: left;"><code>main.py:218</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/renomear-empenho</code></td>
+<td style="text-align: left;"><code>@ui.page</code></td>
+<td style="text-align: left;"><code>mod_renomear_empenho</code></td>
+<td style="text-align: left;">liberados (<code>empenhos</code>)</td>
+<td style="text-align: left;"><code>main.py:228</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/solicita-impressao</code></td>
+<td style="text-align: left;"><code>@ui.page</code></td>
+<td style="text-align: left;"><code>mod_solicita_impressao</code></td>
+<td style="text-align: left;">liberados (<code>solicita_impressao</code>)</td>
+<td style="text-align: left;"><code>main.py:285</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/solicita-impressao/pdf/{id}</code></td>
+<td style="text-align: left;"><code>@app.get</code></td>
+<td style="text-align: left;"><code>mod_solicita_impressao</code></td>
+<td style="text-align: left;">solicitante/responsável/admin</td>
+<td style="text-align: left;"><code>main.py:238</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/solicita-impressao/src/impressao.js</code></td>
+<td style="text-align: left;"><code>@app.get</code></td>
+<td style="text-align: left;"><code>mod_solicita_impressao</code></td>
+<td style="text-align: left;">público (JS)</td>
+<td style="text-align: left;"><code>main.py:297</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/configuracoes</code></td>
+<td style="text-align: left;"><code>@ui.page</code></td>
+<td style="text-align: left;"><code>mod_intranet</code></td>
+<td style="text-align: left;"><code>administrador_geral</code></td>
+<td style="text-align: left;"><code>main.py:306</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/documentacao</code></td>
+<td style="text-align: left;"><code>app.mount</code> (FastAPI)</td>
+<td style="text-align: left;"><code>mod_intranet</code></td>
+<td style="text-align: left;">público</td>
+<td style="text-align: left;"><code>mod_intranet/documentacao.py:37</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Rota ≠ slug:</strong> a rota não é a chave do módulo — <code>CHAVE_POR_ROTA</code> (<code>autenticacao.py:24</code>) mapeia <code>/users</code>→<code>usuarios</code>, <code>/edit-pdf</code>→<code>editar_pdf</code>, <code>/renomear-empenho</code>→<code>empenhos</code> etc.</p>
+</blockquote>
+<h2 id="funcoes-chave-nucleo">Funções-chave — núcleo<a class="headerlink" href="#funcoes-chave-nucleo" title="Permanent link">&para;</a></h2>
+<h3 id="bootstrap-e-banco-central-mod_intranetmod_intranet_inicializacao_bdpy-e-mod_intranetconexao_bdpy">Bootstrap e banco central (<code>mod_intranet/mod_intranet_inicializacao_bd.py</code> e <code>mod_intranet/conexao_bd.py</code>)<a class="headerlink" href="#bootstrap-e-banco-central-mod_intranetmod_intranet_inicializacao_bdpy-e-mod_intranetconexao_bdpy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>inicializar_bancos()</code></td>
+<td style="text-align: left;"><code>mod_intranet_inicializacao_bd.py:13</code></td>
+<td style="text-align: left;">cria o central + bancos dos módulos na ordem correta (idempotente)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_connection()</code></td>
+<td style="text-align: left;"><code>conexao_bd.py:27</code></td>
+<td style="text-align: left;">conexão WAL (<code>synchronous=NORMAL</code>) no banco central</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>init_db()</code></td>
+<td style="text-align: left;"><code>conexao_bd.py:34</code></td>
+<td style="text-align: left;">cria <code>tb_auditoria</code>, <code>tb_config</code>, <code>tb_sessoes</code> + seeds (versão, cotas, <code>versao_modulo:*</code>, <code>PADRAO_CONFIG</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_config(chave, default)</code></td>
+<td style="text-align: left;"><code>conexao_bd.py:87</code></td>
+<td style="text-align: left;">leitura de configuração (<code>tb_config</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>set_config(chave, valor)</code></td>
+<td style="text-align: left;"><code>conexao_bd.py:99</code></td>
+<td style="text-align: left;">gravação de configuração</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>favicon_versao()</code></td>
+<td style="text-align: left;"><code>conexao_bd.py:110</code></td>
+<td style="text-align: left;">mtime do favicon (cache-busting <code>?v=</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>DB_PATH</code> / <code>PADRAO_CONFIG</code></td>
+<td style="text-align: left;"><code>conexao_bd.py:11</code> / <code>:13</code></td>
+<td style="text-align: left;">caminho do banco central / padrões de aparência</td>
+</tr>
+</tbody>
+</table>
+<h3 id="auditoria-e-rastreabilidade-mod_intranetmanipulador_bdpy">Auditoria e rastreabilidade (<code>mod_intranet/manipulador_bd.py</code>)<a class="headerlink" href="#auditoria-e-rastreabilidade-mod_intranetmanipulador_bdpy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>get_intranet_conn()</code></td>
+<td style="text-align: left;"><code>:20</code></td>
+<td style="text-align: left;">alias de <code>get_connection()</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>garantir_rastreabilidade()</code></td>
+<td style="text-align: left;"><code>:24</code></td>
+<td style="text-align: left;">migração idempotente (colunas <code>ip</code>/<code>user_agent</code>/<code>dispositivo</code>/<code>mac</code>, índice <code>sessao_retencao</code>, índices da auditoria)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>audit_log(usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent)</code></td>
+<td style="text-align: left;"><code>:66</code></td>
+<td style="text-align: left;">grava na <code>tb_auditoria</code> com contexto HTTP e horário local</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>hash_arquivo(caminho)</code></td>
+<td style="text-align: left;"><code>:98</code></td>
+<td style="text-align: left;">SHA-256 de arquivo (blocos de 8 KB)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="autenticacao-e-sessoes-mod_intranetautenticacaopy">Autenticação e sessões (<code>mod_intranet/autenticacao.py</code>)<a class="headerlink" href="#autenticacao-e-sessoes-mod_intranetautenticacaopy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>MODULOS_SISTEMA</code></td>
+<td style="text-align: left;"><code>:15</code></td>
+<td style="text-align: left;">seed dos 6 módulos nativos <code>(chave, nome, icone, rota)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>CHAVE_POR_ROTA</code></td>
+<td style="text-align: left;"><code>:24</code></td>
+<td style="text-align: left;">dict rota → chave</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_garantir_tb_modulos()</code></td>
+<td style="text-align: left;"><code>:29</code></td>
+<td style="text-align: left;">cria/popula <code>tb_modulos</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>verificar_senha</code> / <code>gerar_hash_senha</code></td>
+<td style="text-align: left;"><code>:157</code> / <code>:161</code></td>
+<td style="text-align: left;">bcrypt</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>autenticar(user_nome, senha)</code></td>
+<td style="text-align: left;"><code>:179</code></td>
+<td style="text-align: left;">valida credenciais; falha audita <code>login_falha</code>; bloqueio recusa login</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>registrar_login(user_nome, modulo)</code></td>
+<td style="text-align: left;"><code>:224</code></td>
+<td style="text-align: left;">cria sessão + <code>cookie_hash</code> + IP/UA; poda histórico</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>sessao_ativa(user_nome, cookie_hash)</code></td>
+<td style="text-align: left;"><code>:257</code></td>
+<td style="text-align: left;">revalida sessão (revogável)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>registrar_logout</code></td>
+<td style="text-align: left;"><code>:276</code></td>
+<td style="text-align: left;">encerra sessão do navegador</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>precisa_trocar_senha</code></td>
+<td style="text-align: left;"><code>:299</code></td>
+<td style="text-align: left;">flag <code>forcar_troca:&lt;user&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>trocar_senha_propria</code></td>
+<td style="text-align: left;"><code>:336</code></td>
+<td style="text-align: left;">autoatendimento (diálogo Meu Perfil)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>eh_admin_do_modulo(user, chave)</code></td>
+<td style="text-align: left;"><code>:405</code></td>
+<td style="text-align: left;">papel <code>administrador</code> por módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>perfil_global_de(user)</code></td>
+<td style="text-align: left;"><code>:409</code></td>
+<td style="text-align: left;">perfil global do usuário</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pode_publicar_no_blog(user)</code></td>
+<td style="text-align: left;"><code>:415</code></td>
+<td style="text-align: left;">permissão de escrita no blog</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>validar_acesso_modulo(user, chave)</code></td>
+<td style="text-align: left;"><code>:422</code></td>
+<td style="text-align: left;">delega ao manipulador de usuários (núcleo nunca lê <code>tb_usuarios</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_modulos_permitidos(user)</code></td>
+<td style="text-align: left;"><code>:429</code></td>
+<td style="text-align: left;">módulos do usuário (menu lateral)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="layout-e-guarda-mod_intranetlayout_telapy">Layout e guarda (<code>mod_intranet/layout_tela.py</code>)<a class="headerlink" href="#layout-e-guarda-mod_intranetlayout_telapy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>usuario_logado()</code></td>
+<td style="text-align: left;"><code>:24</code></td>
+<td style="text-align: left;">dict do usuário da sessão ou <code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pagina_restrita(titulo, chave_modulo)</code></td>
+<td style="text-align: left;"><code>:29</code></td>
+<td style="text-align: left;">guarda + layout de 4 partes + diálogo de troca de senha</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_montar_layout(...)</code></td>
+<td style="text-align: left;"><code>:89</code></td>
+<td style="text-align: left;">header/drawer/rodapé/área principal + versões</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_dialogo_meu_perfil</code> / <code>_dialogo_troca_senha</code></td>
+<td style="text-align: left;"><code>:202</code> / <code>:257</code></td>
+<td style="text-align: left;">autoatendimento</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rotinas-e-agendador-mod_intranetrotinaspy">Rotinas e agendador (<code>mod_intranet/rotinas.py</code>)<a class="headerlink" href="#rotinas-e-agendador-mod_intranetrotinaspy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>intervalo_backup(chave, default="12")</code></td>
+<td style="text-align: left;"><code>:27</code></td>
+<td style="text-align: left;">horas do job de backup (mín. 1)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>intervalo_monitor_empenho(default=10)</code></td>
+<td style="text-align: left;"><code>:36</code></td>
+<td style="text-align: left;">segundos do monitor de empenhos</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>backup_bancos()</code> / <code>backup_modulo(chave)</code></td>
+<td style="text-align: left;"><code>:105</code> / <code>:123</code></td>
+<td style="text-align: left;">cópia para <code>backup/</code> com timestamp</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_podar_backups(manter=10)</code></td>
+<td style="text-align: left;"><code>:140</code></td>
+<td style="text-align: left;">retém as 10 cópias mais recentes por banco</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>iniciar_agendador()</code></td>
+<td style="text-align: left;"><code>:176</code></td>
+<td style="text-align: left;">agenda <code>backup:*</code>, <code>cleanup_pdf</code>, <code>cleanup_solicita</code>, <code>poda_auditoria</code>, <code>monitor_empenho</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>reagendar_backup(chave, horas)</code></td>
+<td style="text-align: left;"><code>:235</code></td>
+<td style="text-align: left;">altera o intervalo do job vivo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>limpar_editor_pdf(minutos=10)</code></td>
+<td style="text-align: left;"><code>:247</code></td>
+<td style="text-align: left;">fallback de limpeza de <code>editorPDF/</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="outros-nucleo">Outros (núcleo)<a class="headerlink" href="#outros-nucleo" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>mostrar_tela</code> (configurações)</td>
+<td style="text-align: left;"><code>tela_configuracoes.py:23</code></td>
+<td style="text-align: left;">tela <code>/configuracoes</code> (só admin geral)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>abrir_dialogo(usuario, chave_modulo)</code></td>
+<td style="text-align: left;"><code>dialogo_backup.py:28</code></td>
+<td style="text-align: left;">diálogo de backup do header</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>configurar()</code> / <code>limpar_todos()</code> / <code>instalar_excepthook()</code> / <code>get_logger()</code></td>
+<td style="text-align: left;"><code>observabilidade.py:71</code> / <code>:127</code> / <code>:144</code> / <code>:163</code></td>
+<td style="text-align: left;">loguru central</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>enviar_email</code> / <code>testar_conexao</code></td>
+<td style="text-align: left;"><code>email_util.py:30</code> / <code>:69</code></td>
+<td style="text-align: left;">SMTP</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>capturar_contexto</code> / <code>rotulo_dispositivo</code> / <code>mac_best_effort</code></td>
+<td style="text-align: left;"><code>contexto.py:48</code> / <code>:74</code> / <code>:112</code></td>
+<td style="text-align: left;">ContextVar IP/UA</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>construir_e_montar_documentacao()</code></td>
+<td style="text-align: left;"><code>documentacao.py:44</code></td>
+<td style="text-align: left;">build + mount do MkDocs</td>
+</tr>
+</tbody>
+</table>
+<h2 id="funcoes-chave-gestao-de-usuarios">Funções-chave — Gestão de Usuários<a class="headerlink" href="#funcoes-chave-gestao-de-usuarios" title="Permanent link">&para;</a></h2>
+<p><code>mod_gest_cad_usuario/manipulador_bd.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>senha_minima()</code></td>
+<td style="text-align: left;"><code>:43</code></td>
+<td style="text-align: left;">política mínima (<code>usuarios_senha_min</code>, default 6)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>init_db()</code></td>
+<td style="text-align: left;"><code>:54</code></td>
+<td style="text-align: left;">cria <code>tb_usuarios</code>, <code>tb_acesso_usuario</code> + seed <code>master</code>/<code>master</code> + auto-cura da troca (<code>:136-156</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_usuarios(filtro_ativo)</code></td>
+<td style="text-align: left;"><code>:178</code></td>
+<td style="text-align: left;">lista com filtros</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>obter_usuario(user_nome)</code></td>
+<td style="text-align: left;"><code>:200</code></td>
+<td style="text-align: left;">usuário por login</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>criar_usuario(ator, ...)</code></td>
+<td style="text-align: left;"><code>:248</code></td>
+<td style="text-align: left;">cria com senha provisória + <code>forcar_troca</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>editar_usuario(ator, ...)</code></td>
+<td style="text-align: left;"><code>:283</code></td>
+<td style="text-align: left;">edita; protege último <code>administrador_geral</code> (RF-26, <code>:292-305</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>renomear_usuario(ator, atual, novo)</code></td>
+<td style="text-align: left;"><code>:350</code></td>
+<td style="text-align: left;">renomeia replicando em dependentes</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>alterar_senha_admin</code></td>
+<td style="text-align: left;"><code>:388</code></td>
+<td style="text-align: left;">redefinição derruba as sessões</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bloquear_usuario(ator, nome, bloquear)</code></td>
+<td style="text-align: left;"><code>:410</code></td>
+<td style="text-align: left;">bloqueio/desbloqueio com auditoria</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>soft_delete_usuario(ator, nome, motivo)</code></td>
+<td style="text-align: left;"><code>:435</code></td>
+<td style="text-align: left;">exclusão lógica (motivo ≥ 3 chars)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_vinculos_cruzados_excluir</code></td>
+<td style="text-align: left;"><code>:463</code></td>
+<td style="text-align: left;">limpeza LGPD em bancos vizinhos</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>excluir_usuario_definitivo(ator, nome)</code></td>
+<td style="text-align: left;"><code>:572</code></td>
+<td style="text-align: left;">DELETE físico (aba Excluídos)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>definir_acesso</code> / <code>remover_acesso</code></td>
+<td style="text-align: left;"><code>:609</code> / <code>:634</code></td>
+<td style="text-align: left;">papel por módulo em <code>tb_acesso_usuario</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>validar_acesso_modulo(user, chave)</code></td>
+<td style="text-align: left;"><code>:666</code></td>
+<td style="text-align: left;">usado pela guarda do núcleo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_sessoes_ativas</code> / <code>contar_sessoes_ativas</code></td>
+<td style="text-align: left;"><code>:686</code> / <code>:705</code></td>
+<td style="text-align: left;">sessões vivas</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_historico_sessoes(usuario, limite=10)</code></td>
+<td style="text-align: left;"><code>:728</code></td>
+<td style="text-align: left;">histórico por usuário</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>encerrar_sessao(ator, id)</code> / <code>encerrar_todas_sessoes(ator, nome)</code></td>
+<td style="text-align: left;"><code>:746</code> / <code>:763</code></td>
+<td style="text-align: left;">revogação</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_vinculos_orfaos(chaves_ativas)</code></td>
+<td style="text-align: left;"><code>:771</code></td>
+<td style="text-align: left;">vínculos órfãos (INDISPONÍVEL)</td>
+</tr>
+</tbody>
+</table>
+<p>Tela: <code>mostrar_tela(user_nome, perfil_global)</code> — <code>telas.py:33</code>.</p>
+<h2 id="funcoes-chave-blog">Funções-chave — Blog<a class="headerlink" href="#funcoes-chave-blog" title="Permanent link">&para;</a></h2>
+<p><code>mod_blog/manipulador_bd.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>tags_permitidas()</code></td>
+<td style="text-align: left;"><code>:29</code></td>
+<td style="text-align: left;">whitelist nh3 de <code>tb_config</code> (CSV)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>init_db()</code></td>
+<td style="text-align: left;"><code>:47</code></td>
+<td style="text-align: left;">cria <code>tb_postagens</code>, <code>tb_comentarios</code>, <code>tb_config</code> local</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_config_local</code> / <code>set_config_local</code></td>
+<td style="text-align: left;"><code>:91</code> / <code>:105</code></td>
+<td style="text-align: left;">config local do módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_postagens(ativo, ordem)</code></td>
+<td style="text-align: left;"><code>:142</code></td>
+<td style="text-align: left;">lista com modo de exibição</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>contar_postagens(ativo=True)</code></td>
+<td style="text-align: left;"><code>:157</code></td>
+<td style="text-align: left;">usada pelo dashboard</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_sanitizar_texto(texto)</code></td>
+<td style="text-align: left;"><code>:189</code></td>
+<td style="text-align: left;">nh3 na gravação</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>criar_postagem(titulo, conteudo, autor)</code></td>
+<td style="text-align: left;"><code>:220</code></td>
+<td style="text-align: left;">cria + audita</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>atualizar_postagem</code> / <code>excluir_postagem</code></td>
+<td style="text-align: left;"><code>:246</code> / <code>:270</code></td>
+<td style="text-align: left;">edita / soft delete</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>despublicar_postagem</code> / <code>publicar_postagem</code></td>
+<td style="text-align: left;"><code>:288</code> / <code>:312</code></td>
+<td style="text-align: left;">toggle ativo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>criar_comentario(postagem_id, autor, conteudo)</code></td>
+<td style="text-align: left;"><code>:341</code></td>
+<td style="text-align: left;">comentário sanitizado</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_FormatadorBlog(HTMLParser)</code></td>
+<td style="text-align: left;"><code>:373</code></td>
+<td style="text-align: left;">única classe do código (formatação)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_markdown_leve(texto)</code></td>
+<td style="text-align: left;"><code>:425</code></td>
+<td style="text-align: left;">Markdown leve (<code>#</code>, <code>**</code>, <code>-</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>formatar_conteudo_para_exibicao(conteudo)</code></td>
+<td style="text-align: left;"><code>:468</code></td>
+<td style="text-align: left;">títulos centralizados/negrito, imagens 200–400px à esquerda</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>obter_modo_exibicao()</code></td>
+<td style="text-align: left;"><code>:507</code></td>
+<td style="text-align: left;">histórico OU publicação única</td>
+</tr>
+</tbody>
+</table>
+<p>Tela: <code>mostrar_tela(usuario_logado, perfil)</code> — <code>telas.py:115</code> (<code>_card_postagem</code> em <code>:14</code>).</p>
+<h2 id="funcoes-chave-editor-de-pdf">Funções-chave — Editor de PDF<a class="headerlink" href="#funcoes-chave-editor-de-pdf" title="Permanent link">&para;</a></h2>
+<p><code>mod_edit_pdf/manipulador_bd.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>DB_PDF_PATH</code></td>
+<td style="text-align: left;"><code>:23</code></td>
+<td style="text-align: left;">caminho <code>db_mod_edit_pdf.db</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>cfg_lote_arquivos</code> / <code>cfg_lote_mb</code> / <code>cfg_usuario_gb</code> / <code>cfg_expiracao_min</code> / <code>cfg_tema</code></td>
+<td style="text-align: left;"><code>:39</code>–<code>:73</code></td>
+<td style="text-align: left;">leitura de cotas/tema (defaults se <code>get_config</code> faltar)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>init_db_pdf()</code></td>
+<td style="text-align: left;"><code>:87</code></td>
+<td style="text-align: left;">cria <code>tb_arquivos</code>, <code>tb_cota_disco</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>nome_padronizado(usuario, operacao, nome_original)</code></td>
+<td style="text-align: left;"><code>:151</code></td>
+<td style="text-align: left;">prefixo <code>dataHora_usuario_operacao_...</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>verificar_quota(usuario, tamanho_bytes)</code></td>
+<td style="text-align: left;"><code>:171</code></td>
+<td style="text-align: left;">cotas em 4 níveis</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>registrar_arquivo(...)</code></td>
+<td style="text-align: left;"><code>:193</code></td>
+<td style="text-align: left;">grava upload com hash SHA-256</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>obter_meus_arquivos(usuario)</code></td>
+<td style="text-align: left;"><code>:238</code></td>
+<td style="text-align: left;">arquivos do usuário</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>contar_uploads_ativos(usuario)</code></td>
+<td style="text-align: left;"><code>:258</code></td>
+<td style="text-align: left;">estoque de uploads</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>hash_sha256(caminho)</code></td>
+<td style="text-align: left;"><code>:277</code></td>
+<td style="text-align: left;">hash para auditoria</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>op_reduzir(...)</code></td>
+<td style="text-align: left;"><code>:287</code></td>
+<td style="text-align: left;">modos leve/agressivo (<code>_reduzir_leve</code> <code>:302</code>, <code>_reduzir_agressivo</code> <code>:345</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>op_juntar(caminhos_in, caminho_out)</code></td>
+<td style="text-align: left;"><code>:366</code></td>
+<td style="text-align: left;">merge respeitando ordem de seleção</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>op_cortar(...)</code></td>
+<td style="text-align: left;"><code>:503</code></td>
+<td style="text-align: left;">pares/ímpares/intervalo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>op_dividir_partes(...)</code></td>
+<td style="text-align: left;"><code>:577</code></td>
+<td style="text-align: left;">dividir por página/par-ímpar/cortes/intervalos</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>op_verificar(caminho_in)</code></td>
+<td style="text-align: left;"><code>:647</code></td>
+<td style="text-align: left;">integridade</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>zip_por_ids(usuario, ids)</code></td>
+<td style="text-align: left;"><code>:665</code></td>
+<td style="text-align: left;">ZIP da seleção</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>deletar_arquivo(usuario, arquivo_id)</code></td>
+<td style="text-align: left;"><code>:706</code></td>
+<td style="text-align: left;">exclusão com devolução de cota</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>expirar_antigos(minutos)</code></td>
+<td style="text-align: left;"><code>:734</code></td>
+<td style="text-align: left;">chamada pelo scheduler central</td>
+</tr>
+</tbody>
+</table>
+<p>Tela: <code>mostrar_tela(usuario_logado, perfil)</code> — <code>telas.py:54</code>.</p>
+<h2 id="funcoes-chave-renomear-empenho">Funções-chave — Renomear Empenho<a class="headerlink" href="#funcoes-chave-renomear-empenho" title="Permanent link">&para;</a></h2>
+<p><code>mod_renomear_empenho/manipulador_bd.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>DB_EMPENHO_PATH</code> / <code>PAGINAS_EXTRACAO</code></td>
+<td style="text-align: left;"><code>:20</code> / <code>:40</code></td>
+<td style="text-align: left;">banco / páginas iniciais de extração (3)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pasta_monitorada()</code></td>
+<td style="text-align: left;"><code>:27</code></td>
+<td style="text-align: left;"><code>empenhos_pasta_monitorada</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>init_db_empenho()</code></td>
+<td style="text-align: left;"><code>:60</code></td>
+<td style="text-align: left;">cria <code>tb_empenhos</code>, <code>tb_indexador_pesquisa</code>, <code>tb_indexador_pesquisa_fts5</code>, <code>tb_quarentena</code>, <code>tb_regex_regras</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>extrair_texto_pdf(caminho)</code></td>
+<td style="text-align: left;"><code>:139</code></td>
+<td style="text-align: left;">pipeline <code>pymupdf → pdfplumber → OCR (pytesseract) → pikepdf</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>extrair_numero(texto)</code></td>
+<td style="text-align: left;"><code>:201</code></td>
+<td style="text-align: left;">número do empenho por regex</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>processar_pdf(usuario, caminho, numero, parcela, regex_custom)</code></td>
+<td style="text-align: left;"><code>:239</code></td>
+<td style="text-align: left;">extração + renomeação + FTS5 + auditoria</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mover_quarentena(usuario, caminho, motivo)</code></td>
+<td style="text-align: left;"><code>:315</code></td>
+<td style="text-align: left;">fila de quarentena</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_empenhos(status, limite=200)</code></td>
+<td style="text-align: left;"><code>:343</code></td>
+<td style="text-align: left;">últimos registros</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>extrair_campos_regex(texto)</code></td>
+<td style="text-align: left;"><code>:373</code></td>
+<td style="text-align: left;">campos customizados de <code>tb_regex_regras</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>reindexar_empenho(eid)</code> / <code>rebuild_fts()</code></td>
+<td style="text-align: left;"><code>:399</code> / <code>:438</code></td>
+<td style="text-align: left;">manutenção FTS5</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pesquisar(termo, limite=50)</code></td>
+<td style="text-align: left;"><code>:452</code></td>
+<td style="text-align: left;">busca <strong>FTS5 MATCH</strong> (fallback <code>LIKE</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_quarentena(limite=100)</code></td>
+<td style="text-align: left;"><code>:494</code></td>
+<td style="text-align: left;">pendências</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>reprocesse_quarentena(qid, novo_padrao)</code></td>
+<td style="text-align: left;"><code>:508</code></td>
+<td style="text-align: left;">reprocessa com regex aplicada na hora</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>salvar_regra(nome, padrao, ativo, campo_destino)</code></td>
+<td style="text-align: left;"><code>:536</code></td>
+<td style="text-align: left;">regex dinâmica (vale sem restart)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>rodar_monitor(usuario="sistema")</code></td>
+<td style="text-align: left;"><code>:597</code></td>
+<td style="text-align: left;">job do APScheduler (RF-40)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>organizar_pastas()</code></td>
+<td style="text-align: left;"><code>:616</code></td>
+<td style="text-align: left;">caixas/subpastas físicas</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gerar_matriz_organizador()</code></td>
+<td style="text-align: left;"><code>:709</code></td>
+<td style="text-align: left;">capas <code>capa.txt</code> + <code>matrizDeDocumentos.txt</code>/<code>.pdf</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>validar_presenca_matriz()</code></td>
+<td style="text-align: left;"><code>:740</code></td>
+<td style="text-align: left;">validação da matriz</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ferramenta_cortar</code> / <code>ferramenta_juntar</code> / <code>ferramenta_reduzir</code></td>
+<td style="text-align: left;"><code>:774</code> / <code>:797</code> / <code>:818</code></td>
+<td style="text-align: left;">reutilizam as <code>op_*</code> do <code>mod_edit_pdf</code></td>
+</tr>
+</tbody>
+</table>
+<p>Tela: <code>mostrar_tela(usuario_logado, perfil)</code> — <code>telas.py:25</code>.</p>
+<h2 id="funcoes-chave-auditoria">Funções-chave — Auditoria<a class="headerlink" href="#funcoes-chave-auditoria" title="Permanent link">&para;</a></h2>
+<p><code>mod_auditoria/</code>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>mostrar_tela(usuario_logado, perfil)</code></td>
+<td style="text-align: left;"><code>telas.py:83</code></td>
+<td style="text-align: left;">único ponto de entrada; filtros, paginação server-side, exportação CSV, campos/ordem por auditor</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>check_auditoria.py</code></td>
+<td style="text-align: left;">script diagnóstico</td>
+<td style="text-align: left;">contagem/sumário da trilha</td>
+</tr>
+</tbody>
+</table>
+<p>Sem banco próprio: lê <code>tb_auditoria</code> via <code>get_connection()</code> do núcleo. Configs: <code>auditoria_limite</code>, <code>auditoria_retencao_dias</code>, <code>auditoria_texto_header</code>, <code>auditoria_campos:&lt;usuario&gt;</code>.</p>
+<h2 id="funcoes-chave-solicitacao-de-impressao">Funções-chave — Solicitação de Impressão<a class="headerlink" href="#funcoes-chave-solicitacao-de-impressao" title="Permanent link">&para;</a></h2>
+<p><code>mod_solicita_impressao/manipulador_bd.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Linha</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>DB_PATH</code></td>
+<td style="text-align: left;"><code>:25</code></td>
+<td style="text-align: left;"><code>db_mod_solicita_impressao.db</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>init_db()</code></td>
+<td style="text-align: left;"><code>:92</code></td>
+<td style="text-align: left;">7 tabelas + <code>tb_configuracoes_modulo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>obter_config</code> / <code>definir_config</code></td>
+<td style="text-align: left;"><code>:259</code> / <code>:270</code></td>
+<td style="text-align: left;">config local do módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>contar_paginas_pdf(caminho)</code></td>
+<td style="text-align: left;"><code>:285</code></td>
+<td style="text-align: left;">PyMuPDF (0 ⇒ bloqueia envio)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>calcular_paginas_contabilizadas(...)</code></td>
+<td style="text-align: left;"><code>:303</code></td>
+<td style="text-align: left;">fórmula <code>qtd × cópias × fator_papel × fator_frente_verso</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>criar_secretaria</code>/<code>listar_secretarias</code>/<code>editar_secretaria</code>/<code>excluir_secretaria</code></td>
+<td style="text-align: left;"><code>:321</code>–<code>:394</code></td>
+<td style="text-align: left;">cadastro de secretarias</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>criar_setor</code>/<code>listar_setores</code>/<code>editar_setor</code>/<code>excluir_setor</code></td>
+<td style="text-align: left;"><code>:408</code>–<code>:489</code></td>
+<td style="text-align: left;">cadastro de setores</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>criar_responsavel</code>/<code>listar_responsaveis</code>/<code>excluir_responsavel</code></td>
+<td style="text-align: left;"><code>:503</code>–<code>:551</code></td>
+<td style="text-align: left;">responsáveis por autorização</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>eh_responsavel_autorizacao(user, sec, setor)</code></td>
+<td style="text-align: left;"><code>:563</code></td>
+<td style="text-align: left;">confere vínculo (independe do perfil)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>obter_ou_criar_cota</code> / <code>definir_cota</code></td>
+<td style="text-align: left;"><code>:592</code> / <code>:626</code></td>
+<td style="text-align: left;">cota mensal hierárquica</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>obter_consumo</code> / <code>_incrementar_consumo</code> / <code>verificar_excedente</code> / <code>resetar_consumo</code> / <code>percentual_consumo</code></td>
+<td style="text-align: left;"><code>:647</code>–<code>:721</code></td>
+<td style="text-align: left;">consumo e excedente</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gerar_nome_arquivo(...)</code></td>
+<td style="text-align: left;"><code>:741</code></td>
+<td style="text-align: left;"><code>YYYYMMDD_HHMMSS_usuario_copias_paginas_secretaria_setor.pdf</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>criar_solicitacao(...)</code></td>
+<td style="text-align: left;"><code>:753</code></td>
+<td style="text-align: left;">cria + audita (com hash)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>autorizar_solicitacao</code> / <code>recusar_solicitacao</code></td>
+<td style="text-align: left;"><code>:923</code> / <code>:949</code></td>
+<td style="text-align: left;">autorização (motivo na recusa)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>imprimir_solicitacao(sid, admin, ator)</code></td>
+<td style="text-align: left;"><code>:971</code></td>
+<td style="text-align: left;">desconta cota + agenda exclusão</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>recuar_solicitacao</code> / <code>cancelar_solicitacao</code></td>
+<td style="text-align: left;"><code>:1011</code> / <code>:1031</code></td>
+<td style="text-align: left;">revertem e removem o arquivo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tempo_expira_rascunho_min</code> / <code>tempo_exclui_impresso_min</code></td>
+<td style="text-align: left;"><code>:1052</code> / <code>:1059</code></td>
+<td style="text-align: left;">prazos padrão (4/10 min)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>registrar_rascunho(usuario, bytes, nome)</code></td>
+<td style="text-align: left;"><code>:1086</code></td>
+<td style="text-align: left;">upload automático + uuid (evita colisão)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>confirmar_rascunho(...)</code></td>
+<td style="text-align: left;"><code>:1162</code></td>
+<td style="text-align: left;">reconfirma e renomeia para o padrão final</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>expirar_rascunhos_e_impressos()</code></td>
+<td style="text-align: left;"><code>:1248</code></td>
+<td style="text-align: left;">job <code>cleanup_solicita</code> (1 min)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>relatorio_cotas(mes)</code></td>
+<td style="text-align: left;"><code>:1324</code></td>
+<td style="text-align: left;">relatório mensal</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>aplicar_marca_dagua(...)</code></td>
+<td style="text-align: left;"><code>:1357</code></td>
+<td style="text-align: left;">marca d'água personalizável</td>
+</tr>
+</tbody>
+</table>
+<p>Tela: <code>mostrar_tela(usuario_logado, perfil)</code> — <code>telas.py:24</code> (subtelas <code>_tela_nova</code> <code>:107</code>, <code>_tela_minhas</code> <code>:327</code>, <code>_tela_autorizar</code> <code>:346</code>, <code>_tela_admin</code> <code>:469</code>).</p>
+<h2 id="tabelas-por-banco">Tabelas por banco<a class="headerlink" href="#tabelas-por-banco" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Banco</th>
+<th style="text-align: left;">Tabelas</th>
+<th style="text-align: left;">Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>db_mod_intranet.db</code></td>
+<td style="text-align: left;"><code>tb_auditoria</code>, <code>tb_config</code>, <code>tb_sessoes</code>, <code>tb_modulos</code></td>
+<td style="text-align: left;">central; <code>tb_auditoria</code> com <code>ip</code>/<code>user_agent</code> + índices; <code>tb_sessoes</code> com <code>ip</code>, <code>user_agent</code>, <code>dispositivo</code>, <code>mac</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db_mod_gest_cad_usuario.db</code></td>
+<td style="text-align: left;"><code>tb_usuarios</code>, <code>tb_acesso_usuario</code></td>
+<td style="text-align: left;"><code>tb_usuarios</code>: <code>id</code>, <code>user_nome</code>, <code>user_senha</code> (bcrypt), <code>user_email</code>, <code>user_fone</code>, <code>user_perfil</code>, <code>user_ativo</code>, <code>data_cadastro</code>, <code>user_deletado</code>, <code>user_nome_completo</code>, <code>user_motivo_exclusao</code>; vínculo <code>UNIQUE(user_nome, modulo_chave)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db_mod_blog.db</code></td>
+<td style="text-align: left;"><code>tb_postagens</code>, <code>tb_comentarios</code>, <code>tb_config</code></td>
+<td style="text-align: left;">sanitização nh3 na gravação e renderização</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db_mod_edit_pdf.db</code></td>
+<td style="text-align: left;"><code>tb_arquivos</code>, <code>tb_cota_disco</code></td>
+<td style="text-align: left;"><code>tb_arquivos</code>: <code>nome_arquivo</code>, <code>usuario</code>, <code>tamanho_bytes</code>, <code>operacao</code>, <code>hash</code>; cotas por usuário</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db_mod_renomear_empenho.db</code></td>
+<td style="text-align: left;"><code>tb_empenhos</code>, <code>tb_indexador_pesquisa</code>, <code>tb_indexador_pesquisa_fts5</code> (32 colunas), <code>tb_quarentena</code>, <code>tb_regex_regras</code></td>
+<td style="text-align: left;">FTS5 virtual (RF-41) com MATCH; regex com <code>campo_destino</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db_mod_solicita_impressao.db</code></td>
+<td style="text-align: left;"><code>tb_solicitacoes</code>, <code>tb_secretarias</code>, <code>tb_setores</code>, <code>tb_responsaveis_autorizacao</code>, <code>tb_cotas_impressao</code>, <code>tb_consumo_cota</code>, <code>tb_configuracoes_modulo</code></td>
+<td style="text-align: left;">contabilização com fórmula; cotas mensais hierárquicas</td>
+</tr>
+<tr>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;"><code>mod_auditoria</code> <strong>não tem banco</strong></td>
+<td style="text-align: left;">lê <code>tb_auditoria</code> do central</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>⚠️ <strong><code>criador_bd.py</code> é legado/morto</strong> em todos os módulos (aponta para o banco central com esquemas divergentes). As tabelas reais são criadas por <code>init_db*()</code> dos respectivos <code>manipulador_bd.py</code> — ver <a href="../arquitetura/#padrao-interno-de-um-modulo">Arquitetura</a>.</p>
+</blockquote>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../arquitetura/" class="btn btn-neutral float-left" title="Arquitetura"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../convencoes_codigo/" class="btn btn-neutral float-right" title="Convenções de Criação de Código">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../arquitetura/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../convencoes_codigo/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
