@@ -181,3 +181,4 @@ cython_debug/
 .cursorindexingignore
 *.db
 AGENTS.md
+/.idea
