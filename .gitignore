@@ -182,3 +182,4 @@ cython_debug/
 *.db
 AGENTS.md
 /.idea
+/.nicegui
