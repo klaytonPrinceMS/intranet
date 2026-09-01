@@ -6,7 +6,7 @@
 
 # Intranet Modular — Índice de Documentação
 
-> Índice central da documentação técnica da Intranet Modular (NiceGUI) da Prefeitura Municipal de Monte Santo de Minas. Cada entrada aponta para um documento focado; o padrão adotado é um resumo em inglês seguido do resumo em português (Brasil) no topo de cada página.
+> Índice central da documentação técnica da Intranet Modular (NiceGUI). Cada entrada aponta para um documento focado; o padrão adotado é um resumo em inglês seguido do resumo em português (Brasil) no topo de cada página.
 
 ## Sumário
 
