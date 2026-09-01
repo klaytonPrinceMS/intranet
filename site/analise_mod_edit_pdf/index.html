@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Editor de PDF - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Editor de PDF";
+        var mkdocs_page_input_path = "analise_mod_edit_pdf.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Editor de PDF</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Módulos (análise)</li>
+      <li class="breadcrumb-item active">Editor de PDF</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="editor-de-pdf-mod_edit_pdf">Editor de PDF — <code>mod_edit_pdf</code><a class="headerlink" href="#editor-de-pdf-mod_edit_pdf" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>PDF editor module: route <code>/edit-pdf</code> (key <code>editar_pdf</code>) · own database <code>db_mod_edit_pdf.db</code> · per-user temp space, quotas, SHA-256 audit, scheduled expiration.</p>
+</blockquote>
+<hr />
+<h1 id="editor-de-pdf-mod_edit_pdf_1">Editor de PDF — <code>mod_edit_pdf</code><a class="headerlink" href="#editor-de-pdf-mod_edit_pdf_1" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Módulo de edição de PDF: rota <code>/edit-pdf</code> (chave <code>editar_pdf</code>) · banco próprio <code>db_mod_edit_pdf.db</code> · espaço temporário por usuário, cotas, auditoria SHA-256, expiração agendada.</p>
+</blockquote>
+<h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
+<p>Editor de PDFs multiusuário com espaço temporário por usuário. O usuário envia PDFs em lote e aplica operações sobre uma seleção ordenada (reduzir, juntar, cortar, dividir, verificar, ZIP, excluir); arquivos expiram automaticamente. Aba de Administração exclusiva do <code>administrador_geral</code> para cotas/limites/expiração — tudo configurável sem restart.</p>
+<h2 id="banco-proprio">Banco próprio<a class="headerlink" href="#banco-proprio" title="Permanent link">&para;</a></h2>
+<p>Criador vigente: <code>init_db_pdf()</code> em <code>manipulador_bd.py:71-93</code> (executado no import e no bootstrap central).</p>
+<ul>
+<li><strong><code>tb_arquivos</code></strong>: id, nome_arquivo, usuario, tamanho_bytes, <code>operacao</code> (upload/saida/zip), data_operacao, ativo.</li>
+<li><strong><code>tb_cota_disco</code></strong>: usuario PK, total_usado_bytes, atualizado_em.</li>
+</ul>
+<p>⚠️ O <code>criador_bd.py</code> deste módulo é <strong>legado/morto</strong> com esquema divergente (<code>caminho_arquivo</code>, <code>hash_sha256 NOT NULL</code>, FTS inexistente) e conecta no banco <strong>central</strong> — se executado criaria tabelas erradas em <code>db_mod_intranet.db</code>. É dele a semeadura da versão do sistema citada na convenção de versionamento.</p>
+<h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Abas</strong>: Editor (sempre) | Administração (só <code>administrador_geral</code>). Cabeçalho mostra uso da cota do usuário; uso global só ao admin geral.</li>
+<li><strong>Upload</strong>: múltiplo com auto-upload, aceita só <code>.pdf</code>; recusados aparecem <strong>nominalmente em vermelho</strong> com o motivo; botão "Enviar agora" para reenvio.</li>
+<li><strong>Arquivos no servidor</strong>: tabela com seleção múltipla estável entre refreshes (timer 5 s), badges "#" com a ordem de marcação (merge respeita essa ordem) e coluna "Expira em" com contagem regressiva colorida (verde &gt;5 min, amarelo ≤5 min, vermelho ≤1 min).</li>
+<li><strong>Ações sobre a seleção</strong>: Verificar integridade, Juntar, Excluir selecionados, Baixar ZIP, baixar PDFs individuais; menu de contexto por linha (Baixar/Excluir).</li>
+<li><strong>Operações</strong>: Reduzir tamanho — modos Leve (recompressão; biblioteca auto <code>pymupdf→pikepdf→pypdf</code> ou fixa) e Agressivo (rasteriza páginas como JPEG, DPI 50–400, qualidade 10–100%) | Cortar páginas (pares/ímpares/lista "2-5,8" → um único PDF) | Dividir (página-a-página, par/ímpar, cortes ou intervalos → vários PDFs).</li>
+<li><strong>Administração</strong>: cota global GB, máx. arquivos/lote, MB/lote, cota por usuário GB, minutos de expiração + botão "Expirar agora".</li>
+<li><strong>Aparência</strong> (Administração): padronização de tema dos botões — cor de fundo, cor do texto, cor de fundo da página do editor, cor dos títulos e tamanho dos botões (<code>small</code>/<code>medium</code>/<code>large</code>). Cada cor usa <code>ui.color_input</code> (seletor de cor <strong>e</strong> digitação direta hex/RGB). Valem sem restart (leitura live via <code>cfg_tema</code>).</li>
+</ul>
+<h2 id="regras-de-negocio-relevantes">Regras de negócio relevantes<a class="headerlink" href="#regras-de-negocio-relevantes" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Cotas em 4 níveis</strong>, todas lidas de <code>tb_config</code> central a cada uso:</li>
+<li>global: uso real em disco de <code>editorPDF/</code> ≤ <code>cotadisco_global_gb</code> (default 10 GB);</li>
+<li>por usuário: <code>editpdf_usuario_gb</code> (default 1 GB);</li>
+<li>lote: <code>editpdf_lote_arquivos</code> arquivos / <code>editpdf_lote_mb</code> MB numa janela deslizante de 60 s (o valor de MB é teto <strong>por envio/lote</strong>, não acumulado por usuário);</li>
+<li>estoque: máximo simultâneo de arquivos tipo <code>upload</code> por usuário (= limite do lote).</li>
+<li><strong>Limite de MB é por ENVIO, não acumulado</strong>: <code>_receber_lote</code> faz <strong>pré-checagem</strong> de <code>ativos_upload+len(pdfs) &gt; lote_max</code> e <code>sum(f.size()) &gt; lote_bytes_max</code> <strong>antes</strong> de gravar qualquer arquivo (rejeita nominalmente o lote inteiro), depois valida por-arquivo na janela de 60 s. Um envio único de 350 MB com limite 200 MB é recusado de imediato.</li>
+<li><strong>Expiração</strong>: executada pelo scheduler do núcleo a cada 1 min (sem login), critério mtime; remove do disco, inativa registro, devolve cota e audita como ator <code>sistema</code>.</li>
+<li><strong>Prefixo obrigatório</strong>: <code>dataHora_usuario_operacao_nomeArquivo.pdf</code> — cada usuário vê apenas os próprios arquivos.</li>
+<li><strong>Auditoria com SHA-256</strong>: upload grava <code>upload_hash</code>; reduzir/juntar/cortar gravam hashes das origens na descrição e hash do resultado no campo <code>hash_arquivo</code>; dividir audita origens; tipos extras: <code>erro_reducao</code>, <code>configuracao</code>, <code>expiracao</code>, <code>deletar</code>.</li>
+</ul>
+<h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
+<p>Usa <code>get_connection</code>/<code>get_config</code>/<code>set_config</code> centrais e <code>audit_log</code>. Chaves de configuração: <code>cotadisco_global_gb</code>, <code>editpdf_lote_arquivos</code>, <code>editpdf_lote_mb</code>, <code>editpdf_usuario_gb</code>, <code>editpdf_expiracao_min</code>; tema: <code>editpdf_cor_botao</code>, <code>editpdf_cor_texto_botao</code>, <code>editpdf_cor_fundo</code>, <code>editpdf_cor_titulo</code>, <code>editpdf_btn_tamanho</code>. O scheduler central chama <code>expirar_antigos()</code> diretamente.</p>
+<p><strong>Versão individual do módulo</strong>: <code>versao_modulo:editar_pdf = 1.0.260827</code> (em <code>tb_config</code> central — seed principal idempotente em <code>conexao_bd.init_db()</code>; o <code>manipulador_bd.py::_semear_versao_modulo</code> é duplicado inofensivo). Exibida no rodapé ao lado da versão global quando o usuário navega em <code>/edit-pdf</code>. Atualizar manualmente a cada alteração do <code>mod_edit_pdf</code> — não mexer na versão global nem na dos demais módulos.</p>
+<h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>criador_bd.py</code> morto/divergente — não executar.</li>
+<li><strong><code>_cfg</code> depende de <code>get_config</code> importado</strong> no topo de <code>manipulador_bd.py</code>. Se faltar <code>get_config</code> no <code>from mod_intranet.conexao_bd import …</code>, cada leitura cai em <code>NameError</code>→<code>except</code>→ retorna <strong>sempre o default</strong> (bug real: MB configurado em 200 e o sistema usava 1024; arquivos configurados em 100 e usava 10). Conferir o import ao mexer no topo do arquivo.</li>
+<li>Limite de "estoque de uploads" reaproveita o valor do limite de lote (não é configurável separadamente).</li>
+<li>Redução Agressivo transforma texto em imagem (perde seleção/busca no PDF).</li>
+</ul>
+<h2 id="status-fase-5-do-planomd">Status — Fase 5 do PLANO.md<a class="headerlink" href="#status-fase-5-do-planomd" title="Permanent link">&para;</a></h2>
+<p>Fase essencialmente <strong>concluída</strong>: banco + cotas + limites de lote; expiração automática agendada; prefixo padronizado; todas as operações (reduzir/juntar/cortar/dividir/verificar/ZIP/excluir); auditoria com SHA-256 origem/destino; estoque de uploads; <strong>tema padronizado</strong> (boas práticas: botões/tamanho/cores via <code>ui.color_input</code>); testes ponta a ponta em <code>test/test_editor_pdf.py</code> (32 verificações passando — o README diz "20", número defasado). Única pendência conceitual é o legado <code>criador_bd.py</code>.</p>
+<h3 id="correcao-registrada-limite-de-mb-ignorado">Correção registrada — limite de MB ignorado<a class="headerlink" href="#correcao-registrada-limite-de-mb-ignorado" title="Permanent link">&para;</a></h3>
+<p>Bug real: limites configurados não eram aplicados porque faltava o import de <code>get_config</code> em <code>mod_edit_pdf/manipulador_bd.py</code> — <code>_cfg</code> sempre retornava o default (<code>editpdf_lote_mb</code>=1024 em vez de 200). Corrigido restaurando o import e reforçado com a pré-checagem do lote inteiro em <code>_receber_lote</code> (<code>telas.py</code>).</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../analise_mod_blog/" class="btn btn-neutral float-left" title="Blog"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../analise_mod_renomear_empenho/" class="btn btn-neutral float-right" title="Renomear Empenhos">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../analise_mod_blog/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../analise_mod_renomear_empenho/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

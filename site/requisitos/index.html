@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Requisitos do Sistema - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Requisitos do Sistema";
+        var mkdocs_page_input_path = "requisitos.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Requisitos do Sistema</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Documentação Técnica</li>
+      <li class="breadcrumb-item active">Requisitos do Sistema</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="intranet-modular-system-requirements">Intranet Modular — System Requirements<a class="headerlink" href="#intranet-modular-system-requirements" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Technical requirements to run the Intranet Modular: Linux/Windows host, Python 3.12, NiceGUI 3.15 (Tailwind served locally — no CDN), SQLite in WAL mode, APScheduler, nh3, PDF libraries (pymupdf, pikepdf, pypdf, pdfplumber, pytesseract), bcrypt, loguru and MkDocs (theme <code>readthedocs</code>).</p>
+</blockquote>
+<hr />
+<h1 id="intranet-modular-requisitos-do-sistema">Intranet Modular — Requisitos do Sistema<a class="headerlink" href="#intranet-modular-requisitos-do-sistema" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Requisitos técnicos para rodar a Intranet Modular: hospedeiro Linux/Windows, Python 3.12, NiceGUI 3.15 (Tailwind servido localmente — sem CDN), SQLite em modo WAL, APScheduler, nh3, bibliotecas de PDF (pymupdf, pikepdf, pypdf, pdfplumber, pytesseract), bcrypt, loguru e MkDocs (tema <code>readthedocs</code>).</p>
+</blockquote>
+<h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#visao-geral">Visão geral</a></li>
+<li><a href="#sistema-operacional">Sistema operacional</a></li>
+<li><a href="#linguagem-e-framework">Linguagem e framework</a></li>
+<li><a href="#dependencias-python">Dependências Python</a></li>
+<li><a href="#armazenamento">Armazenamento</a></li>
+<li><a href="#rede-e-interface">Rede e interface</a></li>
+<li><a href="#requisitos-nao-funcionais-relevantes">Requisitos não funcionais relevantes</a></li>
+</ol>
+<h2 id="visao-geral">Visão geral<a class="headerlink" href="#visao-geral" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Categoria</th>
+<th style="text-align: left;">Exigência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">SO</td>
+<td style="text-align: left;">Linux (recomendado) ou Windows</td>
+</tr>
+<tr>
+<td style="text-align: left;">Python</td>
+<td style="text-align: left;"><strong>3.12</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">Framework</td>
+<td style="text-align: left;"><strong>NiceGUI 3.15</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">Banco</td>
+<td style="text-align: left;">SQLite (stdlib) em <strong>modo WAL</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">UI</td>
+<td style="text-align: left;">Tailwind CSS servido localmente pelo NiceGUI (<strong>sem CDN</strong>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Internet</td>
+<td style="text-align: left;">necessária apenas na instalação das dependências; em operação, o sistema deve rodar <strong>sem internet</strong> (rede interna)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sistema-operacional">Sistema operacional<a class="headerlink" href="#sistema-operacional" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Linux</strong> — ambiente de referência do projeto (rotinas de MAC via <code>ip neigh</code>, caminhos em <code>rotinas.py</code> etc.).</li>
+<li><strong>Windows</strong> — suportado; a detecção de MAC via ARP retorna <code>None</code> silenciosamente (coluna <code>mac</code> fica nula).</li>
+</ul>
+<h2 id="linguagem-e-framework">Linguagem e framework<a class="headerlink" href="#linguagem-e-framework" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Python 3.12</strong> — versão usada pelo projeto (há histórico de convenções do código baseadas nela, ex.: <code>datetime.now(localtime)</code>).</li>
+<li><strong>NiceGUI 3.15.0</strong> — framework web (FastAPI/WebSockets); <code>ui.run(...)</code> no <code>main.py</code> com <code>reload=False</code>, <code>show=False</code>, porta <code>8080</code>.</li>
+</ul>
+<h2 id="dependencias-python">Dependências Python<a class="headerlink" href="#dependencias-python" title="Permanent link">&para;</a></h2>
+<p>Fonte: <code>requirements.txt</code> (raiz).</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Dependência</th>
+<th style="text-align: left;">Versão mínima</th>
+<th style="text-align: left;">Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>nicegui</code></td>
+<td style="text-align: left;"><code>3.15.0</code></td>
+<td style="text-align: left;">framework web (páginas, componentes, Tailwind local)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>apscheduler</code></td>
+<td style="text-align: left;"><code>&gt;=3.10,&lt;4</code></td>
+<td style="text-align: left;">agendadores (backups, cleanups, monitor de pasta, poda)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>nh3</code></td>
+<td style="text-align: left;"><code>&gt;=0.2</code></td>
+<td style="text-align: left;">sanitização HTML do Blog (gravação e renderização)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pdfplumber</code></td>
+<td style="text-align: left;"><code>&gt;=0.11</code></td>
+<td style="text-align: left;">extração de texto de PDF (fallback)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pikepdf</code></td>
+<td style="text-align: left;"><code>&gt;=9.0</code></td>
+<td style="text-align: left;">manipulação PDF (metadados, redução leve)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pymupdf</code></td>
+<td style="text-align: left;"><code>&gt;=1.24</code></td>
+<td style="text-align: left;">extração de texto, contagem de páginas, rasterização</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pytesseract</code></td>
+<td style="text-align: left;"><code>&gt;=0.3</code></td>
+<td style="text-align: left;">OCR de PDFs escaneados (requer binário <code>tesseract</code> no SO)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pypdf</code></td>
+<td style="text-align: left;"><code>&gt;=5.0</code></td>
+<td style="text-align: left;">manipulação PDF (redução leve/fallback)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bcrypt</code></td>
+<td style="text-align: left;"><code>&gt;=5.0.0</code></td>
+<td style="text-align: left;">hash de senhas</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>loguru</code></td>
+<td style="text-align: left;"><code>&gt;=0.7.3</code></td>
+<td style="text-align: left;">observabilidade/logs por módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mkdocs</code></td>
+<td style="text-align: left;"><code>&gt;=1.6.1</code></td>
+<td style="text-align: left;">build da documentação embutida</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mkdocs-material</code></td>
+<td style="text-align: left;"><code>&gt;=9.7.7</code></td>
+<td style="text-align: left;">presente no requirements; <strong>o tema ativo é <code>readthedocs</code></strong> (ver <code>mkdocs.yml</code>)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>⚠️ <strong><code>pytesseract</code></strong> depende do binário <strong>Tesseract OCR</strong> instalado no sistema operacional (<code>apt install tesseract-ocr</code> no Debian/Ubuntu, com <code>por+eng</code>).</p>
+</blockquote>
+<h2 id="armazenamento">Armazenamento<a class="headerlink" href="#armazenamento" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>SQLite</strong> (módulo <code>sqlite3</code> da stdlib) — sem servidor externo de banco.</li>
+<li><strong>Modo WAL obrigatório</strong>: cada conexão executa <code>PRAGMA journal_mode=WAL</code> + <code>PRAGMA synchronous=NORMAL</code> (ex.: <code>mod_intranet/conexao_bd.py:27-31</code>).</li>
+<li><strong>Um banco por módulo</strong> na raiz do projeto: <code>db_mod_intranet.db</code>, <code>db_mod_gest_cad_usuario.db</code>, <code>db_mod_blog.db</code>, <code>db_mod_edit_pdf.db</code>, <code>db_mod_renomear_empenho.db</code>, <code>db_mod_solicita_impressao.db</code>.</li>
+<li>Pastas de arquivos: <code>backup/</code> (backups), <code>editorPDF/</code> (arquivos temporários do editor), <code>doc/</code> (empenhos), <code>quarentena/</code>, <code>organizadorPasta/</code>, <code>logs/</code> (loguru), <code>assets/</code> (favicon), <code>site/</code> (docs compiladas).</li>
+</ul>
+<h2 id="rede-e-interface">Rede e interface<a class="headerlink" href="#rede-e-interface" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Tailwind CSS local</strong>: o NiceGUI embute/ serve o <code>tailwindcss.min.js</code> localmente (<code>ui.run(...)</code> sem CDN) — exigência para rede interna.</li>
+<li><strong>Porta</strong>: <code>8080</code> (configurável no bloco <code>ui.run</code> de <code>main.py:333-339</code>).</li>
+<li><strong>Documentação</strong>: servida na mesma porta em <code>/documentacao</code> (build MkDocs <code>docs/</code> → <code>site/</code>, montado pela própria aplicação — <code>mod_intranet/documentacao.py</code>).</li>
+</ul>
+<h2 id="requisitos-nao-funcionais-relevantes">Requisitos não funcionais relevantes<a class="headerlink" href="#requisitos-nao-funcionais-relevantes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: left;">Detalhe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Rastreabilidade LGPD</td>
+<td style="text-align: left;"><code>tb_auditoria</code> com IP/user-agent/dispositivo; hash SHA-256 em operações com arquivos</td>
+</tr>
+<tr>
+<td style="text-align: left;">Retenção de auditoria</td>
+<td style="text-align: left;">poda automática diária &gt; <code>auditoria_retencao_dias</code> (default 90)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cotas de disco</td>
+<td style="text-align: left;">editor PDF: global 10 GB default + por usuário + por lote</td>
+</tr>
+<tr>
+<td style="text-align: left;">Expiração automática</td>
+<td style="text-align: left;">arquivos do editor (default 10 min) e rascunhos de impressão (default 4 min)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Backups</td>
+<td style="text-align: left;">por módulo a cada 12 h (configurável), retenção das 10 cópias mais recentes</td>
+</tr>
+<tr>
+<td style="text-align: left;">Segurança da sessão</td>
+<td style="text-align: left;">cookie HTTP-Only; sessões revogáveis; <code>storage_secret</code> placeholder precisa ser trocado em produção</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Em conflito entre documentação e código, prevalece o <strong>código executável</strong> (<code>requirements.txt</code>, <code>mkdocs.yml</code>, <code>main.py</code>).</p>
+</blockquote>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../inicio_rapido/" class="btn btn-neutral float-left" title="Guia de Início Rápido"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../configuracoes/" class="btn btn-neutral float-right" title="Configurações e Variáveis de Ambiente">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../inicio_rapido/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../configuracoes/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

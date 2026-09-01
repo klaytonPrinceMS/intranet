@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Administrador - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Administrador";
+        var mkdocs_page_input_path = "manual_de_uso_administrador/index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Administrador</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#perfis-do-sistema">Perfis do sistema</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#acesso">Acesso</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#configuracoes-configuracoes-apenas-geral">Configurações (/configuracoes, apenas geral)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gestao-de-usuarios-users-admin-de-modulogeral">Gestão de Usuários (/users, admin de módulo/geral)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#auditoria-auditoria-apenas-geral">Auditoria (/auditoria, apenas geral)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#observabilidade-e-logs">Observabilidade e Logs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sessoes">Sessões</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Manuais de Uso</li>
+      <li class="breadcrumb-item active">Administrador</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="manual-de-uso-administrador-intranet-modular">Manual de Uso — Administrador — Intranet Modular<a class="headerlink" href="#manual-de-uso-administrador-intranet-modular" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Guia operacional para <code>administrador_geral</code> e <code>administrador do módulo</code>: configurações, gestão de usuários, auditoria e observabilidade.</p>
+</blockquote>
+<h2 id="perfis-do-sistema">Perfis do sistema<a class="headerlink" href="#perfis-do-sistema" title="Permanent link">&para;</a></h2>
+<p>O sistema possui exatamente <strong>três perfis globais</strong> (campo <code>user_perfil</code> em <code>tb_usuarios</code>, constante <code>PERFIS_GLOBAIS</code> em <code>mod_gest_cad_usuario/manipulador_bd.py:15</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Perfil</th>
+<th style="text-align: left;">Chave técnica</th>
+<th style="text-align: left;">Acesso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Administrador geral</td>
+<td style="text-align: left;"><code>administrador_geral</code></td>
+<td style="text-align: left;">Acesso total a todos os módulos; único perfil com acesso a <code>/configuracoes</code>, <code>/users</code> e <code>/auditoria</code> (RF-35).</td>
+</tr>
+<tr>
+<td style="text-align: left;">Administrador de módulo</td>
+<td style="text-align: left;"><code>administrador_modulo</code></td>
+<td style="text-align: left;">Acesso restrito aos módulos que gerencia (vinculados com papel <code>administrador</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;">Comum</td>
+<td style="text-align: left;"><code>comum</code></td>
+<td style="text-align: left;">Acesso limitado às funcionalidades básicas dos módulos que lhe são liberados.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Importante: <strong>não existem perfis "administrador", "almoxarife" nem "operador"</strong> no sistema. O termo "administrador do módulo" (papel por módulo, <code>PAPEIS_MODULO = ["comum", "administrador"]</code>) é o papel que um usuário — normalmente <code>administrador_modulo</code> — exerce dentro de um módulo específico. A função de almoxarifado não é um perfil, e sim um fluxo do módulo Renomeador de Empenho disponível ao usuário <code>comum</code> autorizado. Veja o <a href="../manual_de_uso_usuario_comum/">Manual do Usuário Comum</a>.</p>
+</blockquote>
+<h2 id="acesso">Acesso<a class="headerlink" href="#acesso" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>administrador_geral</code>: vê todos os módulos, incluindo <code>/configuracoes</code>, <code>/users</code> e <code>/auditoria</code>.</li>
+<li><code>administrador_modulo</code> (administrador do módulo): alteração/restrição limitada aos módulos vinculados.</li>
+</ul>
+<h2 id="configuracoes-configuracoes-apenas-geral">Configurações (<code>/configuracoes</code>, apenas geral)<a class="headerlink" href="#configuracoes-configuracoes-apenas-geral" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Personalização: cor primária, título, ícones, pasta raiz.</li>
+<li>Observabilidade (loguru): nível, rotação, retenção, compressão; "Limpar TODOS os logs".</li>
+<li>Backup: chave <code>backup_horas:&lt;modulo&gt;</code> (padrão 12 h); <code>backup_interval_hours</code> e <code>sessao_retencao</code> (roadmap).</li>
+</ul>
+<h2 id="gestao-de-usuarios-users-admin-de-modulogeral">Gestão de Usuários (<code>/users</code>, admin de módulo/geral)<a class="headerlink" href="#gestao-de-usuarios-users-admin-de-modulogeral" title="Permanent link">&para;</a></h2>
+<ul>
+<li>CRUD soft: criar, alterar, bloquear, desbloquear, soft delete (com motivo), restauração.</li>
+<li>Perfis por módulo (<code>administrador_geral</code>, <code>administrador do módulo</code>, <code>comum</code>); controle granular.</li>
+<li>Senha provisória para novos usuários + troca no 1º acesso.</li>
+<li>Proteções: não bloquear/rebaixar a própria conta; último <code>administrador_geral</code> protegido; <code>master</code> não pode ser excluído/renomeado.</li>
+<li>Exclusão em dois estágios (LGPD): lógica (reversível) → permanente (aba <code>Excluídos</code>, só geral).</li>
+</ul>
+<h2 id="auditoria-auditoria-apenas-geral">Auditoria (<code>/auditoria</code>, apenas geral)<a class="headerlink" href="#auditoria-auditoria-apenas-geral" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Leitura/filtro de <code>tb_auditoria</code> por data, hora, usuário, tipo de ação e módulo.</li>
+<li>Colunas IP e resumo de dispositivo.</li>
+</ul>
+<h2 id="observabilidade-e-logs">Observabilidade e Logs<a class="headerlink" href="#observabilidade-e-logs" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>mod_intranet/observabilidade.py</code>: logs por módulo em <code>logs/</code>, captura de exceções (<code>excepthook</code>), reconfiguração em runtime.</li>
+</ul>
+<h2 id="sessoes">Sessões<a class="headerlink" href="#sessoes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Encerrar sessões ativas individualmente ou em massa (usuário deslogado na próxima interação).</li>
+</ul>
+<p>Veja <a href="../manual_de_uso_usuario_comum/">Manual do Usuário Comum</a> e <a href="../arquitetura_de_software_das/">Arquitetura</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../manual_de_uso_instalacao/" class="btn btn-neutral float-left" title="Instalação"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../manual_de_uso_usuario_comum/" class="btn btn-neutral float-right" title="Usuário Comum">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../manual_de_uso_instalacao/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../manual_de_uso_usuario_comum/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
