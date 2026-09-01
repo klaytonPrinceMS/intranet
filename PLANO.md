@@ -5,24 +5,36 @@
 
 ## Fase 0 — Scaffold e estrutura base
 
-- [ ] Estrutura de pastas (`assets/`, `assets/css/`, `doc/`, `editorPDF/`, `organizadorPasta/`, `backup/`)
-- [ ] Tailwind CSS servido localmente pelo próprio NiceGUI (`tailwindcss.min.js` embutido no pacote, `ui.run(tailwind=True)`) — sem CDN (rede interna)
-- [ ] `requirements.txt` (NiceGUI, APScheduler, nh3, pdfplumber, pikepdf, pymupdf, pytesseract)
-- [ ] Utilitário SQLite em modo WAL obrigatório
-- [ ] `main.py` com bootstrap NiceGUI sobe a aplicação
+- [x] Estrutura de pastas (`assets/`, `assets/css/`, `doc/`, `editorPDF/`, `organizadorPasta/`, `backup/`) — concluída; pastas operacionais com `.gitkeep`
+- [x] Tailwind CSS servido localmente pelo próprio NiceGUI (`tailwindcss.min.js` embutido no pacote, `ui.run(tailwind=True)`) — sem CDN (rede interna)
+- [x] `requirements.txt` (NiceGUI, APScheduler, nh3, pdfplumber, pikepdf, pymupdf, pytesseract)
+- [x] Utilitário SQLite em modo WAL obrigatório
+- [x] `main.py` com bootstrap NiceGUI sobe a aplicação
 
 
 ## Fase 1 — mod_intranet (núcleo/centralizador)
 
-- [ ] `db_mod_intranet.db` com tabela central `tb_auditoria` + `tb_config` (`mod_intranet_criador_bd.py`)
-- [ ] Registro centralizado de auditoria (`mod_intranet_auditoria.py`)
-- [ ] Tela de login (cookie HTTP-Only, sessão registrada em banco) — `mod_gest_cad_usuario_render_login.py`
-- [ ] Usuário inicial `master`/`master` com **troca de senha obrigatória no 1º logon** (seed em `mod_gest_cad_usuario_criador_bd.py`)
-- [ ] Layout 4 partes: menu superior, menu lateral retrátil, rodapé com versão, área principal (`mod_intranet_render_layout.py`)
-- [ ] Dashboard home mobile-first (Tailwind, grid fluido 360–1440px, microinterações, feedback de 2s via setTimeout) — `mod_intranet_render_dashboard.py`
-- [ ] Personalização do sistema (título, ícones, pasta raiz, paleta de cores, SMTP) lida de `tb_config`
-- [ ] Backup automático dos bancos a cada 12h (configurável)
-- [ ] Módulos secundários visíveis apenas para usuários autorizados; alerta para módulos removidos do `main.py`
+- [x] `db_mod_intranet.db` com tabela central `tb_auditoria` + `tb_config` (criadas por `conexao_bd.init_db()`; o arquivo `mod_intranet_criador_bd.py` previsto não existe — a inicialização é centralizada no `conexao_bd`)
+- [x] Registro centralizado de auditoria (`manipulador_bd.audit_log()` + `garantir_rastreabilidade()`)
+- [x] Tela de login (cookie HTTP-Only, sessão registrada em banco `tb_sessoes`) — `main.py:page_login`
+- [x] Usuário inicial `master`/`master` com **troca de senha obrigatória no 1º logon** (seed em `mod_gest_cad_usuario/manipulador_bd.py`, flag `forcar_troca`)
+- [x] Layout 4 partes: menu superior, menu lateral retrátil, rodapé com versão, área principal (`layout_tela._montar_layout`)
+- [x] Dashboard home mobile-first (Tailwind, grid fluido 360–1440px, microinterações, feedback de 2s via setTimeout) — `main.py:page_dashboard`
+- [x] Personalização do sistema (título, ícones, pasta raiz, paleta de cores, SMTP) lida de `tb_config`
+- [x] Backup automático dos bancos a cada 12h (configurável, `backup_horas:<modulo>`)
+- [x] Módulos secundários visíveis apenas para usuários autorizados; alerta para módulos removidos do `main.py`
+
+### Padrão de exibição (Fase 1) — "módulo exemplo" = Editor de PDF
+
+> Todos os módulos seguem o padrão de exibição do `mod_edit_pdf/telas.py` (módulo
+> exemplo): **área cheia** (`w-full`, sem `max-w-*` centralizador) e **cupê
+> "Aparência" padronizado** na aba/expansão Administração, com as mesmas 6 chaves
+> em `tb_config` central (`cor_botao`, `cor_texto_botao`, `cor_fundo`, `cor_titulo`,
+> `btn_tamanho`, `texto_header`) sob o prefixo `<chave>_` do módulo
+> (`blog_*`, `usuarios_*`, `auditoria_*`, `empenhos_*`, `solicita_impressao_*`,
+> `editar_pdf` usa `editpdf_*`). Aplicação imediata, sem restart
+> (`_btn_cls`/`_btn_style`/`cor_fundo`/`cor_titulo` no `cabecalho` do
+> `aba_modulo.py`).
 
 ## Fase 2 — mod_gest_cad_usuario (soft CRUD)
 
@@ -86,6 +98,11 @@
 
 - [ ] Leitura/filtro da `tb_auditoria` central (data, hora, usuário, tipo de ação, módulo de origem)
 - [ ] Acesso exclusivo `administrador_geral`
+
+> ⚠️ **Nota de teste (CORRIGIDO)** — `test/test_auditoria.py` usava a assinatura antiga
+> de `audit_log()` (`ip=`, `user_agent=`); o núcleo (`mod_intranet/manipulador_bd.py:66`)
+> usa `client_ip`/`client_user_agent`. Corrigido no script chamando
+> `client_ip="127.0.0.1", client_user_agent="zz-ua"` — **12/12 OK**.
 
 ---
 
@@ -184,8 +201,8 @@ montado pela app). `mkdocs.yml` indexa todos os módulos; build validado.
 | Arquivo em `docs/` | Módulo | Status | Conteúdo |
 |---|---|---|---|
 | `index.md` | Visão geral | OK | Índice/visão geral do sistema |
-| `analise_mod_intranet.md` | Núcleo | OK | Banco central, layout 4 partes, versão no rodapé, personalização |
-| `analise_mod_gest_cad_usuario.md` | Gestão de Usuários | OK | CRUD soft, perfis, auditoria, versionamento |
+| `analise_mod_intranet.md` | Núcleo | **ATUALIZADO** | Banco central, layout 4 partes, **dashboard mobile-first + padronização de exibição (Fase 1)**, versão no rodapé, personalização |
+| `analise_mod_gest_cad_usuario.md` | Gestão de Usuários | OK | CRUD soft, perfis, auditoria, **cupê Aparência padrão**, versionamento |
 | `analise_mod_blog.md` | Blog | OK | Sanitização nh3, CRUD, versionamento |
 | `analise_mod_edit_pdf.md` | Editor de PDF | OK | Lote, expiração 10 min, operações, auditoria |
 | `analise_mod_renomear_empenho.md` | Renomear Empenhos | OK | Monitor, FTS5, quarentena, renomeação, organizador |
@@ -197,6 +214,9 @@ montado pela app). `mkdocs.yml` indexa todos os módulos; build validado.
 reflete o novo fluxo de envio (upload automático, rascunho com expiração, confirmação, retenção
 pós-impressão) e a auditoria; a seção "Observabilidade / Logs (loguru)" foi adicionada a
 `docs/analise_mod_intranet.md` (Fase 8) cobrindo configuração de logs, retenção, compressão,
-limpeza e adoção por módulo — espelhando a Fase 8 acima.
+limpeza e adoção por módulo — espelhando a Fase 8 acima. A Fase 1 está **concluída e testada**
+(`test/test_dashboard.py` 30/30 OK: grid mobile-first, microinterações, feedback 2s, 6 chaves de
+aparência por módulo; boot HTTP 200 em `/login` `/` `/blog` `/configuracoes`; `mkdocs build` OK;
+testes regressivos de blog/editor/solicita passando).
 
 > Pendente de confirmação do autor: `git commit` (padrão `AAMMDD HHMM ...`) — não executar push.

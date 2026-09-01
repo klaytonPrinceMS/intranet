@@ -207,7 +207,7 @@
 <li><strong><code>tb_comentarios</code></strong>: <code>id</code> PK, <code>postagem_id</code> FK CASCADE, <code>autor</code>, <code>conteudo</code> (sanitizado), <code>data_criacao</code>.</li>
 <li><strong><code>tb_config</code> (local do módulo)</strong>: chave-valor com os padrões do blog (<code>blog_modo_exibicao</code>, <code>blog_largura_imagem</code>, <code>blog_tags_permitidas</code>, <code>blog_texto_header</code>).</li>
 </ul>
-<p>A configuração visual (cor/tamanho dos botões) permanece na <code>tb_config</code> central (prefixo <code>blog_*</code>), conforme as demais plataformas.</p>
+<p>A configuração visual (cor/tamanho dos botões, cor de fundo/título e texto do cabeçalho) permanece na <code>tb_config</code> central (prefixo <code>blog_*</code> — <code>blog_cor_botao</code>, <code>blog_cor_texto_botao</code>, <code>blog_cor_fundo</code>, <code>blog_cor_titulo</code>, <code>blog_btn_tamanho</code>, <code>blog_texto_header</code>), no cupê <strong>"Aparência"</strong> da aba Administração, seguindo o padrão do módulo exemplo (Editor de PDF). A tela ocupa a área cheia (<code>w-full</code>).</p>
 <h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>CRUD com soft delete e publicar/despublicar</strong>: criar, editar, despublicar, republicar e excluir (lógica) postagens.</li>

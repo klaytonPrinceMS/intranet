@@ -252,6 +252,7 @@
 <li><strong>Impressão dual</strong>: "Imprimir direto" (<code>window.printSolicitacao(id)</code> via <code>impressao.js</code>) ou "Baixar para impressão" (Ctrl+P); decota cota ao imprimir e agenda exclusão em <code>tempo_exclui_impresso_min</code> (default 10 min); recusar/recuar/cancelar removem o arquivo na hora.</li>
 <li><strong>Marca d'água</strong> opcional e personalizável (texto <code>{data}</code>, <code>{usuario}</code>, <code>{id}</code>, <code>{secretaria}</code>, <code>{setor}</code>, <code>{solicitante}</code>; posição, opacidade, fonte, cor, rotação).</li>
 <li><strong>Padrões pré-selecionados e editáveis</strong> (A4, PB, somente frente, sulfite) na Administração.</li>
+<li><strong>Aparência</strong> (cupê padronizado — módulo exemplo: Editor de PDF): <code>solicita_impressao_cor_botao</code>, <code>solicita_impressao_cor_texto_botao</code>, <code>solicita_impressao_cor_fundo</code>, <code>solicita_impressao_cor_titulo</code>, <code>solicita_impressao_btn_tamanho</code>, <code>solicita_impressao_texto_header</code> em <code>tb_config</code> central, na sub-aba Configurações da Administração; tela em área cheia (<code>w-full</code>).</li>
 <li><strong>Auditoria central</strong> (<code>solicita_impressao</code>): quem solicitou/autorizou/imprimiu/recusou (quantidades, motivo, hash).</li>
 <li><strong>Job <code>cleanup_solicita</code></strong> (1 min) remove rascunhos não confirmados e impressos vencidos.</li>
 </ul>

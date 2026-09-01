@@ -237,8 +237,9 @@
 <pre><code class="language-bash">.venv/bin/python main.py
 </code></pre>
 <ul>
-<li>O servidor sobe na porta <strong>8080</strong> (<code>reload=False</code>, <code>show=False</code>).</li>
+<li>O servidor sobe na porta <strong>8080</strong> (<code>reload=False</code>, <code>show=False</code>, <code>tailwind=True</code> — Tailwind local sem CDN).</li>
 <li>No boot, <code>inicializar_bancos()</code> cria os bancos <code>db_mod_*</code> (SQLite WAL) caso não existam e o usuário seed <code>master</code>/<code>master</code>.</li>
+<li>Pastas operacionais (<code>backup/</code>, <code>organizadorPasta/</code>, <code>quarentena/</code>) são criadas automaticamente em runtime pelo boot/rotinas (<code>os.makedirs(..., exist_ok=True)</code>).</li>
 <li>A documentação é compilada (MkDocs) e servida em <code>http://localhost:8080/documentacao</code>.</li>
 </ul>
 <p>Acesse no navegador:</p>

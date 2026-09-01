@@ -119,7 +119,7 @@ def page_dashboard():
     nome = user["nome"]
     eh_admin = user.get("perfil") == "administrador_geral"
 
-    with ui.column().classes("w-full max-w-6xl mx-auto p-6 gap-6"):
+    with ui.column().classes("w-full p-6 gap-6"):
         # Banner de boas-vindas
         with ui.card().classes("w-full bg-primary text-white shadow-lg"):
             with ui.row().classes("w-full items-center justify-between p-4 flex-wrap gap-4"):
@@ -131,52 +131,85 @@ def page_dashboard():
                     ui.label(subtitulo_home).classes("text-subtitle1 opacity-90")
                 ui.icon("diversity_3", size="80px").classes("opacity-30")
 
-        # Feed do Blog por padrão (RF-09): a área principal carrega as publicações
-        # recentes ao abrir "/" (a navegação por módulos continua no drawer lateral).
-        from mod_blog.telas import _card_postagem
-        from mod_blog.manipulador_bd import listar_postagens
-        pode_publicar_blog = (user.get("perfil") == "administrador_geral"
-                              or autenticacao.eh_admin_do_modulo(nome, "blog"))
-        with ui.column().classes("w-full max-w-4xl mx-auto gap-4"):
-            with ui.row().classes("w-full items-center justify-between"):
-                ui.label("Publicações recentes").classes("text-h6 font-bold text-grey-9")
-                ui.button("Abrir Blog completo", icon="article",
-                          on_click=lambda: ui.navigate.to("/blog")) \
-                    .props("outline color=primary dense")
-            posts = listar_postagens(ativo=True, ordem="DESC")
-            if not posts:
-                with ui.card().classes("w-full items-center p-8"):
-                    ui.icon("article", size="48px").classes("text-grey-4")
-                    ui.label("Nenhuma publicação ainda."
-                             + (" Acesse o Blog para criar a primeira!"
-                                if pode_publicar_blog else "")).classes("text-grey-6")
-            for post in posts:
-                _card_postagem(post, nome, user.get("perfil", ""),
-                               lambda: ui.navigate.reload(),
-                               pode_publicar=pode_publicar_blog)
+        # Feedback de 2s no carregamento: toast de boas-vindas (desaparece sozinho)
+        ui.timer(0.1, lambda: ui.notify(f"Bem-vindo(a), {nome}!",
+                                        type="positive", position="top", timeout=2),
+                 once=True)
 
-        # Estatísticas rápidas (admin vê tudo; usuário comum vê o básico)
-        with ui.card().classes("w-full"):
-            with ui.card_section():
-                ui.label("Resumo do sistema").classes("text-h6 font-bold text-grey-9")
-                with ui.row().classes("w-full gap-6 mt-2 flex-wrap"):
-                    from mod_gest_cad_usuario import manipulador_bd as gest
-                    n_users = len(gest.listar_usuarios(filtro_ativo=True))
-                    from mod_blog import manipulador_bd as blog
-                    n_posts = blog.contar_postagens(ativo=True)
-                    conn = get_connection()
-                    cur = conn.cursor()
-                    cur.execute("SELECT COUNT(*) FROM tb_auditoria")
-                    n_logs = cur.fetchone()[0]
-                    conn.close()
-                    _stat("Usuários ativos", n_users, "people")
-                    _stat("Postagens", n_posts, "article")
-                    if eh_admin:
-                        _stat("Registros de auditoria", n_logs, "history")
+        # Grid fluido 360–1440px (mobile-first): 1 col <640px, 2 cols 640–1024px,
+        # 3 cols >=1024px. Feed ocupa 2/3, resumo 1/3.
+        with ui.grid(columns=3).classes("w-full gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1"):
+
+            # ---- Feed do Blog por padrão (RF-09) ----
+            from mod_blog.telas import _card_postagem
+            from mod_blog.manipulador_bd import listar_postagens
+            pode_publicar_blog = (user.get("perfil") == "administrador_geral"
+                                  or autenticacao.eh_admin_do_modulo(nome, "blog"))
+            with ui.column().classes("col-span-2 max-lg:col-span-2 max-sm:col-span-1 "
+                                     "w-full gap-4"):
+                with ui.row().classes("w-full items-center justify-between"):
+                    ui.label("Publicações recentes").classes("text-h6 font-bold text-grey-9")
+                    ui.button("Abrir Blog completo", icon="article",
+                              on_click=lambda: ui.navigate.to("/blog")) \
+                        .props("outline color=primary dense")
+                posts = listar_postagens(ativo=True, ordem="DESC")
+                if not posts:
+                    with ui.card().classes("w-full items-center p-8"):
+                        ui.icon("article", size="48px").classes("text-grey-4")
+                        ui.label("Nenhuma publicação ainda."
+                                 + (" Acesse o Blog para criar a primeira!"
+                                    if pode_publicar_blog else "")).classes("text-grey-6")
+                for post in posts:
+                    _card_postagem(post, nome, user.get("perfil", ""),
+                                   lambda: ui.navigate.reload(),
+                                   pode_publicar=pode_publicar_blog)
+
+            # ---- Resumo do sistema (admin vê tudo; usuário comum vê o básico) ----
+            def orquestrar_resumo():
+                from mod_gest_cad_usuario import manipulador_bd as gest
+                n_users = len(gest.listar_usuarios(filtro_ativo=True))
+                from mod_blog import manipulador_bd as blog
+                n_posts = blog.contar_postagens(ativo=True)
+                conn = get_connection()
+                cur = conn.cursor()
+                cur.execute("SELECT COUNT(*) FROM tb_auditoria")
+                n_logs = cur.fetchone()[0]
+                conn.close()
+                return n_users, n_posts, n_logs
+
+            with ui.column().classes("col-span-1 max-sm:col-span-1 w-full gap-4"):
+                with ui.card().classes("w-full border-l-4").style(
+                        "border-left-color:#1565C0"):
+                    with ui.card_section().classes("gap-3 w-full"):
+                        ui.label("Resumo do sistema").classes("text-h6 font-bold text-grey-9")
+                        resumo_wrap = ui.column().classes("w-full gap-2")
+
+                        def render_resumo():
+                            resumo_wrap.clear()
+                            n_users, n_posts, n_logs = orquestrar_resumo()
+                            with resumo_wrap:
+                                _stat("Usuários ativos", n_users, "people")
+                                _stat("Postagens", n_posts, "article")
+                                if eh_admin:
+                                    _stat("Registros de auditoria", n_logs, "history")
+
+                        render_resumo()
+                        lbl_fb_resumo = ui.label("").classes("text-caption text-green-8")
+
+                        def atualizar_resumo():
+                            render_resumo()
+                            lbl_fb_resumo.set_text("Atualizado ✓")
+                            # feedback de 2s: reverte o rótulo via timer
+                            ui.timer(2.0, lambda: lbl_fb_resumo.set_text(""), once=True)
+
+                        ui.button("Atualizar resumo", icon="refresh",
+                                  on_click=atualizar_resumo) \
+                            .props("outline color=primary dense").classes("w-full")
 
 
 def _stat(rotulo, valor, icone):
-    with ui.card().classes("min-w-[160px] bg-grey-1"):
+    with ui.card().classes("w-full min-w-[160px] bg-grey-1 "
+                           "transition-transform hover:-translate-y-0.5 hover:shadow-lg"):
         with ui.row().classes("items-center gap-3"):
             ui.icon(icone).classes("text-primary text-4xl")
             with ui.column().classes("gap-0"):

@@ -34,6 +34,8 @@ def mostrar_tela(usuario_logado: str, perfil: str):
 
     t_cor_botao = _tema("cor_botao", "#2E7D32")
     t_cor_txt_botao = _tema("cor_texto_botao", "#FFFFFF")
+    t_cor_fundo = _tema("cor_fundo", "")
+    t_cor_titulo = _tema("cor_titulo", "#212121")
     t_tamanho = _tema("btn_tamanho", "medium")
 
     def _btn_cls():
@@ -55,7 +57,8 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                            f"Monitora a pasta <code>{pasta_monitorada()}</code>, extrai o nº do empenho "
                            "por regex, renomeia como <b>doc_0001_numEmpenho_123456_p001.pdf</b> e organiza em caixas.")
 
-    cabecalho("Renomeador de Empenhos", texto_header, cor_borda="#2E7D32")
+    cabecalho("Renomeador de Empenhos", texto_header, cor_borda="#2E7D32",
+              cor_titulo=t_cor_titulo, cor_fundo=t_cor_fundo)
     eh_admin = perfil == "administrador_geral" or (perfil and "admin" in perfil)
     tabs_el = abas("Renomeador", "receipt_long", admin=eh_admin)
     with ui.tab_panels(tabs_el, value="principal").classes("w-full"):
@@ -424,6 +427,9 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     ui.label("Aparência — temas dos botões desta tela").classes("text-subtitle2 text-grey-7")
                     inp_cor_botao = ui.color_input(label="Cor dos botões", value=t_cor_botao)
                     inp_cor_txt = ui.color_input(label="Cor do texto dos botões", value=t_cor_txt_botao)
+                    inp_cor_fundo = ui.color_input(label="Cor de fundo da página (vazio = herda)",
+                                                   value=t_cor_fundo)
+                    inp_cor_titulo = ui.color_input(label="Cor dos títulos", value=t_cor_titulo)
                     sel_tamanho = ui.select(
                         {0: "Pequeno", 1: "Médio", 2: "Grande"},
                         label="Tamanho dos botões",
@@ -456,6 +462,8 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                             set_config("empenhos_pasta_monitorada", v_pasta)
                             set_config("empenhos_cor_botao", inp_cor_botao.value or "")
                             set_config("empenhos_cor_texto_botao", inp_cor_txt.value or "")
+                            set_config("empenhos_cor_fundo", inp_cor_fundo.value or "")
+                            set_config("empenhos_cor_titulo", inp_cor_titulo.value or "")
                             set_config("empenhos_btn_tamanho", _tamanhos[sel_tamanho.value])
                             set_config("empenhos_texto_header", (inp_texto.value or "").strip())
                             set_config("renomear_autorizar_download", "1" if sw_autorizar.value else "0")
@@ -480,6 +488,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                         try:
                             set_config("empenhos_pasta_monitorada", _PASTA_MONITORADA_PADRAO)
                             for chave, valor in (("cor_botao", "#2E7D32"), ("cor_texto_botao", "#FFFFFF"),
+                                                 ("cor_fundo", ""), ("cor_titulo", "#212121"),
                                                  ("btn_tamanho", "medium"), ("texto_header", ""),
                                                  ("monitor_intervalo_seg", "10")):
                                 set_config(f"empenhos_{chave}", valor)

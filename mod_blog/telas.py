@@ -133,6 +133,8 @@ def mostrar_tela(usuario_logado: str, perfil: str):
 
     t_cor_botao = _tema("cor_botao", "#7B1FA2")
     t_cor_txt_botao = _tema("cor_texto_botao", "#FFFFFF")
+    t_cor_fundo = _tema("cor_fundo", "")
+    t_cor_titulo = _tema("cor_titulo", "#212121")
     t_tamanho = _tema("btn_tamanho", "medium")
 
     def _btn_cls():
@@ -154,11 +156,12 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                            "Comunique novidades para toda a equipe.")
     modo_atual = obter_modo_exibicao()
 
-    cabecalho("Blog", texto_header, cor_borda="#7B1FA2")
+    cabecalho("Blog", texto_header, cor_borda="#7B1FA2",
+              cor_titulo=t_cor_titulo, cor_fundo=t_cor_fundo)
     tabs_el = abas("Publicações", "article", admin=pode_publicar)
     with ui.tab_panels(tabs_el, value="principal").classes("w-full"):
         with ui.tab_panel("principal"):
-            container = ui.column().classes("w-full max-w-4xl mx-auto gap-4")
+            container = ui.column().classes("w-full gap-4")
 
             if pode_publicar:
                 # ---- Editor (criar/editar) com pré-visualização ----
@@ -304,6 +307,9 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     inp_cor_botao = ui.color_input(label="Cor dos botões", value=t_cor_botao)
                     inp_cor_txt = ui.color_input(label="Cor do texto dos botões",
                                                  value=t_cor_txt_botao)
+                    inp_cor_fundo = ui.color_input(label="Cor de fundo da página (vazio = herda)",
+                                                   value=t_cor_fundo)
+                    inp_cor_titulo = ui.color_input(label="Cor dos títulos", value=t_cor_titulo)
                     sel_tamanho = ui.select(
                         {0: "Pequeno", 1: "Médio", 2: "Grande"},
                         label="Tamanho dos botões",
@@ -337,6 +343,8 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                         try:
                             set_config("blog_cor_botao", inp_cor_botao.value or "")
                             set_config("blog_cor_texto_botao", inp_cor_txt.value or "")
+                            set_config("blog_cor_fundo", inp_cor_fundo.value or "")
+                            set_config("blog_cor_titulo", inp_cor_titulo.value or "")
                             set_config("blog_btn_tamanho", _tamanhos[sel_tamanho.value])
                             set_config_local("blog_tags_permitidas",
                                              (inp_tags.value or "").strip())
@@ -361,6 +369,8 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                             for chave, valor in (
                                 ("cor_botao", "#7B1FA2"),
                                 ("cor_texto_botao", "#FFFFFF"),
+                                ("cor_fundo", ""),
+                                ("cor_titulo", "#212121"),
                                 ("btn_tamanho", "medium"),
                                 ("tags_permitidas", _TAGS_PADRAO),
                                 ("texto_header", "Comunique novidades para toda a equipe."),

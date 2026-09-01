@@ -14,14 +14,24 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from nicegui import ui
 
 
-def cabecalho(titulo: str, subtitulo: str = "", cor_borda: str = "#1565C0"):
-    """Card de cabeçalho do módulo (título + subtítulo opcional)."""
+def cabecalho(titulo: str, subtitulo: str = "", cor_borda: str = "#1565C0",
+              cor_titulo: str = "#212121", cor_fundo: str = ""):
+    """Card de cabeçalho do módulo (título + subtítulo opcional).
+
+    `cor_titulo`/`cor_fundo` seguem o padrão de aparência do módulo exemplo
+    (Editor de PDF): cor dos títulos e cor de fundo da tela, aplicados sem restart.
+    """
     with ui.card().classes("w-full border-l-8").style(f"border-left-color:{cor_borda}"):
         with ui.row().classes("w-full items-center justify-between flex-wrap gap-3"):
             with ui.column().classes("gap-0"):
-                ui.label(titulo).classes("text-h5 font-bold text-grey-9")
+                ui.label(titulo).classes("text-h5 font-bold").style(f"color:{cor_titulo}")
                 if subtitulo:
                     ui.label(subtitulo).classes("text-caption text-grey-6")
+    if cor_fundo:
+        try:
+            ui.query(".q-page").style(f"background-color:{cor_fundo}")
+        except Exception:
+            pass
 
 
 def abas(titulo_principal: str, icone_principal: str, admin: bool = False,

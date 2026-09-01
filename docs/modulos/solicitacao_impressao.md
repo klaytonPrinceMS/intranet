@@ -38,6 +38,7 @@ Criador vigente: `init_db()` em `manipulador_bd.py:92` (bootstrap central). Arqu
 - **Impressão dual**: "Imprimir direto" (`window.printSolicitacao(id)` via `impressao.js`) ou "Baixar para impressão" (Ctrl+P); decota cota ao imprimir e agenda exclusão em `tempo_exclui_impresso_min` (default 10 min); recusar/recuar/cancelar removem o arquivo na hora.
 - **Marca d'água** opcional e personalizável (texto `{data}`, `{usuario}`, `{id}`, `{secretaria}`, `{setor}`, `{solicitante}`; posição, opacidade, fonte, cor, rotação).
 - **Padrões pré-selecionados e editáveis** (A4, PB, somente frente, sulfite) na Administração.
+- **Aparência** (cupê padronizado — módulo exemplo: Editor de PDF): `solicita_impressao_cor_botao`, `solicita_impressao_cor_texto_botao`, `solicita_impressao_cor_fundo`, `solicita_impressao_cor_titulo`, `solicita_impressao_btn_tamanho`, `solicita_impressao_texto_header` em `tb_config` central, na sub-aba Configurações da Administração; tela em área cheia (`w-full`).
 - **Auditoria central** (`solicita_impressao`): quem solicitou/autorizou/imprimiu/recusou (quantidades, motivo, hash).
 - **Job `cleanup_solicita`** (1 min) remove rascunhos não confirmados e impressos vencidos.
 

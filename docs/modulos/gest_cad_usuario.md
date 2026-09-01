@@ -29,8 +29,8 @@ Criador vigente: `init_db()` em `manipulador_bd.py:54-156` (executado no import 
 - **Sessões Ativas**: todas as vivas do sistema (IP, dispositivo, MAC em tooltip), encerramento individual/em massa e histórico das 10 últimas por usuário.
 - **Limpeza cruzada LGPD**: exclui postagens/comentários do Blog, remove arquivos/cota do Editor PDF e anonimiza empenhos como "(usuário excluído)"; auditoria sempre preservada.
 - **Proteções**: vedado agir sobre a própria conta; `master` não é renomeado/excluído; último `administrador_geral` ativo protegido contra rebaixamento/bloqueio por outro admin (RF-26).
-- **Aba Administração** (admin geral): aparência (`usuarios_*`) + política `usuarios_senha_min`.
-- **Versionamento**: `versao_modulo:usuarios = 1.0.260827` no rodapé de `/users`.
+- **Aba Administração** (admin geral): aparência (`usuarios_*` — `cor_botao`, `cor_texto_botao`, `cor_fundo`, `cor_titulo`, `btn_tamanho`, `texto_header`) + política `usuarios_senha_min`; cupê "Aparência" padronizado (módulo exemplo: Editor de PDF) e tela em área cheia (`w-full`).
+- **Versionamento**: `versao_modulo:usuarios = 1.0.260901` no rodapé de `/users`.
 
 ## Permissões
 

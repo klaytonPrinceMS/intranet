@@ -18,7 +18,7 @@ Blog corporativo para publicação de avisos, novidades e orientações. O usuá
 - **`tb_comentarios`**: `id` PK, `postagem_id` FK CASCADE, `autor`, `conteudo` (sanitizado), `data_criacao`.
 - **`tb_config` (local do módulo)**: chave-valor com os padrões do blog (`blog_modo_exibicao`, `blog_largura_imagem`, `blog_tags_permitidas`, `blog_texto_header`).
 
-A configuração visual (cor/tamanho dos botões) permanece na `tb_config` central (prefixo `blog_*`), conforme as demais plataformas.
+A configuração visual (cor/tamanho dos botões, cor de fundo/título e texto do cabeçalho) permanece na `tb_config` central (prefixo `blog_*` — `blog_cor_botao`, `blog_cor_texto_botao`, `blog_cor_fundo`, `blog_cor_titulo`, `blog_btn_tamanho`, `blog_texto_header`), no cupê **"Aparência"** da aba Administração, seguindo o padrão do módulo exemplo (Editor de PDF). A tela ocupa a área cheia (`w-full`).
 
 ## Funcionalidades
 

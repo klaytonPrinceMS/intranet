@@ -30,12 +30,43 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                 or autenticacao.eh_admin_do_modulo(usuario_logado, "solicita_impressao"))
     eh_responsavel = _eh_responsavel(usuario_logado)
 
-    container = ui.column().classes("w-full max-w-6xl mx-auto gap-4")
+    # ================= TEMA (Aparência, prefixo solicita_impressao_) =================
+    from mod_intranet.conexao_bd import get_config, set_config
+    def _tema(chave, default):
+        try:
+            return (get_config(f"solicita_impressao_{chave}", default) or "").strip() or default
+        except Exception:
+            return default
+
+    t_cor_botao = _tema("cor_botao", "#EF6C00")
+    t_cor_txt_botao = _tema("cor_texto_botao", "#FFFFFF")
+    t_cor_fundo = _tema("cor_fundo", "")
+    t_cor_titulo = _tema("cor_titulo", "#212121")
+    t_btn_tamanho = _tema("btn_tamanho", "medium")
+    t_texto_header = _tema("texto_header",
+                           "Solicite impressões, acompanhe pedidos e autorize demandas.")
+
+    def _btn_cls():
+        if t_btn_tamanho == "small":
+            return "min-w-[140px] text-sm"
+        if t_btn_tamanho == "large":
+            return "min-w-[220px] text-lg"
+        return "min-w-[180px]"
+
+    def _btn_style():
+        st = ""
+        if t_cor_botao:
+            st += f"background-color:{t_cor_botao};"
+        if t_cor_txt_botao:
+            st += f"color:{t_cor_txt_botao};"
+        return st
+
+    container = ui.column().classes("w-full gap-4")
 
     with container:
         cabecalho("Solicitação de Impressão",
-                   "Solicite impressões, acompanhe pedidos e autorize demandas.",
-                   cor_borda="#EF6C00")
+                   t_texto_header,
+                   cor_borda="#EF6C00", cor_titulo=t_cor_titulo, cor_fundo=t_cor_fundo)
 
         # Tabs conforme perfil
         tabs = []
@@ -964,7 +995,35 @@ def _admin_configuracoes(usuario_logado):
             md_cor = ui.color_input("Cor",
                                    value=bd.obter_config("marca_dagua_cor", "#CCCCCC"))
 
+        ui.separator().classes("my-2")
+        ui.label("Aparência — temas dos botões desta tela").classes("text-subtitle2")
+        with ui.grid(columns=2).classes("w-full gap-3 max-sm:grid-cols-1"):
+            inp_cor_botao = ui.color_input("Cor dos botões", value=t_cor_botao) \
+                .props("outlined dense").classes("w-full")
+            inp_cor_txt = ui.color_input("Cor do texto dos botões", value=t_cor_txt_botao) \
+                .props("outlined dense").classes("w-full")
+            inp_cor_fundo = ui.color_input("Cor de fundo da página (vazio = herda)",
+                                           value=t_cor_fundo) \
+                .props("outlined dense").classes("w-full")
+            inp_cor_titulo = ui.color_input("Cor dos títulos", value=t_cor_titulo) \
+                .props("outlined dense").classes("w-full")
+        sel_tamanho = ui.select({0: "Pequeno", 1: "Médio", 2: "Grande"},
+                                label="Tamanho dos botões",
+                                value={"small": 0, "medium": 1, "large": 2}.get(
+                                    t_btn_tamanho, 1)).props("outlined dense").classes("w-full")
+        inp_txt_header = ui.input("Texto do cabeçalho", value=t_texto_header) \
+            .props("outlined dense").classes("w-full")
+        _tamanhos = {0: "small", 1: "medium", 2: "large"}
+
         def salvar():
+            from mod_intranet.conexao_bd import set_config as _set_cfg_central
+            _set_cfg_central("solicita_impressao_cor_botao", inp_cor_botao.value or "")
+            _set_cfg_central("solicita_impressao_cor_texto_botao", inp_cor_txt.value or "")
+            _set_cfg_central("solicita_impressao_cor_fundo", inp_cor_fundo.value or "")
+            _set_cfg_central("solicita_impressao_cor_titulo", inp_cor_titulo.value or "")
+            _set_cfg_central("solicita_impressao_btn_tamanho",
+                             _tamanhos[sel_tamanho.value])
+            _set_cfg_central("solicita_impressao_texto_header", inp_txt_header.value or "")
             bd.definir_config("impressora_padrao_nome", imp_a4.value or "")
             bd.definir_config("impressora_padrao_a3_nome", imp_a3.value or "")
             bd.definir_config("aviso_presenca_obrigatoria", aviso.value or "")
@@ -990,4 +1049,4 @@ def _admin_configuracoes(usuario_logado):
                 pass
             ui.notify("Configurações salvas", type="positive")
         ui.button("Salvar configurações", icon="save", on_click=salvar).props(
-            "unelevated color=primary")
+            "unelevated").classes(_btn_cls()).style(_btn_style())

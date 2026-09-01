@@ -30,7 +30,7 @@ Criador vigente: `init_db_pdf()` em `manipulador_bd.py:87-93`.
 - **Reduzir tamanho**: modo Leve (recompressão; biblioteca auto `pymupdf→pikepdf→pypdf`) ou Agressivo (rasteriza como JPEG, DPI 50–400, qualidade 10–100%).
 - **Cortar** (pares/ímpares/lista "2-5,8") e **Dividir** (página-a-página, par/ímpar, cortes ou intervalos).
 - **Administração**: cota global GB (default 10), máx. arquivos/lote, MB/lote, cota por usuário GB, minutos de expiração + "Expirar agora".
-- **Aparência** (Administração): tema dos botões via `ui.color_input` — fundo, texto, cor da página, título, tamanho (`editpdf_*`).
+- **Aparência** (Administração): tema dos botões via `ui.color_input` — fundo, texto, cor da página, título, tamanho (`editpdf_*`). Este módulo é o **módulo exemplo** do padrão de exibição: área cheia (`w-full`) e cupê "Aparência" com as 6 chaves (`cor_botao`, `cor_texto_botao`, `cor_fundo`, `cor_titulo`, `btn_tamanho`, `texto_header`), replicado aos demais módulos.
 - **Versionamento**: `versao_modulo:editar_pdf = 1.0.260827`.
 
 ## Regras de negócio

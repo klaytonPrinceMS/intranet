@@ -65,7 +65,7 @@ Fonte: `requirements.txt` (raiz).
 - **SQLite** (módulo `sqlite3` da stdlib) — sem servidor externo de banco.
 - **Modo WAL obrigatório**: cada conexão executa `PRAGMA journal_mode=WAL` + `PRAGMA synchronous=NORMAL` (ex.: `mod_intranet/conexao_bd.py:27-31`).
 - **Um banco por módulo** na raiz do projeto: `db_mod_intranet.db`, `db_mod_gest_cad_usuario.db`, `db_mod_blog.db`, `db_mod_edit_pdf.db`, `db_mod_renomear_empenho.db`, `db_mod_solicita_impressao.db`.
-- Pastas de arquivos: `backup/` (backups), `editorPDF/` (arquivos temporários do editor), `doc/` (empenhos), `quarentena/`, `organizadorPasta/`, `logs/` (loguru), `assets/` (favicon), `site/` (docs compiladas).
+- Pastas de arquivos: `assets/`, `assets/css/` (estilos custom do sistema), `backup/` (backups), `editorPDF/` (arquivos temporários do editor), `doc/` (empenhos), `quarentena/`, `organizadorPasta/`, `logs/` (loguru), `site/` (docs compiladas).
 
 ## Rede e interface
 
@@ -82,6 +82,8 @@ Fonte: `requirements.txt` (raiz).
 | Cotas de disco | editor PDF: global 10 GB default + por usuário + por lote |
 | Expiração automática | arquivos do editor (default 10 min) e rascunhos de impressão (default 4 min) |
 | Backups | por módulo a cada 12 h (configurável), retenção das 10 cópias mais recentes |
+| Interface responsiva | dashboard e módulos em **grid fluido 360–1440px** (mobile-first, Tailwind); módulos em **área cheia** (`w-full`) |
+| Padrão de exibição | todos os módulos seguem o padrão do módulo exemplo (Editor de PDF): card "Aparência" no admin com `cor_botao`, `cor_texto_botao`, `cor_fundo`, `cor_titulo`, `btn_tamanho`, `texto_header` (prefixo `<chave>_` em `tb_config`), aplicação imediata sem restart |
 | Segurança da sessão | cookie HTTP-Only; sessões revogáveis; `storage_secret` placeholder precisa ser trocado em produção |
 
 > Em conflito entre documentação e código, prevalece o **código executável** (`requirements.txt`, `mkdocs.yml`, `main.py`).

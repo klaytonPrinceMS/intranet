@@ -108,10 +108,12 @@ O rodapé mostra as versões **da esquerda para a direita**: 1ª a versão globa
 - Cookie de sessão **HttpOnly** (RF-04/16) — **REALIZADO** no nível de framework: o NiceGUI/Starlette define `HttpOnly=True` no cookie `app.storage.user`.
 - Tela de Configurações (RF-57) — **REALIZADO**: cartão "Configurações gerais" com `sessao_retencao`, `backup_interval_hours` (reagenda todos os backups sem restart) e exibição da pasta raiz.
 - Servidor SMTP (RF-58) — **REALIZADO**: `mod_intranet/email_util.py` + cartão "E-mail / SMTP" (credenciais `smtp_*` em `tb_config` + teste de conexão).
+- Dashboard mobile-first (Fase 1) — **REALIZADO**: `main.py:page_dashboard` usa grid fluido 360–1440px (`ui.grid(columns=3)` com `max-lg:grid-cols-2`/`max-sm:grid-cols-1`), cards com microinterações Tailwind (`transition-transform hover:-translate-y-0.5 hover:shadow-lg`) e feedback de 2s: toast de boas-vindas (`ui.notify(... timeout=2)`) + botão "Atualizar resumo" que exibe "Atualizado ✓" e reverte em 2s (`ui.timer(2.0, once=True)`).
+- **Padrão de exibição** — **REALIZADO**: todos os módulos seguem o padrão do **módulo exemplo `mod_edit_pdf`** — área cheia (`w-full`, sem `max-w-*` centralizador) e cupê **"Aparência"** padronizado na aba/expansão Administração com as **6 chaves** `cor_botao`, `cor_texto_botao`, `cor_fundo`, `cor_titulo`, `btn_tamanho`, `texto_header` em `tb_config` (prefixos `blog_*`, `usuarios_*`, `auditoria_*`, `empenhos_*`, `solicita_impressao_*`; o `editar_pdf` usa `editpdf_*`). `aba_modulo.cabecalho()` passou a aceitar `cor_titulo`/`cor_fundo`, aplicando o tema sem restart. Áreas que já eram `w-full` (auditoria, empenhos) mantidas; blog/usuários/solicita tiveram o `max-w-* mx-auto` centralizador removido.
 
 **Parcial/Pendente:**
 
-- Dashboard mobile-first: grid responsivo implementado (`main.py:111-184` — `flex-wrap`, `max-w-6xl`, cards `min-w-[160px]`); as microinterações / "feedback de 2s via setTimeout" previstas na Fase 1 do PLANO **não foram evidenciadas no código**.
+- Nada pendente nesta fase (Fase 1 concluída — ver item 6 → REALIZADO acima).
 
 ## Observabilidade / Logs (loguru)
 

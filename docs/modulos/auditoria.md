@@ -24,8 +24,8 @@ Contém apenas `telas.py` (com `__init__.py` vazio) e `check_auditoria.py` (scri
 - **Campos/ordem por auditor**: painel com checkbox/↑/↓/ocultar e "Restaurar padrão", persistido em `auditoria_campos:<usuario>` (JSON).
 - **Exportação CSV**: página corrente respeitando campos/ordem do auditor.
 - **Colunas padrão**: Data/Hora, Usuário, Módulo, Ação (cores por tipo), Descrição (100 chars), Hash, IP, dispositivo.
-- **Painel Administração**: `auditoria_limite`, `auditoria_retencao_dias`, `auditoria_texto_header`; salvar audita a si mesmo.
-- **Versionamento**: `versao_modulo:auditoria = 1.0.260827`.
+- **Painel Administração**: `auditoria_limite`, `auditoria_retencao_dias`, `auditoria_texto_header` + cupê **"Aparência"** padronizado (`auditoria_cor_botao`, `auditoria_cor_texto_botao`, `auditoria_cor_fundo`, `auditoria_cor_titulo`, `auditoria_btn_tamanho` — módulo exemplo: Editor de PDF); tela em área cheia (`w-full`); salvar audita a si mesmo.
+- **Versionamento**: `versao_modulo:auditoria = 1.0.260901`.
 
 ## Permissões
 

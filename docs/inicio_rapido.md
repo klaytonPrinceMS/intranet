@@ -36,8 +36,9 @@ O `requirements.txt` instala todas as dependências (NiceGUI, APScheduler, nh3, 
 .venv/bin/python main.py
 ```
 
-- O servidor sobe na porta **8080** (`reload=False`, `show=False`).
+- O servidor sobe na porta **8080** (`reload=False`, `show=False`, `tailwind=True` — Tailwind local sem CDN).
 - No boot, `inicializar_bancos()` cria os bancos `db_mod_*` (SQLite WAL) caso não existam e o usuário seed `master`/`master`.
+- Pastas operacionais (`backup/`, `organizadorPasta/`, `quarentena/`) são criadas automaticamente em runtime pelo boot/rotinas (`os.makedirs(..., exist_ok=True)`).
 - A documentação é compilada (MkDocs) e servida em `http://localhost:8080/documentacao`.
 
 Acesse no navegador:

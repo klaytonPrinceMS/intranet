@@ -36,8 +36,8 @@ Criador vigente: `init_db_empenho()` em `manipulador_bd.py:60-83`.
 - **Organizador**: distribui renomeados em `organizadorPasta/caixa_NN/sub_X`; `gerar_matriz_organizador` gera `capa.txt` por caixa + `matrizDeDocumentos.txt`/`.pdf`; `validar_presenca_matriz` confere presença (RF-44).
 - **Ferramentas de PDF embutidas** (RF-45): corte/merge/redução reutilizando `op_*` do `mod_edit_pdf`; saídas em `datahora_cortePDF/`, `datahora_mergePDF/`, `datahora_reducaoPDF/`.
 - **Ações de usuário comum** (RF-39): ZIP/e-mail.
-- **Painel Administração**: aparência (`empenhos_*`) + `empenhos_pasta_monitorada`, `empenhos_texto_header`.
-- **Versionamento**: `versao_modulo:empenhos = 1.0.260827`.
+- **Painel Administração**: aparência (`empenhos_*` — `cor_botao`, `cor_texto_botao`, `cor_fundo`, `cor_titulo`, `btn_tamanho`, `texto_header`, cupê padronizado do módulo exemplo Editor de PDF) + `empenhos_pasta_monitorada`; tela em área cheia (`w-full`).
+- **Versionamento**: `versao_modulo:empenhos = 1.0.260901`.
 
 ## Regras de negócio
 

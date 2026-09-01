@@ -46,7 +46,7 @@ def _testar_audit_log():
     try:
         audit_log("zz_aud_teste", "intranet", "teste_neo",
                   "registro de verificacao rastreavel",
-                  hash_arquivo=None, ip="127.0.0.1", user_agent="zz-ua")
+                  hash_arquivo=None, client_ip="127.0.0.1", client_user_agent="zz-ua")
         cur = conn.cursor()
         row = cur.execute(
             "SELECT acao, ip, user_agent, timestamp FROM tb_auditoria "

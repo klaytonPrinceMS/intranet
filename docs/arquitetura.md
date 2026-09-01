@@ -21,6 +21,7 @@
 9. [Auditoria centralizada](#auditoria-centralizada)
 10. [Observabilidade (loguru)](#observabilidade-loguru)
 11. [Documentação embutida (`/documentacao`)](#documentacao-embutida-documentacao)
+12. [Estrutura de diretórios (Fase 0)](#estrutura-de-diretorios-fase-0)
 
 ## Visão geral
 
@@ -160,5 +161,27 @@ Exceção: `mod_auditoria` **não tem** `manipulador_bd.py` — lê `tb_auditori
 - `mod_intranet/documentacao.py` executa `python -m mkdocs build` (docs/ → site/) e monta `site/` como rota estática FastAPI (`app.mount("/documentacao", StaticFiles(...))`).
 - O build roda no boot (`main.py:330-331`) e **falhas nunca derrubam o servidor** (apenas avisam nos logs).
 - Tema do MkDocs: **`readthedocs`** (definido em `mkdocs.yml` — não alterar para `material`).
+
+## Estrutura de diretórios (Fase 0)
+
+Raiz do projeto (scaffold base — Fase 0 do `PLANO.md`):
+
+| Pasta | Finalidade |
+|:---|:---|
+| `assets/` | recursos estáticos; `favicon_atual.ico` é o "arquivo vivo" do favicon (troca via upload sem restart, cache-busted por `favicon_versao()`) |
+| `assets/css/` | estilos CSS customizados do sistema |
+| `doc/` | pasta monitorada de empenhos (`_PASTA_MONITORADA_PADRAO` — `mod_renomear_empenho/manipulador_bd.py:23`) |
+| `editorPDF/` | arquivos temporários do Editor de PDF (expiração automática, default 10 min) |
+| `organizadorPasta/` | saída do organizador físico do renomear empenho (caixas/subpastas — `PASTA_ORGANIZADOR`) |
+| `backup/` | backups dos bancos por módulo (APScheduler, retenção das 10 cópias mais recentes — `PASTA_BACKUP` em `mod_intranet/rotinas.py`) |
+| `quarentena/` | PDFs com erro de leitura/corrupção na fila de quarentena (`PASTA_QUARENTENA`) |
+| `logs/` | arquivos de log por módulo (loguru — rotação/retenção/compressão) |
+| `site/` | build estático do MkDocs (`docs/` → `site/`), servido em `/documentacao` |
+| `mod_*/` | núcleo `mod_intranet/` + módulos de negócio (`telas.py` obrigatório) |
+| `main.py`, `requirements.txt`, `mkdocs.yml`, `db_mod_*.db` | entry point único, dependências, build da doc e bancos SQLite (WAL) por módulo |
+
+> Pastas operacionais (`backup/`, `organizadorPasta/`, `quarentena/`) são criadas com `.gitkeep`
+> no repositório e também garantidas em runtime pelas rotinas (`os.makedirs(..., exist_ok=True)`);
+> `doc/`, `editorPDF/`, `logs/` e `site/` são criados/geridos em runtime pelo aplicativo.
 
 > Pendências conceituais conhecidas: `criador_bd.py` legado em todos os módulos (não confiar); `manipulador_bd.py` do núcleo foi reconstruído de `*.pyc` quando ausente como fonte (ver [Análise do Núcleo](analise_mod_intranet.md)).

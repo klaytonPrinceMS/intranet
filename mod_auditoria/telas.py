@@ -91,6 +91,34 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             log.error(f"falha ao ler config auditoria_{chave}")
             return str(default)
 
+    # ================= TEMA (Aparência, prefixo auditoria_) =================
+    def _tema(chave, default):
+        try:
+            return (get_config(f"auditoria_{chave}", default) or "").strip() or default
+        except Exception:
+            return default
+
+    t_cor_botao = _tema("cor_botao", "#C62828")
+    t_cor_txt_botao = _tema("cor_texto_botao", "#FFFFFF")
+    t_cor_fundo = _tema("cor_fundo", "")
+    t_cor_titulo = _tema("cor_titulo", "#212121")
+    t_btn_tamanho = _tema("btn_tamanho", "medium")
+
+    def _btn_cls():
+        if t_btn_tamanho == "small":
+            return "min-w-[140px] text-sm"
+        if t_btn_tamanho == "large":
+            return "min-w-[220px] text-lg"
+        return "min-w-[180px]"
+
+    def _btn_style():
+        st = ""
+        if t_cor_botao:
+            st += f"background-color:{t_cor_botao};"
+        if t_cor_txt_botao:
+            st += f"color:{t_cor_txt_botao};"
+        return st
+
     try:
         limite_sql = max(10, int(_cfg("limite", "1000")))
     except (TypeError, ValueError):
@@ -302,7 +330,8 @@ def mostrar_tela(usuario_logado: str, perfil: str):
         _render_tabela()
 
     # ---------- UI ----------
-    cabecalho("Auditoria", texto_header, cor_borda="#C62828")
+    cabecalho("Auditoria", texto_header, cor_borda="#C62828",
+              cor_titulo=t_cor_titulo, cor_fundo=t_cor_fundo)
     tabs_el = abas("Logs", "history", admin=eh_admin_geral)
     with ui.tab_panels(tabs_el, value="principal").classes("w-full"):
         with ui.tab_panel("principal"):
@@ -347,11 +376,11 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     ui.label("Data final").classes("text-caption text-grey-7")
                     data_fim = ui.date(value=None).props("outlined dense")
                 ui.button("Buscar", icon="search",
-                          on_click=lambda: _atualizar_tabela(reset=True)) \
-                    .props("unelevated color=primary")
+                      on_click=lambda: _atualizar_tabela(reset=True)) \
+                    .props("unelevated").classes(_btn_cls()).style(_btn_style())
                 ui.button("Limpar", icon="clear", on_click=_limpar_filtros).props("flat")
                 ui.button("Exportar CSV", icon="download", on_click=_exportar_csv) \
-                    .props("outline color=primary")
+                    .props("outline").classes(_btn_cls()).style(_btn_style())
 
             # ----- Painel: campos visíveis e ordem (por auditor) -----
             with ui.expansion("Campos e ordem de exibição", icon="view_column").classes("w-full mb-2"):
@@ -421,18 +450,48 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                                                   value=texto_header) \
                                 .props("outlined dense").classes("w-full")
 
+                            ui.separator().classes("my-2")
+                            ui.label("Aparência — temas dos botões desta tela").classes(
+                                "text-subtitle2 text-grey-7")
+                            with ui.grid(columns=2).classes("w-full gap-3 max-sm:grid-cols-1"):
+                                inp_cor_botao = ui.color_input(label="Cor dos botões",
+                                                               value=t_cor_botao) \
+                                    .props("outlined dense").classes("w-full")
+                                inp_cor_txt = ui.color_input(label="Cor do texto dos botões",
+                                                             value=t_cor_txt_botao) \
+                                    .props("outlined dense").classes("w-full")
+                                inp_cor_fundo = ui.color_input(
+                                    label="Cor de fundo da página (vazio = herda)",
+                                    value=t_cor_fundo) \
+                                    .props("outlined dense").classes("w-full")
+                                inp_cor_titulo = ui.color_input(label="Cor dos títulos",
+                                                                value=t_cor_titulo) \
+                                    .props("outlined dense").classes("w-full")
+                            sel_tamanho = ui.select(
+                                {0: "Pequeno", 1: "Médio", 2: "Grande"},
+                                label="Tamanho dos botões",
+                                value={"small": 0, "medium": 1, "large": 2}.get(t_btn_tamanho, 1),
+                            ).props("outlined dense").classes("w-full")
+                            _tamanhos = {0: "small", 1: "medium", 2: "large"}
+
                             def _salvar():
                                 try:
                                     set_config("auditoria_limite", inp_limite.value)
                                     set_config("auditoria_retencao_dias", inp_retencao.value)
                                     set_config("auditoria_texto_header", inp_header.value)
+                                    set_config("auditoria_cor_botao", inp_cor_botao.value or "")
+                                    set_config("auditoria_cor_texto_botao", inp_cor_txt.value or "")
+                                    set_config("auditoria_cor_fundo", inp_cor_fundo.value or "")
+                                    set_config("auditoria_cor_titulo", inp_cor_titulo.value or "")
+                                    set_config("auditoria_btn_tamanho",
+                                              _tamanhos[sel_tamanho.value])
                                     nonlocal limite_sql, retencao_dias, texto_header
                                     limite_sql = max(10, int(inp_limite.value))
                                     retencao_dias = str(inp_retencao.value)
                                     texto_header = inp_header.value
                                     audit_log(usuario_logado, "auditoria", "configuracao",
                                               "configurações do módulo de auditoria alteradas: "
-                                              "limite, retenção e cabeçalho")
+                                              "limite, retenção, cabeçalho e aparência")
                                     ui.notify("Configurações salvas", type="positive")
                                     log.info("configuracoes da auditoria salvas")
                                     _atualizar_tabela(reset=True)
@@ -441,6 +500,6 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                                     ui.notify("Erro ao salvar configurações", type="negative")
 
                             ui.button("Salvar", icon="save", on_click=_salvar) \
-                                .props("unelevated color=primary")
+                                .props("unelevated").style(_btn_style())
             _atualizar_tabela()
             ui.timer(30.0, _atualizar_tabela)

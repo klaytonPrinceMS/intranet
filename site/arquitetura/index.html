@@ -212,6 +212,7 @@
 <li><a href="#auditoria-centralizada">Auditoria centralizada</a></li>
 <li><a href="#observabilidade-loguru">Observabilidade (loguru)</a></li>
 <li><a href="#documentacao-embutida-documentacao">Documentação embutida (<code>/documentacao</code>)</a></li>
+<li><a href="#estrutura-de-diretorios-fase-0">Estrutura de diretórios (Fase 0)</a></li>
 </ol>
 <h2 id="visao-geral">Visão geral<a class="headerlink" href="#visao-geral" title="Permanent link">&para;</a></h2>
 <pre><code class="language-text">┌────────────────────────────── main.py (único entry point) ──────────────────────────────┐
@@ -428,7 +429,66 @@
 <li>O build roda no boot (<code>main.py:330-331</code>) e <strong>falhas nunca derrubam o servidor</strong> (apenas avisam nos logs).</li>
 <li>Tema do MkDocs: <strong><code>readthedocs</code></strong> (definido em <code>mkdocs.yml</code> — não alterar para <code>material</code>).</li>
 </ul>
+<h2 id="estrutura-de-diretorios-fase-0">Estrutura de diretórios (Fase 0)<a class="headerlink" href="#estrutura-de-diretorios-fase-0" title="Permanent link">&para;</a></h2>
+<p>Raiz do projeto (scaffold base — Fase 0 do <code>PLANO.md</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Pasta</th>
+<th style="text-align: left;">Finalidade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>assets/</code></td>
+<td style="text-align: left;">recursos estáticos; <code>favicon_atual.ico</code> é o "arquivo vivo" do favicon (troca via upload sem restart, cache-busted por <code>favicon_versao()</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/css/</code></td>
+<td style="text-align: left;">estilos CSS customizados do sistema</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>doc/</code></td>
+<td style="text-align: left;">pasta monitorada de empenhos (<code>_PASTA_MONITORADA_PADRAO</code> — <code>mod_renomear_empenho/manipulador_bd.py:23</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>editorPDF/</code></td>
+<td style="text-align: left;">arquivos temporários do Editor de PDF (expiração automática, default 10 min)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>organizadorPasta/</code></td>
+<td style="text-align: left;">saída do organizador físico do renomear empenho (caixas/subpastas — <code>PASTA_ORGANIZADOR</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>backup/</code></td>
+<td style="text-align: left;">backups dos bancos por módulo (APScheduler, retenção das 10 cópias mais recentes — <code>PASTA_BACKUP</code> em <code>mod_intranet/rotinas.py</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>quarentena/</code></td>
+<td style="text-align: left;">PDFs com erro de leitura/corrupção na fila de quarentena (<code>PASTA_QUARENTENA</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>logs/</code></td>
+<td style="text-align: left;">arquivos de log por módulo (loguru — rotação/retenção/compressão)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>site/</code></td>
+<td style="text-align: left;">build estático do MkDocs (<code>docs/</code> → <code>site/</code>), servido em <code>/documentacao</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_*/</code></td>
+<td style="text-align: left;">núcleo <code>mod_intranet/</code> + módulos de negócio (<code>telas.py</code> obrigatório)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>main.py</code>, <code>requirements.txt</code>, <code>mkdocs.yml</code>, <code>db_mod_*.db</code></td>
+<td style="text-align: left;">entry point único, dependências, build da doc e bancos SQLite (WAL) por módulo</td>
+</tr>
+</tbody>
+</table>
 <blockquote>
+<p>Pastas operacionais (<code>backup/</code>, <code>organizadorPasta/</code>, <code>quarentena/</code>) são criadas com <code>.gitkeep</code>
+no repositório e também garantidas em runtime pelas rotinas (<code>os.makedirs(..., exist_ok=True)</code>);
+<code>doc/</code>, <code>editorPDF/</code>, <code>logs/</code> e <code>site/</code> são criados/geridos em runtime pelo aplicativo.</p>
 <p>Pendências conceituais conhecidas: <code>criador_bd.py</code> legado em todos os módulos (não confiar); <code>manipulador_bd.py</code> do núcleo foi reconstruído de <code>*.pyc</code> quando ausente como fonte (ver <a href="../analise_mod_intranet/">Análise do Núcleo</a>).</p>
 </blockquote>
               

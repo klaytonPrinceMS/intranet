@@ -27,7 +27,8 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` (`conexao
 
 - **Autenticação bcrypt + sessões revogáveis**: `autenticar` → `registrar_login` (cookie_hash via `secrets`) → `sessao_ativa` revalidada a cada request; encerrar sessão pelo admin derruba o navegador.
 - **Guarda de página** (`pagina_restrita`): revalida usuário/sessão/permissão e monta o layout de 4 partes (header, drawer lateral, rodapé com versões, área principal).
-- **Dashboard `/`**: saudação, **feed do Blog por padrão** (RF-09) e estatísticas (usuários ativos, postagens, auditoria p/ admin).
+- **Dashboard `/`**: saudação, **feed do Blog por padrão** (RF-09), estatísticas (usuários ativos, postagens, auditoria p/ admin), **grid fluido 360–1440px** (mobile-first), microinterações e feedback de 2s (toast de boas-vindas + "Atualizado ✓" via `ui.timer(2.0, once=True)`).
+- **Padrão de exibição**: módulo exemplo = Editor de PDF; todos os módulos ocupam **área cheia** (`w-full`) e têm o card **"Aparência"** no admin com as mesmas 6 chaves em `tb_config` (`<chave>_cor_botao`, `cor_texto_botao`, `cor_fundo`, `cor_titulo`, `btn_tamanho`, `texto_header`). `aba_modulo.cabecalho()` aceita `cor_titulo`/`cor_fundo` e aplica o tema sem restart.
 - **Login `/login`**: customizável por `tb_config`; com favicon dinâmico (`favicon_versao`).
 - **Configurações `/configuracoes`** (só `administrador_geral`): cores, ícone, título, textos, favicon, páginas/módulos, SMTP, backup, sessão, observabilidade — "SALVAR TUDO" e "Restaurar padrão".
 - **Backup por módulo** (12 h default, reagendável sem restart) + retenção das 10 cópias em `backup/`.

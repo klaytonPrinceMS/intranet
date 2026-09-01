@@ -68,12 +68,12 @@ def init_db():
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('backup_interval_hours', '12')")
     # Versão individual de cada módulo (1.0.AAMMDD) — idempotente, não sobrescreve edição manual
     for _chave_mod, _ver in (
-        ("usuarios", "1.0.260827"),
-        ("auditoria", "1.0.260827"),
+        ("usuarios", "1.0.260901"),
+        ("auditoria", "1.0.260901"),
         ("editar_pdf", "1.0.260827"),
-        ("empenhos", "1.0.260827"),
-        ("blog", "1.0.260830"),
-        ("solicita_impressao", "1.0.260829"),
+        ("empenhos", "1.0.260901"),
+        ("blog", "1.0.260901"),
+        ("solicita_impressao", "1.0.260901"),
     ):
         cur.execute("INSERT OR IGNORE INTO tb_config (chave, valor) VALUES (?, ?)",
                     (f"versao_modulo:{_chave_mod}", _ver))

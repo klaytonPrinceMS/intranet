@@ -40,6 +40,20 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                       or autenticacao.perfil_global_de(user_nome) == "administrador_geral")
 
     ui.colors(primary="#00838F")
+
+    # ================= TEMA (Aparência, prefixo usuarios_) =================
+    from mod_intranet.conexao_bd import get_config
+    def _tema_cab(chave, default):
+        try:
+            return (get_config(f"usuarios_{chave}", default) or "").strip() or default
+        except Exception:
+            return default
+
+    t_cor_titulo = _tema_cab("cor_titulo", "#212121")
+    t_cor_fundo_cab = _tema_cab("cor_fundo", "")
+    t_texto_header = _tema_cab("texto_header",
+                               "Cadastro de usuários, papéis e acessos por módulo (soft CRUD · LGPD).")
+
     estado_busca = {"valor": ""}
     refreshers = {}  # nome -> função de atualização (registrada por cada aba)
 
@@ -56,10 +70,10 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         _dlg_novo(user_nome, lambda: [refreshers[k]() for k in
                                       ("usuarios", "excluidos") if k in refreshers])
 
-    with ui.column().classes("w-full max-w-7xl mx-auto p-6 gap-4"):
+    with ui.column().classes("w-full p-6 gap-4"):
         cabecalho("Gestão de Usuários",
-                   "Cadastro de usuários, papéis e acessos por módulo (soft CRUD · LGPD).",
-                   cor_borda="#00838F")
+                   t_texto_header,
+                   cor_borda="#00838F", cor_titulo=t_cor_titulo, cor_fundo=t_cor_fundo_cab)
 
         # ===== BARRA SUPERIOR (linha única): abas à esquerda | busca larga + botão à direita =====
         with ui.row().classes("w-full items-center justify-between gap-4 flex-nowrap "
@@ -518,6 +532,8 @@ def _painel_administracao(ator: str):
     t_cor_fundo = _tema("cor_fundo", "")
     t_cor_titulo = _tema("cor_titulo", "#212121")
     t_tamanho = _tema("btn_tamanho", "medium")
+    t_texto_header = _tema("texto_header",
+                           "Cadastro de usuários, papéis e acessos por módulo (soft CRUD · LGPD).")
 
     def _btn_style():
         st = ""
@@ -552,6 +568,8 @@ def _painel_administracao(ator: str):
             with ui.separator().classes("my-2"):
                 pass
             ui.label("Configurações específicas").classes("text-subtitle2 text-grey-7")
+            inp_texto = ui.input("Texto do cabeçalho", value=t_texto_header) \
+                .props("outlined dense").classes("w-full")
             inp_senha = ui.number(
                 "Tamanho mínimo da senha (caracteres)",
                 value=gest.senha_minima(), min=4, max=32, step=1,
@@ -576,6 +594,7 @@ def _painel_administracao(ator: str):
                 set_config("usuarios_cor_fundo", inp_cor_fundo.value or "")
                 set_config("usuarios_cor_titulo", inp_cor_titulo.value or "")
                 set_config("usuarios_btn_tamanho", _tamanhos[sel_tamanho.value])
+                set_config("usuarios_texto_header", inp_texto.value or "")
                 set_config("usuarios_senha_min", int(inp_senha.value or gest.senha_minima()))
                 try:
                     audit_log(ator, "gest_cad_usuario", "configuracao",
@@ -588,7 +607,9 @@ def _painel_administracao(ator: str):
             def resetar():
                 for chave, valor in (("cor_botao", "#00838F"), ("cor_texto_botao", "#FFFFFF"),
                                      ("cor_fundo", ""), ("cor_titulo", "#212121"),
-                                     ("btn_tamanho", "medium"), ("senha_min", 6)):
+                                     ("btn_tamanho", "medium"),
+                                     ("texto_header", "Cadastro de usuários, papéis e acessos por módulo (soft CRUD · LGPD)."),
+                                     ("senha_min", 6)):
                     set_config(f"usuarios_{chave}", valor)
                 try:
                     audit_log(ator, "gest_cad_usuario", "configuracao",
