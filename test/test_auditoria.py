@@ -15,7 +15,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 from mod_intranet.conexao_bd import get_config, set_config, get_connection
-from mod_intranet.manipulador_bd import audit_log, garantir_rastreabilidade
+from mod_intranet.manipulador_bd import audit_log, garantir_rastreabilidade, get_auditoria_connection
 
 PASS = []
 FAIL = []
@@ -42,20 +42,20 @@ def _testar_indices():
 
 def _testar_audit_log():
     print("\n== audit_log com rastreabilidade ==")
-    conn = get_connection()
+    conn = get_auditoria_connection()
     try:
         audit_log("zz_aud_teste", "intranet", "teste_neo",
                   "registro de verificacao rastreavel",
                   hash_arquivo=None, client_ip="127.0.0.1", client_user_agent="zz-ua")
         cur = conn.cursor()
         row = cur.execute(
-            "SELECT acao, ip, user_agent, timestamp FROM tb_auditoria "
+            "SELECT acao, ip, user_agent, timestamp FROM tb_auditoria_intranet "
             "WHERE usuario='zz_aud_teste' ORDER BY id DESC LIMIT 1").fetchone()
         check("acao gravada", row and row[0] == "teste_neo")
         check("ip gravado", row and row[1] == "127.0.0.1")
         check("user_agent gravado", row and row[2] == "zz-ua")
         check("timestamp em formato local (HH:MM:SS)", row and row[3] and row[3].count(":") == 2)
-        cur.execute("DELETE FROM tb_auditoria WHERE usuario='zz_aud_teste'")
+        cur.execute("DELETE FROM tb_auditoria_intranet WHERE usuario='zz_aud_teste'")
         conn.commit()
     except Exception:
         check("audit_log sem excecao", False)

@@ -97,7 +97,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                         elif key == "autorizar":
                             _tela_autorizar(usuario_logado, eh_admin)
                         elif key == "admin":
-                            _tela_admin(usuario_logado, eh_admin, t_cor_botao, t_cor_txt_botao, t_cor_fundo, t_cor_titulo, t_texto_header, t_btn_tamanho, _btn_cls, _btn_style)
+                            _tela_admin(usuario_logado, eh_admin)
 
 
 # ================= HELPERS =================
@@ -500,7 +500,7 @@ def _recusar(sid, usuario, atualizar):
 
 # ================= ADMINISTRAÇÃO =================
 
-def _tela_admin(usuario_logado, eh_admin, t_cor_botao, t_cor_txt_botao, t_cor_fundo, t_cor_titulo, t_texto_header, t_btn_tamanho, _btn_cls, _btn_style):
+def _tela_admin(usuario_logado, eh_admin):
     from mod_solicita_impressao import manipulador_bd as bd
     with ui.tabs().classes("w-full") as subtab:
         ui.tab("solic", "Solicitações")
@@ -521,7 +521,7 @@ def _tela_admin(usuario_logado, eh_admin, t_cor_botao, t_cor_txt_botao, t_cor_fu
         with ui.tab_panel("cotas"):
             _admin_cotas(usuario_logado)
         with ui.tab_panel("conf"):
-            _admin_configuracoes(usuario_logado, t_cor_botao, t_cor_txt_botao, t_cor_fundo, t_cor_titulo, t_texto_header, t_btn_tamanho, _btn_cls, _btn_style)
+            _admin_configuracoes(usuario_logado)
 
 
 def _admin_solicitacoes(usuario_logado):
@@ -927,7 +927,7 @@ def _resetar_cota(secr, setor, usuario, atualizar):
 
 # ================= ADMIN: CONFIGURAÇÕES =================
 
-def _admin_configuracoes(usuario_logado, t_cor_botao, t_cor_txt_botao, t_cor_fundo, t_cor_titulo, t_texto_header, t_btn_tamanho, _btn_cls, _btn_style):
+def _admin_configuracoes(usuario_logado):
     from mod_solicita_impressao import manipulador_bd as bd
     with ui.card().classes("w-full"):
         ui.label("Configurações do Módulo").classes("text-h6 font-bold")

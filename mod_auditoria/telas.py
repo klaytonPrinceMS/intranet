@@ -369,14 +369,12 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     .props("outlined dense").classes("w-60")
 
                 filtro_hora = ui.input("Filtrar hora (HH:MM)").props("outlined dense").classes("w-40")
-                with ui.expansion("Filtrar por data", icon="event").classes("w-auto self-end"):
-                    with ui.row().classes("gap-3 items-end"):
-                        with ui.column().classes("gap-0"):
-                            ui.label("Data inicial").classes("text-caption text-grey-7")
-                            data_inicio = ui.date(value=None).props("outlined dense")
-                        with ui.column().classes("gap-0"):
-                            ui.label("Data final").classes("text-caption text-grey-7")
-                            data_fim = ui.date(value=None).props("outlined dense")
+                with ui.column().classes("gap-0"):
+                    ui.label("Data inicial").classes("text-caption text-grey-7")
+                    data_inicio = ui.date(value=None).props("outlined dense")
+                with ui.column().classes("gap-0"):
+                    ui.label("Data final").classes("text-caption text-grey-7")
+                    data_fim = ui.date(value=None).props("outlined dense")
                 ui.button("Buscar", icon="search",
                       on_click=lambda: _atualizar_tabela(reset=True)) \
                     .props("unelevated").classes(_btn_cls()).style(_btn_style())
