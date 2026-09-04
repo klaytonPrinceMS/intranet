@@ -63,9 +63,17 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava em `t
 | Exibição única OU histórico alternável | **Implementado** (`blog_modo_exibicao` local) |
 | Editor com pré-visualização | **Implementado** (editor com preview, criar/editar) |
 | Publicar/Despublicar + restauração de inativas | **Implementado** (aba Administração lista inativas) |
-| `testes/teste_fluxo_blog.py` (33/33) | **Implementado** (`testes/teste_fluxo_blog.py` — 33/33 OK) |
+| `test/teste_fluxo_blog.py` (33/33) | **Implementado** (em `test/` — 33/33 OK) |
+
+> Fase 3 **REALIZADO** e validado. O teste `test/teste_fluxo_blog.py` (33/33 OK)
+> cobre sanitização XSS (nh3), conversores HTML/Markdown, CRUD, publicar/
+> despublicar, soft delete, config local, modo única/histórico, largura de
+> imagem e auditoria central. A checagem de auditoria foi atualizada para o
+> banco exclusivo `db_mod_auditoria.db` (tabela `tb_auditoria_blog` — a
+> `tb_auditoria` central virou legado, migrada via `migrar_dados_existentes`).
 
 ### Adições recentes (26/08)
 
 - **Painel "Administração"** (expansão, exclusivo do admin do blog): bloco **Aparência** (prefixo blog_* — cor do botão/texto, tamanho via ui.color_input) e **config específica**: blog_tags_permitidas (CSV das tags HTML aceitas na sanitização NH3, aplicada via tags_permitidas()), blog_texto_header. Salvo via set_config, vale sem reiniciar.
 - **Versionamento**: versao_modulo:blog = 1.0.260827 (seed em conexao_bd.init_db()), exibido no rodapé em /blog.
+- **Edição do módulo** (`campo_modulo` do helper `mod_intranet/tema_modulo.py`): permite ao admin editar **nome de exibição, ícone e status (ativo/inativo)** do blog em `tb_modulos`.

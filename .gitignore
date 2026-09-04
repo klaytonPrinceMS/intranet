@@ -8,3 +8,9 @@
 /.nicegui
 AGENTS.md
 *.pdf
+/downloads
+*.pyc
+/mod_solicita_impressao/solicitacaoImpressao
+/mod_solicita_impressao/solicitacaoImpressao
+paraFaser.txt
+

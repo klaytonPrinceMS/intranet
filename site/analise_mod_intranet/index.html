@@ -306,6 +306,31 @@
 </tr>
 </tbody>
 </table>
+<h2 id="padronizacao-de-tema-e-administracao-dos-modulos-tema_modulopy">Padronização de tema e administração dos módulos — <code>tema_modulo.py</code><a class="headerlink" href="#padronizacao-de-tema-e-administracao-dos-modulos-tema_modulopy" title="Permanent link">&para;</a></h2>
+<p>Helper central em <code>mod_intranet/tema_modulo.py</code> que unifica, em TODOS os módulos, a
+configuração de aparência e o gerenciamento dos próprios módulos — eliminando a duplicação de
+código e a variação de nomes que existiam entre as telas.</p>
+<ul>
+<li><strong><code>PREFIXO_POR_CHAVE</code> / <code>prefixo_da_chave(chave)</code></strong>: mapeia a chave do módulo
+  (<code>blog</code>, <code>usuarios</code>, <code>auditoria</code>, <code>editar_pdf</code>, <code>empenhos</code>, <code>solicita_impressao</code>) para o
+  prefixo das chaves em <code>tb_config</code> central (<code>blog_*</code>, <code>usuarios_*</code>, <code>auditoria_*</code>, <code>editpdf_*</code>,
+  <code>empenhos_*</code>, <code>solicita_impressao_*</code>).</li>
+<li><strong><code>ler_tema(chave, defaults...)</code> / <code>salvar_tema</code> / <code>restaurar_tema</code></strong>: as <strong>6 chaves</strong> de
+  aparência (<code>cor_botao</code>, <code>cor_texto_botao</code>, <code>cor_fundo</code>, <code>cor_titulo</code>, <code>btn_tamanho</code>,
+  <code>texto_header</code>), lidas/gravadas em <code>tb_config</code> central, com aplicação imediata (sem restart).</li>
+<li><strong><code>btn_cls(tamanho)</code> / <code>btn_style(cor_botao, cor_texto)</code></strong>: funções puras de classe/estilo.
+  Garantem a regra de <strong>uniformidade</strong> — todos os botões de uma mesma tela usam <strong>sempre a mesma
+  cor/tamanho</strong> (por construção, via o mesmo <code>_btn_style</code>/<code>_btn_cls</code> da tela e o mesmo prefixo).</li>
+<li><strong><code>bloco_aparencia(usuario_logado, chave, tema)</code></strong>: cupê "Aparência" padronizado da aba
+  Administração (cor do botão, cor do texto, fundo, títulos, tamanho e texto do cabeçalho), <strong>com
+  botão Salvar próprio</strong> e "Restaurar padrão", gravando via <code>salvar_tema</code> e audita.</li>
+<li><strong><code>campo_modulo(usuario_logado, chave)</code></strong>: cupê "Edição do módulo" que permite ao
+  administrador alterar <strong>nome de exibição, ícone e status (ativo/inativo)</strong> do módulo em
+  <code>tb_modulos</code> — hoje também disponível no painel central <code>/configuracoes</code>.</li>
+</ul>
+<p><strong>Adoção</strong>: <code>edit_pdf</code> e <code>solicita_impressao</code> usam <code>bloco_aparencia</code> + <code>campo_modulo</code>; os demais
+módulos (<code>blog</code>, <code>usuarios</code>, <code>auditoria</code>, <code>empenhos</code>) usam <code>campo_modulo</code>. A regra de
+uniformidade e o helper são cobertos por <code>test/test_tema.py</code> (18 verificações standalone).</p>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Bootstrap: <code>inicializar_bancos()</code> roda antes de qualquer import de módulo (<code>main.py:15-16</code>) — ordem crítica.</li>

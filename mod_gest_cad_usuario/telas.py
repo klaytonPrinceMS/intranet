@@ -16,6 +16,7 @@ from mod_intranet import autenticacao
 from mod_intranet import observabilidade
 from mod_intranet.manipulador_bd import audit_log
 from mod_intranet.aba_modulo import cabecalho
+from mod_intranet.tema_modulo import campo_modulo
 from mod_gest_cad_usuario import manipulador_bd as gest
 
 log = observabilidade.get_logger("gest_cad_usuario")
@@ -276,6 +277,10 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
                     with ui.row().classes("gap-1"):
                         ui.button(icon="edit", on_click=lambda _, n=nome: _dlg_editar(ator, n, render)) \
                             .props("flat round dense color=primary size=sm").tooltip("Editar dados e acessos")
+                        ui.button(icon="content_copy",
+                                  on_click=lambda _, n=nome: _dlg_duplicar(ator, n, render)) \
+                            .props("flat round dense color=teal-8 size=sm") \
+                            .tooltip("Duplicar usuário e suas configurações de acesso")
                         ui.button(icon="devices_other",
                                   on_click=lambda _, n=nome: _dlg_sessoes(ator, n)) \
                             .props("flat round dense color=indigo-8 size=sm") \
@@ -512,7 +517,8 @@ def _dlg_editar(ator, nome_atual, refresh):
                     ui.notify("Usuário atualizado" +
                               (f" ({mudou} acesso(s) alterado(s))" if mudou else ""), type="positive")
                     dlg.close()
-    refresh()
+                    refresh()
+    dlg.open()
 
 
 # ==================== ABA 3: ADMINISTRAÇÃO (exclusiva do admin geral) ====================
@@ -623,6 +629,8 @@ def _painel_administracao(ator: str):
                 ui.button("Restaurar padrão", on_click=resetar).props("flat").style(_btn_style())
                 ui.button("Salvar", icon="save", on_click=salvar).props("unelevated").style(_btn_style())
 
+    campo_modulo(ator, "usuarios")
+
 
 def _dlg_senha(ator, nome):
     with ui.dialog() as dlg, ui.card().classes("w-[380px]"):
@@ -707,6 +715,70 @@ def _dlg_excluir_definitivo(ator, nome, refresh):
         with ui.row().classes("w-full justify-between mt-2"):
             ui.button("Cancelar", on_click=dlg.close).props("flat no-caps")
             ui.button("Excluir definitivamente", on_click=excluir).props("unelevated no-caps color=negative icon=warning")
+    dlg.open()
+
+
+# ==================== ABA 1.5: EXCLUÍDOS (SOFT) ====================
+
+def _dlg_duplicar(ator, origem, refresh):
+    row = gest.obter_usuario(origem)
+    if not row:
+        ui.notify("Usuário origem não encontrado", type="negative")
+        return
+    origem_perfil = row[5]
+    acessos = gest.listar_acessos(origem)
+
+    with ui.dialog() as dlg, ui.card().classes("w-[560px] max-h-[90vh]"):
+        with ui.card_section().classes("w-full overflow-auto gap-2"):
+            ui.label(f"Duplicar usuário — @{origem}").classes("text-h6")
+            ui.label("O novo usuário herdará o perfil global e os acessos por módulo "
+                     "do usuário origem, que já vêm pré-selecionados abaixo.").classes(
+                "text-caption text-grey-7 -mt-2")
+            ui.label(f"Origem: @{origem} · perfil {origem_perfil.replace('_', ' ')}"
+                     f" · {len(acessos)} acesso(s) por módulo") \
+                .classes("text-caption bg-teal-1 text-teal-9 px-2 py-1 rounded")
+
+            nome = ui.input("Nome de usuário (login) *").props("outlined dense").classes("w-full") \
+                .tooltip("Usado apenas para entrar — não aparece como tratamento")
+            completo = ui.input("Nome completo ou social *", placeholder="ex.: Maria Aparecida da Silva") \
+                .props("outlined dense").classes("w-full") \
+                .tooltip("Nome para tratamento nas telas. Pode ser o nome social "
+                         "(Decreto 8.727/2016). Deve ser diferente do login")
+            senha = ui.input("Senha provisória * (mín. 6)", password=True,
+                             password_toggle_button=True).props("outlined dense").classes("w-full")
+            email = ui.input("E-mail *").props("outlined dense").classes("w-full")
+            fone = ui.input("Telefone (opcional)").props("outlined dense").classes("w-full")
+
+            ui.separator()
+            ui.label(f"Acessos por módulo (copiados de @{origem})").classes(
+                "text-subtitle2 text-grey-8")
+            box = ui.column().classes("w-full gap-0")
+            selecoes, _meta = _seletores_de_acesso(box, origem)
+
+            def salvar():
+                ok, msg = gest.duplicar_usuario(ator, origem, nome.value or "",
+                                                senha.value or "",
+                                                email=email.value.strip() or None,
+                                                fone=fone.value.strip() or None,
+                                                nome_completo=completo.value)
+                if not ok:
+                    log.error(f"duplicar_usuario: falha ao duplicar '{nome.value}' por {ator} | {msg}")
+                    ui.notify(msg, type="negative")
+                    return
+                mudou, erros = _aplicar_acessos(ator, nome.value.strip(), selecoes)
+                if erros:
+                    ui.notify(f"Usuário duplicado, mas houve erros nos acessos: {' | '.join(erros)}",
+                              type="warning")
+                else:
+                    ui.notify(f"Usuário '{nome.value.strip()}' duplicado de @{origem}"
+                              + (f" · {mudou} acesso(s)" if mudou else ""), type="positive")
+                dlg.close()
+                refresh()
+
+            with ui.row().classes("w-full justify-end gap-2 mt-3"):
+                ui.button("Cancelar", on_click=dlg.close).props("flat no-caps")
+                ui.button("Duplicar usuário", on_click=salvar) \
+                    .props("unelevated no-caps color=teal-8 icon=content_copy")
     dlg.open()
 
 

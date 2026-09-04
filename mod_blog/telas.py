@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 from nicegui import ui
 from mod_intranet import observabilidade
 from mod_intranet.aba_modulo import cabecalho, abas
+from mod_intranet.tema_modulo import campo_modulo
 
 
 def _card_postagem(post, usuario_logado, perfil, ao_atualizar, pode_publicar=False,
@@ -396,6 +397,8 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                             .classes(_btn_cls()).style(_btn_style())
                         ui.button("Salvar", icon="save", on_click=salvar).props(
                             "unelevated").classes(_btn_cls()).style(_btn_style())
+
+                campo_modulo(usuario_logado, "blog")
 
                 # ---- Gestão das postagens inativas (restauração/republicar) ----
                 with ui.expansion("Postagens despublicadas (gestão)",

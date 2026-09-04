@@ -69,13 +69,32 @@ Importa `autenticacao` (hash/verificação de senha, papéis, troca pendente), `
 
 **Desvios aceitáveis:** tabela chama-se `tb_usuarios` (não `tb_usuario`); não há tabela `tb_perfil` separada; rota real é `/users` (não `/gestao-usuarios`).
 
-**Parcial/Pendente (RF-26 finalizado e documentado; abaixo os gaps reais):**
+**Proteção do último `administrador_geral` contra bloqueio/rebaixamento por OUTRO admin** (RF-26): `editar_usuario`/`bloquear_usuario` bloqueiam rebaixar ou bloquear o último `administrador_geral` ativo quando o ator é outro admin — **REALIZADO** (`mod_gest_cad_usuario/manipulador_bd.py`).
 
-- **Proteção do último `administrador_geral` contra bloqueio/rebaixamento por OUTRO admin** (RF-26): `editar_usuario`/`bloquear_usuario` bloqueiam rebaixar ou bloquear o último `administrador_geral` ativo quando o ator é outro admin — **REALIZADO** (`mod_gest_cad_usuario/manipulador_bd.py`).
-- Testes `testes/teste_fluxo_autenticacao.py` e `testes/teste_fluxo_permissoes.py` citados na Fase 2.5 não existem (há apenas `test/test_fase1_login.py` e `test/validar_fase1_login.py`).
-- Senha provisória aleatória revelada ao admin não implementada (o admin digita a senha manualmente).
+## Fase 2.5 — Testes do fluxo completo
+
+A Fase 2.5 do PLANO.md foi **concluída** com scripts standalone em `test/`
+(no padrão do projeto, não em `testes/` como o PLANO chegou a citar). Todos
+autocontidos (criam usuários de nome único e os removem definitivamente ao
+fim — LGPD), sem destruir dados do desenvolvedor:
+
+| Script | Cobertura | Resultado |
+|:---|:---|:---|
+| `test/teste_boot.py` | Bootstrap cria os bancos do zero + seed `master`; `main.py` importa; Tailwind **local** (sem CDN) + CSS custom no `/login`; HTTP real em `/login` (200 + Tailwind local) quando o servidor está no ar | 16/16 OK |
+| `test/teste_fluxo_autenticacao.py` | Login → senha provisória → troca obrigatória no 1º acesso → sessão/logout (revogação) → trilha de auditoria central → soft delete → restauração | 19/19 OK |
+| `test/teste_fluxo_permissoes.py` | Concessão/atualização/revogação de perfil por módulo + admin geral vê tudo (auditoria exclusiva) | 13/13 OK |
+
+Os testes refletem o comportamento atual do núcleo:
+- **Auditoria** agora é gravada no banco exclusivo `db_mod_auditoria.db` (tabela
+  por módulo, ex. `tb_auditoria_blog`), e não mais na `tb_auditoria` central
+  (legado migrado via `migrar_dados_existentes`).
+- **Senha provisória** é digitada pelo administrador (não gerada aleatória):
+  geração aleatória continua **não implementada** — desvio documentado.
+- Controle granular é aplicado via `validar_acesso_modulo`/`listar_modulos_permitidos`,
+  usados no menu lateral, cards do dashboard e página `/modulo/{slug}`
 
 ### Adições recentes (26/08)
 
 - **Aba "Administração"** (exclusiva do admin geral, nas tabs existentes): bloco **Aparência** (prefixo usuarios_* — cor do botão/texto, fundo da página, cor do título, tamanho via ui.color_input; a cor do botão também define a primária da tela) e **config específica**: usuarios_senha_min (política de senha mínima, aplicada em criar_usuario/alterar_senha_admin via senha_minima()). Salvo via set_config, vale sem reiniciar.
 - **Versionamento**: versao_modulo:usuarios = 1.0.260827 (seed em conexao_bd.init_db()), exibido no rodapé em /users (rota → chave usuarios).
+- **Edição do módulo** (`campo_modulo` do helper `mod_intranet/tema_modulo.py`): permite ao admin editar **nome de exibição, ícone e status (ativo/inativo)** do módulo de usuários em `tb_modulos`.

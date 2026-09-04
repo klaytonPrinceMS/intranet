@@ -228,6 +228,7 @@
 </ul>
 <h2 id="status-fases-69-do-planomd">Status — Fases 6/9 do PLANO.md<a class="headerlink" href="#status-fases-69-do-planomd" title="Permanent link">&para;</a></h2>
 <p><strong>Implementado:</strong> leitura/filtro unificada da <code>tb_auditoria</code> central por data, <strong>hora</strong> (<code>strftime('%H:%M')</code>), usuário (LIKE), módulo e <strong>categorias de ação</strong>; colunas com IP e <strong>rótulo de dispositivo</strong>; <strong>paginação server-side</strong>; <strong>exportação CSV</strong>; <strong>campos e ordem configuráveis por auditor</strong>; cores por tipo de ação; módulo dinâmico; <strong>auto-auditoria</strong> das configs; <strong>índices</strong> na <code>tb_auditoria</code>; <strong>poda diária</strong> por <code>auditoria_retencao_dias</code>; acesso <strong>exclusivo do <code>administrador_geral</code></strong> com registro de <code>acesso_negado</code> (backend + UI, RF-35) — <strong>REALIZADO</strong>.</p>
+<p><strong>Adição — Edição do módulo</strong> (<code>campo_modulo</code> do helper <code>mod_intranet/tema_modulo.py</code>, exibido só ao admin geral): permite editar <strong>nome de exibição, ícone e status (ativo/inativo)</strong> do módulo de auditoria em <code>tb_modulos</code>.</p>
               
             </div>
           </div><footer>

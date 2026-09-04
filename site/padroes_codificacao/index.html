@@ -240,6 +240,28 @@
 <ul>
 <li>Padrão <code>1.0.AAMMDD</code> (major.menor.data) — ver <a href="../versionamento/">Versionamento</a>.</li>
 </ul>
+<h2 id="7-padroes-aplicados-no-modulo-mod_renomear_empenho-exemplo-vivo">7. Padrões aplicados no módulo <code>mod_renomear_empenho</code> (exemplo vivo)<a class="headerlink" href="#7-padroes-aplicados-no-modulo-mod_renomear_empenho-exemplo-vivo" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>O módulo Renomeador de Empenho é referência concreta das convenções abaixo.</p>
+</blockquote>
+<ul>
+<li><strong>Duas camadas por módulo</strong> (<code>manipulador_bd.py</code> + <code>telas.py</code>), com <code>mostrar_tela(usuario_logado, perfil)</code> obrigatório (<code>telas.py:45</code>).</li>
+<li><strong>Banco WAL próprio</strong> (<code>db_mod_&lt;nome&gt;.db</code>) com <code>CREATOR</code> idempotente (<code>CREATE TABLE IF NOT EXISTS</code> + seeds condicionais) e <strong>migração de coluna</strong> para bancos antigos (<code>_migrar_coluna</code>, <code>manipulador_bd.py:278</code>).</li>
+<li><strong>Tabelas <code>tb_&lt;nome&gt;</code></strong>, colunas <code>snake_case</code> com prefixo semântico (<code>nome_arquivo_final</code>, <code>tipo_especial</code>, <code>motivo_recusa</code>).</li>
+<li><strong>Trilha de auditoria por arquivo</strong> (hash SHA-256) no próprio banco do módulo + <code>audit_log</code> central com hash — ver <code>tb_arquivos_auditoria</code>/<code>tb_eventos_arquivos</code>.</li>
+<li><strong>Perfil por aba</strong>: calcula <code>eh_admin = perfil == "administrador_geral" or eh_admin_do_modulo(usuario, "&lt;chave&gt;")</code> e restringe abas/funções a admin; valida o papel antes de qualquer escrita.</li>
+<li><strong>Configurações via <code>tb_config</code></strong> (chaves <code>empenhos_*</code>) lidas/aplicadas <strong>sem reiniciar</strong> — ver <a href="../configuracoes/">Configurações</a>.</li>
+<li><strong>Tabs manuais</strong> com <code>ui.tabs()</code>/<code>ui.tab_panels()</code> (padrão <code>mod_solicita_impressao</code>) em vez de helper de abas do módulo.</li>
+<li><strong>Segurança de caminho</strong>: normaliza com <code>os.path.realpath</code> e mantém lista de <strong>raízes protegidas</strong> (<code>raizes_navegacao</code>/<code>pasta_navegavel</code>) para anti-travessia; evita <code>..</code> em navegação.</li>
+<li><strong>Idempotência/não-reprocessamento</strong>: decide por nome padronizado e/ou registro no banco (<code>_arquivo_registrado_no_bd</code>).</li>
+<li><strong>Anti-colisão</strong> ao gerar destinos: sufixa (<code>_v2</code>, <code>_v3</code>) em vez de sobrescrever.</li>
+<li><strong>Regex configuráveis</strong> centralizadas em constantes/tabela (não espalhadas) com validação <code>re.compile</code> antes de persistir.</li>
+<li><strong>Import side-effect control</strong>: o módulo dispara <code>init_db_empenho()</code> na importação; por isso <code>inicializar_bancos()</code> deve rodar antes (ordem de import importa — ver <code>AGENTS.md</code>).</li>
+<li><strong>Sem classes de negócio/ORM</strong>; funções puras <code>snake_case</code>; validação de sintaxe via <code>ast.parse</code>.</li>
+</ul>
+<blockquote>
+<p>Regra de ouro: ao criar ou alterar um módulo, espelhe <code>mod_renomear_empenho</code>/<code>mod_solicita_impressao</code> e valide com <code>ast.parse</code> antes de submeter.</p>
+</blockquote>
               
             </div>
           </div><footer>

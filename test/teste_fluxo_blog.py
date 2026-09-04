@@ -187,22 +187,24 @@ def teste_auditoria_central():
     if not _admin_disponivel():
         print("  [SKIP] autor admin indisponível")
         return
-    from mod_intranet.conexao_bd import get_connection
+    # A auditoria agora fica no banco exclusivo db_mod_auditoria.db, na tabela
+    # por módulo tb_auditoria_blog (a tb_auditoria central virou legado).
+    from mod_auditoria.manipulador_bd import get_auditoria_connection
     antes = None
     pid = bd.criar_postagem("Auditável", "corpo", AUTOR_ADMIN)
     assert pid
-    conn = get_connection()
+    conn = get_auditoria_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM tb_auditoria WHERE modulo='blog' AND acao='criar_postagem'")
+        cur.execute("SELECT COUNT(*) FROM tb_auditoria_blog WHERE acao='criar_postagem'")
         antes = cur.fetchone()[0]
     finally:
         conn.close()
     bd.criar_postagem("Auditável 2", "corpo", AUTOR_ADMIN)
-    conn = get_connection()
+    conn = get_auditoria_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM tb_auditoria WHERE modulo='blog' AND acao='criar_postagem'")
+        cur.execute("SELECT COUNT(*) FROM tb_auditoria_blog WHERE acao='criar_postagem'")
         depois = cur.fetchone()[0]
     finally:
         conn.close()

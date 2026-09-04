@@ -3,8 +3,9 @@
 Roda manualmente:
     .venv/bin/python test/test_auditoria.py
 
-Cobre: índices da tb_auditoria, audit_log com rastreabilidade, poda por
-retenção configurável, permissão de acesso (exclusivo do admin geral) e a
+Cobre: índices da tabela por módulo no banco exclusivo de auditoria,
+audit_log com rastreabilidade no db_mod_auditoria.db, poda por retenção
+configurável, permissão de acesso (exclusivo do admin geral) e a
 preferência de campos/ordem persistida por usuário.
 """
 import sys
@@ -15,7 +16,8 @@ from datetime import datetime
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 from mod_intranet.conexao_bd import get_config, set_config, get_connection
-from mod_intranet.manipulador_bd import audit_log, garantir_rastreabilidade, get_auditoria_connection
+from mod_intranet.manipulador_bd import audit_log
+from mod_auditoria.manipulador_bd import get_auditoria_connection
 
 PASS = []
 FAIL = []
@@ -27,21 +29,22 @@ def check(nome, condicao):
 
 
 def _testar_indices():
-    print("\n== indices na tb_auditoria ==")
-    garantir_rastreabilidade()
-    conn = get_connection()
+    print("\n== indices na tabela por modulo (db_mod_auditoria.db) ==")
+    conn = get_auditoria_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='tb_auditoria'")
+        cur.execute("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='tb_auditoria_intranet'")
         nomes = {r[0] for r in cur.fetchall()}
     finally:
         conn.close()
-    for idx in ("idx_auditoria_modulo", "idx_auditoria_usuario", "idx_auditoria_timestamp"):
+    for idx in ("idx_aud_tb_auditoria_intranet_modulo",
+                "idx_aud_tb_auditoria_intranet_usuario",
+                "idx_aud_tb_auditoria_intranet_timestamp"):
         check(f"indice {idx}", idx in nomes)
 
 
 def _testar_audit_log():
-    print("\n== audit_log com rastreabilidade ==")
+    print("\n== audit_log com rastreabilidade no banco exclusivo ==")
     conn = get_auditoria_connection()
     try:
         audit_log("zz_aud_teste", "intranet", "teste_neo",
@@ -65,43 +68,37 @@ def _testar_audit_log():
 
 
 def _testar_poda():
-    print("\n== poda por retencao configurável ==")
+    print("\n== poda por retencao configurável (banco exclusivo) ==")
     from mod_intranet import rotinas
     retencao_prev = get_config("auditoria_retencao_dias", "")
-    conn = get_connection()
+    conn = get_auditoria_connection()
     cur = conn.cursor()
     try:
-        antigas = cur.execute(
-            "SELECT COUNT(*) FROM tb_auditoria "
-            "WHERE timestamp < datetime('now','localtime','-90 days')").fetchone()[0]
         set_config("auditoria_retencao_dias", "90")
         agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cur.execute(
-            "INSERT INTO tb_auditoria (usuario, modulo, acao, descricao, timestamp) "
+            "INSERT INTO tb_auditoria_intranet (usuario, modulo, acao, descricao, timestamp) "
             "VALUES ('zz_poda_teste','intranet','teste_neo','registro novo', ?)", (agora,))
         cur.execute(
-            "INSERT INTO tb_auditoria (usuario, modulo, acao, descricao, timestamp) "
+            "INSERT INTO tb_auditoria_intranet (usuario, modulo, acao, descricao, timestamp) "
             "VALUES ('zz_poda_teste','intranet','teste_neo','registro velho', "
             "'2000-01-01 00:00:00')")
         conn.commit()
         velho_id = cur.execute(
-            "SELECT id FROM tb_auditoria WHERE descricao='registro velho' "
+            "SELECT id FROM tb_auditoria_intranet WHERE descricao='registro velho' "
             "AND usuario='zz_poda_teste'").fetchone()[0]
         novo_id = cur.execute(
-            "SELECT id FROM tb_auditoria WHERE descricao='registro novo' "
+            "SELECT id FROM tb_auditoria_intranet WHERE descricao='registro novo' "
             "AND usuario='zz_poda_teste'").fetchone()[0]
 
-        if antigas == 0:
-            rotinas._job_poda_auditoria()
-            cur.execute("SELECT COUNT(*) FROM tb_auditoria WHERE id=?", (velho_id,))
-            check("poda remove registro mais antigo que a retencao", cur.fetchone()[0] == 0)
-        else:
-            print("  (skip destrutivo: banco ja possui registros antigos reais)")
+        rotinas._job_poda_auditoria()
+        cur.execute("SELECT COUNT(*) FROM tb_auditoria_intranet WHERE id=?", (velho_id,))
+        check("poda remove registro mais antigo que a retencao", cur.fetchone()[0] == 0)
 
-        cur.execute("SELECT COUNT(*) FROM tb_auditoria WHERE id=?", (novo_id,))
+        cur.execute("SELECT COUNT(*) FROM tb_auditoria_intranet WHERE id=?", (novo_id,))
         check("poda preserva registro dentro da retencao", cur.fetchone()[0] == 1)
 
-        cur.execute("DELETE FROM tb_auditoria WHERE usuario='zz_poda_teste'")
+        cur.execute("DELETE FROM tb_auditoria_intranet WHERE usuario='zz_poda_teste'")
         conn.commit()
     except Exception:
         check("poda sem excecao", False)

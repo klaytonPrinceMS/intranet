@@ -287,15 +287,24 @@
 <td style="text-align: left;"><strong>Implementado</strong> (aba Administração lista inativas)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>testes/teste_fluxo_blog.py</code> (33/33)</td>
-<td style="text-align: left;"><strong>Implementado</strong> (<code>testes/teste_fluxo_blog.py</code> — 33/33 OK)</td>
+<td style="text-align: left;"><code>test/teste_fluxo_blog.py</code> (33/33)</td>
+<td style="text-align: left;"><strong>Implementado</strong> (em <code>test/</code> — 33/33 OK)</td>
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p>Fase 3 <strong>REALIZADO</strong> e validado. O teste <code>test/teste_fluxo_blog.py</code> (33/33 OK)
+cobre sanitização XSS (nh3), conversores HTML/Markdown, CRUD, publicar/
+despublicar, soft delete, config local, modo única/histórico, largura de
+imagem e auditoria central. A checagem de auditoria foi atualizada para o
+banco exclusivo <code>db_mod_auditoria.db</code> (tabela <code>tb_auditoria_blog</code> — a
+<code>tb_auditoria</code> central virou legado, migrada via <code>migrar_dados_existentes</code>).</p>
+</blockquote>
 <h3 id="adicoes-recentes-2608">Adições recentes (26/08)<a class="headerlink" href="#adicoes-recentes-2608" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Painel "Administração"</strong> (expansão, exclusivo do admin do blog): bloco <strong>Aparência</strong> (prefixo blog_<em> — cor do botão/texto, tamanho via ui.color_input) e </em><em>config específica</em>*: blog_tags_permitidas (CSV das tags HTML aceitas na sanitização NH3, aplicada via tags_permitidas()), blog_texto_header. Salvo via set_config, vale sem reiniciar.</li>
 <li><strong>Versionamento</strong>: versao_modulo:blog = 1.0.260827 (seed em conexao_bd.init_db()), exibido no rodapé em /blog.</li>
+<li><strong>Edição do módulo</strong> (<code>campo_modulo</code> do helper <code>mod_intranet/tema_modulo.py</code>): permite ao admin editar <strong>nome de exibição, ícone e status (ativo/inativo)</strong> do blog em <code>tb_modulos</code>.</li>
 </ul>
               
             </div>

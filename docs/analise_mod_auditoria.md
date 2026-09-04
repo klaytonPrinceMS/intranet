@@ -43,3 +43,5 @@ Importa `mod_intranet.conexao_bd.get_connection`/`get_config`/`set_config` e `mo
 ## Status — Fases 6/9 do PLANO.md
 
 **Implementado:** leitura/filtro unificada da `tb_auditoria` central por data, **hora** (`strftime('%H:%M')`), usuário (LIKE), módulo e **categorias de ação**; colunas com IP e **rótulo de dispositivo**; **paginação server-side**; **exportação CSV**; **campos e ordem configuráveis por auditor**; cores por tipo de ação; módulo dinâmico; **auto-auditoria** das configs; **índices** na `tb_auditoria`; **poda diária** por `auditoria_retencao_dias`; acesso **exclusivo do `administrador_geral`** com registro de `acesso_negado` (backend + UI, RF-35) — **REALIZADO**.
+
+**Adição — Edição do módulo** (`campo_modulo` do helper `mod_intranet/tema_modulo.py`, exibido só ao admin geral): permite editar **nome de exibição, ícone e status (ativo/inativo)** do módulo de auditoria em `tb_modulos`.

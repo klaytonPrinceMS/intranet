@@ -82,6 +82,33 @@ O rodapé mostra as versões **da esquerda para a direita**: 1ª a versão globa
 | `gerar_hash_senha`, `marcar_trocar_senha` | mod_gest_cad_usuario |
 | `pode_publicar_no_blog`, `eh_admin_do_modulo` | mod_blog |
 
+## Padronização de tema e administração dos módulos — `tema_modulo.py`
+
+Helper central em `mod_intranet/tema_modulo.py` que unifica, em TODOS os módulos, a
+configuração de aparência e o gerenciamento dos próprios módulos — eliminando a duplicação de
+código e a variação de nomes que existiam entre as telas.
+
+- **`PREFIXO_POR_CHAVE` / `prefixo_da_chave(chave)`**: mapeia a chave do módulo
+  (`blog`, `usuarios`, `auditoria`, `editar_pdf`, `empenhos`, `solicita_impressao`) para o
+  prefixo das chaves em `tb_config` central (`blog_*`, `usuarios_*`, `auditoria_*`, `editpdf_*`,
+  `empenhos_*`, `solicita_impressao_*`).
+- **`ler_tema(chave, defaults...)` / `salvar_tema` / `restaurar_tema`**: as **6 chaves** de
+  aparência (`cor_botao`, `cor_texto_botao`, `cor_fundo`, `cor_titulo`, `btn_tamanho`,
+  `texto_header`), lidas/gravadas em `tb_config` central, com aplicação imediata (sem restart).
+- **`btn_cls(tamanho)` / `btn_style(cor_botao, cor_texto)`**: funções puras de classe/estilo.
+  Garantem a regra de **uniformidade** — todos os botões de uma mesma tela usam **sempre a mesma
+  cor/tamanho** (por construção, via o mesmo `_btn_style`/`_btn_cls` da tela e o mesmo prefixo).
+- **`bloco_aparencia(usuario_logado, chave, tema)`**: cupê "Aparência" padronizado da aba
+  Administração (cor do botão, cor do texto, fundo, títulos, tamanho e texto do cabeçalho), **com
+  botão Salvar próprio** e "Restaurar padrão", gravando via `salvar_tema` e audita.
+- **`campo_modulo(usuario_logado, chave)`**: cupê "Edição do módulo" que permite ao
+  administrador alterar **nome de exibição, ícone e status (ativo/inativo)** do módulo em
+  `tb_modulos` — hoje também disponível no painel central `/configuracoes`.
+
+**Adoção**: `edit_pdf` e `solicita_impressao` usam `bloco_aparencia` + `campo_modulo`; os demais
+módulos (`blog`, `usuarios`, `auditoria`, `empenhos`) usam `campo_modulo`. A regra de
+uniformidade e o helper são cobertos por `test/test_tema.py` (18 verificações standalone).
+
 ## Pontos de atenção
 
 - Bootstrap: `inicializar_bancos()` roda antes de qualquer import de módulo (`main.py:15-16`) — ordem crítica.

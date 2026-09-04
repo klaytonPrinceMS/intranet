@@ -94,9 +94,27 @@
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#contexto">Contexto</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#fluxos-do-almoxarifado">Fluxos do almoxarifado</a>
+    <li class="toctree-l2"><a class="reference internal" href="#as-abas">As abas</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-navegar">1. Navegar</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-fila-renomeacao">2. Fila Renomeação</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-pesquisar">3. Pesquisar</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-organizador-admin">4. Organizador (admin)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#5-solicitacao-todos-admin-gerencia">5. Solicitação (todos; admin gerencia)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#6-configuracoes-admin">6. Configurações (admin)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fluxos-principais">Fluxos principais</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#permissoes">Permissões</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#auditoria-e-seguranca">Auditoria e segurança</a>
     </li>
     </ul>
                   </li>
@@ -198,26 +216,73 @@
               
                 <h1 id="manual-de-uso-renomeador-de-empenho-intranet-modular">Manual de Uso — Renomeador de Empenho — Intranet Modular<a class="headerlink" href="#manual-de-uso-renomeador-de-empenho-intranet-modular" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Guia operacional do módulo Renomeador de Empenho (<code>/renomear-empenho</code>), que indexa, renomeia e organiza documentos de empenho. Este manual cobre o fluxo de almoxarifado — <strong>o sistema não possui perfil "almoxarife"</strong>; o fluxo é atendido ao usuário <code>comum</code> quando autorizado pelo administrador do módulo.</p>
+<p>Guia operacional do módulo Renomeador de Empenho (<code>/renomear-empenho</code>), que monitora pastas, extrai, renomeia, indexa e organiza documentos de empenho, e atende ao fluxo de solicitação de cópia (comum → administrador). A tela é dividida em <strong>6 abas</strong>: Navegar, Fila Renomeação, Pesquisar, Organizador (admin), Solicitação e Configurações (admin).</p>
 </blockquote>
 <h2 id="contexto">Contexto<a class="headerlink" href="#contexto" title="Permanent link">&para;</a></h2>
-<p>O sistema não possui um perfil denominado "almoxarife"; a função de almoxarifado é atendida pelo <strong>Renomeador de Empenho</strong> (<code>mod_renomear_empenho</code>), liberado para o usuário comum quando autorizado pelo administrador do módulo.</p>
-<h2 id="fluxos-do-almoxarifado">Fluxos do almoxarifado<a class="headerlink" href="#fluxos-do-almoxarifado" title="Permanent link">&para;</a></h2>
+<p>O módulo atende à função de almoxarifado/gestão de empenhos. Usuários <code>comum</code> navegam, pesquisam e (quando autorizados pelo administrador) baixam/solicitam cópias; o <strong>Organizador</strong> e as <strong>Configurações</strong> são exclusivos do administrador do módulo (ou <code>administrador_geral</code>).</p>
+<h2 id="as-abas">As abas<a class="headerlink" href="#as-abas" title="Permanent link">&para;</a></h2>
+<h3 id="1-navegar">1. Navegar<a class="headerlink" href="#1-navegar" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Monitor de pastas:</strong> varredura de PDFs (live ou intervalo configurável, padrão 10 s).</li>
+<li>Navegação <strong>recursiva</strong> pelas pastas monitoradas e pelo organizador, mostrando apenas PDFs (com breadcrumb e botão de "pasta anterior").</li>
+<li>Cada PDF mostra o status (<code>processado</code> / <code>pendente</code>). Para pendentes: <strong>baixar</strong>, <strong>revisar/renomear</strong> (normaliza o nome conforme o conteúdo e o tipo — DOC, EC, EE, EG, AE) e <strong>solicitar envio</strong>.</li>
+<li>Botões: <strong>Processar pasta agora</strong> (varre a raiz de todas as pastas monitoradas, com resumo ok/total) e <strong>Atualizar</strong>.</li>
+</ul>
+<h3 id="2-fila-renomeacao">2. Fila Renomeação<a class="headerlink" href="#2-fila-renomeacao" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Lista recursiva de PDFs ainda <strong>pendentes</strong> de renomeação.</li>
+<li><strong>Processar</strong> individualmente ou <strong>Processar todos</strong>. Pastas inacessíveis (ex.: rede fora do ar) são puladas.</li>
+</ul>
+<h3 id="3-pesquisar">3. Pesquisar<a class="headerlink" href="#3-pesquisar" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Busca textual</strong> via índice FTS5 (nome final, empenho, parcela, usuário e campos do cabeçalho indexado), com fallback <code>LIKE</code>.</li>
+<li>Tabela "Empenhos renomeados" com nome final, empenho, parcela, tipo, usuário e data.</li>
+</ul>
+<h3 id="4-organizador-admin">4. Organizador <em>(admin)</em><a class="headerlink" href="#4-organizador-admin" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Organizar caixas</strong>: distribui os renomeados em <code>organizadorPasta/caixa_NN/sub_X</code> (~200 páginas/pasta, 4 pastas/caixa).</li>
+<li><strong>Gerar capas/matriz</strong> e <strong>Validar matriz</strong> (<code>matrizDeDocumentos</code>).</li>
+<li><strong>Inventário</strong> de caixas e subpastas.</li>
+<li><strong>Ferramentas de PDF</strong> (corte, mescla, redução) sobre empenhos processados ou PDFs enviados; saídas em <code>datahora_cortePDF/</code>, <code>datahora_mergePDF/</code>, <code>datahora_reducaoPDF/</code>.</li>
+</ul>
+<h3 id="5-solicitacao-todos-admin-gerencia">5. Solicitação <em>(todos; admin gerencia)</em><a class="headerlink" href="#5-solicitacao-todos-admin-gerencia" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Usuário comum</strong>: solicita o envio de um documento informando seu e-mail (e mensagem opcional). A solicitação entra como <code>pendente</code>.</li>
+<li><strong>Administrador</strong>: para cada solicitação (agrupada por lote) pode <strong>Enviar por e-mail</strong> (via SMTP central), <strong>Gerar ZIP</strong> (pega para envio manual e baixa o arquivo) ou <strong>Recusar</strong> (com motivo). ZIP gerado pode ser <strong>Confirmar envio manual</strong> ou <strong>Cancelar ZIP</strong> (volta a pendente).</li>
+<li>Expansão <strong>Histórico completo</strong>: todas as solicitações, com status e método de envio.</li>
+</ul>
+<h3 id="6-configuracoes-admin">6. Configurações <em>(admin)</em><a class="headerlink" href="#6-configuracoes-admin" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Pastas monitoradas</strong> (uma por linha, local ou rede/UNC, ex.: <code>\\servidor\empenhos</code> ou <code>E:\scan</code>) — aplicado sem reiniciar.</li>
+<li><strong>Aparência</strong>: cor dos botões, texto, fundo, título e tamanho.</li>
+<li><strong>Configurações específicas</strong>: texto do cabeçalho, <strong>intervalo do monitor automático</strong> (recomendado 60 s) e autorização de download/ZIP/e-mail para comuns.</li>
+<li><strong>Nome final do arquivo</strong>: template configurável com as variáveis <code>{contador}</code>, <code>{empenho}</code>, <code>{empenho_cru}</code>, <code>{parcela}</code>, <code>{ficha}</code>, <code>{ano}</code> e formatação de largura (ex.: <code>{contador:04d}</code>). Tipos especiais usam nome próprio (<code>EC_0024.pdf</code>).</li>
+<li><strong>Campos de busca (regex)</strong>: identificar/cadastrar/editar as regex de cada campo (ficha/empenho/parcela/ano...) sem reiniciar.</li>
+<li><strong>Auditoria dos arquivos</strong>: consulta da trilha detectado→renomeado→removido por status.</li>
+<li><strong>Quarentena</strong>: itens com erro de leitura/regex; clique para <strong>Reprocessar com nova regex</strong>.</li>
+<li><strong>Regras de extração</strong>: regex dinâmicas, com ativação/inativação e campo FTS de destino.</li>
+</ul>
+<h2 id="fluxos-principais">Fluxos principais<a class="headerlink" href="#fluxos-principais" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Monitor de pastas:</strong> varre a raiz de cada pasta monitorada (local/UNC), processando PDFs novos e registrando os removidos; em rede, pastas inacessíveis são puladas.</li>
 <li><strong>Extração:</strong> fallback <code>pytesseract</code> → <code>pdfplumber</code> → <code>pikepdf</code> → <code>pymupdf</code> (trata OCR e encoding).</li>
-<li><strong>Indexação FTS5:</strong> busca por pagador, CPF, valor, órgão, SISBB etc. (<code>tb_indexador_pesquisa_fts5</code>).</li>
-<li><strong>Quarentena:</strong> PDFs com erro de leitura/Regex não reconhecido vão para fila; o admin identifica manualmente ou cadastra Regex dinâmico (reprocessa sem reiniciar).</li>
-<li><strong>Renomeação:</strong> automática quando campos validados; ou sequencial (<code>doc_0032_numEmpenho_numParcela.pdf</code>).</li>
-<li><strong>Organizador físico:</strong> subpastas ~200 páginas, 4 pastas/caixa, capas PDF/TXT; validação via <code>matrizDeDocumentos.pdf</code>.</li>
-<li><strong>Edição embutida:</strong> corte, merge, redução de tamanho (saídas em <code>datahora_*PDF/</code>).</li>
+<li><strong>Tipos especiais:</strong> EC (complementação), EE (estimativo), EG (global) e AE (anulação) são detectados pelo conteúdo e renomeados com nome próprio.</li>
+<li><strong>Indexação FTS5:</strong> busca por pagador, CPF, valor, órgão etc. (<code>tb_indexador_pesquisa_fts5</code>).</li>
+<li><strong>Quarentena:</strong> PDFs com erro de leitura/regex vão para a fila; o admin reprocessa individualmente (regex alternativa na hora).</li>
+<li><strong>Renomeação:</strong> automática (monitor/botão) ou manual (filas/revisão), com <strong>gate de validação</strong> — só renomeia com nº identificado; anti-colisão (<code>_v2</code>) evita sobrescrever.</li>
+<li><strong>Organizador físico:</strong> subpastas ~200 páginas, 4 pastas/caixa, capas e <code>matrizDeDocumentos</code>.</li>
+<li><strong>Solicitações:</strong> comum pede cópia; admin envia por e-mail ou ZIP; tudo fica no histórico.</li>
 </ul>
 <h2 id="permissoes">Permissões<a class="headerlink" href="#permissoes" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>comum</code> liberado: pesquisa, solicitar envio/ZIP, visualizar/baixar conforme autorização do admin do módulo.</li>
-<li>Auditoria com hash SHA-256 em toda operação (<code>tb_auditoria</code>, módulo <code>empenhos</code>).</li>
+<li><code>comum</code>: Navegar, Fila, Pesquisar, Solicitar; <strong>baixar/enviar somente se</strong> <code>renomear_autorizar_download = 1</code> (admin).</li>
+<li>Admin do módulo / <code>administrador_geral</code>: tudo acima + Organizador, ferramentas de PDF, gerenciamento de solicitações e Configurações.</li>
 </ul>
-<p>Veja <a href="../manual_de_uso_usuario_comum/">Manual do Usuário Comum</a> e <a href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>.</p>
+<h2 id="auditoria-e-seguranca">Auditoria e segurança<a class="headerlink" href="#auditoria-e-seguranca" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Toda operação relevante é registrada na auditoria central com <strong>hash SHA-256</strong> (módulo <code>empenhos</code>) e na trilha por arquivo do próprio módulo.</li>
+<li>Autenticação e perfis pelo núcleo (<code>mod_intranet</code>); não há gestão própria de usuários neste módulo.</li>
+</ul>
+<p>Veja <a href="../manual_de_uso_usuario_comum/">Manual do Usuário Comum</a> e <a href="../analise_mod_renomear_empenho/">Análise do Módulo</a>.</p>
               
             </div>
           </div><footer>

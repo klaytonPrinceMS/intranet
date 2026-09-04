@@ -8,7 +8,7 @@ from nicegui import ui, app
 from fastapi.responses import FileResponse, Response, RedirectResponse
 
 from mod_intranet.conexao_bd import (
-    get_connection, DB_PATH, get_config
+    get_config
 )
 from mod_intranet import autenticacao
 
@@ -170,11 +170,8 @@ def page_dashboard():
                 n_users = len(gest.listar_usuarios(filtro_ativo=True))
                 from mod_blog import manipulador_bd as blog
                 n_posts = blog.contar_postagens(ativo=True)
-                conn = get_connection()
-                cur = conn.cursor()
-                cur.execute("SELECT COUNT(*) FROM tb_auditoria")
-                n_logs = cur.fetchone()[0]
-                conn.close()
+                from mod_auditoria.manipulador_bd import contar_registros
+                n_logs = contar_registros()
                 return n_users, n_posts, n_logs
 
             with ui.column().classes("col-span-1 max-sm:col-span-1 w-full gap-4"):

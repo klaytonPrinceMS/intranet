@@ -164,19 +164,20 @@ def main():
     okq, _msgq = m.verificar_quota("zzz_ninguem", 1024)
     check("quota disponivel p/ usuario novo", okq)
 
-    print("\n== auditoria com hash (tb_auditoria central) ==")
+    print("\n== auditoria com hash (banco exclusivo por módulo) ==")
     from mod_intranet.manipulador_bd import audit_log
     audit_log("zzz_teste_56", "edit-pdf", "teste_hash",
               f"sha256 origem=[{h1}]", hash_arquivo=h1)
-    conn = get_connection()
+    from mod_auditoria.manipulador_bd import get_auditoria_connection
+    conn = get_auditoria_connection()
     cur = conn.cursor()
-    cur.execute("""SELECT descricao, hash_arquivo FROM tb_auditoria
+    cur.execute("""SELECT descricao, hash_arquivo FROM tb_auditoria_edit_pdf
                    WHERE usuario='zzz_teste_56' AND acao='teste_hash'
                    ORDER BY id DESC LIMIT 1""")
     linha = cur.fetchone()
     conn.close()
-    check("hash completo persistido na tb_auditoria",
-          h1 in linha[0] and linha[1] == h1)
+    check("hash completo persistido na auditoria",
+          linha and h1 in linha[0] and linha[1] == h1)
 
     print("\n== expirar_antigos ==")
     velho = os.path.join(base, "velho.pdf")

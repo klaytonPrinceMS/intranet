@@ -96,6 +96,81 @@ def _extrair_modulo(tabela: str) -> str:
     return tabela.replace("tb_auditoria_", "").replace("_", "-")
 
 
+def registrar_auditoria(usuario, modulo, acao, descricao, hash_arquivo=None,
+                        ip=None, user_agent=None, client_hostname=None,
+                        timestamp=None):
+    """Grava a ação na tabela exclusiva do módulo em db_mod_auditoria.db.
+
+    A tabela é criada automaticamente (e registrada em tb_auditoria_meta)
+    caso ainda não exista, de modo que novos módulos passam a auditar
+    sem nenhuma edição no módulo de auditoria.
+    """
+    if timestamp is None:
+        import datetime as _dt
+        timestamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    conn = get_auditoria_connection()
+    try:
+        tabela = _nome_tabela(modulo)
+        _garantir_tabela_auditoria(conn, tabela, modulo)
+        cur = conn.cursor()
+        cur.execute(
+            f"INSERT INTO {tabela} (usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent, client_hostname, timestamp)"
+            f" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent,
+             client_hostname, timestamp),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def contar_registros(tabela=None):
+    """Total de registros no banco de auditoria (uma tabela ou todas)."""
+    conn = get_auditoria_connection()
+    try:
+        cur = conn.cursor()
+        if tabela:
+            cur.execute(f"SELECT COUNT(*) FROM {tabela}")
+            return cur.fetchone()[0]
+        total = 0
+        for tbl in get_tabelas_auditoria():
+            try:
+                cur.execute(f"SELECT COUNT(*) FROM {tbl}")
+                total += cur.fetchone()[0]
+            except Exception:
+                continue
+        return total
+    finally:
+        conn.close()
+
+
+def podar_registros(dias):
+    """Remove registros mais antigos que `dias` em todas as tabelas de auditoria.
+
+    Aplica a política LGPD de retenção de forma uniforme a cada tabela por
+    módulo. Retorna o número total de registros removidos.
+    """
+    import datetime as _dt
+    removidos = 0
+    conn = get_auditoria_connection()
+    try:
+        cur = conn.cursor()
+        for tbl in get_tabelas_auditoria():
+            try:
+                cur.execute(
+                    f"DELETE FROM {tbl} "
+                    "WHERE timestamp < datetime('now','localtime', ?)",
+                    (f"-{int(dias)} days",),
+                )
+                removidos += cur.rowcount
+            except Exception:
+                continue
+        conn.commit()
+    finally:
+        conn.close()
+    return removidos
+
+
 def buscar_logs(tabela=None, filtro_usuario="", filtro_modulo="",
                 filtro_acao="", filtro_hora="", data_inicio="", data_fim="",
                 pagina=1, limite_sql=1000):
@@ -177,9 +252,38 @@ def buscar_logs(tabela=None, filtro_usuario="", filtro_modulo="",
         conn.close()
 
 
-def migrar_dados_existentes():
-    """Migra dados da antiga tb_auditoria em db_mod_intranet.db para as novas tabelas por módulo."""
+def _remover_legado_central():
+    """Remove a tabela tb_auditoria legada do banco central.
+
+    Após a auditoria migrar para o banco exclusivo (db_mod_auditoria.db, uma
+    tabela por módulo), a tb_auditoria central virou resíduo e é descartada.
+    """
     from mod_intranet.conexao_bd import get_connection as _get_central_conn
+    try:
+        conn = _get_central_conn()
+        try:
+            conn.execute("DROP TABLE IF EXISTS tb_auditoria")
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception:
+        pass
+
+
+def migrar_dados_existentes(forcar=False):
+    """Migra dados da antiga tb_auditoria em db_mod_intranet.db para as novas
+    tabelas por módulo.
+
+    Idempotente: só roda uma única vez (marcador persistido na central,
+    'auditoria_migracao_concluida' = '1'). Use forcar=True para forçar uma
+    nova rodada (p.ex. em testes ou manutenção). Ao concluir, a tb_auditoria
+    legada do banco central é removida.
+    """
+    from mod_intranet.conexao_bd import get_config, set_config
+    from mod_intranet.conexao_bd import get_connection as _get_central_conn
+    if not forcar and get_config("auditoria_migracao_concluida", "") == "1":
+        _remover_legado_central()
+        return 0
     central_conn = _get_central_conn()
     try:
         cur_central = central_conn.cursor()
@@ -215,6 +319,8 @@ def migrar_dados_existentes():
         audit_conn.commit()
     finally:
         audit_conn.close()
+    set_config("auditoria_migracao_concluida", "1")
+    _remover_legado_central()
     return len(rows)
 
 

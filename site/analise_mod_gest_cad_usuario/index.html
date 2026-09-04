@@ -288,16 +288,51 @@
 <h2 id="status-fases-2-e-25-do-planomd">Status — Fases 2 e 2.5 do PLANO.md<a class="headerlink" href="#status-fases-2-e-25-do-planomd" title="Permanent link">&para;</a></h2>
 <p><strong>Implementado:</strong> CRUD completo (criar, editar, renomear, bloquear/desbloquear, soft delete, exclusão definitiva LGPD); hash <strong>bcrypt</strong>; múltiplos perfis globais (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) e papéis granulares por módulo (<code>tb_acesso_usuario</code>); seed <code>master</code>/<code>master</code> com troca obrigatória de senha no 1º login (auto-cura idempotente em boot); senha provisória (<code>forcar_troca</code>); nome completo/social (<code>user_nome_completo</code>, Decreto 8.727/2016); exclusão em 2 estágios com motivo; limpeza cruzada LGPD (Blog/editorPDF/empenhos anonimizados, auditoria preservada); proteções (vedado agir sobre a própria conta, <code>master</code> não renomeável/excluível); lista paginada (10/20/50/100), busca instantânea (debounce 150 ms), filtros situação/perfil e badges (ativo/bloqueado/excluído/senha provisória); alerta de módulos inexistentes (vínculos órfãos como INDISPONÍVEL); gestão/revogação de sessões ativas + histórico; auditoria central LGPD.</p>
 <p><strong>Desvios aceitáveis:</strong> tabela chama-se <code>tb_usuarios</code> (não <code>tb_usuario</code>); não há tabela <code>tb_perfil</code> separada; rota real é <code>/users</code> (não <code>/gestao-usuarios</code>).</p>
-<p><strong>Parcial/Pendente (RF-26 finalizado e documentado; abaixo os gaps reais):</strong></p>
-<ul>
-<li><strong>Proteção do último <code>administrador_geral</code> contra bloqueio/rebaixamento por OUTRO admin</strong> (RF-26): <code>editar_usuario</code>/<code>bloquear_usuario</code> bloqueiam rebaixar ou bloquear o último <code>administrador_geral</code> ativo quando o ator é outro admin — <strong>REALIZADO</strong> (<code>mod_gest_cad_usuario/manipulador_bd.py</code>).</li>
-<li>Testes <code>testes/teste_fluxo_autenticacao.py</code> e <code>testes/teste_fluxo_permissoes.py</code> citados na Fase 2.5 não existem (há apenas <code>test/test_fase1_login.py</code> e <code>test/validar_fase1_login.py</code>).</li>
-<li>Senha provisória aleatória revelada ao admin não implementada (o admin digita a senha manualmente).</li>
-</ul>
+<p><strong>Proteção do último <code>administrador_geral</code> contra bloqueio/rebaixamento por OUTRO admin</strong> (RF-26): <code>editar_usuario</code>/<code>bloquear_usuario</code> bloqueiam rebaixar ou bloquear o último <code>administrador_geral</code> ativo quando o ator é outro admin — <strong>REALIZADO</strong> (<code>mod_gest_cad_usuario/manipulador_bd.py</code>).</p>
+<h2 id="fase-25-testes-do-fluxo-completo">Fase 2.5 — Testes do fluxo completo<a class="headerlink" href="#fase-25-testes-do-fluxo-completo" title="Permanent link">&para;</a></h2>
+<p>A Fase 2.5 do PLANO.md foi <strong>concluída</strong> com scripts standalone em <code>test/</code>
+(no padrão do projeto, não em <code>testes/</code> como o PLANO chegou a citar). Todos
+autocontidos (criam usuários de nome único e os removem definitivamente ao
+fim — LGPD), sem destruir dados do desenvolvedor:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Script</th>
+<th style="text-align: left;">Cobertura</th>
+<th style="text-align: left;">Resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>test/teste_boot.py</code></td>
+<td style="text-align: left;">Bootstrap cria os bancos do zero + seed <code>master</code>; <code>main.py</code> importa; Tailwind <strong>local</strong> (sem CDN) + CSS custom no <code>/login</code>; HTTP real em <code>/login</code> (200 + Tailwind local) quando o servidor está no ar</td>
+<td style="text-align: left;">16/16 OK</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>test/teste_fluxo_autenticacao.py</code></td>
+<td style="text-align: left;">Login → senha provisória → troca obrigatória no 1º acesso → sessão/logout (revogação) → trilha de auditoria central → soft delete → restauração</td>
+<td style="text-align: left;">19/19 OK</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>test/teste_fluxo_permissoes.py</code></td>
+<td style="text-align: left;">Concessão/atualização/revogação de perfil por módulo + admin geral vê tudo (auditoria exclusiva)</td>
+<td style="text-align: left;">13/13 OK</td>
+</tr>
+</tbody>
+</table>
+<p>Os testes refletem o comportamento atual do núcleo:
+- <strong>Auditoria</strong> agora é gravada no banco exclusivo <code>db_mod_auditoria.db</code> (tabela
+  por módulo, ex. <code>tb_auditoria_blog</code>), e não mais na <code>tb_auditoria</code> central
+  (legado migrado via <code>migrar_dados_existentes</code>).
+- <strong>Senha provisória</strong> é digitada pelo administrador (não gerada aleatória):
+  geração aleatória continua <strong>não implementada</strong> — desvio documentado.
+- Controle granular é aplicado via <code>validar_acesso_modulo</code>/<code>listar_modulos_permitidos</code>,
+  usados no menu lateral, cards do dashboard e página <code>/modulo/{slug}</code></p>
 <h3 id="adicoes-recentes-2608">Adições recentes (26/08)<a class="headerlink" href="#adicoes-recentes-2608" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Aba "Administração"</strong> (exclusiva do admin geral, nas tabs existentes): bloco <strong>Aparência</strong> (prefixo usuarios_<em> — cor do botão/texto, fundo da página, cor do título, tamanho via ui.color_input; a cor do botão também define a primária da tela) e </em><em>config específica</em>*: usuarios_senha_min (política de senha mínima, aplicada em criar_usuario/alterar_senha_admin via senha_minima()). Salvo via set_config, vale sem reiniciar.</li>
 <li><strong>Versionamento</strong>: versao_modulo:usuarios = 1.0.260827 (seed em conexao_bd.init_db()), exibido no rodapé em /users (rota → chave usuarios).</li>
+<li><strong>Edição do módulo</strong> (<code>campo_modulo</code> do helper <code>mod_intranet/tema_modulo.py</code>): permite ao admin editar <strong>nome de exibição, ícone e status (ativo/inativo)</strong> do módulo de usuários em <code>tb_modulos</code>.</li>
 </ul>
               
             </div>

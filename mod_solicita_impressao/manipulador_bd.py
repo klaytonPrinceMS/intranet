@@ -73,7 +73,7 @@ def get_connection():
 # ================= AUDITORIA =================
 
 def _audit(usuario, acao, descricao, hash_arquivo=None):
-    """Registra na tb_auditoria central (LGPD)."""
+    """Registra na auditoria (db_mod_auditoria.db, tabela por módulo — LGPD)."""
     try:
         from mod_intranet.manipulador_bd import audit_log
         audit_log(usuario or "sistema", "solicita_impressao", acao, descricao, hash_arquivo)

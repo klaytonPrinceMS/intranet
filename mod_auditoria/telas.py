@@ -14,11 +14,16 @@ import json
 from datetime import datetime
 
 from nicegui import ui
-from mod_intranet.conexao_bd import get_config, set_config, get_connection
+from mod_intranet.conexao_bd import get_config, set_config
 from mod_intranet.contexto import rotulo_dispositivo
 from mod_intranet import observabilidade
 from mod_intranet.aba_modulo import cabecalho, abas
+from mod_intranet.tema_modulo import campo_modulo
 from mod_intranet.manipulador_bd import audit_log
+from mod_auditoria.manipulador_bd import (
+    buscar_logs as buscar_logs_auditoria,
+    get_modulos_com_auditoria,
+)
 
 log = observabilidade.get_logger("auditoria")
 
@@ -155,6 +160,37 @@ def mostrar_tela(usuario_logado: str, perfil: str):
     total_paginas = 1
     _ultimos_logs = []
 
+    # ---------- Navegação por tabela de auditoria ----------
+    # None = "todas as tabelas"; caso contrário, o nome da tabela
+    # (tb_auditoria_<modulo>) selecionada no menu de navegação.
+    tabela_atual = None
+
+    # Rótulos amigáveis por chave de módulo, usados no menu de navegação.
+    DEFS_NAV = {
+        "intranet": "Intranet (núcleo)",
+        "gest_cad_usuario": "Gestão de Usuários",
+        "blog": "Blog",
+        "edit-pdf": "Editor de PDF",
+        "renomear-empenho": "Renomear Empenhos",
+        "solicita_impressao": "Solicitação de Impressão",
+        "auditoria": "Auditoria",
+    }
+
+    def _rotulo_modulo(chave):
+        return DEFS_NAV.get(chave, chave.replace("_", " ").replace("-", " ").title())
+
+    def _opcoes_navegacao():
+        """Mapeia cada tabela de auditoria para um rótulo amigável."""
+        opcoes = [("", "Todas as auditorias")]
+        try:
+            for modulo, tabela in get_modulos_com_auditoria():
+                opcoes.append((tabela, _rotulo_modulo(modulo)))
+        except Exception:
+            log.exception("falha ao listar tabelas de auditoria")
+        # Ordena por rótulo, mantendo "Todas" no topo.
+        opcoes = opcoes[:1] + sorted(opcoes[1:], key=lambda o: o[1])
+        return dict(opcoes)
+
     # ---------- Helpers ----------
     def _linha_bruta(r):
         """Dict 'chave -> valor' a partir da tupla do SELECT (antes da UI)."""
@@ -171,42 +207,18 @@ def mostrar_tela(usuario_logado: str, perfil: str):
 
     def _buscar_logs(filtro_usuario="", filtro_modulo="", filtro_acao="",
                      data_inicio="", data_fim="", filtro_hora="", pagina=1):
-        conn = get_connection()
-        try:
-            cur = conn.cursor()
-            where = " WHERE 1=1"
-            params = []
-            if filtro_usuario:
-                where += " AND usuario LIKE ?"
-                params.append(f"%{filtro_usuario}%")
-            if filtro_modulo:
-                where += " AND modulo = ?"
-                params.append(filtro_modulo)
-            if filtro_acao:
-                where += " AND acao LIKE ?"
-                params.append(f"%{filtro_acao}%")
-            if filtro_hora:
-                where += " AND strftime('%H:%M', timestamp) LIKE ?"
-                params.append(f"%{filtro_hora}%")
-            if data_inicio:
-                where += " AND timestamp >= ?"
-                params.append(f"{data_inicio} 00:00:00")
-            if data_fim:
-                where += " AND timestamp <= ?"
-                params.append(f"{data_fim} 23:59:59")
-            cur.execute(f"SELECT COUNT(*) FROM tb_auditoria{where}", params)
-            total = cur.fetchone()[0]
-            offset = max(0, (int(pagina) - 1) * limite_sql)
-            sql = (f"SELECT id, usuario, modulo, acao, descricao, hash_arquivo,"
-                   f" strftime('%d/%m/%Y %H:%M:%S', timestamp), ip, user_agent"
-                   f" FROM tb_auditoria{where} ORDER BY id DESC LIMIT ? OFFSET ?")
-            cur.execute(sql, params + [limite_sql, offset])
-            return cur.fetchall(), total
-        except Exception:
-            log.exception("falha ao buscar logs de auditoria")
-            return [], 0
-        finally:
-            conn.close()
+        log.info(f"[DIAG] _buscar_logs chamado com tabela_atual={tabela_atual!r}")
+        return buscar_logs_auditoria(
+            tabela=tabela_atual,
+            filtro_usuario=filtro_usuario,
+            filtro_modulo=filtro_modulo,
+            filtro_acao=filtro_acao,
+            filtro_hora=filtro_hora,
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            pagina=pagina,
+            limite_sql=limite_sql,
+        )
 
     def _render_tabela():
         ativos = _campos_ativos()
@@ -217,8 +229,6 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                 continue
             col = {"name": chave, "label": label, "field": chave,
                    "align": "center" if chave == "data" else "left"}
-            if chave == "acao":
-                col["html"] = True
             colunas.append(col)
         tabela.columns = colunas
         linhas = []
@@ -246,10 +256,10 @@ def mostrar_tela(usuario_logado: str, perfil: str):
         pagina_atual = max(1, pagina)
         rows, total = _buscar_logs(
             filtro_usuario=filtro_usuario.value or "",
-            filtro_modulo=filtro_modulo.value or "",
+            filtro_modulo="",
             filtro_acao=filtro_acao.value or "",
-            data_inicio=data_inicio.value or "",
-            data_fim=data_fim.value or "",
+            data_inicio=holder_inicio["data"] or "",
+            data_fim=holder_fim["data"] or "",
             filtro_hora=filtro_hora.value or "",
             pagina=pagina_atual,
         )
@@ -259,10 +269,10 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             pagina_atual = total_paginas
             rows, _ = _buscar_logs(
                 filtro_usuario=filtro_usuario.value or "",
-                filtro_modulo=filtro_modulo.value or "",
+                filtro_modulo="",
                 filtro_acao=filtro_acao.value or "",
-                data_inicio=data_inicio.value or "",
-                data_fim=data_fim.value or "",
+                data_inicio=holder_inicio["data"] or "",
+                data_fim=holder_fim["data"] or "",
                 filtro_hora=filtro_hora.value or "",
                 pagina=pagina_atual,
             )
@@ -290,12 +300,14 @@ def mostrar_tela(usuario_logado: str, perfil: str):
         log.info(f"CSV exportado por {usuario_logado} | {len(_ultimos_logs)} linha(s)")
 
     def _limpar_filtros():
+        nonlocal tabela_atual
         filtro_usuario.value = ""
-        filtro_modulo.value = ""
+        nav_tabela.value = ""
+        tabela_atual = None
         filtro_acao.value = ""
         filtro_hora.value = ""
-        data_inicio.value = None
-        data_fim.value = None
+        _limpar_inicio()
+        _limpar_fim()
         _atualizar_tabela(reset=True)
 
     def _mover_campo(i, delta):
@@ -338,27 +350,21 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             with ui.row().classes("w-full gap-3 flex-wrap mb-3 items-end"):
                 filtro_usuario = ui.input("Filtrar usuário").props("outlined dense").classes("w-40")
 
-                # Select de módulo DINÂMICO: módulos registrados (inclusive os
-                # cadastrados depois) + produtores atuais da trilha (chaves reais).
-                modulos_opcoes = {"": "Todos os módulos"}
-                try:
-                    from mod_intranet import autenticacao
-                    for chave, nome, _i, _r, _a in autenticacao.modulos_registrados():
-                        modulos_opcoes.setdefault(chave, nome or chave)
-                except Exception:
-                    pass
-                for chave, nome in (
-                    ("intranet", "Intranet (núcleo)"),
-                    ("gest_cad_usuario", "Gestão de Usuários"),
-                    ("blog", "Blog"),
-                    ("edit-pdf", "Editor de PDF"),
-                    ("renomear-empenho", "Renomear Empenhos"),
-                    ("solicita_impressao", "Solicitação de Impressão"),
-                    ("auditoria", "Auditoria"),
-                ):
-                    modulos_opcoes.setdefault(chave, nome)
-                filtro_modulo = ui.select(modulos_opcoes, value="", label="Filtrar módulo") \
-                    .props("outlined dense").classes("w-56")
+                # Navegação DINÂMICA por tabela de auditoria: cada módulo que
+                # grava auditoria tem a sua tabela (tb_auditoria_<modulo>). O
+                # menu é montado automaticamente a partir do banco, então novos
+                # módulos aparecem aqui sem editar o módulo de auditoria.
+                nav_opcoes = _opcoes_navegacao()
+                nav_tabela = ui.select(nav_opcoes, value="", label="Visualizar auditoria de") \
+                    .props("outlined dense").classes("w-64")
+
+                def _on_navegar():
+                    nonlocal tabela_atual, pagina_atual
+                    tabela_atual = nav_tabela.value or None
+                    log.info(f"[DIAG] _on_navegar -> nav_tabela.value={nav_tabela.value!r} tabela_atual={tabela_atual!r}")
+                    _atualizar_tabela(reset=True)
+
+                nav_tabela.on_value_change(_on_navegar)
 
                 # Categorias de ação prontas (cores por tipo) + texto livre.
                 opcoes_acao = {"": "Todas as ações"}
@@ -369,12 +375,51 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     .props("outlined dense").classes("w-60")
 
                 filtro_hora = ui.input("Filtrar hora (HH:MM)").props("outlined dense").classes("w-40")
-                with ui.column().classes("gap-0"):
-                    ui.label("Data inicial").classes("text-caption text-grey-7")
-                    data_inicio = ui.date(value=None).props("outlined dense")
-                with ui.column().classes("gap-0"):
-                    ui.label("Data final").classes("text-caption text-grey-7")
-                    data_fim = ui.date(value=None).props("outlined dense")
+
+                # Datas em modo "clicar para exibir": um campo compacto que só
+                # mostra o calendário (popup) quando o usuário clica — evita o
+                # calendário aberto o tempo todo e melhora a UX.
+                def _fmt_data(iso):
+                    if not iso:
+                        return ""
+                    try:
+                        return datetime.strptime(iso, "%Y-%m-%d").strftime("%d/%m/%Y")
+                    except (ValueError, TypeError):
+                        return iso
+
+                def _campo_data(rotulo):
+                    """Campo de data com calendário em popup (abre só ao clicar)."""
+                    campo = ui.input(rotulo, placeholder="dd/mm/aaaa") \
+                        .props("outlined dense readonly").classes("w-40")
+                    menu = ui.menu().props("no-parent-event")
+                    holder = {"data": None, "cal": None}
+
+                    def _abrir():
+                        if holder["cal"] is not None:
+                            holder["cal"].value = holder["data"]
+                        menu.open()
+
+                    campo.on('click', _abrir)
+
+                    with menu:
+                        cal = ui.date(value=None).props("mask YYYY-MM-DD")
+
+                        def _ao_escolher(e):
+                            holder["data"] = e.value
+                            campo.value = _fmt_data(e.value)
+                            menu.close()
+
+                        cal.on_value_change(_ao_escolher)
+                        holder["cal"] = cal
+
+                    def _limpar():
+                        holder["data"] = None
+                        campo.value = ""
+
+                    return campo, holder, _limpar
+
+                data_inicio, holder_inicio, _limpar_inicio = _campo_data("Data inicial")
+                data_fim, holder_fim, _limpar_fim = _campo_data("Data final")
                 ui.button("Buscar", icon="search",
                       on_click=lambda: _atualizar_tabela(reset=True)) \
                     .props("unelevated").classes(_btn_cls()).style(_btn_style())
@@ -424,6 +469,12 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             colunas_iniciais = [{"name": c, "label": l, "field": c} for c, l in CAMPOS]
             tabela = ui.table(columns=colunas_iniciais, rows=[], row_key="id") \
                 .props("flat bordered dense").classes("w-full")
+            # Coluna "Ação" com cor por categoria: o Quasar (v2) não renderiza a
+            # flag `html` das colunas, então injetamos um slot de corpo customizado
+            # que renderiza o HTML preparado em _linha_bruta via v-html.
+            tabela.add_slot("body-cell-acao", """
+                <q-td :props="props"><span v-html="props.value"></span></q-td>
+            """)
 
             with ui.row().classes("w-full items-center justify-between mt-2"):
                 btn_prev = ui.button("Anterior", icon="chevron_left",
@@ -501,5 +552,6 @@ def mostrar_tela(usuario_logado: str, perfil: str):
 
                             ui.button("Salvar", icon="save", on_click=_salvar) \
                                 .props("unelevated").style(_btn_style())
+                campo_modulo(usuario_logado, "auditoria")
             _atualizar_tabela()
             ui.timer(30.0, _atualizar_tabela)

@@ -172,6 +172,30 @@ def init_db():
         conn.commit(); conn.close()
         marcar_trocar_senha("master", True)
 
+    # Garante usuários de teste de QA (docs) — qacomum (comum) e qamaster (administrador_geral)
+    from mod_intranet.autenticacao import gerar_hash_senha, marcar_trocar_senha
+    conn = get_connection(); cur = conn.cursor()
+    if not obter_usuario("qacomum"):
+        cur.execute(
+            "INSERT INTO tb_usuarios (user_nome, user_senha, user_perfil, user_ativo, user_nome_completo) VALUES (?, ?, 'comum', 1, ?)",
+            ("qacomum", gerar_hash_senha("123456"), "Usuário de Teste QA Comum"),
+        )
+        for chave in ("blog", "editar_pdf", "empenhos"):
+            cur.execute(
+                "INSERT OR IGNORE INTO tb_acesso_usuario (user_nome, modulo_chave, papel, liberado_por) VALUES (?, ?, 'comum', 'sistema')",
+                ("qacomum", chave),
+            )
+        conn.commit()
+        marcar_trocar_senha("qacomum", True)
+    if not obter_usuario("qamaster"):
+        cur.execute(
+            "INSERT INTO tb_usuarios (user_nome, user_senha, user_perfil, user_ativo, user_nome_completo) VALUES (?, ?, 'administrador_geral', 1, ?)",
+            ("qamaster", gerar_hash_senha("123456"), "Usuário de Teste QA Master"),
+        )
+        conn.commit()
+        marcar_trocar_senha("qamaster", True)
+    conn.close()
+
 
 # ================= CONSULTAS =================
 
@@ -603,6 +627,34 @@ def excluir_usuario_definitivo(ator, user_nome):
     finally:
         conn.close()
 
+
+def duplicar_usuario(ator, usuario_origem, novo_nome, senha, email=None,
+                     fone=None, nome_completo=""):
+    """Duplica um usuário existente e todas as suas configurações de acesso.
+
+    Copia o perfil global e o papel do usuário origem em cada módulo
+    (tb_acesso_usuario). O novo usuário é criado exigindo apenas os dados
+    essenciais (login, nome, senha e email) — as permissões vêm da origem.
+    """
+    origem = obter_usuario(usuario_origem)
+    if not origem:
+        return False, "Usuário origem não encontrado"
+    perfil_origem = origem[5]
+    ok, msg = criar_usuario(ator, novo_nome, senha,
+                            email=email, fone=fone, perfil=perfil_origem,
+                            nome_completo=nome_completo)
+    if not ok:
+        return False, msg
+    # replica acessos por módulo (perfil) da origem
+    for chave, papel, _liberado, _data in listar_acessos(usuario_origem):
+        gest_sys = definir_acesso(ator, novo_nome, chave, papel)
+        if not gest_sys[0]:
+            _log().warning(f"duplicar_usuario: falha ao replicar acesso {chave} "
+                           f"para {novo_nome} | {gest_sys[1]}")
+    _audit(ator, "duplicar_usuario", novo_nome,
+           f"origem={usuario_origem} | perfil={perfil_origem}")
+    _log().info(f"usuário duplicado: {novo_nome} a partir de {usuario_origem} por {ator}")
+    return True, "Usuário duplicado com as permissões da origem"
 
 # ================= PERFIS POR MÓDULO =================
 

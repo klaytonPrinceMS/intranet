@@ -33,8 +33,12 @@ def intervalo_backup(chave, default="12"):
         return int(default)
 
 
-def intervalo_monitor_empenho(default=10):
-    """Intervalo (segundos) do monitor automático de empenhos (RF-40)."""
+def intervalo_monitor_empenho(default=60):
+    """Intervalo (segundos) do monitor automático de empenhos (RF-40).
+
+    Recomendado 60 s (avaliando o padrão do sistema que está sendo copiado).
+    Configurável via tb_config 'empenhos_monitor_intervalo_seg' sem restart.
+    """
     from mod_intranet.conexao_bd import get_config
     try:
         return max(1, int(get_config("empenhos_monitor_intervalo_seg", default)))
@@ -68,27 +72,24 @@ def _job_monitor_empenho():
 
 
 def _job_poda_auditoria():
-    """Poda diária da tb_auditoria central conforme a retenção configurada
-    (auditoria_retencao_dias, default 90). Registros mais antigos que o prazo
-    são removidos para conformidade LGPD sem acúmulo indefinido."""
+    """Poda diária do banco exclusivo de auditoria (db_mod_auditoria.db).
+
+    Remove das tabelas por módulo os registros mais antigos que o prazo de
+    retenção configurado (auditoria_retencao_dias, default 90), para
+    conformidade LGPD sem acúmulo indefinido.
+    """
     removidos = 0
     try:
-        from mod_intranet.conexao_bd import get_config, get_connection
+        from mod_intranet.conexao_bd import get_config
+        from mod_auditoria.manipulador_bd import podar_registros
         try:
             dias = max(1, int(get_config("auditoria_retencao_dias", "90")))
         except (TypeError, ValueError):
             dias = 90
-        conn = get_connection()
         try:
-            cur = conn.cursor()
-            cur.execute(
-                "DELETE FROM tb_auditoria "
-                "WHERE timestamp < datetime('now','localtime', ?)",
-                (f"-{dias} days",))
-            removidos = cur.rowcount
-            conn.commit()
-        finally:
-            conn.close()
+            removidos = podar_registros(dias)
+        except Exception:
+            removidos = 0
         if removidos:
             from mod_intranet import observabilidade
             observabilidade.get_logger("intranet").info(

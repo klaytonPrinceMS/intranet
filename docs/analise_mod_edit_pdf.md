@@ -29,7 +29,7 @@ Criador vigente: `init_db_pdf()` em `manipulador_bd.py:71-93` (executado no impo
 - **Ações sobre a seleção**: Verificar integridade, Juntar, Excluir selecionados, Baixar ZIP, baixar PDFs individuais; menu de contexto por linha (Baixar/Excluir).
 - **Operações**: Reduzir tamanho — modos Leve (recompressão; biblioteca auto `pymupdf→pikepdf→pypdf` ou fixa) e Agressivo (rasteriza páginas como JPEG, DPI 50–400, qualidade 10–100%) | Cortar páginas (pares/ímpares/lista "2-5,8" → um único PDF) | Dividir (página-a-página, par/ímpar, cortes ou intervalos → vários PDFs).
 - **Administração**: cota global GB, máx. arquivos/lote, MB/lote, cota por usuário GB, minutos de expiração + botão "Expirar agora".
-- **Aparência** (Administração): padronização de tema dos botões — cor de fundo, cor do texto, cor de fundo da página do editor, cor dos títulos e tamanho dos botões (`small`/`medium`/`large`). Cada cor usa `ui.color_input` (seletor de cor **e** digitação direta hex/RGB). Valem sem restart (leitura live via `cfg_tema`).
+- **Aparência** (Administração): padronização de tema dos botões — cor de fundo, cor do texto, cor de fundo da página do editor, cor dos títulos e tamanho dos botões (`small`/`medium`/`large`). Cada cor usa `ui.color_input` (seletor de cor **e** digitação direta hex/RGB). Valem sem restart (leitura live via `cfg_tema`). O cupê agora é o **padronizado pelo helper central** `mod_intranet/tema_modulo.py::bloco_aparencia` (prefixo `editpdf_*`), **com botão Salvar próprio** e "Restaurar padrão". Também há o cupê **"Edição do módulo"** (`campo_modulo`): nome de exibição, ícone e status (ativo) em `tb_modulos`.
 
 ## Regras de negócio relevantes
 
@@ -63,3 +63,15 @@ Fase essencialmente **concluída**: banco + cotas + limites de lote; expiração
 ### Correção registrada — limite de MB ignorado
 
 Bug real: limites configurados não eram aplicados porque faltava o import de `get_config` em `mod_edit_pdf/manipulador_bd.py` — `_cfg` sempre retornava o default (`editpdf_lote_mb`=1024 em vez de 200). Corrigido restaurando o import e reforçado com a pré-checagem do lote inteiro em `_receber_lote` (`telas.py`).
+
+### Cupê de Aparência padronizado (helper central)
+
+O cupê "Aparência" (cor de botões, texto, fundo, títulos e tamanho) passou a usar o **helper
+central** `mod_intranet/tema_modulo.py::bloco_aparencia`, que **possui botão "Salvar" próprio**
+(cada cor é persistida via `salvar_tema` e a tela é recarregada) e "Restaurar padrão". Antes, os
+campos de cor do cupê ficavam **sem botão salvar dedicado** (o salvamento dependia do botão
+"Salvar configurações" do cartão de cotas/textos), o que dificultava aplicar a alteração. Também
+foi adicionado o cupê "Edição do módulo" (`campo_modulo`).
+
+Regra de uniformidade e mapeamento de prefixos cobertos por `test/test_tema.py` (18 verificações
+standalone).

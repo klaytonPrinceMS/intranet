@@ -192,17 +192,61 @@
               
                 <h1 id="renomear-empenhos-mod_renomear_empenho">Renomear Empenhos — <code>mod_renomear_empenho</code><a class="headerlink" href="#renomear-empenhos-mod_renomear_empenho" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Empenho rename module: route <code>/renomear-empenho</code> (key <code>empenhos</code>) · own database <code>db_mod_renomear_empenho.db</code> · PDF text extraction, dynamic regex, quarantine, sequential rename, partial physical organizer.</p>
+<p>Módulo de renomeação de empenhos: rota <code>/renomear-empenho</code> (chave <code>empenhos</code>) · banco próprio <code>db_mod_renomear_empenho.db</code> · extração de texto de PDF (excl. tipos EC/EE/EG/AE), monitor multi-pasta (local/UNC), fila, pesquisa FTS5, organizador físico, solicitações comum→admin e configurações.</p>
 </blockquote>
 <hr />
 <h1 id="renomear-empenhos-mod_renomear_empenho_1">Renomear Empenhos — <code>mod_renomear_empenho</code><a class="headerlink" href="#renomear-empenhos-mod_renomear_empenho_1" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo de renomeação de empenhos: rota <code>/renomear-empenho</code> (chave <code>empenhos</code>) · banco próprio <code>db_mod_renomear_empenho.db</code> · extração de texto de PDF, regex dinâmica, quarentena, renomeação sequencial, organizador físico parcial.</p>
+<p>Módulo de renomeação de empenhos: rota <code>/renomear-empenho</code> (chave <code>empenhos</code>) · banco próprio <code>db_mod_renomear_empenho.db</code> · extração de texto de PDF por regex dinâmica, tipos especiais EC/EE/EG/AE, quarentena, renomeação sequencial, organizador físico e fluxo de solicitações.</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
-<p>Extrai nº do empenho/parcela do texto dos PDFs por regex dinâmica, renomeia sequencialmente (<code>doc_%04d_numEmpenho_%d_p%03d.pdf</code>) e move falhas para quarentena reprocessável. Inclui organizador físico em caixas/subpastas. <strong>O processamento pode ser manual (botão "Processar pasta agora") ou automático</strong> via job <code>monitor_empenho</code> do APScheduler (RF-40, intervalo padrão 10 s, configurável em <code>empenhos_monitor_intervalo_seg</code> sem restart — <code>mod_intranet/rotinas.py:36-67,192-193</code>).</p>
+<p>Extrai o nº do empenho/parcela (ou tipo especial EC/EE/EG/AE) do texto dos PDFs, renomeia sequencialmente e move falhas para quarentena reprocessável. Inclui organizador físico em caixas/subpastas, edição e ferramentas de PDF, e o fluxo completo de solicitação de envio. O processamento é <strong>manual</strong> (botão "Processar pasta agora", abas Fila/Navegar) e <strong>automático</strong> via job <code>monitor_empenho</code> do APScheduler (<strong>RF-40</strong>, intervalo padrão 60 s, configurável em <code>empenhos_monitor_intervalo_seg</code> sem restart — <code>mod_intranet/rotinas.py:36-70,229</code>).</p>
+<h3 id="tela-6-abas-internas">Tela — 6 abas internas<a class="headerlink" href="#tela-6-abas-internas" title="Permanent link">&para;</a></h3>
+<p>A tela <code>/renomear-empenho</code> é organizada em abas manuais (padrão <code>mod_solicita_impressao/telas.py</code>), sem alterar o menu lateral global:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Aba</th>
+<th style="text-align: left;">Acesso</th>
+<th style="text-align: left;">Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Navegar</td>
+<td style="text-align: left;">todos</td>
+<td style="text-align: left;">navegação recursiva/protegida (só PDFs), breadcrumb, baixar, revisar/renomear manual, solicitar envio, "Processar pasta agora"</td>
+</tr>
+<tr>
+<td style="text-align: left;">Fila Renomeação</td>
+<td style="text-align: left;">todos</td>
+<td style="text-align: left;">pendentes recursivos, "Processar" individual e "Processar todos"</td>
+</tr>
+<tr>
+<td style="text-align: left;">Pesquisar</td>
+<td style="text-align: left;">todos</td>
+<td style="text-align: left;">busca FTS5 + tabela de empenhos renomeados</td>
+</tr>
+<tr>
+<td style="text-align: left;">Organizador</td>
+<td style="text-align: left;"><strong>admin</strong></td>
+<td style="text-align: left;">organizar caixas, capas/matriz, validar matriz, inventário, ferramentas de PDF</td>
+</tr>
+<tr>
+<td style="text-align: left;">Solicitação</td>
+<td style="text-align: left;">todos (admin gerencia)</td>
+<td style="text-align: left;">fluxo comum→admin: e-mail/ZIP/recusa, lotes, histórico</td>
+</tr>
+<tr>
+<td style="text-align: left;">Configurações</td>
+<td style="text-align: left;"><strong>admin</strong></td>
+<td style="text-align: left;">pastas monitoradas, aparência, template, campos, auditoria, quarentena, regras</td>
+</tr>
+</tbody>
+</table>
+<p>Admin = <code>administrador_geral</code> ou <code>eh_admin_do_modulo(usuario, "empenhos")</code> (<code>telas.py:76</code>).</p>
 <h2 id="banco-proprio">Banco próprio<a class="headerlink" href="#banco-proprio" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db_empenho()</code> em <code>manipulador_bd.py:29-83</code>.</p>
+<p>Criador vigente: <code>init_db_empenho()</code> em <code>manipulador_bd.py:289</code>.</p>
 <table>
 <thead>
 <tr>
@@ -213,15 +257,15 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>tb_empenhos</code></td>
-<td style="text-align: left;">nome original/final, numero_empenho, parcela, usuario, data, status ('ativo'), caminho; índice por número</td>
+<td style="text-align: left;">nome original/final, numero_empenho, parcela, <strong>tipo_especial</strong>, ficha, ano, usuario, data, status ('ativo'), caminho; índice por número</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_indexador_pesquisa</code></td>
-<td style="text-align: left;">empenho_id PK, conteudo_texto (original + final + primeiros 4000 chars) — tabela <strong>comum, mantida como fallback</strong></td>
+<td style="text-align: left;">fallback comum (<code>empenho_id</code>, <code>conteudo_texto</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_indexador_pesquisa_fts5</code></td>
-<td style="text-align: left;"><strong>VIRTUAL TABLE FTS5</strong> com 32 colunas do cabeçalho do empenho (RF-41) — índice real de busca; alimentada por trigger de exclusão + <code>reindexar_empenho()</code></td>
+<td style="text-align: left;"><strong>VIRTUAL TABLE FTS5 com 32 colunas</strong> do cabeçalho (RF-41); alimentada por trigger de exclusão + <code>reindexar_empenho()</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_quarentena</code></td>
@@ -229,53 +273,273 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_regex_regras</code></td>
-<td style="text-align: left;">nome_regra UNIQUE, padrao_regra, substituicao, ativo, <strong>campo_destino</strong> (FTS customizado); seeds "Padrão Empenho" e "Só números"</td>
+<td style="text-align: left;">nome_regra UNIQUE, padrao_regra, substituicao, ativo, <strong>campo_destino</strong> (FTS customizado)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_campos_busca</code></td>
+<td style="text-align: left;">regex por campo (ficha/empenho/parcela/ano...) editável sem tocar no código</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_arquivos_auditoria</code></td>
+<td style="text-align: left;">trilha por arquivo (detectado→renomeado→removido) com <strong>SHA-256</strong> de origem/destino</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_eventos_arquivos</code></td>
+<td style="text-align: left;">linha do tempo cronológica por arquivo (FK <code>tb_arquivos_auditoria</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_solicitacoes</code></td>
+<td style="text-align: left;">fluxo comum→admin: pendente → enviado</td>
 </tr>
 </tbody>
 </table>
-<p>⚠️ O <code>criador_bd.py</code> deste pacote é <strong>legado/morto</strong> e diverge totalmente: define um <code>tb_indexador_pesquisa_fts5</code> virtual (6 colunas) conectado no banco <strong>central</strong>. Nunca foi executado; o esquema real (FTS5 com 32 colunas em <code>db_mod_renomear_empenho.db</code>) está em <code>manipulador_bd.py</code>.</p>
+<p>⚠️ O <code>criador_bd.py</code> é <strong>legado/morto</strong> (esquema FTS5 fantasma no banco central) — não executar; o esquema real está em <code>manipulador_bd.py</code>.</p>
 <h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
-<p>Sem abas e sem controle fino de perfil (parâmetro <code>perfil</code> não é usado — acesso pela chave do módulo apenas):</p>
+<p>Acesso pela chave do módulo <code>empenhos</code>; perfil define o que é visível (abas admin ocultas/restritas). Detalhes por aba em <a href="../modulos/renomear_empenho.md">Módulos (resumo)</a>.</p>
+<h2 id="rfs-rnfs-do-modulo">RFs / RNFs do módulo<a class="headerlink" href="#rfs-rnfs-do-modulo" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Numeração herdada do roadmap do sistema; o código executável prevalece sobre a documentação.</p>
+</blockquote>
+<h3 id="requisitos-funcionais-rf">Requisitos funcionais (RF)<a class="headerlink" href="#requisitos-funcionais-rf" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-001</td>
+<td style="text-align: left;">Parametrização do padrão/monitor no modo manutenção (<code>tb_campos_busca</code> editável)</td>
+<td style="text-align: left;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-002</td>
+<td style="text-align: left;">Consulta avançada com seleção por conteúdo (FTS5 + fallback LIKE)</td>
+<td style="text-align: left;">✅ Implementado (FTS5, máx. 50)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-003</td>
+<td style="text-align: left;">Envio/exportação de cópia em ZIP (fluxo solicitação → ZIP/e-mail)</td>
+<td style="text-align: left;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-004</td>
+<td style="text-align: left;">Gestão granular de permissão para download (<code>renomear_autorizar_download</code>)</td>
+<td style="text-align: left;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-005</td>
+<td style="text-align: left;">Índice de busca textual (FTS) e extração preditiva</td>
+<td style="text-align: left;">✅ Implementado (<code>tb_indexador_pesquisa_fts5</code>, 32 colunas)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-006</td>
+<td style="text-align: left;">Renomeação automática opcional (monitor <code>sistema</code>)</td>
+<td style="text-align: left;">✅ Implementado (job + manual)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-007</td>
+<td style="text-align: left;">Biblioteca de leitura de PDF configurável (fallback)</td>
+<td style="text-align: left;">✅ Implementado (pipeline de extração)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-008</td>
+<td style="text-align: left;">Tipos especiais de documento (EC/EE/EG/AE)</td>
+<td style="text-align: left;">✅ Implementado (<code>detectar_tipo_especial</code>/<code>extrair_dados_tipo_especial</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-009</td>
+<td style="text-align: left;">Organizador de documentos físicos</td>
+<td style="text-align: left;">✅ Implementado (caixas/subpastas + capas/matriz)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-39</td>
+<td style="text-align: left;">Ações de usuário comum (e-mail/ZIP/download)</td>
+<td style="text-align: left;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-40</td>
+<td style="text-align: left;">Monitor de pasta automático</td>
+<td style="text-align: left;">✅ Implementado (APScheduler, intervalo 60 s)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-41</td>
+<td style="text-align: left;">Indexação FTS5 do cabeçalho</td>
+<td style="text-align: left;">✅ Implementado (32 colunas + campos customizados)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-44</td>
+<td style="text-align: left;">Organizador completo com capas e matriz</td>
+<td style="text-align: left;">✅ Implementado (<code>gerar_matriz_organizador</code>, <code>validar_presenca_matriz</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-45</td>
+<td style="text-align: left;">Ferramentas de PDF embutidas (cortar/juntar/reduzir)</td>
+<td style="text-align: left;">✅ Implementado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="requisitos-nao-funcionais-rnf">Requisitos não funcionais (RNF)<a class="headerlink" href="#requisitos-nao-funcionais-rnf" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RNF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RNF-01</td>
+<td style="text-align: left;">Banco SQLite próprio em modo <strong>WAL</strong></td>
+<td style="text-align: left;">✅ Toda conexão aplica <code>PRAGMA journal_mode=WAL</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-02</td>
+<td style="text-align: left;">Auditoria rastreável com <strong>hash SHA-256</strong></td>
+<td style="text-align: left;">✅ <code>tb_arquivos_auditoria</code> (origem/destino) + <code>audit_log</code> central</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-03</td>
+<td style="text-align: left;">Perfis/papéis por módulo (validação de acesso por aba)</td>
+<td style="text-align: left;">✅ <code>eh_admin_do_modulo</code>/<code>administrador_geral</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-04</td>
+<td style="text-align: left;">Execução em intranet; sem dependência de CDN</td>
+<td style="text-align: left;">✅ Tailwind servido localmente</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-05</td>
+<td style="text-align: left;">Configuração aplicada <strong>sem reiniciar o servidor</strong></td>
+<td style="text-align: left;">✅ <code>tb_config</code> (pastas, intervalo, template, campos)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-06</td>
+<td style="text-align: left;">Tolerância a falta de rede/UNC (não derruba o monitor)</td>
+<td style="text-align: left;">✅ <code>pasta_acessivel</code> pula pastas inacessíveis</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-07</td>
+<td style="text-align: left;">Não-reprocessamento idempotente</td>
+<td style="text-align: left;">✅ <code>arquivo_ja_processado</code> + <code>_arquivo_registrado_no_bd</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-08</td>
+<td style="text-align: left;">Segurança de navegação (anti-travessia de diretórios)</td>
+<td style="text-align: left;">✅ <code>raizes_navegacao</code>/<code>pasta_navegavel</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="adicoes-alem-da-referencia-implementadas">Adições além da referência (implementadas)<a class="headerlink" href="#adicoes-alem-da-referencia-implementadas" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Ações rápidas: <strong>"Processar pasta agora"</strong> (varredura pontual de <code>doc/</code> com resumo ok/total) e <strong>"Organizar caixas"</strong>.</li>
-<li>Pesquisa textual instantânea via <strong>FTS5</strong> (<code>MATCH</code>, máx. 50 resultados, fallback <code>LIKE</code>): nome final, empenho, parcela, usuário e qualquer campo do cabeçalho indexado.</li>
-<li>Tabela de Empenhos (últimos registros por status).</li>
-<li>Seção Quarentena: itens pendentes; clique abre diálogo <strong>"Reprocessar com nova regex"</strong> (regex opcional aplicada na hora).</li>
-<li>Expansion "Regras de extração": lista regras ativas/inativas com o padrão e formulário para salvar nova regra (valida <code>re.compile</code>; vale imediatamente).</li>
+<li><strong>Monitor multi-pasta</strong> local + <strong>rede/UNC</strong> (<code>\\servidor\...</code>, <code>E:\scan</code>) — uma por linha, na raiz (não recursivo); suporta vários computadores escaneando.</li>
+<li><strong>Correção de tipos especiais</strong>: antes capturava o nº do empenho complementado (66) em vez do nº do documento (24). Agora <code>detectar_tipo_especial</code> decide AE&gt;EC&gt;PARCELA&gt;Tipo&gt;Nota de Empenho e nomeia <code>EC_0024.pdf</code>, <code>EE_9570.pdf</code>, <code>EG_0089.pdf</code>.</li>
+<li><strong>Gate de validação</strong> (PLANO 4c): renomeação somente com nº identificado sem divergência crítica; falha → quarentena com motivo.</li>
+<li><strong>Revisão manual com normalização</strong> (<code>renomear_manual</code>) + anti-colisão (<code>_v2</code>).</li>
+<li><strong>Trilha por arquivo</strong> (<code>tb_arquivos_auditoria</code> + <code>tb_eventos_arquivos</code>) no banco do módulo.</li>
+<li><strong>Não-reprocessamento DB-aware</strong> para tipos especiais (cujo nome não discrimina por contagem de dígitos).</li>
 </ul>
-<h2 id="regras-de-negocio-relevantes-o-que-existe-hoje">Regras de negócio relevantes — o que existe hoje<a class="headerlink" href="#regras-de-negocio-relevantes-o-que-existe-hoje" title="Permanent link">&para;</a></h2>
+<h2 id="regras-de-negocio-relevantes">Regras de negócio relevantes<a class="headerlink" href="#regras-de-negocio-relevantes" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Extração: pipeline tolerante a escaneados em <code>manipulador_bd.py:139-198</code> nas <code>PAGINAS_EXTRACAO</code> primeiras páginas: <code>pymupdf → pdfplumber → OCR (pytesseract,</code>por+eng<code>, dpi 200) → pikepdf (metadados)</code>. <strong>Sem tratamento explícito de encoding cp1252/Latin-1</strong> — PDF sem texto (nem mesmo via OCR) vai à quarentena ("possivelmente escaneado").</li>
-<li>Renomeação: contador sequencial persistido em banco; <strong>renomeia mesmo sem validação completa</strong> (regex falhou ⇒ empenho=0), contrariando o PLANO 4c ("somente campos validados sem divergência").</li>
-<li>Organizador: distribui renomeados em <code>organizadorPasta/caixa_NN/sub_X</code> por fórmula de páginas. <strong>Não gera capas PDF/TXT nem valida <code>matrizDeDocumentos.pdf</code></strong>.</li>
-<li>Auditoria: ações <code>processar</code> e <code>quarentena</code> na trilha central <strong>com hash SHA-256</strong> (exigência do PLANO 4d atendida).</li>
+<li><strong>Extração</strong> (pipeline tolerante a escaneados, <code>manipulador_bd.py:466</code>): <code>pymupdf → pdfplumber → OCR (pytesseract, por+eng) → pikepdf</code>. PDF sem texto vai à quarentena ("possivelmente escaneado").</li>
+<li><strong>Renomeação</strong>: contador sequencial persistido em banco, único entre pastas; tipos especiais usam nome próprio. Template de nome configurável.</li>
+<li><strong>Organizador</strong>: distribui renomeados em <code>organizadorPasta/caixa_NN/sub_X</code> (~200 páginas/pasta, 4 pastas/caixa, configuráveis); gera <code>capa.txt</code>/<code>matrizDeDocumentos.txt/.pdf</code> e valida presença.</li>
+<li><strong>Solicitações</strong>: <code>pendente → (email) enviado | (ZIP) zip_gerado → confirmar | recusado</code>; agrupadas por <code>lote_id</code>; ZIP em <code>downloads/solic_*.zip</code>.</li>
+<li><strong>Auditoria</strong>: ações <code>processar</code>, <code>revisao_manual</code>, <code>solicitacao*</code>, <code>configuracao</code>, <code>quarentena</code> na trilha central <strong>com hash SHA-256</strong>; + trilha por arquivo local.</li>
 </ul>
 <h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
-<p>Importa <code>audit_log</code> (usado) e <code>get_connection</code> central (importado sem uso — conexões são locais via sqlite3). Nenhuma chave <code>tb_config</code>. Pastas fixas relativas à raiz: <code>doc/</code>, <code>quarentena/</code>, <code>organizadorPasta/</code> — criadas sob demanda; <strong>nenhuma delas existe hoje na raiz</strong> até o primeiro uso.</p>
+<ul>
+<li><code>mod_intranet.conexao_bd</code> (<code>get_config</code>/<code>set_config</code> — chaves <code>empenhos_*</code> e <code>renomear_autorizar_download</code>).</li>
+<li><code>mod_intranet.autenticacao.eh_admin_do_modulo</code> (permissão por aba).</li>
+<li><code>mod_intranet.rotinas</code> (job <code>monitor_empenho</code>, <code>intervalo_monitor_empenho</code>, <code>reagendar_monitor_empenho</code>).</li>
+<li><code>mod_intranet.email_util.enviar_email</code> — envio de solicitações por SMTP.</li>
+<li><code>mod_intranet.aba_modulo.cabecalho</code> e <code>mod_intranet.tema_modulo.campo_modulo</code>.</li>
+<li><code>audit_log</code> (central, com hash).</li>
+</ul>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>criador_bd.py</code> morto com esquema FTS5 fantasma no banco central — fonte de confusão ao ler o código; não executar.</li>
-<li>Gap conhecido: <strong>gate de validação</strong> (renomear somente campos validados sem divergência, PLANO 4c) ainda não implementado — renomeia mesmo quando a regex falha (empenho=0).</li>
-<li>Sem nenhum teste automatizado em <code>test/</code> para este módulo.</li>
+<li><code>criador_bd.py</code> <strong>morto</strong> com esquema FTS5 fantasma — fonte de confusão; não executar.</li>
+<li>Monitor automático varre <strong>só a raiz</strong> de cada pasta monitorada; navegação/fila manuais são <strong>recursivas</strong> (comportamento intencional) — não equivaler automaticidade a recursividade.</li>
+<li>Intervalo padrão do monitor é <strong>60 s</strong> (não 10 s); ajustado em <code>mod_intranet/rotinas.py:36</code>.</li>
 </ul>
-<h2 id="status-fases-4a4d-do-planomd">Status — Fases 4a–4d do PLANO.md<a class="headerlink" href="#status-fases-4a4d-do-planomd" title="Permanent link">&para;</a></h2>
-<p><strong>Implementado:</strong> banco próprio em WAL; auditoria central com <strong>hash SHA-256</strong>; perfis/papéis por módulo (validação de acesso); fila de quarentena com motivo e reprocessamento individual (regex aplicada na hora); regex dinâmicas persistidas aplicadas sem restart (com <code>campo_destino</code> para campos FTS customizados); renomeação automática sequencial com contador em banco; organizador físico básico em caixas/subpastas; <strong>indexação FTS5 (RF-41)</strong> com 32 colunas do cabeçalho e busca via <code>MATCH</code> (fallback <code>LIKE</code>); processamento sob demanda de <code>doc/</code>.</p>
-<p><strong>Parcial/Pendente (RF-41/45/39/40/44 finalizados e documentados; abaixo os gaps reais):</strong></p>
+<h2 id="status-fases-do-plano">Status — Fases do PLANO<a class="headerlink" href="#status-fases-do-plano" title="Permanent link">&para;</a></h2>
+<p><strong>Implementado:</strong> banco próprio em WAL; auditoria central com hash SHA-256; perfis/papéis por módulo; fila de quarentena com motivo e reprocessamento (regex aplicada na hora); regex dinâmicas persistidas (com <code>campo_destino</code> para FTS); renomeação automática sequencial; organizador físico completo (capas/matriz); indexação FTS5 (RF-41); ferramentas de PDF (RF-45); monitor automático multi-pasta (RF-40); ações de usuário comum (RF-39); tipos especiais EC/EE/EG/AE corrigidos; gate de validação; trilha por arquivo; solicitações comum→admin.</p>
+<hr />
+<h2 id="comparacao-com-a-documentacao-de-referencia">Comparação com a documentação de referência<a class="headerlink" href="#comparacao-com-a-documentacao-de-referencia" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Avaliação da documentação do sistema de origem (aplicativo "renomeador de empenhos" standalone) frente ao que foi portado para a intranet modular.</p>
+</blockquote>
+<h3 id="o-que-a-referencia-documentava-o-que-foi-implementado">O que a referência documentava — o que foi implementado<a class="headerlink" href="#o-que-a-referencia-documentava-o-que-foi-implementado" title="Permanent link">&para;</a></h3>
+<p>A documentação de referência (levantamento de requisitos + manual) descrevia um app <strong>autônomo</strong> com: monitor por regex, tipos especiais EC/EE/EG/AE/EX, renomeação automática opcional, índice FTS5 (30 campos de fábrica), busca ao vivo, organizador físico com capas, gestão de usuários CRUD, "meu perfil", editor de PDF (enviar/merge/reduzir/dividir com auditoria SHA256), solicitações em lote e auditoria em bancos separados.</p>
+<p>Mapeamento para esta implementação:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Referência</th>
+<th style="text-align: left;">Nesta implementação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">App standalone (login próprio + gestão de usuários + perfil)</td>
+<td style="text-align: left;">Intranet modular reutiliza <code>mod_gest_cad_usuario</code>/<code>mod_intranet</code> (login, perfis, troca de senha) — <strong>não duplicado</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">Editor de PDF (abas ENVIAR/auditoria PDF/scanner)</td>
+<td style="text-align: left;">Já existe como módulo próprio <code>/edit-pdf</code> — <strong>não duplicado</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">Auditoria em <code>auditoria.db</code>/<code>indice.db</code> separados</td>
+<td style="text-align: left;"><code>tb_auditoria</code> central + banco próprio do módulo (<code>tb_arquivos_auditoria</code>/<code>tb_eventos_arquivos</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Índice FTS5 (30 campos)</td>
+<td style="text-align: left;"><code>tb_indexador_pesquisa_fts5</code> com <strong>32 colunas</strong> + campos customizados</td>
+</tr>
+<tr>
+<td style="text-align: left;">Tipos EC/EE/EG/AE/EX</td>
+<td style="text-align: left;">EC/EE/EG/AE implementados; a desambiguação pelo conteúdo foi <strong>corrigida</strong> (nº do documento, não do empenho complementado)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Monitor de pasta único (intervalo ~4 s)</td>
+<td style="text-align: left;">Monitor <strong>multi-pasta</strong> (local/UNC, um por linha), intervalo padrão <strong>60 s</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">Renomeação mesmo sem validação total</td>
+<td style="text-align: left;"><strong>Gate de validação</strong> adicionado (renomeia só com nº identificado)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Organizador com capas</td>
+<td style="text-align: left;">Implementado com capas + <code>matrizDeDocumentos</code> + validação de presença</td>
+</tr>
+<tr>
+<td style="text-align: left;">Solicitações em lote (comum→master)</td>
+<td style="text-align: left;">Implementado com agrupamento por lote, e-mail (SMTP central) e ZIP</td>
+</tr>
+<tr>
+<td style="text-align: left;">Ferramentas de PDF embutidas</td>
+<td style="text-align: left;">Implementado (reusa <code>mod_edit_pdf</code>); corte/mesclar/reduzir</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ganhos-da-portabilidade-para-a-intranet">Ganhos da portabilidade para a intranet<a class="headerlink" href="#ganhos-da-portabilidade-para-a-intranet" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Indexação FTS5</strong> (RF-41) — <strong>REALIZADO</strong> (32 colunas + campos regex customizados; busca na tela usa FTS5).</li>
-<li><strong>Ferramentas de PDF embutidas</strong> (corte/juntar/reduzir) DENTRO do módulo (RF-45) — <strong>REALIZADO</strong> (reutiliza <code>op_cortar</code>/<code>op_juntar</code>/<code>op_reduzir</code> do <code>mod_edit_pdf</code>; saídas em <code>datahora_cortePDF/</code>, <code>datahora_mergePDF/</code>, <code>datahora_reducaoPDF/</code>).</li>
-<li><strong>Ações de usuário comum</strong> (e-mail/ZIP/download) (RF-39) — <strong>REALIZADO</strong> (card "Ações de usuário comum" com ZIP/e-mail, liberado por <code>renomear_autorizar_download</code>).</li>
-<li><strong>Monitor de pasta automático</strong> (scheduler ~10 s) em vez de execução manual (RF-40) — <strong>REALIZADO</strong> (job <code>monitor_empenho</code> no APScheduler; intervalo em <code>empenhos_monitor_intervalo_seg</code>).</li>
-<li><strong>Capas PDF/TXT e validação <code>matrizDeDocumentos.pdf</code></strong> no organizador (RF-44) — <strong>REALIZADO</strong> (<code>gerar_matriz_organizador</code> gera <code>capa.txt</code> por caixa + <code>matrizDeDocumentos.txt</code>/<code>.pdf</code>; <code>validar_presenca_matriz</code> confere presença; <code>organizar_pastas</code> gera a matriz ao final).</li>
-<li>Reprocessamento em lote ("Reprocessar fila") — não há botão; é item a item.</li>
-<li>Tratamento de encoding cp1252/Latin-1 na extração — <strong>Em aberto</strong> (OCR <code>pytesseract</code>/<code>pikepdf</code> já implementado em <code>manipulador_bd.py:139-198</code>).</li>
-<li>Renomeação condicionada a validação sem divergência — <strong>Em aberto</strong>.</li>
-<li>Teste <code>testes/teste_fluxo_renameador.py</code> (31/31) citado no PLANO — não existe.</li>
+<li><strong>Segurança/perfis</strong> unitários: usuários, sessões revogáveis, perfil por módulo e auditoria central com SHA-256 — em vez de gestão de usuários própria do app standalone.</li>
+<li><strong>Configuração central</strong> em <code>tb_config</code> (sem <code>config.json</code>) com efeito <strong>sem reiniciar</strong>.</li>
+<li><strong>Não-reprocessamento</strong> e <strong>gate de validação</strong> que a referência não garantia.</li>
+<li><strong>Anti-travessia</strong> na navegação e suporte nativo a <strong>pasta de rede/UNC</strong>.</li>
+<li><strong>Sem duplicação</strong>: editor de PDF, usuários e auditoria continuam nos módulos próprios.</li>
 </ul>
-<h3 id="adicoes-recentes-2608">Adições recentes (26/08)<a class="headerlink" href="#adicoes-recentes-2608" title="Permanent link">&para;</a></h3>
+<h3 id="lacunas-diferencas-assumidas">Lacunas / diferenças assumidas<a class="headerlink" href="#lacunas-diferencas-assumidas" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Painel "Administração"</strong> (expansão, exclusivo do admin geral/admin do módulo): bloco <strong>Aparência</strong> (prefixo empenhos_<em> — cor do botão/texto, tamanho via ui.color_input) e </em><em>config específica</em>*: empenhos_pasta_monitorada (pasta monitorada, aplicada via pasta_monitorada() sem reiniciar), empenhos_texto_header. Salvo via set_config.</li>
-<li><strong>Versionamento</strong>: versao_modulo:empenhos = 1.0.260827 (seed em conexao_bd.init_db()), exibido no rodapé em /renomear-empenho (rota → chave empenhos).</li>
+<li><strong>EX</strong> (tipo especial adicional citado na referência) não foi portado — a extração cobre EC/EE/EG/AE.</li>
+<li>A referência tinha <strong>pesquisa ao vivo</strong> com yield progressivo; aqui a busca FTS5 é por atualização do campo, com limite de resultados.</li>
+<li>Editor de PDF e gestão <strong>não</strong> ficam dentro da tela dos empenhos — permanecem como módulos independentes (escopo definido na portabilidade).</li>
+<li>Intervalo de varredura foi elevado (60 s) para reduzir I/O em ambiente de rede; ajustável sem reiniciar.</li>
 </ul>
               
             </div>

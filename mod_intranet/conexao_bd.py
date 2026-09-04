@@ -35,17 +35,6 @@ def init_db():
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS tb_auditoria (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario TEXT NOT NULL,
-            modulo TEXT NOT NULL,
-            acao TEXT NOT NULL,
-            descricao TEXT,
-            timestamp DATETIME DEFAULT (datetime('now','localtime')),
-            hash_arquivo TEXT
-        )
-    """)
-    cur.execute("""
         CREATE TABLE IF NOT EXISTS tb_config (
             chave TEXT PRIMARY KEY,
             valor TEXT NOT NULL

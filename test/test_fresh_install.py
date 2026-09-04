@@ -14,6 +14,7 @@ DBS = [
     "db_mod_gest_cad_usuario.db",
     "db_mod_edit_pdf.db",
     "db_mod_renomear_empenho.db",
+    "db_mod_auditoria.db",
 ]
 
 

@@ -36,6 +36,32 @@
 > (`_btn_cls`/`_btn_style`/`cor_fundo`/`cor_titulo` no `cabecalho` do
 > `aba_modulo.py`).
 
+### Tema centralizado — `mod_intranet/tema_modulo.py` (adições recentes)
+
+O tema e a administração de **todos** os módulos foram **centralizados** num helper único em
+`mod_intranet/tema_modulo.py` (elimina duplicação de código e a variação antiga de nomes entre
+telas):
+
+- **`PREFIXO_POR_CHAVE` / `prefixo_da_chave`**: mapeia chave→prefixo das chaves em `tb_config`.
+- **`ler_tema` / `salvar_tema` / `restaurar_tema`**: leitura/gravação das 6 chaves de aparência.
+- **`btn_cls` / `btn_style`**: funções puras de classe/estilo que **garantem a uniformidade**
+  (todo botão de uma tela usa sempre a mesma cor/tamanho).
+- **`bloco_aparencia`**: cupê "Aparência" padronizado, agora **com botão "Salvar" próprio** e
+  "Restaurar padrão" (antes os campos de cor não tinham botão salvar dedicado) — usado pelo
+  `edit_pdf` e `solicita_impressao`, gravando via `salvar_tema` com auditoria.
+- **`campo_modulo`**: novo cupê **"Edição do módulo"** na administração — permite editar
+  **nome de exibição, ícone e status (ativo/inativo)** do módulo em `tb_modulos`. Adicionado a
+  todos os 6 módulos (`blog`, `usuarios`, `auditoria`, `empenhos`, `editar_pdf`, `solicita_impressao`).
+
+**Correções nesta rodada:**
+
+- `mod_solicita_impressao`: bug `NameError: name 't_cor_botao' is not defined` (tema no escopo do
+  módulo, fora de `mostrar_tela`) corrigido delegando o cupê "Aparência" a `bloco_aparencia`.
+- `mod_edit_pdf`: cupê "Aparência" agora **com botão salvar próprio** (`bloco_aparencia`).
+
+**Teste novo:** `test/test_tema.py` (18/18 OK) — cobre o helper, a regra de uniformidade e o
+mapeamento de prefixos (só leitura; não altera `tb_config`).
+
 ## Fase 2 — mod_gest_cad_usuario (soft CRUD)
 
 - [ ] `db_mod_gest_cad_usuario.db`: tabela `tb_usuario` (ID como chave primária), `tb_perfil`, vínculo usuário↔módulo↔perfil
@@ -45,22 +71,24 @@
 - [ ] Senha provisória para novos usuarios + troca no primeiro acesso
 - [ ] Auditoria central em `tb_auditoria` (criação/edição/exclusão/liberação, LGPD)
 
-## Fase 2.5 — Testes do fluxo completo (pasta `testes/`)
+## Fase 2.5 — Testes do fluxo completo (scripts standalone em `test/`)
 
-- [ ] `testes/teste_boot.py`: servidor sobe, `/login` com Tailwind local + CSS custom
-- [ ] `testes/teste_fluxo_autenticacao.py`: login master → senha provisória → troca obrigatória → sessão/logout → auditoria → soft delete (19/19 OK)
-- [ ] `testes/teste_fluxo_permissoes.py`: concessão/atualização/revogação de perfil por módulo + admin geral vê tudo (13/13 OK)
-- [ ] Correções: inputs dentro do diálogo, evento `.value` do checkbox, senha provisória aleatória revelada ao admin, remoção de rascunho quebrado (`mod_gest_cad_usuario_api.py`)
-- [ ] Controle granular aplicado no menu lateral, cards do dashboard e página `/modulo/{slug}` (acesso negado)
+- [x] `test/teste_boot.py`: servidor sobe, `/login` com Tailwind local + CSS custom (16/16 OK)
+- [x] `test/teste_fluxo_autenticacao.py`: login master → senha provisória → troca obrigatória → sessão/logout → auditoria → soft delete (19/19 OK)
+- [x] `test/teste_fluxo_permissoes.py`: concessão/atualização/revogação de perfil por módulo + admin geral vê tudo (13/13 OK)
+- [x] Correções: inputs dentro do diálogo + evento `.value` aplicados corretamente (`ui.select`/`ui.input`), rascunho quebrado removido (`mod_gest_cad_usuario_api.py` não existe mais). ⚠️ Senha provisória é **digitada pelo admin** (geração aleatória revelada **não implementada** — desvio documentado em `docs/`)
+- [x] Controle granular aplicado via `validar_acesso_modulo` no menu lateral (`modulos_do_usuario`), cards do dashboard e páginas dos módulos (acesso negado)
+
+> Os testes ficaram em `test/` (padrão do projeto / AGENTS.md), não em `testes/`.
 
 ## Fase 3 — mod_blog
 
-- [ ] `db_mod_blog.db` + CRUD de postagens (soft delete, publicar/despublicar, `tb_config` local do módulo)
-- [ ] Sanitização obrigatória com `nh3` (na gravação e na renderização; `data:`/relativas permitidas para imagens)
-- [ ] Formatação: títulos em negrito/centralizado, imagens 200–400px alinhadas à esquerda, texto puro/Markdown/HTML
-- [ ] Exibição única ou histórico cronológico; auditoria central
-- [ ] Página `/blog` com editor (pré-visualização), configurações (modo + largura de imagem) e gestão restrita a admin geral/admin. do módulo
-- [ ] `testes/teste_fluxo_blog.py`: sanitização XSS, conversores, CRUD, soft delete, config local, auditoria central (33/33 OK)
+- [x] `db_mod_blog.db` + CRUD de postagens (soft delete, publicar/despublicar, `tb_config` local do módulo)
+- [x] Sanitização obrigatória com `nh3` (na gravação e na renderização; `data:`/relativas permitidas para imagens)
+- [x] Formatação: títulos em negrito/centralizado, imagens 200–400px alinhadas à esquerda, texto puro/Markdown/HTML
+- [x] Exibição única ou histórico cronológico; auditoria central
+- [x] Página `/blog` com editor (pré-visualização), configurações (modo + largura de imagem) e gestão restrita a admin geral/admin. do módulo
+- [x] `test/teste_fluxo_blog.py`: sanitização XSS, conversores, CRUD, soft delete, config local, auditoria central (33/33 OK)
 
 ## Fase 4 — mod_renomear_empenho
 
@@ -201,13 +229,13 @@ montado pela app). `mkdocs.yml` indexa todos os módulos; build validado.
 | Arquivo em `docs/` | Módulo | Status | Conteúdo |
 |---|---|---|---|
 | `index.md` | Visão geral | OK | Índice/visão geral do sistema |
-| `analise_mod_intranet.md` | Núcleo | **ATUALIZADO** | Banco central, layout 4 partes, **dashboard mobile-first + padronização de exibição (Fase 1)**, versão no rodapé, personalização |
-| `analise_mod_gest_cad_usuario.md` | Gestão de Usuários | OK | CRUD soft, perfis, auditoria, **cupê Aparência padrão**, versionamento |
-| `analise_mod_blog.md` | Blog | OK | Sanitização nh3, CRUD, versionamento |
-| `analise_mod_edit_pdf.md` | Editor de PDF | OK | Lote, expiração 10 min, operações, auditoria |
+| `analise_mod_intranet.md` | Núcleo | **ATUALIZADO** | Banco central, layout 4 partes, **dashboard mobile-first + padronização de exibição (Fase 1)**, versão no rodapé, personalização, **helper central de tema e administração (`tema_modulo.py`)** |
+| `analise_mod_gest_cad_usuario.md` | Gestão de Usuários | **ATUALIZADO** | CRUD soft, perfis, auditoria, **cupê Aparência padrão**, versionamento, **Fase 2.5 concluída (teste_boot/autenticação/permissões)** |
+| `analise_mod_blog.md` | Blog | **ATUALIZADO** | Sanitização nh3, CRUD, versionamento, **Fase 3 concluída (33/33 OK, auditoria em `db_mod_auditoria.db`)** |
+| `analise_mod_edit_pdf.md` | Editor de PDF | **ATUALIZADO** | Lote, expiração 10 min, operações, auditoria; **cupê "Aparência" via helper central com botão Salvar próprio + "Edição do módulo"** |
 | `analise_mod_renomear_empenho.md` | Renomear Empenhos | OK | Monitor, FTS5, quarentena, renomeação, organizador |
 | `analise_mod_auditoria.md` | Auditoria | OK | Leitura/filtro `tb_auditoria`, acesso admin geral |
-| `analise_mod_solicita_impressao.md` | Solicitação de Impressão | **ATUALIZADO** | Fluxo de upload/rascunho, fórmula, cotas, autorização, retenção de arquivo, auditoria, versionamento `1.0.260829` |
+| `analise_mod_solicita_impressao.md` | Solicitação de Impressão | **ATUALIZADO** | Fluxo de upload/rascunho, fórmula, cotas, autorização, retenção de arquivo, auditoria, versionamento `1.0.260829`, **correção do `NameError` no tema + cupê via helper central** |
 | `analise_mod_intranet.md` (seção Observabilidade) | Núcleo | **OK / REALIZADO** | Observabilidade central `mod_intranet/observabilidade.py` documentada (loguru: rotação/retenção/compressão, excepthook, limpeza, `get_logger` por módulo) |
 
 **Feito:** todos os 7 módulos possuem análise em `docs/`; `analise_mod_solicita_impressao.md`
@@ -217,6 +245,8 @@ pós-impressão) e a auditoria; a seção "Observabilidade / Logs (loguru)" foi 
 limpeza e adoção por módulo — espelhando a Fase 8 acima. A Fase 1 está **concluída e testada**
 (`test/test_dashboard.py` 30/30 OK: grid mobile-first, microinterações, feedback 2s, 6 chaves de
 aparência por módulo; boot HTTP 200 em `/login` `/` `/blog` `/configuracoes`; `mkdocs build` OK;
-testes regressivos de blog/editor/solicita passando).
+testes regressivos de blog/editor/solicita passando). Tema **centralizado** no helper
+`mod_intranet/tema_modulo.py` com novo cupê "Aparência" (botão Salvar próprio) e cupê
+"Edição do módulo"; cobertos por `test/test_tema.py` (18/18 OK).
 
 > Pendente de confirmação do autor: `git commit` (padrão `AAMMDD HHMM ...`) — não executar push.

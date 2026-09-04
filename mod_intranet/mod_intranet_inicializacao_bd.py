@@ -18,6 +18,17 @@ def inicializar_bancos():
     init_central()
     garantir_rastreabilidade()
 
+    # 1.1) Banco exclusivo de auditoria (db_mod_auditoria.db), tabela por
+    # módulo. Inicializa o banco de auditoria e, uma única vez, migra os
+    # registros antigos da tb_auditoria central (legado) para as novas
+    # tabelas por módulo.
+    from mod_auditoria.manipulador_bd import init_db_auditoria, migrar_dados_existentes
+    init_db_auditoria()
+    try:
+        migrar_dados_existentes()
+    except Exception:
+        pass
+
     # 2) Demais módulos (cada import pode disparar init_db no nível do módulo)
     from mod_blog.manipulador_bd import init_db as init_blog
     init_blog()           # db_mod_blog.db

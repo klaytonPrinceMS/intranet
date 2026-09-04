@@ -372,6 +372,19 @@ com outros módulos).</p>
 </tr>
 </tbody>
 </table>
+<h2 id="correcao-registrada-tema-no-escopo-do-modulo-nameerror">Correção registrada — tema no escopo do módulo (<code>NameError</code>)<a class="headerlink" href="#correcao-registrada-tema-no-escopo-do-modulo-nameerror" title="Permanent link">&para;</a></h2>
+<p>Bug real: ao abrir <code>/solicita-impressao</code>, a tela quebrava com
+<code>NameError: name 't_cor_botao' is not defined</code>. Causa: as variáveis <code>t_cor_botao</code>,
+<code>t_cor_txt_botao</code>, <code>t_btn_tamanho</code> e os helpers <code>_btn_cls()</code>/<code>_btn_style()</code> foram deixados <strong>fora</strong>
+de <code>mostrar_tela(usuario_logado, perfil)</code> (no escopo do módulo), onde não têm acesso ao
+<code>usuario_logado</code> para ler o tema — e as cores residuais no banco (<code>editpdf_cor_botao=#e61c91</code>,
+<code>editpdf_cor_texto_botao=#faf7f7</code>) nunca eram lidas/carregadas corretamente naquele escopo.</p>
+<p>Corrigido tirando a leitura de aparência do escopo do módulo e delegando o cupê "Aparência" ao
+<strong>helper central</strong> <code>mod_intranet/tema_modulo.py::bloco_aparencia</code> (que lê/grava as 6 chaves com o
+prefixo <code>solicita_impressao_*</code> em <code>tb_config</code> e <strong>possui botão Salvar próprio</strong>). O <code>_admin_configuracoes</code>
+passou a usar <code>bloco_aparencia</code> + <code>campo_modulo</code>; as variáveis <code>t_cor_fundo</code>, <code>t_cor_titulo</code> e
+<code>t_texto_header</code> (usadas no cabeçalho) permanecem em <code>mostrar_tela</code>. Código morto (<code>_btn_cls</code>,
+<code>_btn_style</code>) removido. Regra de uniformidade e prefixos cobertos por <code>test/test_tema.py</code>.</p>
               
             </div>
           </div><footer>

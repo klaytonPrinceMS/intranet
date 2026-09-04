@@ -216,7 +216,7 @@
 <li><strong>Ações sobre a seleção</strong>: Verificar integridade, Juntar, Excluir selecionados, Baixar ZIP, baixar PDFs individuais; menu de contexto por linha (Baixar/Excluir).</li>
 <li><strong>Operações</strong>: Reduzir tamanho — modos Leve (recompressão; biblioteca auto <code>pymupdf→pikepdf→pypdf</code> ou fixa) e Agressivo (rasteriza páginas como JPEG, DPI 50–400, qualidade 10–100%) | Cortar páginas (pares/ímpares/lista "2-5,8" → um único PDF) | Dividir (página-a-página, par/ímpar, cortes ou intervalos → vários PDFs).</li>
 <li><strong>Administração</strong>: cota global GB, máx. arquivos/lote, MB/lote, cota por usuário GB, minutos de expiração + botão "Expirar agora".</li>
-<li><strong>Aparência</strong> (Administração): padronização de tema dos botões — cor de fundo, cor do texto, cor de fundo da página do editor, cor dos títulos e tamanho dos botões (<code>small</code>/<code>medium</code>/<code>large</code>). Cada cor usa <code>ui.color_input</code> (seletor de cor <strong>e</strong> digitação direta hex/RGB). Valem sem restart (leitura live via <code>cfg_tema</code>).</li>
+<li><strong>Aparência</strong> (Administração): padronização de tema dos botões — cor de fundo, cor do texto, cor de fundo da página do editor, cor dos títulos e tamanho dos botões (<code>small</code>/<code>medium</code>/<code>large</code>). Cada cor usa <code>ui.color_input</code> (seletor de cor <strong>e</strong> digitação direta hex/RGB). Valem sem restart (leitura live via <code>cfg_tema</code>). O cupê agora é o <strong>padronizado pelo helper central</strong> <code>mod_intranet/tema_modulo.py::bloco_aparencia</code> (prefixo <code>editpdf_*</code>), <strong>com botão Salvar próprio</strong> e "Restaurar padrão". Também há o cupê <strong>"Edição do módulo"</strong> (<code>campo_modulo</code>): nome de exibição, ícone e status (ativo) em <code>tb_modulos</code>.</li>
 </ul>
 <h2 id="regras-de-negocio-relevantes">Regras de negócio relevantes<a class="headerlink" href="#regras-de-negocio-relevantes" title="Permanent link">&para;</a></h2>
 <ul>
@@ -244,6 +244,15 @@
 <p>Fase essencialmente <strong>concluída</strong>: banco + cotas + limites de lote; expiração automática agendada; prefixo padronizado; todas as operações (reduzir/juntar/cortar/dividir/verificar/ZIP/excluir); auditoria com SHA-256 origem/destino; estoque de uploads; <strong>tema padronizado</strong> (boas práticas: botões/tamanho/cores via <code>ui.color_input</code>); testes ponta a ponta em <code>test/test_editor_pdf.py</code> (32 verificações passando — o README diz "20", número defasado). Única pendência conceitual é o legado <code>criador_bd.py</code>.</p>
 <h3 id="correcao-registrada-limite-de-mb-ignorado">Correção registrada — limite de MB ignorado<a class="headerlink" href="#correcao-registrada-limite-de-mb-ignorado" title="Permanent link">&para;</a></h3>
 <p>Bug real: limites configurados não eram aplicados porque faltava o import de <code>get_config</code> em <code>mod_edit_pdf/manipulador_bd.py</code> — <code>_cfg</code> sempre retornava o default (<code>editpdf_lote_mb</code>=1024 em vez de 200). Corrigido restaurando o import e reforçado com a pré-checagem do lote inteiro em <code>_receber_lote</code> (<code>telas.py</code>).</p>
+<h3 id="cupe-de-aparencia-padronizado-helper-central">Cupê de Aparência padronizado (helper central)<a class="headerlink" href="#cupe-de-aparencia-padronizado-helper-central" title="Permanent link">&para;</a></h3>
+<p>O cupê "Aparência" (cor de botões, texto, fundo, títulos e tamanho) passou a usar o <strong>helper
+central</strong> <code>mod_intranet/tema_modulo.py::bloco_aparencia</code>, que <strong>possui botão "Salvar" próprio</strong>
+(cada cor é persistida via <code>salvar_tema</code> e a tela é recarregada) e "Restaurar padrão". Antes, os
+campos de cor do cupê ficavam <strong>sem botão salvar dedicado</strong> (o salvamento dependia do botão
+"Salvar configurações" do cartão de cotas/textos), o que dificultava aplicar a alteração. Também
+foi adicionado o cupê "Edição do módulo" (<code>campo_modulo</code>).</p>
+<p>Regra de uniformidade e mapeamento de prefixos cobertos por <code>test/test_tema.py</code> (18 verificações
+standalone).</p>
               
             </div>
           </div><footer>

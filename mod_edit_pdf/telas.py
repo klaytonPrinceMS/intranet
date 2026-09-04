@@ -12,6 +12,7 @@ from nicegui import ui
 
 from mod_intranet.conexao_bd import get_config, set_config
 from mod_intranet.manipulador_bd import audit_log
+from mod_intranet.tema_modulo import bloco_aparencia, ler_tema, campo_modulo
 from mod_intranet import observabilidade
 
 log = observabilidade.get_logger("edit_pdf")
@@ -510,8 +511,6 @@ def mostrar_tela(usuario_logado: str, perfil: str):
     def salvar_configs():
         nonlocal lote_max, lote_bytes_max, usuario_gb, vida_pdf_s
         nonlocal txt_upload_titulo, txt_upload_hint, txt_upload_label, txt_header_sub
-        nonlocal tema_cor_botao, tema_cor_texto_botao, tema_cor_fundo, tema_cor_titulo
-        nonlocal tema_btn_tamanho
         try:
             gb_g = max(1, int(inp_cota_global.value or 10))
             lot_a = max(1, int(inp_lote_arq.value or 10))
@@ -536,16 +535,6 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             set_config("editpdf_texto_upload_hint", txt_upload_hint)
             set_config("editpdf_texto_upload_label", txt_upload_label)
             set_config("editpdf_texto_header_sub", txt_header_sub)
-            tema_cor_botao = (inp_cor_botao.value or "").strip() or "#1565C0"
-            tema_cor_texto_botao = (inp_cor_txt_botao.value or "").strip() or "#FFFFFF"
-            tema_cor_fundo = (inp_cor_fundo.value or "").strip()
-            tema_cor_titulo = (inp_cor_titulo.value or "").strip() or "#212121"
-            tema_btn_tamanho = inp_btn_tamanho.value or "medium"
-            set_config("editpdf_cor_botao", tema_cor_botao)
-            set_config("editpdf_cor_texto_botao", tema_cor_texto_botao)
-            set_config("editpdf_cor_fundo", tema_cor_fundo)
-            set_config("editpdf_cor_titulo", tema_cor_titulo)
-            set_config("editpdf_btn_tamanho", tema_btn_tamanho)
             _app_tema()
         except Exception as ex:
             log.exception("erro ao salvar configurações do editor PDF")
@@ -591,8 +580,6 @@ def mostrar_tela(usuario_logado: str, perfil: str):
     def resetar_configs():
         nonlocal lote_max, lote_bytes_max, usuario_gb, vida_pdf_s
         nonlocal txt_upload_titulo, txt_upload_hint, txt_upload_label, txt_header_sub
-        nonlocal tema_cor_botao, tema_cor_texto_botao, tema_cor_fundo, tema_cor_titulo
-        nonlocal tema_btn_tamanho
         try:
             for chave, valor in PADROES_CFG.items():
                 set_config(chave, valor)
@@ -604,11 +591,6 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             txt_upload_hint = ""
             txt_upload_label = "Clique ou arraste PDFs aqui"
             txt_header_sub = "Reduza, junte, corte, divida e verifique seus documentos."
-            tema_cor_botao = "#1565C0"
-            tema_cor_texto_botao = "#FFFFFF"
-            tema_cor_fundo = ""
-            tema_cor_titulo = "#212121"
-            tema_btn_tamanho = "medium"
             inp_cota_global.value = 10
             inp_lote_arq.value = 10
             inp_lote_mb.value = 1024
@@ -618,11 +600,6 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             inp_txt_hint.value = txt_upload_hint
             inp_txt_label.value = txt_upload_label
             inp_txt_header.value = txt_header_sub
-            inp_cor_botao.value = tema_cor_botao
-            inp_cor_txt_botao.value = tema_cor_texto_botao
-            inp_cor_fundo.value = tema_cor_fundo
-            inp_cor_titulo.value = tema_cor_titulo
-            inp_btn_tamanho.value = tema_btn_tamanho
             lbl_up_titulo.set_text(f"1. {txt_upload_titulo}")
             lbl_up_hint.set_text(_montar_hint())
             lbl_header_sub.set_text(txt_header_sub)
@@ -931,34 +908,13 @@ def mostrar_tela(usuario_logado: str, perfil: str):
 
                 with ui.card().classes("w-full border-l-4").style("border-left-color:#6A1B9A"):
                     with ui.card_section().classes("gap-3 w-full"):
-                        with ui.row().classes("w-full items-center gap-2"):
-                            ui.icon("palette").classes("text-h5").style(f"color:{tema_cor_botao}")
-                            ui.label("Aparência").classes("text-h6 font-bold")
-                        ui.label("Padronize tamanho e cores dos botões e do fundo. "
-                                 "Toque no seletor OU digite a cor diretamente (hex/RGB). "
-                                 "Valem imediatamente, sem restart.").classes(
-                            "text-caption text-grey-6")
-                        with ui.grid(columns=2).classes("w-full gap-3 max-sm:grid-cols-1"):
-                            inp_cor_botao = ui.color_input(
-                                "Cor de fundo dos botões",
-                                value=tema_cor_botao,
-                            ).props("outlined dense").classes("w-full")
-                            inp_cor_txt_botao = ui.color_input(
-                                "Cor do texto dos botões",
-                                value=tema_cor_texto_botao,
-                            ).props("outlined dense").classes("w-full")
-                            inp_cor_fundo = ui.color_input(
-                                "Cor de fundo da página do editor (vazio = padrão)",
-                                value=tema_cor_fundo,
-                            ).props("outlined dense").classes("w-full")
-                            inp_cor_titulo = ui.color_input(
-                                "Cor dos títulos",
-                                value=tema_cor_titulo,
-                            ).props("outlined dense").classes("w-full")
-                        inp_btn_tamanho = ui.select(
-                            {"small": "Pequeno", "medium": "Médio", "large": "Grande"},
-                            value=tema_btn_tamanho, label="Tamanho dos botões",
-                        ).props("outlined dense").classes("w-full")
+                        from mod_intranet.tema_modulo import bloco_aparencia, ler_tema
+                        _tema_edit = ler_tema(
+                            "editar_pdf", cor_botao="#1565C0", cor_texto_botao="#FFFFFF",
+                            cor_titulo="#212121", btn_tamanho="medium")
+                        bloco_aparencia(usuario_logado, "editar_pdf", _tema_edit,
+                                        prefixo_auditoria="edit-pdf")
+                        campo_modulo(usuario_logado, "editar_pdf")
 
                 with ui.card().classes("w-full border-l-4").style("border-left-color:#EF6C00"):
                     with ui.card_section().classes("gap-2 w-full"):

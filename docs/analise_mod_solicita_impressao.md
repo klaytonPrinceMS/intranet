@@ -161,3 +161,19 @@ Ex.: `20260829_143022_joao_silva_3_10_SECRETARIA_SAUDE_ATENDIMENTO.pdf`
 | Auditoria central | Implementado |
 | Documentação MkDocs | Implementado |
 | Testes manuais (qacomum/qamaster) | Pendente |
+
+## Correção registrada — tema no escopo do módulo (`NameError`)
+
+Bug real: ao abrir `/solicita-impressao`, a tela quebrava com
+`NameError: name 't_cor_botao' is not defined`. Causa: as variáveis `t_cor_botao`,
+`t_cor_txt_botao`, `t_btn_tamanho` e os helpers `_btn_cls()`/`_btn_style()` foram deixados **fora**
+de `mostrar_tela(usuario_logado, perfil)` (no escopo do módulo), onde não têm acesso ao
+`usuario_logado` para ler o tema — e as cores residuais no banco (`editpdf_cor_botao=#e61c91`,
+`editpdf_cor_texto_botao=#faf7f7`) nunca eram lidas/carregadas corretamente naquele escopo.
+
+Corrigido tirando a leitura de aparência do escopo do módulo e delegando o cupê "Aparência" ao
+**helper central** `mod_intranet/tema_modulo.py::bloco_aparencia` (que lê/grava as 6 chaves com o
+prefixo `solicita_impressao_*` em `tb_config` e **possui botão Salvar próprio**). O `_admin_configuracoes`
+passou a usar `bloco_aparencia` + `campo_modulo`; as variáveis `t_cor_fundo`, `t_cor_titulo` e
+`t_texto_header` (usadas no cabeçalho) permanecem em `mostrar_tela`. Código morto (`_btn_cls`,
+`_btn_style`) removido. Regra de uniformidade e prefixos cobertos por `test/test_tema.py`.
