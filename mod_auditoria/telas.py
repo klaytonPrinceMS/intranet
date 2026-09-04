@@ -17,6 +17,7 @@ from nicegui import ui
 from mod_intranet.conexao_bd import get_config, set_config
 from mod_intranet.contexto import rotulo_dispositivo
 from mod_intranet import observabilidade
+from mod_intranet import docker_detector as _dd
 from mod_intranet.aba_modulo import cabecalho, abas
 from mod_intranet.tema_modulo import campo_modulo
 from mod_intranet.manipulador_bd import audit_log
@@ -344,7 +345,9 @@ def mostrar_tela(usuario_logado: str, perfil: str):
     # ---------- UI ----------
     cabecalho("Auditoria", texto_header, cor_borda="#C62828",
               cor_titulo=t_cor_titulo, cor_fundo=t_cor_fundo)
-    tabs_el = abas("Logs", "history", admin=eh_admin_geral)
+    obs_ligado = _dd.otel_stack_rodando()
+    tabs_el = abas("Logs", "history", admin=eh_admin_geral,
+                   observabilidade=obs_ligado)
     with ui.tab_panels(tabs_el, value="principal").classes("w-full"):
         with ui.tab_panel("principal"):
             with ui.row().classes("w-full gap-3 flex-wrap mb-3 items-end"):
@@ -555,3 +558,62 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                 campo_modulo(usuario_logado, "auditoria")
             _atualizar_tabela()
             ui.timer(30.0, _atualizar_tabela)
+
+        if obs_ligado:
+            with ui.tab_panel("obs"):
+                with ui.row().classes("w-full gap-2 items-center mb-1"):
+                    ui.icon("query_stats").classes("text-primary text-2xl")
+                    ui.label("Observabilidade OpenTelemetry (Grafana)").classes(
+                        "text-h6 font-bold")
+                ui.label("Dashboards de telemetria do sistema, servidos pelo Grafana "
+                         "(LGTM: Loki, Grafana, Tempo, Mimir + OTel Collector). "
+                         "Abra os links em nova aba para inspecionar métricas, "
+                         "traces e logs gerados pela aplicação.").classes(
+                    "text-caption text-grey-7 max-w-3xl -mt-1")
+
+                _dashboards = [
+                    ("Visão Geral (Intranet)", "intranet-visao-geral", "monitor_heart",
+                     "Métricas agregadas da Intranet via Mimir"),
+                    ("Traces", "intranet-traces", "timeline",
+                     "Tracing distribuído via Tempo (span de requisições)"),
+                    ("Logs", "intranet-logs", "subject",
+                     "Logs centralizados via Loki (fluem pelo OTel Collector)"),
+                ]
+                with ui.row().classes("w-full flex-wrap gap-2 items-stretch mt-2"):
+                    for titulo, uid, icone, desc in _dashboards:
+                        _url = f"http://localhost:3000/d/{uid}/{uid}"
+                        with ui.card().classes(
+                                "cursor-pointer hover:shadow-lg transition-shadow "
+                                "border border-grey-3 rounded-lg p-2 flex-1 "
+                                "min-w-[220px]") \
+                                .on("click",
+                                    lambda u=_url: ui.navigate.to(u, new_tab=True)) \
+                                .tooltip(desc):
+                            with ui.row().classes("gap-2 items-center"):
+                                ui.icon(icone).classes("text-primary text-2xl")
+                                ui.label(titulo).classes("font-bold")
+                            ui.label("Abrir dashboard em nova aba").classes(
+                                "text-caption text-grey-6 pt-1")
+                ui.html("<div class='text-caption text-grey-6 pt-2 q-px-sm'>"
+                        "Grafana: <b>http://localhost:3000</b> — usuário <b>master</b> "
+                        "/ senha <b>master</b></div>")
+                ui.html(
+                    "<div class='flex items-start gap-3 rounded-lg border-l-4 p-3' "
+                    "style='background:#FFF3E0; border-left-color:#E65100'>"
+                    "<span style='color:#BF360C;font-size:1.75rem;line-height:1'>⚠</span>"
+                    "<div class='flex-1'>"
+                    "<div class='text-body2 font-bold' style='color:#BF360C'>"
+                    "Atenção (segurança de dados):</div>"
+                    "<div class='text-body2 mt-1' style='color:#3E2723'>"
+                    "O acesso ao Grafana é feito com a senha padrão <b>master</b>. "
+                    "Por questões de segurança e de conformidade legal, cabe ao "
+                    "<b>primeiro usuário administrador</b> trocar essa senha após o "
+                    "primeiro acesso. Essa obrigação decorre dos princípios de "
+                    "segurança previstos na <b>LGPD (Lei nº 13.709/2018)</b>, em "
+                    "especial o inciso VII do art. 6º e o art. 46, bem como da "
+                    "<b>Lei do Governo Digital (Lei nº 14.129/2021)</b> e do "
+                    "<b>Marco Civil da Internet (Lei nº 12.965/2014)</b>. "
+                    "<b>Fica registrado que não existe possibilidade de resetar a "
+                    "senha do Grafana</b> caso seja perdida — guarde-a em local "
+                    "seguro.</div></div></div>"
+                )

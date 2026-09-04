@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Guia Rápido - Grafana OTel LGTM - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Guia R\u00e1pido - Grafana OTel LGTM";
+        var mkdocs_page_input_path = "inicio_rapido_otel.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Guia Rápido - Grafana OTel LGTM</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="guia-rapido-grafana-otel-lgtm">Guia Rápido - Grafana OTel LGTM<a class="headerlink" href="#guia-rapido-grafana-otel-lgtm" title="Permanent link">&para;</a></h1>
+<h2 id="o-que-e">O que é?<a class="headerlink" href="#o-que-e" title="Permanent link">&para;</a></h2>
+<p>Stack completa de observabilidade para monitoramento da Intranet:</p>
+<ul>
+<li><strong>Grafana</strong> → Dashboard visual (http://localhost:3000)</li>
+<li><strong>Loki</strong> → Armazenamento de logs</li>
+<li><strong>Tempo</strong> → Rastreamento de traces</li>
+<li><strong>Mimir</strong> → Métricas (compatível com Prometheus)</li>
+<li><strong>OTel Collector</strong> → Receptor central de telemetria</li>
+</ul>
+<hr />
+<h2 id="credenciais-mastermaster">Credenciais (master/master)<a class="headerlink" href="#credenciais-mastermaster" title="Permanent link">&para;</a></h2>
+<p>Todos os serviços usam as mesmas credenciais do usuário master da Intranet:</p>
+<table>
+<thead>
+<tr>
+<th>Serviço</th>
+<th>Usuário</th>
+<th>Senha</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Grafana</strong></td>
+<td>master</td>
+<td>master</td>
+<td>http://localhost:3000</td>
+</tr>
+<tr>
+<td>Loki</td>
+<td>(interno)</td>
+<td>(interno)</td>
+<td>http://localhost:3100</td>
+</tr>
+<tr>
+<td>Tempo</td>
+<td>(interno)</td>
+<td>(interno)</td>
+<td>http://localhost:3200</td>
+</tr>
+<tr>
+<td>Mimir</td>
+<td>(interno)</td>
+<td>(interno)</td>
+<td>http://localhost:9009</td>
+</tr>
+</tbody>
+</table>
+<p><strong>NOTA:</strong> Serviços internos (Loki, Tempo, Mimir) não requerem autenticação pois só são acessíveis pela rede Docker. O Grafana é o ponto de entrada único.</p>
+<hr />
+<h2 id="como-ativar">Como Ativar?<a class="headerlink" href="#como-ativar" title="Permanent link">&para;</a></h2>
+<h3 id="opcao-1-automatica-recomendado">Opção 1: Automática (Recomendado)<a class="headerlink" href="#opcao-1-automatica-recomendado" title="Permanent link">&para;</a></h3>
+<p>Basta rodar o <code>main.py</code>. O sistema detecta o Docker automaticamente:</p>
+<pre><code class="language-bash">.venv/bin/python main.py
+</code></pre>
+<p><strong>Se o Docker estiver disponível:</strong>
+- A stack OTel é iniciada automaticamente
+- Logs aparecem no terminal
+- Grafana disponível em http://localhost:3000</p>
+<p><strong>Se o Docker NÃO estiver disponível:</strong>
+- O sistema funciona normalmente
+- Apenas aviso no terminal (sem erros)</p>
+<h3 id="opcao-2-manual">Opção 2: Manual<a class="headerlink" href="#opcao-2-manual" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># Navegar até a pasta docker
+cd docker
+
+# Iniciar stack
+./start.sh
+
+# Ou usar docker compose
+docker compose up -d
+</code></pre>
+<hr />
+<h2 id="pre-requisitos">Pré-requisitos<a class="headerlink" href="#pre-requisitos" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Docker Desktop</strong> ou <strong>Docker Engine</strong> instalado</li>
+<li><strong>Docker Compose</strong> disponível (já incluído no Docker Desktop v2+)</li>
+</ol>
+<h3 id="verificar-se-o-docker-esta-disponivel">Verificar se o Docker está disponível<a class="headerlink" href="#verificar-se-o-docker-esta-disponivel" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">docker --version
+docker compose version
+docker info
+</code></pre>
+<h3 id="instalar-docker-se-necessario">Instalar Docker (se necessário)<a class="headerlink" href="#instalar-docker-se-necessario" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Windows/Mac:</strong> <a href="https://docs.docker.com/desktop/">Docker Desktop</a></li>
+<li><strong>Linux:</strong> <a href="https://docs.docker.com/engine/install/">Docker Engine</a></li>
+</ul>
+<hr />
+<h2 id="acessar-os-servicos">Acessar os Serviços<a class="headerlink" href="#acessar-os-servicos" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Serviço</th>
+<th>URL</th>
+<th>Credenciais</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Grafana</strong></td>
+<td>http://localhost:3000</td>
+<td>master / master</td>
+</tr>
+<tr>
+<td>Loki</td>
+<td>http://localhost:3100</td>
+<td>(interno)</td>
+</tr>
+<tr>
+<td>Tempo</td>
+<td>http://localhost:3200</td>
+<td>(interno)</td>
+</tr>
+<tr>
+<td>Mimir</td>
+<td>http://localhost:9009</td>
+<td>(interno)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Acesse o Grafana com:</strong> master / master (mesmo usuário da Intranet)</p>
+<hr />
+<h2 id="comandos-uteis">Comandos Úteis<a class="headerlink" href="#comandos-uteis" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># Ver status da stack
+cd docker &amp;&amp; ./start.sh status
+
+# Ver logs em tempo real
+cd docker &amp;&amp; ./start.sh logs
+
+# Parar stack
+cd docker &amp;&amp; ./start.sh stop
+
+# Testar integração
+cd docker &amp;&amp; ./start.sh test
+</code></pre>
+<hr />
+<h2 id="estrutura">Estrutura<a class="headerlink" href="#estrutura" title="Permanent link">&para;</a></h2>
+<pre><code>intranet/
+├── docker/
+│   ├── compose.yml          # Configuração Docker
+│   ├── start.sh             # Script de inicialização
+│   ├── README.md            # Documentação completa
+│   └── config/              # Configurações dos serviços
+├── mod_intranet/
+│   ├── docker_detector.py   # Detecção automática do Docker
+│   └── otel_integracao.py   # Integração com OpenTelemetry
+└── main.py                  # Ponto de entrada (auto-inicia OTel)
+</code></pre>
+<hr />
+<h2 id="fluxo-automatico">Fluxo Automático<a class="headerlink" href="#fluxo-automatico" title="Permanent link">&para;</a></h2>
+<pre><code>main.py inicia
+    ↓
+Verifica: Docker disponível?
+    ↓
+    ├── SIM → Inicia stack OTel (Grafana, Loki, Tempo, Mimir)
+    │        ↓
+    │        Configura OpenTelemetry SDK
+    │        ↓
+    │        Sistema envia logs/traces/métricas
+    │
+    └── NÃO → Sistema funciona normalmente
+             (sem telemetria, sem erros)
+</code></pre>
+<hr />
+<h2 id="solucao-de-problemas">Solução de Problemas<a class="headerlink" href="#solucao-de-problemas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Problema</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Docker não encontrado</td>
+<td>Instale o Docker Desktop ou Engine</td>
+</tr>
+<tr>
+<td>Docker não rodando</td>
+<td>Inicie o Docker Desktop</td>
+</tr>
+<tr>
+<td>Porta em uso</td>
+<td>Verifique com <code>netstat -tulpn \| grep :3000</code></td>
+</tr>
+<tr>
+<td>Containers não iniciam</td>
+<td>Veja logs: <code>docker compose logs</code></td>
+</tr>
+<tr>
+<td>Sem dados no Grafana</td>
+<td>Verifique se a Intranet está rodando</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="documentacao-completa">Documentação Completa<a class="headerlink" href="#documentacao-completa" title="Permanent link">&para;</a></h2>
+<p>Consulte o <a href="docker/README.md">README completo</a> para mais detalhes.</p>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -8,9 +8,13 @@
 /.nicegui
 AGENTS.md
 *.pdf
-/downloads
+*.db-shm
+*.db-wal
+*.zip
+*.Identifier
 *.pyc
-/mod_solicita_impressao/solicitacaoImpressao
-/mod_solicita_impressao/solicitacaoImpressao
+*.pyc
+*.pyc
+*.pyc
+opencode.json
 paraFaser.txt
-

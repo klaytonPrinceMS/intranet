@@ -35,8 +35,9 @@ def cabecalho(titulo: str, subtitulo: str = "", cor_borda: str = "#1565C0",
 
 
 def abas(titulo_principal: str, icone_principal: str, admin: bool = False,
-         valor: str = "principal"):
-    """Cria a barra de abas: aba principal + aba 'Administração' (se admin).
+         valor: str = "principal", observabilidade: bool = False):
+    """Cria a barra de abas: aba principal + 'Administração' (se admin) +
+    'Observabilidade' (se o serviço OTel/Grafana estiver rodando).
 
     Retorna o elemento `ui.tabs` para ser usado em `ui.tab_panels`.
     """
@@ -45,4 +46,6 @@ def abas(titulo_principal: str, icone_principal: str, admin: bool = False,
         ui.tab("principal", label=titulo_principal, icon=icone_principal)
         if admin:
             ui.tab("adm", label="Administração", icon="admin_panel_settings")
+        if observabilidade:
+            ui.tab("obs", label="Observabilidade", icon="query_stats")
     return tabs_el

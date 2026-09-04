@@ -117,6 +117,22 @@ def configurar():
             logger.add(sys.stderr, level=nivel, format=_FMT, filter=lambda r: True)
             console = "sim"
 
+        # Bridge: roteia logs do loguru para o OpenTelemetry (→ Loki via collector).
+        # loguru aceita instâncias de logging.Handler como sink: cada record é
+        # convertido e enviado ao LoggerProvider OTel. Sem isso, logs via loguru()
+        # (o que o app usa) NUNCA chegam ao Loki — ficam presos no arquivo/console.
+        if _sink_otel_loguru is None:
+            try:
+                from mod_intranet.otel_integracao import (
+                    OTEL_AVAILABLE, obter_handler_log,
+                )
+                _h = obter_handler_log()
+                if OTEL_AVAILABLE and _h:
+                    logger.add(_h, level="DEBUG")
+                    _sink_otel_loguru = _h
+            except Exception as e:
+                print(f"[observabilidade] falha ao bridge OTel loguru: {e}")
+
         logger.info(f"Observabilidade ativa | nivel={nivel} rotacao={rotacao} "
                      f"retencao={retencao} | console={console}")
     except Exception as e:

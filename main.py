@@ -16,6 +16,35 @@ from mod_intranet import autenticacao
 from mod_intranet.mod_intranet_inicializacao_bd import inicializar_bancos
 inicializar_bancos()
 
+# ================== INICIALIZAÇÃO OTEL (observabilidade) ==================
+# Auto-inicia a stack OTel LGTM se Docker estiver disponível
+try:
+    from mod_intranet.docker_detector import auto_iniciar_otel
+    from mod_intranet.otel_integracao import inicializar_otel, finalizar_otel
+    if auto_iniciar_otel():
+        inicializar_otel()
+        # Registra shutdown hook para finalizar OTel ao encerrar
+        import atexit
+        atexit.register(finalizar_otel)
+
+        # Instrumenta a aplicação: métricas + spans por requisição HTTP
+        from mod_intranet.instrumentacao_app import instrumentar_aplicacao
+        instrumentar_aplicacao(app)
+
+        # Sincroniza credenciais do Grafana com o usuário master
+        try:
+            from mod_intranet.grafana_sync import sincronizar_credenciais
+            sucesso, msg = sincronizar_credenciais()
+            if sucesso:
+                print(f"[grafana] {msg}")
+            else:
+                print(f"[grafana] {msg}")
+        except Exception as e:
+            print(f"[grafana] Aviso: não foi possível sincronizar credenciais: {e}")
+except Exception as e:
+    print(f"[otel] Aviso: não foi possível inicializar OTel: {e}")
+    print("[otel] O sistema funcionará sem telemetria OTel")
+
 # Garantir __pycache__ limpo de telas inexistentes
 from pathlib import Path
 
@@ -86,6 +115,12 @@ def page_login():
 
             def tentar_login():
                 ok, msg = autenticacao.autenticar(usuario.value or "", senha.value or "")
+                # Observabilidade: registra a tentativa de login (métrica OTel)
+                try:
+                    from mod_intranet.otel_integracao import registrar_login_observabilidade
+                    registrar_login_observabilidade(usuario.value or "", ok)
+                except Exception:
+                    pass
                 if not ok:
                     ui.notify(msg, type="negative", position="top")
                     return

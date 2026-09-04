@@ -1,0 +1,55 @@
+# =============================================================================
+# Grafana Datasources Provisioning - Intranet Modular
+# =============================================================================
+# Configuração automática das fontes de dados no Grafana.
+# =============================================================================
+
+apiVersion: 1
+
+datasources:
+  # Loki - Logs
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: false
+    editable: true
+    jsonData:
+      maxLines: 1000
+      timeout: 60
+
+  # Tempo - Traces
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    isDefault: false
+    editable: true
+    jsonData:
+      tracesToLogs:
+        datasourceUid: Loki
+        filterByTraceID: true
+      tracesToMetrics:
+        datasourceUid: Mimir
+      nodeGraph:
+        enabled: true
+
+  # Mimir - Métricas (Prometheus)
+  - name: Mimir
+    type: prometheus
+    access: proxy
+    url: http://mimir:9009/prometheus
+    isDefault: true
+    editable: true
+    jsonData:
+      httpMethod: POST
+
+  # Prometheus - Métricas do OTel Collector
+  - name: OTel-Metrics
+    type: prometheus
+    access: proxy
+    url: http://otel-collector:8889
+    isDefault: false
+    editable: true
+    jsonData:
+      httpMethod: POST

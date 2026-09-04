@@ -11,3 +11,9 @@ loguru>=0.7.3
 pytest>=8.0
 mkdocs>=1.6.1
 mkdocs-material>=9.7.7
+
+# OpenTelemetry (observabilidade) - Opcional
+# Instalar apenas se Docker estiver disponível
+# opentelemetry-api>=1.20.0
+# opentelemetry-sdk>=1.20.0
+# opentelemetry-exporter-otlp-proto-grpc>=1.20.0
