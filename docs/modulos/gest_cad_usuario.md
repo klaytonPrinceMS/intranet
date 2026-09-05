@@ -23,9 +23,9 @@ Criador vigente: `init_db()` em `manipulador_bd.py:54-156` (executado no import 
 
 ## Funcionalidades
 
-- **CRUD soft**: criar (senha provisória mín. 6 + `forcar_troca`), editar (aplica só diferenças; login travado para `master`), renomear (replica em dependentes), bloquear/desbloquear, excluir em 2 estágios (soft com motivo ≥ 3 chars → DELETE físico na aba Excluídos).
-- **Busca instantânea** (debounce 150 ms) insensível a acentos, com filtros situação/perfil e paginação 10/20/50/100.
-- **Papéis por módulo**: seletores de acesso com módulos inativos marcados INDISPONÍVEL (vínculos órfãos).
+- **CRUD soft**: criar (senha provisória mín. 6 + `forcar_troca`), editar (aplica só diferenças; login travado para `master`), renomear (replica em dependentes), bloquear/desbloquear, excluir em 2 estágios (soft com motivo ≥ 3 chars → DELETE físico, liberado nas linhas de excluídos via busca "excluído").
+- **Busca instantânea** (debounce 150 ms) insensível a acentos, com filtros situação/perfil e paginação 10/20/50/100. Busca em **todos os campos** (ID, login, perfil, e-mail, telefone, módulos:papel, nome completo) + palavras-chave de estado ("provisório", "bloqueado", "sessão", "excluído"). Buscar "excluído" revela soft-deleted na lista — **a aba Excluídos foi removida** (redundante). Ordenação A→Z (nome/tratamento) ou numérica (ID) via seletor.
+- **Papéis por módulo**: seletores de acesso com módulos inativos marcados INDISPONÍVEL (vínculos órfãos). Tooltip no nome de tratamento expõe todos os campos (login, perfil, situação, contato, cadastro, acessos com nomes de exibição + badge de papel) — exibição compacta 4 colunas (ID | Tratamento | Senha provisória | Ações).
 - **Sessões Ativas**: todas as vivas do sistema (IP, dispositivo, MAC em tooltip), encerramento individual/em massa e histórico das 10 últimas por usuário.
 - **Limpeza cruzada LGPD**: exclui postagens/comentários do Blog, remove arquivos/cota do Editor PDF e anonimiza empenhos como "(usuário excluído)"; auditoria sempre preservada.
 - **Proteções**: vedado agir sobre a própria conta; `master` não é renomeado/excluído; último `administrador_geral` ativo protegido contra rebaixamento/bloqueio por outro admin (RF-26).
@@ -38,7 +38,7 @@ Criador vigente: `init_db()` em `manipulador_bd.py:54-156` (executado no import 
 |:---|:---:|:---:|:---:|
 | Ver tela de gestão | ✗ | ✓ | ✓ |
 | Criar/editar/bloquear/renomear | ✗ | ✓ | ✓ |
-| Exclusão definitiva (aba Excluídos) | ✗ | ✗ | ✓ |
+| Exclusão definitiva (via busca "excluído") | ✗ | ✗ | ✓ |
 | Encerrar sessões | ✗ | ✓ | ✓ |
 | Aba Administração | ✗ | ✗ | ✓ |
 

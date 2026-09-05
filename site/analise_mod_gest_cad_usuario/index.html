@@ -263,7 +263,7 @@
 <h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Gate duplo: <code>administrador_geral</code> ou <code>eh_admin_do_modulo(user,'usuarios')</code>; caso contrário painel "Acesso restrito".</li>
-<li>Abas: <strong>Usuários</strong> | <strong>Excluídos</strong> (só admin geral) | <strong>Sessões Ativas</strong>.</li>
+<li>Abas: <strong>Usuários</strong> | <strong>Sessões Ativas</strong> | <strong>Administração</strong> (só admin geral). A aba <strong>Excluídos</strong> foi <strong>removida</strong>: usuários excluídos (soft) são acessados pela busca por "excluído" na aba Usuários.</li>
 <li>Busca instantânea (debounce 150 ms) insensível a acentos/pontuação, localiza também pelo nome completo/social.</li>
 <li>Lista com filtros situação/perfil, paginação client-side 10/20/50/100 e badges: <code>ativo</code>, <code>bloqueado</code>, <code>excluído (soft)</code>, <code>senha provisória</code>. Ações ocultas na própria linha do ator ("use Meu Perfil").</li>
 <li>Diálogos: Novo usuário (senha provisória mín. 6 + seletores de acesso por módulo registrado, inativos marcados INDISPONÍVEL), Editar (login travado p/ master; aplica só diferenças), Redefinir senha, Excluir lógico (motivo ≥3 chars obrigatório), Exclusão definitiva (digitar o login; aviso LGPD listando a limpeza cruzada).</li>
@@ -271,7 +271,7 @@
 </ul>
 <h2 id="regras-de-negocio-relevantes">Regras de negócio relevantes<a class="headerlink" href="#regras-de-negocio-relevantes" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Exclusão em dois estágios</strong>: estágio 1 = soft delete com motivo, encerra sessões, reversível ("Restaurar" limpa o motivo); estágio 2 = DELETE físico, exclusivo da aba Excluídos (admin geral revalidado no backend).</li>
+<li><strong>Exclusão em dois estágios</strong>: estágio 1 = soft delete com motivo, encerra sessões, reversível ("Restaurar" limpa o motivo); estágio 2 = DELETE físico, acessível nas linhas de usuários excluídos via busca "excluído" (admin geral revalidado no backend).</li>
 <li><strong>Limpeza cruzada LGPD</strong>: exclui postagens/comentários do Blog, remove arquivos/cota do editorPDF e anonimiza autoria de empenhos como "(usuário excluído)". Auditoria sempre preservada. Nota: implementa cross-query SQLite ad-hoc aos bancos vizinhos (contrariando a convenção geral do projeto).</li>
 <li><strong>Proteções</strong>: vedado agir sobre a própria conta (bloquear/excluir/rebaixar); <code>master</code> não é renomeado nem excluído; último admin geral ativo protegido contra <strong>exclusão definitiva</strong>; RF-26: <code>editar_usuario</code>/<code>bloquear_usuario</code> bloqueiam <strong>rebaixar ou bloquear</strong> o último <code>administrador_geral</code> ativo quando o ator é OUTRO admin (<code>manipulador_bd.py:292-305</code>).</li>
 <li><strong>Senha provisória</strong>: criação/redefinição marcam <code>forcar_troca</code>; redefinição derruba todas as sessões. O admin digita a senha manualmente (não é gerada aleatória como diz o PLANO 2.5).</li>
@@ -286,7 +286,7 @@
 <li>Renomear usuário replica o nome nas tabelas dependentes e nas sessões centrais.</li>
 </ul>
 <h2 id="status-fases-2-e-25-do-planomd">Status — Fases 2 e 2.5 do PLANO.md<a class="headerlink" href="#status-fases-2-e-25-do-planomd" title="Permanent link">&para;</a></h2>
-<p><strong>Implementado:</strong> CRUD completo (criar, editar, renomear, bloquear/desbloquear, soft delete, exclusão definitiva LGPD); hash <strong>bcrypt</strong>; múltiplos perfis globais (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) e papéis granulares por módulo (<code>tb_acesso_usuario</code>); seed <code>master</code>/<code>master</code> com troca obrigatória de senha no 1º login (auto-cura idempotente em boot); senha provisória (<code>forcar_troca</code>); nome completo/social (<code>user_nome_completo</code>, Decreto 8.727/2016); exclusão em 2 estágios com motivo; limpeza cruzada LGPD (Blog/editorPDF/empenhos anonimizados, auditoria preservada); proteções (vedado agir sobre a própria conta, <code>master</code> não renomeável/excluível); lista paginada (10/20/50/100), busca instantânea (debounce 150 ms), filtros situação/perfil e badges (ativo/bloqueado/excluído/senha provisória); alerta de módulos inexistentes (vínculos órfãos como INDISPONÍVEL); gestão/revogação de sessões ativas + histórico; auditoria central LGPD.</p>
+<p><strong>Implementado:</strong> CRUD completo (criar, editar, renomear, bloquear/desbloquear, soft delete, exclusão definitiva LGPD); hash <strong>bcrypt</strong>; múltiplos perfis globais (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) e papéis granulares por módulo (<code>tb_acesso_usuario</code>); seed <code>master</code>/<code>master</code> com troca obrigatória de senha no 1º login (auto-cura idempotente em boot); senha provisória (<code>forcar_troca</code>); nome completo/social (<code>user_nome_completo</code>, Decreto 8.727/2016); exclusão em 2 estágios com motivo; limpeza cruzada LGPD (Blog/editorPDF/empenhos anonimizados, auditoria preservada); proteções (vedado agir sobre a própria conta, <code>master</code> não renomeável/excluível); lista paginada (10/20/50/100), busca instantânea em todos os campos + palavras-chave de estado (debounce 150 ms), filtros situação/perfil, ordenação A→Z/numérica e exibição compacta com hover (tooltip com nomes de módulos); alerta de módulos inexistentes (vínculos órfãos como INDISPONÍVEL); gestão/revogação de sessões ativas + histórico; auditoria central LGPD.</p>
 <p><strong>Desvios aceitáveis:</strong> tabela chama-se <code>tb_usuarios</code> (não <code>tb_usuario</code>); não há tabela <code>tb_perfil</code> separada; rota real é <code>/users</code> (não <code>/gestao-usuarios</code>).</p>
 <p><strong>Proteção do último <code>administrador_geral</code> contra bloqueio/rebaixamento por OUTRO admin</strong> (RF-26): <code>editar_usuario</code>/<code>bloquear_usuario</code> bloqueiam rebaixar ou bloquear o último <code>administrador_geral</code> ativo quando o ator é outro admin — <strong>REALIZADO</strong> (<code>mod_gest_cad_usuario/manipulador_bd.py</code>).</p>
 <h2 id="fase-25-testes-do-fluxo-completo">Fase 2.5 — Testes do fluxo completo<a class="headerlink" href="#fase-25-testes-do-fluxo-completo" title="Permanent link">&para;</a></h2>
@@ -328,6 +328,34 @@ fim — LGPD), sem destruir dados do desenvolvedor:</p>
   geração aleatória continua <strong>não implementada</strong> — desvio documentado.
 - Controle granular é aplicado via <code>validar_acesso_modulo</code>/<code>listar_modulos_permitidos</code>,
   usados no menu lateral, cards do dashboard e página <code>/modulo/{slug}</code></p>
+<h3 id="adicoes-recentes-0509">Adições recentes (05/09)<a class="headerlink" href="#adicoes-recentes-0509" title="Permanent link">&para;</a></h3>
+<p>Oito melhorias na tela de usuários (<code>mod_gest_cad_usuario/telas.py</code>), todas na aba <strong>Usuários</strong> e no diálogo de edição:</p>
+<ol>
+<li>
+<p><strong>Botão "Salvar alterações" no diálogo de edição</strong> — <code>_dlg_editar</code> definia a função <code>salvar()</code> internamente, mas nunca a conectava a um botão. Adicionada linha de ações com "Cancelar" (flat) + "Salvar alterações" (primário, ícone <code>save</code>) (<code>telas.py:621-624</code>), seguindo o padrão dos diálogos Novo/Duplicar.</p>
+</li>
+<li>
+<p><strong>Busca em qualquer campo</strong> — A função <code>_filtrar</code> agora pesquisa em <strong>todos</strong> os campos do registro: ID numérico, login, perfil global, e-mail, telefone, string módulos:papel e nome completo/tratamento (<code>telas.py:236-244</code>). O placeholder e o tooltip do campo de busca foram atualizados para refletir a abrangência (<code>telas.py:108-112</code>).</p>
+</li>
+<li>
+<p><strong>Ordenação alfabética ou numérica</strong> — Seletor "Ordenar por" (<code>ORDEM_OPCOES</code>) na barra de filtros, com opções <code>A→Z (nome)</code> e <code>Numérica (ID)</code> (<code>telas.py:195</code>, <code>telas.py:282-284</code>). A função <code>_chave_ordenacao</code> ordena por nome de tratamento/login (alfabética, via <code>_norm</code> que ignora acentos) ou por ID (<code>telas.py:197-203</code>). Limpar filtros restaura <code>nome</code> como ordem padrão (<code>telas.py:286</code>). A ordenação é aplicada no final de <code>_filtrar</code> (<code>telas.py:253</code>).</p>
+</li>
+<li>
+<p><strong>Exibição compacta</strong> — A tabela encolheu de 8 colunas para 4: <code>[ID][Tratamento][Senha provisória][Ações]</code>, com grid <code>60px 1fr 150px 220px</code> (<code>telas.py:310-311</code>). Os demais campos (login @, perfil global, situação, e-mail, telefone, cadastro, módulos:papel) são expostos em tooltip ao passar o mouse no nome de tratamento, com ícone <code>info_outline</code> como dica visual (<code>telas.py:329-360</code>).</p>
+</li>
+<li>
+<p><strong>Nomes de módulos no tooltip</strong> — Os acessos do usuário no tooltip exibem o <strong>nome de exibição</strong> do módulo (via <code>_nomes_modulos()</code>, que usa <code>autenticacao.modulos_registrados()</code> com cache lazy em <code>_MAP_MODULOS</code>) ao invés da chave bruta (ex. <code>blog</code> em vez de <code>blog:comum</code>). Cada linha de acesso exibe ícone do módulo + nome + badge do papel usando <code>ROTULOS_PAPEL</code> ("Comum"/"Administrador") (<code>telas.py:25-34</code>, <code>telas.py:346-358</code>).</p>
+</li>
+<li>
+<p><strong>Busca por palavras-chave de estado</strong> — Digitar "provisório" ("provisor"), "bloqueado" ("bloque"), "sessão" ("sess") ou "excluído" ("exclu") filtra pelos estados computados: senha provisória pendente (<code>autenticacao.usuarios_com_troca_pendente()</code>), bloqueado (<code>user_ativo=0</code>), sessão ativa (<code>gest.sessoes_ativas_por_usuario()</code>) e excluído (<code>user_deletado=1</code>). As consultas extras (troca pendente, sessões) só rodam quando um token de estado está presente, evitando custo desnecessário (<code>telas.py:213-234</code>).</p>
+</li>
+<li>
+<p><strong>Busca "excluído" revela excluídos + aba Excluídos removida</strong> — Quando o termo de busca contém "exclu", a base do filtro em <code>_filtrar</code> inclui soft-deleted (<code>user_deletado=1</code>), fazendo-os aparecer na aba Usuários (<code>telas.py:207-211</code>). Como isso tornou essa aba redundante, a aba "Excluídos" foi <strong>removida do menu</strong> (agora são 3 abas: Usuários | Sessões Ativas | Administração). Nas linhas de excluídos que aparecem na busca, o botão de exclusão é o permanente (<code>delete_forever</code>, <code>_dlg_excluir_definitivo</code>) com aviso LGPD, mantendo também "Restaurar conta" (<code>telas.py:396-405</code>).</p>
+</li>
+<li>
+<p><strong>Tabulação consistente</strong> — O grid da tabela mudou de <code>60px 1fr auto</code> (implícito) para <code>60px 1fr 150px 220px</code> tanto no cabeçalho quanto nas linhas (<code>telas.py:311</code>, <code>telas.py:325</code>). O badge "senha provisória" virou coluna própria ao invés de ficar embutido na coluna situação, alinhando as ações de todas as linhas à mesma posição horizontal (<code>telas.py:362-368</code>).</p>
+</li>
+</ol>
 <h3 id="adicoes-recentes-2608">Adições recentes (26/08)<a class="headerlink" href="#adicoes-recentes-2608" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Aba "Administração"</strong> (exclusiva do admin geral, nas tabs existentes): bloco <strong>Aparência</strong> (prefixo usuarios_<em> — cor do botão/texto, fundo da página, cor do título, tamanho via ui.color_input; a cor do botão também define a primária da tela) e </em><em>config específica</em>*: usuarios_senha_min (política de senha mínima, aplicada em criar_usuario/alterar_senha_admin via senha_minima()). Salvo via set_config, vale sem reiniciar.</li>

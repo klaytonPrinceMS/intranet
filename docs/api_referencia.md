@@ -133,7 +133,7 @@
 | `bloquear_usuario(ator, nome, bloquear)` | `:410` | bloqueio/desbloqueio com auditoria |
 | `soft_delete_usuario(ator, nome, motivo)` | `:435` | exclusão lógica (motivo ≥ 3 chars) |
 | `_vinculos_cruzados_excluir` | `:463` | limpeza LGPD em bancos vizinhos |
-| `excluir_usuario_definitivo(ator, nome)` | `:572` | DELETE físico (aba Excluídos) |
+| `excluir_usuario_definitivo(ator, nome)` | `:572` | DELETE físico (via busca "excluído") |
 | `definir_acesso` / `remover_acesso` | `:609` / `:634` | papel por módulo em `tb_acesso_usuario` |
 | `validar_acesso_modulo(user, chave)` | `:666` | usado pela guarda do núcleo |
 | `listar_sessoes_ativas` / `contar_sessoes_ativas` | `:686` / `:705` | sessões vivas |

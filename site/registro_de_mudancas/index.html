@@ -213,7 +213,12 @@
 <li><strong>Renomear Empenho — Organizador completo (RF-44):</strong> <code>organizar_pastas</code> agora gera <code>capa.txt</code> por caixa e <code>matrizDeDocumentos.txt</code>/<code>.pdf</code>; <code>validar_presenca_matriz</code> confere a presença dos documentos listados.</li>
 <li><strong>Renomear Empenho — Ações de usuário comum (RF-39):</strong> card "Ações de usuário comum" com <strong>Baixar ZIP</strong> e <strong>Enviar por e-mail</strong> dos empenhos organizados; liberado por <code>renomear_autorizar_download</code> (admin).</li>
 <li><strong>Infraestrutura — SMTP (RF-58):</strong> <code>mod_intranet/email_util.py</code> + cartão "E-mail / SMTP" em Configurações (<code>smtp_*</code> em <code>tb_config</code>) com teste de conexão.</li>
-<li><strong>Infraestrutura — Configurações gerais (RF-57):</strong> cartão "Configurações gerais" com <code>backup_interval_hours</code> (reagenda todos os backups), <code>sessao_retencao</code> e exibição da pasta raiz.</li>
+<li>
+<p><strong>Infraestrutura — Configurações gerais (RF-57):</strong> cartão "Configurações gerais" com <code>backup_interval_hours</code> (reagenda todos os backups), <code>sessao_retencao</code> e exibição da pasta raiz.</p>
+</li>
+<li>
+<p><strong>Gestão de Usuários — melhorias na tela (05/09):</strong> busca em todos os campos + palavras-chave de estado (provisório/bloqueado/sessão/excluído), ordenação A→Z/numérica, exibição compacta 4 colunas com tooltip (nomes de módulos + badges de papel), botão "Salvar alterações" no diálogo de edição, grid alinhado (senha provisória em coluna própria), busca "excluído" revela soft-deleted e <strong>aba "Excluídos" removida</strong> (redundante; exclusão permanente LGPD segue disponível nas linhas de excluídos).</p>
+</li>
 </ul>
 <p>Veja <a href="../plano_de_projeto/">Plano de Projeto</a> e <a href="../versionamento/">Versionamento</a>.</p>
               

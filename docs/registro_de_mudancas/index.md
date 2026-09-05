@@ -27,4 +27,6 @@
 - **Infraestrutura — SMTP (RF-58):** `mod_intranet/email_util.py` + cartão "E-mail / SMTP" em Configurações (`smtp_*` em `tb_config`) com teste de conexão.
 - **Infraestrutura — Configurações gerais (RF-57):** cartão "Configurações gerais" com `backup_interval_hours` (reagenda todos os backups), `sessao_retencao` e exibição da pasta raiz.
 
+- **Gestão de Usuários — melhorias na tela (05/09):** busca em todos os campos + palavras-chave de estado (provisório/bloqueado/sessão/excluído), ordenação A→Z/numérica, exibição compacta 4 colunas com tooltip (nomes de módulos + badges de papel), botão "Salvar alterações" no diálogo de edição, grid alinhado (senha provisória em coluna própria), busca "excluído" revela soft-deleted e **aba "Excluídos" removida** (redundante; exclusão permanente LGPD segue disponível nas linhas de excluídos).
+
 Veja [Plano de Projeto](../plano_de_projeto/index.md) e [Versionamento](../versionamento/index.md).

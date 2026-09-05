@@ -210,9 +210,9 @@
 <p>⚠️ <code>tb_modulo_perfil</code> existe apenas no <code>criador_bd.py</code> — <strong>legado/morto</strong> (aponta para o banco central); não confiar.</p>
 <h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>CRUD soft</strong>: criar (senha provisória mín. 6 + <code>forcar_troca</code>), editar (aplica só diferenças; login travado para <code>master</code>), renomear (replica em dependentes), bloquear/desbloquear, excluir em 2 estágios (soft com motivo ≥ 3 chars → DELETE físico na aba Excluídos).</li>
-<li><strong>Busca instantânea</strong> (debounce 150 ms) insensível a acentos, com filtros situação/perfil e paginação 10/20/50/100.</li>
-<li><strong>Papéis por módulo</strong>: seletores de acesso com módulos inativos marcados INDISPONÍVEL (vínculos órfãos).</li>
+<li><strong>CRUD soft</strong>: criar (senha provisória mín. 6 + <code>forcar_troca</code>), editar (aplica só diferenças; login travado para <code>master</code>), renomear (replica em dependentes), bloquear/desbloquear, excluir em 2 estágios (soft com motivo ≥ 3 chars → DELETE físico, liberado nas linhas de excluídos via busca "excluído").</li>
+<li><strong>Busca instantânea</strong> (debounce 150 ms) insensível a acentos, com filtros situação/perfil e paginação 10/20/50/100. Busca em <strong>todos os campos</strong> (ID, login, perfil, e-mail, telefone, módulos:papel, nome completo) + palavras-chave de estado ("provisório", "bloqueado", "sessão", "excluído"). Buscar "excluído" revela soft-deleted na lista — <strong>a aba Excluídos foi removida</strong> (redundante). Ordenação A→Z (nome/tratamento) ou numérica (ID) via seletor.</li>
+<li><strong>Papéis por módulo</strong>: seletores de acesso com módulos inativos marcados INDISPONÍVEL (vínculos órfãos). Tooltip no nome de tratamento expõe todos os campos (login, perfil, situação, contato, cadastro, acessos com nomes de exibição + badge de papel) — exibição compacta 4 colunas (ID | Tratamento | Senha provisória | Ações).</li>
 <li><strong>Sessões Ativas</strong>: todas as vivas do sistema (IP, dispositivo, MAC em tooltip), encerramento individual/em massa e histórico das 10 últimas por usuário.</li>
 <li><strong>Limpeza cruzada LGPD</strong>: exclui postagens/comentários do Blog, remove arquivos/cota do Editor PDF e anonimiza empenhos como "(usuário excluído)"; auditoria sempre preservada.</li>
 <li><strong>Proteções</strong>: vedado agir sobre a própria conta; <code>master</code> não é renomeado/excluído; último <code>administrador_geral</code> ativo protegido contra rebaixamento/bloqueio por outro admin (RF-26).</li>
@@ -243,7 +243,7 @@
 <td style="text-align: center;">✓</td>
 </tr>
 <tr>
-<td style="text-align: left;">Exclusão definitiva (aba Excluídos)</td>
+<td style="text-align: left;">Exclusão definitiva (via busca "excluído")</td>
 <td style="text-align: center;">✗</td>
 <td style="text-align: center;">✗</td>
 <td style="text-align: center;">✓</td>

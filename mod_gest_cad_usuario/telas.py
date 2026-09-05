@@ -22,6 +22,16 @@ from mod_gest_cad_usuario import manipulador_bd as gest
 log = observabilidade.get_logger("gest_cad_usuario")
 
 OPCOES_PAPEL = {"": "— sem acesso —", "comum": "Comum", "administrador": "Administrador do módulo"}
+ROTULOS_PAPEL = {"comum": "Comum", "administrador": "Administrador"}
+_MAP_MODULOS = {}  # cache lazy: {chave: (nome, icone)}
+
+
+def _nomes_modulos():
+    """Mapa chave → (nome, icone) dos módulos registrados — populado na primeira chamada."""
+    if not _MAP_MODULOS:
+        for chave, nome, icone, _rota, _ativo in autenticacao.modulos_registrados():
+            _MAP_MODULOS[chave] = (nome, icone)
+    return _MAP_MODULOS
 
 
 def _norm(s):
@@ -36,7 +46,8 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             or autenticacao.eh_admin_do_modulo(user_nome, "usuarios")):
         _acesso_negado()
         return
-    # Aba "Excluídos" (com exclusão permanente LGPD): exclusiva do administrador geral
+    # Exclusão permanente (LGPD) disponível nas linhas de excluídos via busca "excluído";
+    # exclusividade do administrador geral.
     eh_admin_geral = (perfil_global == "administrador_geral"
                       or autenticacao.perfil_global_de(user_nome) == "administrador_geral")
 
@@ -60,7 +71,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
 
     def ao_digitar(e):
         estado_busca["valor"] = e.value or ""
-        for chave in ("usuarios", "excluidos"):
+        for chave in ("usuarios",):
             if chave in refreshers:
                 try:
                     refreshers[chave]()
@@ -69,7 +80,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
 
     def novo_usuario():
         _dlg_novo(user_nome, lambda: [refreshers[k]() for k in
-                                      ("usuarios", "excluidos") if k in refreshers])
+                                      ("usuarios",) if k in refreshers])
 
     with ui.column().classes("w-full p-6 gap-4"):
         cabecalho("Gestão de Usuários",
@@ -81,13 +92,14 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                               "bg-white rounded-lg shadow-sm px-3 py-1"):
             with ui.tabs().props("dense inline-label").classes("min-w-0 overflow-x-auto") as tabs:
                 tab_users = ui.tab("Usuários", icon="people")
-                tab_excluidos = ui.tab("Excluídos", icon="auto_delete") if eh_admin_geral else None
                 tab_sessoes = ui.tab("Sessões Ativas", icon="wifi")
                 tab_adm = ui.tab("Administração", icon="admin_panel_settings") if eh_admin_geral else None
             with ui.row().classes("items-center gap-2 flex-nowrap shrink-0").style("width:min(46%, 620px)"):
-                ui.input(placeholder="🔍  Buscar usuário… (ignora acentos)", on_change=ao_digitar) \
+                ui.input(placeholder="🔍  Buscar… nome, e-mail, telefone, perfil, id ou estado (provisório, bloqueado, sessão, excluído)", on_change=ao_digitar) \
                     .props("outlined dense clearable debounce='150'").classes("w-full grow min-w-[220px]") \
-                    .tooltip("Filtra a lista de Usuários enquanto digita — sem acentos e maiúsculas")
+                    .tooltip("Busca em todos os campos do usuário. Palavras-chave de estado: "
+                             "'provisório' (senha a trocar), 'bloqueado', 'sessão' (com sessão ativa), "
+                             "'excluído'. Sem acentos e maiúsculas.")
                 ui.button("Novo usuário", on_click=novo_usuario).props(
                     "unelevated color=primary no-caps icon=person_add").classes("shrink-0") \
                     .tooltip("Criar usuário definindo perfil e liberação por módulo")
@@ -95,9 +107,6 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         with ui.tab_panels(tabs, value=tab_users).classes("w-full bg-transparent"):
             with ui.tab_panel(tab_users):
                 _painel_usuarios(user_nome, estado_busca, refreshers)
-            if tab_excluidos is not None:
-                with ui.tab_panel(tab_excluidos):
-                    _painel_excluidos(user_nome, refreshers)
             with ui.tab_panel(tab_sessoes):
                 _painel_sessoes(user_nome, refreshers)
             with ui.tab_panel(tab_adm):
@@ -165,20 +174,62 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
     """Lista paginada com filtros. Busca/botão vivem na BARRA SUPERIOR (mostrar_tela).
     Renderiza só a página visível — suporta milhares de usuários sem travar."""
     estado = termo_compartilhado if termo_compartilhado is not None else {"valor": ""}
-    local = {"pagina": 1, "por_pagina": 20, "situacao": "", "perfil": ""}
+    local = {"pagina": 1, "por_pagina": 20, "situacao": "", "perfil": "", "ordem": "nome"}
     container = ui.column().classes("w-full gap-2")
 
     SIT_OPCOES = {"": "Todas", "ativos": "Ativos", "bloqueados": "Bloqueados"}
     PERFIL_OPCOES = {"": "Todos"} | {p: p.replace("_", " ") for p in gest.PERFIS_GLOBAIS}
+    ORDEM_OPCOES = {"nome": "A→Z (nome)", "id": "Numérica (ID)"}
+
+    def _chave_ordenacao(linha):
+        """Ordena por nome de tratamento/login (alfabética) ou por ID (numérica)."""
+        if local["ordem"] == "id":
+            return linha[0]
+        _uid, _nome, _perfil, _ativo, _email, _fone, _cad, _aces, _del, completo, _motivo = linha
+        trat = (completo or "").strip() or _nome
+        return (_norm(trat), _norm(_nome))
 
     def _filtrar():
-        # excluídos (soft) vivem na aba própria; aqui só ativos/bloqueados
-        linhas = [l for l in gest.listar_usuarios() if not l[8]]
         termo = _norm(estado.get("valor"))
+        tem_excluido = "exclu" in termo if termo else False
+        todos = gest.listar_usuarios()
+        # Excluídos (soft) só entram na lista quando a busca pede "excluído";
+        # sem busca eles não aparecem na aba Usuários.
+        linhas = todos if tem_excluido else [l for l in todos if not l[8]]
         if termo:
-            linhas = [l for l in linhas
-                      if termo in _norm(l[1]) or termo in _norm(l[4])
-                      or termo in _norm(l[2]) or termo in _norm(l[9])]
+            # tokens de estado pesquisáveis por palavra-chave digitada
+            tem_provisorio = "provisor" in termo
+            tem_bloqueado = "bloque" in termo
+            tem_sessao = "sess" in termo
+            usa_estado = any((tem_provisorio, tem_bloqueado, tem_sessao, tem_excluido))
+
+            pendentes = set()  # só computados se o token de estado for usado
+            sessoes_cnt = {}
+            if usa_estado:
+                pendentes = set(autenticacao.usuarios_com_troca_pendente())
+                sessoes_cnt = gest.sessoes_ativas_por_usuario()
+
+            def _match_usuario(l):
+                if tem_provisorio and l[1] in pendentes:
+                    return True
+                if tem_bloqueado and not l[3]:
+                    return True
+                if tem_sessao and sessoes_cnt.get(l[1], 0) > 0:
+                    return True
+                if tem_excluido and l[8]:
+                    return True
+                return False
+
+            linhas = [l for l in linhas if (
+                _match_usuario(l)
+                or termo in _norm(str(l[0]))       # ID (numérica/alfabética)
+                or termo in _norm(l[1])          # login
+                or termo in _norm(l[2])          # perfil
+                or termo in _norm(l[4])          # e-mail
+                or termo in _norm(l[5])          # telefone
+                or termo in _norm(l[7])          # módulos:papel
+                or termo in _norm(l[9])          # nome completo
+            )]
         sit = local["situacao"]
         if sit == "ativos":
             linhas = [l for l in linhas if l[3]]
@@ -186,6 +237,7 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
             linhas = [l for l in linhas if not l[3]]
         if local["perfil"]:
             linhas = [l for l in linhas if l[2] == local["perfil"]]
+        linhas.sort(key=_chave_ordenacao)
         return linhas
 
     def render():
@@ -214,8 +266,11 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
                     ui.select(PERFIL_OPCOES, value=local["perfil"], label="Perfil global",
                               on_change=lambda e: (local.update(perfil=e.value, pagina=1), render())) \
                         .props("outlined dense label").classes("min-w-[170px]")
+                    ui.select(ORDEM_OPCOES, value=local["ordem"], label="Ordenar por",
+                              on_change=lambda e: (local.update(ordem=e.value, pagina=1), render())) \
+                        .props("outlined dense label").classes("min-w-[160px]")
                     ui.button(icon="restart_alt", on_click=lambda: (
-                        local.update(pagina=1, situacao="", perfil=""), render())) \
+                        local.update(pagina=1, situacao="", perfil="", ordem="nome"), render())) \
                         .props("flat round dense size=sm color=grey-7") \
                         .tooltip("Limpar filtros")
                 with ui.row().classes("items-center gap-1"):
@@ -233,10 +288,14 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
                         local.update(pagina=min(paginas, pag + 1)), render())) \
                         .props("flat round dense").props(f"disabled={pag >= paginas}")
 
-            # ---- tabela ----
-            cab = ("ID", "Tratamento / @login", "E-mail", "Telefone", "Perfil global",
-                   "Situação", "Módulos:papel", "Ações")
-            with ui.grid(columns="60px 1.1fr 1.4fr 1fr 1.2fr 0.8fr 1.6fr auto").classes(
+            # ---- tabela (colunas enxutas: ID | Tratamento | Ações) ----
+            def _rotulo_situacao(ativo, deletado):
+                if deletado:
+                    return "excluído (soft)"
+                return "ativo" if ativo else "bloqueado"
+
+            cab = ("ID", "Tratamento", "Senha provisória", "Ações")
+            with ui.grid(columns="60px 1fr 150px 220px").classes(
                     "w-full bg-grey-1 rounded-t-lg px-3 py-2 text-caption font-bold text-grey-8"):
                 for c in cab:
                     ui.label(c)
@@ -246,33 +305,54 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
             for row in fatia:
                 uid, nome, perfil, ativo, email, fone, cadastro, acessos, deletado, completo, _motivo = row
                 trat = (completo or "").strip() or nome
-                with ui.grid(columns="60px 1.1fr 1.4fr 1fr 1.2fr 0.8fr 1.6fr auto").classes(
+                sit = _rotulo_situacao(ativo, deletado)
+                perfil_rot = perfil.replace("_", " ")
+                tem_provisoria = nome in pendentes and not deletado
+
+                with ui.grid(columns="60px 1fr 150px 220px").classes(
                         "w-full border-b border-grey-2 px-3 py-2 items-center hover:bg-blue-50/50"):
                     ui.label(str(uid)).classes("text-caption text-grey-6")
-                    with ui.column().classes("gap-0 leading-tight"):
-                        ui.label(trat).classes("font-medium")
-                        ui.label("@" + nome).classes("text-caption text-grey-6")
-                    ui.label(email or "—").classes("text-caption")
-                    ui.label(fone or "—").classes("text-caption")
-                    ui.badge(perfil.replace("_", " "), color={
-                        "administrador_geral": "deep-purple-2",
-                        "administrador_modulo": "blue-2",
-                        "comum": "grey-3",
-                    }.get(perfil, "grey-3")).props("outline dense")
-                    with ui.row().classes("items-center gap-1 flex-nowrap"):
-                        if deletado:
-                            ui.badge("excluído (soft)", color="grey-4") \
-                                .props("text-color=grey-10 outline dense") \
-                                .tooltip("Exclusão lógica — pode ser restaurada")
-                        elif ativo:
-                            ui.badge("ativo", color="green-2").props("text-color=green-9 outline dense")
-                        else:
-                            ui.badge("bloqueado", color="red-2").props("text-color=red-9 outline dense")
-                        if nome in pendentes and not deletado:
-                            ui.badge("senha provisória", color="amber-3").props(
-                                "text-color=amber-10 outline dense") \
-                                .tooltip("Troca obrigatória ainda não realizada")
-                    ui.label(acessos or "—").classes("text-caption text-grey-7")
+
+                    # tratamento com hover -> expõe os demais campos
+                    with ui.element("div").classes("cursor-help"):
+                        with ui.row().classes("items-center gap-2"):
+                            ui.label(trat).classes("font-medium")
+                            ui.icon("info_outline").classes("text-grey-5 text-xs").tooltip(
+                                "Passe o mouse para ver todos os dados")
+                        with ui.tooltip().props("offset=[0,12]"):
+                            with ui.column().classes("gap-1 p-1 min-w-[260px]"):
+                                ui.label(f"@{nome}").classes("text-subtitle2 font-bold")
+                                ui.separator()
+                                ui.label(f"Perfil global: {perfil_rot}").classes("text-caption")
+                                ui.label(f"Situação: {sit}").classes("text-caption")
+                                ui.label(f"E-mail: {email or '—'}").classes("text-caption")
+                                ui.label(f"Telefone: {fone or '—'}").classes("text-caption")
+                                ui.label(f"Cadastro: {cadastro or '—'}").classes("text-caption")
+                                ui.separator()
+                                ui.label("Acesso aos módulos").classes("text-caption font-bold")
+                                mapa_mod = _nomes_modulos()
+                                if acessos:
+                                    for trecho in acessos.split(","):
+                                        trecho = trecho.strip()
+                                        if ":" not in trecho:
+                                            continue
+                                        chave_mod, papel_mod = trecho.rsplit(":", 1)
+                                        nome_mod, icone_mod = mapa_mod.get(chave_mod, (chave_mod, "extension"))
+                                        with ui.row().classes("items-center gap-1"):
+                                            ui.icon(icone_mod).classes("text-xs text-grey-6")
+                                            ui.label(nome_mod).classes("text-caption font-medium")
+                                            ui.badge(ROTULOS_PAPEL.get(papel_mod, papel_mod),
+                                                     color="blue-grey-2").props("text-color=blue-grey-10 outline dense")
+                                else:
+                                    ui.label("—").classes("text-caption text-grey-6")
+
+                    # coluna própria "Senha provisória" (tabulada à esquerda da Ações)
+                    if tem_provisoria:
+                        ui.badge("senha provisória", color="amber-3").props(
+                            "text-color=amber-10 outline dense").tooltip(
+                            "Troca obrigatória ainda não realizada")
+                    else:
+                        ui.label("").classes("text-caption")
 
                     with ui.row().classes("gap-1"):
                         ui.button(icon="edit", on_click=lambda _, n=nome: _dlg_editar(ator, n, render)) \
@@ -300,10 +380,16 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
                                     .props("flat round dense color=green-8 size=sm") \
                                     .tooltip("Restaurar conta" +
                                              (" (remove exclusão lógica)" if deletado else ""))
-                            ui.button(icon="delete_outline",
-                                      on_click=lambda _, n=nome: _dlg_excluir(ator, n, render)) \
-                                .props("flat round dense color=orange-9 size=sm") \
-                                .tooltip("Excluir (lógico) — pede motivo e move para a aba Excluídos")
+                            if deletado:
+                                ui.button(icon="delete_forever",
+                                          on_click=lambda _, n=nome: _dlg_excluir_definitivo(ator, n, render)) \
+                                    .props("flat round dense color=red-8 size=sm") \
+                                    .tooltip("Excluir definitivamente (LGPD — irreversível)")
+                            else:
+                                ui.button(icon="delete_outline",
+                                          on_click=lambda _, n=nome: _dlg_excluir(ator, n, render)) \
+                                    .props("flat round dense color=orange-9 size=sm") \
+                                    .tooltip("Excluir (lógico) — pede motivo e move para a lista de excluídos")
                         else:
                             ui.icon("person_pin").classes("text-grey-5 self-center") \
                                 .tooltip("Sua própria conta — use 'Meu Perfil' (menu superior)")
@@ -518,6 +604,11 @@ def _dlg_editar(ator, nome_atual, refresh):
                               (f" ({mudou} acesso(s) alterado(s))" if mudou else ""), type="positive")
                     dlg.close()
                     refresh()
+
+            with ui.row().classes("w-full justify-end gap-2 mt-3"):
+                ui.button("Cancelar", on_click=dlg.close).props("flat no-caps")
+                ui.button("Salvar alterações", on_click=salvar) \
+                    .props("unelevated no-caps color=primary icon=save")
     dlg.open()
 
 
@@ -780,57 +871,6 @@ def _dlg_duplicar(ator, origem, refresh):
                 ui.button("Duplicar usuário", on_click=salvar) \
                     .props("unelevated no-caps color=teal-8 icon=content_copy")
     dlg.open()
-
-
-# ==================== ABA 1.5: EXCLUÍDOS (SOFT) ====================
-
-def _painel_excluidos(ator: str, refreshers=None):
-    box = ui.column().classes("w-full gap-2")
-
-    def refresh():
-        box.clear()
-        linhas = [l for l in gest.listar_usuarios() if l[8]]  # deletado=1
-        with box:
-            with ui.row().classes("w-full justify-between items-center flex-wrap"):
-                ui.label(f"{len(linhas)} usuário(s) na lista de excluídos").classes(
-                    "text-subtitle1 font-bold")
-                ui.button("Atualizar", on_click=refresh).props("flat no-caps icon=refresh")
-            if not linhas:
-                ui.label("Nenhum usuário excluído (lógico). Exclusões aparecem aqui "
-                         "com o motivo registrado.").classes("text-grey-6 p-2")
-                return
-            with ui.grid(columns="60px 1.2fr 0.9fr 1.8fr 0.9fr auto").classes(
-                    "w-full bg-grey-1 rounded-lg px-3 py-2 text-caption font-bold text-grey-8"):
-                for c in ("ID", "Usuário", "Perfil", "Motivo da exclusão", "Cadastro", ""):
-                    ui.label(c)
-            for row in linhas:
-                uid, nome, perfil, _ativo, _email, _fone, cadastro, _aces, _del, completo, motivo = row
-                trat = (completo or "").strip() or nome
-                with ui.grid(columns="60px 1.2fr 0.9fr 1.8fr 0.9fr auto").classes(
-                        "w-full border-b border-grey-2 px-3 py-2 items-center hover:bg-red-50/40"):
-                    ui.label(str(uid)).classes("text-caption text-grey-6")
-                    with ui.column().classes("gap-0 leading-tight"):
-                        ui.label(trat).classes("font-medium")
-                        ui.label("@" + nome).classes("text-caption text-grey-6")
-                    ui.badge((perfil or "comum").replace("_", " "), color="grey-3") \
-                        .props("outline dense")
-                    ui.label(motivo or "—").classes("text-caption text-grey-8")
-                    ui.label(cadastro or "—").classes("text-caption text-grey-7")
-                    with ui.row().classes("gap-1"):
-                        ui.button(icon="settings_backup_restore",
-                                  on_click=lambda _, n=nome: (
-                                      _gest_bloq(ator, n, False), refresh())) \
-                            .props("flat round dense color=green-8 size=sm") \
-                            .tooltip("Restaurar conta (sai da lista de excluídos)")
-                        ui.button(icon="delete_forever",
-                                  on_click=lambda _, n=nome:
-                                      _dlg_excluir_definitivo(ator, n, refresh)) \
-                            .props("flat round dense color=red-8 size=sm") \
-                            .tooltip("Excluir definitivamente (LGPD — irreversível)")
-
-    if refreshers is not None:
-        refreshers["excluidos"] = refresh
-    refresh()
 
 
 # ==================== ABA 2: SESSÕES ATIVAS ====================

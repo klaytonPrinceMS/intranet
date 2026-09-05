@@ -3,6 +3,12 @@
 
 
 
+.nicegui/
+.opencode/
+.venv/
+*.db-shm
+*.db-wal
+
 *.db
 *.log
 /.nicegui
@@ -16,5 +22,6 @@ AGENTS.md
 *.pyc
 *.pyc
 *.pyc
+
 opencode.json
 paraFaser.txt
