@@ -1,6 +1,7 @@
 import bcrypt
 import os
 import hashlib
+import re
 
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
@@ -27,7 +28,14 @@ _modulos_ok = False
 
 
 def _garantir_tb_modulos():
-    """Cria/popula tb_modulos uma única vez por processo."""
+    """Creates/populates tb_modulos once per process (idempotent migration).
+
+    Cria a tabela `tb_modulos` (incluindo a coluna `ordem`) e a semeia com os
+    módulos nativos de `MODULOS_SISTEMA`, uma única vez por processo. Em
+    bancos antigos aplica migração idempotente: adiciona a coluna `ordem` via
+    `ALTER TABLE` e inicializa a sequência — nativos seguem `MODULOS_SISTEMA`
+    (1..n) e não-nativos ficam após os nativos em ordem alfabética. Falhas são
+    registradas via loguru e re-lançadas (o cadastro de módulos é crítico)."""
     global _modulos_ok
     if _modulos_ok:
         return
@@ -42,7 +50,8 @@ def _garantir_tb_modulos():
                 icone TEXT DEFAULT 'extension',
                 rota TEXT NOT NULL,
                 ativo INTEGER NOT NULL DEFAULT 1,
-                nativo INTEGER NOT NULL DEFAULT 0
+                nativo INTEGER NOT NULL DEFAULT 0,
+                ordem INTEGER NOT NULL DEFAULT 0
             )
         """)
         for chave, nome, icone, rota in MODULOS_SISTEMA:
@@ -50,8 +59,28 @@ def _garantir_tb_modulos():
                 "INSERT OR IGNORE INTO tb_modulos (chave, nome, icone, rota, nativo) VALUES (?, ?, ?, ?, 1)",
                 (chave, nome, icone, rota),
             )
+        # Migração idempotente: coluna 'ordem' em bancos antigos + inicialização
+        colunas = {row[1] for row in cur.execute("PRAGMA table_info(tb_modulos)").fetchall()}
+        if "ordem" not in colunas:
+            cur.execute("ALTER TABLE tb_modulos ADD COLUMN ordem INTEGER NOT NULL DEFAULT 0")
+        cur.execute("SELECT COUNT(*) FROM tb_modulos WHERE ordem=0")
+        if cur.fetchone()[0] > 0:
+            # Nativos seguem a sequência de MODULOS_SISTEMA; demais por nome
+            for idx, (chave, _, _, _) in enumerate(MODULOS_SISTEMA, start=1):
+                cur.execute("UPDATE tb_modulos SET ordem=? WHERE chave=? AND nativo=1", (idx, chave))
+            cur.execute("SELECT COALESCE(MAX(ordem), 0) FROM tb_modulos WHERE nativo=1")
+            max_nativo = cur.fetchone()[0]
+            cur.execute("SELECT chave FROM tb_modulos WHERE nativo=0 AND ordem=0 ORDER BY nome")
+            for i, (chave,) in enumerate(cur.fetchall()):
+                cur.execute("UPDATE tb_modulos SET ordem=? WHERE chave=?",
+                            (max_nativo + i + 1, chave))
         conn.commit()
         _modulos_ok = True
+    except Exception:
+        from mod_intranet import observabilidade
+        observabilidade.get_logger("intranet").exception(
+            "falha ao garantir tb_modulos (criação/migração da coluna ordem)")
+        raise
     finally:
         conn.close()
 
@@ -68,8 +97,13 @@ def nome_do_modulo(chave):
 
 
 def modulos_registrados(somente_ativos=False):
-    """[(chave, nome, icone, rota, ativo)] — TODOS os módulos cadastrados,
-    incluindo os registrados depois (nativos ou criados pelo administrador)."""
+    """[(chave, nome, icone, rota, ativo)] — ALL registered modules, ordered.
+
+    Retorna TODOS os módulos cadastrados em `tb_modulos`, incluindo os
+    registrados depois (nativos ou criados pelo administrador), ordenados
+    pela coluna `ordem` (editável em Configurações → Módulo) e, em empate,
+    por nome. Em falha de leitura, registra loguru e retorna lista vazia
+    (fail-soft)."""
     _garantir_tb_modulos()
     conn = get_connection()
     try:
@@ -77,17 +111,27 @@ def modulos_registrados(somente_ativos=False):
         sql = "SELECT chave, nome, icone, rota, ativo FROM tb_modulos"
         if somente_ativos:
             sql += " WHERE ativo=1"
-        sql += " ORDER BY nativo DESC, nome"
+        sql += " ORDER BY ordem ASC, nome"
         cur.execute(sql)
         return cur.fetchall()
+    except Exception:
+        from mod_intranet import observabilidade
+        observabilidade.get_logger("intranet").exception(
+            "falha ao listar módulos registrados")
+        return []
     finally:
         conn.close()
 
 
 def registrar_modulo(ator, chave, nome, icone="extension", rota="#", ativo=False):
-    """Cadastra um módulo NOVO (futuro). Por padrão nasce INDISPONÍVEL até que
+    """Registers a NEW (future) module, born unavailable until activated.
+
+    Cadastra um módulo NOVO (futuro). Por padrão nasce INDISPONÍVEL até que
     o administrador o ative (quando a rota/página passar a existir).
-    Aparece imediatamente nas liberações de usuário."""
+    Aparece imediatamente nas liberações de usuário. A ordem de exibição
+    nasce como `max(ordem)+1` (fica no fim da lista). Audita
+    `registrar_modulo` e retorna `(ok, msg)`; falhas são registradas via
+    loguru e reportadas como chave duplicada."""
     chave = (chave or "").strip().lower().replace(" ", "_")
     if not chave or not nome:
         return False, "Chave e nome são obrigatórios"
@@ -95,19 +139,97 @@ def registrar_modulo(ator, chave, nome, icone="extension", rota="#", ativo=False
     conn = get_connection()
     try:
         cur = conn.cursor()
+        cur.execute("SELECT COALESCE(MAX(ordem), 0) FROM tb_modulos")
+        max_ordem = cur.fetchone()[0]
         cur.execute(
-            "INSERT INTO tb_modulos (chave, nome, icone, rota, ativo, nativo) VALUES (?, ?, ?, ?, ?, 0)",
+            "INSERT INTO tb_modulos (chave, nome, icone, rota, ativo, nativo, ordem) "
+            "VALUES (?, ?, ?, ?, ?, 0, ?)",
             (chave, nome.strip(), icone.strip() or "extension", rota.strip() or "#",
-             1 if ativo else 0),
+             1 if ativo else 0, max_ordem + 1),
         )
         conn.commit()
         audit_log(ator, "intranet", "registrar_modulo",
                   f"{chave} ({nome}) rota={rota} {'ativo' if ativo else 'indisponível'}")
         return True, f"Módulo '{nome}' registrado — já disponível nas liberações"
-    except Exception:
+    except Exception as e:
+        from mod_intranet import observabilidade
+        observabilidade.get_logger("intranet").exception(
+            f"falha ao registrar módulo '{chave}' por {ator} | {e}")
         return False, f"Chave '{chave}' já existe"
     finally:
         conn.close()
+
+
+def reordenar_modulos(ator, chaves_ordenadas):
+    """Reorder display order of modules (sidebar, user management).
+
+    Reordena a ordem de exibição dos módulos no menu lateral e nas
+    liberações de usuário. Recebe a lista COMPLETA de chaves na nova ordem;
+    a posição (1-based) de cada chave é gravada na coluna `ordem` de
+    `tb_modulos`. Audita `modulos_reordenados` com a sequência final.
+    Retorna `(ok, msg)`."""
+    _garantir_tb_modulos()
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT chave FROM tb_modulos")
+        todas = {r[0] for r in cur.fetchall()}
+        faltam = todas - set(chaves_ordenadas)
+        if faltam:
+            # Defensivo: chaves ausentes vão para o fim (ordem alfabética)
+            chaves_ordenadas = list(chaves_ordenadas) + sorted(faltam)
+        for idx, chave in enumerate(chaves_ordenadas, start=1):
+            cur.execute("UPDATE tb_modulos SET ordem=? WHERE chave=?", (idx, chave))
+        conn.commit()
+        audit_log(ator, "intranet", "modulos_reordenados",
+                  ",".join(chaves_ordenadas))
+        return True, "Ordem dos módulos atualizada"
+    except Exception as e:
+        from mod_intranet import observabilidade
+        observabilidade.get_logger("intranet").exception(
+            f"falha ao reordenar módulos por {ator} | {e}")
+        return False, f"Erro ao reordenar módulos: {e}"
+    finally:
+        conn.close()
+
+
+def alterar_rota_modulo(ator, chave, nova_rota):
+    """Changes a module's page route (URL) and re-registers it live.
+
+    Altera a rota/URL de um módulo em `tb_modulos` e re-registra a página no
+    servidor NiceGUI imediatamente (via `rotas_modulos.registrar_modulo`).
+    A `chave` (identificador interno) permanece inalterada. Valida a rota
+    (não vazia, caracteres permitidos, sem conflito com outro módulo),
+    audita `modulo_rota_alterada` e retorna `(ok, msg)`. Falhas são
+    registradas via loguru."""
+    nova_rota = "/" + (nova_rota or "").strip().strip("/").lower().replace(" ", "-")
+    while "//" in nova_rota:
+        nova_rota = nova_rota.replace("//", "/")
+    if nova_rota == "/":
+        return False, "A URL da página não pode ficar vazia"
+    if not re.fullmatch(r"[a-z0-9_\-/]+", nova_rota):
+        return False, "URL inválida: use apenas letras, números, hífen, sublinhado e barra"
+    _garantir_tb_modulos()
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT chave FROM tb_modulos WHERE rota=? AND chave<>?",
+                    (nova_rota, chave))
+        if cur.fetchone():
+            return False, f"A URL '{nova_rota}' já está em uso por outro módulo"
+        cur.execute("UPDATE tb_modulos SET rota=? WHERE chave=?", (nova_rota, chave))
+        conn.commit()
+    except Exception as e:
+        from mod_intranet import observabilidade
+        observabilidade.get_logger("intranet").exception(
+            f"falha ao alterar rota do módulo '{chave}' por {ator} | {e}")
+        return False, f"Erro ao alterar a URL: {e}"
+    finally:
+        conn.close()
+    from mod_intranet import rotas_modulos
+    rotas_modulos.registrar_modulo(chave, nova_rota)
+    audit_log(ator, "intranet", "modulo_rota_alterada", f"{chave}: {nova_rota}")
+    return True, f"URL da página '{chave}' alterada para {nova_rota}"
 
 
 def excluir_modulo(ator, chave):
@@ -130,7 +252,21 @@ def excluir_modulo(ator, chave):
         conn.close()
 
 
+# Módulos indispensáveis ao funcionamento do sistema: não podem ser desativados.
+MODULOS_INDISPENSAVEIS = {"auditoria", "usuarios"}
+
+
 def set_modulo_ativo(ator, chave, ativo=True):
+    """Activates/deactivates a module, blocking deactivation of essential ones.
+
+    Ativa ou desativa um módulo em `tb_modulos`. Módulos indispensáveis
+    (`MODULOS_INDISPENSAVEIS`) nunca podem ser desativados: a tentativa é
+    recusada com `(False, msg)` e registrada em auditoria como
+    `modulo_desativado_bloqueado`, sem tocar no banco. Em sucesso retorna
+    `(True, "ok")` e audita `modulo_desativado`/`moduloreativado`."""
+    if not ativo and chave in MODULOS_INDISPENSAVEIS:
+        audit_log(ator, "intranet", "modulo_desativado_bloqueado", chave)
+        return False, f"Módulo '{chave}' é indispensável ao sistema e não pode ser desativado"
     _garantir_tb_modulos()
     conn = get_connection()
     try:
@@ -138,6 +274,7 @@ def set_modulo_ativo(ator, chave, ativo=True):
         cur.execute("UPDATE tb_modulos SET ativo=? WHERE chave=?", (1 if ativo else 0, chave))
         conn.commit()
         audit_log(ator, "intranet", "modulo_desativado" if not ativo else "moduloreativado", chave)
+        return True, "ok"
     finally:
         conn.close()
 
@@ -375,8 +512,13 @@ def chaves_desativadas():
 
 
 def set_chaves_desativadas(ator, chaves):
-    """Compatibilidade: define quais chaves ficam desativadas; demais reativadas."""
-    alvo = set(chaves)
+    """Compatibilidade: define quais chaves ficam desativadas; demais reativadas.
+
+    Define o conjunto de módulos desativados em `tb_modulos`. Módulos
+    indispensáveis (`MODULOS_INDISPENSAVEIS`) são sempre removidos do alvo
+    antes da gravação, garantindo que nunca sejam desativados por esta via.
+    Audita `modulos_desativados` com a lista final (ou "(nenhum)")."""
+    alvo = set(chaves) - MODULOS_INDISPENSAVEIS
     conn = get_connection()
     try:
         cur = conn.cursor()

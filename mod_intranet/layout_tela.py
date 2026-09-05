@@ -132,6 +132,16 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
 
     # ===== DRAWER/SIDEBAR (parte 2) =====
     with ui.left_drawer(bordered=True, elevated=False, value=True) as drawer:
+        # ===== HOME: página inicial de boas-vindas =====
+        ui.label("PÁGINA INICIAL").classes(
+            "text-caption text-grey-7 px-4 pt-3 pb-1 tracking-widest")
+        with ui.item(on_click=lambda: ui.navigate.to("/")).classes(
+                "rounded-lg mx-2 my-0.5 hover:bg-blue-50 cursor-pointer"):
+            with ui.item_section().props("avatar"):
+                ui.icon("home").classes("text-primary")
+            ui.item_label("Home")
+
+        ui.separator()
         ui.label("MÓDULOS").classes("text-caption text-grey-7 px-4 pt-3 pb-1 tracking-widest")
         ui.separator()
         for chave, nome, icone, rota, ativa in autenticacao.modulos_do_usuario(nome_usuario):

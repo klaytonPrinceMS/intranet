@@ -50,10 +50,15 @@ MODULOS = {
 
 print("INICIANDO TESTES — Dashboard mobile-first + padrão de exibição (Fase 1)")
 
-# ---------- Dashboard (item 6) ----------
-check("ui.grid(columns=3)" in MAIN, "dashboard usa ui.grid de 3 colunas")
-check("max-lg:grid-cols-2" in MAIN, "2 colunas em telas médias (max-lg)")
-check("max-sm:grid-cols-1" in MAIN, "1 coluna mobile-first (max-sm)")
+# ---------- Dashboard ----------
+check('eh_admin = user.get("perfil") in ("administrador_geral", "administrador_modulo")' in MAIN,
+      "resumo restrito a admins (geral e de módulos)")
+check("if eh_admin:" in MAIN, "resumo do sistema exibido somente para admins")
+check("Resumo do sistema" in MAIN and "Publicações recentes" in MAIN
+      and MAIN.index("Resumo do sistema") < MAIN.index("Publicações recentes"),
+      "resumo fica acima das postagens do blog")
+check('ui.row().classes("w-full justify-center gap-4")' in MAIN,
+      "cards do resumo lado a lado e centralizados")
 check("transition-transform" in MAIN,
       "microinteração transition-transform nos cards de estatística")
 check("hover:-translate-y-0.5" in MAIN, "microinteração hover -translate-y")
@@ -64,7 +69,7 @@ check('ui.notify(f"Bem-vindo(a), {nome}!' in MAIN
 check('"Atualizado ✓"' in MAIN, "feedback de 2s: rótulo 'Atualizado ✓'")
 check('ui.timer(2.0, lambda: lbl_fb_resumo.set_text(""), once=True)' in MAIN,
       "feedback de 2s: reversão via ui.timer(2.0, once=True)")
-# Grid 360–1440px deve cobrir o intervalo com quebras responsivas (sem max-w fixo)
+# Dashboard deve ocupar a largura inteira (sem container max-w centralizador)
 check("max-w-6xl mx-auto" not in MAIN.split("# ================== DASHBOARD")[1]
       [:2000], "dashboard sem container max-w centralizador")
 

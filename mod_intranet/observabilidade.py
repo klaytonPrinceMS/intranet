@@ -76,10 +76,11 @@ def configurar():
     - Console (terminal) SOMENTE quando rodando via python (não congelado);
       no executável (.exe / auto-py-to-exe) os logs ficam apenas no arquivo.
     """
-    global _sinks
+    global _sinks, _sink_otel_loguru
     try:
         logger.remove()  # remove tudo (inclusive o stderr padrão do loguru)
         _sinks = []
+        _sink_otel_loguru = None
         if _obter(CFG_ATIVO, "1") != "1":
             return
         os.makedirs(LOG_DIR, exist_ok=True)

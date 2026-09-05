@@ -348,6 +348,11 @@
 <td style="text-align: left;"><code>main.py:319-321</code></td>
 </tr>
 <tr>
+<td style="text-align: left;">CSS frameworks embarcados</td>
+<td style="text-align: left;"><code>tema_css.montar_rotas_static()</code> — serve <code>assets/css/frameworks/</code> em <code>/css/frameworks/*</code> (sem CDN), com fallback silencioso</td>
+<td style="text-align: left;"><code>main.py:64-71</code></td>
+</tr>
+<tr>
 <td style="text-align: left;">Documentação</td>
 <td style="text-align: left;"><code>construir_e_montar_documentacao()</code> — build MkDocs + mount em <code>/documentacao</code></td>
 <td style="text-align: left;"><code>main.py:330-331</code></td>
@@ -477,7 +482,7 @@
 <td style="text-align: left;">E-mail/SMTP</td>
 <td style="text-align: left;"><code>smtp_*</code></td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">credenciais (cartão "E-mail / SMTP")</td>
+<td style="text-align: left;">credenciais (aba "E-mail" de Configurações)</td>
 </tr>
 <tr>
 <td style="text-align: left;">Logs</td>
@@ -488,8 +493,20 @@
 </tbody>
 </table>
 <blockquote>
-<p>Os padrões de aparência vivem em <code>PADRAO_CONFIG</code> (<code>mod_intranet/conexao_bd.py:13-24</code>) e são restaurados via tela de configurações (cartões com "Restaurar padrão").</p>
+<p>Os padrões de aparência vivem em <code>PADRAO_CONFIG</code> (<code>mod_intranet/conexao_bd.py:13-24</code>) e são restaurados via tela de configurações (abas com "Restaurar padrão" por cartão).</p>
 </blockquote>
+<h3 id="aba-modulo-paginas-do-sistema">Aba "Módulo" — Páginas do sistema<a class="headerlink" href="#aba-modulo-paginas-do-sistema" title="Permanent link">&para;</a></h3>
+<p>Na aba <strong>Módulo → Páginas do sistema</strong> (renomeada de "Registro/Nome de módulo" em 05/09 — <code>tela_configuracoes.py:165</code>) o administrador edita o <strong>nome exibido</strong> (menu lateral e título do cabeçalho), o <strong>ícone</strong> (Material Icons) e a <strong>ORDEM</strong> de cada página usando as setas ↑/↓ (a ordem é salva imediatamente). Desde 05/09:</p>
+<ul>
+<li><strong>Reordenação com ↑/↓</strong> — a lista de páginas é <strong>ÚNICA</strong> (substituiu os grupos separados "Indispensáveis"/"Demais") e todos os módulos são reordenáveis: <code>refresh_modulos()</code> (<code>tela_configuracoes.py:566-636</code>) remonta a lista na ordem vigente de <code>tb_modulos.ordem</code> e <code>_mover(idx, direcao)</code> (<code>tela_configuracoes.py:638-669</code>) troca o vizinho, persiste de imediato via <code>autenticacao.reordenar_modulos</code> e preserva edições pendentes (nome/ícone/ativo) entre remontagens. A 1ª coluna do grid (56px) exibe a posição e os botões ↑/↓.</li>
+<li><strong>Campo de ícone editável com seletor visual</strong> — <code>_campo_icone</code> (<code>tela_configuracoes.py:519-546</code>): input livre do nome do Material Icon + <strong>pré-visualização viva</strong> (o ícone é atualizado em tempo real na linha) + <strong>seletor visual</strong> (<code>ui.menu</code> com grid de 6 colunas sobre <code>ICONES_COMUNS</code> — 31 ícones, <code>tela_configuracoes.py:33-39</code>) + botão <code>grid_view</code>. Reutilizado no campo "Ícone Material" do registro de novo módulo (<code>tela_configuracoes.py:762</code>).</li>
+<li><strong>Alinhamento corrigido</strong> — constante compartilhada <code>COLUNAS_MODULOS</code> (<code>tela_configuracoes.py:45</code>) entre cabeçalho e linhas (mesmo columns/gap/padding; antes o cabeçalho não tinha gap).</li>
+<li><strong>Indispensáveis destacados, porém reordenáveis</strong> (<code>tela_configuracoes.py:595-630</code>): <code>auditoria</code> e <code>usuarios</code> (<code>MODULOS_INDISPENSAVEIS</code> — <code>tela_configuracoes.py:30</code> e <code>autenticacao.py:216</code>) aparecem com fundo âmbar + cadeado e <strong>não podem ser desativados</strong>: a tentativa é recusada no backend (<code>set_modulo_ativo</code> retorna <code>(False, msg)</code> e audita <code>modulo_desativado_bloqueado</code> — <code>autenticacao.py:227-229</code>); <code>set_chaves_desativadas</code> também os filtra (<code>autenticacao.py:481</code>); <code>salvar_tudo</code> força <code>ativo=1</code> (<code>tela_configuracoes.py:123</code>). O switch fica oculto/disabled com valor fixo <code>True</code>.</li>
+<li><strong>"Restaurar padrão" também restaura a ordem</strong> — <code>restaurar_paginas_padrao()</code> (<code>tela_configuracoes.py:673-720</code>) volta os nativos ao nome/ícone codificados, reativados e na sequência de <code>MODULOS_SISTEMA</code>, renumerando os não-nativos após os nativos em ordem alfabética.</li>
+<li><strong>Campo "URL da página" (slug editável, 05/09)</strong> — cada linha da lista ganhou um campo <strong>"URL da página"</strong> editável (<code>_campo_empilhado("URL da página", rota, ...)</code> em <code>tela_configuracoes.py:660-662</code>), ligado em <code>campos_url[chave] = inp_url</code> / <code>estado_campos["urls"]</code> (<code>tela_configuracoes.py:593-594</code>). Ao salvar, <code>salvar_tudo()</code> (<code>tela_configuracoes.py:139-158</code>) compara o valor com a rota vigente no BD e chama <code>autenticacao.alterar_rota_modulo</code> (<code>autenticacao.py:196-232</code>), que valida a URL (regex <code>[a-z0-9_\-/]+</code>), impede colisão entre módulos, grava <code>tb_modulos.rota</code> e <strong>re-registra a página ao vivo</strong> via <code>rotas_modulos.registrar_modulo</code> — sem restart. A notificação informa "N URL(s) alterada(s) — recarregue com F5". O registro dinâmico de rotas vive em <code>mod_intranet/rotas_modulos.py</code> (<code>DEFAULT_ROTAS</code>, <code>REGISTRO_MODULOS</code>, <code>_registradas</code>, <code>_normalizar_rota</code>, <code>registrar_modulo</code>, <code>montar_rotas_ativas</code>), com <code>REGISTRO_MODULOS["chave"] = page_*</code> preenchido em <code>main.py</code> após cada decorator fixo e <code>montar_rotas_ativas()</code> antes do START (<code>main.py:426</code>). Os decorators fixos são mantidos — links antigos continuam válidos.</li>
+<li><strong>Grid responsivo (05/09)</strong> — <code>COLUNAS_MODULOS</code> (<code>tela_configuracoes.py:44-47</code>) deixou de usar <code>columns=</code> inline e agora é <strong>responsiva</strong>: <code>grid-cols-1 sm:grid-cols-2 lg:grid-cols-[56px_minmax(12ch,1fr)_minmax(22ch,1fr)_minmax(22ch,1fr)_minmax(20ch,1fr)_150px]</code> — 6 colunas em desktop (setas, chave, nome, URL, ícone, situação), empilhando em telas pequenas. O cabeçalho é oculto em sm/md (<code>hidden lg:grid</code>, <code>tela_configuracoes.py:619</code>), o <code>overflow-x-auto</code> foi removido e os inputs usam <code>w-full max-w-[30ch]</code>.</li>
+<li>O grid ganhou cabeçalho com <strong>tooltips</strong> explicando cada coluna e colunas <code>56px minmax(30ch, 1fr) minmax(30ch, 1fr) minmax(30ch, 1fr) 150px</code> (<code>tela_configuracoes.py:581-593</code>).</li>
+</ul>
 <h2 id="sem-variaveis-de-ambiente-env">Sem variáveis de ambiente <code>.env</code><a class="headerlink" href="#sem-variaveis-de-ambiente-env" title="Permanent link">&para;</a></h2>
 <p>Diferente de muitos projetos NiceGUI, a Intranet <strong>não lê <code>.env</code> nem variáveis de ambiente</strong>. Toda configuração operacional é:</p>
 <ol>

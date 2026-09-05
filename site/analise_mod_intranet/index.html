@@ -232,8 +232,8 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_modulos</code></td>
-<td style="text-align: left;">id, chave UNIQUE, nome, icone, rota, ativo, nativo — semeada com os 5 módulos nativos</td>
-<td style="text-align: left;"><code>autenticacao.py:28-55</code></td>
+<td style="text-align: left;">id, chave UNIQUE, nome, icone, rota, ativo, nativo, <strong>ordem</strong> — semeada com os 5 módulos nativos; <code>ordem</code> controla a exibição (migração idempotente em bancos antigos)</td>
+<td style="text-align: left;"><code>autenticacao.py:29-84</code></td>
 </tr>
 </tbody>
 </table>
@@ -263,13 +263,44 @@
 <li>Job <code>cleanup_pdf</code> a cada <strong>1 min</strong>: chama <code>mod_edit_pdf.expirar_antigos(cfg_expiracao_min())</code>; em falha de import cai no fallback <code>limpar_editor_pdf(minutos=10)</code>.</li>
 </ul>
 <h2 id="telas-de-configuracao">Telas de configuração<a class="headerlink" href="#telas-de-configuracao" title="Permanent link">&para;</a></h2>
-<p><code>/configuracoes</code> (exclusiva do <code>administrador_geral</code>), gravação única "SALVAR TUDO":</p>
-<ol>
-<li>Cores primária/fundo, ícone, título + upload de favicon <code>.ico</code> ≤1 MB → <code>assets/favicon_atual.ico</code> (arquivo vivo: troca vale no próximo F5, sem restart).</li>
-<li>Textos fixos (login, home, rodapé).</li>
-<li>Páginas: edita <code>tb_modulos</code> dos módulos registrados (nome, ícone, ativação).</li>
-<li>Registro de novos módulos e limpeza de vínculos órfãos.</li>
-</ol>
+<p><code>/configuracoes</code> (exclusiva do <code>administrador_geral</code>), organizada no padrão <strong>menu_mod de abas</strong> (mesmo padrão da Gestão de Usuários): barra com 5 abas à esquerda e botão "SALVAR TUDO" à direita (<code>tela_configuracoes.py:189-198</code>).</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Aba</th>
+<th style="text-align: left;">Ícone</th>
+<th style="text-align: left;">Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Config</td>
+<td style="text-align: left;"><code>tune</code></td>
+<td style="text-align: left;">Cores e ícone (color_input, ícone Material, nome do sistema, favicon <code>.ico</code> ≤1 MB) + Textos fixos (login, home, rodapé) + Configurações gerais (backup horas, retenção de sessão, pasta raiz)</td>
+</tr>
+<tr>
+<td style="text-align: left;">E-mail</td>
+<td style="text-align: left;"><code>mail</code></td>
+<td style="text-align: left;">SMTP: servidor, porta, usuário, remetente, senha, TLS + "Testar conexão SMTP"</td>
+</tr>
+<tr>
+<td style="text-align: left;">Módulo</td>
+<td style="text-align: left;"><code>extension</code></td>
+<td style="text-align: left;">Páginas do sistema (lista ÚNICA reordenável com ↑/↓, nome/ícone/ativa por módulo; indispensáveis destacados) + registro de módulos e vínculos órfãos</td>
+</tr>
+<tr>
+<td style="text-align: left;">Observabilidade</td>
+<td style="text-align: left;"><code>query_stats</code></td>
+<td style="text-align: left;">Logs loguru: ativo, nível mínimo, rotação, retenção + "Limpar TODOS os logs"</td>
+</tr>
+<tr>
+<td style="text-align: left;">Documentação</td>
+<td style="text-align: left;"><code>menu_book</code></td>
+<td style="text-align: left;">Rebuild MkDocs para <code>/documentacao</code> + abrir em nova aba</td>
+</tr>
+</tbody>
+</table>
+<p>Cada aba tem seu próprio botão "SALVAR <aba>" (helper <code>botao_salvar_aba</code>, <code>tela_configuracoes.py:177-184</code>) que chama o <strong>mesmo</strong> <code>salvar_tudo</code> do botão "SALVAR TUDO" (<code>tela_configuracoes.py:98-175</code>); a aba "Documentação" não precisa salvar por ser ação única (reconstruir). A persistência grava em <code>tb_config</code> (<code>cor_principal</code>, <code>texto_*</code>, <code>smtp_*</code>, <code>log_*</code>, <code>backup_interval_hours</code>, <code>sessao_retencao</code>) e em <code>tb_modulos</code> (nome/ícone/ativo).</p>
 <p><code>dialogo_backup.abrir_dialogo()</code> (botão no header do módulo, para quem pode gerenciar): intervalo em horas salvo + reagendado ao vivo, "Fazer backup agora" e grade das cópias retidas.</p>
 <h2 id="versionamento-no-rodape-layout_tela_montar_layout">Versionamento no rodapé — <code>layout_tela._montar_layout</code><a class="headerlink" href="#versionamento-no-rodape-layout_tela_montar_layout" title="Permanent link">&para;</a></h2>
 <p>O rodapé mostra as versões <strong>da esquerda para a direita</strong>: 1ª a versão global do sistema (<code>v{versao_sistema}</code>), e quando o usuário está dentro de um módulo (<code>chave_modulo</code>), 2ª a versão <strong>individual do módulo atual</strong> (<code>v{versao_modulo:&lt;chave&gt;}</code>). Sem módulo específico (Dashboard/Configurações) aparece só a global. A versão individual é lida de <code>tb_config</code> (chave <code>versao_modulo:&lt;chave&gt;</code>, mesmo estilo <code>1.0.AAMMDD</code>) com fallback <code>1.0</code> quando o módulo ainda não versionou. Ex.: <code>/edit-pdf</code> mostra <code>v1.0.260822</code> (sistema) + <code>v1.0.260827</code> (mod_edit_pdf).</p>
@@ -356,8 +387,152 @@ uniformidade e o helper são cobertos por <code>test/test_tema.py</code> (18 ver
 <li>Cookie de sessão <strong>HttpOnly</strong> (RF-04/16) — <strong>REALIZADO</strong> no nível de framework: o NiceGUI/Starlette define <code>HttpOnly=True</code> no cookie <code>app.storage.user</code>.</li>
 <li>Tela de Configurações (RF-57) — <strong>REALIZADO</strong>: cartão "Configurações gerais" com <code>sessao_retencao</code>, <code>backup_interval_hours</code> (reagenda todos os backups sem restart) e exibição da pasta raiz.</li>
 <li>Servidor SMTP (RF-58) — <strong>REALIZADO</strong>: <code>mod_intranet/email_util.py</code> + cartão "E-mail / SMTP" (credenciais <code>smtp_*</code> em <code>tb_config</code> + teste de conexão).</li>
-<li>Dashboard mobile-first (Fase 1) — <strong>REALIZADO</strong>: <code>main.py:page_dashboard</code> usa grid fluido 360–1440px (<code>ui.grid(columns=3)</code> com <code>max-lg:grid-cols-2</code>/<code>max-sm:grid-cols-1</code>), cards com microinterações Tailwind (<code>transition-transform hover:-translate-y-0.5 hover:shadow-lg</code>) e feedback de 2s: toast de boas-vindas (<code>ui.notify(... timeout=2)</code>) + botão "Atualizar resumo" que exibe "Atualizado ✓" e reverte em 2s (<code>ui.timer(2.0, once=True)</code>).</li>
+<li>Dashboard mobile-first (Fase 1) — <strong>REALIZADO</strong>: <code>main.py:page_dashboard</code> (<code>main.py:147-234</code>) renderiza banner de boas-vindas, card "Resumo do sistema" (apenas para <code>administrador_geral</code> ou <code>administrador_modulo</code> — <code>main.py:155</code>) com métricas em <code>ui.row()</code> responsivo (<code>w-full gap-2 flex-wrap</code>) e feed do Blog em largura total (<code>ui.column</code> <code>w-full gap-4</code>). Microinterações Tailwind (<code>transition-transform hover:-translate-y-0.5 hover:shadow-lg</code>) e feedback de 2s: toast de boas-vindas (<code>ui.notify(... timeout=2)</code>) + botão "Atualizar resumo" que exibe "Atualizado ✓" e reverte em 2s (<code>ui.timer(2.0, once=True)</code>).</li>
+<li>CSS frameworks embarcados (Bootstrap, Bulma, DaisyUI, Pico, Picnic) servidos localmente em <code>/css/frameworks/*</code> via <code>tema_css.py</code> — <strong>REALIZADO</strong>: injeção por página, sem CDN, com fallback silencioso no boot.</li>
+</ul>
+<h3 id="adicoes-recentes-0509">Adições recentes (05/09)<a class="headerlink" href="#adicoes-recentes-0509" title="Permanent link">&para;</a></h3>
+<h4 id="dashboard-resumo-reposicionado-e-restrito-a-administradores">Dashboard <code>/</code> — resumo reposicionado e restrito a administradores<a class="headerlink" href="#dashboard-resumo-reposicionado-e-restrito-a-administradores" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>main.py:155</code></strong>: <code>eh_admin</code> agora aceita <code>administrador_geral</code> OU <code>administrador_modulo</code> (antes era apenas <code>== "administrador_geral"</code>). Isso amplia a visibilidade do card de resumo para admin de módulos.</li>
+<li><strong><code>main.py:174-211</code></strong>: O "Resumo do sistema" foi <strong>movido de uma sidebar direita para abaixo do banner de boas-vindas</strong> e acima do feed do blog, em largura total. O container antigo era <code>ui.grid(columns=3)</code> com <code>max-lg:grid-cols-2</code>/<code>max-sm:grid-cols-1</code> que separava feed (2/3) e resumo (1/3). Agora o bloco é sequencial: banner → resumo → feed, todos em <code>w-full</code>.</li>
+<li><strong><code>main.py:190</code></strong>: As métricas passaram de <code>ui.column()</code> (<code>w-full gap-2</code>) para <code>ui.row()</code> (<code>w-full gap-2 flex-wrap</code>), exibindo os três cards lado a lado com quebra responsiva.</li>
+<li><strong><code>main.py:196-198</code></strong>: Os três cards <code>_stat</code> são <strong>sempre renderizados</strong> dentro do bloco de admin: "Usuários ativos" (<code>people</code>), "Postagens" (<code>article</code>) e "Registros de auditoria" (<code>history</code>). Antes, o de auditoria era condicionado a <code>if eh_admin</code> — redundante agora que o bloco inteiro já é <code>if eh_admin</code>.</li>
+<li><strong><code>main.py:213-234</code></strong>: O <strong>Feed do Blog</strong> agora ocupa largura total (<code>ui.column</code> <code>w-full gap-4</code>, sem <code>col-span-*</code>). Cabeçalho "Publicações recentes" + botão "Abrir Blog completo" inalterados; cards de postagens via <code>_card_postagem</code> e <code>pode_publicar_blog</code> permanecem iguais.</li>
+</ul>
+<h4 id="menu-lateral-item-home-no-topo-do-drawer">Menu lateral — item "Home" no topo do drawer<a class="headerlink" href="#menu-lateral-item-home-no-topo-do-drawer" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>layout_tela.py:135-144</code></strong>: Adicionado no <strong>TOPO do drawer</strong> (antes da seção "MÓDULOS") um item "Home" sob o rótulo de seção "PÁGINA INICIAL". O item usa ícone <code>home</code> e <code>ui.item_label("Home")</code>, navegando para <code>/</code> via <code>ui.navigate.to("/")</code>. Seguido de <code>ui.separator()</code> antes de "MÓDULOS" (<code>layout_tela.py:144</code>). Antes, o drawer começava direto com "MÓDULOS" — agora há um atalho explícito para a página inicial visível em todas as rotas.</li>
 <li><strong>Padrão de exibição</strong> — <strong>REALIZADO</strong>: todos os módulos seguem o padrão do <strong>módulo exemplo <code>mod_edit_pdf</code></strong> — área cheia (<code>w-full</code>, sem <code>max-w-*</code> centralizador) e cupê <strong>"Aparência"</strong> padronizado na aba/expansão Administração com as <strong>6 chaves</strong> <code>cor_botao</code>, <code>cor_texto_botao</code>, <code>cor_fundo</code>, <code>cor_titulo</code>, <code>btn_tamanho</code>, <code>texto_header</code> em <code>tb_config</code> (prefixos <code>blog_*</code>, <code>usuarios_*</code>, <code>auditoria_*</code>, <code>empenhos_*</code>, <code>solicita_impressao_*</code>; o <code>editar_pdf</code> usa <code>editpdf_*</code>). <code>aba_modulo.cabecalho()</code> passou a aceitar <code>cor_titulo</code>/<code>cor_fundo</code>, aplicando o tema sem restart. Áreas que já eram <code>w-full</code> (auditoria, empenhos) mantidas; blog/usuários/solicita tiveram o <code>max-w-* mx-auto</code> centralizador removido.</li>
+</ul>
+<h4 id="tela-de-configuracoes-reorganizada-no-padrao-menu_mod-abas">Tela de Configurações — reorganizada no padrão menu_mod (abas)<a class="headerlink" href="#tela-de-configuracoes-reorganizada-no-padrao-menu_mod-abas" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>tela_configuracoes.py:189-198</code></strong>: a tela <code>/configuracoes</code> deixou de ser um empilhamento de 8 cartões sequenciais com um único "SALVAR TUDO" no topo e passou a usar <code>ui.tabs</code> + <code>ui.tab_panels</code> (padrão menu_mod, como a Gestão de Usuários): barra com <strong>5 abas</strong> à esquerda e botão <strong>"SALVAR TUDO"</strong> à direita (<code>tela_configuracoes.py:195-198</code>).</li>
+<li><strong><code>tela_configuracoes.py:190-194</code></strong>: as 5 abas são <code>Config</code> (<code>tune</code>), <code>E-mail</code> (<code>mail</code>), <code>Módulo</code> (<code>extension</code>), <code>Observabilidade</code> (<code>query_stats</code>) e <code>Documentação</code> (<code>menu_book</code>).</li>
+<li><strong><code>tela_configuracoes.py:177-184</code></strong>: novo helper <code>botao_salvar_aba(rotulo)</code> gera o botão "SALVAR <rotulo>" (ex.: "SALVAR Config", "SALVAR E-mail", "SALVAR Observabilidade", "SALVAR Módulos") com o <strong>mesmo handler <code>salvar_tudo</code></strong> do botão "SALVAR TUDO" — cada aba tem seu botão no rodapé dos cartões; a aba "Documentação" não tem salvar por ser ação única (reconstruir).</li>
+<li><strong><code>tela_configuracoes.py:98-175</code></strong>: <code>salvar_tudo</code> mantido, agora comentado <strong>por aba</strong> (Config → cores/ícone/textos/gerais; E-mail → <code>smtp_*</code>; Módulo → <code>tb_modulos</code>; Observabilidade → <code>log_*</code> + <code>observabilidade.configurar()</code>).</li>
+<li><strong>Conteúdo por aba</strong>: Config reúne Cores e ícone (<code>tela_configuracoes.py:206-314</code>, inclui upload de favicon <code>.ico</code> ≤1 MB), Textos fixos (<code>tela_configuracoes.py:316-355</code>) e Configurações gerais RF-57 (<code>tela_configuracoes.py:357-400</code>); E-mail/SMTP RF-58 (<code>tela_configuracoes.py:402-453</code>, com "Testar conexão SMTP" em <code>tela_configuracoes.py:438-447</code>); Observabilidade (<code>tela_configuracoes.py:457-501</code>, com "Limpar TODOS os logs" em <code>tela_configuracoes.py:490-495</code>); Documentação (<code>tela_configuracoes.py:506-528</code>, rebuild MkDocs + abrir <code>/documentacao</code> em nova aba); Módulo (<code>tela_configuracoes.py:578-865</code>, páginas do sistema + registro de módulos e vínculos órfãos).</li>
+<li><strong>Não mudou</strong>: chaves em <code>tb_config</code> (<code>cor_principal</code>, <code>texto_*</code>, <code>smtp_*</code>, <code>log_*</code>, <code>backup_interval_hours</code>, <code>sessao_retencao</code>), restrição a <code>administrador_geral</code> (<code>tela_configuracoes.py:59-63</code>), autenticação e a rota <code>/configuracoes</code> em <code>main.py</code>.</li>
+</ul>
+<h4 id="abas-renomeadas-e-reordenadas-0509-config-e-mail-modulo-observabilidade-documentacao">Abas renomeadas e reordenadas (05/09) — Config, E-mail, Módulo, Observabilidade, Documentação<a class="headerlink" href="#abas-renomeadas-e-reordenadas-0509-config-e-mail-modulo-observabilidade-documentacao" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>tela_configuracoes.py:190-194</code></strong>: as 5 abas foram <strong>renomeadas e reordenadas</strong> — antes <code>[Config geral, E-mail, Observabilidade, Documentação técnica, Módulo]</code>, agora <strong><code>[Config, E-mail, Módulo, Observabilidade, Documentação]</code></strong> (mesmos ícones: <code>tune</code>, <code>mail</code>, <code>extension</code>, <code>query_stats</code>, <code>menu_book</code>).</li>
+<li><strong><code>tela_configuracoes.py:200-865</code></strong>: os <code>ui.tab_panel</code> foram renomeados/reordenados no código; a <strong>ordem DOM dos painéis</strong> (Config, E-mail, Observabilidade, Documentação, Módulo) <strong>não coincide mais com a ordem da barra de abas</strong> — o Quasar <code>q-tab-panels</code> vincula abas a painéis pelo atributo <code>name</code>, então <strong>não há mudança funcional</strong>.</li>
+<li><strong><code>tela_configuracoes.py:251, 347, 397</code></strong>: os 3 botões <code>botao_salvar_aba("Config")</code> da aba Config (cores/ícone, textos fixos e gerais).</li>
+<li><strong><code>tela_configuracoes.py:508</code></strong>: rótulo do painel "Documentação" (antes "Documentação técnica").</li>
+<li><strong><code>tela_configuracoes.py:1-16, 53-58</code></strong>: docstring do módulo (tabela de abas) e de <code>mostrar_tela</code> atualizadas para a nova ordem; comentários internos "# Aba Config —" e "# ABA: <nome>" renomeados.</li>
+</ul>
+<h4 id="aba-modulo-redesenho-0509-icone-editavel-com-seletor-alinhamento-e-grupos">Aba "Módulo" — redesenho (05/09): ícone editável com seletor, alinhamento e grupos<a class="headerlink" href="#aba-modulo-redesenho-0509-icone-editavel-com-seletor-alinhamento-e-grupos" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>tela_configuracoes.py:165</code></strong>: a aba foi <strong>renomeada</strong> de "Registro/Nome de módulo" para <strong>"Módulo"</strong> (<code>tab_mod = ui.tab("Módulo", icon="extension")</code>); docstring do módulo, comentário do <code>salvar_tudo</code> e cabeçalho da seção atualizados.</li>
+<li><strong><code>tela_configuracoes.py:33-39</code></strong>: nova constante <code>ICONES_COMUNS</code> — 31 ícones Material oferecidos no seletor visual (article, people, manage_accounts, history, folder_open, print, picture_as_pdf, extension, home, settings, menu_book, dashboard, description, list, tune, mail, query_stats, hub, apartment, domain, blog, edit, lock, save, restore, add_circle, link_off, delete_forever, open_in_new, info, settings_applications).</li>
+<li><strong><code>tela_configuracoes.py:519-546</code></strong>: nova função <code>_campo_icone(valor_inicial)</code> — input livre do nome do Material Icon + <strong>pré-visualização viva</strong> (<code>prev.set_text</code> ligado ao <code>on_value_change</code>, com fallback <code>extension</code>) + <strong>seletor visual</strong> (<code>ui.menu</code> com grid de 6 colunas sobre <code>ICONES_COMUNS</code>, cada botão aplica o ícone e fecha o menu) + botão <code>grid_view</code> para abrir o seletor. Retorna o <code>ui.input</code> criado. Reutilizada no campo "Ícone Material" do registro de novo módulo (<code>tela_configuracoes.py:762</code>).</li>
+<li><strong><code>tela_configuracoes.py:45</code></strong>: constante <code>COLUNAS_MODULOS = "56px minmax(30ch, 1fr) minmax(30ch, 1fr) minmax(30ch, 1fr) 150px"</code> <strong>compartilhada entre cabeçalho e linhas</strong> — mesmo <code>columns</code>/<code>gap</code> (0.75rem via <code>.style</code>) e mesmo padding (<code>px-3 py-2</code>). Antes o cabeçalho não tinha gap → desalinhamento com as linhas; a 1ª coluna (56px) hoje exibe posição + setas ↑/↓ (ver "Reordenação de módulos" abaixo).</li>
+<li><strong><code>tela_configuracoes.py:566-636</code></strong>: a lista de módulos é <strong>ÚNICA</strong> (os grupos separados "Indispensáveis"/"Demais" foram substituídos pela lista reordenável — ver "Reordenação de módulos" abaixo); container <code>ui.column</code> <code>w-full overflow-x-auto</code> (responsividade) envolvendo o cabeçalho do grid com <strong>tooltips</strong> por coluna ("#", "Página (chave)", "Nome exibido (menu e título)", "Ícone (Material Icons)", "Situação").</li>
+<li><strong><code>tela_configuracoes.py:595-630</code></strong>: módulos <strong>indispensáveis</strong> (auditoria, usuarios) destacados na lista única com fundo âmbar (<code>bg-amber-50/40 border-amber-200</code>) + ícone <code>lock</code> com tooltip "Sempre ativo — não pode ser desativado"; o switch fica <strong>oculto</strong> (<code>hidden</code>), desabilitado e com valor fixo <code>True</code>. Os demais módulos têm switch "Ativo" (<code>color=primary</code>).</li>
+<li><strong><code>tela_configuracoes.py:123</code></strong>: <code>salvar_tudo</code> <strong>força <code>ativo=1</code></strong> para chaves em <code>MODULOS_INDISPENSAVEIS</code> independente do switch, garantindo que nunca sejam desativados mesmo via salvamento em lote.</li>
+<li><strong>Compatibilidade mantida</strong>: <code>estado_campos["paginas"]</code> continua com a tupla <code>(inp_nome, inp_icone, switch)</code> por chave (<code>tela_configuracoes.py:630</code>), lida por <code>salvar_tudo()</code>; a proteção de indispensáveis permanece no backend (<code>MODULOS_INDISPENSAVEIS</code> em <code>autenticacao.py:216</code>); a variável <code>registrados</code> não utilizada foi <strong>removida</strong> de <code>refresh_orfaos</code> (<code>tela_configuracoes.py:744</code>).</li>
+<li><strong><code>tela_configuracoes.py:30</code></strong>: <code>MODULOS_INDISPENSAVEIS = {"auditoria", "usuarios"}</code> (junto de <code>CORES_PRESET</code>) — módulos essenciais que <strong>não podem ser desativados</strong>.</li>
+</ul>
+<h4 id="backend-protecao-de-modulos-indispensaveis-em-autenticacaopy">Backend — proteção de módulos indispensáveis em <code>autenticacao.py</code><a class="headerlink" href="#backend-protecao-de-modulos-indispensaveis-em-autenticacaopy" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>autenticacao.py:216</code></strong>: nova constante <code>MODULOS_INDISPENSAVEIS = {"auditoria", "usuarios"}</code>.</li>
+<li><strong><code>autenticacao.py:227-229</code></strong>: <code>set_modulo_ativo</code> agora <strong>retorna <code>(False, msg)</code></strong> e registra auditoria <code>modulo_desativado_bloqueado</code> caso alguém tente desativar um módulo indispensável; a guarda de tempo/banco <strong>não é executada</strong> nesse caso. Em sucesso retorna <code>(True, "ok")</code> (contrato mudou de <code>None</code> para <code>(bool, str)</code>).</li>
+<li><strong><code>autenticacao.py:481</code></strong>: <code>set_chaves_desativadas</code> filtra <code>set(chaves) - MODULOS_INDISPENSAVEIS</code> para que módulos indispensáveis <strong>nunca</strong> sejam desativados por essa via.</li>
+</ul>
+<h4 id="reordenacao-de-modulos-ordem-editavel-0509">Reordenação de módulos — ordem editável (05/09)<a class="headerlink" href="#reordenacao-de-modulos-ordem-editavel-0509" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>autenticacao.py:53</code></strong>: nova coluna <code>ordem INTEGER NOT NULL DEFAULT 0</code> na <code>CREATE TABLE tb_modulos</code> — a ordem de exibição dos módulos (menu lateral e liberações de usuário) passa a ser controlada por essa coluna.</li>
+<li><strong><code>autenticacao.py:61-75</code></strong>: <strong>migração idempotente</strong> para bancos antigos — <code>PRAGMA table_info(tb_modulos)</code> detecta a ausência da coluna e aplica <code>ALTER TABLE ADD COLUMN ordem INTEGER NOT NULL DEFAULT 0</code>; em seguida inicializa a sequência: nativos seguem <code>MODULOS_SISTEMA</code> (1..n) e não-nativos com <code>ordem=0</code> ficam após os nativos em ordem alfabética. Roda a cada boot sem efeito colateral quando já migrado.</li>
+<li><strong><code>autenticacao.py:113</code></strong>: <code>modulos_registrados()</code> passou de <code>ORDER BY nativo DESC, nome</code> para <strong><code>ORDER BY ordem ASC, nome</code></strong> — as tuplas <code>(chave, nome, icone, rota, ativo)</code> permanecem intactas, então nenhum consumidor (drawer, liberações, <code>chaves_ativas</code>, <code>chaves_desativadas</code>) precisou mudar.</li>
+<li><strong><code>autenticacao.py:141-148</code></strong>: <code>registrar_modulo()</code> grava <code>ordem = max(ordem)+1</code> — módulos novos nascem no fim da lista.</li>
+<li><strong><code>autenticacao.py:162-192</code></strong>: nova função <strong><code>reordenar_modulos(ator, chaves_ordenadas)</code></strong> — recebe a lista COMPLETA de chaves na nova ordem, grava a posição 1-based de cada chave em <code>tb_modulos.ordem</code>, audita <code>modulos_reordenados</code> com a sequência final e retorna <code>(ok, msg)</code>. Defensivo: chaves ausentes da lista vão para o fim (ordem alfabética). <code>try/except</code> + loguru (<code>observabilidade.get_logger("intranet")</code>).</li>
+<li><strong><code>tela_configuracoes.py:45</code></strong>: <code>COLUNAS_MODULOS</code> agora é <code>"56px minmax(30ch, 1fr) minmax(30ch, 1fr) minmax(30ch, 1fr) 150px"</code> — a 1ª coluna (56px) exibe a posição e os botões ↑/↓ de reordenação.</li>
+<li><strong><code>tela_configuracoes.py:566-636</code></strong>: <code>refresh_modulos()</code> remonta a <strong>lista ÚNICA de módulos</strong> na ordem vigente de <code>tb_modulos.ordem</code> (substituiu os grupos separados "Indispensáveis"/"Demais") — todos reordenáveis; indispensáveis (auditoria, usuarios) destacados com fundo âmbar + cadeado, reordenáveis porém nunca desativáveis. Mantém <code>estado_campos["paginas"][chave] = (inp_nome, inp_icone, switch)</code> (contrato do <code>salvar_tudo</code>).</li>
+<li><strong><code>tela_configuracoes.py:638-669</code></strong>: <code>_mover(idx, direcao)</code> troca o módulo com o vizinho (-1 sobe, +1 desce), <strong>persiste de imediato</strong> via <code>autenticacao.reordenar_modulos</code>, notifica e remonta a lista — edições pendentes (nome/ícone/ativo) são preservadas entre remontagens.</li>
+<li><strong><code>tela_configuracoes.py:673-720</code></strong>: <code>restaurar_paginas_padrao()</code> agora também <strong>restaura a ordem nativa</strong> (nativos voltam à sequência de <code>MODULOS_SISTEMA</code>) e <strong>renumera os não-nativos</strong> após os nativos em ordem alfabética.</li>
+<li><strong><code>layout_tela.py:147</code></strong>: sem mudança de código — o menu lateral já usa <code>modulos_do_usuario</code>, que herda a nova ordem via <code>modulos_registrados()</code>.</li>
+</ul>
+<h4 id="urlslug-editavel-dos-modulos-rotas_modulospy-alterar_rota_modulo">URL/slug editável dos módulos — <code>rotas_modulos.py</code> + <code>alterar_rota_modulo</code><a class="headerlink" href="#urlslug-editavel-dos-modulos-rotas_modulospy-alterar_rota_modulo" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>mod_intranet/rotas_modulos.py</code></strong> (novo): registro <strong>dinâmico</strong> de rotas de páginas de módulos no NiceGUI, permitindo que a URL de cada página (<code>tb_modulos.rota</code>) seja editada em <code>/configuracoes</code> e re-registrada no servidor <strong>sem restart</strong>.</li>
+<li><strong><code>DEFAULT_ROTAS</code></strong> (<code>rotas_modulos.py:16-23</code>): espelho dos decorators fixos de <code>main.py</code> — <code>{"blog":"/blog","users":"/users","auditoria":"/auditoria","editar_pdf":"/edit-pdf","empenhos":"/renomear-empenho","solicita_impressao":"/solicita-impressao"}</code>. Usado para semear <code>_registradas</code> e como referência das rotas nativas.</li>
+<li><strong><code>REGISTRO_MODULOS: dict</code></strong> (<code>rotas_modulos.py:26</code>): chave→função de página, preenchido em <code>main.py</code> após cada decorator fixo.</li>
+<li><strong><code>_registradas: set</code></strong> (<code>rotas_modulos.py:30</code>): rotas já registradas no servidor — evita duplicidade (registrar o mesmo path duas vezes <strong>quebraria o servidor</strong>). Semeadas com <code>DEFAULT_ROTAS.values()</code>.</li>
+<li><strong><code>_normalizar_rota(rota)</code></strong> (<code>rotas_modulos.py:33-41</code>): garante <code>/</code> inicial, lowercase, espaço→hífen e remove <code>//</code> duplicados.</li>
+<li><strong><code>registrar_modulo(chave, rota)</code></strong> (<code>rotas_modulos.py:44-58</code>): registra via <code>ui.page(rota)(func)</code> de forma <strong>idempotente</strong> — se a chave não tiver página em <code>REGISTRO_MODULOS</code> (módulo futuro) ou a rota já estiver em <code>_registradas</code>, apenas retorna.</li>
+<li><strong><code>montar_rotas_ativas()</code></strong> (<code>rotas_modulos.py:61-69</code>): lê <code>tb_modulos</code> via <code>autenticacao.modulos_registrados()</code> e chama <code>registrar_modulo</code> para todos — re-registra slugs customizados persistidos após restart.</li>
+<li><strong><code>main.py</code></strong>:</li>
+<li><strong><code>main.py:78-82</code></strong>: bloco "ROTAS DINÂMICAS DE MÓDULOS" — <code>try/except</code> que importa <code>rotas_modulos</code> (fallback <code>rotas_modulos = None</code>).</li>
+<li><strong><code>main.py:281, 295, 309, 323, 337, 400</code></strong>: <code>rotas_modulos.REGISTRO_MODULOS["chave"] = page_*</code> após cada decorator fixo (blog, usuarios, auditoria, editar_pdf, empenhos, solicita_impressao).</li>
+<li><strong><code>main.py:426</code></strong>: <code>rotas_modulos.montar_rotas_ativas()</code> antes do START — re-registra os slugs customizados persistidos. Os decorators fixos são <strong>mantidos</strong> (links antigos continuam válidos).</li>
+<li><strong><code>autenticacao.py:196-232</code> — <code>alterar_rota_modulo(ator, chave, nova_rota)</code></strong>: normaliza a rota (<code>/</code> inicial, lowercase, espaço→hífen, sem <code>//</code>), valida com regex <code>[a-z0-9_\-/]+</code>, impede colisão de URL entre módulos (<code>SELECT ... WHERE rota=? AND chave&lt;&gt;?</code>), grava <code>tb_modulos.rota</code>, re-registra ao vivo via <code>rotas_modulos.registrar_modulo</code>, audita <code>modulo_rota_alterada</code> e usa try/except + loguru. Retorna <code>(ok, msg)</code>.</li>
+<li><strong><code>tela_configuracoes.py</code> — campo "URL da página" e grid responsivo</strong>:</li>
+<li><strong><code>tela_configuracoes.py:44-47</code></strong>: <code>COLUNAS_MODULOS</code> agora é <strong>responsiva</strong> — <code>"grid-cols-1 sm:grid-cols-2 lg:grid-cols-[56px_minmax(12ch,1fr)_minmax(22ch,1fr)_minmax(22ch,1fr)_minmax(20ch,1fr)_150px]"</code> (sem <code>columns=</code> inline). Em desktop (lg:) 6 colunas explícitas (setas, chave, nome, URL, ícone, situação); em sm/md empilha em 2 colunas (cada <code>_campo_empilhado</code> já coloca label acima do input).</li>
+<li><strong><code>tela_configuracoes.py:533-546</code></strong>: <code>_campo_empilhado(label, valor, readonly=False, tooltip=None)</code> — rótulo acima do input (empilhado), input <code>w-full max-w-[30ch]</code> que preenche a coluna do grid.</li>
+<li><strong><code>tela_configuracoes.py:660-662</code></strong>: novo campo <code>_campo_empilhado("URL da página", rota, ...)</code> em cada linha.</li>
+<li><strong><code>tela_configuracoes.py:593-594</code></strong>: <code>campos_url[chave] = inp_url</code> ligado em <code>estado_campos["urls"]</code> (lido pelo SALVAR TUDO). A tupla <code>estado_campos["paginas"] = (inp_n, inp_i, sw_a)</code> é <strong>mantida</strong>.</li>
+<li><strong><code>tela_configuracoes.py:139-158</code></strong>: <code>salvar_tudo()</code> — após o loop das páginas, itera <code>c.get("urls", {})</code>, compara o trim com a rota vigente no BD e chama <code>alterar_rota_modulo</code>; acumula avisos e notifica "N URL(s) alterada(s) — recarregue com F5".</li>
+<li><strong><code>tela_configuracoes.py:698-713</code></strong>: <code>_mover()</code> preserva a URL pendente entre remontagens (<code>pendentes_url</code>).</li>
+<li><strong><code>tela_configuracoes.py:737-744</code></strong>: <code>restaurar_paginas_padrao()</code> também restaura <code>rota</code> para <code>DEFAULT_ROTAS[chave]</code> dos nativos.</li>
+<li><strong><code>tela_configuracoes.py:619</code></strong>: cabeçalho do grid oculto em telas pequenas (<code>hidden lg:grid</code>); <code>overflow-x-auto</code> removido; inputs <code>w-full max-w-[30ch]</code>.</li>
+<li><strong><code>tela_configuracoes.py:816-818</code></strong>: card "Registrar novo módulo (futuro)" já tinha <code>n_rota</code> configurável (placeholder <code># ou /rota-futura</code>) — confirmado.</li>
+</ul>
+<h4 id="css-frameworks-embarcados-bootstrapbulmadaisyuipicopicnic">CSS frameworks embarcados — Bootstrap/Bulma/DaisyUI/Pico/Picnic<a class="headerlink" href="#css-frameworks-embarcados-bootstrapbulmadaisyuipicopicnic" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>mod_intranet/tema_css.py</code></strong> (novo): módulo que serve os frameworks CSS baixados em
+  <code>assets/css/frameworks/</code> localmente — <strong>sem CDN</strong>. A constante <code>FRAMEWORKS_CSS</code> cataloga
+  cinco frameworks:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Chave</th>
+<th style="text-align: left;">Arquivo</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Aviso de compatibilidade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>bootstrap</code></td>
+<td style="text-align: left;"><code>bootstrap@5.3.8.min.css</code></td>
+<td style="text-align: left;">Bootstrap 5.3.8 — grid <code>.row</code>/<code>.col</code>, utilitários e componentes (<code>.btn</code>, <code>.card</code>, <code>.badge</code>, <code>.table</code>)</td>
+<td style="text-align: left;">Reset global (box-sizing, body, headings) pode afetar o Quasar; injeção por página em telas de marca própria ou escopado; JS do Bootstrap (dropdowns/toasts/offcanvas) não é servido — SÓ o CSS</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bulma</code></td>
+<td style="text-align: left;"><code>bulma@1.0.2.min.css</code></td>
+<td style="text-align: left;">Flexbox utilitários/componentes</td>
+<td style="text-align: left;"><code>.button</code> e resets podem chocar com Quasar</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>daisyui</code></td>
+<td style="text-align: left;"><code>daisyui@5.6.8.min.css</code> + <code>daisyui@5.6.8.themes.min.css</code></td>
+<td style="text-align: left;">Componentes <code>.btn</code>/<code>.card</code>/<code>.badge</code> sobre Tailwind</td>
+<td style="text-align: left;">Depende de Tailwind v4 (NiceGUI embute v3 parcial); classes podem conflitar</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pico</code></td>
+<td style="text-align: left;"><code>pico@2.min.css</code></td>
+<td style="text-align: left;">Reset + tipografia minimalista</td>
+<td style="text-align: left;">Estiliza <code>&lt;body&gt;</code>/<code>&lt;h1&gt;</code>/<code>&lt;button&gt;</code> globais — pode quebrar Quasar</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>picnic</code></td>
+<td style="text-align: left;"><code>picnic@7.1.0.min.css</code></td>
+<td style="text-align: left;">Leve, estilo "demo site"</td>
+<td style="text-align: left;">Projeto em manutenção reduzida; evite em módulos padronizados</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong><code>tema_css.montar_rotas_static()</code></strong> (<code>tema_css.py:42-53</code>): registra <code>app.add_static_files("/css/frameworks", ...)</code> no boot. Falhas são silenciosas (não derrubam o servidor).</li>
+<li><strong><code>tema_css.caminho_css(nome)</code></strong> (<code>tema_css.py:56-68</code>): devolve a URL HTTP de um framework (<code>/css/frameworks/&lt;arquivo&gt;</code>) ou a lista dos disponíveis quando <code>nome</code> é <code>None</code>. Retorna <code>None</code> para nome desconhecido.</li>
+<li><strong><code>tema_css.injetar_framework(nome)</code></strong> (<code>tema_css.py:71-85</code>): adiciona <code>&lt;link rel="stylesheet"&gt;</code> ao <code>&lt;head&gt;</code> da página atual via <code>ui.add_head_html()</code>. <strong>Injeção POR PÁGINA, nunca global</strong> — cada módulo/página que desejar um framework chama esta função explicitamente. Retorna <code>True</code>/<code>False</code>.</li>
+<li><strong><code>tema_css._log()</code></strong> (<code>tema_css.py:88-90</code>): logger via <code>observabilidade.get_logger("intranet")</code>.</li>
+<li><strong><code>main.py:64-71</code></strong>: bloco "CSS FRAMEWORKS EMBARCADOS" no boot — <code>try/except</code> que importa <code>tema_css</code> e chama <code>montar_rotas_static()</code>, com <code>print()</code> como fallback silencioso. Não há referência à palavra "cdn" no código (validado por <code>test/teste_boot.py</code>).</li>
+<li><strong>Arquivos em disco</strong>: <code>assets/css/frameworks/</code> contém os seis arquivos <code>.min.css</code> + <code>README.md</code> com origem, licenças e instruções de uso.</li>
+<li><strong>Todos os logs</strong> usam <code>loguru</code> via <code>_log()</code> (padrão <code>mod_intranet/intranet</code> com <code>try/except</code> em todas as funções).</li>
 </ul>
 <p><strong>Parcial/Pendente:</strong></p>
 <ul>

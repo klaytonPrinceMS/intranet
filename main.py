@@ -61,6 +61,27 @@ def iniciar_agendador():
     return rotinas.iniciar_agendador()
 
 
+# ================== CSS FRAMEWORKS EMBARCADOS (assets/css/frameworks) ==================
+# Estilos opcionais (Bulma/DaisyUI/Pico/Picnic) servidos localmente em /css/frameworks/*.
+# A injeção em páginas é feita sob demanda via tema_css.injetar_framework().
+try:
+    from mod_intranet import tema_css
+    tema_css.montar_rotas_static()
+except Exception:
+    print("[css] Aviso: não foi possível montar as rotas de /css/frameworks")
+
+# ================== ROTAS DINÂMICAS DE MÓDULOS (slugs customizados) ==================
+# Permite que a URL de cada página (tb_modulos.rota) seja editada em
+# /configuracoes e re-registrada no servidor sem restart. Os decorators fixos
+# abaixo continuam registrando as rotas padrão; montar_rotas_ativas() re-registra
+# os slugs customizados persistidos no banco.
+try:
+    from mod_intranet import rotas_modulos
+except Exception:
+    print("[rotas] Aviso: não foi possível importar rotas_modulos")
+    rotas_modulos = None
+
+
 # ================== FAVICON CUSTOMIZADO (upload em /configuracoes) ==================
 # ui.run aponta para um ARQUIVO VIVO: o NiceGUI registra /favicon.ico servindo-o
 # a cada request. O upload sobrescreve o conteúdo -> troca vale no próximo F5,
@@ -152,7 +173,7 @@ def page_dashboard():
         return
 
     nome = user["nome"]
-    eh_admin = user.get("perfil") == "administrador_geral"
+    eh_admin = user.get("perfil") in ("administrador_geral", "administrador_modulo")
 
     with ui.column().classes("w-full p-6 gap-6"):
         # Banner de boas-vindas
@@ -171,35 +192,9 @@ def page_dashboard():
                                         type="positive", position="top", timeout=2),
                  once=True)
 
-        # Grid fluido 360–1440px (mobile-first): 1 col <640px, 2 cols 640–1024px,
-        # 3 cols >=1024px. Feed ocupa 2/3, resumo 1/3.
-        with ui.grid(columns=3).classes("w-full gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1"):
-
-            # ---- Feed do Blog por padrão (RF-09) ----
-            from mod_blog.telas import _card_postagem
-            from mod_blog.manipulador_bd import listar_postagens
-            pode_publicar_blog = (user.get("perfil") == "administrador_geral"
-                                  or autenticacao.eh_admin_do_modulo(nome, "blog"))
-            with ui.column().classes("col-span-2 max-lg:col-span-2 max-sm:col-span-1 "
-                                     "w-full gap-4"):
-                with ui.row().classes("w-full items-center justify-between"):
-                    ui.label("Publicações recentes").classes("text-h6 font-bold text-grey-9")
-                    ui.button("Abrir Blog completo", icon="article",
-                              on_click=lambda: ui.navigate.to("/blog")) \
-                        .props("outline color=primary dense")
-                posts = listar_postagens(ativo=True, ordem="DESC")
-                if not posts:
-                    with ui.card().classes("w-full items-center p-8"):
-                        ui.icon("article", size="48px").classes("text-grey-4")
-                        ui.label("Nenhuma publicação ainda."
-                                 + (" Acesse o Blog para criar a primeira!"
-                                    if pode_publicar_blog else "")).classes("text-grey-6")
-                for post in posts:
-                    _card_postagem(post, nome, user.get("perfil", ""),
-                                   lambda: ui.navigate.reload(),
-                                   pode_publicar=pode_publicar_blog)
-
-            # ---- Resumo do sistema (admin vê tudo; usuário comum vê o básico) ----
+        # ---- Resumo do sistema (somente administradores: geral e de módulos) ----
+        # Fica logo abaixo das boas-vindas e acima das postagens do blog.
+        if eh_admin:
             def orquestrar_resumo():
                 from mod_gest_cad_usuario import manipulador_bd as gest
                 n_users = len(gest.listar_usuarios(filtro_ativo=True))
@@ -209,44 +204,66 @@ def page_dashboard():
                 n_logs = contar_registros()
                 return n_users, n_posts, n_logs
 
-            with ui.column().classes("col-span-1 max-sm:col-span-1 w-full gap-4"):
-                with ui.card().classes("w-full border-l-4").style(
-                        "border-left-color:#1565C0"):
-                    with ui.card_section().classes("gap-3 w-full"):
+            with ui.card().classes("w-full border-l-4").style(
+                    "border-left-color:#1565C0"):
+                with ui.card_section().classes("gap-4 w-full"):
+                    with ui.row().classes("w-full items-center justify-between flex-wrap gap-2"):
                         ui.label("Resumo do sistema").classes("text-h6 font-bold text-grey-9")
-                        resumo_wrap = ui.column().classes("w-full gap-2")
+                        with ui.row().classes("items-center gap-2"):
+                            lbl_fb_resumo = ui.label("").classes("text-caption text-green-8")
+                            ui.button("Atualizar", icon="refresh",
+                                      on_click=lambda: atualizar_resumo()) \
+                                .props("outline color=primary dense")
 
-                        def render_resumo():
-                            resumo_wrap.clear()
-                            n_users, n_posts, n_logs = orquestrar_resumo()
-                            with resumo_wrap:
-                                _stat("Usuários ativos", n_users, "people")
-                                _stat("Postagens", n_posts, "article")
-                                if eh_admin:
-                                    _stat("Registros de auditoria", n_logs, "history")
+                    resumo_wrap = ui.row().classes("w-full justify-center gap-4")
 
+                    def render_resumo():
+                        resumo_wrap.clear()
+                        n_users, n_posts, n_logs = orquestrar_resumo()
+                        with resumo_wrap:
+                            _stat("Usuários ativos", n_users, "people")
+                            _stat("Postagens", n_posts, "article")
+                            _stat("Registros de auditoria", n_logs, "history")
+
+                    def atualizar_resumo():
                         render_resumo()
-                        lbl_fb_resumo = ui.label("").classes("text-caption text-green-8")
+                        lbl_fb_resumo.set_text("Atualizado ✓")
+                        # feedback de 2s: reverte o rótulo via timer
+                        ui.timer(2.0, lambda: lbl_fb_resumo.set_text(""), once=True)
 
-                        def atualizar_resumo():
-                            render_resumo()
-                            lbl_fb_resumo.set_text("Atualizado ✓")
-                            # feedback de 2s: reverte o rótulo via timer
-                            ui.timer(2.0, lambda: lbl_fb_resumo.set_text(""), once=True)
+                    render_resumo()
 
-                        ui.button("Atualizar resumo", icon="refresh",
-                                  on_click=atualizar_resumo) \
-                            .props("outline color=primary dense").classes("w-full")
+        # ---- Feed do Blog por padrão (RF-09) ----
+        from mod_blog.telas import _card_postagem
+        from mod_blog.manipulador_bd import listar_postagens
+        pode_publicar_blog = (user.get("perfil") == "administrador_geral"
+                              or autenticacao.eh_admin_do_modulo(nome, "blog"))
+        with ui.column().classes("w-full gap-4"):
+            with ui.row().classes("w-full items-center justify-between"):
+                ui.label("Publicações recentes").classes("text-h6 font-bold text-grey-9")
+                ui.button("Abrir Blog completo", icon="article",
+                          on_click=lambda: ui.navigate.to("/blog")) \
+                    .props("outline color=primary dense")
+            posts = listar_postagens(ativo=True, ordem="DESC")
+            if not posts:
+                with ui.card().classes("w-full items-center p-8"):
+                    ui.icon("article", size="48px").classes("text-grey-4")
+                    ui.label("Nenhuma publicação ainda."
+                             + (" Acesse o Blog para criar a primeira!"
+                                if pode_publicar_blog else "")).classes("text-grey-6")
+            for post in posts:
+                _card_postagem(post, nome, user.get("perfil", ""),
+                               lambda: ui.navigate.reload(),
+                               pode_publicar=pode_publicar_blog)
 
 
 def _stat(rotulo, valor, icone):
-    with ui.card().classes("w-full min-w-[160px] bg-grey-1 "
+    with ui.card().classes("flex-1 min-w-[140px] max-w-[240px] bg-grey-1 "
                            "transition-transform hover:-translate-y-0.5 hover:shadow-lg"):
-        with ui.row().classes("items-center gap-3"):
-            ui.icon(icone).classes("text-primary text-4xl")
-            with ui.column().classes("gap-0"):
-                ui.label(str(valor)).classes("text-h4 font-bold text-grey-9")
-                ui.label(rotulo).classes("text-caption text-grey-6")
+        with ui.column().classes("items-center justify-center gap-1 px-2 py-3"):
+            ui.icon(icone).classes("text-primary text-3xl")
+            ui.label(str(valor)).classes("text-h5 font-bold text-grey-9")
+            ui.label(rotulo).classes("text-caption text-grey-6 text-center")
 
 
 # ================== MÓDULOS ==================
@@ -260,6 +277,10 @@ def page_blog():
     mostrar_tela(user["nome"], user.get("perfil", ""))
 
 
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["blog"] = page_blog
+
+
 @ui.page("/users")
 def page_users():
     from mod_intranet.layout_tela import pagina_restrita
@@ -268,6 +289,10 @@ def page_users():
         return
     from mod_gest_cad_usuario.telas import mostrar_tela
     mostrar_tela(user["nome"], user.get("perfil", ""))
+
+
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["usuarios"] = page_users
 
 
 @ui.page("/auditoria")
@@ -280,6 +305,10 @@ def page_auditoria():
     mostrar_tela(user["nome"], user.get("perfil", ""))
 
 
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["auditoria"] = page_auditoria
+
+
 @ui.page("/edit-pdf")
 def page_edit_pdf():
     from mod_intranet.layout_tela import pagina_restrita
@@ -290,6 +319,10 @@ def page_edit_pdf():
     mostrar_tela(user["nome"], user.get("perfil", ""))
 
 
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["editar_pdf"] = page_edit_pdf
+
+
 @ui.page("/renomear-empenho")
 def page_renomear_empenho():
     from mod_intranet.layout_tela import pagina_restrita
@@ -298,6 +331,10 @@ def page_renomear_empenho():
         return
     from mod_renomear_empenho.telas import mostrar_tela
     mostrar_tela(user["nome"], user.get("perfil", ""))
+
+
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["empenhos"] = page_renomear_empenho
 
 
 @app.get("/solicita-impressao/pdf/{solicitacao_id}")
@@ -359,6 +396,10 @@ def page_solicita_impressao():
     ui.add_head_html('<script src="/solicita-impressao/src/impressao.js"></script>')
 
 
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["solicita_impressao"] = page_solicita_impressao
+
+
 @app.get("/solicita-impressao/src/impressao.js")
 def servir_js_impressao():
     caminho = os.path.join(
@@ -379,6 +420,11 @@ def page_configuracoes():
 
 
 # ================== START ==================
+# Re-registra slugs customizados persistidos em tb_modulos (idempotente):
+# as rotas padrão já foram registradas pelos decorators fixos acima.
+if rotas_modulos is not None:
+    rotas_modulos.montar_rotas_ativas()
+
 if __name__ in ("__main__", "__mp_main__"):
     # Observabilidade (loguru): configura sink de arquivo + captura de exceções
     from mod_intranet import observabilidade
