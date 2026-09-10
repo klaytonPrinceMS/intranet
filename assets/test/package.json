@@ -1,0 +1,14 @@
+{
+  "name": "intranet-modular-e2e",
+  "private": true,
+  "version": "1.0.260908",
+  "description": "E2E tests (Playwright) for Intranet Modular — assets/test",
+  "scripts": {
+    "test:e2e": "playwright test --config playwright.config.js",
+    "e2e:headed": "playwright test --config playwright.config.js --headed",
+    "e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0"
+  }
+}

@@ -1,0 +1,25 @@
+nicegui==3.15.0
+apscheduler>=3.10,<4
+nh3>=0.2
+pdfplumber>=0.11
+pikepdf>=9.0
+pymupdf>=1.24
+pytesseract>=0.3
+bcrypt>=5.0.0
+pypdf>=5.0
+loguru>=0.7.3
+
+# Documentação MkDocs — build em RUNTIME (/documentacao via mod_intranet/documentacao.py)
+mkdocs>=1.6.1
+mkdocs-material>=9.7.7
+
+# OpenTelemetry (observabilidade) - Opcional
+# Instalar apenas se Docker estiver disponível
+# opentelemetry-api>=1.20.0
+# opentelemetry-sdk>=1.20.0
+# opentelemetry-exporter-otlp-proto-grpc>=1.20.0
+
+# PostgreSQL (banco opcional) - Instalar apenas se banco_tipo='postgres'
+# (container: docker/postgres/docker-compose.yml)
+sqlalchemy>=2.0
+psycopg2-binary>=2.9

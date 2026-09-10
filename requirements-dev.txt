@@ -1,0 +1,36 @@
+# ============================================================
+# INTRANET Modular - Dependências de DESENVOLVIMENTO / TESTE / SEGURANÇA
+# Dev, test and security dependencies for the Intranet Modular project.
+# Instalar em ambiente de desenvolvimento/QA:
+#   pip install -r requirements-dev.txt
+# O ambiente de produção usa apenas requirements.txt (não instalar este arquivo).
+# ============================================================
+
+# --- QA / Testes ---
+pytest>=8.0
+pytest-playwright>=0.9.0
+pytest-cov>=7.0.0
+
+# --- SAST (Static Application Security Testing) ---
+bandit>=1.9.0
+semgrep>=1.176.0
+
+# --- Auditoria de dependências ---
+pip-audit>=2.10.0
+safety>=3.8.0
+
+# --- Segredos / secrets leak (git) ---
+# gitleaks é um binário Go (https://github.com/gitleaks/gitleaks/releases)
+# Instalação manual (não-PyPI):
+#   curl -sL -o /tmp/gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz
+#   tar -xzf /tmp/gitleaks.tgz gitleaks && install gitleaks ~/.local/bin/
+# --- Ferramentas externas (não-PyPI) ---
+# k6 (teste de carga/performance): binário Go
+#   https://grafana.com/docs/k6/latest/set-up/install/
+#   (ex.: via deb: sudo gpg -k ...; sudo apt-get install k6)
+# nmap, sqlmap, wpscan, sslscan, nikto (Kali/red team): disponíveis no sistema host
+#   - nmap: varredura de rede/portas
+#   - sqlmap: detecção de SQL Injection
+#   - wpscan: auditoria WordPress
+#   - sslscan: auditoria TLS/SSL
+#   - nikto: varredura de vulnerabilidades web (não instalado — instalar se necessário)
