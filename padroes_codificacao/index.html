@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Padrões de Codificação - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Padr\u00f5es de Codifica\u00e7\u00e3o";
+        var mkdocs_page_input_path = "padroes_codificacao/index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Padrões de Codificação</a>
+    <ul class="current">
+    </ul>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Padrões de Codificação</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="coding-standards-intranet-modular">Coding Standards — Intranet Modular<a class="headerlink" href="#coding-standards-intranet-modular" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Mandatory coding standards, derived from the actual codebase (function-based, <code>snake_case</code>, module packages <code>mod_*</code>). Mirror an existing module when in doubt.</p>
+</blockquote>
+<hr />
+<h1 id="padroes-de-codificacao-intranet-modular">Padrões de Codificação — Intranet Modular<a class="headerlink" href="#padroes-de-codificacao-intranet-modular" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Padrões obrigatórios de codificação, extraídos do código real (funcional, <code>snake_case</code>, pacotes <code>mod_*</code>). Em dúvida, espelhe um módulo existente.</p>
+</blockquote>
+<h2 id="1-nomenclatura">1. Nomenclatura<a class="headerlink" href="#1-nomenclatura" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>snake_case</code></strong> para funções, variáveis e nomes de arquivo Python. Ex.: <code>autenticar</code> (<code>:179</code>), <code>gerar_hash_senha</code> (<code>:161</code>), <code>bd_criador.py</code>.</li>
+<li><strong>Não use <code>camelCase</code></strong> para funções/variáveis Python.</li>
+<li>Constantes em <strong><code>MAIUSCULAS_SNAKE</code></strong>.</li>
+<li>Pacote de módulo: <strong><code>mod_&lt;nome&gt;</code></strong> (minúsculas, underscore). Arquivos: <strong><code>mod_&lt;nome&gt;_&lt;descricao&gt;.py</code></strong>.</li>
+<li>Tabelas: <strong><code>tb_&lt;nome&gt;</code></strong>; colunas: <code>snake_case</code> com prefixo semântico (<code>user_nome</code>, <code>hash_arquivo</code>).</li>
+</ul>
+<h2 id="2-estilo">2. Estilo<a class="headerlink" href="#2-estilo" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Projeto <strong>funcional/procedural</strong> nas regras de negócio — prefira funções puras; classes ficam restritas aos <strong>componentes reutilizáveis do núcleo</strong> (<code>mod_intranet</code>: <code>CrudBase</code>, <code>GradeTabela</code>/<code>PainelLista</code>, <code>FormularioBuilder</code>, classes de <code>ui_comum</code> — 06/09). Nos módulos <code>mod_*</code>, não crie classes de negócio.</li>
+<li><code>telas.py</code> <strong>DEVE</strong> expor <code>mostrar_tela(nome, perfil)</code>.</li>
+<li>Sem comentários a menos que solicitado (regra <code>../../AGENTSadf.md</code>).</li>
+<li>Valide com: <code>.venv/bin/python -c "import ast; ast.parse(open('&lt;arquivo&gt;', encoding='utf-8').read())"</code>.</li>
+</ul>
+<h2 id="3-modelo-de-novo-modulo">3. Modelo de novo módulo<a class="headerlink" href="#3-modelo-de-novo-modulo" title="Permanent link">&para;</a></h2>
+<p><div class="highlight"><pre><span></span><code>mod_exemplo/
+  __init__.py
+  telas.py            # mostrar_tela(nome, perfil)  — abas de negócio
+  administracao.py    # mostrar_administracao(...)  — painel admin standalone
+  manipulador_bd.py   # acesso ao db_mod_exemplo.db (WAL)
+  criador_bd.py       # legado/morto — não confiar
+</code></pre></div>
+- Banco próprio criado por <code>inicializar_bancos()</code>; toda escrita relevante registra na trilha de auditoria via <code>audit_log</code> (banco exclusivo <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_&lt;modulo&gt;</code>).
+- Registre o módulo em <code>tb_modulos</code> (<code>autenticacao.registrar_modulo</code>).
+- <strong>Painel admin em arquivo dedicado (<code>telas_administracao.py</code>)</strong> — desde 06/09, cada módulo expõe <code>mostrar_administracao(...)</code> em <code>mod_&lt;nome&gt;/administracao.py</code>, isolado do <code>telas.py</code> e sem tabs de navegação. A rota <code>main.py:439</code> (<code>@ui.page("/admin/{chave_modulo}")</code>) faz o dispatch e chama o <code>mostrar_administracao</code> correspondente. Isso permite: (1) admin abrir direto pela URL <code>/admin/blog</code> etc., (2) o admin do módulo ser <strong>standalone</strong> (não depende do estado das telas de negócio) e (3) o cupê "Administração" do drawer ser contextual por módulo. O arquivo recebe como parâmetro o ator/flags de permissão e o que precisar de tema/BD; toda a lógica de configuração (aparência, cotas, textos, regex, pastas monitoradas, Quarentena, etc.) vive nele.</p>
+<h2 id="4-tela-nicegui">4. Tela (NiceGUI)<a class="headerlink" href="#4-tela-nicegui" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Funções que recebem <code>(nome, perfil)</code>; sem JavaScript direto.</li>
+<li>Respeite o layout de 4 partes; valide o papel do ator antes de qualquer escrita.</li>
+<li>Conteúdo HTML do Blog passa obrigatoriamente por <code>nh3</code>.</li>
+</ul>
+<h2 id="5-banco">5. Banco<a class="headerlink" href="#5-banco" title="Permanent link">&para;</a></h2>
+<h3 id="51-crudbase-camada-de-acesso-legado">5.1 <code>CrudBase</code> — camada de acesso legado<a class="headerlink" href="#51-crudbase-camada-de-acesso-legado" title="Permanent link">&para;</a></h3>
+<p><code>db_manipulador.py</code> concentra acesso; <strong>nunca cross-query</strong> entre bancos.
+Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
+<strong>Use <code>CrudBase</code> (<code>mod_intranet/crud_base.py</code>) — nunca <code>sqlite3</code> cru</strong> (06/09): conexão WAL/synchronous/foreign_keys padronizada, atalhos <code>listar</code>/<code>obter</code>/<code>criar</code>/<code>atualizar</code>/<code>excluir</code>/<code>executar_muitas</code>/<code>criar_tabela</code> e transação atômica <code>crud.transacao()</code> (commit/rollback); auditoria das escritas via <code>audit_reg</code> (wrapper fail-soft de <code>audit_log</code>). Piloto: <code>../../mod_blog/bd_manipulador.py</code> 100% migrado.</p>
+<h3 id="52-sqlalchemy-orm-dataclasses-padrao-novo-piloto-mod_intranet-0709">5.2 SQLAlchemy ORM + Dataclasses — padrão novo (piloto: <code>mod_intranet</code>, 07/09)<a class="headerlink" href="#52-sqlalchemy-orm-dataclasses-padrao-novo-piloto-mod_intranet-0709" title="Permanent link">&para;</a></h3>
+<p>O <code>mod_intranet</code> usa <strong>SQLAlchemy 2.0 ORM + Dataclasses</strong> como arquitetura piloto, propagável aos demais módulos. Estrutura:</p>
+<div class="highlight"><pre><span></span><code>mod_intranet/
+  models/
+    __init__.py   # Table metadata + dataclass + map_imperatively()
+  repositorio.py  # Classe Repositorio (CRUD tipado via Session ORM)
+  conexao_bd.py  # get_config/set_config delegam para Repositorio
+</code></pre></div>
+<p><strong>Criando models de um novo módulo:</strong></p>
+<ol>
+<li><code>models/__init__.py</code> — defina <code>Table</code> e dataclass, mapeie com <code>registry.map_imperatively()</code>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Table</span><span class="p">,</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mod_intranet.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">metadata</span>
+
+<span class="n">tb_postagens</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="s2">"tb_postagens"</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s2">"id"</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">autoincrement</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s2">"titulo"</span><span class="p">,</span> <span class="n">String</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s2">"conteudo"</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s2">"ativo"</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Postagem</span><span class="p">:</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">titulo</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">conteudo</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">ativo</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.orm</span><span class="w"> </span><span class="kn">import</span> <span class="n">registry</span>
+<span class="n">registry</span><span class="p">()</span><span class="o">.</span><span class="n">map_imperatively</span><span class="p">(</span><span class="n">Postagem</span><span class="p">,</span> <span class="n">tb_postagens</span><span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><code>repositorio.py</code> — crie <code>Repositorio</code> local vinculado ao banco do módulo:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">mod_intranet.repositorio</span><span class="w"> </span><span class="kn">import</span> <span class="n">Repositorio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Postagem</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RepositorioBlog</span><span class="p">(</span><span class="n">Repositorio</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sessao</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">sessao</span><span class="p">,</span> <span class="n">chave_db</span><span class="o">=</span><span class="s2">"blog"</span><span class="p">)</span>  <span class="c1"># banco do módulo</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">listar_ativas</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Postagem</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Postagem</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">ativo</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</code></pre></div>
+<ol>
+<li><code>db_manipulador.py</code> — use <code>RepositorioBlog</code> em vez de <code>CrudBase</code>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">.repositorio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RepositorioBlog</span>
+<span class="n">_repo</span> <span class="o">=</span> <span class="n">RepositorioBlog</span><span class="p">()</span>
+</code></pre></div>
+<ol>
+<li><code>autenticacao.py</code>/<code>db_manipulador.py</code> — use <code>Repositorio</code>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">mod_intranet.repositorio</span><span class="w"> </span><span class="kn">import</span> <span class="n">Repositorio</span>
+<span class="k">with</span> <span class="n">Repositorio</span><span class="p">()</span> <span class="k">as</span> <span class="n">repo</span><span class="p">:</span>
+    <span class="n">mods</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">listar_modulos</span><span class="p">()</span>
+    <span class="n">repo</span><span class="o">.</span><span class="n">definir_config</span><span class="p">(</span><span class="s2">"minha_chave"</span><span class="p">,</span> <span class="s2">"valor"</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Regras:</strong>
+- <code>Repositorio</code> é context manager (<code>with Repositorio() as repo</code>); fecha a sessão no <code>__exit__</code>.
+- Fail-soft: métodos retornam <code>padrao</code>/<code>False</code>/<code>[]</code> em vez de lançar exceção.
+- Se SQLAlchemy não estiver instalado, <code>engine()</code> retorna <code>None</code> e <code>Repositorio</code> opera em modo degradado.
+- <code>get_config</code>/<code>set_config</code> em <code>bd_conexao.py</code> já delegam para <code>Repositorio</code> automaticamente.
+- <strong>Multi-banco:</strong> <code>engine(chave)</code>/<code>sessaodb(chave)</code>/<code>Repositorio(chave_db=...)</code> operam em qualquer banco de <code>MODULOS_BD</code> (7 bancos); chave desconhecida cai no central. Helpers genéricos <code>consultar</code>/<code>executar</code>/<code>ultimo_id</code> migram SQL cru gradualmente.
+- <strong>Criação condicional:</strong> <code>create_all</code> + log só quando o arquivo do banco não existe; módulos ≠ intranet nunca rodam <code>create_all</code> (schema via <code>init_db</code> do módulo, garantido por <code>garantir_bancos()</code> no passo 0 do boot).
+- <strong>Não use <code>mapper()</code></strong> (removido em SQLAlchemy 2.0) — use <code>registry().map_imperatively()</code>.
+- Credential pattern: <code>postgres_url(como_admin=False)</code> usa <code>klayton/klayton</code>; <code>postgres_url(como_admin=True)</code> usa <code>master/master</code> (chaves <code>banco_usuario</code>/<code>banco_senha</code>/<code>banco_admin_usuario</code>/<code>banco_admin_senha</code> em <code>tb_config</code>).</p>
+<p>Soft delete para entidades sensíveis, com coluna de motivo e auditoria.</p>
+<h2 id="6-versionamento">6. Versionamento<a class="headerlink" href="#6-versionamento" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Padrão <code>1.0.AAMMDD</code> (major.menor.data) — ver <a href="../versionamento/">Versionamento</a>.</li>
+</ul>
+<h2 id="7-padroes-aplicados-no-modulo-mod_renomear_empenho-exemplo-vivo">7. Padrões aplicados no módulo <code>mod_renomear_empenho</code> (exemplo vivo)<a class="headerlink" href="#7-padroes-aplicados-no-modulo-mod_renomear_empenho-exemplo-vivo" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>O módulo Renomeador de Empenho é referência concreta das convenções abaixo.</p>
+</blockquote>
+<ul>
+<li><strong>Duas camadas por módulo</strong> (<code>db_manipulador.py</code> + <code>telas.py</code>), com <code>mostrar_tela(usuario_logado, perfil)</code> obrigatório (<code>telas.py:45</code>).</li>
+<li><strong>Banco WAL próprio</strong> (<code>db_mod_&lt;nome&gt;.db</code>) com <code>CREATOR</code> idempotente (<code>CREATE TABLE IF NOT EXISTS</code> + seeds condicionais) e <strong>migração de coluna</strong> para bancos antigos (<code>_migrar_coluna</code>, <code>manipulador_bd.py:278</code>).</li>
+<li><strong>Tabelas <code>tb_&lt;nome&gt;</code></strong>, colunas <code>snake_case</code> com prefixo semântico (<code>nome_arquivo_final</code>, <code>tipo_especial</code>, <code>motivo_recusa</code>).</li>
+<li><strong>Trilha de auditoria por arquivo</strong> (hash SHA-256) no próprio banco do módulo + <code>audit_log</code> central com hash — ver <code>tb_arquivos_auditoria</code>/<code>tb_eventos_arquivos</code>.</li>
+<li><strong>Perfil por aba</strong>: calcula <code>eh_admin = perfil == "administrador_geral" or eh_admin_do_modulo(usuario, "&lt;chave&gt;")</code> e restringe abas/funções a admin; valida o papel antes de qualquer escrita.</li>
+<li><strong>Configurações via <code>tb_config</code></strong> (chaves <code>empenhos_*</code>) lidas/aplicadas <strong>sem reiniciar</strong> — ver <a href="../configuracoes/">Configurações</a>.</li>
+<li><strong>Tabs via helpers do núcleo</strong>: use <code>aba_modulo.menu_modulo(...)</code> para menus de módulo (ícone em cima, nome embaixo — padrão Renomeador de Empenhos, <code>telas.py:89</code>) e <code>aba_modulo.abas(...)</code> para principal + "Administração" (blog/auditoria); <code>ui.tabs</code> cru apenas em casos especiais (ex.: <code>mod_solicita_impressao</code>).</li>
+<li><strong>Segurança de caminho</strong>: normaliza com <code>os.path.realpath</code> e mantém lista de <strong>raízes protegidas</strong> (<code>raizes_navegacao</code>/<code>pasta_navegavel</code>) para anti-travessia; evita <code>..</code> em navegação.</li>
+<li><strong>Idempotência/não-reprocessamento</strong>: decide por nome padronizado e/ou registro no banco (<code>_arquivo_registrado_no_bd</code>).</li>
+<li><strong>Anti-colisão</strong> ao gerar destinos: sufixa (<code>_v2</code>, <code>_v3</code>) em vez de sobrescrever.</li>
+<li><strong>Regex configuráveis</strong> centralizadas em constantes/tabela (não espalhadas) com validação <code>re.compile</code> antes de persistir.</li>
+<li><strong>Import side-effect control</strong>: o módulo dispara <code>init_db_empenho()</code> na importação; por isso <code>inicializar_bancos()</code> deve rodar antes (ordem de import importa — ver <code>../../AGENTSadf.md</code>).</li>
+<li><strong>Sem classes de negócio/ORM</strong>; funções puras <code>snake_case</code>; validação de sintaxe via <code>ast.parse</code>.</li>
+</ul>
+<blockquote>
+<p>Regra de ouro: ao criar ou alterar um módulo, espelhe <code>mod_renomear_empenho</code>/<code>mod_solicita_impressao</code> e valide com <code>ast.parse</code> antes de submeter.</p>
+</blockquote>
+<h2 id="8-componentes-de-ui-padronizados-mod_intranetui_comumpy">8. Componentes de UI padronizados (<code>mod_intranet/ui_comum.py</code>)<a class="headerlink" href="#8-componentes-de-ui-padronizados-mod_intranetui_comumpy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Fonte única de botões, diálogos e rodapés</strong>: importe de <code>mod_intranet.ui_comum</code> — <code>botao()</code> (variantes <code>primario</code>/<code>secundario</code> (aliases <code>solido</code>/<code>contorno</code>)/<code>texto</code>/<code>neutro</code>/<code>restaurar</code>/<code>restaurar_fill</code>/<code>perigo</code>/<code>icone</code>), <code>botao_icone()</code>, <code>dialogo_card()</code>, <code>rodape_dialogo()</code>, <code>rodape_salvar_restaurar()</code>, paleta <code>CORES</code> e <code>notificar</code> (reexportado de <code>tema_modulo</code>).</li>
+<li><strong>Nada de <code>ui.button</code> cru nem hex solto</strong> (<code>#C62828</code>, <code>#EF6C00</code>, <code>#2E7D32</code>…): use <code>botao(variante=...)</code> e <code>CORES[...]</code>. <code>tema_modulo.botao()</code> e <code>_botao_padrao</code> (<code>tela_configuracoes.py</code>) apenas delegam à fábrica central.</li>
+<li><strong>Migração de botões CONCLUÍDA nos módulos (06/09)</strong>: ~120 botões crus (<code>ui.button</code>) migrados para <code>ui_comum.botao/botao_icone(chave_modulo=...)</code> em 12 arquivos — <code>mod_auditoria</code> (telas+admin), <code>mod_edit_pdf</code> (telas), <code>mod_gest_cad_usuario</code> (telas), <code>mod_renomear_empenho</code> (telas+admin), <code>mod_solicita_impressao</code> (telas+admin). Efeito: ao alterar cor/tamanho dos botões do módulo na administração (<code>&lt;prefixo&gt;_cor_botao</code>/<code>cor_texto_botao</code>/<code>btn_tamanho</code>), a cor aplica em TODOS os botões do módulo (a fábrica lê o tema a cada render). Mapeamento de variantes: <code>unelevated</code>→<code>"solido"</code>; <code>flat</code>→<code>"texto"</code>; <code>outline</code>→<code>"contorno"</code>; ícone <code>round/dense</code>→<code>botao_icone</code>; ações destrutivas→<code>"perigo"</code> ou <code>cor="negative"</code>; "Restaurar padrão"→<code>"restaurar"</code>; verde→<code>texto</code> com <code>cor="green-8"</code>; laranja→<code>cor="orange-9"</code>; Resetar cota (solicita_impressao)→<code>"restaurar_fill"</code> (família restaurar).</li>
+<li><strong>Exceções INTENCIONAIS de <code>ui.button</code> cru</strong> (documentadas como tais): <code>ui_comum.py:163</code> (a própria fábrica), <code>ui_comum.py:326</code> (Cancelar de <code>rodape_dialogo</code> — padrão de diálogo) e <code>tela_configuracoes.py:493,497</code> (preview AO VIVO da aba Cores — usa valores não salvos dos campos).</li>
+<li><strong><code>rodape_salvar_restaurar</code> na fábrica (06/09)</strong> (<code>ui_comum.py:338</code>): "Restaurar padrão" usa a variante <code>restaurar</code> (antes <code>flat</code> cinza) e o botão de salvar usa <code>solido</code> do tema do módulo — ambos via <code>botao(chave_modulo=...)</code>. "Restaurar padrão" tem aparência ÚNICA no projeto (contorno âmbar), inclusive nos sites que usavam contorno/primário em empenhos e edit_pdf. Contraste WCAG: a variante <code>restaurar</code> usa <code>text-color=amber-10</code> (escurecida de <code>amber-9</code>, ~3,8:1 em card branco — melhora o AA do anterior ~2,2:1). <strong>Padrão de 2 botões por card (06/09)</strong>: o rótulo padrão do salvar é <strong>"Aplicar"</strong> (antes "Salvar") — grava EXCLUSIVAMENTE o card em questão; novo parâmetro <code>acoes_extra</code> aceita tuplas <code>(rotulo, icone, on_click[, tooltip[, variante]])</code> (variante default <code>solido</code>) renderizadas antes do "Restaurar padrão"; a row usa <code>flex-wrap</code> (responsividade mobile).</li>
+<li><strong>Painéis de administração no padrão <code>card_admin</code> (06/09)</strong> (<code>ui_comum.py:781</code>): <code>ui.card</code> w-full com borda esquerda temática (cor_botao do módulo, fallback <code>#607D8B</code>) + fundo <code>estilo_cartao</code>; dentro, <code>ui.expansion</code> como cabeçalho retrátil — <strong>o título do card é colorido com a cor de título do módulo</strong> (<code>&lt;prefixo&gt;_cor_titulo</code> via <code>ler_tema</code>, fail-soft → <code>#212121</code>) via <code>header-style</code>; <code>grade=True</code> (padrão) cria a grade responsiva do projeto (1 campo/linha em tela pequena, 2 em média <code>sm:</code>, 3 em grande <code>md:</code>) e o <code>with</code> do chamador entra na grade; <code>grade=False</code> para conteúdo livre (tabelas/textareas). Aplicado em: blog (2 seções), auditoria, empenhos (8 seções, <code>grade=False</code>), <code>tema_modulo.bloco_aparencia</code> (card_admin próprio; <code>com_card=False</code> para callers que já têm card: gest_cad_usuario, edit_pdf, solicita_impressao admin + telas).</li>
+<li><strong>Fail-soft obrigatório</strong>: falha de tema/BD cai nos padrões com registro loguru (<code>observabilidade.get_logger("intranet")</code>); variante inválida levanta <code>ValueError</code> (erro de programação — falha rápida).</li>
+<li><strong>Helpers de tela em <code>mod_intranet/aba_modulo.py</code></strong>: <code>cabecalho(titulo, subtitulo, ..., chave_modulo=None)</code> (card de cabeçalho com cores resolvidas pelo tema do módulo — <strong>a borda de destaque é a MESMA cor dos botões do módulo</strong>, <code>&lt;prefixo&gt;_cor_botao</code>; parâmetros explícitos vencem; sem chave → defaults <code>ui_comum.CORES</code>), <code>menu_modulo(itens, valor=None)</code> (abas de menu com ícone em cima/nome embaixo), <code>campo_busca(placeholder, on_change, valor_inicial, tooltip)</code> (<code>outlined dense clearable debounce='150'</code>) e <code>barra_acoes(busca, acoes)</code> (barra branca com busca à esquerda e botões <code>ui_comum.botao</code> primários à direita; itens malformados ignorados com loguru). Não recrie <code>ui.tabs</code>/<code>ui.input</code> crus.</li>
+<li><strong>Classes do núcleo em telas novas (06/09)</strong>: em vez de <code>ui.grid</code>/<code>ui.input</code>/<code>ui.button</code> crus, use os componentes padronizados — <code>GradeTabela</code> (<code>ui_painel.py:30</code>, grid com cabeçalho caption + células + coluna de ações), <code>PainelLista</code> (<code>ui_painel.py:93</code>, busca + filtro + paginação client-side + <code>atualizar()</code>) e <code>FormularioBuilder</code> (<code>ui_form.py:32</code>, construtor fluente com <code>build()</code>/<code>valores()</code>). <code>ui_comum.py</code> é orientado a classes internamente (<code>BotaoFabrica</code>/<code>Dialogo</code>/<code>Cartao</code>/<code>CampoBase</code>) — as funções <code>botao</code>/<code>dialogo_card</code>/<code>campo_*</code> permanecem como wrappers finos; ambos os estilos são aceitos, comportamento idêntico.</li>
+<li><strong>Equivalência comprovada</strong>: <code>test/verifica_ui_comum.py</code> (<strong>188 verificações</strong> byte-a-byte, stub de nicegui, tema fixado via monkeypatch sem tocar no banco — inclui checks de migração dos botões dos módulos: perigo/solido/botao_icone, rodapé e variante restaurar) e <code>test/teste_classes_crud.py</code> (<strong>68 verificações</strong> — CrudBase em SQLite real, gancho de auditoria, <code>banco_conexao</code>, equivalência wrapper↔classe, GradeTabela/PainelLista/FormularioBuilder) — TODO código de teste fica em <code>test/</code>, nunca em <code>/tmp</code>.</li>
+</ul>
+<h2 id="9-configurabilidade-regra-de-projeto">9. Configurabilidade (regra de projeto)<a class="headerlink" href="#9-configurabilidade-regra-de-projeto" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Toda e qualquer configuração passível de alteração</strong> (cores, padrões, tamanhos, tempos, pastas, textos…) deve ser <strong>configurável pelo usuário</strong> na área de configuração do módulo: chaves em <code>tb_config</code> (prefixo <code>&lt;modulo&gt;_*</code>) + cupê "Administração" do módulo / painel central <code>/configuracoes</code>, aplicando <strong>sem restart</strong> sempre que possível. Não fixe em código valores que o administrador possa querer ajustar.</li>
+<li><strong>Tema de botões por módulo — vazio = padrão do módulo (06/09)</strong>: chave de botão do módulo <strong>VAZIA</strong> (<code>&lt;prefixo&gt;_cor_botao</code>/<code>cor_texto_botao</code>/<code>btn_tamanho</code>) = <strong>padrão do módulo</strong> — precedência em <code>tema_modulo.ler_tema</code> (<code>tema_modulo.py:94-126</code>): (1) chave do módulo não vazia → (2) default do parâmetro → (3) <code>PADROES_TEMA</code> (mapa único com <strong>TODOS os módulos em <code>#000000</code></strong> — blog, usuarios, auditoria, editar_pdf, empenhos, solicita_impressao, intranet; a cor do intranet). O tema do sistema (<code>intranet_*</code>, card "Botões do sistema" em <code>/configuracoes</code>) <strong>NÃO é herdado</strong> por outros módulos; <code>cor_fundo</code>/<code>cor_titulo</code>/<code>texto_header</code> seguem a mesma regra. Para voltar ao padrão, "Restaurar padrão" grava <code>""</code> (detalhes em <a href="../configuracoes/">Configurações</a>).</li>
+<li><strong>Card padrão "Configurações de cores" — <code>bloco_aparencia</code> (06/09)</strong> (<code>tema_modulo.py:297-483</code>): todo módulo deve expor o card PADRÃO <strong>"Configurações de cores"</strong> via <code>tema_modulo.bloco_aparencia(usuario_logado, chave_modulo, tema, ...)</code> — card recolhível <code>card_admin</code> (<code>aberto=False</code>) com <strong>PRÉVIA AO VIVO</strong> (exemplo de cabeçalho/card/botões que atualiza a cada troca de cor) e os campos no padrão do intranet ("Cor geral do módulo", "Cor do texto do módulo", "Cor de fundo da página", "Cor dos títulos", "Cor de fundo dos cards", "Cor do texto dos cards", "Tamanho dos botões" + opcional "Texto do cabeçalho" via <code>com_texto_header</code>). Rodapé padrão de 2 botões (Restaurar padrão + Aplicar) recarregando após 1 s; <code>salvar_tema</code> grava também <code>cor_fundo_card</code>/<code>cor_texto_card</code> (<code>tema_modulo.py:129-153</code>). <code>com_card=False</code> para chamadores que já fornecem o card (evita card dentro de card — ex.: solicita_impressao admin).</li>
+<li><strong>"Cor geral do módulo" — padrão ÚNICO de tema (06/09)</strong>: a chave <code>&lt;prefixo&gt;_cor_botao</code> é chamada de <strong>"Cor geral do módulo"</strong> (rótulo renomeado de "Cor dos botões" em TODOS os painéis — <code>tema_modulo.bloco_aparencia</code> <code>tema_modulo.py:318-323</code>, aba Cores do sistema <code>tela_configuracoes.py:517-526</code>, admins de blog <code>mod_blog/administracao.py:56</code>, auditoria <code>mod_auditoria/administracao.py:111</code> e empenhos <code>mod_renomear_empenho/administracao.py:99</code> + <code>telas.py:699</code>) e define a cor dos <strong>botões E dos menus/abas/destaques</strong> da tela do módulo: <code>ui.colors(primary=cor_botao)</code> (tinge tabs/menus/Quasar) + <code>cabecalho(chave_modulo=...)</code> (borda de destaque) + <code>ui_comum.botao(chave_modulo=...)</code> (botões). A cor é aplicada às telas de TODOS os módulos — antes só blog e gest_cad tinham <code>ui.colors(primary=...)</code>; agora auditoria (<code>mod_auditoria/telas.py:126</code>), edit_pdf (<code>mod_edit_pdf/telas.py:89</code>), empenhos (<code>mod_renomear_empenho/telas.py:65</code>) e solicita_impressao (<code>mod_solicita_impressao/telas.py:53</code>) também aplicam. Nas rotas de admin (<code>main.py:484-523</code>) os hexes fixos foram substituídos por <code>ler_tema(&lt;modulo&gt;, cor_botao=&lt;default&gt;)["cor_botao"]</code> (auditoria/editar_pdf/solicita_impressao); empenhos usa <code>empenhos_cor_botao</code> com default alinhado a <code>#000000</code> (antes <code>#6D4C41</code>). <code>ui.color_input</code>/<code>ui.select</code> crus do admin de auditoria e empenhos (admin + telas) migraram para as fábricas <code>campo_cor</code>/<code>campo_selecao</code> com os novos rótulos. Coberto por <code>test/teste_aba_config_intranet.py</code> (164 verificações — rótulos "Cor geral do módulo"/"Cor do texto do módulo").</li>
+<li>Exemplo vivo: o botão "Novo usuário" da Gestão de Usuários obedece ao tema do módulo (<code>usuarios_cor_botao</code> via <code>ui_comum.botao(chave_modulo="usuarios")</code> — <code>mod_gest_cad_usuario/telas.py:110</code>), ajustável na aba Administração; com a chave vazia (padrão), usa o padrão do PRÓPRIO módulo (<code>PADROES_TEMA["usuarios"]</code> = <code>#000000</code>).</li>
+<li>Detalhes e checklist: <a href="../convencoes_codigo/">Convenções de Código</a> → seção "Configurabilidade (regra de projeto)".</li>
+<li>Guia de migração passo a passo ("como migrar um módulo"): <a href="../convencoes_codigo/">Convenções de Código</a> → seção "Componentes de UI padronizados".</li>
+</ul>
+<h2 id="10-postgresql-opcional-0809-backend-duplo-ativo">10. PostgreSQL opcional (08/09) — backend duplo ATIVO<a class="headerlink" href="#10-postgresql-opcional-0809-backend-duplo-ativo" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>SQLite segue o padrão universal</strong> (<code>banco_tipo = 'sqlite'</code>) — servidores simples não instalam nada extra; todos os módulos operam na camada única <code>banco_conexao.conexao(chave)</code>.</li>
+<li><strong>Backend duplo controlado pelo sistema</strong>: <code>banco_tipo</code> = <code>sqlite</code>|<code>postgres</code> e <code>postgres_url</code> (DSN) na <code>tb_config</code> central, lidos <strong>DIRETO do arquivo SQLite central</strong> (<code>_ler_config_sqlite</code> — seletor de boot). No Postgres, <strong>um SCHEMA por módulo</strong> no banco <code>intranet</code> preserva o isolamento.</li>
+<li><strong>Ativação pelo admin, sem código</strong>: <code>/configuracoes</code> → card <strong>"Banco de dados — SQLite ou PostgreSQL"</strong> → <code>salvar_backend()</code>; <strong>reiniciar o servidor</strong> para aplicar.</li>
+<li><strong>Camada única</strong>: <code>conexao(chave)</code> (<code>banco_conexao.py:488</code>) devolve conexão DBAPI do backend ativo — sqlite (arquivo, WAL) ou postgres (proxy psycopg2 com tradução <code>?</code>→<code>%s</code>, DDL, <code>ON CONFLICT</code>, <code>PRAGMA</code>/<code>sqlite_master</code>/FTS5 degradados, <code>lastrowid</code> via <code>RETURNING</code>, SAVEPOINT por statement). <code>repositorio.engine/sessaodb</code> roteiam para o Postgres quando ativo; <code>CrudBase._conectar</code> também roteia (módulo em <code>SCHEMAS</code>).</li>
+<li><strong>Fail-soft</strong>: sem driver instalado, o sistema segue de pé em SQLite (exception registrada no loguru); DSN nunca logado com credenciais (<code>_dsn_publico</code>).</li>
+<li><strong>Container pronto</strong>: <code>assets/docker/postgres/docker-compose.yml</code> (postgres:16-alpine, base <code>intranet</code>, porta 5432, volume persistente, healthcheck).</li>
+<li><strong>Dependências</strong>: <code>requirements.txt</code> — <code>sqlalchemy&gt;=2.0</code> e <code>psycopg2-binary&gt;=2.9</code> habilitadas (instalar para usar <code>banco_tipo='postgres'</code>).</li>
+<li><strong>Migração de dados SQLite→PostgreSQL permanece manual</strong> — o Postgres inicia com os schemas vazios (recriados pelos <code>init_db</code>); detalhes em <a href="../configuracoes/">Configurações</a>.</li>
+</ul>
+<h2 id="11-administracao-do-modulo-em-arquivo-dedicado-telas_administracaopy-0609">11. Administração do módulo em arquivo dedicado — <code>telas_administracao.py</code> (06/09)<a class="headerlink" href="#11-administracao-do-modulo-em-arquivo-dedicado-telas_administracaopy-0609" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Padrão</strong>: cada módulo expõe <code>mostrar_administracao(...)</code> em <code>mod_&lt;nome&gt;/administracao.py</code> — <strong>arquivo separado</strong> do <code>telas.py</code>, isolado do estado das telas de negócio, sem tabs de navegação. A rota <code>@ui.page("/admin/{chave_modulo}")</code> em <code>main.py:439</code> faz o dispatch por <code>chave_modulo</code> e chama o <code>mostrar_administracao</code> correspondente.</li>
+<li><strong>Assinatura canônica</strong> (varia por módulo conforme o que precisa renderizar):</li>
+<li><code>../../mod_blog/telas_administracao.py</code> — <code>mostrar_administracao(usuario_logado, pode_publicar)</code> (aparência, tags HTML, largura imagem, gestão de inativos, <code>campo_modulo</code>).</li>
+<li><code>../../mod_gest_cad_usuario/telas_administracao.py</code> — <code>mostrar_administracao(ator)</code> (aparência, tamanho mínimo senha, <code>campo_modulo</code>).</li>
+<li><code>../../mod_auditoria/telas_administracao.py</code> — <code>mostrar_administracao(usuario_logado, eh_admin_geral)</code> (retenção LGPD, aparência, <code>campo_modulo</code>).</li>
+<li><code>../../mod_edit_pdf/telas_administracao.py</code> — <code>mostrar_administracao(usuario_logado, eh_admin)</code> (cotas GB/usuário, lotes, textos, aparência, manutenção).</li>
+<li><code>../../mod_renomear_empenho/telas_administracao.py</code> — <code>mostrar_administracao(...)</code> (pastas, aparência, template, regex, auditoria, Quarentena, regras) — recebe também <code>t_cor_botao</code>/<code>t_cor_texto_botao</code>/<code>t_cor_fundo</code>/<code>t_cor_titulo</code>/<code>t_tamanho</code>/<code>texto_header</code> já resolvidos e os callables <code>_btn_cls</code>/<code>_btn_style</code> + <code>get_config</code>/<code>set_config</code>.</li>
+<li><code>../../mod_solicita_impressao/telas_administracao.py</code> — <code>mostrar_administracao(usuario_logado, eh_admin)</code> com <strong>6 sub-abas</strong> (Solicitações, Secretarias, Setores, Responsáveis, Cotas, Config).</li>
+<li><strong>Botão "Administração" do drawer é contextual</strong> (<code>layout_tela.py:184-200</code>): dentro de um módulo, navega para <code>/admin/{chave_modulo}</code>; no Home, navega para <code>/configuracoes</code>. Tooltip muda conforme o contexto ("Configurações de {nome_modulo}" vs "Configurações gerais do sistema").</li>
+<li><strong>Por que arquivo separado</strong>:</li>
+<li>O admin do módulo fica <strong>standalone</strong> — não depende do estado das abas de negócio (cota, filtros, login refresh, etc.).</li>
+<li>Permite URL direta (<code>/admin/blog</code>, <code>/admin/auditoria</code> etc.) e acesso contextual pelo drawer.</li>
+<li><code>telas.py</code> continua focado em fluxo de negócio; <code>telas_administracao.py</code> concentra TODA a configuração do módulo.</li>
+<li><strong>Fail-soft + loguru obrigatórios</strong> (regra geral do projeto): todo <code>mostrar_administracao</code> envolve leituras/gravações em <code>try/except</code>, registrando via <code>observabilidade.get_logger("&lt;modulo&gt;")</code> — <code>_FMT</code> do <code>observabilidade.py</code> já garante <code>{module}:{function}:{line}</code> no log.</li>
+<li><strong>Migração de admin embutido no <code>telas.py</code></strong>: ao criar um novo módulo, <strong>não</strong> coloque o painel de administração como aba dentro de <code>mostrar_tela</code> — extraia para <code>mod_&lt;nome&gt;/administracao.py</code> e adicione a entrada correspondente no <code>dispatch</code> de <code>main.py:439-524</code>. Módulos já migrados (06/09): <code>blog</code>, <code>usuarios</code>, <code>auditoria</code>, <code>editar_pdf</code>, <code>empenhos</code>, <code>solicita_impressao</code>.</li>
+</ul>
+<h2 id="12-sqlalchemy-orm-dataclasses-0709-padrao-a-propagar">12. SQLAlchemy ORM + Dataclasses (07/09) — padrão a propagar<a class="headerlink" href="#12-sqlalchemy-orm-dataclasses-0709-padrao-a-propagar" title="Permanent link">&para;</a></h2>
+<p>O <code>mod_intranet</code> é o <strong>módulo piloto</strong> da arquitetura de acesso a dados com SQLAlchemy 2.0 ORM + Dataclasses. Os demais módulos devem migrar seguindo este padrão.</p>
+<h3 id="estrutura-por-modulo">Estrutura por módulo<a class="headerlink" href="#estrutura-por-modulo" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>mod_&lt;nome&gt;/
+  models/
+    __init__.py    # Table definitions + dataclasses + registry.map_imperatively()
+  repositorio.py   # Repositorio local com CRUD tipado via Session
+  manipulador_bd.py  # usa Repositorio para todas as operações de BD
+  telas.py         # usa Repositorio / CrudBase para acesso a dados
+</code></pre></div>
+<h3 id="camadas-de-baixo-para-cima">Camadas (de baixo para cima)<a class="headerlink" href="#camadas-de-baixo-para-cima" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong><code>models/__init__.py</code></strong> — define <code>Table</code> SQLAlchemy e dataclasses:</li>
+<li>Um <code>Table</code> por tabela (<code>Column</code> com tipos explícitos).</li>
+<li>Uma <code>@dataclass</code> por tabela com campos correspondentes.</li>
+<li><code>from sqlalchemy.orm import registry</code> + <code>map_imperatively()</code>.</li>
+<li><code>metadata.create_all(engine)</code> cria as tabelas.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Exemplo mínimo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Table</span><span class="p">,</span> <span class="n">Column</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="n">Integer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.orm</span><span class="w"> </span><span class="kn">import</span> <span class="n">registry</span>
+
+<span class="n">_metadata</span> <span class="o">=</span> <span class="n">MetaData</span><span class="p">()</span>
+
+<span class="n">tb_exemplo</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="s2">"tb_exemplo"</span><span class="p">,</span> <span class="n">_metadata</span><span class="p">,</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s2">"id"</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">autoincrement</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s2">"nome"</span><span class="p">,</span> <span class="n">String</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Exemplo</span><span class="p">:</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">nome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+
+<span class="n">_reg</span> <span class="o">=</span> <span class="n">registry</span><span class="p">()</span>
+<span class="n">_reg</span><span class="o">.</span><span class="n">map_imperatively</span><span class="p">(</span><span class="n">Exemplo</span><span class="p">,</span> <span class="n">tb_exemplo</span><span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong><code>repositorio.py</code></strong> — engine POR banco + <code>Session</code> factory + classe <code>Repositorio</code>:</li>
+<li><code>MODULOS_BD</code>: mapa chave→arquivo de TODOS os bancos dos módulos (o SQLAlchemy trabalha com todos; o núcleo hospeda o mapa central em <code>mod_intranet/repositorio.py:57-65</code>).</li>
+<li><code>caminho_db(chave)</code>: caminho do banco; chave desconhecida → central (fail-soft).</li>
+<li><code>engine(chave)</code>: um engine por banco, cacheado por chave (dict + <code>_lock</code>); event listener para pragmas WAL/<code>synchronous</code>/<code>foreign_keys</code>; <strong>criação condicional</strong> — <code>create_all</code> + log só quando o ARQUIVO não existe (e só no banco central; módulos recebem o schema via <code>init_db</code> próprio).</li>
+<li><code>sessaodb(chave)</code>: <code>sessionmaker(bind=engine, expire_on_commit=False)</code> por banco, factory cacheada.</li>
+<li><code>garantir_bancos()</code>: percorre <code>MODULOS_BD</code> e força a primeira conexão dos bancos ausentes (chamado no passo 0 do boot, antes dos <code>init_db</code>).</li>
+<li><code>Repositorio(chave_db="intranet")</code>: context manager com <code>fechar()</code> automático; métodos CRUD fail-soft com loguru; helpers genéricos <code>consultar</code>/<code>executar</code>/<code>ultimo_id</code> para migrar SQL cru gradualmente.</li>
+<li>Retornar dataclasses (não dicionários nem tuplas) nos métodos tipados.</li>
+<li>Sempre fazer <code>session.commit()</code> após escritas.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_log</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mod_intranet</span><span class="w"> </span><span class="kn">import</span> <span class="n">observabilidade</span>
+    <span class="k">return</span> <span class="n">observabilidade</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="s2">"intranet"</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">engine</span><span class="p">(</span><span class="n">chave</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"intranet"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">chave</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">MODULOS_BD</span><span class="p">:</span>
+        <span class="n">chave</span> <span class="o">=</span> <span class="s2">"intranet"</span>
+    <span class="k">if</span> <span class="n">chave</span> <span class="ow">in</span> <span class="n">_engines</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_engines</span><span class="p">[</span><span class="n">chave</span><span class="p">]</span>
+    <span class="k">with</span> <span class="n">_lock</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">chave</span> <span class="ow">in</span> <span class="n">_engines</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_engines</span><span class="p">[</span><span class="n">chave</span><span class="p">]</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">caminho_db</span><span class="p">(</span><span class="n">chave</span><span class="p">)</span>
+        <span class="n">novo_banco</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">_eng</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="n">_uri</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="o">...</span><span class="p">)</span>
+        <span class="nd">@event</span><span class="o">.</span><span class="n">listens_for</span><span class="p">(</span><span class="n">_eng</span><span class="p">,</span> <span class="s2">"connect"</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_set_pragmas</span><span class="p">(</span><span class="n">dbapi_conn</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">dbapi_conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA journal_mode=WAL"</span><span class="p">)</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA synchronous=NORMAL"</span><span class="p">)</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA foreign_keys=ON"</span><span class="p">)</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">chave</span> <span class="o">==</span> <span class="s2">"intranet"</span> <span class="ow">and</span> <span class="n">novo_banco</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="o">.</span><span class="n">create_all</span><span class="p">(</span><span class="n">_eng</span><span class="p">)</span>   <span class="c1"># UMA vez, só no central</span>
+        <span class="k">elif</span> <span class="n">novo_banco</span><span class="p">:</span>
+            <span class="n">_eng</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>      <span class="c1"># cria o arquivo; schema via init_db</span>
+        <span class="n">_engines</span><span class="p">[</span><span class="n">chave</span><span class="p">]</span> <span class="o">=</span> <span class="n">_eng</span>
+        <span class="k">return</span> <span class="n">_eng</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Repositorio</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sessao</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Session</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">chave_db</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"intranet"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">chave_db</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">MODULOS_BD</span><span class="p">:</span>
+            <span class="n">chave_db</span> <span class="o">=</span> <span class="s2">"intranet"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chave_db</span> <span class="o">=</span> <span class="n">chave_db</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sessao</span> <span class="o">=</span> <span class="n">sessao</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sessoes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Session</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sessao</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sessao</span> <span class="o">=</span> <span class="n">sessaodb</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chave_db</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sessao</span>
+
+    <span class="c1"># ---- helpers genéricos (SQL cru no banco vinculado) ----</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">consultar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="n">sql</span><span class="p">),</span> <span class="n">params</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">mappings</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="k">return</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">_log</span><span class="p">()</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"consultar(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">chave_db</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">executar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="n">sql</span><span class="p">),</span> <span class="n">params</span> <span class="ow">or</span> <span class="p">{})</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">rowcount</span> <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">rowcount</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">_log</span><span class="p">()</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"executar(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">chave_db</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">ultimo_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="n">text</span><span class="p">(</span><span class="s2">"SELECT last_insert_rowid()"</span><span class="p">))</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">_log</span><span class="p">()</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ultimo_id(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">chave_db</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># ---- métodos tipados (ORM/dataclass) ----</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">obter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Exemplo</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Exemplo</span><span class="p">,</span> <span class="n">id_</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">_log</span><span class="p">()</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"obter: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">criar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nome</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Exemplo</span><span class="p">(</span><span class="n">nome</span><span class="o">=</span><span class="n">nome</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">_log</span><span class="p">()</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"criar: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fechar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sessao</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sessao</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sessao</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fechar</span><span class="p">()</span>
+</code></pre></div>
+<ol>
+<li><strong><code>db_manipulador.py</code></strong> — usa <code>Repositorio</code> para todo acesso:
+   <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">mod_</span><span class="o">&lt;</span><span class="n">nome</span><span class="o">&gt;.</span><span class="n">repositorio</span> <span class="kn">import</span><span class="w"> </span><span class="nn">Repositorio</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">obter_exemplo</span><span class="p">(</span><span class="n">id_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Exemplo</span><span class="p">]:</span>
+    <span class="k">with</span> <span class="n">Repositorio</span><span class="p">()</span> <span class="k">as</span> <span class="n">repo</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">repo</span><span class="o">.</span><span class="n">obter</span><span class="p">(</span><span class="n">id_</span><span class="p">)</span>
+</code></pre></div></li>
+</ol>
+<h3 id="regras-obrigatorias">Regras obrigatórias<a class="headerlink" href="#regras-obrigatorias" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Regra</th>
+<th style="text-align: left;">Detalhe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Docstrings bilíngues EN+PT</strong></td>
+<td style="text-align: left;">Cada função/classe/módulo com docstring no padrão do projeto</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Try/except em tudo</strong></td>
+<td style="text-align: left;">Toda função/ação em <code>try/except</code>; <code>except Exception</code> genérico para fail-soft</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Loguru com nome da função</strong></td>
+<td style="text-align: left;"><code>_log().info/warning/error/exception(...)</code> — o <code>_FMT</code> garante <code>{function}</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Fail-soft</strong></td>
+<td style="text-align: left;">Falha retorna valor seguro (<code>padrao</code>/<code>False</code>/<code>[]</code>/<code>None</code>), nunca derruba a aplicação</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>SQLAlchemy opcional</strong></td>
+<td style="text-align: left;"><code>engine()</code> retorna <code>None</code> se indisponível; <code>Repositorio</code> opera em modo degradado</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Multi-banco</strong></td>
+<td style="text-align: left;"><code>engine(chave)</code>/<code>sessaodb(chave)</code>/<code>Repositorio(chave_db=...)</code> operam em qualquer banco de <code>MODULOS_BD</code>; chave desconhecida → central (fail-soft)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Criação condicional</strong></td>
+<td style="text-align: left;"><code>create_all</code> + log só quando o arquivo do banco NÃO existe; módulos ≠ intranet nunca rodam <code>create_all</code> (schema é do <code>init_db</code> do módulo)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>WAL sempre</strong></td>
+<td style="text-align: left;">Event listener no <code>engine</code> para <code>PRAGMA journal_mode=WAL</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Commit explícito</strong></td>
+<td style="text-align: left;"><code>session.commit()</code> após cada escrita; rollback automático no <code>except</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Sem cross-query</strong></td>
+<td style="text-align: left;">Cada módulo acessa apenas seu banco próprio</td>
+</tr>
+</tbody>
+</table>
+<h3 id="piloto-mod_intranet">Piloto: <code>mod_intranet</code><a class="headerlink" href="#piloto-mod_intranet" title="Permanent link">&para;</a></h3>
+<p>Arquivos migrados no núcleo (07/09, multi-banco em 06/09):
+- <code>models/__init__.py</code> — <code>Configuracao</code>, <code>Sessao</code>, <code>Modulo</code> + tabelas + <code>map_imperatively</code>
+- <code>repositorio.py</code> — <code>MODULOS_BD</code> (7 bancos) + <code>caminho_db()</code> + <code>engine(chave)</code> por banco (criação condicional) + <code>sessaodb(chave)</code> + <code>garantir_bancos()</code> + <code>Repositorio(chave_db=...)</code> com helpers genéricos <code>consultar</code>/<code>executar</code>/<code>ultimo_id</code>
+- <code>bd_conexao.py</code> — <code>get_config</code>/<code>set_config</code> delegam para <code>Repositorio</code> (fallback sqlite3)
+- <code>autenticacao.py</code> — todas as operações de sessão e módulo via <code>Repositorio</code>
+- <code>db_manipulador.py</code> — <code>garantir_rastreabilidade</code> usa <code>Repositorio</code>
+- <code>bd_criador.py</code> — <code>inicializar_bancos()</code> chama <code>garantir_bancos()</code> no passo 0 do boot (antes dos <code>init_db</code>)</p>
+<h3 id="propagacao-para-modulos-existentes">Propagação para módulos existentes<a class="headerlink" href="#propagacao-para-modulos-existentes" title="Permanent link">&para;</a></h3>
+<p>Ao migrar um módulo <code>mod_*</code> existente:</p>
+<ol>
+<li>Criar <code>mod_&lt;nome&gt;/models/__init__.py</code> com as tabelas e dataclasses.</li>
+<li>Registrar o banco do módulo em <code>MODULOS_BD</code> (<code>mod_intranet/repositorio.py:57-65</code>) e usar <code>engine(chave)</code>/<code>sessaodb(chave)</code>/<code>Repositorio(chave_db=...)</code> — não criar engine próprio.</li>
+<li>Refatorar <code>db_manipulador.py</code> para usar <code>Repositorio</code> (métodos tipados ou helpers genéricos <code>consultar</code>/<code>executar</code>/<code>ultimo_id</code>) em vez de sqlite3 direto.</li>
+<li>Manter <code>CrudBase</code> para operações que não se beneficiam do ORM (ex.: FTS5, DDL complexo).</li>
+<li>Atualizar docstrings para EN+PT-BR.</li>
+<li>Garantir que todos os <code>except</code> usem loguru.</li>
+</ol>
+<blockquote>
+<p>Ver detalhes em <a href="../arquitetura/#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura — Arquitetura de acesso a dados do núcleo</a> e <a href="../modulos/intranet/#repositorio-mod_intranetrepositoriopy-0709-multi-banco-0609">Módulo Núcleo — Repositório</a>.</p>
+</blockquote>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../guia_API/" class="btn btn-neutral float-left" title="Guia de API"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../manual_de_uso_instalacao/" class="btn btn-neutral float-right" title="Instalação">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../guia_API/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../manual_de_uso_instalacao/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

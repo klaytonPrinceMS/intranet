@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Convenções de Criação de Código - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Conven\u00e7\u00f5es de Cria\u00e7\u00e3o de C\u00f3digo";
+        var mkdocs_page_input_path = "convencoes_codigo.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Convenções de Criação de Código</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Documentação Técnica</li>
+      <li class="breadcrumb-item active">Convenções de Criação de Código</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="intranet-modular-coding-conventions">Intranet Modular — Coding Conventions<a class="headerlink" href="#intranet-modular-coding-conventions" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Coding standards extracted from the actual codebase: <code>snake_case</code> for Python functions/variables, <code>UPPER_SNAKE</code> for constants, module packages <code>mod_*</code>, database tables <code>tb_*</code>, kebab-case URL routes, per-module WAL databases, the <code>db_manipulador.py</code> pattern and the NiceGUI screen pattern. When in doubt, mirror an existing module.</p>
+</blockquote>
+<hr />
+<h1 id="intranet-modular-convencoes-de-criacao-de-codigo">Intranet Modular — Convenções de Criação de Código<a class="headerlink" href="#intranet-modular-convencoes-de-criacao-de-codigo" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Padrões de código extraídos da base real: <code>snake_case</code> para funções/variáveis Python, <code>MAIUSCULAS_SNAKE</code> para constantes, pacotes de módulo <code>mod_*</code>, tabelas <code>tb_*</code>, rotas kebab-case, bancos WAL por módulo, padrão de <code>db_manipulador.py</code> e padrão de tela NiceGUI. Em dúvida, espelhe um módulo existente.</p>
+</blockquote>
+<h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#visao-geral">Visão geral</a></li>
+<li><a href="#nomenclatura">Nomenclatura</a></li>
+<li><a href="#estilo-de-codigo">Estilo de código</a></li>
+<li><a href="#modelo-de-classes-e-objetos">Modelo de classes e objetos</a></li>
+<li><a href="#estrutura-de-um-novo-modulo-mod_">Estrutura de um novo módulo <code>mod_*</code></a></li>
+<li><a href="#padrao-de-manipulador-de-banco">Padrão de manipulador de banco</a></li>
+<li><a href="#padrao-de-tela-nicegui">Padrão de tela NiceGUI</a></li>
+<li><a href="#postgresql-opcional-0809">PostgreSQL opcional</a></li>
+<li><a href="#configurabilidade-regra-de-projeto">Configurabilidade (regra de projeto)</a></li>
+<li><a href="#auditoria-e-versionamento">Auditoria e versionamento</a></li>
+<li><a href="#checklist-de-aceite">Checklist de aceite</a></li>
+</ol>
+<h2 id="visao-geral">Visão geral<a class="headerlink" href="#visao-geral" title="Permanent link">&para;</a></h2>
+<p>A Intranet Modular é um projeto <strong>funcional/procedural</strong> em Python: as regras de negócio são <strong>funções</strong> e módulos; <strong>classes ficam restritas aos componentes reutilizáveis do núcleo <code>mod_intranet</code></strong> (desde 06/09: <code>CrudBase</code> em <code>crud_base.py</code>, <code>GradeTabela</code>/<code>PainelLista</code> em <code>ui_painel.py</code>, <code>FormularioBuilder</code> em <code>ui_form.py</code> e <code>BotaoFabrica</code>/<code>Dialogo</code>/<code>Cartao</code>/<code>CampoBase</code>/<code>CampoCor</code>/<code>CampoTexto</code>/<code>CampoSelecao</code> em <code>ui_comum.py</code> — além da exceção histórica <code>_FormatadorBlog(HTMLParser)</code>, <code>mod_blog/manipulador_bd.py:373</code>). As convenções abaixo refletem o que <strong>já existe</strong> no repositório — não invente um padrão novo.</p>
+<h2 id="nomenclatura">Nomenclatura<a class="headerlink" href="#nomenclatura" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Item</th>
+<th style="text-align: left;">Padrão</th>
+<th style="text-align: left;">Exemplo real</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Funções e variáveis Python</td>
+<td style="text-align: left;"><code>snake_case</code></td>
+<td style="text-align: left;"><code>autenticar</code>, <code>gerar_hash_senha</code>, <code>pagina_restrita</code>, <code>validar_acesso_modulo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Constantes</td>
+<td style="text-align: left;"><code>MAIUSCULAS_SNAKE</code></td>
+<td style="text-align: left;"><code>MODULOS_SISTEMA</code>, <code>CHAVE_POR_ROTA</code>, <code>PADRAO_CONFIG</code>, <code>DB_PATH</code>, <code>SESSION_COOKIE_NAME</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Classes</td>
+<td style="text-align: left;"><code>CamelCase</code> (componentes do núcleo)</td>
+<td style="text-align: left;"><code>CrudBase</code>, <code>GradeTabela</code>, <code>PainelLista</code>, <code>FormularioBuilder</code>, <code>BotaoFabrica</code>, <code>Dialogo</code>, <code>Cartao</code>, <code>CampoBase</code>; prefixo <code>_</code> para internas (<code>_FormatadorBlog</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Pacote de módulo</td>
+<td style="text-align: left;"><code>mod_&lt;nome&gt;</code> (minúsculas)</td>
+<td style="text-align: left;"><code>mod_blog</code>, <code>mod_gest_cad_usuario</code>, <code>mod_edit_pdf</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Arquivo de módulo</td>
+<td style="text-align: left;"><code>mod_&lt;nome&gt;_&lt;descricao&gt;.py</code></td>
+<td style="text-align: left;"><code>mod_renomear_empenho_organizador.py</code>, <code>bd_criador.py</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Tabelas</td>
+<td style="text-align: left;"><code>tb_&lt;nome&gt;</code></td>
+<td style="text-align: left;"><code>tb_usuarios</code>, <code>tb_postagens</code>, <code>tb_auditoria</code>, <code>tb_cota_disco</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Colunas</td>
+<td style="text-align: left;"><code>snake_case</code> com prefixo semântico</td>
+<td style="text-align: left;"><code>user_nome</code>, <code>user_senha</code>, <code>hash_arquivo</code>, <code>data_criacao</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Chaves de config</td>
+<td style="text-align: left;"><code>&lt;modulo&gt;_&lt;chave&gt;</code> (snake_case em minúsculas)</td>
+<td style="text-align: left;"><code>editpdf_lote_mb</code>, <code>empenhos_pasta_monitorada</code>, <code>backup_horas:&lt;chave&gt;</code>, <code>versao_modulo:&lt;chave&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Chaves de módulo</td>
+<td style="text-align: left;"><code>snake_case</code></td>
+<td style="text-align: left;"><code>editar_pdf</code>, <code>solicita_impressao</code>, <code>renomear_empenho</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Rotas URL</td>
+<td style="text-align: left;"><strong>kebab-case</strong></td>
+<td style="text-align: left;"><code>/edit-pdf</code>, <code>/renomear-empenho</code>, <code>/solicita-impressao</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Bancos</td>
+<td style="text-align: left;"><code>db_mod_&lt;nome&gt;.db</code></td>
+<td style="text-align: left;"><code>db_mod_blog.db</code>, <code>db_mod_gest_cad_usuario.db</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>❌ <strong>Não use <code>camelCase</code> para funções/variáveis Python.</strong> O nome de arquivo de saída de PDF usa <code>dataHora_usuario_operacao_nomeArquivo.pdf</code> — isso é <strong>nomenclatura de arquivo gerado</strong>, não código.</p>
+</blockquote>
+<h2 id="estilo-de-codigo">Estilo de código<a class="headerlink" href="#estilo-de-codigo" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Funcional/procedural</strong>: prefira funções a classes. Cada tela é uma função; cada regra de banco é uma função no <code>db_manipulador.py</code>.</li>
+<li><strong>Interface de tela obrigatória</strong>: <code>telas.py</code> <strong>DEVE</strong> expor <code>mostrar_tela(usuario_logado, perfil)</code> (nome do parâmetro pode variar: <code>user_nome</code>, <code>usuario_logado</code>).</li>
+<li>Sem comentários supérfluos — o padrão do projeto mantém docstrings curtos em funções de núcleo e cabeçalhos de arquivo.</li>
+<li><strong>Validação obrigatória</strong> após alterar qualquer <code>.py</code>:</li>
+</ul>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import ast; ast.parse(open('&lt;arquivo&gt;', encoding='utf-8').read())"</span>
+</code></pre></div>
+<ul>
+<li>Histórico de <strong>caracteres corrompidos</strong> em <code>main.py</code> (edição via PowerShell): evite ferramentas que reescrevam encoding por fora; confira imports (<code>get_config</code>, <code>get_connection</code>) ao mexer no topo dos arquivos.</li>
+</ul>
+<h2 id="modelo-de-classes-e-objetos">Modelo de classes e objetos<a class="headerlink" href="#modelo-de-classes-e-objetos" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Default: funções.</strong> Os módulos <code>mod_*</code> não usam classes para regras de negócio (sem ORM, sem DTOs, sem "service objects").</li>
+<li><strong>Classes no núcleo (06/09)</strong>: componentes reutilizáveis de acesso a dados e UI vivem como classes em <code>mod_intranet</code> — <code>CrudBase</code>/<code>audit_reg</code> (<code>crud_base.py</code>), <code>GradeTabela</code>/<code>PainelLista</code> (<code>ui_painel.py</code>), <code>FormularioBuilder</code> (<code>ui_form.py</code>) e <code>BotaoFabrica</code>/<code>Dialogo</code>/<code>Cartao</code>/<code>CampoBase</code>+subclasses (<code>ui_comum.py</code>, com <strong>wrappers finos funcionais</strong> <code>botao</code>/<code>dialogo_card</code>/<code>campo_*</code> preservando a API antiga, byte-idêntica — provas em <code>test/verifica_ui_comum.py</code>, 187 OK). Regra: <strong>não crie classes nos módulos</strong> — importe as do núcleo.</li>
+<li><strong>Exceção histórica</strong>: subclasses de classes da stdlib para tarefas específicas (<code>_FormatadorBlog(HTMLParser)</code>). Use <code>CamelCase</code> + underscore inicial para indicar uso interno.</li>
+<li><strong>Handlers de eventos</strong>: funções aninhadas (<code>def tentar_login(): ...</code>) dentro da função de página — padrão presente em <code>main.py:87-107</code>.</li>
+</ul>
+<h2 id="estrutura-de-um-novo-modulo-mod_">Estrutura de um novo módulo <code>mod_*</code><a class="headerlink" href="#estrutura-de-um-novo-modulo-mod_" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>mod_&lt;nome&gt;/
+  __init__.py
+  telas.py            # OBRIGATÓRIO: expõe mostrar_tela(usuario_logado, perfil)
+  manipulador_bd.py   # init_db* + queries + regras (criador vigente das tabelas)
+  criador_bd.py       # NÃO crie/use — padrão legado/morto do projeto
+  src/                # opcional: assets JS/CSS do módulo (ex.: mod_solicita_impressao/src/impressao.js)
+</code></pre></div>
+<p>Passos para criar:</p>
+<ol>
+<li><strong>Estrutura</strong>: crie <code>mod_&lt;nome&gt;/</code> com <code>__init__.py</code>, <code>telas.py</code> e <code>db_manipulador.py</code>. <strong>Não</strong> crie <code>db_criador.py</code> (é código morto em todos os módulos).</li>
+<li><strong>Banco</strong>: declare <code>DB_PATH</code> no <code>db_manipulador.py</code> apontando para <code>db_mod_&lt;nome&gt;.db</code> na raiz; crie <code>init_db()</code> com <code>PRAGMA journal_mode=WAL</code> e <code>foreign_keys=ON</code> quando houver FKs.</li>
+<li><strong>Bootstrap</strong>: adicione a chamada <code>init_&lt;nome&gt;()</code> em <code>inicializar_bancos()</code> (<code>../mod_intranet/bd_criador.py</code>) — <strong>após</strong> o banco central.</li>
+<li><strong>Registro</strong>: adicione <code>(chave, nome, ícone, rota)</code> em <code>MODULOS_SISTEMA</code> (<code>mod_intranet/autenticacao.py:15-22</code>) para semear <code>tb_modulos</code>, e registre a rota <code>@ui.page("/&lt;rota&gt;")</code> no <code>main.py</code> usando <code>pagina_restrita(título, chave_modulo="&lt;chave&gt;")</code>.</li>
+<li><strong>Versão</strong>: semeie <code>versao_modulo:&lt;chave&gt;</code> em <code>conexao_bd.init_db()</code> (formato <code>1.0.AAMMDD</code>) para o rodapé.</li>
+<li><strong>Logs</strong>: rotule os logs com <code>observabilidade.get_logger("&lt;modulo&gt;")</code>.</li>
+</ol>
+<h2 id="padrao-de-manipulador-de-banco">Padrão de manipulador de banco<a class="headerlink" href="#padrao-de-manipulador-de-banco" title="Permanent link">&para;</a></h2>
+<p>Template baseado no código real (<code>../mod_blog/bd_manipulador.py</code> é o exemplo mais simples):</p>
+<div class="highlight"><pre><span></span><code><span class="sd">"""&lt;Módulo&gt; — acesso ao db_mod_&lt;nome&gt;.db (WAL)."""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sqlite3</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span> <span class="s1">'..'</span><span class="p">))</span>
+<span class="n">BASE_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)))</span>
+<span class="n">DB_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s2">"db_mod_&lt;nome&gt;.db"</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_log</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mod_intranet</span><span class="w"> </span><span class="kn">import</span> <span class="n">observabilidade</span>
+    <span class="k">return</span> <span class="n">observabilidade</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="s2">"&lt;nome&gt;"</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_conn</span><span class="p">():</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">DB_PATH</span><span class="p">)</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA journal_mode=WAL"</span><span class="p">)</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA synchronous=NORMAL"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">conn</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">init_db</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Cria as tabelas (idempotente). Executado no import e pelo bootstrap."""</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">_conn</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"CREATE TABLE IF NOT EXISTS tb_exemplo (...) "</span><span class="p">)</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA wal_checkpoint(TRUNCATE)"</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="c1"># ... demais funções (listar/criar/atualizar/excluir) ...</span>
+<span class="c1"># Escritas relevantes chamam audit_log do núcleo:</span>
+<span class="c1"># from mod_intranet.manipulador_bd import audit_log</span>
+<span class="c1"># audit_log(usuario, "&lt;chave_modulo&gt;", "criar_x", "descrição", hash_arquivo=None)</span>
+</code></pre></div>
+<p>Regras:</p>
+<ul>
+<li><strong>Padrão vigente (06/09): use <code>CrudBase</code> — nunca <code>sqlite3</code> cru em código novo.</strong> Instancie <code>_crud = CrudBase(DB_PATH, "&lt;nome&gt;", foreign_keys=True)</code> (com FKs), use os atalhos <code>listar</code>/<code>obter</code>/<code>criar</code>/<code>atualizar</code>/<code>excluir</code>/<code>executar_muitas</code>/<code>criar_tabela</code> e envolva sequências multi-instrução em <code>with _crud.transacao() as cur:</code> (commit/rollback atômicos — <code>mod_intranet/crud_base.py:60,135</code>). Auditoria das escritas via <code>audit_reg(ator, "&lt;modulo&gt;", "&lt;acao&gt;", "&lt;alvo&gt;")</code> (<code>crud_base.py:43</code>, wrapper fail-soft de <code>audit_log</code>). Piloto: <code>../mod_blog/bd_manipulador.py</code> <strong>100% migrado</strong> (<code>_crud = CrudBase(DB_BLOG_PATH, "blog")</code> — <code>manipulador_bd.py:49</code>), incluindo <code>mod_blog/telas.py</code> (<code>audit_reg</code> — <code>telas.py:135</code>); no núcleo, <code>garantir_rastreabilidade()</code> usa <code>CrudBase.transacao</code> (<code>mod_intranet/manipulador_bd.py:49-51</code>). O template <code>_conn()</code> cru abaixo permanece apenas nos módulos ainda não migrados (auditoria, edit_pdf, gest_cad_usuario, renomear_empenho, solicita_impressao) — migre ao tocar neles.</li>
+<li>Toda conexão aplica <code>PRAGMA journal_mode=WAL</code> + <code>synchronous=NORMAL</code> (o <code>CrudBase</code> já faz).</li>
+<li>Nunca <strong>cross-query</strong> entre bancos de módulos (exceção documentada: limpeza cruzada LGPD da exclusão de usuário).</li>
+<li>Config do módulo em <code>tb_config</code> central (prefixo <code>&lt;modulo&gt;_*</code>) ou, quando isolada, numa <code>tb_config</code> local.</li>
+<li>Soft delete para entidades sensíveis com coluna <code>ativo</code>/<code>user_deletado</code> + motivo + auditoria.</li>
+</ul>
+<h2 id="padrao-de-tela-nicegui">Padrão de tela NiceGUI<a class="headerlink" href="#padrao-de-tela-nicegui" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># mod_&lt;nome&gt;/telas.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">ui</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">mostrar_tela</span><span class="p">(</span><span class="n">usuario_logado</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">perfil</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Tela principal do módulo. `perfil` é o perfil global do usuário."""</span>
+    <span class="c1"># 1. Gate de permissão (dupla camada: a rota já passou por pagina_restrita)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="o">&lt;</span><span class="n">tem_permissao</span><span class="o">&gt;</span><span class="p">(</span><span class="n">usuario_logado</span><span class="p">,</span> <span class="n">perfil</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Acesso restrito"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-h6 text-negative"</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="c1"># 2. Cabeçalho/abas padronizadas (helper do núcleo)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mod_intranet.aba_modulo</span><span class="w"> </span><span class="kn">import</span> <span class="n">cabecalho</span><span class="p">,</span> <span class="n">abas</span>
+    <span class="c1"># 3. Componentes NiceGUI dentro de funções/blocos with</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Título"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-h6"</span><span class="p">)</span>
+        <span class="c1"># ... ui.input / ui.button / ui.table / callbacks como funções aninhadas</span>
+</code></pre></div>
+<p>Regras:</p>
+<ul>
+<li>Recebe <code>(usuario_logado, perfil)</code> (assinatura variável — ver <code>mostrar_tela</code> em cada <code>telas.py</code>).</li>
+<li>Valida o <strong>papel do ator</strong> antes de <strong>qualquer escrita</strong> (UI esconde e backend bloqueia).</li>
+<li>Use o layout de 4 partes via <code>pagina_restrita</code> na rota (o <code>telas.py</code> <strong>não</strong> monta header/drawer).</li>
+<li>Aparência/tema por módulo: bloco "Administração" com <code>ui.color_input</code> e chaves <code>tb_config</code> com prefixo do módulo.</li>
+<li>Conteúdo HTML do Blog passa obrigatoriamente por <code>nh3</code> (gravação e renderização).</li>
+</ul>
+<h3 id="componentes-de-ui-padronizados-mod_intranetui_comumpy">Componentes de UI padronizados — <code>mod_intranet/ui_comum.py</code><a class="headerlink" href="#componentes-de-ui-padronizados-mod_intranetui_comumpy" title="Permanent link">&para;</a></h3>
+<p>O núcleo expõe uma <strong>fábrica central de componentes de UI</strong> (<code>mod_intranet/ui_comum.py</code>) que unifica as variantes de botão do tema (<code>tema_modulo.botao</code>) com as variantes semânticas do painel de configurações (<code>_botao_padrao</code>), para que o mesmo dado tenha a mesma aparência em qualquer tela. <code>mod_intranet</code> é o módulo base: os demais módulos <code>mod_*</code> devem importar os componentes daqui em vez de criar <code>ui.button</code> crus ou repetir hexes soltos — hoje são 41 ocorrências dos hexes semânticos <code>#C62828</code>/<code>#EF6C00</code>/<code>#2E7D32</code> e 136 <code>ui.button(...)</code> diretos nos módulos de negócio.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Símbolo</th>
+<th style="text-align: left;">Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>CORES</code> (<code>ui_comum.py:37</code>)</td>
+<td style="text-align: left;">paleta semântica única: <code>primaria</code>, <code>sucesso</code>, <code>alerta</code>, <code>perigo</code>, <code>info</code>, <code>neutro</code>, <code>destaque</code>, <code>cinza_escuro</code>, <code>titulo</code>, <code>branco</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>botao(...)</code> (<code>ui_comum.py:52</code>)</td>
+<td style="text-align: left;">fábrica única de botões — variantes <code>primario</code> (alias <code>solido</code>), <code>secundario</code> (alias <code>contorno</code>), <code>texto</code>, <code>neutro</code>, <code>restaurar</code>, <code>restaurar_fill</code>, <code>perigo</code>, <code>icone</code>; parâmetros <code>icone</code>, <code>on_click</code>, <code>tooltip</code>, <code>cor</code> (override), <code>chave_modulo</code>, <code>extra_classes</code>, <code>compacto</code>, <code>no_caps</code> (default <code>True</code>; <code>False</code> remove o token <code>no-caps</code> das props — botões UPPERCASE herdados do Quasar)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>botao_icone(...)</code> (<code>ui_comum.py:153</code>)</td>
+<td style="text-align: left;">ação de linha de tabela (<code>flat round dense size=sm</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>dialogo_card(...)</code> (<code>ui_comum.py:176</code>)</td>
+<td style="text-align: left;">context manager <code>ui.dialog</code> + <code>ui.card</code> com estilo do tema; faz <code>yield (dlg, card)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>rodape_dialogo(dlg, acoes)</code> (<code>ui_comum.py:204</code>)</td>
+<td style="text-align: left;">rodapé de diálogo: "Cancelar" + ações compactas <code>(rotulo, on_click[, kwargs])</code> alinhadas à direita</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>rodape_salvar_restaurar(...)</code> (<code>ui_comum.py:231</code>)</td>
+<td style="text-align: left;">rodapé dos cupês de aparência/módulo (já padrão via <code>tema_modulo</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>campo_texto(rotulo, valor=None, *, ..., senha=False, placeholder=None)</code> (<code>ui_comum.py:314</code>)</td>
+<td style="text-align: left;">campo de texto padronizado (<code>ui.textarea</code> quando <code>multiline</code>, senão <code>ui.input</code>; props <code>outlined dense</code>, classes <code>w-full</code>, tooltip, <code>ao_mudar</code>, valor opcional de <code>tb_config</code> via <code>chave</code>/<code>padrao</code>). <code>senha=True</code> cria o input com <code>password=True, password_toggle_button=True</code> (campo de senha com botão exibir/ocultar; sem efeito com <code>multiline</code>); <code>placeholder</code> é repassado ao construtor quando informado; <strong>sem valor resolvido (<code>valor=None</code> sem <code>chave</code>) o kwarg <code>value</code> NÃO é repassado</strong> — réplica crua byte-idêntica (<code>ui.input</code> sem <code>value</code> usa <code>''</code>, não <code>None</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>campo_selecao(rotulo, opcoes, valor=None, *, ..., tooltip=None)</code> (<code>ui_comum.py:374</code>)</td>
+<td style="text-align: left;">campo de seleção padronizado (<code>ui.select(opcoes, label=rotulo, value=valor_resolvido)</code>; props <code>outlined dense</code>, classes <code>w-full</code>, <code>ao_mudar</code>, valor opcional de <code>tb_config</code> via <code>chave</code>/<code>padrao</code>); <code>tooltip</code> só quando informado</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>notificar</code></td>
+<td style="text-align: left;">reexportado de <code>tema_modulo</code> (toast com tempo configurável)</td>
+</tr>
+</tbody>
+</table>
+<p>Regras:</p>
+<ul>
+<li><strong>Fonte única das variantes é <code>ui_comum.botao</code></strong>: <code>tema_modulo.botao()</code> (<code>tema_modulo.py:128</code>) e <code>_botao_padrao</code> (<code>tela_configuracoes.py:78</code>) são delegações — não crie uma terceira fábrica.</li>
+<li>Variantes de tema (<code>primario</code>/<code>secundario</code>/<code>icone</code>) leem as chaves <code>&lt;prefixo&gt;_cor_botao</code>/<code>cor_texto_botao</code>/<code>btn_tamanho</code> (valem sem restart); <strong>chave vazia = padrão do PRÓPRIO módulo</strong> (<code>PADROES_TEMA</code> — o tema do sistema <code>intranet_*</code> NÃO é herdado; detalhes e precedência em <a href="#configurabilidade-regra-de-projeto">Configurabilidade</a>); variantes semânticas (<code>restaurar</code>, <code>restaurar_fill</code>, <code>perigo</code>, <code>neutro</code>) são fixas.</li>
+<li><code>cor=</code> sobrescreve a cor da variante mantendo formato/tamanho; <code>compacto=True</code> produz o visual de rodapé de diálogo (sem <code>size=md</code>, <code>btn_cls</code> e sombra); <code>no_caps=False</code> remove o token <code>no-caps</code> das props da variante (default <code>True</code> — saída byte-idêntica), preservando o caixa-alto (UPPERCASE) dos módulos que o herdaram do Quasar.</li>
+<li><strong>Fail-soft</strong>: variante inválida levanta <code>ValueError</code> (erro de programação — falha rápida intencional); falha de tema/BD cai nos padrões com registro loguru (<code>_log()</code> → <code>observabilidade.get_logger("intranet")</code>) e a renderização nunca derruba a tela.</li>
+</ul>
+<h4 id="como-migrar-um-modulo-para-ui_comum">Como migrar um módulo para <code>ui_comum</code><a class="headerlink" href="#como-migrar-um-modulo-para-ui_comum" title="Permanent link">&para;</a></h4>
+<ol>
+<li><strong>Importe</strong> do núcleo: <code>from mod_intranet import ui_comum</code> (ou símbolos específicos: <code>botao</code>, <code>botao_icone</code>, <code>dialogo_card</code>, <code>rodape_dialogo</code>, <code>rodape_salvar_restaurar</code>, <code>CORES</code>, <code>notificar</code>).</li>
+<li><strong>Botões</strong>: troque <code>ui.button("Salvar", on_click=...).props("unelevated no-caps")...</code> por <code>ui_comum.botao("Salvar", on_click=...)</code> (primário do tema) ou escolha a semântica — <code>ui_comum.botao("Excluir", variante="perigo", ...)</code>. Módulo com botões UPPERCASE legados do Quasar: passe <code>no_caps=False</code> para manter o caixa-alto (o edit_pdf padronizou TODOS os botões em <code>primario</code> sem <code>no_caps</code> em 06/09 — sem exceções). Ações de linha: <code>ui_comum.botao_icone("delete", on_click=..., tooltip="Excluir")</code>.</li>
+<li><strong>Cores</strong>: substitua hexes soltos por <code>ui_comum.CORES["perigo"]</code>, <code>CORES["alerta"]</code>, <code>CORES["sucesso"]</code> etc.</li>
+<li><strong>Diálogos</strong>: troque <code>with ui.dialog() as dlg, ui.card() as card: ...</code> por <code>with ui_comum.dialogo_card("Título") as (dlg, card): ...</code> e feche com <code>ui_comum.rodape_dialogo(dlg, [("Salvar", salvar)])</code>.</li>
+<li><strong>Rodapés de cupê admin</strong>: use <code>ui_comum.rodape_salvar_restaurar(salvar, restaurar)</code> — ou simplesmente <code>tema_modulo.bloco_aparencia</code>, que já o usa. <strong>Campos de texto/seleção</strong>: troque <code>ui.input</code>/<code>ui.select</code> crus por <code>ui_comum.campo_texto(...)</code>/<code>ui_comum.campo_selecao(...)</code> (senhas com <code>senha=True</code>; <code>placeholder</code>/<code>tooltip</code> opcionais). O cupê "Edição do módulo" (<code>tema_modulo.campo_modulo</code>) foi <strong>restaurado em 06/09</strong> após remoção acidental — os 6 módulos de negócio voltam a usá-lo na aba Administração (a edição também permanece disponível no painel central <code>/configuracoes</code>).</li>
+<li><strong>Avisos</strong>: use <code>ui_comum.notificar(...)</code> em vez de <code>ui.notify</code> cru.</li>
+<li><strong>Telas</strong>: troque <code>ui.tabs()</code>/<code>ui.tab()</code> crus por <code>aba_modulo.menu_modulo(...)</code>, inputs de busca crus por <code>aba_modulo.campo_busca(...)</code> e barras de ações por <code>aba_modulo.barra_acoes(...)</code> (ver tabela acima).</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">Migração gradual e por tela</p>
+<p>O visual é idêntico (comprovado por prova byte-a-byte em <code>test/verifica_ui_comum.py</code> — <strong>187 verificações</strong> — e suítes de teste; ver <a href="../analise_mod_intranet/">Análise do Núcleo</a>), então cada <code>ui.button</code> substituído não muda a aparência: só elimina duplicação. Migre um arquivo por vez e valide com <code>ast.parse</code> + suítes.</p>
+</div>
+<h4 id="helpers-de-tela-padronizados-mod_intranetaba_modulopy">Helpers de tela padronizados — <code>mod_intranet/aba_modulo.py</code><a class="headerlink" href="#helpers-de-tela-padronizados-mod_intranetaba_modulopy" title="Permanent link">&para;</a></h4>
+<p>Além da fábrica de botões, o núcleo padroniza os <strong>componentes de tela</strong> repetidos entre os módulos em <code>mod_intranet/aba_modulo.py</code> — não recrie <code>ui.tabs</code>/<code>ui.input</code> crus:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Símbolo</th>
+<th style="text-align: left;">Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>cabecalho(titulo, subtitulo="", cor_borda=None, cor_titulo=None, cor_fundo=None, *, chave_modulo=None)</code> (<code>aba_modulo.py:33</code>)</td>
+<td style="text-align: left;">card de cabeçalho do módulo (título + subtítulo opcional, aceita HTML como <code>&lt;code&gt;</code>); com <code>chave_modulo</code> as cores vêm do tema do módulo (<code>tema_modulo.ler_tema</code>) — <strong>a cor de destaque da borda esquerda é a MESMA cor geral do módulo</strong> (<code>&lt;prefixo&gt;_cor_botao</code>, vazia = padrão do próprio módulo via <code>PADROES_TEMA</code>, editável no cupê Aparência, campo "Cor geral do módulo"); <code>cor_titulo</code>/<code>cor_fundo</code> idem; parâmetros explícitos vencem o tema (retrocompatível); sem chave → defaults <code>ui_comum.CORES</code> (byte-idêntico); <code>cor_fundo</code> vazio/<code>""</code> = herda (não pinta o <code>.q-page</code>); falha ao ler tema → warning loguru + defaults (fail-soft)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>menu_modulo(itens, valor=None)</code> (<code>aba_modulo.py:102</code>)</td>
+<td style="text-align: left;">barra de abas de menu do módulo (padrão Renomeador de Empenhos): <code>ui.tabs</code> <code>w-full</code> com <code>ui.tab</code> posicional <code>(chave, rotulo, icone)</code> — ícone em cima, nome embaixo; <code>valor=None</code> ativa o 1º item; retorna o <code>ui.tabs</code> para <code>ui.tab_panels</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>campo_busca(placeholder, on_change=None, *, valor_inicial="", tooltip=None)</code> (<code>aba_modulo.py:120</code>)</td>
+<td style="text-align: left;">campo de pesquisa padrão (padrão Gestão de Usuários): props <code>outlined dense clearable debounce='150'</code> + classes <code>w-full grow min-w-[220px]</code>; <code>tooltip</code> só quando informado</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>barra_acoes(busca=None, acoes=())</code> (<code>aba_modulo.py:137</code>)</td>
+<td style="text-align: left;">barra branca (<code>bg-white rounded-lg shadow-sm px-3 py-1</code>): com <code>busca</code> (dict de kwargs de <code>campo_busca</code>) o campo fica à esquerda e os botões à direita; sem <code>busca</code>, botões alinhados à direita. <code>acoes</code> = tuplas <code>(rotulo, icone, on_click[, tooltip])</code> viram <code>ui_comum.botao</code> variante <code>primario</code> com <code>extra_classes="shrink-0"</code>; itens malformados ignorados com loguru (fail-soft)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>abas(...)</code> (<code>aba_modulo.py:82</code>)</td>
+<td style="text-align: left;">barra principal + "Administração"/"Observabilidade" — permanece para os usos atuais (blog, auditoria); para menus de módulo use <code>menu_modulo</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Regra do cabeçalho (06/09): cor de destaque = cor dos botões do módulo.</strong> A borda esquerda do <code>cabecalho</code> usa <code>tema["cor_botao"]</code> — a mesma chave que colore os botões via <code>ui_comum.botao(chave_modulo=...)</code> — garantindo identidade visual única por módulo (título e fundo seguem <code>cor_titulo</code>/<code>cor_fundo</code> do tema). Módulos migrados (zero <code>cor_borda="#..."</code> hardcoded nas telas): renomear_empenho (<code>chave_modulo="empenhos"</code> — <code>mod_renomear_empenho/telas.py:85</code>), auditoria (<code>mod_auditoria/telas.py:345</code>), blog (<code>mod_blog/telas.py:159</code>), solicita_impressao (<code>mod_solicita_impressao/telas.py:49</code>) e gest_cad_usuario (<code>mod_gest_cad_usuario/telas.py:97</code>). Exceção registrada: <code>mod_edit_pdf</code> mantém header custom (estrutura diferente — label de admin + cota com <code>ui.linear_progress</code>, <code>mod_edit_pdf/telas.py:610-625</code>).</p>
+<p>Equivalência visual dos helpers e dos pilotos comprovada por <code>test/verifica_ui_comum.py</code> (<strong>187 verificações</strong> byte-a-byte).</p>
+<h4 id="componentes-de-dados-e-tela-reutilizaveis-classes-do-nucleo-0609">Componentes de dados e tela reutilizáveis — classes do núcleo (06/09)<a class="headerlink" href="#componentes-de-dados-e-tela-reutilizaveis-classes-do-nucleo-0609" title="Permanent link">&para;</a></h4>
+<p>Em telas e manipuladores novos, importe do núcleo em vez de replicar o boilerplate — <code>sqlite3</code> cru, <code>ui.grid</code>/<code>ui.input</code> crus e closures de campos repetidas estão fora do padrão:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Símbolo</th>
+<th style="text-align: left;">Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>CrudBase(db_path, modulo, *, foreign_keys=False, synchronous="NORMAL")</code> (<code>mod_intranet/crud_base.py:60</code>)</td>
+<td style="text-align: left;">base CRUD do banco do módulo (WAL + pragmas, fechamento garantido, commit/rollback): <code>listar</code>, <code>obter</code>, <code>criar</code> (→ <code>lastrowid</code>), <code>atualizar</code>/<code>excluir</code> (→ <code>rowcount</code>), <code>executar_muitas</code>, <code>criar_tabela</code> (DDL idempotente)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>CrudBase.transacao()</code> (<code>mod_intranet/crud_base.py:135</code>)</td>
+<td style="text-align: left;">context manager de transação atômica multi-instrução (commit no fim; rollback + repasse da exceção em falha)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>audit_reg(ator, modulo, acao, alvo="", detalhe="", hash_arquivo=None)</code> (<code>mod_intranet/crud_base.py:43</code>)</td>
+<td style="text-align: left;">auditoria fail-soft das escritas (wrapper de <code>audit_log</code>); falha de auditoria não interrompe a operação de negócio</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>GradeTabela(colunas, ...)</code> (<code>mod_intranet/ui_painel.py:30</code>)</td>
+<td style="text-align: left;">tabela em <code>ui.grid</code> padronizada — <code>colunas</code> = pares <code>(rotulo, largura_css)</code>; <code>montar(dados, celulas, acoes=None)</code> com cabeçalho caption, células por linha e coluna de ações</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>PainelLista(colunas, dados, *, filtrar=None, por_pagina=10, ...)</code> (<code>mod_intranet/ui_painel.py:93</code>)</td>
+<td style="text-align: left;">painel de listagem completo: <code>campo_busca</code> + filtro callável + paginação client-side + <code>GradeTabela</code>; <code>dados</code> é CALLABLE — após CRUD chamar <code>atualizar()</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>FormularioBuilder(...)</code> (<code>mod_intranet/ui_form.py:32</code>)</td>
+<td style="text-align: left;">construtor fluente de formulários (<code>campo_texto</code>/<code>campo_senha</code>/<code>campo_selecao</code>/<code>campo_numero</code>/<code>campo_data</code>); <code>build()</code> monta num column <code>w-full gap-2</code>; leitura por <code>valores()</code>/<code>valor()</code>/<code>elemento()</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui_comum.Dialogo(...)</code> (<code>mod_intranet/ui_comum.py:224</code>)</td>
+<td style="text-align: left;">diálogo temático como context manager (alternativa orientada a objetos ao <code>dialogo_card</code>; expõe <code>abrir()</code>/<code>fechar()</code>; pilotado em <code>tela_configuracoes.confirmar</code> — <code>tela_configuracoes.py:154-160</code>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="postgresql-opcional-0809">PostgreSQL opcional (08/09)<a class="headerlink" href="#postgresql-opcional-0809" title="Permanent link">&para;</a></h2>
+<p>Servidores simples seguem com <strong>SQLite</strong> (padrão universal, zero dependências extras); demandas maiores ativam PostgreSQL <strong>pelo admin, sem tocar em código</strong> (suporte <strong>ativo</strong> desde 08/09 — não é mais fase futura):</p>
+<ul>
+<li><strong>Backend duplo controlado pelo sistema</strong>: <code>banco_tipo</code> = <code>sqlite</code> (padrão) | <code>postgres</code> e <code>postgres_url</code> (DSN) na <code>tb_config</code> central. No Postgres, <strong>um SCHEMA por módulo</strong> no banco <code>intranet</code> preserva o isolamento (ver <a href="../arquitetura/#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Backend duplo</a>).</li>
+<li><strong>Seletor no boot</strong>: <code>banco_tipo</code>/<code>postgres_url</code> são lidos <strong>DIRETO do arquivo SQLite central</strong> (<code>_ler_config_sqlite</code> — <code>banco_conexao.py:57</code>), autoritativo no boot, sem recursão.</li>
+<li><strong>Toggle no admin</strong>: <code>/configuracoes</code> → card <strong>"Banco de dados — SQLite ou PostgreSQL"</strong> (ícone <code>storage</code>) → <code>salvar_backend()</code> (<code>banco_conexao.py:128</code>); <strong>reiniciar o servidor</strong> para aplicar.</li>
+<li><strong>Camada única</strong>: todos os módulos conectam via <code>banco_conexao.conexao(chave)</code> — sqlite (arquivo, WAL) ou postgres (proxy psycopg2 com tradução <code>?</code>→<code>%s</code>, DDL, <code>INSERT OR IGNORE/REPLACE</code>→<code>ON CONFLICT</code>, <code>PRAGMA</code>/<code>sqlite_master</code>/FTS5 degradados, <code>lastrowid</code> via <code>RETURNING</code>); <code>repositorio.engine/sessaodb</code> roteiam para o Postgres quando ativo; <code>CrudBase._conectar</code> também roteia pelo backend ativo.</li>
+<li><strong>Container pronto</strong>: <code>assets/docker/postgres/docker-compose.yml</code> — <code>postgres:16-alpine</code>, usuário/senha/base <code>intranet</code>, porta <code>5432</code>, volume persistente, healthcheck.</li>
+<li><strong>Dependências</strong>: <code>requirements.txt</code> — <code>sqlalchemy&gt;=2.0</code> e <code>psycopg2-binary&gt;=2.9</code> habilitadas (instalar para usar <code>banco_tipo='postgres'</code>).</li>
+<li><strong>Migração de dados SQLite→PostgreSQL permanece manual</strong> — o Postgres inicia com os schemas vazios, recriados pelos <code>init_db</code> dos módulos; os bancos SQLite existentes não são movidos automaticamente.</li>
+</ul>
+<h2 id="configurabilidade-regra-de-projeto">Configurabilidade (regra de projeto)<a class="headerlink" href="#configurabilidade-regra-de-projeto" title="Permanent link">&para;</a></h2>
+<p><strong>Toda e qualquer configuração passável de alteração</strong> (cores, padrões, tamanhos, tempos, pastas, textos…) deve ser pensada como <strong>configurável pelo usuário</strong> na área de configuração do módulo — chaves em <code>tb_config</code> (prefixo <code>&lt;modulo&gt;_*</code>) + cupê "Administração" do próprio módulo (ou o painel central <code>/configuracoes</code>) — e aplicada <strong>sem restart</strong> sempre que possível. Não fixe em código valores que o administrador possa querer ajustar.</p>
+<ul>
+<li>Chaves de aparência por módulo: <code>&lt;chave&gt;_cor_botao</code>, <code>cor_texto_botao</code>, <code>cor_fundo</code>, <code>cor_titulo</code>, <code>btn_tamanho</code>, <code>texto_header</code> (lidas por <code>tema_modulo.ler_tema</code>, valem sem restart).</li>
+<li>
+<p><strong>Padrão próprio do tema de BOTÕES (06/09)</strong>: chave do módulo <strong>VAZIA = padrão do PRÓPRIO módulo</strong> — o tema do sistema (<code>intranet_*</code>) <strong>NÃO é herdado</strong>. Precedência para <code>cor_botao</code>, <code>cor_texto_botao</code> e <code>btn_tamanho</code> (<code>tema_modulo.py:94-126</code>):</p>
+</li>
+<li>
+<p>Chave do módulo (<code>&lt;prefixo&gt;_cor_botao</code> etc.) <strong>não vazia</strong> → usa o valor do módulo;</p>
+</li>
+<li>Default do parâmetro em <code>ler_tema</code> (quando o chamador informa);</li>
+<li>Padrão do módulo — mapa <code>PADROES_TEMA</code> (<code>tema_modulo.py:53-68</code>): <strong>TODOS os módulos em <code>#000000</code></strong> — blog, usuarios, auditoria, editar_pdf, empenhos, solicita_impressao e intranet (a cor do intranet; texto <code>#FFFFFF</code>, título <code>#212121</code>, tamanho <code>medium</code>).</li>
+</ul>
+<p><code>cor_fundo</code>, <code>cor_titulo</code> e <code>texto_header</code> seguem a mesma regra (vazio = default do parâmetro). Com isso, <strong>todos os módulos usam a cor do intranet (<code>#000000</code>)</strong> por padrão; o override por módulo continua possível no cupê "Aparência" da Administração de cada módulo — os inputs exibem o valor <strong>resolvido</strong> (rótulo "vazio = padrão do módulo"), e o "Restaurar padrão" grava <code>""</code> para voltar ao padrão do módulo. O card "Botões do sistema" (<code>intranet_*</code>) vale apenas para o próprio módulo <code>intranet</code>.
+- Config específica de comportamento: <code>usuarios_senha_min</code>, <code>empenhos_pasta_monitorada</code>, <code>blog_tags_permitidas</code>, <code>log_*</code>, <code>smtp_*</code>, <code>backup_horas:&lt;modulo&gt;</code> etc.
+- <strong>Exemplo vivo (05/09)</strong>: o botão "Novo usuário" da Gestão de Usuários deixou de usar <code>color=primary</code> (cor da página) e passou a <code>ui_comum.botao(chave_modulo="usuarios")</code> — a cor segue o tema do módulo (<code>usuarios_cor_botao</code>) e, com a chave vazia (padrão), usa o padrão do PRÓPRIO módulo (<code>PADROES_TEMA["usuarios"]</code> = <code>#000000</code>), ajustável pelo admin na aba Administração (<code>mod_gest_cad_usuario/telas.py:110-112</code>).</p>
+<div class="admonition tip">
+<p class="admonition-title">Como decidir</p>
+<p>Antes de escrever um literal no código (hex, tamanho, tempo, texto, caminho), pergunte: "o administrador pode querer mudar isto?" Se sim → chave em <code>tb_config</code> + campo no cupê Administração do módulo, lida a cada render (sem restart).</p>
+</div>
+<h2 id="auditoria-e-versionamento">Auditoria e versionamento<a class="headerlink" href="#auditoria-e-versionamento" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Auditoria</strong>: toda ação relevante (criar/editar/excluir/publicar/imprimir/autorizar/configurar/renomear) grava <code>audit_log(usuario, modulo, acao, descricao, hash_arquivo=None)</code> — <code>mod_intranet/manipulador_bd.py:70</code>; nos módulos prefira o wrapper <code>audit_reg(ator, modulo, acao, alvo, ...)</code> (<code>mod_intranet/crud_base.py:43</code>, fail-soft). A gravação é desacoplada por gancho: <code>registrar_hook_auditoria(fn)</code> (<code>manipulador_bd.py:26</code>) é chamado pelo <code>mod_auditoria</code> no import (<code>mod_auditoria/manipulador_bd.py:376-377</code>) — sem dependência cíclica núcleo↔auditoria.</li>
+<li><strong>Hash SHA-256</strong> em operações com arquivos (editor PDF, empenhos, impressão).</li>
+<li><strong>Versionamento</strong>: <code>1.0.AAMMDD</code>; versão global <code>versao_sistema</code> + por módulo <code>versao_modulo:&lt;chave&gt;</code> (exibidos da esquerda para a direita no rodapé). Atualize a chave do módulo quando alterar código dele — sem mexer na global nem nas dos outros.</li>
+</ul>
+<h2 id="checklist-de-aceite">Checklist de aceite<a class="headerlink" href="#checklist-de-aceite" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>telas.py</code> expõe <code>mostrar_tela(usuario_logado, perfil)</code> com gate de permissão.</li>
+<li>[ ] <code>db_manipulador.py</code> tem <code>init_db*()</code> com WAL; bootstrap atualizado em <code>inicializar_bancos()</code>.</li>
+<li>[ ] Módulo registrado em <code>MODULOS_SISTEMA</code> + rota no <code>main.py</code> com <code>pagina_restrita(título, chave_modulo="&lt;chave&gt;")</code>.</li>
+<li>[ ] <code>versao_modulo:&lt;chave&gt;</code> semeada e log rotulado com <code>get_logger("&lt;modulo&gt;")</code>.</li>
+<li>[ ] Auditoria em todas as escritas; hash SHA-256 em operações com arquivos.</li>
+<li>[ ] <code>ast.parse</code> passou em todos os arquivos alterados.</li>
+<li>[ ] Valores ajustáveis (cores, tempos, textos, pastas…) em <code>tb_config</code> + cupê Administração — nada de literais hardcoded (ver <a href="#configurabilidade-regra-de-projeto">Configurabilidade</a>).</li>
+<li>[ ] Componentes de UI via <code>mod_intranet/ui_comum</code> (<code>botao</code>/<code>botao_icone</code>/<code>CORES</code>/<code>dialogo_card</code>/<code>rodape_dialogo</code>/<code>notificar</code>) — sem <code>ui.button</code> cru nem hexes soltos; botões UPPERCASE legados do Quasar usam <code>no_caps=False</code> (o edit_pdf padronizou todos em <code>primario</code> sem <code>no_caps</code> em 06/09 — sem exceções cruas).</li>
+<li>[ ] Acesso a dados via <code>CrudBase</code> + <code>audit_reg</code> (nunca <code>sqlite3</code> cru em código novo); telas novas usam <code>FormularioBuilder</code>/<code>GradeTabela</code>/<code>PainelLista</code> do núcleo em vez de replicar grids/inputs crus.</li>
+<li>[ ] Código de teste gravado em <code>test/</code> (nunca em <code>/tmp</code> — se perde ao reiniciar a máquina).</li>
+<li>[ ] No <code>mkdocs.yml</code>, documentação do módulo adicionada ao <code>nav</code> (se houver).</li>
+</ul>
+<blockquote>
+<p>Convenções documentadas também em <a href="../padroes_codificacao/">Padrões de Codificação</a> — este documento é a referência oficial unificada.</p>
+</blockquote>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../api_referencia/" class="btn btn-neutral float-left" title="Referência de API e Código"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../visao_de_produto/" class="btn btn-neutral float-right" title="Visão de Produto">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../api_referencia/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../visao_de_produto/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

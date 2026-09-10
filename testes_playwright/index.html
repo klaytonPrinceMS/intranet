@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>E2E com Playwright - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "E2E com Playwright";
+        var mkdocs_page_input_path = "testes_playwright.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">E2E com Playwright</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Testes</li>
+      <li class="breadcrumb-item active">E2E com Playwright</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="testes-e2e-com-playwright">Testes E2E com Playwright<a class="headerlink" href="#testes-e2e-com-playwright" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>E2E tests with Playwright (Node) against the NiceGUI app: automated login with the QA users (<code>qacomum</code>/<code>qamaster</code>) and a route scan that captures console errors, page errors, failed requests and HTTP 4xx/5xx to identify system problems. This page covers installation and how to repeat the tests.</p>
+</blockquote>
+<hr />
+<h1 id="testes-e2e-com-playwright_1">Testes E2E com Playwright<a class="headerlink" href="#testes-e2e-com-playwright_1" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Testes ponta-a-ponta com Playwright (Node) contra o app NiceGUI: login automatizado com os usuários QA (<code>qacomum</code>/<code>qamaster</code>) e varredura de rotas que captura erros de console, erros de página, requisições falhas e HTTP 4xx/5xx para identificar problemas no sistema. Esta página cobre a instalação e como repetir os testes.</p>
+</blockquote>
+<h2 id="o-que-e">O que é<a class="headerlink" href="#o-que-e" title="Permanent link">&para;</a></h2>
+<p>O <strong>Playwright</strong> é um framework de automação de navegador que executa o sistema real (servidor + navegador) e valida comportamento e a ausência de erros. Aqui ele roda em <strong>headless Chromium</strong> contra o app em <code>http://localhost:8080</code>, usando os <strong>usuários QA</strong> já semeados:</p>
+<table>
+<thead>
+<tr>
+<th>Usuário</th>
+<th>Senha</th>
+<th>Perfil</th>
+<th>Acesso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>qacomum</code></td>
+<td><code>123456</code></td>
+<td><code>comum</code></td>
+<td>blog, editar_pdf, empenhos</td>
+</tr>
+<tr>
+<td><code>qamaster</code></td>
+<td><code>123456</code></td>
+<td><code>administrador_geral</code></td>
+<td>todos + Administração</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>As credenciais acima são <strong>garantidas a cada execução</strong> pelo <em>global setup</em> (<code>test/e2e/_global_setup.js</code> → <code>_garantir_credenciais.py</code>): redefine a senha, o perfil e limpa a flag de troca obrigatória — mesmo que a senha tenha sido alterada em uso real.</p>
+</blockquote>
+<h2 id="o-que-os-testes-cobrem">O que os testes cobrem<a class="headerlink" href="#o-que-os-testes-cobrem" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>test/e2e/01_login.spec.js</code></strong> — login com <code>qacomum</code> (comum) e <code>qamaster</code> (admin); verifica que o dashboard abre sem erros fatais e que usuário comum é <strong>barrado</strong> em <code>/configuracoes</code> e em <code>/admin/auditoria</code>.</li>
+<li><strong><code>test/e2e/02_varredura.spec.js</code></strong> — como <code>qamaster</code>, visita as principais rotas (páginas, módulos e painéis <code>/admin/*</code>) e <strong>coleta erros</strong> de console, <code>pageerror</code>, requisições falhas e respostas HTTP ≥ 400, listando-os no terminal e falhando apenas se houver erros fatais.</li>
+</ul>
+<p>Os testes capturam e reportam erros para facilitar a identificação de problemas:</p>
+<div class="highlight"><pre><span></span><code>=== ERROS COLETADOS (N) ===
+ [http] 404 http://localhost:8080/algum/asset.jpg
+ [pageerror] ReferenceError: x is not defined
+ [requestfailed] https://cdn.exemplo.com/lib.js net::ERR_NAME_NOT_RESOLVED
+</code></pre></div>
+<h2 id="pre-requisitos">Pré-requisitos<a class="headerlink" href="#pre-requisitos" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Node.js + npm</strong> (para o Playwright em JS).</li>
+<li>O <strong>venv Python</strong> do projeto já criado (<code>.venv/</code>) — o servidor é iniciado com ele.</li>
+<li>Navegador Chromium do Playwright (instalar uma vez — ver abaixo).</li>
+</ul>
+<h2 id="instalacao">Instalação<a class="headerlink" href="#instalacao" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Instalar as dependências npm</strong> (a partir da raiz do projeto):</li>
+</ol>
+<div class="highlight"><pre><span></span><code>npm<span class="w"> </span>install
+</code></pre></div>
+<p>Isso instala <code>@playwright/test</code> (já listado em <code>package.json</code>).</p>
+<ol>
+<li><strong>Baixar o navegador Chromium</strong> (uma única vez; ~115 MB em <code>~/.cache/ms-playwright</code>):</li>
+</ol>
+<div class="highlight"><pre><span></span><code>npm<span class="w"> </span>run<span class="w"> </span>test:e2e:install
+<span class="c1"># ou: npx playwright install chromium</span>
+</code></pre></div>
+<h2 id="como-repetir-os-testes-execucao">Como repetir os testes (execução)<a class="headerlink" href="#como-repetir-os-testes-execucao" title="Permanent link">&para;</a></h2>
+<p>Com o <code>.venv</code> existente e o Chromium baixado:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Suíte completa (inicia o servidor na porta 8080 se não estiver de pé,</span>
+<span class="c1"># ou reutiliza um servidor já ativo):</span>
+npm<span class="w"> </span>run<span class="w"> </span>test:e2e
+
+<span class="c1"># Com navegador visível (debug visual):</span>
+npm<span class="w"> </span>run<span class="w"> </span>test:e2e:headed
+
+<span class="c1"># Apenas um arquivo/rota:</span>
+npx<span class="w"> </span>playwright<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--config<span class="w"> </span>test/playwright.config.js<span class="w"> </span>test/e2e/01_login.spec.js
+
+<span class="c1"># Relatório HTML da última execução:</span>
+npm<span class="w"> </span>run<span class="w"> </span>test:e2e:report
+</code></pre></div>
+<p>O <code>webServer</code> do config (<code>test/playwright.config.js</code>) <strong>inicia</strong> <code>python main.py</code> na porta 8080 caso não haja servidor ativo (<code>reuseExistingServer: true</code>).</p>
+<h2 id="saida-e-evidencias">Saída e evidências<a class="headerlink" href="#saida-e-evidencias" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Terminal</strong>: lista cada teste e imprime os erros coletados na varredura.</li>
+<li><strong><code>playwright-report/</code></strong>: relatório HTML interativo da execução.</li>
+<li><strong><code>test-results/</code></strong>: evidências (screenshot/vídeo/trace) <strong>somente em falha</strong>.</li>
+<li>Exit code ≠ 0 quando há falha (útil para CI).</li>
+</ul>
+<h2 id="versionamento-git">Versionamento (git)<a class="headerlink" href="#versionamento-git" title="Permanent link">&para;</a></h2>
+<p>Os <strong>binários e artefatos</strong> do Playwright <strong>não</strong> são versionados (<code>.gitignore</code>):</p>
+<div class="highlight"><pre><span></span><code>node_modules/
+test-results/
+playwright-report/
+</code></pre></div>
+<p>Subir apenas os arquivos usados nos testes:</p>
+<div class="highlight"><pre><span></span><code>test/playwright.config.js
+test/e2e/_global_setup.js
+test/e2e/_garantir_credenciais.py
+test/e2e/helpers.js
+test/e2e/01_login.spec.js
+test/e2e/02_varredura.spec.js
+package.json        (scripts test:e2e*)
+package-lock.json
+</code></pre></div>
+<h2 id="solucao-de-problemas">Solução de problemas<a class="headerlink" href="#solucao-de-problemas" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Porta ocupada</strong>: se <code>http://localhost:8080</code> já responde, o Playwright reutiliza o servidor existente (não inicia outro).</li>
+<li><strong>Navegador ausente</strong>: rode <code>npm run test:e2e:install</code>.</li>
+<li><strong>Login falhando</strong>: rode o global setup manualmente:</li>
+</ul>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>test/e2e/_garantir_credenciais.py
+</code></pre></div>
+<ul>
+<li><strong>Erros falsos de console</strong>: mensagens de ruído conhecidas (favicon, ResizeObserver, Vue Devtools) são ignoradas pela captura (<code>helpers.js</code>).</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../testes_relatorios/seguranca_2026-09-06/" class="btn btn-neutral float-left" title="Relatório de Segurança (06/09/2026)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../analise_mod_intranet/" class="btn btn-neutral float-right" title="Intranet (núcleo)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../testes_relatorios/seguranca_2026-09-06/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../analise_mod_intranet/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

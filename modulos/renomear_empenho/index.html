@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Renomear Empenhos - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Renomear Empenhos";
+        var mkdocs_page_input_path = "modulos/renomear_empenho.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Renomear Empenhos</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#proposito">Propósito</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#banco-de-dados">Banco de dados</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#funcionalidades">Funcionalidades</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#regras-de-negocio">Regras de negócio</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#permissoes">Permissões</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#rota-e-integracoes">Rota e integrações</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#testes">Testes</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#pontos-de-atencao">Pontos de atenção</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Módulos (resumo)</li>
+      <li class="breadcrumb-item active">Renomear Empenhos</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="modulo-renomear-empenho-mod_renomear_empenho">Módulo Renomear Empenho — <code>mod_renomear_empenho</code><a class="headerlink" href="#modulo-renomear-empenho-mod_renomear_empenho" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Módulo de renomeação e gestão de empenhos: rota <code>/renomear-empenho</code> (chave <code>empenhos</code>) · banco próprio <code>db_mod_renomear_empenho.db</code> · extração de texto de PDF (inclui tipos especiais EC/EE/EG/AE), monitor multi-pasta (local/UNC), fila de renomeação, pesquisa FTS5, organizador físico, fluxo de solicitações comum→admin e configurações do módulo.</p>
+</blockquote>
+<h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
+<p>Extrai o nº do empenho/parcela (ou o tipo especial EC/EE/EG/AE) do texto dos PDFs por regex dinâmica, renomeia sequencialmente e move falhas para quarentena reprocessável. Inclui organizador físico em caixas/subpastas, edição e ferramentas de PDF, e o fluxo completo de solicitação de envio (comum solicita; admin aprova via e-mail ou ZIP).</p>
+<p>A tela é organizada em <strong>6 abas internas</strong>: <strong>Navegar</strong>, <strong>Fila Renomeação</strong>, <strong>Pesquisar</strong>, <strong>Organizador</strong> (admin), <strong>Solicitação</strong> e <strong>Configurações</strong> (admin). O menu lateral global de módulos permanece intacto.</p>
+<h2 id="banco-de-dados">Banco de dados<a class="headerlink" href="#banco-de-dados" title="Permanent link">&para;</a></h2>
+<p>Criador vigente: <code>init_db_empenho()</code> em <code>manipulador_bd.py:289</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Tabela</th>
+<th style="text-align: left;">Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>tb_empenhos</code></td>
+<td style="text-align: left;">nome original/final, numero_empenho, parcela, <strong>tipo_especial</strong>, ficha, ano, usuario, data, status, caminho</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_indexador_pesquisa</code></td>
+<td style="text-align: left;">fallback comum (<code>empenho_id</code>, <code>conteudo_texto</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_indexador_pesquisa_fts5</code></td>
+<td style="text-align: left;"><strong>VIRTUAL TABLE FTS5 com 32 colunas</strong> do cabeçalho (RF-41)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_quarentena</code></td>
+<td style="text-align: left;">nome_arquivo, motivo, caminho_atual, data_insercao, processado</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_regex_regras</code></td>
+<td style="text-align: left;">nome_regra UNIQUE, padrao_regra, substituicao, ativo, <strong>campo_destino</strong> (FTS customizado)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_campos_busca</code></td>
+<td style="text-align: left;">regex de identificação por campo (ficha/empenho/parcela/ano...) editáveis sem tocar no código</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_arquivos_auditoria</code></td>
+<td style="text-align: left;">trilha por arquivo (detectado→renomeado→removido) com <strong>hash SHA-256</strong> de origem/destino</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_eventos_arquivos</code></td>
+<td style="text-align: left;">linha do tempo cronológica por arquivo (FK para <code>tb_arquivos_auditoria</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_solicitacoes</code></td>
+<td style="text-align: left;">fluxo comum→admin: pendente → enviado/email</td>
+</tr>
+</tbody>
+</table>
+<p>⚠️ O <code>db_criador.py</code> é <strong>legado/morto</strong> (esquema FTS5 fantasma no banco central) — não executar; o esquema real está em <code>db_manipulador.py</code>.</p>
+<h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>6 abas internas</strong> (padrão <code>mod_solicita_impressao/telas.py</code>, com tabs manuais):</li>
+<li><strong>Navegar</strong>: navegação recursiva e protegida (anti-travessia) das pastas monitoradas + organizador, mostrando apenas PDFs; breadcrumb; baixar; revisar/renomear manual; solicitar envio. Botões "Processar pasta agora" e "Atualizar".</li>
+<li><strong>Fila Renomeação</strong>: lista recursiva de PDFs pendentes, "Processar" individual e "Processar todos".</li>
+<li><strong>Pesquisar</strong>: busca FTS5 (<code>MATCH</code>, fallback <code>LIKE</code>) + tabela de empenhos renomeados.</li>
+<li><strong>Organizador</strong> (admin): organizar caixas, gerar capas/matriz, validar matriz, inventário e ferramentas de PDF (cortar/mesclar/reduzir).</li>
+<li><strong>Solicitação</strong>: fluxo comum→admin (e-mail/ZIP/recusa) com agrupamento por lote e histórico; admin confirma/recusa.</li>
+<li><strong>Configurações</strong> (admin): pastas monitoradas (multi-pasta, UNC), aparência, template de nome, campos de busca, auditoria, quarentena e regras regex.</li>
+<li><strong>Monitor multi-pasta</strong> (RF-40): varre a <strong>raiz</strong> de cada pasta monitorada (não recursivo), incluindo pastas <strong>locais e de rede/UNC</strong> (<code>\\servidor\empenhos</code>, <code>E:\scan</code>); pastas inacessíveis são puladas sem derrubar o monitor. Automático via job <code>monitor_empenho</code> do APScheduler (intervalo configurável, padrão 60 s) + botão manual.</li>
+<li><strong>Tipos especiais</strong> (EC/EE/EG/AE): <code>detectar_tipo_especial</code>/<code>extrair_dados_tipo_especial</code> detectam pelo conteúdo (AE&gt;EC&gt;PARCELA&gt;Tipo&gt;Nota de Empenho) e nomeiam <code>EC_0024.pdf</code>, <code>EE_9570.pdf</code>, <code>EG_0089.pdf</code>; corrige a captura que antes pegava o nº do empenho complementado (66) em vez do nº do documento (24).</li>
+<li><strong>Pesquisa FTS5</strong> (RF-41): 32 colunas do cabeçalho; regras regex com <code>campo_destino</code> alimentam colunas customizadas; trigger de exclusão mantém o índice sincronizado.</li>
+<li><strong>Gate de validação</strong>: <code>renomear_manual</code>/<code>processar_pdf</code> só renomeiam quando o nº é identificado sem divergência crítica; caso contrário vão para a quarentena com motivo.</li>
+<li><strong>Não-reprocessamento</strong>: <code>arquivo_ja_processado</code> (nomes DOC) + <code>_arquivo_registrado_no_bd</code> (autoritativo via <code>tb_empenhos</code>) impedem reprocessar itens já renomeados (inclusive tipos especiais, cujo nome não discrimina por contagem de dígitos).</li>
+<li><strong>Organizador completo</strong> (RF-44): distribui em <code>mod_renomear_empenho/organizadorPasta/caixa_NN/sub_X</code> (~200 páginas/pasta, 4 pastas/caixa — configuráveis); gera <code>capa.txt</code> por caixa e <code>matrizDeDocumentos.txt/.pdf</code>; <code>validar_presenca_matriz</code> confere presença.</li>
+<li><strong>Ferramentas de PDF embutidas</strong> (RF-45): corte (pares/ímpares/intervalo), mesclagem e redução; saídas em <code>mod_renomear_empenho/datahora_cortePDF/</code>, <code>mod_renomear_empenho/datahora_mergePDF/</code>, <code>mod_renomear_empenho/datahora_reducaoPDF/</code>.</li>
+<li><strong>Solicitações de envio</strong> (RF-39): comum registra pedido (e-mail + mensagem); admin envia por e-mail (SMTP central <code>mod_intranet/email_util</code>) ou gera ZIP (<code>mod_renomear_empenho/downloads/solic_*.zip</code>); agrupamento por lote; histórico completo.</li>
+<li><strong>Painel Administração</strong>: aparência (<code>empenhos_*</code> — cor do botão/texto/fundo/título, tamanho, texto do cabeçalho), pastas monitoradas, intervalo do monitor, autorização de download/ZIP/e-mail para comuns, template de nome final, campos de busca e regras regex.</li>
+<li><strong>Versionamento</strong>: <code>versao_modulo:empenhos = 1.0.&lt;data&gt;</code> (seed em <code>conexao_bd.init_db()</code>), exibido no rodapé.</li>
+</ul>
+<h2 id="regras-de-negocio">Regras de negócio<a class="headerlink" href="#regras-de-negocio" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Contador sequencial persistido em banco, único entre pastas; template de nome configurável (<code>doc_{contador:04d}_numEmpenho_{empenho}_p{parcela:03d}.pdf</code>).</li>
+<li>Tipos especiais usam nome próprio (<code>EC_%04d.pdf</code>), não o sequencial DOC.</li>
+<li><strong>Gate de validação</strong>: renomeação somente com nº identificado; falha → quarentena com motivo (PLANO 4c atendido).</li>
+<li>Não-reprocessamento: DOC por padrão de nome; tipos especiais e demais por registro no banco (<code>tb_empenhos</code>/<code>tb_arquivos_auditoria</code>).</li>
+<li>Anti-travessia: navegação/renomeação restritas às raízes protegidas (<code>pastas_monitoradas</code> + <code>mod_renomear_empenho/organizadorPasta</code>).</li>
+<li>Auditoria: <code>audit_log</code> (central) <strong>com hash SHA-256</strong> em toda operação + trilha por arquivo em <code>tb_arquivos_auditoria</code>/<code>tb_eventos_arquivos</code>.</li>
+<li>Monitor automático varre só a raiz; navegação/fila manual variam recursivamente.</li>
+</ul>
+<h2 id="permissoes">Permissões<a class="headerlink" href="#permissoes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Ação</th>
+<th style="text-align: center;"><code>comum</code></th>
+<th style="text-align: center;">Admin módulo</th>
+<th style="text-align: center;"><code>administrador_geral</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Navegar / pesquisar / baixar (se autorizado) / solicitar envio</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td style="text-align: left;">Fila: processar / processar todos</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td style="text-align: left;">Organizador / ferramentas de PDF</td>
+<td style="text-align: center;">✗</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td style="text-align: left;">Solicitação: confirmar envio / gerar ZIP / recusar</td>
+<td style="text-align: center;">✗</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td style="text-align: left;">Configurações / pastas / template / campos / regras / quarentena</td>
+<td style="text-align: center;">✗</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Detalhe: usuário <code>comum</code> só baixa/envia quando <code>renomear_autorizar_download = 1</code> (configuração do admin); mesmo autorizado, a aba <strong>Organizador</strong> e as <strong>Configurações</strong> permanecem restritas ao admin.</p>
+</blockquote>
+<h2 id="rota-e-integracoes">Rota e integrações<a class="headerlink" href="#rota-e-integracoes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Rota: <code>/renomear-empenho</code> (chave <code>empenhos</code>) — <code>main.py</code>.</li>
+<li>Contrato obrigatório <code>mostrar_tela(usuario_logado, perfil)</code> em <code>telas.py</code> (validado pelo <code>main.py</code>).</li>
+<li>Job <code>monitor_empenho</code> no APScheduler (<code>mod_intranet/rotinas.py</code>) — <code>rodar_monitor</code> varre a raiz de todas as pastas.</li>
+<li>Integrações: <code>mod_intranet.email_util.enviar_email</code> (SMTP central) para envio de solicitações; <code>mod_intranet.autenticacao.eh_admin_do_modulo</code>; <code>mod_intranet.aba_modulo.cabecalho</code> (o <code>tema_modulo.campo_modulo</code> foi removido — a edição do módulo é exclusiva de <code>/configuracoes</code>). O cabeçalho usa <code>chave_modulo="empenhos"</code> (<code>telas.py:85</code>): a borda de destaque é a <strong>mesma cor dos botões do módulo</strong> (<code>empenhos_cor_botao</code>, vazia = padrão via <code>PADROES_TEMA</code> — todos os módulos em <code>#000000</code>, a cor do intranet), título/fundo seguem o tema — sem hex hardcoded.</li>
+<li>Chaves de configuração em <code>tb_config</code> (preferencialmente com prefixo <code>empenhos_</code> — ver <a href="../../configuracoes/">Configurações</a>).</li>
+<li>Pastas (dentro do módulo, criadas sob demanda): <code>mod_renomear_empenho/doc/</code> (padrão), <code>mod_renomear_empenho/quarentena/</code>, <code>mod_renomear_empenho/organizadorPasta/</code>, <code>mod_renomear_empenho/downloads/</code>, <code>mod_renomear_empenho/datahora_*PDF/</code>, <code>mod_renomear_empenho/tmp_ferramentas_pdf/</code>.</li>
+</ul>
+<h2 id="testes">Testes<a class="headerlink" href="#testes" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>test/teste_fluxo_renameador.py</code> cobre: processamento DOC e tipos especiais EC/EE/EG, gate de validação, não-reprocessamento, classificação, fluxo de solicitações e navegação. Determinístico (roda 2x); isola <code>pastas_monitoradas</code> via monkeypatch para não vazar configuração central.</li>
+</ul>
+<h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>db_criador.py</code> <strong>morto</strong> — não confiar; o esquema real está em <code>db_manipulador.py</code>.</li>
+<li>Monitor automático é <strong>não recursivo</strong> (apenas a raiz das pastas monitoradas); a navegação/fila manuais são recursivas.</li>
+<li>O intervalo do monitor (padrão <strong>60 s</strong>) e a lista de pastas são lidos de <code>tb_config</code> e aplicados <strong>sem reiniciar</strong>.</li>
+</ul>
+<p>Ver <a href="../../analise_mod_renomear_empenho/">Análise do Módulo</a> e <a href="../../manual_de_uso_renomear_empenho/">Manual de Uso</a> para RFs/RNFs e operação.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../edit_pdf/" class="btn btn-neutral float-left" title="Editor de PDF"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../auditoria/" class="btn btn-neutral float-right" title="Auditoria">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../edit_pdf/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../auditoria/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

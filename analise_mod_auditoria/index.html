@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Auditoria - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Auditoria";
+        var mkdocs_page_input_path = "analise_mod_auditoria.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Auditoria</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Módulos (análise)</li>
+      <li class="breadcrumb-item active">Auditoria</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="auditoria-mod_auditoria">Auditoria — <code>mod_auditoria</code><a class="headerlink" href="#auditoria-mod_auditoria" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Audit module: route <code>/auditoria</code> (key <code>auditoria</code>) · EXCLUSIVE database <code>db_mod_auditoria.db</code> with ONE TABLE PER PRODUCER MODULE (<code>tb_auditoria_&lt;modulo&gt;</code>) · read-only viewer with dynamic table navigation, filters by user/module/action/time/date range, server-side pagination, CSV export, per-auditor column selection/ordering, Grafana observability tab.</p>
+</blockquote>
+<hr />
+<h1 id="auditoria-mod_auditoria_1">Auditoria — <code>mod_auditoria</code><a class="headerlink" href="#auditoria-mod_auditoria_1" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Módulo de auditoria: rota <code>/auditoria</code> (chave <code>auditoria</code>) · <strong>banco EXCLUSIVO</strong> <code>db_mod_auditoria.db</code> com <strong>UMA TABELA POR MÓDULO PRODUTOR</strong> (<code>tb_auditoria_&lt;modulo&gt;</code>) · visualizador somente-leitura com navegação dinâmica por tabela, filtros por usuário/módulo/ação/hora/intervalo de datas, paginação server-side, exportação CSV, seleção/ordem de campos por auditor e aba de Observabilidade (Grafana).</p>
+</blockquote>
+<h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
+<p>Banco e visualizador da trilha de auditoria LGPD. A <strong>escrita</strong> é feita pelos demais módulos via <code>audit_log</code> (núcleo) → <code>registrar_auditoria</code> (este módulo), que grava na tabela do módulo produtor (<code>tb_auditoria_&lt;modulo&gt;</code>, criada automaticamente). A <strong>leitura</strong> é feita pela tela <code>/auditoria</code> (exclusiva do <code>administrador_geral</code>), com filtros, paginação server-side e exportação CSV. As preferências de coluna e as configurações vão para <code>tb_config</code> central.</p>
+<h2 id="banco-exclusivo-db_mod_auditoriadb-wal">Banco exclusivo (<code>db_mod_auditoria.db</code>, WAL)<a class="headerlink" href="#banco-exclusivo-db_mod_auditoriadb-wal" title="Permanent link">&para;</a></h2>
+<p>Criador vigente: <code>init_db_auditoria()</code> em <code>manipulador_bd.py:25-38</code> (executado no import e pelo bootstrap central).</p>
+<ul>
+<li><strong><code>tb_auditoria_&lt;modulo&gt;</code></strong> — UMA TABELA POR MÓDULO (nome sanitizado: hífen vira <code>_</code>, ex. <code>edit-pdf</code> → <code>tb_auditoria_edit_pdf</code>). Colunas: <code>id</code>, <code>usuario</code>, <code>modulo</code>, <code>acao</code>, <code>descricao</code>, <code>timestamp</code> (horário local — RF-08), <code>hash_arquivo</code>, <code>ip</code>, <code>user_agent</code>, <code>client_hostname</code>; índices por <code>modulo</code>, <code>usuario</code> e <code>timestamp</code>.</li>
+<li><strong><code>tb_auditoria_meta</code></strong> — registro dos módulos produtores (<code>modulo</code> PK, <code>nome</code>, <code>criada_em</code>).</li>
+<li><strong>Migração idempotente</strong> do legado: <code>migrar_dados_existentes()</code> (<code>manipulador_bd.py:273-324</code>) copia a antiga <code>tb_auditoria</code> do banco central para as tabelas por módulo, marca <code>auditoria_migracao_concluida=1</code> na <code>tb_config</code> e <strong>remove a tabela legada</strong> do central.</li>
+<li><strong>Poda LGPD</strong>: <code>podar_registros(dias)</code> (<code>manipulador_bd.py:147-171</code>) remove registros mais antigos que o prazo em TODAS as tabelas — chamada diariamente pelo job <code>poda_auditoria</code> (<code>mod_intranet/rotinas.py:74-103</code>, <code>auditoria_retencao_dias</code>, default 90).</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Escrita automática por novos módulos</p>
+<p><code>registrar_auditoria</code> (<code>manipulador_bd.py:99-124</code>) cria a tabela do módulo e o registro em <code>tb_auditoria_meta</code> na primeira gravação — um módulo novo passa a auditar <strong>sem nenhuma edição</strong> neste módulo.</p>
+</div>
+<h2 id="estrutura-do-pacote">Estrutura do pacote<a class="headerlink" href="#estrutura-do-pacote" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>db_manipulador.py</code> — conexão WAL, criação/garantia de tabelas, <code>registrar_auditoria</code>, <code>contar_registros</code>, <code>podar_registros</code>, <code>buscar_logs</code> (filtros + paginação), descoberta de módulos (<code>get_modulos_com_auditoria</code>/<code>get_tabelas_auditoria</code>) e migração do legado.</li>
+<li><code>telas.py</code> — visualizador (<code>mostrar_tela(usuario_logado, perfil)</code>).</li>
+<li><code>db_criador.py</code> — <strong>legado</strong> (cria apenas <code>tb_auditoria_meta</code>; o esquema real é o de <code>db_manipulador.py</code>).</li>
+<li><code>check_auditoria.py</code> — script diagnóstico standalone (lista chaves <code>auditoria%</code> da <code>tb_config</code> central).</li>
+</ul>
+<h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Acesso exclusivo ao <code>administrador_geral</code></strong> — dupla camada: bloqueio interno + exigência da chave <code>auditoria</code> em <code>pagina_restrita</code>. Tentativa sem permissão gera <code>acesso_negado</code> na trilha (choke point único em <code>layout_tela.pagina_restrita</code>).</li>
+<li><strong>Navegação dinâmica por tabela</strong>: select "Visualizar auditoria de" montado a partir do banco (<code>get_modulos_com_auditoria</code>) — "Todas as auditorias" (UNION ALL) ou a tabela de um módulo específico; rótulos amigáveis por chave (<code>DEFS_NAV</code>).</li>
+<li><strong>Filtros</strong>: Usuário (LIKE), Ação (select com <strong>categorias prontas</strong> coloridas <code>CORES_ACAO</code> + texto livre via <code>with_input</code>), Hora (<code>strftime('%H:%M')</code>), intervalo de datas (campos com calendário em popup).</li>
+<li><strong>Paginação server-side</strong>: <code>LIMIT ? OFFSET ?</code> (<code>auditoria_limite</code> como tamanho de página, default 1000) com contador e botões Anterior/Próxima; auto-atualização a cada 30 s.</li>
+<li><strong>Campos/ordem por auditor</strong>: painel "Campos e ordem de exibição" com mover ↑/↓, ocultar, adicionar e "Restaurar padrão"; persistido em <code>tb_config</code> na chave <code>auditoria_campos:&lt;usuario&gt;</code> (JSON). Coluna "Ação" colorida por categoria.</li>
+<li><strong>Exportação CSV</strong>: baixa o resultado filtrado da página corrente respeitando os <strong>campos e a ordem</strong> selecionados pelo auditor.</li>
+<li><strong>Colunas padrão</strong>: Data/Hora, Usuário, Módulo, Ação, Descrição (truncada a 100 chars), Hash, IP e rótulo de dispositivo (<code>rotulo_dispositivo</code>).</li>
+<li><strong>Aba Observabilidade</strong> (só quando a stack OTel está no ar — <code>docker_detector.otel_stack_rodando()</code>): cards de atalho para os dashboards Grafana (Visão Geral, Traces, Logs) com aviso LGPD sobre a senha padrão do Grafana.</li>
+<li><strong>Aba Administração</strong> (expansão, exclusiva do admin geral): <code>auditoria_limite</code>, <code>auditoria_retencao_dias</code>, <code>auditoria_texto_header</code> + card padrão <strong>"Configurações de cores"</strong> (<code>auditoria_cor_botao</code>, <code>auditoria_cor_texto_botao</code>, <code>auditoria_cor_fundo</code>, <code>auditoria_cor_titulo</code>, <code>auditoria_btn_tamanho</code> — vazios usam o padrão do PRÓPRIO módulo via <code>PADROES_TEMA["auditoria"]</code> = <code>#000000</code>, sem herança do tema do sistema). Salvar também <strong>audita a si mesmo</strong> (<code>auditoria</code>, <code>configuracao</code>).</li>
+</ul>
+<h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Escrita</strong>: <code>mod_intranet.manipulador_bd.audit_log</code> preenche IP/UA do contexto (<code>mod_intranet.contexto</code>) e chama <code>registrar_auditoria</code> — produtores: todos os módulos + o próprio núcleo (login/logout/falhas/configurações/backups).</li>
+<li><strong>Leitura</strong>: <code>buscar_logs</code> (UNION ALL entre tabelas ou tabela única), <code>get_modulos_com_auditoria</code> (menu dinâmico), <code>contar_registros</code> (resumo do dashboard).</li>
+<li><strong>Config</strong>: <code>get_config</code>/<code>set_config</code> centrais (<code>auditoria_limite</code>, <code>auditoria_retencao_dias</code>, <code>auditoria_texto_header</code>, <code>auditoria_campos:&lt;usuario&gt;</code>, tema <code>auditoria_*</code>).</li>
+<li><strong>Poda</strong>: job diário <code>poda_auditoria</code> do APScheduler central.</li>
+<li><strong>Versionamento</strong>: <code>versao_modulo:auditoria = 1.0.260908</code> (seed em <code>manipulador_bd._semear_versao_modulo</code> e <code>conexao_bd.init_db()</code>), exibido no rodapé de <code>/auditoria</code>.</li>
+</ul>
+<h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Consulta além de <code>auditoria_limite</code> numa página usa os botões de paginação; a exportação CSV cobre a página corrente (na ordem do auditor).</li>
+<li>Ações desconhecidas/novas podem ser filtradas por texto livre no select de Ação.</li>
+<li>A preferência de colunas é por usuário (<code>auditoria_campos:&lt;usuario&gt;</code>); como o módulo é exclusivo do admin geral, na prática vale para qualquer auditor.</li>
+<li><code>db_criador.py</code> é legado — não executar como fonte de verdade.</li>
+</ul>
+<h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Item</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Banco exclusivo com tabela por módulo + metadados</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Escrita automática (<code>registrar_auditoria</code> cria tabela/meta)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Migração idempotente do legado central (+ remoção da tabela legada)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Navegação dinâmica por tabela de módulo</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Filtros (usuário/módulo/ação/hora/datas) + categorias coloridas</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Paginação server-side + índices</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Exportação CSV (página corrente, campos/ordem do auditor)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Campos/ordem por auditor (<code>auditoria_campos:&lt;usuario&gt;</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Poda diária LGPD (<code>auditoria_retencao_dias</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Acesso exclusivo do <code>administrador_geral</code> + <code>acesso_negado</code> (RF-35)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Aba Observabilidade (Grafana) condicionada à stack OTel</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cupê Aparência + auto-auditoria das configs</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../analise_mod_renomear_empenho/" class="btn btn-neutral float-left" title="Renomear Empenhos"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../analise_mod_solicita_impressao/" class="btn btn-neutral float-right" title="Solicitação de Impressão">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../analise_mod_renomear_empenho/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../analise_mod_solicita_impressao/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

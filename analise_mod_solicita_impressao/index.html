@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Solicitação de Impressão - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Solicita\u00e7\u00e3o de Impress\u00e3o";
+        var mkdocs_page_input_path = "analise_mod_solicita_impressao.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Solicitação de Impressão</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Módulos (análise)</li>
+      <li class="breadcrumb-item active">Solicitação de Impressão</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="solicitacao-de-impressao-mod_solicita_impressao">Solicitação de Impressão — <code>mod_solicita_impressao</code><a class="headerlink" href="#solicitacao-de-impressao-mod_solicita_impressao" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Print request module: route <code>/solicita-impressao</code> (key <code>solicita_impressao</code>) · own database <code>db_mod_solicita_impressao.db</code> · PDF upload, page counting, hierarchical monthly quotas, dual-mode print, central audit.</p>
+</blockquote>
+<hr />
+<h1 id="solicitacao-de-impressao-mod_solicita_impressao_1">Solicitação de Impressão — <code>mod_solicita_impressao</code><a class="headerlink" href="#solicitacao-de-impressao-mod_solicita_impressao_1" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Módulo de solicitação de impressão: rota <code>/solicita-impressao</code> (chave <code>solicita_impressao</code>) · banco próprio <code>db_mod_solicita_impressao.db</code> · envio de PDF, contagem de páginas, cotas mensais hierárquicas, impressão dual, auditoria central.</p>
+<p><strong>Versionamento</strong>: <code>versao_modulo:solicita_impressao = 1.0.260908</code> (seed em <code>conexao_bd.init_db()</code> — chave <code>tb_config</code> central, formato <code>1.0.AAMMDD</code>, exibida no rodapé em <code>/solicita-impressao</code> junto à versão global). Duplicada também em <code>tb_configuracoes_modulo</code> (<code>versao_modulo</code>) do banco do módulo. Atualizar a cada alteração do módulo.</p>
+</blockquote>
+<h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
+<p>Módulo para solicitação de impressão de arquivos PDF. Usuários <strong>comuns</strong> anexam um ou mais PDFs
+por envio, informam cópias, papel (A4/A3), cor (PB/Color), frente e verso (borda curta/longa),
+se o papel é sulfite, observações e a secretaria/setor de crédito. O sistema conta as páginas,
+renomeia os arquivos no padrão definido, aplica regras de cota mensal (hierárquica) e fluxo de
+autorização quando exigido. Apenas administradores do módulo imprimem; responsáveis cadastrados
+autorizam quando a secretaria/setor exige.</p>
+<div class="admonition note">
+<p class="admonition-title">Modelo vigente — 1 pedido por envio (grupo)</p>
+<p>Desde a reformulação de <strong>07/09</strong> o módulo trata <strong>1 PEDIDO POR ENVIO</strong>: um grupo de arquivos
+(até 10 PDFs) confirmado de uma vez vira <strong>um único pedido</strong> com <strong>status único</strong> — todos os
+arquivos do grupo são autorizados/recusados/impressos/cancelados <strong>em conjunto</strong>. A
+<strong>auto-autorização foi removida</strong>: sem autorizador cadastrado para a secretaria/setor, o
+pedido fica <code>pendente</code> e o <strong>admin autoriza e imprime</strong>. Ao imprimir, a cota é descontada
+<strong>uma vez por grupo</strong> e os <strong>arquivos são apagados do servidor imediatamente</strong>.</p>
+</div>
+<h2 id="banco-proprio">Banco próprio<a class="headerlink" href="#banco-proprio" title="Permanent link">&para;</a></h2>
+<p>Criador vigente: <code>init_db()</code> em <code>manipulador_bd.py:113-345</code> (bootstrap central
+<code>mod_intranet_inicializacao_bd.inicializar_bancos</code>).</p>
+<p>Todas as tabelas vivem em <code>db_mod_solicita_impressao.db</code> (WAL). Arquivos PDF enviados são salvos
+em <code>mod_solicita_impressao/solicitacaoImpressao/</code> (pasta própria do módulo — nada é misturado
+com outros módulos).</p>
+<h3 id="tabelas">Tabelas<a class="headerlink" href="#tabelas" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>tb_solicitacoes</code></strong>: id, usuario_solicitante, arquivo_original, arquivo_servidor,
+  caminho_arquivo, hash_arquivo, qtd_copias, tamanho_papel (A4/A3), cor (PB/Color),
+  frente_verso (0/1), tipo_borda (curta/longa/NULL), papel_sulfite (0/1),
+  <strong>tipo_papel</strong> (sulfite/fotografico/verge — coluna nova, migração idempotente
+  <code>manipulador_bd.py:275-282</code>), observacoes,
+  secretaria_id FK, setor_id FK, qtd_paginas_arquivo, paginas_contabilizadas, status,
+  cota_excedida (0/1), requer_autorizacao (0/1), autorizado_por, data_autorizacao,
+  motivo_recusa, impresso_por, data_impressao, data_criacao, data_atualizacao,
+  <strong>grupo_id</strong> (agrupamento "1 pedido por envio"; criado via ALTER idempotente +
+  backfill <code>grupo_id = id</code> para registros sem grupo + índice <code>idx_sol_grupo</code> —
+  <code>manipulador_bd.py:278-287</code>).</li>
+<li><strong><code>tb_secretarias</code></strong>: id, nome, sigla, cota_paginas_mensal, limite_pedidos_abertos, ativo.</li>
+<li><strong><code>tb_setores</code></strong>: id, nome, secretaria_id FK, cota_paginas_mensal, limite_pedidos_abertos, ativo.</li>
+<li><strong><code>tb_responsaveis_autorizacao</code></strong>: id, user_nome, secretaria_id FK, setor_id FK (opcional), ativo.</li>
+<li><strong><code>tb_cotas_impressao</code></strong>: id, secretaria_id, setor_id (NULL=secretaria), cota_paginas,
+  mes_referencia (YYYY-MM, único por vínculo), ativo.</li>
+<li><strong><code>tb_consumo_cota</code></strong>: id, secretaria_id, setor_id, mes_referencia, paginas_usadas, atualizado_em.</li>
+<li><strong><code>tb_configuracoes_modulo</code></strong>: chave/valor (pasta, max MB, <strong>alertas da nova solicitação</strong>,
+  impressoras padrão, <strong>tipo de papel padrão</strong>, marca d'água opcional e personalizável).</li>
+<li><strong><code>tb_impressoras</code></strong>: id, nome (UNIQUE), tamanho_papel (A4/A3), cor (Color/PB),
+  frente_verso (0/1), papel_sulfite (0/1), driver (padrão <code>PCL6</code>), ativo (0/1), criado_em.
+  Usada pelo seletor de impressão do botão "Imprimir". Migração idempotente adiciona a coluna
+  <code>driver</code> em instalações existentes (<code>manipulador_bd.py:304-315</code>).</li>
+</ul>
+<h2 id="contabilizacao-de-impressoes-formula">Contabilização de impressões (fórmula)<a class="headerlink" href="#contabilizacao-de-impressoes-formula" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>paginas_contabilizadas = qtd_paginas × qtd_copias × fator_papel × fator_frente_verso
+  fator_papel: A4 = 1, A3 = 2
+  fator_frente_verso: não = 1, sim = 2
+</code></pre></div>
+<p>Exemplos: 10 pág × 3 cóp × A4 frente = 30; A4 frente/verso = 60; A3 frente = 60; A3 frente/verso = 120.</p>
+<h2 id="cotas-mensal-hierarquicas">Cotas (mensal, hierárquicas)<a class="headerlink" href="#cotas-mensal-hierarquicas" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Cada <strong>secretaria</strong> tem cota máxima mensal (total do mês).</li>
+<li>Cada <strong>setor</strong> pode ter cota própria; se não tiver, usa o <strong>pool da secretaria</strong>.</li>
+<li>Ao <strong>exceder</strong>: o envio é <strong>permitido</strong>, porém a solicitação fica marcada como
+  <code>excedente_cota</code> e a critério do autorizador/admin imprimir ou não.</li>
+<li>Consumo descontado <strong>somente na impressão efetiva</strong> (admin confirma).</li>
+<li>Visual no painel: barra de progresso <strong>SEM numeral</strong> (para não expor o consumo entre
+  secretarias) — verde &lt;50%, amarelo 50–80%, laranja 80–100%, vermelho &gt;100%
+  (<code>_barra_cota</code>, <code>telas.py:123-138</code>).</li>
+<li>Admin pode <strong>editar cota</strong> e <strong>resetar consumo</strong> do mês. Sem notificações (por design).</li>
+<li>Reset automático todo dia 1º (novo <code>mes_referencia</code>).</li>
+</ul>
+<h2 id="limite-de-pedidos-abertos-elastico">Limite de pedidos abertos (elástico)<a class="headerlink" href="#limite-de-pedidos-abertos-elastico" title="Permanent link">&para;</a></h2>
+<p>Além da cota mensal de páginas, cada <strong>secretaria</strong> e cada <strong>setor</strong> pode ter um
+<strong>limite de pedidos abertos</strong> (<code>limite_pedidos_abertos</code>, coluna nova em
+<code>tb_secretarias</code> e <code>tb_setores</code> — <code>manipulador_bd.py:159,180</code>; migração idempotente
+<code>manipulador_bd.py:160-166,181-187</code>). <strong>0 = sem limite</strong> (padrão).</p>
+<p>Regra de bloqueio (contagem elástica):</p>
+<ul>
+<li>"Pedido aberto" = status em <code>pendente</code>, <code>aguardando_autorizacao</code>, <code>autorizado</code>
+  ou <code>excedente_cota</code> — ou seja, <strong>não</strong> impresso/recusado/cancelado
+  (<code>contar_pedidos_abertos</code>, <code>manipulador_bd.py:1028</code>).</li>
+<li>O <strong>setor só pode pedir se a secretaria não atingiu o teto</strong>; cada um tem seu
+  próprio limite (<code>verificar_limite_pedidos</code>, <code>manipulador_bd.py:1057</code>).</li>
+<li>Ao atingir o teto, <code>criar_solicitacao</code> (<code>manipulador_bd.py:1136</code>) e
+  <code>confirmar_rascunho</code> (<code>manipulador_bd.py:1627</code>) <strong>bloqueiam</strong> o envio com
+  mensagem orientando a imprimir/cancelar pedidos pendentes para liberar vaga.</li>
+<li>A impressão (ou recusa/cancelamento) <strong>libera a vaga</strong> automaticamente —
+  por isso "elástico".</li>
+</ul>
+<h2 id="relatorio-de-impressoes-por-periodo">Relatório de impressões por período<a class="headerlink" href="#relatorio-de-impressoes-por-periodo" title="Permanent link">&para;</a></h2>
+<p>Sub-aba <strong>Relatórios</strong> na Administração (<code>_admin_relatorio</code>, <code>telas.py:1553-1647</code> e
+<code>administracao.py:615-713</code> — <strong>cópia duplicada da admin existe nos dois arquivos</strong>): o admin
+escolhe um <strong>prazo fixo mensal</strong> (Este mês, Mês anterior, Últimos 6 meses, Ano atual — botões que
+preenchem as datas e geram na hora) ou informa um <strong>período personalizado no calendário</strong>
+(data inicial/final) e clica em <strong>"Gerar relatório"</strong>, que monta as tabelas prontas via
+<code>_tabela_relatorio</code> (<code>telas.py:1538</code>, <code>administracao.py:596</code>). O foco é <strong>cobrança/repasse</strong>:
+secretaria/setor primeiro, depois quem imprimiu, quem autorizou e o total geral.</p>
+<p>Backend: <code>relatorio_impressao(data_inicio, data_fim)</code> (<code>manipulador_bd.py:2345</code>)
+agrega as solicitações com <code>status='impresso'</code> no período (por <code>data_impressao</code>),
+com totais de <strong>cópias</strong> e <strong>páginas contabilizadas</strong>, separando <strong>color/PB</strong> pela
+coluna <code>cor</code>. Helper <code>_agregar_impressao</code> (<code>manipulador_bd.py:2301</code>) faz o GROUP BY
+por coluna. Desde a reformulação de 07/09, a contagem de <strong>pedidos</strong> usa
+<code>COUNT(DISTINCT s.grupo_id)</code> (1 pedido por envio) — não mais o nº de linhas de
+<code>tb_solicitacoes</code>. Retorna um dict com:</p>
+<ul>
+<li><code>geral</code> — total geral (pedidos, cópias total/color/PB, págs. total/color/PB);</li>
+<li><code>por_secretaria</code> — agrupado por secretaria;</li>
+<li><code>por_setor</code> — agrupado por secretaria+setor;</li>
+<li><code>por_autorizador</code> — agrupado por <code>autorizado_por</code>;</li>
+<li><code>por_impressor</code> — agrupado por <code>impresso_por</code>.</li>
+</ul>
+<h2 id="fluxo-de-tela">Fluxo de tela<a class="headerlink" href="#fluxo-de-tela" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Nova Solicitação</strong> (comum): ao <strong>selecionar os PDFs</strong> eles sobem <strong>automaticamente para o servidor</strong>
+  e já recebem nome do sistema (o nome original é descartado — não influencia o sistema). Cada arquivo fica
+  como <strong>rascunho</strong> com nome <code>YYYYMMDD_HHMMSS_usuario_&lt;uuid&gt;_rascunho.pdf</code> e expiração de
+  <code>tempo_expira_rascunho_min</code> (padrão 10 min): se o usuário não confirmar ("Enviar solicitação")
+  nesse prazo, o arquivo é <strong>removido do servidor automaticamente</strong> (job <code>cleanup_solicita</code>, 1 min).
+  Há botão "Remover selecionados" (e remoção individual) para descartar antes. Ao confirmar, os
+  arquivos são renomeados para o padrão final <code>dataHora_usuario_cor_copias_paginas_secretaria_setor.pdf</code>
+  e <strong>todos viram UM ÚNICO PEDIDO (grupo)</strong> — <code>confirmar_lote</code> (<code>manipulador_bd.py:1740</code>) converte os
+  N rascunhos do envio em um pedido com o mesmo <code>grupo_id</code> e <strong>status único</strong> (máx. 10 PDFs por envio,
+  <code>MAX_ARQ</code>).</li>
+<li><strong>Status do pedido (sem auto-autorização)</strong>: ao confirmar o envio, o status do grupo é definido por
+  <code>confirmar_lote</code> (<code>manipulador_bd.py:1773-1782</code>): <code>excedente_cota</code> se exceder a cota; senão
+  <code>aguardando_autorizacao</code> se houver responsável cadastrado para a secretaria/setor; senão
+  <strong><code>pendente</code></strong> — sem autorizador, o pedido fica pendente e o <strong>admin autoriza e imprime</strong>.</li>
+<li>Valores <strong>padrão pré-selecionados</strong> (editáveis pelo admin): papel <code>padrao_papel</code> (A4),
+  cor <code>padrao_cor</code> (<strong>Color</strong> — migrado de PB em 07/09), <code>padrao_frente_verso</code> (somente frente),
+  <code>padrao_sulfite</code> (sim) e <strong><code>padrao_tipo_papel</code></strong> (sulfite).</li>
+<li>Campos: cópias, papel, cor, <strong>tipo de papel</strong> (sulfite/fotográfico/vergê — ativo apenas em A4),
+  frente/verso + borda, observações, secretaria→setor — todos em <strong>UMA linha</strong> (<code>flex-wrap</code> +
+  <code>flex-1 min-w-[15ch]</code>, secretaria/setor <code>min-w-[25ch]</code>); <strong>alertas configuráveis</strong>
+  (<code>alertas_nova_solicitacao</code>, uma frase por linha) exibidos <strong>abaixo do card de envio</strong> com ⚠
+  (substitui os antigos avisos fixos de presença obrigatória e de páginas múltiplas); rótulo
+  informando que todos os arquivos marcados viram <strong>um único pedido</strong>.</li>
+<li><strong>Impressão</strong> (admin): ao confirmar a impressão do pedido, a cota é descontada <strong>uma vez por grupo</strong>
+  e os <strong>arquivos são apagados do servidor imediatamente</strong> (<code>imprimir_grupo</code>,
+  <code>manipulador_bd.py:2053</code>). Recusar / recuar / cancelar <strong>removem os arquivos do servidor</strong> de todos
+  os arquivos do grupo.</li>
+<li><strong>Auditoria</strong> (banco exclusivo <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_solicita_impressao</code>): registra quem <strong>solicitou</strong>
+  (cópias, páginas, secretaria, setor, status, excedente), quem <strong>autorizou</strong>, quem <strong>imprimiu</strong>
+  (com total de páginas e prazo de exclusão) e quem <strong>recusou</strong> (com motivo).</li>
+<li><strong>Minhas Solicitações</strong> (comum): lista os <strong>pedidos</strong> do usuário (um card por envio/grupo, com
+  todos os arquivos e status único — <code>_tela_minhas</code>, <code>telas.py:374</code>), com <strong>campo de busca</strong>,
+  <strong>filtro que remove pedidos cancelados</strong> da lista, chip de status, barra de cota <strong>sem numeral</strong>,
+  botão Baixar (por arquivo), <strong>checkboxes por arquivo + "Baixar selecionados" (avulso) e
+  "(zip)"</strong>, <strong>Reenviar</strong> (pedido recusado) e Cancelar (pendente/aguardando/excedente/recusado).</li>
+<li><strong>Autorização</strong> (responsável): aba <strong>"Solicitação pendente"</strong> (<code>_tela_autorizar</code>, <code>telas.py:409</code>)
+  com <strong>campo de busca no topo</strong> (entre o menu de abas e os cards) e seções <strong>"AGUARDANDO
+  AUTORIZAÇÃO"</strong> e <strong>"JÁ AUTORIZADOS"</strong> + busca (texto/data); lista os
+  pedidos das secretarias/setores do autorizador (<code>listar_pedidos_responsavel</code>,
+  <code>manipulador_bd.py:1923</code>) com Autorizar / Recusar (motivo obrigatório) — ações em <strong>todo o grupo</strong>.</li>
+<li><strong>Administração</strong> (admin do módulo): tabela mestra + sub-abas Secretarias, Setores,
+  Responsáveis, Cotas, Relatórios, Configurações. Ações: Imprimir (seletor de impressora), Baixar (sempre),
+  Recuar (cancelar), Autorizar, Recusar.</li>
+<li><strong>Administração → Secretarias / Setores</strong>: campo <strong>"Limite pedidos abertos (0=ilimitado)"</strong>
+  no criar/editar e exibição do limite na listagem (<code>administracao.py:100,150,190,245</code>).</li>
+<li><strong>Administração → Solicitações</strong> (<code>_admin_solicitacoes</code>, <code>telas.py:700</code>; <code>administracao.py:77</code>
+  delega para <code>telas.py</code> — evita duplicação): abas <strong>Ativos / Impressos / Recusados / Todos</strong> +
+  barra de busca com <strong>texto livre</strong> (solicitante, observação, arquivo, nome de secretaria/setor —
+  <code>LIKE NOCASE</code>), <strong>secretaria→setor em cascata</strong>, <strong>data inicial/final</strong> e botão <strong>Buscar</strong>
+  (<code>listar_pedidos</code>, <code>manipulador_bd.py:1840</code>). Pedidos agrupados por <strong>secretaria→setor</strong>; ao
+  imprimir, o pedido sai da gestão ativa do admin.</li>
+<li><strong>Impressão com seletor de impressoras</strong> (<code>_imprimir_grupo</code>, <code>telas.py:883</code>): ao clicar em "Imprimir"
+  num pedido <strong>autorizado/pendente/excedente</strong>, abre um <strong>diálogo com as impressoras cadastradas</strong>
+  (<code>tb_impressoras</code>), sugerindo a padrão A4/A3 conforme o papel; ao confirmar, dispara
+  <code>window.imprimirPdf</code> via JS (diálogo nativo do SO). <strong>Não marca como impresso</strong> — o desconto de
+  cota e a remoção dos arquivos ocorrem no botão <strong>"Confirmar impressão"</strong> (<code>_confirmar_impressao_grupo</code>,
+  <code>telas.py:944</code> → <code>imprimir_grupo</code>, <code>manipulador_bd.py:1862</code>).</li>
+</ul>
+<h2 id="impressao-dual-mode">Impressão (dual mode)<a class="headerlink" href="#impressao-dual-mode" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Se <strong>impressora padrão</strong> configurada (A4/A3): botão "Imprimir direto" dispara
+  <code>window.printSolicitacao(id)</code> via JS (<code>impressao.js</code> em <code>src/</code>) — abre o PDF preparado numa
+  nova aba e usa o diálogo nativo do SO.</li>
+<li>Sempre disponível: <strong>Baixar para impressão</strong> (<code>ui.download</code> do PDF, com marca d'água se ativa) →
+  usuário imprime via Ctrl+P no navegador/SO.</li>
+<li><strong>Marca d'água</strong> (opcional, personalizável): texto com placeholders <code>{data}</code>, <code>{usuario}</code>,
+  <code>{id}</code>, <code>{secretaria}</code>, <code>{setor}</code>, <code>{solicitante}</code>; posição, opacidade, fonte, cor, rotação —
+  tudo configurável em Configurações. Se desativada, PDF sai sem marca.</li>
+<li><strong>Painel de impressoras</strong> (<code>_painel_impressoras</code>, <code>telas.py:1509</code> e <code>administracao.py:545</code>):
+  bloco em <strong>Configurações</strong> para <strong>cadastrar / listar / definir padrão / excluir</strong> impressoras
+  (nome, papel, cor, frente/verso, sulfite, driver <strong>PCL6</strong> default). A padrão A4/A3 é marcada via
+  <code>definir_impressora_padrao</code> (<code>manipulador_bd.py:474</code>) e alimenta o seletor do botão "Imprimir".</li>
+<li><strong>Impressão por grupo</strong> (<code>imprimir_grupo</code>, <code>manipulador_bd.py:1862</code>): ao confirmar a impressão de
+  um pedido, a cota é descontada <strong>uma vez por grupo</strong> (pelo total de páginas contabilizadas, na
+  secretaria e no setor se houver) e os <strong>arquivos são apagados do servidor imediatamente</strong> — o
+  pedido impresso sai da gestão ativa do admin.</li>
+<li><strong>Padrões migrados (07/09, sem restart via <code>init_db</code>)</strong>: <code>tempo_expira_rascunho_min</code> 4→<strong>10</strong> e
+  <code>padrao_cor</code> PB→<strong>Color</strong> (<code>manipulador_bd.py:328-331</code>).</li>
+</ul>
+<h2 id="nomenclatura-do-arquivo">Nomenclatura do arquivo<a class="headerlink" href="#nomenclatura-do-arquivo" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>AAMMDDHHMMSS_secretaria_setor_nomeSolicitante_qtdCopias_cor_tipoPapel_quantidadeFolhas_ordemDoenvioArquivo.pdf
+</code></pre></div>
+<p>Ex.: <code>260907143022_SAUDE_ATENDIMENTO_joao_silva_3_colorido_sulfite_10_1.pdf</code>
+(acentos removidos, espaços→<code>_</code>, nomes sanitizados). A cor entra entre as cópias e o tipo de
+papel (<code>colorido</code> para Color, <code>pretoebranco</code> para PB); o <strong>tipo de papel</strong>
+(<code>sulfite</code>/<code>fotografico</code>/<code>verge</code>) e a <strong>ordem de envio do arquivo</strong> (1, 2, 3…) garantem
+unicidade mesmo quando vários arquivos chegam no mesmo segundo com a mesma quantidade de
+páginas — gerada por <code>gerar_nome_arquivo</code> (<code>manipulador_bd.py:1038-1070</code>), que recebe
+<code>cor</code>, <code>tipo_papel</code> e <code>ordem_envio</code>.</p>
+<h2 id="regras-de-negocio">Regras de negócio<a class="headerlink" href="#regras-de-negocio" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Somente PDF</strong>: upload recusa extensões não-<code>.pdf</code>.</li>
+<li><strong>Até 10 arquivos por envio</strong> (<code>MAX_ARQ = 10</code>): todos os arquivos de um envio viram <strong>um único
+  pedido (grupo)</strong> com status único.</li>
+<li><strong>Tipo de papel</strong> (<code>tipo_papel</code>): sulfite (padrão), fotográfico ou vergê — selecionável no
+  formulário e <strong>ativo apenas em A4</strong> (A3 = sulfite obrigatório, <code>ao_papel</code> em <code>telas.py:290-301</code>);
+  papel não sulfite notifica "o usuário deve trazer o próprio papel" (<code>ao_tipo_papel</code>,
+  <code>telas.py:284-288</code>). Padrão configurável (<code>padrao_tipo_papel</code>, default <code>sulfite</code>).</li>
+<li><strong>Alertas da nova solicitação</strong> (<code>alertas_nova_solicitacao</code>, config): frases exibidas abaixo do
+  card de envio (uma por linha, com ⚠) — <strong>substitui</strong> os antigos <code>aviso_presenca_obrigatoria</code> e
+  <code>aviso_paginas_multiplas</code> (removidos). Editável em Administração → Configurações
+  (<code>telas.py:366-369</code>, <code>administracao.py:416-418</code>).</li>
+<li><strong>Reenvio de pedido recusado</strong>: o usuário pode <strong>Reenviar</strong> o próprio pedido recusado — o status
+  volta para <code>aguardando_autorizacao</code> (se há responsável) ou <code>pendente</code>, limpando motivo e dados de
+  autorização (<code>reenviar_grupo</code>, <code>manipulador_bd.py:2025-2055</code>; botão em <code>telas.py:572-576</code>).
+  <code>cancelar_grupo</code> também aceita o status <code>recusado</code> (<code>manipulador_bd.py:2001-2022</code>).</li>
+<li><strong>Permissões</strong>: <code>comum</code> cria/acompanha próprios pedidos; responsável autoriza sua secretaria/setor;
+  <code>administrador</code> do módulo imprime/recua/gerencia. Admin geral vê tudo + auditoria.</li>
+<li><strong>Concessão da permissão de autorizar impressão</strong>: em <em>Administração → Responsáveis</em> o admin
+  localiza um <strong>usuário cadastrado</strong> via seletor buscável (do módulo de Gestão de Usuários) e o
+  vincula a uma secretaria/setor como responsável. A permissão <strong>pode ser concedida a usuários
+  <code>comum</code></strong> — ao logar, mesmo sendo <code>comum</code>, o usuário passa a ver a aba <strong>Autorização</strong> e a
+  área de autorizar impressões (a checagem usa <code>tb_responsaveis_autorizacao</code>, independente do perfil).</li>
+<li><strong>Sem auto-autorização</strong>: sem responsável cadastrado para a secretaria/setor, o pedido fica
+  <code>pendente</code> e o <strong>admin autoriza e imprime</strong> (<code>confirmar_lote</code>, <code>manipulador_bd.py:1610-1619</code>).</li>
+<li><strong>Auditoria central</strong> (banco exclusivo de auditoria, tabela <code>tb_auditoria_solicita_impressao</code>): <code>criar_solicitacao</code>, <code>autorizar_solicitacao</code>,
+  <code>recusar_solicitacao</code>, <code>imprimir_solicitacao</code>, <code>recuar_solicitacao</code>, <code>cancelar_solicitacao</code>,
+  <code>criar/editar/excluir_secretaria/setor/responsavel</code>, <code>definir_cota</code>, <code>resetar_consumo</code>. Na
+  reformulação de 07/09, a auditoria de <strong><code>criar_grupo</code></strong> (<code>confirmar_lote</code>,
+  <code>manipulador_bd.py:1822-1825</code>) inclui o <strong>SHA256 dos arquivos</strong> do pedido; as ações de grupo
+  (<code>autorizar_grupo</code>, <code>recusar_grupo</code>, <code>imprimir_grupo</code>, <code>recuar_grupo</code>, <code>cancelar_grupo</code>) são
+  auditadas por <code>grupo_id</code>.</li>
+</ul>
+<h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Bootstrap cria o banco (<code>inicializar_bancos</code> → <code>init_solicita</code>).</li>
+<li>Módulo nativo em <code>tb_modulos</code> (seed <code>MODULOS_SISTEMA</code> em <code>autenticacao.py</code>):
+  chave <code>solicita_impressao</code>, ícone <code>print</code>, rota <code>/solicita-impressao</code>.</li>
+<li>Permissão por módulo em <code>tb_acesso_usuario</code> (papel <code>comum</code>/<code>administrador</code>).</li>
+<li>Auditoria via <code>audit_log(usuario, 'solicita_impressao', acao, desc, hash)</code>.</li>
+<li>JS de impressão servido por rota <code>/solicita-impressao/src/impressao.js</code> (arquivo em
+  <code>mod_solicita_impressao/src/</code>).</li>
+<li>Documentação disponível em <code>/documentacao</code> (build MkDocs do <code>docs/analise_mod_solicita_impressao.md</code>).</li>
+</ul>
+<h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
+<ul>
+<li>NiceGUI roda no servidor; a lista real de impressoras do cliente depende de API experimental
+  (<code>navigator.getPrinters</code>). O fallback é sempre o diálogo nativo do SO via <code>window.print()</code>.</li>
+<li>Contagem de páginas usa PyMuPDF; PDFs corrompidos/imagem podem retornar 0 (bloqueia envio).</li>
+<li>Cotas são mensais; reset manual ou automático (dia 1) — não há notificação por e-mail (sem SMTP).</li>
+</ul>
+<h2 id="hora-do-servidor-fonte-da-verdade-de-datahora">Hora do servidor (fonte da verdade de data/hora)<a class="headerlink" href="#hora-do-servidor-fonte-da-verdade-de-datahora" title="Permanent link">&para;</a></h2>
+<p>Desde 07/09, <strong>todas as datas</strong> do módulo (criação, autorização, impressão, expiração de
+rascunho, exclusão de impresso, marca d'água e chave do mês de cota) vêm do <strong>servidor</strong> —
+nunca do navegador/cliente:</p>
+<ul>
+<li><strong>Python</strong>: <code>hora_servidor()</code> / <code>hora_servidor_str()</code> do novo helper central
+  <code>mod_intranet/hora_servidor.py</code> (substituiu <code>datetime.datetime.now()</code> em
+  <code>criar_solicitacao</code>, <code>confirmar_rascunho</code>, <code>confirmar_lote</code>, <code>registrar_rascunho</code>,
+  <code>imprimir_solicitacao</code>, <code>expirar_rascunhos_e_impressos</code>, <code>aplicar_marca_dagua</code> e
+  <code>mes_atual</code>).</li>
+<li><strong>SQL</strong>: <code>datetime('now','localtime')</code> (relógio do servidor) em todos os INSERT/UPDATE de
+  data — antes alguns usavam <code>datetime('now')</code> (UTC) e outros gravavam a string literal
+  <code>"datetime('now','localtime')"</code> como texto (bug do relatório).</li>
+</ul>
+<p>Com internet, a hora é sincronizada com <strong>NTP.br</strong> (a/b/c.ntp.br, RFC 5905, socket UDP puro,
+timeout 2 s, cache de 60 s, lock threading); sem internet (ou com NTP desativado) usa o relógio
+local do servidor. Chave de configuração: <code>hora_ntp_ativa</code> (default <code>"1"</code>) em <code>tb_config</code>
+central — ver <a href="../analise_mod_intranet/#hora-do-servidor-ntp">Análise do Núcleo</a>.</p>
+<h2 id="adicoes-recentes-0709-tipo-de-papel-alertas-unificados-reenvio-e-relatorio-de-cobranca">Adições recentes (07/09) — tipo de papel, alertas unificados, reenvio e relatório de cobrança<a class="headerlink" href="#adicoes-recentes-0709-tipo-de-papel-alertas-unificados-reenvio-e-relatorio-de-cobranca" title="Permanent link">&para;</a></h2>
+<h3 id="db_manipuladorpy"><code>db_manipulador.py</code><a class="headerlink" href="#db_manipuladorpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Config <code>alertas_nova_solicitacao</code></strong> (<code>manipulador_bd.py:34-45</code>): frases de alerta da nova
+  solicitação (uma por linha) — <strong>substitui</strong> <code>aviso_presenca_obrigatoria</code> e
+  <code>aviso_paginas_multiplas</code> (removidos do <code>CONFIG_PADRAO</code>).</li>
+<li><strong>Coluna <code>tipo_papel</code></strong> em <code>tb_solicitacoes</code> (sulfite/fotografico/verge, default <code>sulfite</code>):
+  no CREATE (<code>manipulador_bd.py:127</code>) + <strong>migração idempotente</strong> via ALTER
+  (<code>manipulador_bd.py:275-282</code>).</li>
+<li><strong><code>gerar_nome_arquivo</code> reescrito</strong> (<code>manipulador_bd.py:1038-1070</code>): novo formato
+  <code>AAMMDDHHMMSS_secretaria_setor_solicitante_copias_cor_tipoPapel_folhas_ordemEnvio.pdf</code> com o
+  parâmetro <code>ordem_envio</code> para diferenciar arquivos do mesmo envio no mesmo segundo.</li>
+<li><strong><code>criar_solicitacao</code></strong> (<code>:1073</code>), <strong><code>confirmar_rascunho</code></strong> (<code>:1520</code>) e <strong><code>confirmar_lote</code></strong>
+  (<code>:1626</code>) recebem <code>tipo_papel</code> (e <code>ordem_envio</code> nas duas primeiras); o INSERT grava a coluna
+  <code>tipo_papel</code>.</li>
+<li><strong><code>reenviar_grupo(grupo_id, usuario, ator)</code></strong> (<code>:2025</code>): reabre pedido recusado para nova
+  autorização (status → <code>aguardando_autorizacao</code>/<code>pendente</code>, limpa motivo e autorização).</li>
+<li><strong><code>cancelar_grupo</code></strong> (<code>:2001</code>) agora também aceita o status <code>recusado</code>.</li>
+<li><strong><code>_atualizar_status_grupo</code> corrigido</strong> (<code>:1870-1899</code>): o valor especial
+  <code>"datetime('now','localtime')"</code> é injetado como <strong>expressão SQL</strong> (avaliada pelo banco), não
+  como string literal — era a causa do relatório não mostrar impressões do dia.</li>
+<li><strong>Migração de datas</strong> (<code>init_db</code>, <code>:321-328</code>): corrige registros com a string literal
+  <code>"datetime('now')"</code>/<code>"datetime('now','localtime')"</code> gravada em <code>data_impressao</code>/
+  <code>data_autorizacao</code> para o valor real de agora.</li>
+<li><strong>Datas do servidor</strong>: todas as funções usam <code>hora_servidor()</code> (Python) e
+  <code>datetime('now','localtime')</code> (SQL) — ver seção "Hora do servidor" acima.</li>
+<li><strong><code>relatorio_impressao</code> mantido</strong> (<code>:2211</code>): geral, por secretaria, setor, autorizador e
+  impressor (com <code>COUNT(DISTINCT grupo_id)</code>).</li>
+</ul>
+<h3 id="telaspy-telas_administracaopy"><code>telas.py</code> / <code>telas_administracao.py</code><a class="headerlink" href="#telaspy-telas_administracaopy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Aba Nova Solicitação</strong> (<code>_tela_nova</code>, <code>telas.py:143-369</code>): alertas unificados da config
+  <code>alertas_nova_solicitacao</code> exibidos <strong>abaixo do card de envio</strong> (<code>:366-369</code>); removido o texto
+  "Arquivos marcados serão enviados..."; campos (Secretaria, Setor, Qtd cópias, Tamanho papel,
+  Cor, Tipo papel, Frente e verso, Tipo de borda) em <strong>UMA linha</strong> com <code>flex-wrap</code> e
+  <code>flex-1 min-w-[15ch]</code> (secretaria/setor <code>min-w-[25ch]</code>), preenchendo toda a linha em qualquer
+  largura; select <strong>Tipo de papel ativo apenas em A4</strong> (A3 = sulfite obrigatório); botões
+  "Remover selecionados" e "Enviar solicitação" com <strong>mesmo tamanho (w-56) centralizados</strong>.</li>
+<li><strong>Aba Minhas Solicitações</strong> (<code>_tela_minhas</code>, <code>telas.py:374-404</code>): campo de busca; filtro que
+  <strong>remove pedidos cancelados</strong> da lista (<code>:396</code>); checkboxes por arquivo + botões
+  <strong>"Baixar selecionados"</strong> (avulso) e <strong>"Baixar selecionados (zip)"</strong> (<code>_card_grupo</code>,
+  <code>telas.py:486-505</code>); botões <strong>Reenviar</strong> e <strong>Cancelar</strong> para pedido recusado (<code>:566-576</code>);
+  card mostra Secretaria/Setor na 1ª linha, Cópias/Papel/Cor/FV/Tipo na 2ª, Páginas + barra de
+  cota na 3ª.</li>
+<li><strong><code>_barra_cota</code> sem numeral</strong> (<code>telas.py:123-138</code>): verde &lt;50%, amarelo 50–80%, laranja
+  80–100%, vermelho &gt;100%.</li>
+<li><strong>Aba Autorização</strong> (<code>_tela_autorizar</code>, <code>telas.py:409-458</code>): campo de busca no topo (entre o
+  menu de abas e os cards).</li>
+<li><strong><code>_card_grupo</code>/<code>_card_admin_grupo</code></strong> (<code>telas.py:463,764</code>): unpacking com <code>tipo_papel</code>, novo
+  layout e <code>permite_selecao</code>.</li>
+<li><strong><code>_admin_relatorio</code> reescrito</strong> (<code>telas.py:1553-1647</code> e <code>administracao.py:615-713</code> — cópia
+  duplicada da admin existe nos dois arquivos): <strong>prazos fixos mensais</strong> (Este mês, Mês anterior,
+  Últimos 6 meses, Ano atual) + calendário, com foco em <strong>cobrança/repasse</strong> (secretaria/setor
+  primeiro, depois quem imprimiu, quem autorizou e total geral).</li>
+<li><strong>Novo wrapper <code>_reenviar_grupo</code></strong> (<code>telas.py:613-619</code>).</li>
+<li><strong>Admin config</strong> (<code>_admin_configuracoes</code>): campo único <strong>"Alertas da nova solicitação (uma
+  frase por linha)"</strong> e select <strong>"Tipo de papel padrão"</strong> (sulfite/fotográfico/vergê) —
+  <code>telas.py:1359-1390</code> e <code>administracao.py:416-447</code>.</li>
+</ul>
+<h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Item</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Banco + 7 tabelas + cotas</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Contagem páginas + fórmula exata</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Fluxo comum (criar/acompanhar)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Autorização por responsável</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Admin (imprimir/recuar/cadastros/cotas/config)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Impressão dual (direto + download) + marca d'água</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Auditoria (banco exclusivo, tabela por módulo)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Impressoras cadastradas + seletor de impressão (driver PCL6)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Abas por status + busca (texto/secretaria→setor/data) em Solicitações</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Nomenclatura do arquivo com cor + padrões migrados (10 min / Colorido)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Limite de pedidos abertos (elástico) em secretaria/setor</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Relatório de impressões por período (Relatórios)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>1 pedido por envio (grupo)</strong> — status único, sem auto-autorização, admin autoriza+imprime, arquivos apagados ao imprimir</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Auditoria de <code>criar_grupo</code> com SHA256 + relatório conta pedidos (<code>COUNT(DISTINCT grupo_id)</code>)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Tipo de papel (sulfite/fotografico/verge) + nome de arquivo com <code>ordem_envio</code></td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Alertas unificados <code>alertas_nova_solicitacao</code> (substitui avisos antigos)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Reenvio de pedido recusado (<code>reenviar_grupo</code>) + cancelar recusado</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Datas do servidor (<code>hora_servidor()</code>/NTP.br) + correção do <code>_atualizar_status_grupo</code></td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Relatório de cobrança/repasse com prazos fixos + calendário</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Documentação MkDocs</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Testes automatizados (<code>test/test_solicita_impressao.py</code>, <code>test/test_solicita_ui.py</code>)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Testes manuais com usuários QA (<code>qacomum</code>/<code>qamaster</code>)</td>
+<td style="text-align: center;">Pendente</td>
+</tr>
+</tbody>
+</table>
+<h2 id="correcao-registrada-tema-no-escopo-do-modulo-nameerror">Correção registrada — tema no escopo do módulo (<code>NameError</code>)<a class="headerlink" href="#correcao-registrada-tema-no-escopo-do-modulo-nameerror" title="Permanent link">&para;</a></h2>
+<p>Bug real: ao abrir <code>/solicita-impressao</code>, a tela quebrava com
+<code>NameError: name 't_cor_botao' is not defined</code>. Causa: as variáveis <code>t_cor_botao</code>,
+<code>t_cor_txt_botao</code>, <code>t_btn_tamanho</code> e os helpers <code>_btn_cls()</code>/<code>_btn_style()</code> foram deixados <strong>fora</strong>
+de <code>mostrar_tela(usuario_logado, perfil)</code> (no escopo do módulo), onde não têm acesso ao
+<code>usuario_logado</code> para ler o tema — e as cores residuais no banco (<code>editpdf_cor_botao=#e61c91</code>,
+<code>editpdf_cor_texto_botao=#faf7f7</code>) nunca eram lidas/carregadas corretamente naquele escopo.</p>
+<p>Corrigido tirando a leitura de aparência do escopo do módulo e delegando o cupê "Aparência" ao
+<strong>helper central</strong> <code>mod_intranet/tema_modulo.py::bloco_aparencia</code> (que lê/grava as 6 chaves com o
+prefixo <code>solicita_impressao_*</code> em <code>tb_config</code> e <strong>possui botão Salvar próprio</strong>). O <code>_admin_configuracoes</code>
+passou a usar <code>bloco_aparencia</code> (o <code>campo_modulo</code> foi <strong>removido em 06/09</strong> — edição do módulo é
+exclusiva de <code>/configuracoes</code>); as variáveis <code>t_cor_fundo</code>, <code>t_cor_titulo</code> e
+<code>t_texto_header</code> (usadas no cabeçalho) permanecem em <code>mostrar_tela</code>. Código morto (<code>_btn_cls</code>,
+<code>_btn_style</code>) removido. Regra de uniformidade e prefixos cobertos por <code>test/test_tema.py</code>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../analise_mod_auditoria/" class="btn btn-neutral float-left" title="Auditoria"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../modulos/intranet/" class="btn btn-neutral float-right" title="Intranet (núcleo)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../analise_mod_auditoria/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../modulos/intranet/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Riscos de IA/ML - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Riscos de IA/ML";
+        var mkdocs_page_input_path = "seguranca/riscos_ia_ml.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Riscos de IA/ML</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Segurança</li>
+      <li class="breadcrumb-item active">Riscos de IA/ML</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="ai-ml-security-risks-intranet-modular">AI / ML Security Risks — Intranet Modular<a class="headerlink" href="#ai-ml-security-risks-intranet-modular" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Risks of language models and machine learning applied to the system: prompt injection, data exfiltration/leakage, jailbreak, data poisoning and adversarial defense. Based on Microsoft Learn "Fundamentals of AI security".</p>
+</blockquote>
+<hr />
+<h1 id="riscos-de-seguranca-em-ia-aprendizado-de-maquina-intranet-modular">Riscos de Segurança em IA / Aprendizado de Máquina — Intranet Modular<a class="headerlink" href="#riscos-de-seguranca-em-ia-aprendizado-de-maquina-intranet-modular" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Riscos de modelos de linguagem e aprendizado de máquina aplicados ao sistema: injeção de comandos (prompt injection), vazamento/exfiltração de dados, jailbreak, envenenamento de dados e defesa adversarial. Baseado no módulo "Fundamentos de IA de segurança" da Microsoft Learn.</p>
+</blockquote>
+<h2 id="contexto">Contexto<a class="headerlink" href="#contexto" title="Permanent link">&para;</a></h2>
+<p>A intranet é um sistema <strong>multiusuário com dados sensíveis</strong> (gestão de usuários,
+auditoria, documentos). Qualquer integração futura com <strong>modelos de linguagem</strong>
+(chat, sumarização, busca semântica, assistentes administrativos) ou <strong>modelos
+de ML</strong> (classificação, OCR/visão, recomendação) amplia a superfície de ataque.
+Este documento cataloga os riscos e as <strong>defesas</strong> a aplicar.</p>
+<p>Referência principal: <strong>Microsoft Learn — Fundamentos de segurança de IA</strong>
+(https://learn.microsoft.com/pt-br/training/modules/fundamentals-ai-security/).</p>
+<h2 id="riscos-de-modelos-de-linguagem-llm">Riscos de modelos de linguagem (LLM)<a class="headerlink" href="#riscos-de-modelos-de-linguagem-llm" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Risco</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Impacto no projeto</th>
+<th style="text-align: left;">Defesa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><strong>Prompt Injection (injeção de comandos)</strong></td>
+<td style="text-align: left;">O usuário (ou conteúdo externo) insere instruções no texto que "sequestram" o modelo, fazendo-o ignorar regras e executar ações não autorizadas</td>
+<td style="text-align: left;">Modelo pode expor o system prompt, alterar dados ou acionar comandos</td>
+<td style="text-align: left;">Tratar todo input como <strong>dado</strong>, não instrução; separar instruções de dados; permitlist de comandos; <strong>confirmação humana</strong> antes de ações</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><strong>Exfiltração / vazamento de dados</strong></td>
+<td style="text-align: left;">Modelo devolve dados de outros usuários, do system prompt ou de dados de treinamento (memória)</td>
+<td style="text-align: left;">Vazamento de dados pessoais (LGPD)</td>
+<td style="text-align: left;">Menor privilégio; <strong>não incluir dados sensíveis</strong> no contexto se desnecessário; tokenização/mascaramento</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;"><strong>Jailbreak</strong></td>
+<td style="text-align: left;">Prompts criativos (personas, "modo dev") contornam os filtros de conteúdo</td>
+<td style="text-align: left;">Saída inadequada/ilegal</td>
+<td style="text-align: left;">Filtros de entrada e saída em camadas; monitoramento; rate limiting</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><strong>Injeção indireta</strong></td>
+<td style="text-align: left;">Conteúdo externo (documento, URL, e-mail) carregado no contexto carrega instrução maliciosa</td>
+<td style="text-align: left;">Documentos do módulo de PDF/blog podem manipular o modelo</td>
+<td style="text-align: left;">Marcar conteúdo externo como <strong>dado não confiável</strong> (delimitadores); não executar instruções vindas de documentos</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;"><strong>Alucinação</strong></td>
+<td style="text-align: left;">Resposta factualmente errada apresentada como verdade</td>
+<td style="text-align: left;">Decisões administrativas erradas</td>
+<td style="text-align: left;">Citar fontes; restringir domínio; revisão humana</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;"><strong>Prompt poisoning / data poisoning</strong></td>
+<td style="text-align: left;">Dados maliciosos no contexto/treinamento mudam o comportamento do modelo</td>
+<td style="text-align: left;">Modelo enviesado/instrumentalizado</td>
+<td style="text-align: left;">Validar fontes de dados; trust boundaries; re-treino controlado</td>
+</tr>
+</tbody>
+</table>
+<h2 id="riscos-de-modelos-de-ml-classico-visaoocrclassificacao">Riscos de modelos de ML clássico (visão/OCR/classificação)<a class="headerlink" href="#riscos-de-modelos-de-ml-classico-visaoocrclassificacao" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Risco</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Defesa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Ataques adversariais (adversarial examples)</strong></td>
+<td style="text-align: left;">Perturbações imperceptíveis em imagens/texto enganam o modelo (ex. OCR erra um valor em PDF)</td>
+<td style="text-align: left;">Validação cruzada com regras de negócio; revisão humana em valores críticos</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Fuga de dados de treinamento</strong></td>
+<td style="text-align: left;">Modelo memoriza e reproduz dados de treinamento sensíveis</td>
+<td style="text-align: left;">Não treinar com dados pessoais reais; anonimização</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Espelhamento (model inversion)</strong></td>
+<td style="text-align: left;">Inferir dados de treino a partir de saídas</td>
+<td style="text-align: left;">Restringir API de predição; rate limiting</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Robustez</strong></td>
+<td style="text-align: left;">Entradas fora da distribuição causam falhas silenciosas</td>
+<td style="text-align: left;">Testes com dados adversarial; limites de confiança</td>
+</tr>
+</tbody>
+</table>
+<h2 id="defesa-adversarial-regras-obrigatorias-de-implementacao">Defesa Adversarial — regras obrigatórias de implementação<a class="headerlink" href="#defesa-adversarial-regras-obrigatorias-de-implementacao" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Nunca executar comandos/operações</strong> baseadas em saída de IA sem confirmação
+   humana (toda ação destrutiva ou alteração de dados exige o usuário confirmar).</li>
+<li><strong>Menor privilégio</strong>: o modelo/IA tem acesso restrito, sem credenciais
+   administrativas nem acesso direto a bancos de outros módulos.</li>
+<li><strong>Escapar/sanitizar a entrada</strong> antes de interpolar em prompt — o conteúdo do
+   usuário é tratado como dado entre delimitadores, nunca como instrução.</li>
+<li><strong>Filtro de conteúdo na saída</strong> antes de renderizar (ex.: reutilizar o padrão
+   <code>nh3</code> do projeto para HTML gerado por IA).</li>
+<li><strong>Auditar e logar interações</strong> com IA sem gravar dados pessoais nos logs
+   (padrão loguru do projeto).</li>
+<li><strong>Rate limiting</strong> nas chamadas ao modelo para mitigar scraping/envenenamento.</li>
+<li><strong>Não incluir dados sensíveis no contexto</strong> se a tarefa não precisar deles.</li>
+<li><strong>Configurabilidade</strong> (regra do projeto): limites, filtros e tempos como chaves
+   em <code>tb_config</code>, não fixados em código.</li>
+</ol>
+<h2 id="checklist-de-aceite-para-qualquer-integracao-de-iaml">Checklist de aceite para qualquer integração de IA/ML<a class="headerlink" href="#checklist-de-aceite-para-qualquer-integracao-de-iaml" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Entrada do usuário tratada como dado, não instrução (anti prompt injection).</li>
+<li>[ ] Ações sensíveis exigem confirmação humana.</li>
+<li>[ ] Acesso do modelo restrito por perfil/permissões (menor privilégio).</li>
+<li>[ ] Sem dados pessoais/detalhados nos logs de IA.</li>
+<li>[ ] Saída filtrada antes de renderização (XSS/saneamento).</li>
+<li>[ ] Rate limiting e monitoramento configurados.</li>
+<li>[ ] Retenção/logs de auditoria das interações configurável.</li>
+</ul>
+<p>Veja <a href="../ferramentas_de_seguranca/">Ferramentas de Segurança</a>,
+<a href="../../analise_de_risco/">Análise de Risco</a> e o subagente
+<code>.opencode/agent/qa_seguranca.md</code>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../ferramentas_de_seguranca/" class="btn btn-neutral float-left" title="Ferramentas de Segurança"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../testes_casos/" class="btn btn-neutral float-right" title="Casos">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../ferramentas_de_seguranca/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../testes_casos/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

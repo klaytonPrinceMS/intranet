@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Relatório de Segurança (06/09/2026) - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Relat\u00f3rio de Seguran\u00e7a (06/09/2026)";
+        var mkdocs_page_input_path = "testes_relatorios/seguranca_2026-09-06.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Relatório de Segurança (06/09/2026)</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Testes</li>
+      <li class="breadcrumb-item active">Relatório de Segurança (06/09/2026)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="security-scan-report-intranet-modular-2026-09-06">Security Scan Report — Intranet Modular (2026-09-06)<a class="headerlink" href="#security-scan-report-intranet-modular-2026-09-06" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>First DevSecOps scan of the Intranet Modular codebase: bandit, semgrep, pip-audit, safety and gitleaks. 0 high-severity findings; 24 medium (bandit) and 31 (semgrep) findings analyzed — most are low/structural or false positives from internal constants; 1 real secret-in-code finding (default Grafana credentials).</p>
+</blockquote>
+<hr />
+<h1 id="relatorio-de-varredura-de-seguranca-intranet-modular-06092026">Relatório de Varredura de Segurança — Intranet Modular (06/09/2026)<a class="headerlink" href="#relatorio-de-varredura-de-seguranca-intranet-modular-06092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Primeira varredura DevSecOps do código do Intranet Modular: bandit, semgrep, pip-audit, safety e gitleaks. 0 achados de alta severidade; 24 médios (bandit) e 31 (semgrep) analisados — a maioria baixa/estrutural ou falso positivo de constantes internas; 1 achado real de segredo em código (credenciais padrão do Grafana).</p>
+</blockquote>
+<h2 id="escopo-e-ferramentas">Escopo e ferramentas<a class="headerlink" href="#escopo-e-ferramentas" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Data</strong>: 06/09/2026</li>
+<li><strong>Ambiente</strong>: Linux, Python 3.12.4, venv <code>.venv</code></li>
+<li><strong>Alvo</strong>: <code>main.py</code>, <code>mod_intranet</code>, <code>mod_auditoria</code>, <code>mod_blog</code>,
+  <code>mod_edit_pdf</code>, <code>mod_gest_cad_usuario</code>, <code>mod_renomear_empenho</code>,
+  <code>mod_solicita_impressao</code>, <code>requirements.txt</code>, histórico git.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Ferramenta</th>
+<th style="text-align: left;">Versão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">bandit</td>
+<td style="text-align: left;">1.9.4</td>
+</tr>
+<tr>
+<td style="text-align: left;">semgrep</td>
+<td style="text-align: left;">1.176.1</td>
+</tr>
+<tr>
+<td style="text-align: left;">pip-audit</td>
+<td style="text-align: left;">2.10.1</td>
+</tr>
+<tr>
+<td style="text-align: left;">safety</td>
+<td style="text-align: left;">3.8.1</td>
+</tr>
+<tr>
+<td style="text-align: left;">gitleaks</td>
+<td style="text-align: left;">8.24.3</td>
+</tr>
+</tbody>
+</table>
+<h2 id="resultados-bandit">Resultados — bandit<a class="headerlink" href="#resultados-bandit" title="Permanent link">&para;</a></h2>
+<p>Total: <strong>0 High · 24 Medium · 86 Low</strong> (18.675 linhas de código).</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Severidade</th>
+<th style="text-align: left;">Quantidade</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">High</td>
+<td style="text-align: left;">0</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">Medium</td>
+<td style="text-align: left;">22</td>
+<td style="text-align: left;"><code>B608</code> SQL injection (string-based query)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Medium</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><code>B310</code> urlopen com scheme não auditado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Low</td>
+<td style="text-align: left;">~60</td>
+<td style="text-align: left;"><code>B110</code> try/except pass silencioso</td>
+</tr>
+<tr>
+<td style="text-align: left;">Low</td>
+<td style="text-align: left;">restante</td>
+<td style="text-align: left;">sugestões de estilo/confiança</td>
+</tr>
+</tbody>
+</table>
+<h3 id="analise-dos-achados-medios">Análise dos achados médios<a class="headerlink" href="#analise-dos-achados-medios" title="Permanent link">&para;</a></h3>
+<p><strong>B608 (SQL injection)</strong> — <code>../../mod_auditoria/db_manipulador.py</code>, <code>mod_blog</code>,
+<code>mod_edit_pdf</code>, <code>mod_gest_cad_usuario</code>, <code>mod_intranet/repositorio.py</code>,
+<code>mod_renomear_empenho</code>, <code>mod_solicita_impressao</code>.</p>
+<p>Status: <strong>falso positivo / baixo risco na prática</strong>. Os valores são sempre
+passados por parâmetro <code>?</code>; apenas <strong>nomes de tabela/coluna</strong> são interpolados e
+vêm de funções/constantes internas (<code>_nome_tabela()</code>, <code>PRAGMA</code>, dicionários
+fixos), nunca de input do usuário. Exemplos confirmados:
+<code>mod_auditoria/manipulador_bd.py:148</code>, <code>:168</code>, <code>:173</code> e
+<code>mod_intranet/manipulador_bd.py:55-70</code>.</p>
+<p>Ação recomendada: manter a regra (nunca interpolar input de usuário) e, se
+desejado, adicionar <code># nosec B608</code> com comentário nas linhas de tabela interna
+para reduzir ruído.</p>
+<p><strong>B310 (urlopen)</strong> — <code>mod_intranet/grafana_sync.py:112</code> e <code>:136</code>.</p>
+<p>Status: <strong>baixo risco</strong>. A URL vem de <code>obter_grafana_url()</code> (env <code>GRAFANA_URL</code>
+ou chave <code>grafana_url</code> em <code>tb_config</code>), controlada por <strong>administrador</strong>, não
+pelo usuário final. Ainda assim, <code>urllib</code> aceita <code>file://</code> — um admin com
+config corrompida poderia fazer leitura de arquivo local.</p>
+<p>Ação recomendada: <strong>validar o scheme</strong> (exigir <code>http</code>/<code>https</code>) em
+<code>obter_grafana_url()</code> — hardening de baixo custo.</p>
+<h2 id="resultados-semgrep">Resultados — semgrep<a class="headerlink" href="#resultados-semgrep" title="Permanent link">&para;</a></h2>
+<p>Total: <strong>31 resultados</strong> (<code>--config auto</code>).</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Regra</th>
+<th style="text-align: left;">Qtd</th>
+<th style="text-align: left;">Análise</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>sqlalchemy-execute-raw-query</code></td>
+<td style="text-align: left;">21</td>
+<td style="text-align: left;">Queries SQLAlchemy <code>text()</code>/raw; valores parametrizados — revisar caso a caso</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>formatted-sql-query</code></td>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">SQL com f-string; mesmo padrão do B608 — nomes internos</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>dynamic-urllib-use-detected</code></td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Mesmos pontos do B310 (<code>grafana_sync.py:112,136</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Status: os achados de SQL seguem o mesmo padrão do bandit (nomes de tabela
+internos, valores por parâmetro). Ação: revisar cada <code>sqlalchemy-execute-raw-query</code>
+para confirmar uso de bind params; aplicar guarda de scheme no urllib.</p>
+<h2 id="resultados-pip-audit-safety">Resultados — pip-audit / safety<a class="headerlink" href="#resultados-pip-audit-safety" title="Permanent link">&para;</a></h2>
+<p><code>pip-audit -r requirements.txt</code>: <strong>nenhuma vulnerabilidade conhecida</strong>.</p>
+<p><code>safety check</code>: sem achados bloqueantes (executado via venv).</p>
+<h2 id="resultados-gitleaks">Resultados — gitleaks<a class="headerlink" href="#resultados-gitleaks" title="Permanent link">&para;</a></h2>
+<p><strong>1 achado real</strong> + 36 falsos positivos:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Arquivo</th>
+<th style="text-align: left;">Análise</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Credenciais padrão <code>master:master</code></strong></td>
+<td style="text-align: left;"><code>docker/verify-credentials.sh:66</code></td>
+<td style="text-align: left;">Script de verificação do Docker/Grafana usa basic auth com usuário/senha padrão <code>master:master</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>generic-api-key</code> (×36)</td>
+<td style="text-align: left;"><code>site/search/search_index.json</code> e <code>search/search_index.json</code></td>
+<td style="text-align: left;"><strong>Falsos positivos</strong> — arquivos de build do mkdocs (texto HTML/JSON gerado)</td>
+</tr>
+</tbody>
+</table>
+<p>Ação recomendada: trocar credenciais padrão do Grafana em produção
+(<code>docker/verify-credentials.sh</code> é para ambiente local de observabilidade);
+configurar <code>.gitignore</code> para <code>site/</code> se não for publicado.</p>
+<h2 id="acoes-recomendadas-priorizadas">Ações recomendadas (priorizadas)<a class="headerlink" href="#acoes-recomendadas-priorizadas" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Alta</strong>: trocar credenciais padrão do Grafana fora de dev
+   (<code>docker/verify-credentials.sh</code>); validar scheme http/https em
+   <code>obter_grafana_url()</code>.</li>
+<li><strong>Média</strong>: revisar os 21 <code>sqlalchemy-execute-raw-query</code> para confirmar bind
+   params; documentar as regras de "nomes de tabela internos" como aceitas.</li>
+<li><strong>Baixa</strong>: reduzir ruído B608 com <code># nosec</code> justificado; substituir
+   <code>except: pass</code> silenciosos por loguru.warning (padrão do projeto); adicionar
+   <code>site/</code> ao <code>.gitignore</code>.</li>
+</ol>
+<h2 id="proximos-passos">Próximos passos<a class="headerlink" href="#proximos-passos" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Adicionar esta rotina ao fluxo de toda alteração (subagente <code>qa_seguranca</code>).</li>
+<li>Rodar periodicamente (pré-release): <code>bandit</code>, <code>semgrep</code>, <code>pip-audit</code>, <code>gitleaks</code>.</li>
+<li>Integrar <code>k6</code> para carga quando houver endpoints críticos.</li>
+<li>Documentar novas varreduras em <code>docs/testes_relatorios/</code>.</li>
+</ul>
+<p>Veja <a href="../../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a> e
+<a href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../" class="btn btn-neutral float-left" title="Relatórios"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../testes_playwright/" class="btn btn-neutral float-right" title="E2E com Playwright">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../testes_playwright/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

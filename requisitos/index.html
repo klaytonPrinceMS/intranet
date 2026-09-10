@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Requisitos do Sistema - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Requisitos do Sistema";
+        var mkdocs_page_input_path = "requisitos.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Requisitos do Sistema</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Documentação Técnica</li>
+      <li class="breadcrumb-item active">Requisitos do Sistema</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="intranet-modular-system-requirements">Intranet Modular — System Requirements<a class="headerlink" href="#intranet-modular-system-requirements" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Requirements audit of the Intranet Modular: technical requirements to run the system (Linux/Windows host, Python 3.12, NiceGUI 3.15 with local Tailwind, SQLite WAL, APScheduler, nh3, PDF libraries, bcrypt, loguru, MkDocs <code>readthedocs</code>) PLUS the functional requirements per module and the non-functional requirements (security, persistence, local CSS frameworks, loguru, try/except, configurability without restart, responsiveness) — each one with its REAL status verified against the executable code (implemented / partial / not implemented). Nothing aspirational.</p>
+</blockquote>
+<hr />
+<h1 id="intranet-modular-requisitos-do-sistema">Intranet Modular — Requisitos do Sistema<a class="headerlink" href="#intranet-modular-requisitos-do-sistema" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Auditoria de requisitos da Intranet Modular: requisitos técnicos para rodar o sistema (hospedeiro Linux/Windows, Python 3.12, NiceGUI 3.15 com Tailwind local, SQLite WAL, APScheduler, nh3, bibliotecas de PDF, bcrypt, loguru, MkDocs <code>readthedocs</code>) MAIS os requisitos funcionais por módulo e os não funcionais (segurança, persistência, frameworks CSS locais, loguru, try/except, configurabilidade sem restart, responsividade) — cada um com o status REAL verificado no código executável (implementado/parcial/não implementado). Nada aspiracional.</p>
+</blockquote>
+<h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#requisitos-tecnicos-ambiente">Requisitos técnicos (ambiente)</a></li>
+<li><a href="#requisitos-funcionais-por-modulo-status-real">Requisitos funcionais por módulo (status real)</a></li>
+<li><a href="#requisitos-nao-funcionais-status-real">Requisitos não funcionais (status real)</a></li>
+<li><a href="#diagramas">Diagramas</a></li>
+<li><a href="#fluxo-de-uso">Fluxo de uso (login → navegação → ações)</a></li>
+<li><a href="#modelo-de-dados">Modelo de dados (erDiagram)</a></li>
+<li><a href="#estrutura-de-classes">Estrutura de classes dos módulos (classDiagram)</a></li>
+</ol>
+<blockquote>
+<p>Em conflito entre documentação e código, prevalece o <strong>código executável</strong> (<code>requirements.txt</code>, <code>mkdocs.yml</code>, <code>main.py</code>, <code>mod_*/</code>). Status verificados por leitura do código em 06/09/2026.</p>
+</blockquote>
+<h2 id="requisitos-tecnicos-ambiente">Requisitos técnicos (ambiente)<a class="headerlink" href="#requisitos-tecnicos-ambiente" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Categoria</th>
+<th style="text-align: left;">Exigência</th>
+<th style="text-align: center;">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">SO</td>
+<td style="text-align: left;">Linux (recomendado) ou Windows</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Python</td>
+<td style="text-align: left;"><strong>3.12</strong></td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Framework</td>
+<td style="text-align: left;"><strong>NiceGUI 3.15</strong> (<code>ui.run</code> com <code>reload=False</code>, <code>show=False</code>, porta <code>8080</code> — <code>main.py:471-478</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Banco</td>
+<td style="text-align: left;">SQLite (stdlib) em <strong>modo WAL</strong> (<code>PRAGMA journal_mode=WAL</code> em toda conexão)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">UI</td>
+<td style="text-align: left;">Tailwind CSS servido localmente pelo NiceGUI (<strong>sem CDN</strong>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Internet</td>
+<td style="text-align: left;">necessária apenas na instalação das dependências; em operação, o sistema roda <strong>sem internet</strong> (rede interna)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">OCR (opcional)</td>
+<td style="text-align: left;">binário <strong>Tesseract</strong> no SO (<code>apt install tesseract-ocr</code>, <code>por+eng</code>) — usado no fallback de extração de empenhos escaneados</td>
+<td style="text-align: center;">⚠️ Opcional (degrada para quarentena sem ele)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencias-python">Dependências Python<a class="headerlink" href="#dependencias-python" title="Permanent link">&para;</a></h3>
+<p>Fonte: <code>requirements.txt</code> (raiz).</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Dependência</th>
+<th style="text-align: left;">Versão mínima</th>
+<th style="text-align: left;">Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>nicegui</code></td>
+<td style="text-align: left;"><code>3.15.0</code></td>
+<td style="text-align: left;">framework web (páginas, componentes, Tailwind local)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>apscheduler</code></td>
+<td style="text-align: left;"><code>&gt;=3.10,&lt;4</code></td>
+<td style="text-align: left;">agendadores (backups, cleanups, monitor de pasta, poda)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>nh3</code></td>
+<td style="text-align: left;"><code>&gt;=0.2</code></td>
+<td style="text-align: left;">sanitização HTML do Blog (gravação e renderização)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pdfplumber</code></td>
+<td style="text-align: left;"><code>&gt;=0.11</code></td>
+<td style="text-align: left;">extração de texto de PDF (fallback)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pikepdf</code></td>
+<td style="text-align: left;"><code>&gt;=9.0</code></td>
+<td style="text-align: left;">manipulação PDF (metadados, redução leve)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pymupdf</code></td>
+<td style="text-align: left;"><code>&gt;=1.24</code></td>
+<td style="text-align: left;">extração de texto, contagem de páginas, rasterização</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pytesseract</code></td>
+<td style="text-align: left;"><code>&gt;=0.3</code></td>
+<td style="text-align: left;">OCR de PDFs escaneados (requer binário <code>tesseract</code> no SO)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pypdf</code></td>
+<td style="text-align: left;"><code>&gt;=5.0</code></td>
+<td style="text-align: left;">manipulação PDF (redução leve/fallback)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bcrypt</code></td>
+<td style="text-align: left;"><code>&gt;=5.0.0</code></td>
+<td style="text-align: left;">hash de senhas</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>loguru</code></td>
+<td style="text-align: left;"><code>&gt;=0.7.3</code></td>
+<td style="text-align: left;">observabilidade/logs por módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mkdocs</code></td>
+<td style="text-align: left;"><code>&gt;=1.6.1</code></td>
+<td style="text-align: left;">build da documentação embutida</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mkdocs-material</code></td>
+<td style="text-align: left;"><code>&gt;=9.7.7</code></td>
+<td style="text-align: left;">presente no requirements; <strong>o tema ativo é <code>readthedocs</code></strong> (ver <code>mkdocs.yml</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="armazenamento">Armazenamento<a class="headerlink" href="#armazenamento" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>SQLite</strong> (módulo <code>sqlite3</code> da stdlib) — sem servidor externo de banco.</li>
+<li><strong>Modo WAL obrigatório</strong>: cada conexão executa <code>PRAGMA journal_mode=WAL</code> (+ <code>synchronous=NORMAL</code> no central/auditoria).</li>
+<li><strong>Um banco por módulo</strong> na raiz do projeto: <code>db_mod_intranet.db</code>, <code>db_mod_gest_cad_usuario.db</code>, <code>db_mod_blog.db</code>, <code>db_mod_edit_pdf.db</code>, <code>db_mod_renomear_empenho.db</code>, <code>db_mod_auditoria.db</code>, <code>db_mod_solicita_impressao.db</code>.</li>
+<li>Pastas de arquivos: na raiz — <code>assets/</code> (+ <code>assets/css/frameworks/</code>), <code>backup/</code>, <code>logs/</code> (loguru), <code>site/</code> (docs compiladas); <strong>dentro dos módulos</strong> — <code>mod_edit_pdf/editorPDF/</code>, <code>mod_renomear_empenho/doc/</code> (empenhos), <code>mod_renomear_empenho/quarentena/</code>, <code>mod_renomear_empenho/organizadorPasta/</code>, <code>mod_renomear_empenho/downloads/</code>, <code>mod_renomear_empenho/datahora_*PDF/</code>, <code>mod_renomear_empenho/tmp_ferramentas_pdf/</code>, <code>mod_solicita_impressao/solicitacaoImpressao/</code>.</li>
+</ul>
+<h3 id="rede-e-interface">Rede e interface<a class="headerlink" href="#rede-e-interface" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Tailwind CSS local</strong>: o NiceGUI embute/serve o <code>tailwindcss.min.js</code> localmente — exigência para rede interna.</li>
+<li><strong>Frameworks CSS embarcados</strong>: Bulma, DaisyUI, Pico e Picnic em <code>assets/css/frameworks/</code>, servidos localmente em <code>/css/frameworks/*</code> (sem CDN) via <code>tema_css.montar_rotas_static()</code> (<code>main.py:81-85</code>); injeção <strong>por página</strong> via <code>tema_css.injetar_framework()</code> — nunca global.</li>
+<li><strong>Porta</strong>: <code>8080</code> (<code>main.py:476</code>).</li>
+<li><strong>Documentação</strong>: servida na mesma porta em <code>/documentacao</code> (build MkDocs <code>docs/</code> → <code>site/</code>, montado pela própria aplicação — <code>mod_intranet/documentacao.py</code>).</li>
+</ul>
+<h2 id="requisitos-funcionais-por-modulo-status-real">Requisitos funcionais por módulo (status real)<a class="headerlink" href="#requisitos-funcionais-por-modulo-status-real" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Numeração herdada do roadmap (<code>analise.md</code>/<code>PLANO.md</code>); o código executável prevalece. Status verificados no código em 06/09/2026.</p>
+</blockquote>
+<h3 id="nucleo-mod_intranet-resumo-detalhe-em-analise_mod_intranetmd">Núcleo (<code>mod_intranet</code>) — resumo (detalhe em <code>analise_mod_intranet.md</code>)<a class="headerlink" href="#nucleo-mod_intranet-resumo-detalhe-em-analise_mod_intranetmd" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Login bcrypt + sessão revogável amarrada a cookie (<code>tb_sessoes</code> com IP/UA/dispositivo/MAC)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Guarda de página <code>pagina_restrita</code> (revalida usuário, sessão e permissão a cada request)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Troca obrigatória de senha no 1º acesso (diálogo persistente) + "Meu Perfil" (dados + senha)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cadastro de módulos em <code>tb_modulos</code> (nome/ícone/rota/ordem/ativo; indispensáveis não desativáveis)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">URL (slug) de página editável com re-registro ao vivo (<code>rotas_modulos</code>) — sem restart</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Painel central <code>/configuracoes</code> (aparência, textos, e-mail/SMTP, módulos, observabilidade, documentação)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Backups por módulo (APScheduler, intervalo individual, retenção 10 cópias)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Observabilidade loguru (arquivo por módulo, rotação/retenção, console <code>auto/sempre/nunca</code>, bridge OTel→Loki)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Telemetria OTel (stack local via Docker ou remota; Grafana com sync de credenciais)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Documentação embutida <code>/documentacao</code> (build MkDocs no boot; falha nunca derruba o servidor)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Favicon customizável por upload (arquivo vivo, cache-busting, sem restart)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">CSS frameworks embarcados locais (<code>/css/frameworks/*</code>, injeção por página)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="gestao-de-usuarios-mod_gest_cad_usuario">Gestão de Usuários (<code>mod_gest_cad_usuario</code>)<a class="headerlink" href="#gestao-de-usuarios-mod_gest_cad_usuario" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Soft CRUD completo (criar, editar, renomear, bloquear/restaurar, excluir lógico com motivo, excluir definitivo LGPD)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Perfis globais (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) + papéis por módulo (<code>tb_acesso_usuario</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Senha provisória com troca obrigatória; política de tamanho mínimo configurável (<code>usuarios_senha_min</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Nome de exibição/social (Decreto 8.727/2016) usado como tratamento</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Busca instantânea em todos os campos + palavras-chave de estado (provisório/bloqueado/sessão/excluído)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Lista paginada (10/20/50/100), filtros situação/perfil, ordenação A→Z/numérica, exibição compacta com tooltip</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Duplicar usuário (herda perfil global + acessos por módulo)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Sessões ativas: visualização (IP/dispositivo/MAC), encerramento individual/em massa, histórico por usuário</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Limpeza cruzada LGPD na exclusão definitiva (Blog, editorPDF, empenhos anonimizados; auditoria preservada)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Proteções: vedado agir sobre a própria conta; <code>master</code> não renomeável/excluível; último admin geral protegido (RF-26)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Aba Administração: aparência (<code>usuarios_*</code> com padrão próprio do módulo) + <code>usuarios_senha_min</code></td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Geração ALEATÓRIA de senha provisória pelo sistema</td>
+<td style="text-align: center;">❌ Não implementado (admin digita a senha)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="blog-mod_blog">Blog (<code>mod_blog</code>)<a class="headerlink" href="#blog-mod_blog" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">CRUD de postagens com soft delete + publicar/despublicar/republicar</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Sanitização nh3 na gravação E na renderização, com whitelist configurável (<code>blog_tags_permitidas</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Aceita <code>http</code>/<code>https</code>, URLs relativas e <code>data:</code> para imagens (<code>url_schemes</code>/<code>url_relative</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Formatação rica: títulos centralizados/negrito, imagens à esquerda com largura configurável, texto justificado</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Markdown leve (<code>#</code>, <code>**negrito**</code>, <code>- item</code>) convertido para HTML</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Editor com pré-visualização (criar e editar)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Modo de exibição histórico OU publicação única (config local <code>blog_modo_exibicao</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Gestão de postagens despublicadas com republicar (aba Administração)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Somente-leitura para <code>comum</code> (UI esconde + backend valida em toda escrita)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Comentários (só admins escrevem; leitura para todos)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Feed do Blog no dashboard <code>/</code> (RF-09)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="editor-de-pdf-mod_edit_pdf">Editor de PDF (<code>mod_edit_pdf</code>)<a class="headerlink" href="#editor-de-pdf-mod_edit_pdf" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Upload múltiplo com pré-checagem do lote e recusas nominais com motivo</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operações: reduzir (leve/agressivo), juntar, cortar, dividir (4 modos), verificar, ZIP, excluir</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Seleção ordenada (badges "#") respeitada pelo Juntar/Reduzir/Cortar</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cotas em 4 níveis (global, por usuário, por lote, estoque de uploads) — todas configuráveis sem restart</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Expiração automática (job 1 min, critério mtime; devolve cota e audita) + "Expirar agora"</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Auditoria com SHA-256 (upload e operações; hashes de origem/destino)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Menu de contexto por linha (Baixar/Excluir) + downloads individuais</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Aba Administração (cotas, limites, textos da tela, aparência, manutenção) — só admin geral</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="renomear-empenhos-mod_renomear_empenho">Renomear Empenhos (<code>mod_renomear_empenho</code>)<a class="headerlink" href="#renomear-empenhos-mod_renomear_empenho" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Extração de texto tolerante a escaneados (<code>pymupdf → pdfplumber → OCR → pikepdf</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Regex dinâmicas persistidas (<code>tb_regex_regras</code>, com <code>campo_destino</code> para FTS) — sem restart</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Campos de busca configuráveis por regex (<code>tb_campos_busca</code>: ficha/empenho/parcela/ano…)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Tipos especiais EC/EE/EG/AE detectados pelo conteúdo e nomeados (<code>EC_0024.pdf</code>…)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Renomeação sequencial com template configurável (<code>{contador}</code>, <code>{empenho}</code>, <code>{parcela}</code>…)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Monitor multi-pasta (local + rede/UNC), automático (RF-40, intervalo configurável) + manual</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Quarentena com motivo e reprocessamento (regex aplicada na hora)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Pesquisa FTS5 (32 colunas, RF-41) com fallback LIKE</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Organizador físico (~200 pág/pasta, 4 pastas/caixa configuráveis) + capas/matriz + validação (RF-44)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Ferramentas de PDF embutidas: cortar/mesclar/reduzir (RF-45, reusa <code>mod_edit_pdf</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Solicitações comum→admin (e-mail SMTP central ou ZIP; lotes; recusa com motivo) (RF-39/RF-003)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Navegação protegida anti-travessia (só PDFs, raízes monitoradas + organizador)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Trilha por arquivo (<code>tb_arquivos_auditoria</code> + <code>tb_eventos_arquivos</code>) com SHA-256</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Tipo especial "EX" (citado na referência standalone)</td>
+<td style="text-align: center;">❌ Não portado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="auditoria-mod_auditoria">Auditoria (<code>mod_auditoria</code>)<a class="headerlink" href="#auditoria-mod_auditoria" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Banco exclusivo <code>db_mod_auditoria.db</code> com UMA TABELA POR MÓDULO (<code>tb_auditoria_&lt;modulo&gt;</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Descoberta automática de módulos produtores (navegação dinâmica por tabela)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Filtros: usuário (LIKE), módulo/tabela, ação (categorias coloridas + texto livre), hora, intervalo de datas</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Paginação server-side (<code>LIMIT ? OFFSET ?</code>, <code>auditoria_limite</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Exportação CSV da página corrente (respeita campos/ordem do auditor)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Campos/ordem de exibição por auditor (persistido em <code>auditoria_campos:&lt;usuario&gt;</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cores por categoria de ação (<code>CORES_ACAO</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Poda automática diária (<code>auditoria_retencao_dias</code>, default 90 — LGPD)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Migração idempotente do legado central (<code>migrar_dados_existentes</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Aba Observabilidade (dashboards Grafana) quando a stack OTel está no ar</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Acesso exclusivo do <code>administrador_geral</code> (RF-35) com <code>acesso_negado</code></td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="solicitacao-de-impressao-mod_solicita_impressao">Solicitação de Impressão (<code>mod_solicita_impressao</code>)<a class="headerlink" href="#solicitacao-de-impressao-mod_solicita_impressao" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Upload múltiplo (até 10 PDFs) com rascunhos expiráveis e contagem regressiva</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Contagem de páginas (PyMuPDF, fallback pdfplumber) + fórmula de contabilização exata</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cotas mensais hierárquicas (secretaria → setor; excedente permitido e marcado)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Consumo descontado somente na impressão confirmada; reset manual (e virada de mês por <code>mes_referencia</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Autorização por responsável vinculado (pode ser usuário <code>comum</code>) ou admin do módulo</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Fluxo de status completo (pendente → aguardando → autorizado → impresso; recusado/cancelado)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Impressão dual: JS <code>printSolicitacao</code> (impressora padrão A4/A3) ou download com marca d'água</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Marca d'água configurável (texto com placeholders, posição, opacidade, fonte, cor, rotação)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cadastros: secretarias, setores, responsáveis, cotas (relatório mensal com barras)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Configurações: impressoras padrão, aviso de presença, prazos de rascunho/exclusão, padrões do formulário</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Limpeza automática (job 1 min): rascunhos vencidos + arquivos de impressos vencidos</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Notificação por e-mail de eventos de cota</td>
+<td style="text-align: center;">❌ Não implementado (por design — sem SMTP neste fluxo)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="requisitos-nao-funcionais-status-real">Requisitos não funcionais (status real)<a class="headerlink" href="#requisitos-nao-funcionais-status-real" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: left;">Evidência no código</th>
+<th style="text-align: center;">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Segurança — autenticação</strong></td>
+<td style="text-align: left;">bcrypt (<code>autenticacao.py:294-299</code>); falha de login audita <code>login_falha</code>; usuário bloqueado não entra</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Segurança — sessões revogáveis</strong></td>
+<td style="text-align: left;"><code>cookie_hash</code> sha256+secrets por sessão (<code>registrar_login</code>); guarda revalida <code>sessao_ativa</code> a cada request; bloqueio/exclusão/redefinição derrubam sessões vivas</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Segurança — permissões</strong></td>
+<td style="text-align: left;"><code>validar_acesso_modulo</code> no choke point <code>pagina_restrita</code> + revalidação do papel dentro de cada tela (dupla camada); <code>acesso_negado</code> auditado</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Segurança — XSS</strong></td>
+<td style="text-align: left;">nh3 na gravação e renderização do Blog (whitelist configurável); escape em comentários</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Segurança — anti-travessia</strong></td>
+<td style="text-align: left;"><code>pasta_navegavel</code>/<code>raizes_navegacao</code> no renomeador; <code>_path_real</code> resolve <code>..</code>/<code>~</code></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Segurança — storage_secret</strong></td>
+<td style="text-align: left;">placeholder <code>intranet-secret-2026-mude-isto</code> em <code>main.py:474</code> — <strong>precisa ser trocado em produção</strong></td>
+<td style="text-align: center;">⚠️ Parcial (placeholder)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Persistência SQLite/WAL</strong></td>
+<td style="text-align: left;"><code>PRAGMA journal_mode=WAL</code> em todos os bancos; <code>synchronous=NORMAL</code> no central/auditoria; um banco por módulo</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Postgres</strong></td>
+<td style="text-align: left;">Não há suporte — SQLite apenas (decisão de arquitetura do projeto)</td>
+<td style="text-align: center;">❌ Não aplicável</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Frameworks CSS locais</strong></td>
+<td style="text-align: left;"><code>assets/css/frameworks/</code> servido em <code>/css/frameworks/*</code> (Bulma, DaisyUI, Pico, Picnic — sem CDN); injeção por página via <code>tema_css.injetar_framework()</code></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Loguru padronizado</strong></td>
+<td style="text-align: left;"><code>_FMT</code> com <code>{module}:{function}:{line}</code>; arquivo por módulo (<code>logs/&lt;modulo&gt;_&lt;data&gt;.log</code>); rotação/retenção/compressão; excepthook global</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>try/except (fail-soft)</strong></td>
+<td style="text-align: left;">Handlers de UI e acessos a BD protegidos nos módulos; falhas registradas com loguru; renderização nunca derruba a tela</td>
+<td style="text-align: center;">⚠️ Parcial (pontos legados restantes, ex.: <code>print</code> em fallbacks)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Configurabilidade sem restart</strong></td>
+<td style="text-align: left;">Chaves em <code>tb_config</code> (central) e <code>tb_configuracoes_modulo</code>/<code>tb_config</code> locais; temas, cotas, prazos, pastas, textos e intervalos aplicados a cada leitura; jobs reagendáveis ao vivo</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Responsividade</strong></td>
+<td style="text-align: left;">Grids Tailwind fluidos (<code>grid-cols-1 sm:grid-cols-2 …</code>), telas em área cheia (<code>w-full</code>), cards com <code>flex-wrap</code>/<code>min-w</code> — 360–1440 px</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Desempenho — paginação</strong></td>
+<td style="text-align: left;">Lista de usuários paginada client-side; auditoria com paginação server-side (<code>LIMIT/OFFSET</code> + índices); FTS5 para busca textual</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Desempenho — timers</strong></td>
+<td style="text-align: left;">Editor PDF atualiza a cada 5 s; auditoria a cada 30 s; limpezas a cada 1 min; monitor de empenhos configurável (padrão 60 s)</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Retenção LGPD</strong></td>
+<td style="text-align: left;">Poda diária da auditoria (<code>auditoria_retencao_dias</code>); poda de sessões (<code>sessao_retencao</code>, padrão 50); exclusão definitiva com limpeza cruzada</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Backups</strong></td>
+<td style="text-align: left;">1 job por módulo (intervalo individual <code>backup_horas:&lt;chave&gt;</code>, padrão 12 h), retenção das 10 cópias mais recentes</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Operação sem internet</strong></td>
+<td style="text-align: left;">Tailwind/frameworks locais; sem CDN; documentação embutida</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Auditoria com hash</strong></td>
+<td style="text-align: left;">SHA-256 em operações com arquivos (editor PDF, empenhos, impressão)</td>
+<td style="text-align: center;">✅</td>
+</tr>
+</tbody>
+</table>
+<h2 id="diagramas">Diagramas<a class="headerlink" href="#diagramas" title="Permanent link">&para;</a></h2>
+<h3 id="fluxo-de-uso">Fluxo de uso<a class="headerlink" href="#fluxo-de-uso" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart TD
+    A[Navegador] --&gt;|GET /login| B[Página de Login]
+    B --&gt;|usuário + senha| C[autenticar&lt;br/&gt;bcrypt + usuário ativo?]
+    C --&gt;|falha| B
+    C --&gt;|ok| D[registrar_login&lt;br/&gt;tb_sessoes + cookie_hash]
+    D --&gt; E[Dashboard /&lt;br/&gt;boas-vindas + resumo admin + feed do Blog]
+    E --&gt; F{Menu lateral&lt;br/&gt;módulos liberados}
+    F --&gt; G[/blog]
+    F --&gt; H[/users]
+    F --&gt; I[/edit-pdf]
+    F --&gt; J[/renomear-empenho]
+    F --&gt; K[/solicita-impressao]
+    F --&gt; L[/auditoria&lt;br/&gt;só admin geral]
+    G &amp; H &amp; I &amp; J &amp; K &amp; L --&gt; M[pagina_restrita&lt;br/&gt;revalida usuário + sessão + permissão]
+    M --&gt;|sem permissão| N[acesso_negado + volta ao /]
+    M --&gt;|ok| O[Ações do módulo&lt;br/&gt;CRUD · operações · configurações]
+    O --&gt; P[audit_log&lt;br/&gt;db_mod_auditoria.db&lt;br/&gt;tb_auditoria_&amp;lt;modulo&amp;gt;]
+    O --&gt; Q[notificar&lt;br/&gt;toast com notificacao_timeout]
+    E --&gt;|logout| R[registrar_logout + /login]</code></pre>
+<h3 id="modelo-de-dados">Modelo de dados<a class="headerlink" href="#modelo-de-dados" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>erDiagram
+    tb_config {
+        TEXT chave PK
+        TEXT valor
+    }
+    tb_sessoes {
+        INTEGER id PK
+        TEXT usuario
+        TEXT modulo
+        DATETIME login_timestamp
+        DATETIME logout_timestamp
+        TEXT cookie_hash
+        TEXT ip
+        TEXT user_agent
+        TEXT dispositivo
+        TEXT mac
+    }
+    tb_modulos {
+        INTEGER id PK
+        TEXT chave UK
+        TEXT nome
+        TEXT icone
+        TEXT rota
+        INTEGER ativo
+        INTEGER nativo
+        INTEGER ordem
+    }
+    tb_usuarios {
+        INTEGER id PK
+        TEXT user_nome UK
+        TEXT user_senha
+        TEXT user_email
+        TEXT user_fone
+        TEXT user_perfil
+        INTEGER user_ativo
+        DATETIME data_cadastro
+        INTEGER user_deletado
+        TEXT user_nome_completo
+        TEXT user_motivo_exclusao
+    }
+    tb_acesso_usuario {
+        INTEGER id PK
+        TEXT user_nome FK
+        TEXT modulo_chave
+        TEXT papel
+        TEXT liberado_por
+        DATETIME data_liberacao
+    }
+    tb_postagens {
+        INTEGER id PK
+        TEXT titulo
+        TEXT conteudo
+        TEXT autor
+        DATETIME data_criacao
+        DATETIME data_atualizacao
+        INTEGER ativo
+    }
+    tb_comentarios {
+        INTEGER id PK
+        INTEGER postagem_id FK
+        TEXT autor
+        TEXT conteudo
+        DATETIME data_criacao
+    }
+    tb_arquivos {
+        INTEGER id PK
+        TEXT nome_arquivo
+        TEXT usuario
+        INTEGER tamanho_bytes
+        TEXT operacao
+        DATETIME data_operacao
+        INTEGER ativo
+    }
+    tb_cota_disco {
+        TEXT usuario PK
+        INTEGER total_usado_bytes
+        DATETIME atualizado_em
+    }
+    tb_empenhos {
+        INTEGER id PK
+        TEXT nome_arquivo_original
+        TEXT nome_arquivo_final
+        INTEGER numero_empenho
+        INTEGER parcela
+        TEXT tipo_especial
+        TEXT ficha
+        TEXT ano
+        TEXT usuario
+        TEXT status
+        TEXT caminho_arquivo
+    }
+    tb_quarentena {
+        INTEGER id PK
+        TEXT nome_arquivo
+        TEXT motivo
+        TEXT caminho_atual
+        INTEGER processado
+    }
+    tb_regex_regras {
+        INTEGER id PK
+        TEXT nome_regra UK
+        TEXT padrao_regra
+        TEXT campo_destino
+        INTEGER ativo
+    }
+    tb_campos_busca {
+        INTEGER id PK
+        TEXT campo UK
+        TEXT rotulo
+        TEXT padrao_regra
+        INTEGER ativo
+    }
+    tb_arquivos_auditoria {
+        INTEGER id PK
+        TEXT nome_original
+        TEXT nome_renomeado
+        TEXT numero_empenho
+        TEXT status
+        TEXT hash_sha256_origem
+        TEXT hash_sha256_destino
+        TEXT usuario
+    }
+    tb_eventos_arquivos {
+        INTEGER id PK
+        INTEGER arquivo_id FK
+        TEXT tipo
+        TEXT detalhe
+        TEXT usuario
+        DATETIME timestamp
+    }
+    tb_solicitacoes_emp {
+        INTEGER id PK
+        INTEGER empenho_id FK
+        TEXT arquivo_caminho
+        TEXT solicitante_email
+        TEXT status
+        TEXT lote_id
+        TEXT metodo_envio
+        TEXT caminho_zip
+        TEXT motivo_recusa
+    }
+    tb_solicitacoes_imp {
+        INTEGER id PK
+        TEXT usuario_solicitante
+        TEXT arquivo_servidor
+        TEXT hash_arquivo
+        INTEGER qtd_copias
+        TEXT tamanho_papel
+        TEXT cor
+        INTEGER frente_verso
+        INTEGER secretaria_id FK
+        INTEGER setor_id FK
+        INTEGER paginas_contabilizadas
+        TEXT status
+        INTEGER cota_excedida
+        TEXT autorizado_por
+        TEXT impresso_por
+        DATETIME excluir_arquivo_em
+    }
+    tb_secretarias {
+        INTEGER id PK
+        TEXT nome
+        TEXT sigla
+        INTEGER cota_paginas_mensal
+        INTEGER ativo
+    }
+    tb_setores {
+        INTEGER id PK
+        TEXT nome
+        INTEGER secretaria_id FK
+        INTEGER cota_paginas_mensal
+        INTEGER ativo
+    }
+    tb_responsaveis_autorizacao {
+        INTEGER id PK
+        TEXT user_nome
+        INTEGER secretaria_id FK
+        INTEGER setor_id FK
+        INTEGER ativo
+    }
+    tb_cotas_impressao {
+        INTEGER id PK
+        INTEGER secretaria_id FK
+        INTEGER setor_id
+        INTEGER cota_paginas
+        TEXT mes_referencia
+    }
+    tb_consumo_cota {
+        INTEGER id PK
+        INTEGER secretaria_id FK
+        INTEGER setor_id
+        TEXT mes_referencia
+        INTEGER paginas_usadas
+    }
+    tb_auditoria_modulo {
+        INTEGER id PK
+        TEXT usuario
+        TEXT modulo
+        TEXT acao
+        TEXT descricao
+        TEXT hash_arquivo
+        TEXT ip
+        TEXT user_agent
+        TEXT client_hostname
+        DATETIME timestamp
+    }
+    tb_auditoria_meta {
+        TEXT modulo PK
+        TEXT nome
+        TEXT criada_em
+    }
+
+    tb_usuarios ||--o{ tb_acesso_usuario : "user_nome"
+    tb_postagens ||--o{ tb_comentarios : "postagem_id (CASCADE)"
+    tb_empenhos ||--o{ tb_eventos_arquivos : "arquivo_id (via auditoria)"
+    tb_arquivos_auditoria ||--o{ tb_eventos_arquivos : "arquivo_id (CASCADE)"
+    tb_empenhos |o--o| tb_solicitacoes_emp : "empenho_id"
+    tb_secretarias ||--o{ tb_setores : "secretaria_id (CASCADE)"
+    tb_secretarias ||--o{ tb_responsaveis_autorizacao : "secretaria_id (CASCADE)"
+    tb_setores ||--o{ tb_responsaveis_autorizacao : "setor_id (CASCADE)"
+    tb_secretarias ||--o{ tb_solicitacoes_imp : "secretaria_id (SET NULL)"
+    tb_setores |o--o{ tb_solicitacoes_imp : "setor_id (SET NULL)"
+    tb_secretarias ||--o{ tb_cotas_impressao : "secretaria_id (CASCADE)"
+    tb_secretarias ||--o{ tb_consumo_cota : "secretaria_id"
+    tb_auditoria_meta ||--|| tb_auditoria_modulo : "uma tabela por módulo"</code></pre>
+<blockquote>
+<p>Notas: <code>tb_config</code> (central) e as <code>tb_config</code> locais (blog) / <code>tb_configuracoes_modulo</code> (impressão) são tabelas chave-valor sem FK. <code>tb_auditoria_modulo</code> representa o padrão <code>tb_auditoria_&lt;modulo&gt;</code> (uma tabela física por módulo produtor, em <code>db_mod_auditoria.db</code>). <code>tb_indexador_pesquisa_fts5</code> (32 colunas) é uma virtual table FTS5 alimentada por <code>reindexar_empenho()</code> — omitida do diagrama por ser derivada de <code>tb_empenhos</code> + texto extraído.</p>
+</blockquote>
+<h3 id="estrutura-de-classes">Estrutura de classes<a class="headerlink" href="#estrutura-de-classes" title="Permanent link">&para;</a></h3>
+<p>O projeto é <strong>funcional/procedural</strong> — não há classes de domínio. O "modelo de classes" real é o padrão de pacote por módulo, mais as duas únicas classes do código:</p>
+<pre class="mermaid"><code>classDiagram
+    class main_py["main.py (entry point)"] {
+        +page_login()
+        +page_dashboard()
+        +page_blog() / page_users() / page_auditoria()
+        +page_edit_pdf() / page_renomear_empenho()
+        +page_solicita_impressao() / page_configuracoes()
+        +baixar_pdf_impressao(solicitacao_id) FileResponse
+        +iniciar_agendador()
+    }
+    class ModuloNegocio["mod_&lt;nome&gt; (padrão de pacote)"] {
+        +telas.py : mostrar_tela(usuario_logado, perfil)
+        +manipulador_bd.py : init_db*() / queries / regras
+        +criador_bd.py : LEGADO (não usar)
+    }
+    class ManipuladorBD["db_manipulador.py"] {
+        +get_connection() Connection
+        +init_db*() void
+        +listar*/criar*/editar*/excluir*()
+        -_log() Logger
+        -_audit(ator, acao, alvo)
+    }
+    class Telas["telas.py"] {
+        +mostrar_tela(usuario_logado, perfil)
+        -_dlg_*() Dialog
+        -_painel_*() Panel
+    }
+    class FormatadorBlog {
+        +parts list
+        +img_min int
+        +img_max int
+        +feed(html)
+        +getvalue() str
+    }
+    class HTMLParser {
+        &lt;&lt;stdlib&gt;&gt;
+    }
+    class Observabilidade["mod_intranet.observabilidade"] {
+        +configurar()
+        +get_logger(modulo) Logger
+        +instalar_excepthook()
+    }
+    class Autenticacao["mod_intranet.autenticacao"] {
+        +autenticar(user, senha)
+        +registrar_login(user, modulo)
+        +sessao_ativa(user, hash)
+        +validar_acesso_modulo(user, chave)
+        +modulos_do_usuario(user)
+    }
+    class AuditLog["mod_intranet.manipulador_bd.audit_log"] {
+        +audit_log(usuario, modulo, acao, descricao, hash_arquivo)
+    }
+    class RegistrarAuditoria["mod_auditoria.manipulador_bd.registrar_auditoria"] {
+        +registrar_auditoria(usuario, modulo, acao, ...)
+    }
+
+    main_py --&gt; ModuloNegocio : importa e registra rotas
+    ModuloNegocio *-- ManipuladorBD
+    ModuloNegocio *-- Telas
+    HTMLParser &lt;|-- FormatadorBlog : única herança do código
+    Telas ..&gt; Observabilidade : get_logger("modulo")
+    ManipuladorBD ..&gt; Observabilidade : get_logger("modulo")
+    ManipuladorBD ..&gt; AuditLog : audita ações
+    AuditLog ..&gt; RegistrarAuditoria : grava em db_mod_auditoria.db
+    main_py ..&gt; Autenticacao : login/guarda/permissões</code></pre>
+<blockquote>
+<p><code>db_criador.py</code> é legado/morto em todos os módulos (aponta para o banco central com esquemas divergentes) — o padrão real é <code>manipulador_bd.init_db*()</code>. Detalhes em <a href="../arquitetura/#padrao-interno-de-um-modulo">Arquitetura</a>.</p>
+</blockquote>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../inicio_rapido/" class="btn btn-neutral float-left" title="Guia de Início Rápido"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../configuracoes/" class="btn btn-neutral float-right" title="Configurações e Variáveis de Ambiente">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../inicio_rapido/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../configuracoes/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
