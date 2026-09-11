@@ -1,12 +1,12 @@
 # Intranet Modular — Introduction
 
-> The Intranet Modular is a corporate intranet built with Python 3.12 + NiceGUI 3.15 for the Prefeitura Municipal de Monte Santo de Minas. It runs only on the internal network (no CDN), uses one SQLite (WAL) database per module, has an LGPD audit trail (exclusive audit database, one table per module) and modular packages (`mod_*`). This page describes what the system is, its context and target audience.
+> The Intranet Modular is a corporate intranet built with Python 3.12 + NiceGUI 3.15 for the rede interna. It runs only on the internal network (no CDN), uses one SQLite (WAL) database per module, has an LGPD audit trail (exclusive audit database, one table per module) and modular packages (`mod_*`). This page describes what the system is, its context and target audience.
 
 ---
 
 # Intranet Modular — Introdução
 
-> A Intranet Modular é uma intranet corporativa desenvolvida em Python 3.12 + NiceGUI 3.15 para a Prefeitura Municipal de Monte Santo de Minas. Roda apenas na rede interna (sem CDN), usa um banco SQLite (WAL) por módulo, possui trilha de auditoria LGPD (banco exclusivo de auditoria, uma tabela por módulo) e pacotes modulares (`mod_*`). Esta página descreve o que é o sistema, seu contexto e o público-alvo.
+> A Intranet Modular é uma intranet corporativa desenvolvida em Python 3.12 + NiceGUI 3.15 para a rede interna. Roda apenas na rede interna (sem CDN), usa um banco SQLite (WAL) por módulo, possui trilha de auditoria LGPD (banco exclusivo de auditoria, uma tabela por módulo) e pacotes modulares (`mod_*`). Esta página descreve o que é o sistema, seu contexto e o público-alvo.
 
 ## Sumário
 
@@ -17,7 +17,7 @@
 
 ## O que é o sistema
 
-A **Intranet Modular** é um software de servidor para **rede interna** (intranet) da Prefeitura Municipal de Monte Santo de Minas. Foi desenvolvida pelo Analista de Sistemas **PRINCE, K.B.** e versionada no padrão `1.0.AAMMDD` (atual: `1.0.260908` — seed `versao_sistema` em `tb_config`).
+A **Intranet Modular** é um software de servidor para **rede interna** (intranet) da rede interna. Foi desenvolvida pelo Analista de Sistemas **PRINCE, K.B.** e versionada no padrão `1.0.AAMMDD` (atual: `1.0.260908` — seed `versao_sistema` em `tb_config`).
 
 Características centrais:
 

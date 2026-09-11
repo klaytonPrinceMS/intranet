@@ -21,6 +21,19 @@ from mod_intranet.bd_conexao import (
 from mod_intranet import autenticacao
 from mod_intranet.tema_modulo import notificar
 
+# ================== ASSISTENTE DE ATIVAÇÃO (terminal) ==================
+# Prompt inicial: ENTER = configuração padrão; "sim" = modo de ativação
+# (escolher banco de dados SQLite/PostgreSQL, OpenTelemetry e portas).
+from mod_intranet import ativacao
+_cfg = ativacao.iniciar()
+ativacao.aplicar_banco(_cfg)
+
+# ================== OBSERVABILIDADE (console colorido) ==================
+# Configura o loguru ANTES de criar os bancos para manter as cores do console
+# consistentes (a criação dos bancos também fica colorida).
+from mod_intranet import observabilidade
+observabilidade.configurar()
+
 # ================== INICIALIZAÇÃO DOS BANCOS ==================
 from mod_intranet.bd_criador import inicializar_bancos
 inicializar_bancos()
@@ -29,7 +42,8 @@ inicializar_bancos()
 # `otel_ativo=0` desliga a telemetria; `otel_auto_start_stack=0` usa stack
 # remota/dedicada (pula o `compose up` local e as checagens de Docker).
 try:
-    _otel_ativo = get_config("otel_ativo", "1") == "1"
+    _otel_ativo = _cfg.get("otel_ativo", True) and \
+        get_config("otel_ativo", "1") == "1"
     _otel_auto_stack = get_config("otel_auto_start_stack", "1") == "1"
     if not _otel_ativo:
         print("[otel] Telemetria OTel desativada (otel_ativo=0)")
@@ -128,7 +142,7 @@ def page_login():
     titulo_login = get_config("texto_login_titulo", "INTRANET Básica") or "INTRANET Básica"
     subtitulo = get_config("texto_login_subtitulo", "Acesso restrito a usuários autorizados")
     hint = get_config("texto_login_hint",
-                      "Primeiro acesso? Use master / master e troque a senha.")
+                      "Novos usuários? Procure o DTI para realizar o seu cadastro.")
     ui.colors(primary=cor)
     fundo_login = get_config("cor_fundo", "#EEEEEE") or "#EEEEEE"
     ui.query("body").style(f"background:{fundo_login}")
@@ -157,9 +171,10 @@ def page_login():
             if subtitulo:
                 ui.label(subtitulo).classes("text-caption text-grey-6 mb-4")
 
-            usuario = ui.input("Usuário").props("outlined dense").classes("w-full") \
+            usuario = ui.input("Usuário", placeholder="master").props("outlined dense").classes("w-full") \
                 .props('data-testid=login-usuario')
-            senha = ui.input("Senha", password=True, password_toggle_button=True).props(
+            senha = ui.input("Senha", password=True, password_toggle_button=True,
+                             placeholder="master").props(
                 "outlined dense"
             ).classes("w-full") \
                 .props('data-testid=login-senha')
@@ -267,9 +282,11 @@ def page_dashboard():
 
                     render_resumo()
 
-        # ---- Feed do Blog por padrão (RF-09) ----
-        from mod_blog.telas import _card_postagem
-        from mod_blog.bd_manipulador import listar_postagens
+        # ---- Feed do Blog (RF-09) — respeita o padrão de exibição ----
+        # A Home mostra as postagens no MESMO padrão configurado no Blog
+        # (histórico/única/carrossel): a fonte única é
+        # `mod_blog.telas.renderizar_postagens`, também usada pela tela do Blog.
+        from mod_blog.telas import renderizar_postagens
         pode_publicar_blog = (user.get("perfil") == "administrador_geral"
                               or autenticacao.eh_admin_do_modulo(nome, "blog"))
         with ui.column().classes("w-full gap-4"):
@@ -279,18 +296,10 @@ def page_dashboard():
                 _botao_tema("Abrir Blog completo", icone="article",
                             variante="contorno",
                             on_click=lambda: ui.navigate.to("/blog"))
-            posts = listar_postagens(ativo=True, ordem="DESC")
-            if not posts:
-                from mod_intranet.tema_modulo import estilo_cartao as _estilo_vazio_fn
-                with ui.card().classes("w-full items-center p-8").style(_estilo_vazio_fn()):
-                    ui.icon("article", size="48px").classes("text-grey-4")
-                    ui.label("Nenhuma publicação ainda."
-                             + (" Acesse o Blog para criar a primeira!"
-                                if pode_publicar_blog else "")).classes("text-grey-6")
-            for post in posts:
-                _card_postagem(post, nome, user.get("perfil", ""),
-                               lambda: ui.navigate.reload(),
-                               pode_publicar=pode_publicar_blog)
+            _feed_wrap = ui.column().classes("w-full gap-4")
+            renderizar_postagens(_feed_wrap, nome, user.get("perfil", ""),
+                                 pode_publicar_blog,
+                                 lambda: ui.navigate.reload())
 
 
 def _stat(rotulo, valor, icone):
@@ -551,15 +560,20 @@ if __name__ in ("__main__", "__mp_main__"):
     observabilidade.configurar()
     observabilidade.instalar_excepthook()
 
-    _agendador = iniciar_agendador()
+    # Passos de boot com barra de progresso no terminal
+    def _passo_agendador():
+        return iniciar_agendador()
+
+    def _passo_docs():
+        from mod_intranet.documentacao import construir_e_montar_documentacao
+        construir_e_montar_documentacao()
+
+    ativacao.progresso_boot([
+        ("Agendadores (backup/limpeza/monitor)", _passo_agendador),
+        ("Documentação MkDocs (/documentacao)", _passo_docs),
+    ])
 
     observabilidade.get_logger().info("Intranet iniciada (boot concluído)")
-
-    # ================== DOCUMENTAÇÃO MKDOCS (/documentacao) ==================
-    # Build estático de docs/ -> site/ e montagem como rota FastAPI da própria
-    # app (mesma porta). Falha NUNCA derruba o servidor.
-    from mod_intranet.documentacao import construir_e_montar_documentacao
-    construir_e_montar_documentacao()
 
     ui.run(
         title=get_config("texto_login_titulo", "INTRANET Básica") or "INTRANET Básica",
@@ -567,6 +581,6 @@ if __name__ in ("__main__", "__mp_main__"):
         storage_secret=os.environ.get("INTRANET_STORAGE_SECRET")
         or "intranet-secret-2026-mude-isto",  # trocar via env em produção
         reload=False,
-        port=8080,
+        port=_cfg.get("porta_site", 8080),
         show=False,
     )

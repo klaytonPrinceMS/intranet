@@ -1029,8 +1029,8 @@ check("_painel_administracao" not in GEST3,
 LAYOUT = ler("mod_intranet/telas.py")
 check(LAYOUT.count("ui.input(") == 0,
       "layout_tela: ui.input removido (9 → 0, perfil + senhas via campo_texto)")
-check(LAYOUT.count("ui_comum.campo_texto(") == 13,
-      "layout_tela: 13 campos via campo_texto (3 perfil + 3 senha perfil + 3 troca obrigatória + 1 novo nome + 3 credenciais master)")
+check(LAYOUT.count("ui_comum.campo_texto(") == 16,
+      "layout_tela: 16 campos via campo_texto (3 perfil + 3 senha perfil + 4 credenciais + 1 novo nome + 3 dados master)")
 check(LAYOUT.count("senha=True") == 9,
       "layout_tela: 9 campos de senha via campo_texto(senha=True)")
 TMF2 = ler("mod_intranet/tema_modulo.py")
@@ -1060,7 +1060,7 @@ cards_h = [e for e in REG if e.tipo == "card"]
 labs_h = [e for e in REG if e.tipo == "label"]
 check(cards_h and cards_h[0].classes_str == "w-full border-l-8" and
       cards_h[0].style_str == "border-left-color:#1565C0" and
-      labs_h[0].classes_str == "text-h5 font-bold whitespace-nowrap" and
+      labs_h[0].classes_str == "text-h5 font-bold whitespace-nowrap cabecalho-titulo" and
       labs_h[0].style_str == "color:#212121" and
       labs_h[1].classes_str == "text-caption text-grey-6" and
       not [e for e in REG if e.tipo == "query"],

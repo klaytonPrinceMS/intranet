@@ -1,5 +1,4 @@
-# Prefeitura Municipal de Monte Santo de Minas
-## Intranet Modular
+# Intranet Modular
 Software para rede interna.
 Desenvolvido por: **PRINCE, K.B.** (Analista de Sistemas).
 

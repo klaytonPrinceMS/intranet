@@ -483,10 +483,10 @@ classDiagram
     }
     class ModuloNegocio["mod_<nome> (padrão de pacote)"] {
         +telas.py : mostrar_tela(usuario_logado, perfil)
-        +manipulador_bd.py : init_db*() / queries / regras
-        +criador_bd.py : LEGADO (não usar)
+        +bd_manipulador.py : init_db*() / queries / regras
+        +bd_criador.py : LEGADO (não usar)
     }
-    class ManipuladorBD["db_manipulador.py"] {
+    class ManipuladorBD["bd_manipulador.py"] {
         +get_connection() Connection
         +init_db*() void
         +listar*/criar*/editar*/excluir*()
@@ -520,10 +520,10 @@ classDiagram
         +validar_acesso_modulo(user, chave)
         +modulos_do_usuario(user)
     }
-    class AuditLog["mod_intranet.manipulador_bd.audit_log"] {
+    class AuditLog["mod_intranet.bd_manipulador.audit_log"] {
         +audit_log(usuario, modulo, acao, descricao, hash_arquivo)
     }
-    class RegistrarAuditoria["mod_auditoria.manipulador_bd.registrar_auditoria"] {
+    class RegistrarAuditoria["mod_auditoria.db_manipulador.registrar_auditoria"] {
         +registrar_auditoria(usuario, modulo, acao, ...)
     }
 
@@ -538,4 +538,4 @@ classDiagram
     main_py ..> Autenticacao : login/guarda/permissões
 ```
 
-> `db_criador.py` é legado/morto em todos os módulos (aponta para o banco central com esquemas divergentes) — o padrão real é `manipulador_bd.init_db*()`. Detalhes em [Arquitetura](arquitetura.md#padrao-interno-de-um-modulo).
+> `bd_criador.py` é legado/morto em todos os módulos (aponta para o banco central com esquemas divergentes) — o padrão real é `bd_manipulador.init_db*()`. Detalhes em [Arquitetura](arquitetura.md#padrao-interno-de-um-modulo).

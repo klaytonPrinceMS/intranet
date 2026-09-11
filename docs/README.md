@@ -1,6 +1,6 @@
 # Intranet Modular — Documentation Index
 
-> Central index of the technical documentation for the Intranet Modular (NiceGUI) of the Prefeitura Municipal de Monte Santo de Minas. Each entry links to a focused document; the convention is an English summary followed by the Portuguese (Brazil) summary at the top of every page.
+> Central index of the technical documentation for the Intranet Modular (NiceGUI) of the rede interna. Each entry links to a focused document; the convention is an English summary followed by the Portuguese (Brazil) summary at the top of every page.
 
 ---
 

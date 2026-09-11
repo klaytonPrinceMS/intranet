@@ -8,6 +8,12 @@
 
 > Padrões obrigatórios de codificação, extraídos do código real (funcional, `snake_case`, pacotes `mod_*`). Em dúvida, espelhe um módulo existente.
 
+## Fundamento — Domain-Driven Design (DDD) e a Língua Ubíqua
+
+O padrão de criar funções, tabelas e documentação **em Português BR** não é arbitrário: deriva do **Domain-Driven Design (DDD)** e da sua **Língua Ubíqua** — o vocabulário exatamente como os especialistas do domínio (servidores da prefeitura, almoxarifado, secretarias) falam no dia a dia. Exemplos reais no projeto: `solicitacao_impressao`, `empenho`, `quarentena`, `autorizar_grupo`, `cota_paginas_mensal`, `secretaria`, `setor` — termos do negócio, não abstrações técnicas.
+
+Regra resultante: **toda função, variável, tabela, coluna e documentação deve usar o vocabulário do domínio**, nunca traduções técnicas ou abreviações que os especialistas não reconheceriam. Em conflito entre um nome "técnico" e o termo do negócio, vence o termo do negócio.
+
 ## 1. Nomenclatura
 
 - **`snake_case`** para funções, variáveis e nomes de arquivo Python. Ex.: `autenticar` (`:179`), `gerar_hash_senha` (`:161`), `bd_criador.py`.
@@ -27,15 +33,18 @@
 
 ```
 mod_exemplo/
-  __init__.py
-  telas.py            # mostrar_tela(nome, perfil)  — abas de negócio
-  administracao.py    # mostrar_administracao(...)  — painel admin standalone
-  manipulador_bd.py   # acesso ao db_mod_exemplo.db (WAL)
-  criador_bd.py       # legado/morto — não confiar
+  __init__.py               # encapsulamento, exposição pública e bootstrap do módulo
+  models/__init__.py        # (padrão a propagar) Table + dataclass + map_imperatively() — hoje só mod_intranet
+  bd_criador.py             # LEGADO/MORTO — não confiar; schema real via init_db* do bd_manipulador
+  bd_manipulador.py         # ÚNICO ponto de acesso ao db_mod_exemplo.db (WAL)
+  telas.py                  # mostrar_tela(nome, perfil)  — abas de negócio
+  telas_administracao.py    # mostrar_administracao(...)  — painel admin standalone
 ```
 - Banco próprio criado por `inicializar_bancos()`; toda escrita relevante registra na trilha de auditoria via `audit_log` (banco exclusivo `db_mod_auditoria.db`, tabela `tb_auditoria_<modulo>`).
+- O schema real do módulo é criado por `init_db*` no `bd_manipulador.py`; `bd_criador.py` é **legado/morto** (não confiar nem executar).
+- Módulos de negócio **não** têm `bd_conexao.py` próprio — usam o central `mod_intranet/bd_conexao.py` (`get_config`/`set_config` via `Repositorio`) e `mod_intranet/banco_conexao.conexao(chave)` para a conexão do backend ativo.
 - Registre o módulo em `tb_modulos` (`autenticacao.registrar_modulo`).
-- **Painel admin em arquivo dedicado (`telas_administracao.py`)** — desde 06/09, cada módulo expõe `mostrar_administracao(...)` em `mod_<nome>/administracao.py`, isolado do `telas.py` e sem tabs de navegação. A rota `main.py:439` (`@ui.page("/admin/{chave_modulo}")`) faz o dispatch e chama o `mostrar_administracao` correspondente. Isso permite: (1) admin abrir direto pela URL `/admin/blog` etc., (2) o admin do módulo ser **standalone** (não depende do estado das telas de negócio) e (3) o cupê "Administração" do drawer ser contextual por módulo. O arquivo recebe como parâmetro o ator/flags de permissão e o que precisar de tema/BD; toda a lógica de configuração (aparência, cotas, textos, regex, pastas monitoradas, Quarentena, etc.) vive nele.
+- **Painel admin em arquivo dedicado (`telas_administracao.py`)** — desde 06/09, cada módulo expõe `mostrar_administracao(...)` em `mod_<nome>/telas_administracao.py`, isolado do `telas.py` e sem tabs de navegação. A rota `main.py:439` (`@ui.page("/admin/{chave_modulo}")`) faz o dispatch e chama o `mostrar_administracao` correspondente. Isso permite: (1) admin abrir direto pela URL `/admin/blog` etc., (2) o admin do módulo ser **standalone** (não depende do estado das telas de negócio) e (3) o cupê "Administração" do drawer ser contextual por módulo. O arquivo recebe como parâmetro o ator/flags de permissão e o que precisar de tema/BD; toda a lógica de configuração (aparência, cotas, textos, regex, pastas monitoradas, Quarentena, etc.) vive nele.
 
 ## 4. Tela (NiceGUI)
 
@@ -47,7 +56,7 @@ mod_exemplo/
 
 ### 5.1 `CrudBase` — camada de acesso legado
 
-`db_manipulador.py` concentra acesso; **nunca cross-query** entre bancos.
+`bd_manipulador.py` concentra acesso; **nunca cross-query** entre bancos.
 Toda conexão aplica `PRAGMA journal_mode=WAL`.
 **Use `CrudBase` (`mod_intranet/crud_base.py`) — nunca `sqlite3` cru** (06/09): conexão WAL/synchronous/foreign_keys padronizada, atalhos `listar`/`obter`/`criar`/`atualizar`/`excluir`/`executar_muitas`/`criar_tabela` e transação atômica `crud.transacao()` (commit/rollback); auditoria das escritas via `audit_reg` (wrapper fail-soft de `audit_log`). Piloto: `../../mod_blog/bd_manipulador.py` 100% migrado.
 
@@ -60,7 +69,7 @@ mod_intranet/
   models/
     __init__.py   # Table metadata + dataclass + map_imperatively()
   repositorio.py  # Classe Repositorio (CRUD tipado via Session ORM)
-  conexao_bd.py  # get_config/set_config delegam para Repositorio
+  bd_conexao.py  # get_config/set_config delegam para Repositorio
 ```
 
 **Criando models de um novo módulo:**
@@ -106,14 +115,14 @@ class RepositorioBlog(Repositorio):
         return self.sessoes.query(Postagem).filter_by(ativo=1).all()
 ```
 
-3. `db_manipulador.py` — use `RepositorioBlog` em vez de `CrudBase`:
+3. `bd_manipulador.py` — use `RepositorioBlog` em vez de `CrudBase`:
 
 ```python
 from .repositorio import RepositorioBlog
 _repo = RepositorioBlog()
 ```
 
-4. `autenticacao.py`/`db_manipulador.py` — use `Repositorio`:
+4. `autenticacao.py`/`bd_manipulador.py` — use `Repositorio`:
 
 ```python
 from mod_intranet.repositorio import Repositorio
@@ -142,8 +151,8 @@ Soft delete para entidades sensíveis, com coluna de motivo e auditoria.
 
 > O módulo Renomeador de Empenho é referência concreta das convenções abaixo.
 
-- **Duas camadas por módulo** (`db_manipulador.py` + `telas.py`), com `mostrar_tela(usuario_logado, perfil)` obrigatório (`telas.py:45`).
-- **Banco WAL próprio** (`db_mod_<nome>.db`) com `CREATOR` idempotente (`CREATE TABLE IF NOT EXISTS` + seeds condicionais) e **migração de coluna** para bancos antigos (`_migrar_coluna`, `manipulador_bd.py:278`).
+- **Duas camadas por módulo** (`bd_manipulador.py` + `telas.py`), com `mostrar_tela(usuario_logado, perfil)` obrigatório (`telas.py:45`).
+- **Banco WAL próprio** (`db_mod_<nome>.db`) com `CREATOR` idempotente (`CREATE TABLE IF NOT EXISTS` + seeds condicionais) e **migração de coluna** para bancos antigos (`_migrar_coluna`, `bd_manipulador.py:278`).
 - **Tabelas `tb_<nome>`**, colunas `snake_case` com prefixo semântico (`nome_arquivo_final`, `tipo_especial`, `motivo_recusa`).
 - **Trilha de auditoria por arquivo** (hash SHA-256) no próprio banco do módulo + `audit_log` central com hash — ver `tb_arquivos_auditoria`/`tb_eventos_arquivos`.
 - **Perfil por aba**: calcula `eh_admin = perfil == "administrador_geral" or eh_admin_do_modulo(usuario, "<chave>")` e restringe abas/funções a admin; valida o papel antes de qualquer escrita.
@@ -176,7 +185,7 @@ Soft delete para entidades sensíveis, com coluna de motivo e auditoria.
 - **Toda e qualquer configuração passível de alteração** (cores, padrões, tamanhos, tempos, pastas, textos…) deve ser **configurável pelo usuário** na área de configuração do módulo: chaves em `tb_config` (prefixo `<modulo>_*`) + cupê "Administração" do módulo / painel central `/configuracoes`, aplicando **sem restart** sempre que possível. Não fixe em código valores que o administrador possa querer ajustar.
 - **Tema de botões por módulo — vazio = padrão do módulo (06/09)**: chave de botão do módulo **VAZIA** (`<prefixo>_cor_botao`/`cor_texto_botao`/`btn_tamanho`) = **padrão do módulo** — precedência em `tema_modulo.ler_tema` (`tema_modulo.py:94-126`): (1) chave do módulo não vazia → (2) default do parâmetro → (3) `PADROES_TEMA` (mapa único com **TODOS os módulos em `#000000`** — blog, usuarios, auditoria, editar_pdf, empenhos, solicita_impressao, intranet; a cor do intranet). O tema do sistema (`intranet_*`, card "Botões do sistema" em `/configuracoes`) **NÃO é herdado** por outros módulos; `cor_fundo`/`cor_titulo`/`texto_header` seguem a mesma regra. Para voltar ao padrão, "Restaurar padrão" grava `""` (detalhes em [Configurações](../configuracoes.md)).
 - **Card padrão "Configurações de cores" — `bloco_aparencia` (06/09)** (`tema_modulo.py:297-483`): todo módulo deve expor o card PADRÃO **"Configurações de cores"** via `tema_modulo.bloco_aparencia(usuario_logado, chave_modulo, tema, ...)` — card recolhível `card_admin` (`aberto=False`) com **PRÉVIA AO VIVO** (exemplo de cabeçalho/card/botões que atualiza a cada troca de cor) e os campos no padrão do intranet ("Cor geral do módulo", "Cor do texto do módulo", "Cor de fundo da página", "Cor dos títulos", "Cor de fundo dos cards", "Cor do texto dos cards", "Tamanho dos botões" + opcional "Texto do cabeçalho" via `com_texto_header`). Rodapé padrão de 2 botões (Restaurar padrão + Aplicar) recarregando após 1 s; `salvar_tema` grava também `cor_fundo_card`/`cor_texto_card` (`tema_modulo.py:129-153`). `com_card=False` para chamadores que já fornecem o card (evita card dentro de card — ex.: solicita_impressao admin).
-- **"Cor geral do módulo" — padrão ÚNICO de tema (06/09)**: a chave `<prefixo>_cor_botao` é chamada de **"Cor geral do módulo"** (rótulo renomeado de "Cor dos botões" em TODOS os painéis — `tema_modulo.bloco_aparencia` `tema_modulo.py:318-323`, aba Cores do sistema `tela_configuracoes.py:517-526`, admins de blog `mod_blog/administracao.py:56`, auditoria `mod_auditoria/administracao.py:111` e empenhos `mod_renomear_empenho/administracao.py:99` + `telas.py:699`) e define a cor dos **botões E dos menus/abas/destaques** da tela do módulo: `ui.colors(primary=cor_botao)` (tinge tabs/menus/Quasar) + `cabecalho(chave_modulo=...)` (borda de destaque) + `ui_comum.botao(chave_modulo=...)` (botões). A cor é aplicada às telas de TODOS os módulos — antes só blog e gest_cad tinham `ui.colors(primary=...)`; agora auditoria (`mod_auditoria/telas.py:126`), edit_pdf (`mod_edit_pdf/telas.py:89`), empenhos (`mod_renomear_empenho/telas.py:65`) e solicita_impressao (`mod_solicita_impressao/telas.py:53`) também aplicam. Nas rotas de admin (`main.py:484-523`) os hexes fixos foram substituídos por `ler_tema(<modulo>, cor_botao=<default>)["cor_botao"]` (auditoria/editar_pdf/solicita_impressao); empenhos usa `empenhos_cor_botao` com default alinhado a `#000000` (antes `#6D4C41`). `ui.color_input`/`ui.select` crus do admin de auditoria e empenhos (admin + telas) migraram para as fábricas `campo_cor`/`campo_selecao` com os novos rótulos. Coberto por `test/teste_aba_config_intranet.py` (164 verificações — rótulos "Cor geral do módulo"/"Cor do texto do módulo").
+- **"Cor geral do módulo" — padrão ÚNICO de tema (06/09)**: a chave `<prefixo>_cor_botao` é chamada de **"Cor geral do módulo"** (rótulo renomeado de "Cor dos botões" em TODOS os painéis — `tema_modulo.bloco_aparencia` `tema_modulo.py:318-323`, aba Cores do sistema `tela_configuracoes.py:517-526`, admins de blog `mod_blog/telas_administracao.py:56`, auditoria `mod_auditoria/telas_administracao.py:111` e empenhos `mod_renomear_empenho/telas_administracao.py:99` + `telas.py:699`) e define a cor dos **botões E dos menus/abas/destaques** da tela do módulo: `ui.colors(primary=cor_botao)` (tinge tabs/menus/Quasar) + `cabecalho(chave_modulo=...)` (borda de destaque) + `ui_comum.botao(chave_modulo=...)` (botões). A cor é aplicada às telas de TODOS os módulos — antes só blog e gest_cad tinham `ui.colors(primary=...)`; agora auditoria (`mod_auditoria/telas.py:126`), edit_pdf (`mod_edit_pdf/telas.py:89`), empenhos (`mod_renomear_empenho/telas.py:65`) e solicita_impressao (`mod_solicita_impressao/telas.py:53`) também aplicam. Nas rotas de admin (`main.py:484-523`) os hexes fixos foram substituídos por `ler_tema(<modulo>, cor_botao=<default>)["cor_botao"]` (auditoria/editar_pdf/solicita_impressao); empenhos usa `empenhos_cor_botao` com default alinhado a `#000000` (antes `#6D4C41`). `ui.color_input`/`ui.select` crus do admin de auditoria e empenhos (admin + telas) migraram para as fábricas `campo_cor`/`campo_selecao` com os novos rótulos. Coberto por `test/teste_aba_config_intranet.py` (164 verificações — rótulos "Cor geral do módulo"/"Cor do texto do módulo").
 - Exemplo vivo: o botão "Novo usuário" da Gestão de Usuários obedece ao tema do módulo (`usuarios_cor_botao` via `ui_comum.botao(chave_modulo="usuarios")` — `mod_gest_cad_usuario/telas.py:110`), ajustável na aba Administração; com a chave vazia (padrão), usa o padrão do PRÓPRIO módulo (`PADROES_TEMA["usuarios"]` = `#000000`).
 - Detalhes e checklist: [Convenções de Código](../convencoes_codigo.md) → seção "Configurabilidade (regra de projeto)".
 - Guia de migração passo a passo ("como migrar um módulo"): [Convenções de Código](../convencoes_codigo.md) → seção "Componentes de UI padronizados".
@@ -194,7 +203,7 @@ Soft delete para entidades sensíveis, com coluna de motivo e auditoria.
 
 ## 11. Administração do módulo em arquivo dedicado — `telas_administracao.py` (06/09)
 
-- **Padrão**: cada módulo expõe `mostrar_administracao(...)` em `mod_<nome>/administracao.py` — **arquivo separado** do `telas.py`, isolado do estado das telas de negócio, sem tabs de navegação. A rota `@ui.page("/admin/{chave_modulo}")` em `main.py:439` faz o dispatch por `chave_modulo` e chama o `mostrar_administracao` correspondente.
+- **Padrão**: cada módulo expõe `mostrar_administracao(...)` em `mod_<nome>/telas_administracao.py` — **arquivo separado** do `telas.py`, isolado do estado das telas de negócio, sem tabs de navegação. A rota `@ui.page("/admin/{chave_modulo}")` em `main.py:439` faz o dispatch por `chave_modulo` e chama o `mostrar_administracao` correspondente.
 - **Assinatura canônica** (varia por módulo conforme o que precisa renderizar):
   - `../../mod_blog/telas_administracao.py` — `mostrar_administracao(usuario_logado, pode_publicar)` (aparência, tags HTML, largura imagem, gestão de inativos, `campo_modulo`).
   - `../../mod_gest_cad_usuario/telas_administracao.py` — `mostrar_administracao(ator)` (aparência, tamanho mínimo senha, `campo_modulo`).
@@ -208,7 +217,7 @@ Soft delete para entidades sensíveis, com coluna de motivo e auditoria.
   2. Permite URL direta (`/admin/blog`, `/admin/auditoria` etc.) e acesso contextual pelo drawer.
   3. `telas.py` continua focado em fluxo de negócio; `telas_administracao.py` concentra TODA a configuração do módulo.
 - **Fail-soft + loguru obrigatórios** (regra geral do projeto): todo `mostrar_administracao` envolve leituras/gravações em `try/except`, registrando via `observabilidade.get_logger("<modulo>")` — `_FMT` do `observabilidade.py` já garante `{module}:{function}:{line}` no log.
-- **Migração de admin embutido no `telas.py`**: ao criar um novo módulo, **não** coloque o painel de administração como aba dentro de `mostrar_tela` — extraia para `mod_<nome>/administracao.py` e adicione a entrada correspondente no `dispatch` de `main.py:439-524`. Módulos já migrados (06/09): `blog`, `usuarios`, `auditoria`, `editar_pdf`, `empenhos`, `solicita_impressao`.
+- **Migração de admin embutido no `telas.py`**: ao criar um novo módulo, **não** coloque o painel de administração como aba dentro de `mostrar_tela` — extraia para `mod_<nome>/telas_administracao.py` e adicione a entrada correspondente no `dispatch` de `main.py:439-524`. Módulos já migrados (06/09): `blog`, `usuarios`, `auditoria`, `editar_pdf`, `empenhos`, `solicita_impressao`.
 
 ## 12. SQLAlchemy ORM + Dataclasses (07/09) — padrão a propagar
 
@@ -221,7 +230,7 @@ mod_<nome>/
   models/
     __init__.py    # Table definitions + dataclasses + registry.map_imperatively()
   repositorio.py   # Repositorio local com CRUD tipado via Session
-  manipulador_bd.py  # usa Repositorio para todas as operações de BD
+  bd_manipulador.py  # usa Repositorio para todas as operações de BD
   telas.py         # usa Repositorio / CrudBase para acesso a dados
 ```
 
@@ -379,7 +388,7 @@ mod_<nome>/
            self.fechar()
    ```
 
-3. **`db_manipulador.py`** — usa `Repositorio` para todo acesso:
+3. **`bd_manipulador.py`** — usa `Repositorio` para todo acesso:
    ```python
    from mod_<nome>.repositorio import Repositorio
 
@@ -410,7 +419,7 @@ Arquivos migrados no núcleo (07/09, multi-banco em 06/09):
 - `repositorio.py` — `MODULOS_BD` (7 bancos) + `caminho_db()` + `engine(chave)` por banco (criação condicional) + `sessaodb(chave)` + `garantir_bancos()` + `Repositorio(chave_db=...)` com helpers genéricos `consultar`/`executar`/`ultimo_id`
 - `bd_conexao.py` — `get_config`/`set_config` delegam para `Repositorio` (fallback sqlite3)
 - `autenticacao.py` — todas as operações de sessão e módulo via `Repositorio`
-- `db_manipulador.py` — `garantir_rastreabilidade` usa `Repositorio`
+- `bd_manipulador.py` — `garantir_rastreabilidade` usa `Repositorio`
 - `bd_criador.py` — `inicializar_bancos()` chama `garantir_bancos()` no passo 0 do boot (antes dos `init_db`)
 
 ### Propagação para módulos existentes
@@ -419,7 +428,7 @@ Ao migrar um módulo `mod_*` existente:
 
 1. Criar `mod_<nome>/models/__init__.py` com as tabelas e dataclasses.
 2. Registrar o banco do módulo em `MODULOS_BD` (`mod_intranet/repositorio.py:57-65`) e usar `engine(chave)`/`sessaodb(chave)`/`Repositorio(chave_db=...)` — não criar engine próprio.
-3. Refatorar `db_manipulador.py` para usar `Repositorio` (métodos tipados ou helpers genéricos `consultar`/`executar`/`ultimo_id`) em vez de sqlite3 direto.
+3. Refatorar `bd_manipulador.py` para usar `Repositorio` (métodos tipados ou helpers genéricos `consultar`/`executar`/`ultimo_id`) em vez de sqlite3 direto.
 4. Manter `CrudBase` para operações que não se beneficiam do ORM (ex.: FTS5, DDL complexo).
 5. Atualizar docstrings para EN+PT-BR.
 6. Garantir que todos os `except` usem loguru.

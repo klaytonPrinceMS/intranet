@@ -10,6 +10,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 import sqlite3
+from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_CAD_PATH = os.path.join(BASE_DIR, "db_mod_gest_cad_usuario.db")
@@ -225,13 +226,27 @@ def init_db():
 
 # ================= CONSULTAS =================
 
+def _normalizar_data(valor):
+    """Normalizes a date value to 'YYYY-MM-DD HH:MM:SS' string.
+
+    No SQLite `data_cadastro`/`data_liberacao` já vêm como string; no
+    PostgreSQL o driver retorna `datetime.datetime`. Padroniza para string
+    para que o consumo (telas) não precise saber o backend."""
+    if valor is None:
+        return None
+    if isinstance(valor, (datetime,)):
+        return valor.strftime("%Y-%m-%d %H:%M:%S")
+    return str(valor)
+
+
 def listar_usuarios(filtro_ativo=None):
     """Lists users with per-module access aggregated (GROUP_CONCAT).
 
     Retorna tuplas (id, user_nome, user_perfil, user_ativo, user_email,
     user_fone, data_cadastro, acessos 'modulo:papel, …', user_deletado,
     user_nome_completo, user_motivo_exclusao). `filtro_ativo` filtra por
-    `user_ativo` quando informado; ordenado por login."""
+    `user_ativo` quando informado; ordenado por login. `data_cadastro` é
+    normalizada para string (backend-agnóstico)."""
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -248,7 +263,12 @@ def listar_usuarios(filtro_ativo=None):
             params.append(1 if filtro_ativo else 0)
         sql += " GROUP BY u.id ORDER BY u.user_nome"
         cur.execute(sql, params)
-        return cur.fetchall()
+        linhas = []
+        for r in cur.fetchall():
+            linha = list(r)
+            linha[6] = _normalizar_data(linha[6])
+            linhas.append(tuple(linha))
+        return linhas
     finally:
         conn.close()
 
@@ -290,7 +310,12 @@ def listar_acessos(user_nome):
                FROM tb_acesso_usuario WHERE user_nome=? ORDER BY modulo_chave""",
             (user_nome,),
         )
-        return cur.fetchall()
+        linhas = []
+        for r in cur.fetchall():
+            linha = list(r)
+            linha[3] = _normalizar_data(linha[3])
+            linhas.append(tuple(linha))
+        return linhas
     finally:
         conn.close()
 

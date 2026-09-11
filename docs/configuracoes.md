@@ -21,7 +21,7 @@
 
 ## Visão geral
 
-A aplicação não usa arquivo `.env` nem variáveis de ambiente: a configuração é **persistida no banco central** `db_mod_intranet.db` (tabela `tb_config`, chave/valor) e lida via `get_config(chave, default)` / `set_config(chave, valor)` (`mod_intranet/conexao_bd.py:103-123`). As únicas "constantes de execução" estão hardcoded no `main.py`.
+A aplicação não usa arquivo `.env` nem variáveis de ambiente: a configuração é **persistida no banco central** `db_mod_intranet.db` (tabela `tb_config`, chave/valor) e lida via `get_config(chave, default)` / `set_config(chave, valor)` (`mod_intranet/bd_conexao.py:103-123`). As únicas "constantes de execução" estão hardcoded no `main.py`.
 
 ## `storage_secret` (curinga do NiceGUI)
 
@@ -56,12 +56,12 @@ Os bancos são criados na **raiz do projeto** (mesma pasta do `main.py`):
 
 | Banco | Módulo | Onde é declarado |
 |:---|:---|:---|
-| `db_mod_intranet.db` | núcleo (auditoria, config, sessões, módulos) | `mod_intranet/conexao_bd.py:11` |
+| `db_mod_intranet.db` | núcleo (auditoria, config, sessões, módulos) | `mod_intranet/bd_conexao.py:11` |
 | `db_mod_gest_cad_usuario.db` | gestão de usuários | `../mod_gest_cad_usuario/bd_manipulador.py` |
-| `db_mod_blog.db` | blog | `mod_blog/manipulador_bd.py:41-45` |
-| `db_mod_edit_pdf.db` | editor de PDF | `mod_edit_pdf/manipulador_bd.py:23` |
-| `db_mod_renomear_empenho.db` | renomear empenho | `mod_renomear_empenho/manipulador_bd.py:20` |
-| `db_mod_solicita_impressao.db` | solicitação de impressão | `mod_solicita_impressao/manipulador_bd.py:25` |
+| `db_mod_blog.db` | blog | `mod_blog/bd_manipulador.py:41-45` |
+| `db_mod_edit_pdf.db` | editor de PDF | `mod_edit_pdf/bd_manipulador.py:23` |
+| `db_mod_renomear_empenho.db` | renomear empenho | `mod_renomear_empenho/bd_manipulador.py:20` |
+| `db_mod_solicita_impressao.db` | solicitação de impressão | `mod_solicita_impressao/bd_manipulador.py:25` |
 
 Todos operam em **modo WAL** (`PRAGMA journal_mode=WAL`), gerando arquivos `*.db-wal` e `*.db-shm` ao lado do `.db`.
 
@@ -110,7 +110,7 @@ As principais chaves, agrupadas por dono:
 | Botões do sistema (intranet) | `intranet_cor_botao` (`#000000`), `intranet_cor_texto_botao` (`#FFFFFF`), `intranet_btn_tamanho` (`medium`), `intranet_cor_titulo` (`#212121`) | `PADRAO_CONFIG` | **"Cor geral do módulo"** (`intranet_cor_botao`): mesma cor/tamanho em TODOS os botões do módulo (login, painel, config, diálogos) **e nos menus/destaques** (`ui.colors(primary=...)`); prévia ao vivo; APLICAR recarrega. **Vale apenas para o próprio módulo `intranet`** — os demais módulos usam o padrão do PRÓPRIO módulo (`PADROES_TEMA`), sem herança (ver seção abaixo) |
 | Cards do sistema (intranet) | `intranet_cor_fundo_card` (`#FFFFFF`), `intranet_cor_texto_card` (vazio = herda) | `PADRAO_CONFIG` | fundo + texto base de todos os cards do módulo (login, config, diálogos, painel) |
 | Textos | `texto_login_titulo`, `texto_login_subtitulo`, `texto_login_hint`, `texto_home_saudacao`, `texto_home_subtitulo`, `texto_rodape` | `PADRAO_CONFIG` | textos fixos |
-| Versão por módulo | `versao_modulo:<chave>` | seeds em `conexao_bd.py:70-79` | versão individual no rodapé |
+| Versão por módulo | `versao_modulo:<chave>` | seeds em `bd_conexao.py:70-79` | versão individual no rodapé |
 | Backup | `backup_horas:<modulo>` | `12` | intervalo em horas por módulo (mín. 1 h) |
 | Editor PDF | `editpdf_lote_arquivos`, `editpdf_lote_mb`, `editpdf_usuario_gb`, `editpdf_expiracao_min` | — | cotas/limites/expiração |
 | Editor PDF (tema) | `editpdf_cor_botao`, `editpdf_cor_texto_botao`, `editpdf_cor_fundo`, `editpdf_cor_titulo`, `editpdf_btn_tamanho` | — | aparência da tela |
@@ -125,9 +125,9 @@ As principais chaves, agrupadas por dono:
 | Grafana | `grafana_url` (`http://localhost:3000`, env `GRAFANA_URL` tem prioridade) | — | URL base do Grafana (health-check/API/status) |
 | Avisos | `notificacao_timeout` (`10`, 1–30 s) | — | tempo de exibição dos toasts via `tema_modulo.notificar()` |
 | Hora do servidor | `hora_ntp_ativa` (`1`) | — | sincronização NTP.br da hora do servidor (`mod_intranet/hora_servidor.py`): `1` = ativa (default), `0` = usa o relógio local; aplicada sem restart |
-| Banco | `banco_tipo` (`sqlite`), `postgres_url` (`postgresql+psycopg2://intranet:intranet@localhost:5432/intranet`) | `PADRAO_CONFIG` (`conexao_bd.py:40-41`) | seleção do SGBD: `sqlite` (padrão, zero dependências extras) ou `postgres` (backend duplo via `banco_conexao` — conexão DBAPI por módulo, um SCHEMA por módulo no banco `intranet`); lidos no boot via `banco_conexao._ler_config_sqlite`; troca exige **reiniciar o servidor** — ver [Card "Banco de dados" (SQLite ou PostgreSQL)](#card-banco-de-dados-sqlite-ou-postgresql-0809) |
+| Banco | `banco_tipo` (`sqlite`), `postgres_url` (`postgresql+psycopg2://intranet:intranet@localhost:5432/intranet`) | `PADRAO_CONFIG` (`bd_conexao.py:40-41`) | seleção do SGBD: `sqlite` (padrão, zero dependências extras) ou `postgres` (backend duplo via `banco_conexao` — conexão DBAPI por módulo, um SCHEMA por módulo no banco `intranet`); lidos no boot via `banco_conexao._ler_config_sqlite`; troca exige **reiniciar o servidor** — ver [Card "Banco de dados" (SQLite ou PostgreSQL)](#card-banco-de-dados-sqlite-ou-postgresql-0809) |
 
-> Os padrões de aparência vivem em `PADRAO_CONFIG` (`mod_intranet/conexao_bd.py:13-24`) e são restaurados via tela de configurações (abas com "Restaurar padrão" por cartão).
+> Os padrões de aparência vivem em `PADRAO_CONFIG` (`mod_intranet/bd_conexao.py:13-24`) e são restaurados via tela de configurações (abas com "Restaurar padrão" por cartão).
 
 ### Menu "Administração" (06/09)
 
@@ -229,7 +229,7 @@ O padrão do `notificacao_timeout` mudou de **2 s para 10 s** — os toasts fica
 
 | Ponto | Local |
 |:---|:---|
-| Seed em `PADRAO_CONFIG` | `mod_intranet/conexao_bd.py:67` |
+| Seed em `PADRAO_CONFIG` | `mod_intranet/bd_conexao.py:67` |
 | Helper `notificacao_timeout()` — default/fallback 10, clamp 1–30 | `mod_intranet/tema_modulo.py:234-243` |
 | Campo do card Gerais (`padrao="10"`) | `mod_intranet/tela_configuracoes.py:713` |
 | Fallback do APLICAR do card Gerais (`aplicar_gerais`) | `mod_intranet/tela_configuracoes.py:353-367` |
@@ -262,7 +262,7 @@ O tema do sistema (`intranet_*` / card **"Botões do sistema"** do painel centra
     **Todos os módulos usam a cor do intranet (`#000000`)** por padrão (`PADROES_TEMA`), sem depender do tema do sistema — `PADRAO_CONFIG` não semeia chaves de botão por módulo e instalações novas já iniciam com a cor única `#000000`. O override por módulo continua disponível no cupê "Aparência" de cada módulo: os inputs exibem o valor **resolvido** (rótulo "vazio = padrão do módulo") e o "Restaurar padrão" grava `""` para voltar ao padrão do módulo. O card "Botões do sistema" (`intranet_*`) vale apenas para o próprio módulo `intranet` (`tema_modulo.py:94-126`).
 
 !!! note "Rótulo renomeado: 'Cor geral do módulo' (06/09)"
-    A chave `<prefixo>_cor_botao` agora é chamada de **"Cor geral do módulo"** (antes "Cor dos botões") e `cor_texto_botao` de **"Cor do texto do módulo"** (antes "Cor do texto dos botões") — rótulos renomeados em TODOS os painéis: cupê "Aparência" (`tema_modulo.bloco_aparencia` — `tema_modulo.py:318-323`), aba Cores do sistema (`tela_configuracoes.py:517-526`), admins de blog (`mod_blog/administracao.py:56`), auditoria (`mod_auditoria/administracao.py:111`) e empenhos (`mod_renomear_empenho/administracao.py:99` + `telas.py:699`). O nome reflete o novo escopo: a cor define os **botões E os menus/abas/destaques** da tela do módulo — `ui.colors(primary=cor_botao)` (menus/Quasar) + `cabecalho(chave_modulo=...)` (borda de destaque) + `ui_comum.botao(chave_modulo=...)` (botões). `ui.colors(primary=...)` passou a ser aplicado em TODAS as telas (antes só blog e gest_cad): auditoria (`mod_auditoria/telas.py:126`), edit_pdf (`mod_edit_pdf/telas.py:89`), empenhos (`mod_renomear_empenho/telas.py:65`) e solicita_impressao (`mod_solicita_impressao/telas.py:53`). Nas rotas de admin (`main.py:484-523`) os hexes fixos viraram `ler_tema(<modulo>, cor_botao=<default>)["cor_botao"]`; empenhos usa `empenhos_cor_botao` com default alinhado a `#000000` (antes `#6D4C41`). `ui.color_input`/`ui.select` crus do admin de auditoria e empenhos migraram para as fábricas `campo_cor`/`campo_selecao`. Coberto por `test/teste_aba_config_intranet.py` (164 verificações — novos rótulos).
+    A chave `<prefixo>_cor_botao` agora é chamada de **"Cor geral do módulo"** (antes "Cor dos botões") e `cor_texto_botao` de **"Cor do texto do módulo"** (antes "Cor do texto dos botões") — rótulos renomeados em TODOS os painéis: cupê "Aparência" (`tema_modulo.bloco_aparencia` — `tema_modulo.py:318-323`), aba Cores do sistema (`tela_configuracoes.py:517-526`), admins de blog (`mod_blog/telas_administracao.py:56`), auditoria (`mod_auditoria/telas_administracao.py:111`) e empenhos (`mod_renomear_empenho/telas_administracao.py:99` + `telas.py:699`). O nome reflete o novo escopo: a cor define os **botões E os menus/abas/destaques** da tela do módulo — `ui.colors(primary=cor_botao)` (menus/Quasar) + `cabecalho(chave_modulo=...)` (borda de destaque) + `ui_comum.botao(chave_modulo=...)` (botões). `ui.colors(primary=...)` passou a ser aplicado em TODAS as telas (antes só blog e gest_cad): auditoria (`mod_auditoria/telas.py:126`), edit_pdf (`mod_edit_pdf/telas.py:89`), empenhos (`mod_renomear_empenho/telas.py:65`) e solicita_impressao (`mod_solicita_impressao/telas.py:53`). Nas rotas de admin (`main.py:484-523`) os hexes fixos viraram `ler_tema(<modulo>, cor_botao=<default>)["cor_botao"]`; empenhos usa `empenhos_cor_botao` com default alinhado a `#000000` (antes `#6D4C41`). `ui.color_input`/`ui.select` crus do admin de auditoria e empenhos migraram para as fábricas `campo_cor`/`campo_selecao`. Coberto por `test/teste_aba_config_intranet.py` (164 verificações — novos rótulos).
 
 !!! tip "Botões 100% na fábrica + 'Restaurar padrão' com aparência única (06/09)"
     Com a migração de ~120 botões crus em 12 arquivos (auditoria, edit_pdf, gest_cad_usuario, renomear_empenho e solicita_impressao — telas+admin), a cor/tamanho configurados aqui (ou no cupê "Aparência" do módulo) aplicam em **TODOS os botões do módulo** — a fábrica `ui_comum.botao/botao_icone(chave_modulo=...)` lê o tema a cada render. O rodapé `rodape_salvar_restaurar` (`ui_comum.py:338`) também usa a fábrica: "Restaurar padrão" tem aparência ÚNICA no projeto (contorno âmbar, `text-color=amber-10`, contraste WCAG ~3,8:1 em card branco) e "Salvar" usa o `solido` do tema. Exceções intencionais de `ui.button` cru: a própria fábrica (`ui_comum.py:163`), o "Cancelar" de `rodape_dialogo` (`ui_comum.py:326`) e o preview ao vivo da aba Cores (`tela_configuracoes.py:493,497` — usa valores não salvos dos campos).

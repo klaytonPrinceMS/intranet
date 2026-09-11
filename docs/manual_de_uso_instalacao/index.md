@@ -23,7 +23,7 @@ Porta `8080`, `reload=False`, `show=False`. No boot, `inicializar_bancos()` cria
 
 ## 3. Primeiro acesso (seed)
 
-- `master` / `master` — troca obrigatória de senha aplicada automaticamente no 1º logon (`mod_gest_cad_usuario/manipulador_bd.py:136-156`). Recomenda-se alterar manualmente.
+- `master` / `master` — troca obrigatória de senha aplicada automaticamente no 1º logon (`mod_gest_cad_usuario/bd_manipulador.py:136-156`). Recomenda-se alterar manualmente.
 
 ## 4. Usuários de teste
 
@@ -32,7 +32,7 @@ Porta `8080`, `reload=False`, `show=False`. No boot, `inicializar_bancos()` cria
 | `qacomum` | `123456` | `comum` | blog, editar_pdf, empenhos |
 | `qamaster` | `123456` | `administrador_geral` | todos |
 
-> **Perfis do sistema** — existem exatamente três (constante `PERFIS_GLOBAIS` em `mod_gest_cad_usuario/manipulador_bd.py:15`): `comum`, `administrador_modulo` e `administrador_geral`. Não há perfis "administrador", "almoxarife" ou "operador". O acesso por módulo é controlado por papel (`comum`/`administrador`) em `tb_acesso_usuario`; `administrador_geral` obtém papel `administrador` em todos os módulos e acesso exclusivo a `/auditoria`.
+> **Perfis do sistema** — existem exatamente três (constante `PERFIS_GLOBAIS` em `mod_gest_cad_usuario/bd_manipulador.py:15`): `comum`, `administrador_modulo` e `administrador_geral`. Não há perfis "administrador", "almoxarife" ou "operador". O acesso por módulo é controlado por papel (`comum`/`administrador`) em `tb_acesso_usuario`; `administrador_geral` obtém papel `administrador` em todos os módulos e acesso exclusivo a `/auditoria`.
 
 ## 5. Smoke test
 

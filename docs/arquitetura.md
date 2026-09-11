@@ -1,12 +1,12 @@
 # Intranet Modular — Architecture
 
-> Technical architecture of the Intranet Modular: single entry point (`main.py`), modular packages (`mod_*`), the `db_criador.py` / `db_manipulador.py` / `telas.py` pattern, one SQLite (WAL) database per module, centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor and audit pruning).
+> Technical architecture of the Intranet Modular: single entry point (`main.py`), modular packages (`mod_*`), the `bd_manipulador.py` / `telas.py` / `telas_administracao.py` pattern (with `models/` SQLAlchemy as the pattern to propagate and `bd_criador.py` kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL schema), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor and audit pruning).
 
 ---
 
 # Intranet Modular — Arquitetura
 
-> Arquitetura técnica da Intranet Modular: entry point único (`main.py`), pacotes modulares (`mod_*`), padrão `db_criador.py` / `db_manipulador.py` / `telas.py`, banco SQLite (WAL) por módulo, auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta e poda da auditoria).
+> Arquitetura técnica da Intranet Modular: entry point único (`main.py`), pacotes modulares (`mod_*`), padrão `bd_manipulador.py` / `telas.py` / `telas_administracao.py` (com `models/` SQLAlchemy como padrão a propagar e `bd_criador.py` mantido como legado/morto), um banco por módulo (SQLite WAL ou schema PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta e poda da auditoria).
 
 ## Sumário
 
@@ -33,7 +33,7 @@
    ┌────────────▼───────────┐                     ┌────────────▼───────────┐
    │ mod_intranet (núcleo)  │                     │ Módulos de negócio      │
    │ autenticacao · layout  │◄── importa ────────►│ mod_blog, mod_gest_*,   │
-   │ conexao_bd · rotinas   │                     │ mod_edit_pdf,           │
+   │ bd_conexao · rotinas   │                     │ mod_edit_pdf,           │
    │ observabilidade · etc. │                     │ mod_renomear_*,         │
    └────────────┬───────────┘                     │ mod_auditoria,          │
                 │                                 │ mod_solicita_impressao  │
@@ -51,7 +51,7 @@ flowchart LR
     end
     subgraph Nucleo["mod_intranet — núcleo"]
         AUTH[autenticacao] --- LAY[layout_tela<br/>pagina_restrita]
-        CONN[conexao_bd<br/>get_config/set_config]
+        CONN[bd_conexao<br/>get_config/set_config]
         CONN --> REPO[repositorio.py<br/>Repositorio + engine]
         REPO --> MODELS[models/<br/>Configuracao<br/>Sessao<br/>Modulo]
         MODELS --> SA[sqlalchemy.orm<br/>Session + Table]
@@ -122,26 +122,32 @@ Subpacotes/fluxos relevantes do núcleo:
 
 ```text
 mod_<nome>/
-  __init__.py
-  telas.py            # OBRIGATÓRIO: expõe mostrar_tela(usuario_logado, perfil)
-  manipulador_bd.py   # acesso ao db_mod_<nome>.db (WAL) — criador vigente das tabelas
-  criador_bd.py       # LEGADO/MORTO: aponta para o banco central — NÃO confiar nem executar
-  (outros: monitor, organizador, src/...)
+  __init__.py              # encapsulamento, exposição pública e bootstrap do módulo
+  models/__init__.py       # (padrão a propagar) Table + dataclass + map_imperatively() — hoje só mod_intranet
+  bd_criador.py            # LEGADO/MORTO — criador antigo do banco; NÃO confiar nem executar
+  bd_manipulador.py        # ÚNICO ponto de acesso ao DB (init_db*, queries, regras)
+  telas.py                 # mostrar_tela(nome, perfil)
+  telas_administracao.py   # mostrar_administracao — painel standalone na rota /admin/{chave_modulo}
 ```
 
 | Arquivo | Responsabilidade |
 |:---|:---|
-| `telas.py` | UI NiceGUI; `mostrar_tela(usuario_logado, perfil)`; revalida papel antes de qualquer escrita |
-| `db_manipulador.py` | schema (`init_db*`), queries e regras de negócio; conexão WAL; auditoria via `audit_log` |
-| `db_criador.py` | **legado/morto** em todos os módulos — usa a conexão do banco central e esquemas divergentes; nunca executar (o padrão real é `manipulador_bd.init_db*`) |
+| `__init__.py` | encapsulamento, exposição pública e bootstrap do módulo |
+| `models/__init__.py` | **(padrão a propagar)** mapeamento SQLAlchemy imperativo: `Table` + `dataclass` + `map_imperatively()` — hoje só `mod_intranet` |
+| `bd_manipulador.py` | **único** ponto de acesso ao DB do módulo: schema (`init_db*`), queries e regras de negócio; conexão via `mod_intranet/banco_conexao.conexao(chave)` (backend duplo SQLite/PostgreSQL); auditoria via `audit_log` |
+| `bd_criador.py` | **legado/morto** em todos os módulos de negócio — usa a conexão do banco central e esquemas divergentes; nunca executar (o schema real é criado por `init_db*` do `bd_manipulador`) |
+| `telas.py` | UI NiceGUI; `mostrar_tela(nome, perfil)`; revalida papel antes de qualquer escrita |
+| `telas_administracao.py` | painel admin standalone; `mostrar_administracao(...)` — rota `/admin/{chave_modulo}` |
 
-> `mod_auditoria` **tem** `db_manipulador.py` (banco exclusivo `db_mod_auditoria.db`, uma tabela por módulo) — o visualizador em `telas.py` lê esse banco via `buscar_logs()`; a escrita é feita indiretamente pelos demais módulos via `audit_log` → `registrar_auditoria`.
+> **Exceção `mod_auditoria`:** é o único módulo com a nomenclatura fora do padrão — `db_manipulador.py`/`db_criador.py` (em vez de `bd_manipulador.py`/`bd_criador.py`) — mantém banco exclusivo `db_mod_auditoria.db` (uma tabela por módulo); o visualizador em `telas.py` lê esse banco via `buscar_logs()` e a escrita é feita indiretamente pelos demais módulos via `audit_log` → `registrar_auditoria`.
+
+> **Conexão e configuração:** módulos de negócio **não** têm `bd_conexao.py` próprio — usam o central `mod_intranet/bd_conexao.py` (`get_config`/`set_config` via `Repositorio`) e `mod_intranet/banco_conexao.conexao(chave)` para obter a conexão do backend ativo (SQLite WAL ou PostgreSQL, com **um schema por módulo** no Postgres).
 
 ## Bancos de dados (um por módulo, WAL)
 
 - Cada banco é um **arquivo SQLite separado** na raiz (`db_mod_*.db`).
 - Toda conexão aplica `PRAGMA journal_mode=WAL` (+ `synchronous=NORMAL` no central e na auditoria).
-- **Convenção:** consultar um banco somente pelo `manipulador_bd` do seu próprio módulo (evitar cross-query). Exceções conhecidas e documentadas: a limpeza cruzada LGPD da exclusão de usuário (`mod_gest_cad_usuario` varre bancos vizinhos para anonimizar/excluir dados — ver [Módulo de Gestão de Usuários](modulos/gest_cad_usuario.md)) e a escrita de auditoria (`audit_log` no núcleo grava no banco exclusivo de auditoria via `registrar_auditoria`).
+- **Convenção:** consultar um banco somente pelo `bd_manipulador` do seu próprio módulo (evitar cross-query). Exceções conhecidas e documentadas: a limpeza cruzada LGPD da exclusão de usuário (`mod_gest_cad_usuario` varre bancos vizinhos para anonimizar/excluir dados — ver [Módulo de Gestão de Usuários](modulos/gest_cad_usuario.md)) e a escrita de auditoria (`audit_log` no núcleo grava no banco exclusivo de auditoria via `registrar_auditoria`).
 - O banco **central** (`db_mod_intranet.db`) guarda `tb_config`, `tb_sessoes` e `tb_modulos` (a antiga `tb_auditoria` central foi migrada e removida — ver [Auditoria](#auditoria-lgpd-banco-exclusivo)).
 - **SQLAlchemy em TODOS os bancos (06/09):** o mapa `MODULOS_BD` (`repositorio.py:57-65`) registra os 7 bancos (`intranet`, `blog`, `editar_pdf`, `usuarios`, `empenhos`, `auditoria`, `solicita_impressao`); `engine(chave)`/`sessaodb(chave)`/`Repositorio(chave_db=...)` operam em qualquer um deles — ver [Arquitetura de acesso a dados do núcleo](#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809).
 - **Backend duplo controlado pelo sistema (08/09):** além do SQLite, o sistema agora suporta **PostgreSQL opcional** — a chave `banco_tipo` em `tb_config` central (`'sqlite'` padrão | `'postgres'`) seleciona o backend. No Postgres, **um SCHEMA por módulo** dentro do banco `intranet` preserva o isolamento "um banco por módulo" e evita colisão de nomes de tabela (ex.: `tb_solicitacoes`). SQLite continua o padrão. Ver [Backend duplo (08/09)](#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809) abaixo.
@@ -162,10 +168,10 @@ mod_intranet/
   banco_conexao.py     ← backend duplo: conexao(chave), config_backend(),
                          salvar_backend(), SCHEMAS (um schema por módulo),
                          sgbd_ativo(), obter_engine_modulo(chave)
-  conexao_bd.py        ← delega get_config/set_config para Repositorio
+  bd_conexao.py        ← delega get_config/set_config para Repositorio
                          fallback sqlite3 raw em caso de falha
   autenticacao.py      ← todas as operações de sessão e módulo via Repositorio
-  manipulador_bd.py    ← garante_rastreabilidade via Repositorio
+  bd_manipulador.py    ← garante_rastreabilidade via Repositorio
 ```
 
 **Camadas:**
@@ -228,7 +234,7 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 
 **Fail-soft:** se SQLAlchemy não estiver instalado, `engine()` retorna `None` e `Repositorio` opera em modo degradado (retorna `padrao`/`False`/`[]`). `bd_conexao.py` aplica fallback sqlite3 raw em qualquer exceção.
 
-> **Propagação:** ao criar `db_manipulador.py` de um novo módulo, espelhe o padrão — `models/` com dataclasses + `Table` + `map_imperatively()`, `repositorio.py` com `Repositorio` local e `autenticacao.py`/`db_manipulador.py` migrados para usar `Repositorio`. Ver [Padrões de Codificação](padroes_codificacao/index.md).
+> **Propagação:** ao criar `bd_manipulador.py` de um novo módulo, espelhe o padrão — `models/` com dataclasses + `Table` + `map_imperatively()`, `repositorio.py` com `Repositorio` local e `autenticacao.py`/`bd_manipulador.py` migrados para usar `Repositorio`. Ver [Padrões de Codificação](padroes_codificacao/index.md).
 
 ## Autenticação e sessões
 
@@ -264,11 +270,11 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 
 ## Auditoria LGPD (banco exclusivo)
 
-- **`audit_log(usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent)`** (`mod_intranet/manipulador_bd.py:58-83`) é a função única de escrita — ela preenche IP/UA do contexto HTTP e delega a `registrar_auditoria` (`mod_auditoria/manipulador_bd.py:99-124`).
+- **`audit_log(usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent)`** (`mod_intranet/bd_manipulador.py:58-83`) é a função única de escrita — ela preenche IP/UA do contexto HTTP e delega a `registrar_auditoria` (`mod_auditoria/db_manipulador.py:99-124`).
 - **Banco exclusivo** `db_mod_auditoria.db` (WAL): cada módulo produtor tem a SUA tabela `tb_auditoria_<modulo>` (criada automaticamente e registrada em `tb_auditoria_meta`) — novos módulos passam a auditar sem editar o módulo de auditoria.
 - Colunas de rastreabilidade LGPD: `usuario`, `modulo`, `acao`, `descricao`, `timestamp` (horário local, RF-08), `hash_arquivo`, `ip`, `user_agent`, `client_hostname`; índices por `modulo`, `usuario` e `timestamp`.
 - Todos os módulos auditam suas ações relevantes: criação/edição/exclusão, autenticação (login/logout/falha), configurações, permissões (inclusive `acesso_negado`), operações com arquivos (com **hash SHA-256**).
-- **Migração idempotente** do legado central: `migrar_dados_existentes()` (`mod_auditoria/manipulador_bd.py:273-324`) copia a antiga `tb_auditoria` do banco central para as tabelas por módulo, marca `auditoria_migracao_concluida` e remove a tabela legada.
+- **Migração idempotente** do legado central: `migrar_dados_existentes()` (`mod_auditoria/db_manipulador.py:273-324`) copia a antiga `tb_auditoria` do banco central para as tabelas por módulo, marca `auditoria_migracao_concluida` e remove a tabela legada.
 - **Poda automática**: job diário `poda_auditoria` (`rotinas.py:74-103`) chama `podar_registros(dias)` em todas as tabelas (`auditoria_retencao_dias`, default 90).
 - Visualização: módulo `mod_auditoria` (só `administrador_geral`) — ver [Módulo de Auditoria](modulos/auditoria.md).
 
@@ -299,7 +305,7 @@ Raiz do projeto (scaffold base — Fase 0 do `PLANO.md`):
 | `logs/` | arquivos de log por módulo (loguru — rotação/retenção/compressão) |
 | `site/` | build estático do MkDocs (`docs/` → `site/`), servido em `/documentacao` |
 | `mod_*/` | núcleo `mod_intranet/` + módulos de negócio (`telas.py` obrigatório) — **as pastas operacionais dos módulos vivem DENTRO de cada `mod_*`** (regra de ouro do AGENTS.md) |
-| `mod_renomear_empenho/doc/` | pasta monitorada de empenhos (`_PASTA_MONITORADA_PADRAO` — `mod_renomear_empenho/manipulador_bd.py:25`) |
+| `mod_renomear_empenho/doc/` | pasta monitorada de empenhos (`_PASTA_MONITORADA_PADRAO` — `mod_renomear_empenho/bd_manipulador.py:25`) |
 | `mod_renomear_empenho/organizadorPasta/` | saída do organizador físico do renomear empenho (caixas/subpastas — `PASTA_ORGANIZADOR`) |
 | `mod_renomear_empenho/quarentena/` | PDFs com erro de leitura/corrupção na fila de quarentena (`PASTA_QUARENTENA`) |
 | `mod_edit_pdf/editorPDF/` | arquivos temporários do Editor de PDF (expiração automática, default 10 min — `PASTA_EDITOR`/`PASTA_EDITOR_PDF`) |
@@ -310,4 +316,4 @@ Raiz do projeto (scaffold base — Fase 0 do `PLANO.md`):
 > garantidas em runtime pelas rotinas (`os.makedirs(..., exist_ok=True)`);
 > `backup/` e `logs/` continuam **na raiz** — `logs/` e `site/` são criados/geridos em runtime pelo aplicativo.
 
-> Pendências conceituais conhecidas: `db_criador.py` legado em todos os módulos (não confiar); `db_manipulador.py` do núcleo foi reconstruído de `*.pyc` quando ausente como fonte (ver [Análise do Núcleo](analise_mod_intranet.md)).
+> Pendências conceituais conhecidas: `bd_criador.py` legado em todos os módulos de negócio (não confiar); `bd_manipulador.py` do núcleo foi reconstruído de `*.pyc` quando ausente como fonte (ver [Análise do Núcleo](analise_mod_intranet.md)).

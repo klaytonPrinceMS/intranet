@@ -24,23 +24,36 @@ logger = logging.getLogger(__name__)
 def _run_command(cmd: list, timeout: int = 10, cwd: Optional[str] = None) -> Tuple[int, str, str]:
     """Execute a command and return returncode, stdout, stderr.
 
-    Executa um comando e retorna codigo de saida, stdout e stderr.
+    Executa em thread separada com deadline rígido: mesmo que o processo
+    (ex.: CLI Python do docker-compose v1) deixe um descendente segurando o
+    pipe, o boot nunca trava — após `timeout` retorna (-1, "", "timed out").
     """
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=cwd
-        )
-        return result.returncode, result.stdout, result.stderr
-    except subprocess.TimeoutExpired:
+    import threading
+
+    resultado = {}
+
+    def _executar():
+        try:
+            p = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
+            resultado["rc"] = p.returncode
+            resultado["out"] = p.stdout
+            resultado["err"] = p.stderr
+        except FileNotFoundError:
+            resultado["rc"] = -1
+            resultado["out"] = ""
+            resultado["err"] = f"Command not found: {cmd[0]}"
+        except Exception as e:
+            resultado["rc"] = -1
+            resultado["out"] = ""
+            resultado["err"] = str(e)
+
+    t = threading.Thread(target=_executar, daemon=True)
+    t.start()
+    t.join(timeout)
+    if t.is_alive():
         return -1, "", "Command timed out"
-    except FileNotFoundError:
-        return -1, "", f"Command not found: {cmd[0]}"
-    except Exception as e:
-        return -1, "", str(e)
+    return (resultado.get("rc", -1), resultado.get("out", ""),
+            resultado.get("err", ""))
 
 
 def docker_disponivel() -> bool:
@@ -115,8 +128,9 @@ def _compose_command() -> Optional[list]:
     if returncode == 0:
         return ["docker", "compose"]
     
-    # Try docker-compose (v1)
-    returncode, _, _ = _run_command(["docker-compose", "version"], timeout=5)
+    # Try docker-compose (v1) — o binário é um app Python e pode demorar
+    # alguns segundos; deadline rígido em thread evita travar o boot.
+    returncode, _, _ = _run_command(["docker-compose", "version"], timeout=15)
     if returncode == 0:
         return ["docker-compose"]
     
@@ -153,6 +167,17 @@ def otel_stack_rodando() -> bool:
                     return True
             except json.JSONDecodeError:
                 continue
+    
+    # Fallback: consulta `docker ps` diretamente pelos nomes dos serviços
+    # (não depende do `docker-compose ps --format json`, que varia por versão).
+    _SERVICOS = ["intranet-grafana", "intranet-loki", "intranet-tempo",
+                 "intranet-mimir", "intranet-otel-collector"]
+    for nome in _SERVICOS:
+        rc, saida, _ = _run_command(
+            ["docker", "ps", "--format", "{{.Names}}", "--filter",
+             f"name={nome}"], timeout=10)
+        if rc == 0 and nome in saida:
+            return True
     
     return False
 

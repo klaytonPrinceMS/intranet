@@ -23,13 +23,14 @@ Este repositório contém uma aplicação Python com entry point na raiz (`main.
 mod_<nome>/
 ├── __init__.py              # Encapsulamento, exposição pública e bootstrap do módulo
 ├── models/
-│   └── __init__.py          # Mapeamento SQLAlchemy imperativo: Table + dataclass + map_imperatively()
-├── db_criador.py            # Responsável por criar o banco db_mod_<nome>.db
-├── db_conexao.py            # get_config / set_config delegando para Repositório
-├── db_manipulador.py        # ÚNICO ponto de acesso ao DB do módulo
-├── telas.py                 # Renderiza telas no mod_intranet e main.py
-└── tela_administracao.py    # Menu de configuração exposto ao administrador
+│   └── __init__.py          # (padrão a propagar) Mapeamento SQLAlchemy imperativo: Table + dataclass + map_imperatively() — hoje só mod_intranet
+├── bd_criador.py            # LEGADO/MORTO — criador antigo do banco; NÃO confiar nem executar (schema real via init_db* do bd_manipulador)
+├── bd_manipulador.py        # ÚNICO ponto de acesso ao DB do módulo (init_db*, queries, regras; conexão via mod_intranet/banco_conexao.conexao)
+├── telas.py                 # Renderiza as telas de negócio (mostrar_tela(nome, perfil)) — usada pelo main.py
+└── telas_administracao.py   # Painel de administração standalone (mostrar_administracao) — rota /admin/{chave_modulo}
 ```
+
+> `mod_intranet` é o núcleo e acrescenta `bd_conexao.py` (delega `get_config`/`set_config` ao `Repositorio`), `repositorio.py`, `models/`, `banco_conexao.py` (backend duplo SQLite/PostgreSQL) e demais serviços. Os módulos de negócio NÃO têm `bd_conexao.py` próprio — usam o central `mod_intranet/bd_conexao`.
 
 ### 2.2 Estrutura Obrigatória da Raiz
 
@@ -50,6 +51,7 @@ Permitido na raiz apenas:
 ├── LICENSE
 ├── main.py                  # Entry point
 ├── mkdocs.yml
+├── pytest.ini               # Configuração do pytest (roda a suíte standalone via assets/test/test_suite.py)
 ├── README.md
 ├── requirements.txt         # Dependências de execução
 └── requirements-dev.txt     # Dependências de desenvolvimento
@@ -62,6 +64,14 @@ Permitido na raiz apenas:
 - `db_mod_*.db` nunca deve ser commitado.
 
 ## 3. Convenções de Codificação
+
+> **Fundamento: Domain-Driven Design (DDD) — Língua Ubíqua.** O padrão de criar
+> funções/documentação **em Português BR** não é arbitrário: reflete a **língua
+> ubíqua** do DDD — o vocabulário exatamente como os especialistas do domínio
+> (servidores da prefeitura, almoxarifado, secretarias) falam no dia a dia.
+> Ex.: `solicitacao_impressao`, `empenho`, `quarentena`, `autorizar_grupo`,
+> `cota_paginas_mensal` são termos do negócio, não abstrações técnicas. Toda
+> função, tabela, coluna e documentação deve usar esse vocabulário do domínio.
 
 | Elemento | Padrão Obrigatório | Exemplo Correto |
 |---|---|---|

@@ -22,6 +22,7 @@ import sys
 import os
 import re
 import threading
+from datetime import datetime, date
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
@@ -338,7 +339,9 @@ def _ddl_postgres(ddl: str) -> str:
 
 class _CursorPostgres:
     """psycopg2 cursor proxy: translates `?`→`%s`, SQLite DDL/PRAGMA and
-    captures `lastrowid` for plain INSERTs (RETURNING id)."""
+    captures `lastrowid` for plain INSERTs (RETURNING id). Datetime values
+    from Postgres are normalized to strings so the app treats dates the same
+    way it does in SQLite (backend-agnostic)."""
 
     def __init__(self, cur):
         self._cur = cur
@@ -353,6 +356,9 @@ class _CursorPostgres:
                       "(LOCALTIMESTAMP + cast(? as interval))")
         s = s.replace("datetime('now','localtime')", "LOCALTIMESTAMP")
         s = s.replace("datetime('now')", "CURRENT_TIMESTAMP")
+        # GROUP_CONCAT é SQLite-only; no Postgres o equivalente é STRING_AGG
+        # (mesma sintaxe/semântica para os usos `GROUP_CONCAT(x, ', ')`).
+        s = s.replace("GROUP_CONCAT(", "STRING_AGG(")
         # INSERT OR IGNORE → ON CONFLICT DO NOTHING (válido em SQLite e Postgres).
         if re.match(r"(?is)^\s*INSERT\s+OR\s+IGNORE\s+INTO", s):
             s = re.sub(r"(?is)^\s*INSERT\s+OR\s+IGNORE\s+INTO", "INSERT INTO", s, count=1)
@@ -456,6 +462,32 @@ class _CursorPostgres:
     @property
     def description(self):
         return self._cur.description
+
+    def _normalizar_valor(self, v):
+        """Converts Postgres datetime/date to string (SQLite-compatible)."""
+        if isinstance(v, datetime):
+            return v.strftime("%Y-%m-%d %H:%M:%S")
+        if isinstance(v, date):
+            return v.isoformat()
+        return v
+
+    def _normalizar_linha(self, linha):
+        if linha is None:
+            return None
+        if isinstance(linha, dict):
+            return {k: self._normalizar_valor(v) for k, v in linha.items()}
+        if isinstance(linha, (list, tuple)):
+            return tuple(self._normalizar_valor(v) for v in linha)
+        return self._normalizar_valor(linha)
+
+    def fetchone(self):
+        return self._normalizar_linha(self._cur.fetchone())
+
+    def fetchall(self):
+        return [self._normalizar_linha(r) for r in self._cur.fetchall()]
+
+    def fetchmany(self, size=None):
+        return [self._normalizar_linha(r) for r in self._cur.fetchmany(size)]
 
     def __getattr__(self, item):
         return getattr(self._cur, item)

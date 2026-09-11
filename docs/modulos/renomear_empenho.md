@@ -10,7 +10,7 @@ A tela é organizada em **6 abas internas**: **Navegar**, **Fila Renomeação**,
 
 ## Banco de dados
 
-Criador vigente: `init_db_empenho()` em `manipulador_bd.py:289`.
+Criador vigente: `init_db_empenho()` em `bd_manipulador.py:289`.
 
 | Tabela | Conteúdo |
 |:---|:---|
@@ -24,7 +24,7 @@ Criador vigente: `init_db_empenho()` em `manipulador_bd.py:289`.
 | `tb_eventos_arquivos` | linha do tempo cronológica por arquivo (FK para `tb_arquivos_auditoria`) |
 | `tb_solicitacoes` | fluxo comum→admin: pendente → enviado/email | zip_gerado → recusado; com `lote_id`, `metodo_envio`, `caminho_zip`, `motivo_recusa` |
 
-⚠️ O `db_criador.py` é **legado/morto** (esquema FTS5 fantasma no banco central) — não executar; o esquema real está em `db_manipulador.py`.
+⚠️ O `bd_criador.py` é **legado/morto** (esquema FTS5 fantasma no banco central) — não executar; o esquema real está em `bd_manipulador.py`.
 
 ## Funcionalidades
 
@@ -44,7 +44,7 @@ Criador vigente: `init_db_empenho()` em `manipulador_bd.py:289`.
 - **Ferramentas de PDF embutidas** (RF-45): corte (pares/ímpares/intervalo), mesclagem e redução; saídas em `mod_renomear_empenho/datahora_cortePDF/`, `mod_renomear_empenho/datahora_mergePDF/`, `mod_renomear_empenho/datahora_reducaoPDF/`.
 - **Solicitações de envio** (RF-39): comum registra pedido (e-mail + mensagem); admin envia por e-mail (SMTP central `mod_intranet/email_util`) ou gera ZIP (`mod_renomear_empenho/downloads/solic_*.zip`); agrupamento por lote; histórico completo.
 - **Painel Administração**: aparência (`empenhos_*` — cor do botão/texto/fundo/título, tamanho, texto do cabeçalho), pastas monitoradas, intervalo do monitor, autorização de download/ZIP/e-mail para comuns, template de nome final, campos de busca e regras regex.
-- **Versionamento**: `versao_modulo:empenhos = 1.0.<data>` (seed em `conexao_bd.init_db()`), exibido no rodapé.
+- **Versionamento**: `versao_modulo:empenhos = 1.0.<data>` (seed em `bd_conexao.init_db()`), exibido no rodapé.
 
 ## Regras de negócio
 
@@ -83,7 +83,7 @@ Criador vigente: `init_db_empenho()` em `manipulador_bd.py:289`.
 
 ## Pontos de atenção
 
-- `db_criador.py` **morto** — não confiar; o esquema real está em `db_manipulador.py`.
+- `bd_criador.py` **morto** — não confiar; o esquema real está em `bd_manipulador.py`.
 - Monitor automático é **não recursivo** (apenas a raiz das pastas monitoradas); a navegação/fila manuais são recursivas.
 - O intervalo do monitor (padrão **60 s**) e a lista de pastas são lidos de `tb_config` e aplicados **sem reiniciar**.
 

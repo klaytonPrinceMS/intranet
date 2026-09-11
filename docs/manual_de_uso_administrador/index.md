@@ -4,7 +4,7 @@
 
 ## Perfis do sistema
 
-O sistema possui exatamente **três perfis globais** (campo `user_perfil` em `tb_usuarios`, constante `PERFIS_GLOBAIS` em `mod_gest_cad_usuario/manipulador_bd.py:15`):
+O sistema possui exatamente **três perfis globais** (campo `user_perfil` em `tb_usuarios`, constante `PERFIS_GLOBAIS` em `mod_gest_cad_usuario/bd_manipulador.py:15`):
 
 | Perfil | Chave técnica | Acesso |
 |:---|:---|:---|

@@ -24,7 +24,7 @@ PADRAO_CONFIG = {
     "cor_fundo": "#EEEEEE",
     "texto_login_titulo": "INTRANET Básica",
     "texto_login_subtitulo": "Acesso restrito a usuários autorizados",
-    "texto_login_hint": "Primeiro acesso? Use master / master e troque a senha.",
+    "texto_login_hint": "Novos usuários? Procure o DTI para realizar o seu cadastro.",
     "texto_home_saudacao": "Olá",
     "texto_home_subtitulo": "Sua intranet corporativa é tudo em um só lugar.",
     "texto_rodape": "uso interno",

@@ -365,6 +365,62 @@ def _renderizar_carrossel(wrap, posts, tempo_seg, usuario_logado, perfil,
     ui.timer(tempo_seg, avancar)
 
 
+def renderizar_postagens(wrap, usuario_logado, perfil, pode_publicar,
+                         ao_atualizar, ao_editar=None, termo="", data_f=""):
+    """Renders the post feed honoring the configured display mode.
+
+    Monta o feed conforme `blog_modo_exibicao` — 'historico' (lista completa),
+    'unica' (postagem fixada ou a mais recente) ou 'carrossel' (rotação
+    automática das selecionadas). É a FONTE ÚNICA do padrão de exibição:
+    usada pela tela do Blog E pela Home, para que a página inicial mostre o
+    MESMO padrão configurado no módulo. `termo` filtra título/conteúdo/autor;
+    `data_f` filtra pela data (AAAA-MM-DD)."""
+    from mod_blog.bd_manipulador import (
+        listar_postagens, obter_modo_exibicao, obter_postagem_unica_id,
+        obter_carrossel_postagens_ids, obter_carrossel_tempo,
+        listar_postagens_por_ids,
+    )
+    wrap.clear()
+    modo = obter_modo_exibicao()
+    posts = listar_postagens(ativo=True, ordem="DESC")
+    termo = (termo or "").strip().lower()
+    data_f = (data_f or "").strip()
+    if termo:
+        posts = [p for p in posts if
+                 termo in ((p[1] or "").lower())
+                 or termo in ((p[2] or "").lower())
+                 or termo in ((p[3] or "").lower())]
+    if data_f:
+        posts = [p for p in posts if (p[4] or "").startswith(data_f)]
+    if modo == "carrossel":
+        posts = listar_postagens_por_ids(
+            obter_carrossel_postagens_ids(), ativo=True)
+        _renderizar_carrossel(wrap, posts, obter_carrossel_tempo(),
+                              usuario_logado, perfil, pode_publicar,
+                              ao_editar, ao_atualizar)
+        return
+    if modo == "unica":
+        fixada = obter_postagem_unica_id()
+        if fixada is not None:
+            fixadas = [p for p in posts if str(p[0]) == str(fixada)]
+            if fixadas:
+                posts = fixadas
+        posts = posts[:1]
+    with wrap:
+        if not posts:
+            with ui.card().classes("w-full items-center p-8"):
+                ui.icon("article", size="48px").classes("text-grey-4")
+                if termo or data_f:
+                    msg = "Nenhuma publicação encontrada."
+                else:
+                    msg = "Nenhuma publicação ainda." + (
+                        " Crie a primeira!" if pode_publicar else "")
+                ui.label(msg).classes("text-grey-6")
+        for post in posts:
+            _card_postagem(post, usuario_logado, perfil, ao_atualizar,
+                           pode_publicar=pode_publicar, ao_editar=ao_editar)
+
+
 def mostrar_tela(usuario_logado: str, perfil: str):
     """Renders the blog screen (editor + feed + administration tab).
 
@@ -690,54 +746,11 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             posts_wrap = ui.column().classes("w-full gap-4")
 
             def atualizar():
-                from mod_blog.bd_manipulador import listar_postagens
-                posts_wrap.clear()
-                modo = obter_modo_exibicao()
-                posts = listar_postagens(ativo=True, ordem="DESC")
-                termo = (busca_termo.value or "").strip().lower()
-                data_f = (busca_data.value or "").strip()
-                if termo:
-                    posts = [p for p in posts if
-                             termo in ((p[1] or "").lower())
-                             or termo in ((p[2] or "").lower())
-                             or termo in ((p[3] or "").lower())]
-                if data_f:
-                    posts = [p for p in posts
-                             if (p[4] or "").startswith(data_f)]
-                if modo == "unica":
-                    fixada = obter_postagem_unica_id()
-                    if fixada is not None:
-                        fixadas = [p for p in posts
-                                   if str(p[0]) == str(fixada)]
-                        if fixadas:
-                            posts = fixadas
-                    posts = posts[:1]
-                if modo == "carrossel":
-                    from mod_blog.bd_manipulador import (
-                        listar_postagens_por_ids, obter_carrossel_postagens_ids,
-                    )
-                    posts = listar_postagens_por_ids(
-                        obter_carrossel_postagens_ids(), ativo=True)
-                    _renderizar_carrossel(
-                        posts_wrap, posts, obter_carrossel_tempo(),
-                        usuario_logado, perfil, pode_publicar, ao_editar,
-                        atualizar)
-                    return
-                with posts_wrap:
-                    if not posts:
-                        with ui.card().classes("w-full items-center p-8"):
-                            ui.icon("article", size="48px").classes("text-grey-4")
-                            if termo or data_f:
-                                msg = "Nenhuma publicação encontrada."
-                            else:
-                                msg = "Nenhuma publicação ainda." + (
-                                    " Crie a primeira!" if pode_publicar else "")
-                            ui.label(msg).classes("text-grey-6")
-                    for post in posts:
-                        _card_postagem(
-                            post, usuario_logado, perfil, atualizar,
-                            pode_publicar=pode_publicar,
-                            ao_editar=ao_editar if pode_publicar else None)
+                renderizar_postagens(
+                    posts_wrap, usuario_logado, perfil, pode_publicar,
+                    atualizar, ao_editar if pode_publicar else None,
+                    termo=(busca_termo.value or ""),
+                    data_f=(busca_data.value or ""))
 
             atualizar()
 

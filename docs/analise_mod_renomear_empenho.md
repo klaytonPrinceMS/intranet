@@ -29,7 +29,7 @@ Admin = `administrador_geral` ou `eh_admin_do_modulo(usuario, "empenhos")` (`tel
 
 ## Banco próprio
 
-Criador vigente: `init_db_empenho()` em `manipulador_bd.py:289`.
+Criador vigente: `init_db_empenho()` em `bd_manipulador.py:289`.
 
 | Tabela | Conteúdo |
 |:---|:---|
@@ -43,7 +43,7 @@ Criador vigente: `init_db_empenho()` em `manipulador_bd.py:289`.
 | `tb_eventos_arquivos` | linha do tempo cronológica por arquivo (FK `tb_arquivos_auditoria`) |
 | `tb_solicitacoes` | fluxo comum→admin: pendente → enviado | zip_gerado → recusado; `lote_id`, `metodo_envio`, `caminho_zip`, `motivo_recusa` |
 
-⚠️ O `db_criador.py` é **legado/morto** (esquema FTS5 fantasma no banco central) — não executar; o esquema real está em `db_manipulador.py`.
+⚠️ O `bd_criador.py` é **legado/morto** (esquema FTS5 fantasma no banco central) — não executar; o esquema real está em `bd_manipulador.py`.
 
 ## Fluxo da tela
 
@@ -96,7 +96,7 @@ Acesso pela chave do módulo `empenhos`; perfil define o que é visível (abas a
 
 ## Regras de negócio relevantes
 
-- **Extração** (pipeline tolerante a escaneados, `manipulador_bd.py:475`): `pymupdf → pdfplumber → OCR (pytesseract, por+eng) → pikepdf`. PDF sem texto vai à quarentena ("possivelmente escaneado").
+- **Extração** (pipeline tolerante a escaneados, `bd_manipulador.py:475`): `pymupdf → pdfplumber → OCR (pytesseract, por+eng) → pikepdf`. PDF sem texto vai à quarentena ("possivelmente escaneado").
 - **Renomeação**: contador sequencial persistido em banco, único entre pastas; tipos especiais usam nome próprio. Template de nome configurável.
 - **Organizador**: distribui renomeados em `mod_renomear_empenho/organizadorPasta/caixa_NN/sub_X` (~200 páginas/pasta, 4 pastas/caixa, configuráveis); gera `capa.txt`/`matrizDeDocumentos.txt/.pdf` e valida presença.
 - **Solicitações**: `pendente → (email) enviado | (ZIP) zip_gerado → confirmar | recusado`; agrupadas por `lote_id`; ZIP em `mod_renomear_empenho/downloads/solic_*.zip`.
@@ -104,7 +104,7 @@ Acesso pela chave do módulo `empenhos`; perfil define o que é visível (abas a
 
 ## Integrações com o núcleo
 
-- `mod_intranet.conexao_bd` (`get_config`/`set_config` — chaves `empenhos_*` e `renomear_autorizar_download`).
+- `mod_intranet.bd_conexao` (`get_config`/`set_config` — chaves `empenhos_*` e `renomear_autorizar_download`).
 - `mod_intranet.autenticacao.eh_admin_do_modulo` (permissão por aba).
 - `mod_intranet.rotinas` (job `monitor_empenho`, `intervalo_monitor_empenho`, `reagendar_monitor_empenho`).
 - `mod_intranet.email_util.enviar_email` — envio de solicitações por SMTP.
@@ -113,7 +113,7 @@ Acesso pela chave do módulo `empenhos`; perfil define o que é visível (abas a
 
 ## Pontos de atenção
 
-- `db_criador.py` **morto** com esquema FTS5 fantasma — fonte de confusão; não executar.
+- `bd_criador.py` **morto** com esquema FTS5 fantasma — fonte de confusão; não executar.
 - Monitor automático varre **só a raiz** de cada pasta monitorada; navegação/fila manuais são **recursivas** (comportamento intencional) — não equivaler automaticidade a recursividade.
 - Intervalo padrão do monitor é **60 s** (não 10 s); ajustado em `mod_intranet/rotinas.py:36`.
 

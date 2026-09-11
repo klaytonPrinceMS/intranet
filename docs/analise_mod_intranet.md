@@ -14,15 +14,15 @@ Pacote núcleo que centraliza tudo o que os módulos compartilham: banco central
 
 ## Banco central `db_mod_intranet.db`
 
-Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` (`conexao_bd.py:29-30`). Tabelas criadas por `init_db()` (`conexao_bd.py:34-77`), chamada pelo bootstrap `inicializar_bancos()` **antes** da importação de qualquer módulo:
+Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` (`bd_conexao.py:29-30`). Tabelas criadas por `init_db()` (`bd_conexao.py:34-77`), chamada pelo bootstrap `inicializar_bancos()` **antes** da importação de qualquer módulo:
 
-> ⚠️ **Reconstrução do núcleo**: `bd_conexao.py`, `db_manipulador.py` e `dialogo_backup.py` estavam **ausentes como fonte** (restavam só `*.pyc` em `__pycache__`) e foram reconstruídos fielmente a partir do bytecode. Em caso de divergência de comportamento esperada, comparar com o `*.pyc` correspondente (ou `gh-pages`). `db_manipulador.py` central expõe `get_intranet_conn`, `garantir_rastreabilidade`, `audit_log`, `hash_arquivo`; `bd_conexao.py` expõe `get_connection`, `get_config`, `set_config`, `init_db`, `favicon_versao`, `DB_PATH`, `PADRAO_CONFIG`.
+> ⚠️ **Reconstrução do núcleo**: `bd_conexao.py`, `bd_manipulador.py` e `dialogo_backup.py` estavam **ausentes como fonte** (restavam só `*.pyc` em `__pycache__`) e foram reconstruídos fielmente a partir do bytecode. Em caso de divergência de comportamento esperada, comparar com o `*.pyc` correspondente (ou `gh-pages`). `bd_manipulador.py` central expõe `get_intranet_conn`, `garantir_rastreabilidade`, `audit_log`, `hash_arquivo`; `bd_conexao.py` expõe `get_connection`, `get_config`, `set_config`, `init_db`, `favicon_versao`, `DB_PATH`, `PADRAO_CONFIG`.
 
 | Tabela | Conteúdo | Criada em |
 |:---|:---|:---|
-| `tb_auditoria` | id, usuario, modulo, acao, descricao, timestamp, hash_arquivo + colunas `ip`/`user_agent` (migração `garantir_rastreabilidade`) | `conexao_bd.py:38-47` |
-| `tb_config` | chave PK / valor — seeds: `versao_sistema=1.0.260908`, `cotadisco_global_gb=10`, `backup_interval_hours=12` (legada) e padrões de aparência | `conexao_bd.py:49-74` |
-| `tb_sessoes` | id, usuario, modulo, login/logout_timestamp, cookie_hash + `ip`, `user_agent`, `dispositivo`, `mac` | `conexao_bd.py:55-63` |
+| `tb_auditoria` | id, usuario, modulo, acao, descricao, timestamp, hash_arquivo + colunas `ip`/`user_agent` (migração `garantir_rastreabilidade`) | `bd_conexao.py:38-47` |
+| `tb_config` | chave PK / valor — seeds: `versao_sistema=1.0.260908`, `cotadisco_global_gb=10`, `backup_interval_hours=12` (legada) e padrões de aparência | `bd_conexao.py:49-74` |
+| `tb_sessoes` | id, usuario, modulo, login/logout_timestamp, cookie_hash + `ip`, `user_agent`, `dispositivo`, `mac` | `bd_conexao.py:55-63` |
 | `tb_modulos` | id, chave UNIQUE, nome, icone, rota, ativo, nativo, **ordem** — semeada com os 5 módulos nativos; `ordem` controla a exibição (migração idempotente em bancos antigos) | `autenticacao.py:29-84` |
 
 `init_db()` encerra com `PRAGMA wal_checkpoint(TRUNCATE)` para evitar "no such table" em instalação limpa sob WAL.
@@ -73,7 +73,7 @@ Não há mais um botão único "APLICAR" geral: cada card é recolhível (`card_
 
 O rodapé mostra as versões **da esquerda para a direita**: 1ª a versão global do sistema (`v{versao_sistema}`), e quando o usuário está dentro de um módulo (`chave_modulo`), 2ª a versão **individual do módulo atual** (`v{versao_modulo:<chave>}`). Sem módulo específico (Dashboard/Configurações) aparece só a global. A versão individual é lida de `tb_config` (chave `versao_modulo:<chave>`, mesmo estilo `1.0.AAMMDD`) com fallback `1.0` quando o módulo ainda não versionou. Ex.: `/edit-pdf` mostra `v1.0.260908` (sistema) + `v1.0.260908` (mod_edit_pdf).
 
-**Seed centralizado**: `versao_modulo:<chave>` é semeada para os 5 módulos (`usuarios`, `auditoria`, `editar_pdf`, `empenhos`, `blog`) em `conexao_bd.init_db()` com `INSERT OR IGNORE` — idempotente, não sobrescreve edição manual. Para refletir numa base existente, chame `init_db()` novamente.
+**Seed centralizado**: `versao_modulo:<chave>` é semeada para os 5 módulos (`usuarios`, `auditoria`, `editar_pdf`, `empenhos`, `blog`) em `bd_conexao.init_db()` com `INSERT OR IGNORE` — idempotente, não sobrescreve edição manual. Para refletir numa base existente, chame `init_db()` novamente.
 
 **Painel "Administração" por módulo**: cada módulo ganhou uma aba/expansão exclusiva do admin geral (ou admin do módulo) com o bloco **Aparência** (tema dos botões via `ui.color_input`, prefixo `<chave>_`) e **config específica de comportamento** salva via `set_config` do núcleo. Padrões: `usuarios_senha_min`, `auditoria_limite`/`auditoria_retencao_dias`/`auditoria_texto_header`, `empenhos_pasta_monitorada`/`empenhos_texto_header`, `blog_tags_permitidas`/`blog_texto_header`, além do `editpdf_*` já existente.
 
@@ -162,7 +162,7 @@ sistema**: a data atual e de gravação devem vir SEMPRE do servidor (nunca do n
 ## Pontos de atenção
 
 - Bootstrap: `inicializar_bancos()` roda antes de qualquer import de módulo (`main.py:15-16`) — ordem crítica.
-- O PLANO cita `mod_intranet_criador_bd.py` e `mod_intranet_auditoria.py`: esses arquivos **não existem** — quem cria as tabelas é `conexao_bd.init_db()` e quem audita é `manipulador_bd.audit_log()`.
+- O PLANO cita `mod_intranet_bd_criador.py` e `mod_intranet_auditoria.py`: esses arquivos **não existem** — quem cria as tabelas é `bd_conexao.init_db()` e quem audita é `bd_manipulador.audit_log()`.
 - `storage_secret` do `ui.run` é placeholder hardcoded ("...mude-isto") — trocar antes de produção.
 - `backup_interval_hours` é semente legada; os jobs usam apenas `backup_horas:<modulo>`. `sessao_retencao` não tem campo na UI.
 - MAC via ARP não funciona neste host Windows (comandos Linux) — coluna fica nula.
@@ -172,13 +172,13 @@ sistema**: a data atual e de gravação devem vir SEMPRE do servidor (nunca do n
 **Implementado:**
 
 - Banco central `db_mod_intranet.db` em modo **WAL** + `tb_auditoria` unificada (rastreabilidade IP/UA/dispositivo/MAC via `garantir_rastreabilidade`).
-- Auditoria centralizada: `manipulador_bd.audit_log` registra config/auth/permissões/acessos de todos os módulos.
+- Auditoria centralizada: `bd_manipulador.audit_log` registra config/auth/permissões/acessos de todos os módulos.
 - Visibilidade de módulos por permissão (drawer lateral com alerta de módulo inativo/removido).
 - Login com sessão registrada em banco (`registrar_login`) + **sessões revogáveis**: `cookie_hash` via `secrets`, revalidação a cada request (`sessao_ativa`), logout próprio preserva as demais sessões do usuário.
 - Gestão de Sessões (ativas + histórico + encerrar) no módulo de usuários; **retenção** do histórico implementada no mecanismo (poda por `sessao_retencao`, default 50/usuário).
 - Layout de 4 partes (`layout_tela.pagina_restrita`) com versão no rodapé; área principal carrega o **Blog por padrão** (feed de publicações recentes) — RF-09 **REALIZADO**; a navegação por módulos permanece no drawer lateral.
 - Personalização de cor primária/fundo, ícone, título, textos e favicon via `/configuracoes` (gravação única, vale sem restart).
-- Edição de Perfil ("Meu Perfil") e troca obrigatória de senha do `master` no 1º login (auto-cura idempotente em boot — `mod_gest_cad_usuario/manipulador_bd.py:136-156`).
+- Edição de Perfil ("Meu Perfil") e troca obrigatória de senha do `master` no 1º login (auto-cura idempotente em boot — `mod_gest_cad_usuario/bd_manipulador.py:136-156`).
 - Backup automático configurável por módulo (12 h default, sem restart) + expiração do editorPDF agendada.
 - **Observabilidade centralizada (loguru)** — ver seção "Observabilidade / Logs".
 - Carimbos de auditoria (`tb_auditoria.timestamp`) gravados em `localtime` (RF-08) — **REALIZADO**.
@@ -455,7 +455,7 @@ Novo subsistema central em `mod_intranet/observabilidade.py` (validado com `ast.
 - **Boot com gate** (`main.py`): `otel_ativo=0` desliga a telemetria; `otel_auto_start_stack=0` usa stack remota (sem gerenciar Docker local); o sync de credenciais Grafana via `docker exec` só roda com stack local (remota usa token/API — Fase 3).
 - **Grafana configurável** (`grafana_sync.py`): `obter_grafana_url()` com prioridade env `GRAFANA_URL` > `tb_config` (`grafana_url`, padrão `http://localhost:3000`); health-check, API e status usam a URL resolvida.
 - **Bridge loguru→Loki com filtro**: `log_otel_envio=0` mantém o log só local; `log_otel_nivel` define o nível mínimo enviado ao Loki.
-- **Seed**: todas as chaves novas estão em `conexao_bd.PADRAO_CONFIG` (propagadas via `INSERT OR IGNORE`, cobrindo bancos existentes).
+- **Seed**: todas as chaves novas estão em `bd_conexao.PADRAO_CONFIG` (propagadas via `INSERT OR IGNORE`, cobrindo bancos existentes).
 - **Aviso**: troca de endpoint/`otel_ativo` exige REINICIAR o sistema (endpoint lido no boot); a aba avisa isso na tela.
 
 #### Textos fixos, fundo e padrão de edição (05/09) — exibir vigente, salvar sem zerar, aplicar

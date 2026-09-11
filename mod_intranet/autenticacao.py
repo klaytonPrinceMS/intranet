@@ -407,6 +407,22 @@ def precisa_trocar_credenciais(user_nome):
         return val == "1"
 
 
+def tema_escuro(user_nome):
+    """True se o usuário prefere o tema escuro (config per-usuário).
+
+    Preferência de tema individual (não afeta os demais usuários). Chave
+    `tema_escuro:<user>` na tb_config central; padrão claro (light)."""
+    with Repositorio() as repo:
+        val = repo.obter_config(f"tema_escuro:{user_nome}", "0")
+        return val == "1"
+
+
+def definir_tema_escuro(user_nome, escuro):
+    """Define a preferência de tema (escuro/claro) do usuário."""
+    with Repositorio() as repo:
+        repo.definir_config(f"tema_escuro:{user_nome}", "1" if escuro else "0")
+
+
 def trocar_senha_propria(user_nome, senha_atual, nova_senha):
     ok, msg = autenticar(user_nome, senha_atual)
     if not ok:
@@ -429,8 +445,10 @@ def trocar_senha_propria(user_nome, senha_atual, nova_senha):
     return True, "Senha alterada com sucesso"
 
 
-def trocar_credenciais_master(nome_atual, novo_nome, senha_atual, nova_senha):
-    """Primeiro acesso do `master` nativo: renomeia o usuário E troca a senha.
+def trocar_credenciais_master(nome_atual, novo_nome, senha_atual, nova_senha,
+                              nome_completo="", email="", fone=""):
+    """Primeiro acesso do `master` nativo: renomeia o usuário, troca a senha
+    e atualiza dados pessoais (nome completo/social, e-mail, telefone).
 
     Retorna (ok, msg, novo_nome). Só é acionado quando a flag
     `forcar_troca_credenciais:master` está ativa (instalação nova/legado com
@@ -460,6 +478,17 @@ def trocar_credenciais_master(nome_atual, novo_nome, senha_atual, nova_senha):
         conn.commit()
     finally:
         conn.close()
+    # Dados pessoais (nome completo/social, e-mail, telefone) — opcionais.
+    if (nome_completo and nome_completo.strip()) or \
+            (email and email.strip()) or (fone and fone.strip()):
+        ok_dados, msg_dados = gest.editar_usuario(
+            novo, novo,
+            email=(email or "").strip() or "__NULO__",
+            fone=(fone or "").strip() or "__NULO__",
+            nome_completo=(nome_completo or "").strip() or "__NULO__",
+            auditar=False)
+        if not ok_dados:
+            return False, msg_dados, novo
     # limpa as flags (a chave antiga `:master` sai da lista de pendentes)
     marcar_trocar_senha(nome_atual, False)
     marcar_trocar_credenciais(nome_atual, False)

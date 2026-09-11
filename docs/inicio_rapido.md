@@ -56,7 +56,7 @@ http://localhost:8080
 |:---|:---|:---|
 | `master` | `master` | `administrador_geral` |
 
-3. **A troca de senha é obrigatória no 1º logon** — o sistema exibe o diálogo de troca e não permite prosseguir no fluxo normal (auto-cura idempotente: enquanto a senha for `master`, a troca é rearmada a cada boot — `mod_gest_cad_usuario/manipulador_bd.py:168-194`).
+3. **A troca de senha é obrigatória no 1º logon** — o sistema exibe o diálogo de troca e não permite prosseguir no fluxo normal (auto-cura idempotente: enquanto a senha for `master`, a troca é rearmada a cada boot — `mod_gest_cad_usuario/bd_manipulador.py:168-194`).
 
 > ⚠️ **Segurança:** troque a senha do `master` imediatamente e não use a senha padrão em produção.
 
@@ -77,24 +77,36 @@ Os bancos já vêm com usuários de teste cadastrados (banco `db_mod_gest_cad_us
 Teste mínimo de bootstrap do servidor (sobe NiceGUI sem módulos):
 
 ```bash
-.venv/bin/python test/test_server.py
+.venv/bin/python assets/test/test_server.py
 ```
 
-Testes existentes na pasta `test/`:
+> O `test_server.py` acima é um **helper** (sobe a app na 8080 e bloqueia) — fica de **fora** da suíte automatizada (ver abaixo).
+
+### Suíte completa de testes — pytest
+
+O comando oficial de validação é `.venv/bin/pytest`: o `pytest.ini` (raiz) aponta o pytest apenas para o runner `assets/test/test_suite.py` (`testpaths = assets/test/test_suite.py`), que executa **TODOS** os scripts standalone de `assets/test/*.py` em subprocessos e falha se algum retornar código ≠ 0 (duração ≈3–5 min). Para rodar um único teste isolado:
+
+```bash
+.venv/bin/python assets/test/<arquivo>.py
+```
+
+Exemplo: `.venv/bin/python assets/test/teste_fluxo_blog.py`. Detalhes e lista de exclusões do runner: [Testes — Plano](testes_plano/index.md).
+
+Testes existentes na pasta `assets/test/`:
 
 | Script | Escopo |
 |:---|:---|
-| `test/test_server.py` | bootstrap mínimo (smoke test) |
-| `test/test_editor_pdf.py` | editor PDF (32 verificações) |
-| `test/test_auditoria.py` | filtros/exportação da auditoria |
-| `test/test_fase1_login.py` | fase 1: login/autenticação |
-| `test/test_fresh_install.py` | instalação limpa |
-| `test/test_solicita_impressao.py` | módulo de solicitação de impressão |
-| `test/teste_fluxo_blog.py` | fluxo do Blog (33/33 OK) |
-| `test/teste_fluxo_autenticacao.py` | login → troca de senha → sessões → soft delete (19/19) |
-| `test/teste_fluxo_permissoes.py` | perfis/papéis por módulo (13/13) |
-| `test/teste_fluxo_renameador.py` | renomeador de empenhos (DOC + tipos especiais) |
-| `test/verifica_ui_comum.py` | equivalência visual dos componentes de UI (150 verificações) |
+| `assets/test/test_server.py` | bootstrap mínimo (smoke test) |
+| `assets/test/test_editor_pdf.py` | editor PDF (32 verificações) |
+| `assets/test/test_auditoria.py` | filtros/exportação da auditoria |
+| `assets/test/test_fase1_login.py` | fase 1: login/autenticação |
+| `assets/test/test_fresh_install.py` | instalação limpa |
+| `assets/test/test_solicita_impressao.py` | módulo de solicitação de impressão |
+| `assets/test/teste_fluxo_blog.py` | fluxo do Blog (33/33 OK) |
+| `assets/test/teste_fluxo_autenticacao.py` | login → troca de senha → sessões → soft delete (19/19) |
+| `assets/test/teste_fluxo_permissoes.py` | perfis/papéis por módulo (13/13) |
+| `assets/test/teste_fluxo_renameador.py` | renomeador de empenhos (DOC + tipos especiais) |
+| `assets/test/verifica_ui_comum.py` | equivalência visual dos componentes de UI (150 verificações) |
 
 ## Solução de problemas
 

@@ -1,12 +1,12 @@
 # Intranet Modular — Technical Documentation
 
-> Central index of the Intranet Modular (NiceGUI) engineering documentation for the Prefeitura Municipal de Monte Santo de Minas. This site follows the "Documentos de Engenharia de Software" standard (MkDocs Material): every page carries an English summary followed by the Portuguese (Brazil) summary, and is organized into per-topic folders.
+> Central index of the Intranet Modular (NiceGUI) engineering documentation for the rede interna. This site follows the "Documentos de Engenharia de Software" standard (MkDocs Material): every page carries an English summary followed by the Portuguese (Brazil) summary, and is organized into per-topic folders.
 
 ---
 
 # Intranet Modular — Documentação Técnica
 
-> Índice central da documentação de engenharia da Intranet Modular (NiceGUI) da Prefeitura Municipal de Monte Santo de Minas. Este sítio segue o padrão "Documentos de Engenharia de Software" (MkDocs Material): cada página traz um resumo em inglês seguido do resumo em português (Brasil) e é organizada em pastas por tema.
+> Índice central da documentação de engenharia da Intranet Modular (NiceGUI) da rede interna. Este sítio segue o padrão "Documentos de Engenharia de Software" (MkDocs Material): cada página traz um resumo em inglês seguido do resumo em português (Brasil) e é organizada em pastas por tema.
 
 ## Documentos de Engenharia de Software
 

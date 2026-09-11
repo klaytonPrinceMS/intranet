@@ -15,14 +15,14 @@
 
 ## Layout de pacotes
 
-Cada módulo é um pacote `mod_<nome>/` com `telas.py` (obrigatório: `mostrar_tela(nome, perfil)`), `db_manipulador.py` e `db_criador.py` (legado/morto). Acesso a dados concentra-se em `db_manipulador.py`.
+Cada módulo é um pacote `mod_<nome>/` com `telas.py` (obrigatório: `mostrar_tela(nome, perfil)`), `telas_administracao.py` (painel admin), `bd_manipulador.py` (único acesso ao DB) e `bd_criador.py` (legado/morto — o schema real é criado por `init_db*` no `bd_manipulador`). Acesso a dados concentra-se em `bd_manipulador.py`.
 
 ## Banco de dados
 
 - **Central** `db_mod_intranet.db`: `tb_config`, `tb_sessoes`, `tb_modulos`.
 - **Auditoria** `db_mod_auditoria.db`: `tb_auditoria_<modulo>` (uma tabela por módulo produtor) + `tb_auditoria_meta`.
 - Cada módulo tem seu `.db` na raiz em modo **WAL** (`*.db-wal`, `*.db-shm`).
-- **Não cross-query**: consultar via o `manipulador_bd` do próprio módulo.
+- **Não cross-query**: consultar via o `bd_manipulador` do próprio módulo.
 - Auditoria LGPD via `audit_log` → banco exclusivo `db_mod_auditoria.db` (tabela por módulo) para toda escrita; operações de PDF registram hash SHA-256 (`hash_arquivo`).
 
 ## Agendadores (APScheduler)

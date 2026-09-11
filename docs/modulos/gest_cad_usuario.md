@@ -14,12 +14,12 @@ Soft CRUD completo de usuários: criar, editar, renomear, bloquear/desbloquear, 
 
 ## Banco de dados
 
-Criador vigente: `init_db()` em `manipulador_bd.py:61-215` (executado no import e pelo bootstrap central).
+Criador vigente: `init_db()` em `bd_manipulador.py:61-215` (executado no import e pelo bootstrap central).
 
 - **`tb_usuarios`**: `id` PK AUTOINCREMENT, `user_nome` UNIQUE, `user_senha` (bcrypt), `user_email`, `user_fone`, `user_perfil`, `user_ativo`, `data_cadastro`, `user_deletado`, `user_nome_completo` (nome social, Decreto 8.727/2016), `user_motivo_exclusao`.
 - **`tb_acesso_usuario`**: vínculo `usuário × módulo × papel` (`UNIQUE(user_nome, modulo_chave)`, FK CASCADE).
 
-⚠️ `tb_modulo_perfil` existe apenas no `db_criador.py` — **legado/morto** (aponta para o banco central); não confiar.
+⚠️ `tb_modulo_perfil` existe apenas no `bd_criador.py` — **legado/morto** (aponta para o banco central); não confiar.
 
 ## Funcionalidades
 
@@ -46,7 +46,7 @@ Criador vigente: `init_db()` em `manipulador_bd.py:61-215` (executado no import 
 
 - Rota: `/users` (chave `usuarios`) — gate duplo: `administrador_geral` ou `eh_admin_do_modulo(user, 'usuarios')`.
 - Importa `autenticacao` (hash/papéis), `get_connection` central e `audit_log`; escreve/lê `tb_sessoes` central.
-- Seed `master`/`master` com **auto-cura da troca obrigatória** a cada boot (`manipulador_bd.py:168-194`).
+- Seed `master`/`master` com **auto-cura da troca obrigatória** a cada boot (`bd_manipulador.py:168-194`).
 
 ## Testes
 
@@ -58,7 +58,7 @@ Criador vigente: `init_db()` em `manipulador_bd.py:61-215` (executado no import 
 ## Pontos de atenção
 
 - Tabela real é `tb_usuarios` (não `tb_usuario`); rota real é `/users` (não `/gestao-usuarios`).
-- `db_criador.py` é morto — não executar.
+- `bd_criador.py` é morto — não executar.
 - Testes `testes/teste_fluxo_autenticacao.py`/`teste_fluxo_permissoes.py` citados no PLANO não existem (há `test/test_fase1_login.py`).
 
 Ver [Análise do Módulo](../analise_mod_gest_cad_usuario.md).

@@ -36,21 +36,38 @@ def obter_grafana_url():
 
 
 def _run_command(cmd: list, timeout: int = 10) -> Tuple[int, str, str]:
-    """Execute a command and return returncode, stdout, stderr."""
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout
-        )
-        return result.returncode, result.stdout, result.stderr
-    except subprocess.TimeoutExpired:
+    """Execute a command and return returncode, stdout, stderr.
+
+    Executa em thread separada com deadline rígido: mesmo que o processo
+    deixe um descendente segurando o pipe (comum no CLI do Docker), o boot
+    nunca trava — após `timeout` retorna (-1, "", "Command timed out").
+    """
+    import threading
+
+    resultado = {}
+
+    def _executar():
+        try:
+            p = subprocess.run(cmd, capture_output=True, text=True)
+            resultado["rc"] = p.returncode
+            resultado["out"] = p.stdout
+            resultado["err"] = p.stderr
+        except FileNotFoundError:
+            resultado["rc"] = -1
+            resultado["out"] = ""
+            resultado["err"] = f"Command not found: {cmd[0]}"
+        except Exception as e:
+            resultado["rc"] = -1
+            resultado["out"] = ""
+            resultado["err"] = str(e)
+
+    t = threading.Thread(target=_executar, daemon=True)
+    t.start()
+    t.join(timeout)
+    if t.is_alive():
         return -1, "", "Command timed out"
-    except FileNotFoundError:
-        return -1, "", f"Command not found: {cmd[0]}"
-    except Exception as e:
-        return -1, "", str(e)
+    return (resultado.get("rc", -1), resultado.get("out", ""),
+            resultado.get("err", ""))
 
 
 def obter_senha_master() -> Optional[str]:

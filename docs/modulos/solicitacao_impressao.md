@@ -16,7 +16,7 @@ Módulo para solicitação de impressão de PDFs. Usuários **comuns** anexam um
 
 ## Banco de dados
 
-Criador vigente: `init_db()` em `manipulador_bd.py:92` (bootstrap central). Arquivos PDF em `mod_solicita_impressao/solicitacaoImpressao/` (pasta própria).
+Criador vigente: `init_db()` em `bd_manipulador.py:92` (bootstrap central). Arquivos PDF em `mod_solicita_impressao/solicitacaoImpressao/` (pasta própria).
 
 | Tabela | Conteúdo |
 |:---|:---|

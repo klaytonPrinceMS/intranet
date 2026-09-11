@@ -10,7 +10,7 @@
 
 ## Como adicionar um módulo (`mod_exemplo`)
 
-1. Crie o pacote `mod_exemplo/` com `__init__.py`, `telas.py` (obrigatório: `mostrar_tela(nome, perfil)`), `db_manipulador.py`.
+1. Crie o pacote `mod_exemplo/` com `__init__.py`, `telas.py` (obrigatório: `mostrar_tela(nome, perfil)`), `bd_manipulador.py`.
 2. Crie o banco próprio `db_mod_exemplo.db` (WAL) via `inicializar_bancos()`.
 3. Registre o módulo em `tb_modulos` (`autenticacao.registrar_modulo`).
 4. Toda escrita relevante deve registrar na trilha de auditoria via `audit_log` (banco exclusivo `db_mod_auditoria.db`, tabela `tb_auditoria_<modulo>`); operações de PDF registram `hash_arquivo` (SHA-256).

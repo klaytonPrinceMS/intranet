@@ -11,7 +11,7 @@
 ## Lições registradas (semente)
 
 - **Integridade de `main.py`:** edições via PowerShell corromperam caracteres (`.`→`..`, `.`→`~`, `_`→`-`, `,`→`;;`). Mitigação: validar todo `.py` com `ast.parse` e revisar diffs.
-- **`db_criador.py` é legado/morto:** aponta para banco central e não reflete o banco por módulo. Usar `db_manipulador.py` como fonte de verdade.
+- **`bd_criador.py` é legado/morto:** aponta para banco central e não reflete o banco por módulo. Usar `bd_manipulador.py` como fonte de verdade.
 - **Sanitização de Blog:** `nh3` deve ser aplicado na gravação **e** na renderização para prevenir XSS.
 - **Rastro de auditoria:** toda escrita relevante (incluindo PDF) deve registrar na trilha de auditoria (`audit_log` → banco exclusivo `db_mod_auditoria.db`) com `hash_arquivo` (SHA-256) para conformidade LGPD.
 - **Ambiente virtual:** preferir `.venv/bin/python` (Linux) / `Scripts\python.exe` (Windows) para evitar conflitos de dependência.

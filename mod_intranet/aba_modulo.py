@@ -72,7 +72,7 @@ def cabecalho(titulo: str, subtitulo: str = "",
     with ui.card().classes("w-full border-l-8").style(f"border-left-color:{cor_borda}"):
         with ui.row().classes("w-full items-center justify-between flex-wrap").style("gap: 0.75rem"):
             with ui.column().style("gap: 0"):
-                ui.label(titulo).classes("text-h5 font-bold whitespace-nowrap").style(f"color:{cor_titulo}")
+                ui.label(titulo).classes("text-h5 font-bold whitespace-nowrap cabecalho-titulo").style(f"color:{cor_titulo}")
                 if subtitulo:
                     ui.label(subtitulo).classes("text-caption text-grey-6")
     if cor_fundo:

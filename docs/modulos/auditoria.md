@@ -14,7 +14,7 @@ Banco e visualizador da trilha de auditoria LGPD. A **escrita** é feita pelos d
 
 ## Banco de dados
 
-Criador vigente: `init_db_auditoria()` em `manipulador_bd.py:25-38` (executado no import e pelo bootstrap central).
+Criador vigente: `init_db_auditoria()` em `db_manipulador.py:25-38` (executado no import e pelo bootstrap central).
 
 | Tabela | Conteúdo |
 |:---|:---|

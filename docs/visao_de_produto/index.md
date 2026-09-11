@@ -10,11 +10,11 @@
 
 ## O que é
 
-Sistema intranet modularizado (NiceGUI/FastAPI) da Prefeitura Municipal de Monte Santo de Minas, que centraliza o acesso a módulos Python interoperáveis em um único hub autenticado, restrito à rede local, com auditoria centralizada (LGPD).
+Sistema intranet modularizado (NiceGUI/FastAPI) da rede interna, que centraliza o acesso a módulos Python interoperáveis em um único hub autenticado, restrito à rede local, com auditoria centralizada (LGPD).
 
 ## Contexto
 
-- **Órgão:** Prefeitura Municipal de Monte Santo de Minas — DTI.
+- **Órgão:** DTI — Tecnologia da Informação.
 - **Base legal:** Lei Municipal n.º 1.570/2007; conformidade LGPD.
 - **Autor:** PRINCE, K.B.
 

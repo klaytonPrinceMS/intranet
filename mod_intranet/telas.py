@@ -92,6 +92,83 @@ def pagina_restrita(titulo_modulo: str, chave_modulo: str = None):
     return user
 
 
+def _aplicar_tema_escuro(escuro: bool, chave_modulo: str = None):
+    """Applies the user's dark-theme override (per-user, non-global).
+
+    Aplica o tema escuro individual: ativa o dark mode do Quasar e injeta CSS
+    com uma paleta em variáveis, na ordem MAIS ESCURO → MAIS CLARO (do que está
+    mais ao fundo para o que está mais à frente):
+      cor geral do módulo → fundo da página → fundo do card → cor do título →
+      texto do módulo → texto do card. O tema claro (light) é o padrão — as
+      cores escolhidas pelos administradores."""
+    if not escuro:
+        return
+    try:
+        ui.dark_mode(True)
+    except Exception:
+        pass
+    from mod_intranet import tema_modulo
+    tema = tema_modulo.ler_tema(chave_modulo or "intranet")
+    p = tema_modulo.paleta_escura(tema)
+    ui.query("body").classes("intranet-dark")
+    ui.add_head_html(f"""<style>
+body.intranet-dark {{
+  --cor-geral: {p['cor_geral']};
+  --fundo-pagina: {p['fundo_pagina']};
+  --fundo-card: {p['fundo_card']};
+  --cor-titulo: {p['cor_titulo']};
+  --texto-modulo: {p['texto_modulo']};
+  --texto-card: {p['texto_card']};
+}}
+body.intranet-dark {{ background: var(--fundo-pagina) !important; }}
+body.intranet-dark .q-page {{ background-color: var(--fundo-pagina) !important; color: var(--texto-modulo); }}
+body.intranet-dark .q-card,
+body.intranet-dark .q-drawer,
+body.intranet-dark .q-dialog,
+body.intranet-dark .q-menu,
+body.intranet-dark .q-expansion-item__content,
+body.intranet-dark .q-table {{ background-color: var(--fundo-card) !important; color: var(--texto-card); }}
+body.intranet-dark .q-footer {{ background-color: #1a1a1a !important; }}
+body.intranet-dark .bg-white {{ background-color: var(--fundo-card) !important; }}
+body.intranet-dark .bg-grey-1,
+body.intranet-dark .bg-grey-2,
+body.intranet-dark .bg-grey-3 {{ background-color: var(--fundo-pagina) !important; }}
+body.intranet-dark .cabecalho-titulo {{ color: var(--cor-titulo) !important; }}
+body.intranet-dark .text-grey-9,
+body.intranet-dark .text-grey-8,
+body.intranet-dark .text-grey-7,
+body.intranet-dark .text-black {{ color: var(--texto-modulo) !important; }}
+body.intranet-dark .q-card .text-grey-9,
+body.intranet-dark .q-card .text-grey-8,
+body.intranet-dark .q-card .text-grey-7,
+body.intranet-dark .q-card .text-black {{ color: var(--texto-card) !important; }}
+body.intranet-dark .text-grey-6,
+body.intranet-dark .text-grey-5,
+body.intranet-dark .text-grey-4,
+body.intranet-dark .text-caption {{ color: var(--texto-modulo) !important; }}
+body.intranet-dark .q-field--outlined .q-field__control,
+body.intranet-dark .q-input,
+body.intranet-dark .q-textarea,
+body.intranet-dark .q-select,
+body.intranet-dark .q-number {{ background-color: var(--fundo-card) !important; color: var(--texto-card); }}
+body.intranet-dark input,
+body.intranet-dark textarea {{ color: var(--texto-card) !important; }}
+body.intranet-dark .q-field__label {{ color: var(--texto-modulo) !important; }}
+body.intranet-dark .q-item,
+body.intranet-dark .q-tab {{ color: var(--texto-modulo) !important; }}
+body.intranet-dark .q-separator {{ background-color: #3f3f3f !important; }}
+body.intranet-dark .q-chip {{ background-color: var(--fundo-card) !important; color: var(--texto-card); }}
+</style>
+""")
+
+
+def _alternar_tema(user_nome: str):
+    """Toggles the current user's dark/light theme preference (individual)."""
+    novo = not autenticacao.tema_escuro(user_nome)
+    autenticacao.definir_tema_escuro(user_nome, novo)
+    ui.timer(0.1, lambda: ui.navigate.reload(), once=True)
+
+
 def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
                     chave_modulo: str = None):
     """Builds the 4-part layout (header, drawer, content and footer).
@@ -113,6 +190,8 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
         ui.query(".q-page").style(f"background-color:{fundo}")
     except Exception:
         pass
+    # Tema escuro individual do usuário (não afeta os demais).
+    _aplicar_tema_escuro(autenticacao.tema_escuro(nome_usuario), chave_modulo)
     titulo_sistema = _obter_config("titulo_sistema", "INTRANET") or "INTRANET"
     icone_sistema = (_obter_config("icone_sistema", "hub") or "hub").strip()
     # Título da ABA do navegador acompanha o nome configurado.
@@ -145,6 +224,15 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
             ui_comum.botao(trat, variante="texto_branco",
                            on_click=lambda: _dialogo_meu_perfil(nome_usuario),
                            tooltip="Meu Perfil — editar meus dados e senha")
+            # Tema claro/escuro (preferência individual do usuário)
+            escuro_atual = autenticacao.tema_escuro(nome_usuario)
+            ui_comum.botao_icone(
+                "dark_mode" if escuro_atual else "light_mode",
+                on_click=lambda: _alternar_tema(nome_usuario),
+                variante="icone_branco",
+                tooltip="Tema atual: "
+                        + ("escuro" if escuro_atual else "claro")
+                        + " — clique para alternar (só para você)")
             ui.badge(rotulo_perfil, color="primary-4").props("outline")
             ui_comum.botao_icone("logout", _logout, variante="icone_branco",
                                  tooltip="Sair")
@@ -288,17 +376,24 @@ def _dialogo_meu_perfil(nome_usuario: str):
 
 
 def _dialogo_troca_credenciais(nome_usuario: str):
-    """Forces master's first-access combined change (username + password).
+    """Forces master's first-access combined change (username + password + dados).
 
     Diálogo persistente do primeiro acesso do `master` nativo: exige definir
-    um NOVO nome de usuário E uma nova senha. `persistent` (não fecha com
-    ESC/clique fora) e fechamento somente após a troca bem-sucedida."""
+    um NOVO nome de usuário E uma nova senha, e permite informar nome
+    completo/social, e-mail e telefone. `persistent` (não fecha com ESC/clique
+    fora) e fechamento somente após a troca bem-sucedida."""
     with ui_comum.dialogo_card(largura="w-96", max_altura=False) as (dlg, card):
         ui.label("Credenciais obrigatórias").classes("text-h6")
         ui.label(f"Bem-vindo(a), {autenticacao.nome_de_tratamento(nome_usuario)}. "
                  "Por segurança, defina um novo nome de usuário e uma nova "
                  "senha antes de continuar.").classes("text-body2 text-grey-7")
         novo_nome = ui_comum.campo_texto("Novo nome de usuário", props="")
+        nome_completo = ui_comum.campo_texto(
+            "Nome completo (ou social)", props="",
+            tooltip="Nome pelo qual você será tratado no sistema. "
+                    "Pode ser seu nome social (Decreto 8.727/2016)")
+        email = ui_comum.campo_texto("E-mail", props="")
+        fone = ui_comum.campo_texto("Telefone", props="")
         atual = ui_comum.campo_texto("Senha atual", senha=True, props="")
         nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True, props="")
         conf = ui_comum.campo_texto("Confirmar nova senha", senha=True, props="")
@@ -312,7 +407,10 @@ def _dialogo_troca_credenciais(nome_usuario: str):
                 notificar("As senhas não conferem", type="negative")
                 return
             ok, msg, novo = autenticacao.trocar_credenciais_master(
-                nome_usuario, novo_nome.value or "", atual.value or "", nova.value or "")
+                nome_usuario, novo_nome.value or "", atual.value or "",
+                nova.value or "",
+                nome_completo=nome_completo.value or "",
+                email=email.value or "", fone=fone.value or "")
             notificar(msg, type="positive" if ok else "negative")
             if ok:
                 app.storage.user["usuario"]["nome"] = novo

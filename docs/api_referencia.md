@@ -49,12 +49,12 @@
 | Função | Linha | Descrição |
 |:---|:---|:---|
 | `inicializar_bancos()` | `mod_intranet_inicializacao_bd.py:13` | cria o central + auditoria + bancos dos módulos na ordem correta (idempotente) |
-| `get_connection()` | `conexao_bd.py:54` | conexão WAL (`synchronous=NORMAL`) no banco central |
-| `init_db()` | `conexao_bd.py:61` | cria `tb_config`, `tb_sessoes`, `tb_modulos` (via `autenticacao`) + seeds (versão, cotas, `versao_modulo:*`, `PADRAO_CONFIG`) |
-| `get_config(chave, default)` | `conexao_bd.py:103` | leitura de configuração (`tb_config`) |
-| `set_config(chave, valor)` | `conexao_bd.py:115` | gravação de configuração |
-| `favicon_versao()` | `conexao_bd.py:126` | mtime do favicon (cache-busting `?v=`) |
-| `DB_PATH` / `PADRAO_CONFIG` | `conexao_bd.py:11` / `:13` | caminho do banco central / padrões de aparência |
+| `get_connection()` | `bd_conexao.py:54` | conexão WAL (`synchronous=NORMAL`) no banco central |
+| `init_db()` | `bd_conexao.py:61` | cria `tb_config`, `tb_sessoes`, `tb_modulos` (via `autenticacao`) + seeds (versão, cotas, `versao_modulo:*`, `PADRAO_CONFIG`) |
+| `get_config(chave, default)` | `bd_conexao.py:103` | leitura de configuração (`tb_config`) |
+| `set_config(chave, valor)` | `bd_conexao.py:115` | gravação de configuração |
+| `favicon_versao()` | `bd_conexao.py:126` | mtime do favicon (cache-busting `?v=`) |
+| `DB_PATH` / `PADRAO_CONFIG` | `bd_conexao.py:11` / `:13` | caminho do banco central / padrões de aparência |
 
 ### Auditoria e rastreabilidade (`../mod_intranet/bd_manipulador.py`)
 
@@ -293,4 +293,4 @@ Tela: `mostrar_tela(usuario_logado, perfil)` — `telas.py:24` (subtelas `_tela_
 | `db_mod_renomear_empenho.db` | `tb_empenhos`, `tb_indexador_pesquisa`, `tb_indexador_pesquisa_fts5` (32 colunas), `tb_quarentena`, `tb_regex_regras`, `tb_campos_busca`, `tb_arquivos_auditoria`, `tb_eventos_arquivos`, `tb_solicitacoes` | FTS5 virtual (RF-41) com MATCH; regex com `campo_destino`; trilha por arquivo |
 | `db_mod_solicita_impressao.db` | `tb_solicitacoes`, `tb_secretarias`, `tb_setores`, `tb_responsaveis_autorizacao`, `tb_cotas_impressao`, `tb_consumo_cota`, `tb_configuracoes_modulo`, `tb_rascunhos_upload` | contabilização com fórmula; cotas mensais hierárquicas; rascunhos expiráveis |
 
-> ⚠️ **`db_criador.py` é legado/morto** em todos os módulos (aponta para o banco central com esquemas divergentes). As tabelas reais são criadas por `init_db*()` dos respectivos `db_manipulador.py` — ver [Arquitetura](arquitetura.md#padrao-interno-de-um-modulo).
+> ⚠️ **`bd_criador.py` é legado/morto** em todos os módulos (aponta para o banco central com esquemas divergentes). As tabelas reais são criadas por `init_db*()` dos respectivos `bd_manipulador.py` — ver [Arquitetura](arquitetura.md#padrao-interno-de-um-modulo).

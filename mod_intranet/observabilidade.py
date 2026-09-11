@@ -63,6 +63,13 @@ MODULOS = ["gest_cad_usuario", "blog", "edit_pdf",
 _FMT = ("{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | "
         "{module}:{function}:{line} | {message}")
 
+# Formato COLORIDO para o CONSOLE (loguru coloriza as tags <level>/<green>/<cyan>).
+# Os arquivos continuam com `_FMT` (sem códigos ANSI), para não poluir os logs.
+_FMT_COLOR = ("<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+              "<level>{level: <8}</level> | "
+              "<cyan>{module}:{function}:{line}</cyan> | "
+              "{message}")
+
 
 def _obter(chave, padrao):
     try:
@@ -136,7 +143,8 @@ def configurar():
         console = "nao"
         if modo_console == "sempre" or (
                 modo_console == "auto" and not getattr(sys, "frozen", False)):
-            logger.add(sys.stderr, level=nivel, format=_FMT, filter=lambda r: True)
+            logger.add(sys.stderr, level=nivel, format=_FMT_COLOR,
+                       filter=lambda r: True)
             console = "sim"
 
         # Bridge: roteia logs do loguru para o OpenTelemetry (→ Loki via collector).

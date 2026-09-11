@@ -8,7 +8,7 @@
 
 > Módulo de solicitação de impressão: rota `/solicita-impressao` (chave `solicita_impressao`) · banco próprio `db_mod_solicita_impressao.db` · envio de PDF, contagem de páginas, cotas mensais hierárquicas, impressão dual, auditoria central.
 >
-> **Versionamento**: `versao_modulo:solicita_impressao = 1.0.260908` (seed em `conexao_bd.init_db()` — chave `tb_config` central, formato `1.0.AAMMDD`, exibida no rodapé em `/solicita-impressao` junto à versão global). Duplicada também em `tb_configuracoes_modulo` (`versao_modulo`) do banco do módulo. Atualizar a cada alteração do módulo.
+> **Versionamento**: `versao_modulo:solicita_impressao = 1.0.260908` (seed em `bd_conexao.init_db()` — chave `tb_config` central, formato `1.0.AAMMDD`, exibida no rodapé em `/solicita-impressao` junto à versão global). Duplicada também em `tb_configuracoes_modulo` (`versao_modulo`) do banco do módulo. Atualizar a cada alteração do módulo.
 
 ## Propósito
 
@@ -29,7 +29,7 @@ autorizam quando a secretaria/setor exige.
 
 ## Banco próprio
 
-Criador vigente: `init_db()` em `manipulador_bd.py:113-345` (bootstrap central
+Criador vigente: `init_db()` em `bd_manipulador.py:113-345` (bootstrap central
 `mod_intranet_inicializacao_bd.inicializar_bancos`).
 
 Todas as tabelas vivem em `db_mod_solicita_impressao.db` (WAL). Arquivos PDF enviados são salvos
@@ -42,13 +42,13 @@ com outros módulos).
   caminho_arquivo, hash_arquivo, qtd_copias, tamanho_papel (A4/A3), cor (PB/Color),
   frente_verso (0/1), tipo_borda (curta/longa/NULL), papel_sulfite (0/1),
   **tipo_papel** (sulfite/fotografico/verge — coluna nova, migração idempotente
-  `manipulador_bd.py:275-282`), observacoes,
+  `bd_manipulador.py:275-282`), observacoes,
   secretaria_id FK, setor_id FK, qtd_paginas_arquivo, paginas_contabilizadas, status,
   cota_excedida (0/1), requer_autorizacao (0/1), autorizado_por, data_autorizacao,
   motivo_recusa, impresso_por, data_impressao, data_criacao, data_atualizacao,
   **grupo_id** (agrupamento "1 pedido por envio"; criado via ALTER idempotente +
   backfill `grupo_id = id` para registros sem grupo + índice `idx_sol_grupo` —
-  `manipulador_bd.py:278-287`).
+  `bd_manipulador.py:278-287`).
 - **`tb_secretarias`**: id, nome, sigla, cota_paginas_mensal, limite_pedidos_abertos, ativo.
 - **`tb_setores`**: id, nome, secretaria_id FK, cota_paginas_mensal, limite_pedidos_abertos, ativo.
 - **`tb_responsaveis_autorizacao`**: id, user_nome, secretaria_id FK, setor_id FK (opcional), ativo.
@@ -60,7 +60,7 @@ com outros módulos).
 - **`tb_impressoras`**: id, nome (UNIQUE), tamanho_papel (A4/A3), cor (Color/PB),
   frente_verso (0/1), papel_sulfite (0/1), driver (padrão `PCL6`), ativo (0/1), criado_em.
   Usada pelo seletor de impressão do botão "Imprimir". Migração idempotente adiciona a coluna
-  `driver` em instalações existentes (`manipulador_bd.py:304-315`).
+  `driver` em instalações existentes (`bd_manipulador.py:304-315`).
 
 ## Contabilização de impressões (fórmula)
 
@@ -89,18 +89,18 @@ Exemplos: 10 pág × 3 cóp × A4 frente = 30; A4 frente/verso = 60; A3 frente =
 
 Além da cota mensal de páginas, cada **secretaria** e cada **setor** pode ter um
 **limite de pedidos abertos** (`limite_pedidos_abertos`, coluna nova em
-`tb_secretarias` e `tb_setores` — `manipulador_bd.py:159,180`; migração idempotente
-`manipulador_bd.py:160-166,181-187`). **0 = sem limite** (padrão).
+`tb_secretarias` e `tb_setores` — `bd_manipulador.py:159,180`; migração idempotente
+`bd_manipulador.py:160-166,181-187`). **0 = sem limite** (padrão).
 
 Regra de bloqueio (contagem elástica):
 
 - "Pedido aberto" = status em `pendente`, `aguardando_autorizacao`, `autorizado`
   ou `excedente_cota` — ou seja, **não** impresso/recusado/cancelado
-  (`contar_pedidos_abertos`, `manipulador_bd.py:1028`).
+  (`contar_pedidos_abertos`, `bd_manipulador.py:1028`).
 - O **setor só pode pedir se a secretaria não atingiu o teto**; cada um tem seu
-  próprio limite (`verificar_limite_pedidos`, `manipulador_bd.py:1057`).
-- Ao atingir o teto, `criar_solicitacao` (`manipulador_bd.py:1136`) e
-  `confirmar_rascunho` (`manipulador_bd.py:1627`) **bloqueiam** o envio com
+  próprio limite (`verificar_limite_pedidos`, `bd_manipulador.py:1057`).
+- Ao atingir o teto, `criar_solicitacao` (`bd_manipulador.py:1136`) e
+  `confirmar_rascunho` (`bd_manipulador.py:1627`) **bloqueiam** o envio com
   mensagem orientando a imprimir/cancelar pedidos pendentes para liberar vaga.
 - A impressão (ou recusa/cancelamento) **libera a vaga** automaticamente —
   por isso "elástico".
@@ -108,17 +108,17 @@ Regra de bloqueio (contagem elástica):
 ## Relatório de impressões por período
 
 Sub-aba **Relatórios** na Administração (`_admin_relatorio`, `telas.py:1553-1647` e
-`administracao.py:615-713` — **cópia duplicada da admin existe nos dois arquivos**): o admin
+`telas_administracao.py:615-713` — **cópia duplicada da admin existe nos dois arquivos**): o admin
 escolhe um **prazo fixo mensal** (Este mês, Mês anterior, Últimos 6 meses, Ano atual — botões que
 preenchem as datas e geram na hora) ou informa um **período personalizado no calendário**
 (data inicial/final) e clica em **"Gerar relatório"**, que monta as tabelas prontas via
-`_tabela_relatorio` (`telas.py:1538`, `administracao.py:596`). O foco é **cobrança/repasse**:
+`_tabela_relatorio` (`telas.py:1538`, `telas_administracao.py:596`). O foco é **cobrança/repasse**:
 secretaria/setor primeiro, depois quem imprimiu, quem autorizou e o total geral.
 
-Backend: `relatorio_impressao(data_inicio, data_fim)` (`manipulador_bd.py:2345`)
+Backend: `relatorio_impressao(data_inicio, data_fim)` (`bd_manipulador.py:2345`)
 agrega as solicitações com `status='impresso'` no período (por `data_impressao`),
 com totais de **cópias** e **páginas contabilizadas**, separando **color/PB** pela
-coluna `cor`. Helper `_agregar_impressao` (`manipulador_bd.py:2301`) faz o GROUP BY
+coluna `cor`. Helper `_agregar_impressao` (`bd_manipulador.py:2301`) faz o GROUP BY
 por coluna. Desde a reformulação de 07/09, a contagem de **pedidos** usa
 `COUNT(DISTINCT s.grupo_id)` (1 pedido por envio) — não mais o nº de linhas de
 `tb_solicitacoes`. Retorna um dict com:
@@ -138,11 +138,11 @@ por coluna. Desde a reformulação de 07/09, a contagem de **pedidos** usa
   nesse prazo, o arquivo é **removido do servidor automaticamente** (job `cleanup_solicita`, 1 min).
   Há botão "Remover selecionados" (e remoção individual) para descartar antes. Ao confirmar, os
   arquivos são renomeados para o padrão final `dataHora_usuario_cor_copias_paginas_secretaria_setor.pdf`
-  e **todos viram UM ÚNICO PEDIDO (grupo)** — `confirmar_lote` (`manipulador_bd.py:1740`) converte os
+  e **todos viram UM ÚNICO PEDIDO (grupo)** — `confirmar_lote` (`bd_manipulador.py:1740`) converte os
   N rascunhos do envio em um pedido com o mesmo `grupo_id` e **status único** (máx. 10 PDFs por envio,
   `MAX_ARQ`).
 - **Status do pedido (sem auto-autorização)**: ao confirmar o envio, o status do grupo é definido por
-  `confirmar_lote` (`manipulador_bd.py:1773-1782`): `excedente_cota` se exceder a cota; senão
+  `confirmar_lote` (`bd_manipulador.py:1773-1782`): `excedente_cota` se exceder a cota; senão
   `aguardando_autorizacao` se houver responsável cadastrado para a secretaria/setor; senão
   **`pendente`** — sem autorizador, o pedido fica pendente e o **admin autoriza e imprime**.
 - Valores **padrão pré-selecionados** (editáveis pelo admin): papel `padrao_papel` (A4),
@@ -156,7 +156,7 @@ por coluna. Desde a reformulação de 07/09, a contagem de **pedidos** usa
   informando que todos os arquivos marcados viram **um único pedido**.
 - **Impressão** (admin): ao confirmar a impressão do pedido, a cota é descontada **uma vez por grupo**
   e os **arquivos são apagados do servidor imediatamente** (`imprimir_grupo`,
-  `manipulador_bd.py:2053`). Recusar / recuar / cancelar **removem os arquivos do servidor** de todos
+  `bd_manipulador.py:2053`). Recusar / recuar / cancelar **removem os arquivos do servidor** de todos
   os arquivos do grupo.
 - **Auditoria** (banco exclusivo `db_mod_auditoria.db`, tabela `tb_auditoria_solicita_impressao`): registra quem **solicitou**
   (cópias, páginas, secretaria, setor, status, excedente), quem **autorizou**, quem **imprimiu**
@@ -170,24 +170,24 @@ por coluna. Desde a reformulação de 07/09, a contagem de **pedidos** usa
   com **campo de busca no topo** (entre o menu de abas e os cards) e seções **"AGUARDANDO
   AUTORIZAÇÃO"** e **"JÁ AUTORIZADOS"** + busca (texto/data); lista os
   pedidos das secretarias/setores do autorizador (`listar_pedidos_responsavel`,
-  `manipulador_bd.py:1923`) com Autorizar / Recusar (motivo obrigatório) — ações em **todo o grupo**.
+  `bd_manipulador.py:1923`) com Autorizar / Recusar (motivo obrigatório) — ações em **todo o grupo**.
 - **Administração** (admin do módulo): tabela mestra + sub-abas Secretarias, Setores,
   Responsáveis, Cotas, Relatórios, Configurações. Ações: Imprimir (seletor de impressora), Baixar (sempre),
   Recuar (cancelar), Autorizar, Recusar.
 - **Administração → Secretarias / Setores**: campo **"Limite pedidos abertos (0=ilimitado)"**
-  no criar/editar e exibição do limite na listagem (`administracao.py:100,150,190,245`).
-- **Administração → Solicitações** (`_admin_solicitacoes`, `telas.py:700`; `administracao.py:77`
+  no criar/editar e exibição do limite na listagem (`telas_administracao.py:100,150,190,245`).
+- **Administração → Solicitações** (`_admin_solicitacoes`, `telas.py:700`; `telas_administracao.py:77`
   delega para `telas.py` — evita duplicação): abas **Ativos / Impressos / Recusados / Todos** +
   barra de busca com **texto livre** (solicitante, observação, arquivo, nome de secretaria/setor —
   `LIKE NOCASE`), **secretaria→setor em cascata**, **data inicial/final** e botão **Buscar**
-  (`listar_pedidos`, `manipulador_bd.py:1840`). Pedidos agrupados por **secretaria→setor**; ao
+  (`listar_pedidos`, `bd_manipulador.py:1840`). Pedidos agrupados por **secretaria→setor**; ao
   imprimir, o pedido sai da gestão ativa do admin.
 - **Impressão com seletor de impressoras** (`_imprimir_grupo`, `telas.py:883`): ao clicar em "Imprimir"
   num pedido **autorizado/pendente/excedente**, abre um **diálogo com as impressoras cadastradas**
   (`tb_impressoras`), sugerindo a padrão A4/A3 conforme o papel; ao confirmar, dispara
   `window.imprimirPdf` via JS (diálogo nativo do SO). **Não marca como impresso** — o desconto de
   cota e a remoção dos arquivos ocorrem no botão **"Confirmar impressão"** (`_confirmar_impressao_grupo`,
-  `telas.py:944` → `imprimir_grupo`, `manipulador_bd.py:1862`).
+  `telas.py:944` → `imprimir_grupo`, `bd_manipulador.py:1862`).
 
 ## Impressão (dual mode)
 
@@ -199,16 +199,16 @@ por coluna. Desde a reformulação de 07/09, a contagem de **pedidos** usa
 - **Marca d'água** (opcional, personalizável): texto com placeholders `{data}`, `{usuario}`,
   `{id}`, `{secretaria}`, `{setor}`, `{solicitante}`; posição, opacidade, fonte, cor, rotação —
   tudo configurável em Configurações. Se desativada, PDF sai sem marca.
-- **Painel de impressoras** (`_painel_impressoras`, `telas.py:1509` e `administracao.py:545`):
+- **Painel de impressoras** (`_painel_impressoras`, `telas.py:1509` e `telas_administracao.py:545`):
   bloco em **Configurações** para **cadastrar / listar / definir padrão / excluir** impressoras
   (nome, papel, cor, frente/verso, sulfite, driver **PCL6** default). A padrão A4/A3 é marcada via
-  `definir_impressora_padrao` (`manipulador_bd.py:474`) e alimenta o seletor do botão "Imprimir".
-- **Impressão por grupo** (`imprimir_grupo`, `manipulador_bd.py:1862`): ao confirmar a impressão de
+  `definir_impressora_padrao` (`bd_manipulador.py:474`) e alimenta o seletor do botão "Imprimir".
+- **Impressão por grupo** (`imprimir_grupo`, `bd_manipulador.py:1862`): ao confirmar a impressão de
   um pedido, a cota é descontada **uma vez por grupo** (pelo total de páginas contabilizadas, na
   secretaria e no setor se houver) e os **arquivos são apagados do servidor imediatamente** — o
   pedido impresso sai da gestão ativa do admin.
 - **Padrões migrados (07/09, sem restart via `init_db`)**: `tempo_expira_rascunho_min` 4→**10** e
-  `padrao_cor` PB→**Color** (`manipulador_bd.py:328-331`).
+  `padrao_cor` PB→**Color** (`bd_manipulador.py:328-331`).
 
 ## Nomenclatura do arquivo
 
@@ -221,7 +221,7 @@ Ex.: `260907143022_SAUDE_ATENDIMENTO_joao_silva_3_colorido_sulfite_10_1.pdf`
 papel (`colorido` para Color, `pretoebranco` para PB); o **tipo de papel**
 (`sulfite`/`fotografico`/`verge`) e a **ordem de envio do arquivo** (1, 2, 3…) garantem
 unicidade mesmo quando vários arquivos chegam no mesmo segundo com a mesma quantidade de
-páginas — gerada por `gerar_nome_arquivo` (`manipulador_bd.py:1038-1070`), que recebe
+páginas — gerada por `gerar_nome_arquivo` (`bd_manipulador.py:1038-1070`), que recebe
 `cor`, `tipo_papel` e `ordem_envio`.
 
 ## Regras de negócio
@@ -236,11 +236,11 @@ páginas — gerada por `gerar_nome_arquivo` (`manipulador_bd.py:1038-1070`), qu
 - **Alertas da nova solicitação** (`alertas_nova_solicitacao`, config): frases exibidas abaixo do
   card de envio (uma por linha, com ⚠) — **substitui** os antigos `aviso_presenca_obrigatoria` e
   `aviso_paginas_multiplas` (removidos). Editável em Administração → Configurações
-  (`telas.py:366-369`, `administracao.py:416-418`).
+  (`telas.py:366-369`, `telas_administracao.py:416-418`).
 - **Reenvio de pedido recusado**: o usuário pode **Reenviar** o próprio pedido recusado — o status
   volta para `aguardando_autorizacao` (se há responsável) ou `pendente`, limpando motivo e dados de
-  autorização (`reenviar_grupo`, `manipulador_bd.py:2025-2055`; botão em `telas.py:572-576`).
-  `cancelar_grupo` também aceita o status `recusado` (`manipulador_bd.py:2001-2022`).
+  autorização (`reenviar_grupo`, `bd_manipulador.py:2025-2055`; botão em `telas.py:572-576`).
+  `cancelar_grupo` também aceita o status `recusado` (`bd_manipulador.py:2001-2022`).
 - **Permissões**: `comum` cria/acompanha próprios pedidos; responsável autoriza sua secretaria/setor;
   `administrador` do módulo imprime/recua/gerencia. Admin geral vê tudo + auditoria.
 - **Concessão da permissão de autorizar impressão**: em *Administração → Responsáveis* o admin
@@ -249,12 +249,12 @@ páginas — gerada por `gerar_nome_arquivo` (`manipulador_bd.py:1038-1070`), qu
   `comum`** — ao logar, mesmo sendo `comum`, o usuário passa a ver a aba **Autorização** e a
   área de autorizar impressões (a checagem usa `tb_responsaveis_autorizacao`, independente do perfil).
 - **Sem auto-autorização**: sem responsável cadastrado para a secretaria/setor, o pedido fica
-  `pendente` e o **admin autoriza e imprime** (`confirmar_lote`, `manipulador_bd.py:1610-1619`).
+  `pendente` e o **admin autoriza e imprime** (`confirmar_lote`, `bd_manipulador.py:1610-1619`).
 - **Auditoria central** (banco exclusivo de auditoria, tabela `tb_auditoria_solicita_impressao`): `criar_solicitacao`, `autorizar_solicitacao`,
   `recusar_solicitacao`, `imprimir_solicitacao`, `recuar_solicitacao`, `cancelar_solicitacao`,
   `criar/editar/excluir_secretaria/setor/responsavel`, `definir_cota`, `resetar_consumo`. Na
   reformulação de 07/09, a auditoria de **`criar_grupo`** (`confirmar_lote`,
-  `manipulador_bd.py:1822-1825`) inclui o **SHA256 dos arquivos** do pedido; as ações de grupo
+  `bd_manipulador.py:1822-1825`) inclui o **SHA256 dos arquivos** do pedido; as ações de grupo
   (`autorizar_grupo`, `recusar_grupo`, `imprimir_grupo`, `recuar_grupo`, `cancelar_grupo`) são
   auditadas por `grupo_id`.
 
@@ -298,15 +298,15 @@ central — ver [Análise do Núcleo](analise_mod_intranet.md#hora-do-servidor-n
 
 ## Adições recentes (07/09) — tipo de papel, alertas unificados, reenvio e relatório de cobrança
 
-### `db_manipulador.py`
+### `bd_manipulador.py`
 
-- **Config `alertas_nova_solicitacao`** (`manipulador_bd.py:34-45`): frases de alerta da nova
+- **Config `alertas_nova_solicitacao`** (`bd_manipulador.py:34-45`): frases de alerta da nova
   solicitação (uma por linha) — **substitui** `aviso_presenca_obrigatoria` e
   `aviso_paginas_multiplas` (removidos do `CONFIG_PADRAO`).
 - **Coluna `tipo_papel`** em `tb_solicitacoes` (sulfite/fotografico/verge, default `sulfite`):
-  no CREATE (`manipulador_bd.py:127`) + **migração idempotente** via ALTER
-  (`manipulador_bd.py:275-282`).
-- **`gerar_nome_arquivo` reescrito** (`manipulador_bd.py:1038-1070`): novo formato
+  no CREATE (`bd_manipulador.py:127`) + **migração idempotente** via ALTER
+  (`bd_manipulador.py:275-282`).
+- **`gerar_nome_arquivo` reescrito** (`bd_manipulador.py:1038-1070`): novo formato
   `AAMMDDHHMMSS_secretaria_setor_solicitante_copias_cor_tipoPapel_folhas_ordemEnvio.pdf` com o
   parâmetro `ordem_envio` para diferenciar arquivos do mesmo envio no mesmo segundo.
 - **`criar_solicitacao`** (`:1073`), **`confirmar_rascunho`** (`:1520`) e **`confirmar_lote`**
@@ -347,14 +347,14 @@ central — ver [Análise do Núcleo](analise_mod_intranet.md#hora-do-servidor-n
   menu de abas e os cards).
 - **`_card_grupo`/`_card_admin_grupo`** (`telas.py:463,764`): unpacking com `tipo_papel`, novo
   layout e `permite_selecao`.
-- **`_admin_relatorio` reescrito** (`telas.py:1553-1647` e `administracao.py:615-713` — cópia
+- **`_admin_relatorio` reescrito** (`telas.py:1553-1647` e `telas_administracao.py:615-713` — cópia
   duplicada da admin existe nos dois arquivos): **prazos fixos mensais** (Este mês, Mês anterior,
   Últimos 6 meses, Ano atual) + calendário, com foco em **cobrança/repasse** (secretaria/setor
   primeiro, depois quem imprimiu, quem autorizou e total geral).
 - **Novo wrapper `_reenviar_grupo`** (`telas.py:613-619`).
 - **Admin config** (`_admin_configuracoes`): campo único **"Alertas da nova solicitação (uma
   frase por linha)"** e select **"Tipo de papel padrão"** (sulfite/fotográfico/vergê) —
-  `telas.py:1359-1390` e `administracao.py:416-447`.
+  `telas.py:1359-1390` e `telas_administracao.py:416-447`.
 
 ## Status
 

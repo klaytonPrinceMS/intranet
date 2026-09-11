@@ -594,3 +594,40 @@ def campo_modulo(usuario_logado, chave_modulo, nome_atual=None, icone_atual=None
         ui_comum.rodape_salvar_restaurar(salvar, chave_modulo=chave_modulo,
                                          rotulo_salvar="Salvar módulo")
     return salvar
+
+
+def _hex_para_rgb(cor):
+    """Converts a hex color (#RGB/#RRGGBB) to an (r, g, b) tuple."""
+    h = (cor or "").strip().lstrip("#")
+    if len(h) == 3:
+        h = "".join(ch * 2 for ch in h)
+    if len(h) != 6:
+        return (0, 0, 0)
+    try:
+        return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+    except ValueError:
+        return (0, 0, 0)
+
+
+def paleta_escura(tema):
+    """Gera a paleta do MODO ESCURO na ordem MAIS ESCURO → MAIS CLARO,
+    do que está mais ao fundo para o que está mais à frente:
+
+      1. cor geral do módulo  → 2. fundo da página → 3. fundo do card
+      → 4. cor do título → 5. texto do módulo → 6. texto do card.
+
+    O `tema` é um dict de `ler_tema` (chaves cor_botao/cor_fundo/cor_titulo/
+    cor_texto_botao/cor_fundo_card/cor_texto_card). Retorna um dict com as 6
+    camadas prontas para o CSS do modo escuro."""
+    tema = tema or {}
+    base = _hex_para_rgb(tema.get("cor_botao") or "#000000")
+    luminancia = sum(base) / 3
+    escuro = luminancia < 128  # cor geral escura → camadas escuras neutras
+    return {
+        "cor_geral": tema.get("cor_botao") or "#000000",
+        "fundo_pagina": "#161616" if escuro else "#2a2a2a",
+        "fundo_card": "#242424" if escuro else "#3a3a3a",
+        "cor_titulo": "#c8c8c8",
+        "texto_modulo": "#dcdcdc",
+        "texto_card": "#f2f2f2",
+    }

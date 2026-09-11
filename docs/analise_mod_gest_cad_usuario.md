@@ -14,7 +14,7 @@ Soft CRUD completo de usuários: criar, editar, renomear, bloquear/desbloquear, 
 
 ## Banco próprio
 
-Conexão com WAL + `foreign_keys=ON`. Criador vigente: `init_db()` em `manipulador_bd.py:61-215`, executado no import do módulo e pelo bootstrap central.
+Conexão com WAL + `foreign_keys=ON`. Criador vigente: `init_db()` em `bd_manipulador.py:61-215`, executado no import do módulo e pelo bootstrap central.
 
 **`tb_usuarios`** (após migrações):
 
@@ -34,7 +34,7 @@ Conexão com WAL + `foreign_keys=ON`. Criador vigente: `init_db()` em `manipulad
 
 **`tb_acesso_usuario`** — vínculo usuário×módulo×papel (`UNIQUE(user_nome, modulo_chave)`, FK CASCADE para `tb_usuarios`); `modulo_chave` é texto livre — origem dos vínculos órfãos.
 
-⚠️ `tb_modulo_perfil` existe apenas no `db_criador.py`, que é **código legado/morto**: usa a conexão do banco **central** (criaria as tabelas em `db_mod_intranet.db`) e não é importado por ninguém.
+⚠️ `tb_modulo_perfil` existe apenas no `bd_criador.py`, que é **código legado/morto**: usa a conexão do banco **central** (criaria as tabelas em `db_mod_intranet.db`) e não é importado por ninguém.
 
 ## Fluxo da tela
 
@@ -49,9 +49,9 @@ Conexão com WAL + `foreign_keys=ON`. Criador vigente: `init_db()` em `manipulad
 
 - **Exclusão em dois estágios**: estágio 1 = soft delete com motivo, encerra sessões, reversível ("Restaurar" limpa o motivo); estágio 2 = DELETE físico, acessível nas linhas de usuários excluídos via busca "excluído" (admin geral revalidado no backend).
 - **Limpeza cruzada LGPD**: exclui postagens/comentários do Blog, remove arquivos/cota do editorPDF (`mod_edit_pdf/editorPDF/`) e anonimiza autoria de empenhos como "(usuário excluído)". Auditoria sempre preservada. Nota: implementa cross-query SQLite ad-hoc aos bancos vizinhos (contrariando a convenção geral do projeto).
-- **Proteções**: vedado agir sobre a própria conta (bloquear/excluir/rebaixar); `master` não é renomeado nem excluído; último admin geral ativo protegido contra **exclusão definitiva**; RF-26: `editar_usuario`/`bloquear_usuario` bloqueiam **rebaixar ou bloquear** o último `administrador_geral` ativo quando o ator é OUTRO admin (`manipulador_bd.py:349-362`).
+- **Proteções**: vedado agir sobre a própria conta (bloquear/excluir/rebaixar); `master` não é renomeado nem excluído; último admin geral ativo protegido contra **exclusão definitiva**; RF-26: `editar_usuario`/`bloquear_usuario` bloqueiam **rebaixar ou bloquear** o último `administrador_geral` ativo quando o ator é OUTRO admin (`bd_manipulador.py:349-362`).
 - **Senha provisória**: criação/redefinição marcam `forcar_troca`; redefinição derruba todas as sessões. O admin digita a senha manualmente (não é gerada aleatória como diz o PLANO 2.5).
-- **Auto-cura do master**: enquanto a senha for `master`, a troca é rearmada a cada boot (`manipulador_bd.py:168-194`) — corrige o roadmap do README que dizia o contrário.
+- **Auto-cura do master**: enquanto a senha for `master`, a troca é rearmada a cada boot (`bd_manipulador.py:168-194`) — corrige o roadmap do README que dizia o contrário.
 
 ## Integrações com o núcleo
 
@@ -59,7 +59,7 @@ Importa `autenticacao` (hash/verificação de senha, papéis, troca pendente), `
 
 ## Pontos de atenção
 
-- `db_criador.py` é morto e aponta para o banco central — não executar.
+- `bd_criador.py` é morto e aponta para o banco central — não executar.
 - `listar_vinculos_orfaos()` existe mas não é chamada pela tela (órfãos aparecem apenas como badge INDISPONÍVEL nos seletores).
 - Renomear usuário replica o nome nas tabelas dependentes e nas sessões centrais.
 
@@ -116,7 +116,7 @@ Oito melhorias na tela de usuários (`mod_gest_cad_usuario/telas.py`), todas na 
 ### Adições recentes (26/08)
 
 - **Aba "Administração"** (exclusiva do admin geral, nas tabs existentes): bloco **Aparência** (prefixo usuarios_* — cor do botão/texto, fundo da página, cor do título, tamanho via ui.color_input; a cor do botão também define a primária da tela) e **config específica**: usuarios_senha_min (política de senha mínima, aplicada em criar_usuario/alterar_senha_admin via senha_minima()). Salvo via set_config, vale sem reiniciar.
-- **Versionamento**: versao_modulo:usuarios = 1.0.260908 (seed em conexao_bd.init_db()), exibido no rodapé em /users (rota → chave usuarios).
+- **Versionamento**: versao_modulo:usuarios = 1.0.260908 (seed em bd_conexao.init_db()), exibido no rodapé em /users (rota → chave usuarios).
 - **Edição do módulo** (`campo_modulo` do helper `mod_intranet/tema_modulo.py`) — **RESTAURADO (06/09)**: após remoção acidental (regressão), o cupê voltou a aparecer na aba Administração — editar **nome de exibição, ícone e status (ativo/inativo)** do módulo (`mod_gest_cad_usuario/telas.py:705`); a edição também permanece no painel central `/configuracoes` (aba Módulo, admin geral).
 
 ### Adições recentes (06/09)

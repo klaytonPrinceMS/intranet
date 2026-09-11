@@ -14,12 +14,12 @@ Editor de PDFs multiusuário com espaço temporário por usuário. O usuário en
 
 ## Banco próprio
 
-Criador vigente: `init_db_pdf()` em `manipulador_bd.py:92-123` (executado no import e no bootstrap central).
+Criador vigente: `init_db_pdf()` em `bd_manipulador.py:92-123` (executado no import e no bootstrap central).
 
 - **`tb_arquivos`**: id, nome_arquivo, usuario, tamanho_bytes, `operacao` (upload/saida/zip), data_operacao, ativo.
 - **`tb_cota_disco`**: usuario PK, total_usado_bytes, atualizado_em.
 
-⚠️ O `db_criador.py` deste módulo é **legado/morto** com esquema divergente (`caminho_arquivo`, `hash_sha256 NOT NULL`, FTS inexistente) e conecta no banco **central** — se executado criaria tabelas erradas em `db_mod_intranet.db`. É dele a semeadura da versão do sistema citada na convenção de versionamento.
+⚠️ O `bd_criador.py` deste módulo é **legado/morto** com esquema divergente (`caminho_arquivo`, `hash_sha256 NOT NULL`, FTS inexistente) e conecta no banco **central** — se executado criaria tabelas erradas em `db_mod_intranet.db`. É dele a semeadura da versão do sistema citada na convenção de versionamento.
 
 ## Fluxo da tela
 
@@ -42,7 +42,7 @@ A tela foi migrada para os padrões centrais (`mod_intranet/ui_comum.py` + `tema
 | Borda do cabeçalho | `CORES["perigo"]` (vermelho fixo) | `tema["cor_botao"]` — a MESMA cor dos botões do módulo (`telas.py:621`) |
 | Título do cabeçalho | `text-grey-9` fixo | colorido por `_app_tema` via `lbl_header_titulo` (`telas.py:624`, `cor_titulo` configurável) |
 | Reset de aparência | `PADROES_CFG` com `editar_pdf_cor_*` (nunca lidas) | `editpdf_*` — prefixo real lido por `ler_tema` (`telas.py:572-576`) |
-| Cupês de Administração | montagem própria | `bloco_aparencia` reusando o tema único (`administracao.py:175-176`, `com_card=True` — card padrão "Configurações de cores") — o `campo_modulo` foi **removido (06/09)** |
+| Cupês de Administração | montagem própria | `bloco_aparencia` reusando o tema único (`telas_administracao.py:175-176`, `com_card=True` — card padrão "Configurações de cores") — o `campo_modulo` foi **removido (06/09)** |
 
 **Padronização total dos botões**: "Excluir selecionados" deixou `variante="perigo"` (outline vermelho) e virou `primario` igual aos demais (`telas.py:743-744`); "Enviar agora" deixou `variante="solido"` (`telas.py:754-756`); o botão de atualizar deixou de ser `botao_icone` e virou `botao("Atualizar", ...)` (`telas.py:671-673`). Os helpers locais `cls_btn`/`estilo_btn` foram removidos — o tema é aplicado pela fábrica `ui_comum.botao(chave_modulo="editar_pdf")`. Com o padrão do módulo (chaves `editpdf_*` vazias), os botões usam `PADROES_TEMA` (todos os módulos em `#000000`, a cor do intranet) — **mudança visual intencional**: antes o azul era fixo (`#1565C0`); o override por módulo continua possível no cupê "Aparência".
 
@@ -67,19 +67,19 @@ Coberto por `test/verifica_ui_comum.py` (190 verificações — seção "edit_pd
 
 Usa `get_connection`/`get_config`/`set_config` centrais e `audit_log`. Chaves de configuração: `cotadisco_global_gb`, `editpdf_lote_arquivos`, `editpdf_lote_mb`, `editpdf_usuario_gb`, `editpdf_expiracao_min`; tema: `editpdf_cor_botao`, `editpdf_cor_texto_botao`, `editpdf_cor_fundo`, `editpdf_cor_titulo`, `editpdf_btn_tamanho`. O scheduler central chama `expirar_antigos()` diretamente.
 
-**Versão individual do módulo**: `versao_modulo:editar_pdf = 1.0.260908` (em `tb_config` central — seed principal idempotente em `conexao_bd.init_db()`; o `manipulador_bd.py::_semear_versao_modulo` é duplicado inofensivo). Exibida no rodapé ao lado da versão global quando o usuário navega em `/edit-pdf`. Atualizar manualmente a cada alteração do `mod_edit_pdf` — não mexer na versão global nem na dos demais módulos.
+**Versão individual do módulo**: `versao_modulo:editar_pdf = 1.0.260908` (em `tb_config` central — seed principal idempotente em `bd_conexao.init_db()`; o `bd_manipulador.py::_semear_versao_modulo` é duplicado inofensivo). Exibida no rodapé ao lado da versão global quando o usuário navega em `/edit-pdf`. Atualizar manualmente a cada alteração do `mod_edit_pdf` — não mexer na versão global nem na dos demais módulos.
 
 ## Pontos de atenção
 
-- `db_criador.py` morto/divergente — não executar.
-- **`_cfg` depende de `get_config` importado** no topo de `db_manipulador.py`. Se faltar `get_config` no `from mod_intranet.conexao_bd import …`, cada leitura cai em `NameError`→`except`→ retorna **sempre o default** (bug real: MB configurado em 200 e o sistema usava 1024; arquivos configurados em 100 e usava 10). Conferir o import ao mexer no topo do arquivo.
+- `bd_criador.py` morto/divergente — não executar.
+- **`_cfg` depende de `get_config` importado** no topo de `bd_manipulador.py`. Se faltar `get_config` no `from mod_intranet.bd_conexao import …`, cada leitura cai em `NameError`→`except`→ retorna **sempre o default** (bug real: MB configurado em 200 e o sistema usava 1024; arquivos configurados em 100 e usava 10). Conferir o import ao mexer no topo do arquivo.
 - Limite de "estoque de uploads" reaproveita o valor do limite de lote (não é configurável separadamente).
 - Redução Agressivo transforma texto em imagem (perde seleção/busca no PDF).
-- `cfg_tema` em `manipulador_bd.py:74` ficou **sem uso** após a migração da tela para `ler_tema` (06/09) — código morto candidato a remoção.
+- `cfg_tema` em `bd_manipulador.py:74` ficou **sem uso** após a migração da tela para `ler_tema` (06/09) — código morto candidato a remoção.
 
 ## Status — Fase 5 do PLANO.md
 
-Fase essencialmente **concluída**: banco + cotas + limites de lote; expiração automática agendada; prefixo padronizado; todas as operações (reduzir/juntar/cortar/dividir/verificar/ZIP/excluir); auditoria com SHA-256 origem/destino; estoque de uploads; **tema padronizado** (boas práticas: botões/tamanho/cores via `ui.color_input`); testes ponta a ponta em `test/test_editor_pdf.py` (32 verificações passando — o README diz "20", número defasado). Única pendência conceitual é o legado `db_criador.py`.
+Fase essencialmente **concluída**: banco + cotas + limites de lote; expiração automática agendada; prefixo padronizado; todas as operações (reduzir/juntar/cortar/dividir/verificar/ZIP/excluir); auditoria com SHA-256 origem/destino; estoque de uploads; **tema padronizado** (boas práticas: botões/tamanho/cores via `ui.color_input`); testes ponta a ponta em `test/test_editor_pdf.py` (32 verificações passando — o README diz "20", número defasado). Única pendência conceitual é o legado `bd_criador.py`.
 
 ### Correção registrada — limite de MB ignorado
 

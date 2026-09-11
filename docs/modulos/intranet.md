@@ -20,7 +20,7 @@ Arquitetura de acesso: **SQLAlchemy 2.0 ORM + Dataclasses** (piloto, 07/09).
 models/              # dataclasses + Table metadata
   __init__.py        Configuracao · Sessao · Modulo
 repositorio.py       Repositorio (CRUD tipado via Session)
-conexao_bd.py        get_config/set_config delegam para Repositorio
+bd_conexao.py        get_config/set_config delegam para Repositorio
                      (fallback sqlite3 raw em caso de falha)
 ```
 
@@ -215,7 +215,7 @@ Mapeamento via `sqlalchemy.orm.registry.map_imperatively()` — SQLAlchemy fica 
 
 ## Rota e integrações
 
-- Rotas: `/` (`main.py:189`), `/login` (`main.py:115`), `/admin/{chave_modulo}` (`main.py:439` — dispatch de admin por módulo, renderiza `mod_<nome>/administracao.py` standalone), `/configuracoes` (`main.py:527` — painel central, guarda `pagina_restrita("Administração")`), `/documentacao` (mount).
+- Rotas: `/` (`main.py:189`), `/login` (`main.py:115`), `/admin/{chave_modulo}` (`main.py:439` — dispatch de admin por módulo, renderiza `mod_<nome>/telas_administracao.py` standalone), `/configuracoes` (`main.py:527` — painel central, guarda `pagina_restrita("Administração")`), `/documentacao` (mount).
 - Consumido por todos: `pagina_restrita`, `get_connection`/`get_config`/`set_config`, `audit_log`/`audit_reg`, `CrudBase`, `gerar_hash_senha`, `validar_acesso_modulo`.
 - Jobs: `backup:<chave>` (12 h), `cleanup_pdf`/`cleanup_solicita` (1 min), `poda_auditoria` (24 h), `monitor_empenho` (10 s).
 
@@ -235,4 +235,4 @@ Mapeamento via `sqlalchemy.orm.registry.map_imperatively()` — SQLAlchemy fica 
 - `storage_secret` é placeholder (`main.py:336`) — trocar em produção.
 - `backup_interval_hours` é seed legada; os jobs usam `backup_horas:<modulo>`.
 
-Ver [Análise do Núcleo](../analise_mod_intranet.md) (detalhe completo, incluindo reconstrução de `bd_conexao.py`/`db_manipulador.py` a partir de `*.pyc`).
+Ver [Análise do Núcleo](../analise_mod_intranet.md) (detalhe completo, incluindo reconstrução de `bd_conexao.py`/`bd_manipulador.py` a partir de `*.pyc`).

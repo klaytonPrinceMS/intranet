@@ -15,7 +15,7 @@
 | `storage_secret` placeholder em `main.py` | Segredo fraco em produção | Trocar antes de produção (ver `../../AGENTSadf.md`) |
 | Rede interna exposta à internet | Vazamento/intrusão | Operação restrita a intranet; sem CDN |
 | Corrupção de caracteres em `main.py` (histórico PowerShell) | Quebra de boot | Validar com `ast.parse` todo `.py` |
-| `db_criador.py` legado aponta para banco central | Dados incorretos se usado | Não confiar como fonte; usar `db_manipulador.py` |
+| `bd_criador.py` legado aponta para banco central | Dados incorretos se usado | Não confiar como fonte; usar `bd_manipulador.py` |
 | Retenção de sessões/auditoria (LGPD) | Conformidade | `tb_sessoes` podada (50/usuário); tabelas de auditoria (`db_mod_auditoria.db`) podadas diariamente por `auditoria_retencao_dias` (default 90, configurável no módulo) |
 
 ## Sugestão de expansão

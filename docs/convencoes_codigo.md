@@ -1,12 +1,16 @@
 # Intranet Modular — Coding Conventions
 
-> Coding standards extracted from the actual codebase: `snake_case` for Python functions/variables, `UPPER_SNAKE` for constants, module packages `mod_*`, database tables `tb_*`, kebab-case URL routes, per-module WAL databases, the `db_manipulador.py` pattern and the NiceGUI screen pattern. When in doubt, mirror an existing module.
+> Coding standards extracted from the actual codebase: `snake_case` for Python functions/variables, `UPPER_SNAKE` for constants, module packages `mod_*`, database tables `tb_*`, kebab-case URL routes, per-module WAL databases, the `bd_manipulador.py` pattern and the NiceGUI screen pattern. When in doubt, mirror an existing module.
 
 ---
 
 # Intranet Modular — Convenções de Criação de Código
 
-> Padrões de código extraídos da base real: `snake_case` para funções/variáveis Python, `MAIUSCULAS_SNAKE` para constantes, pacotes de módulo `mod_*`, tabelas `tb_*`, rotas kebab-case, bancos WAL por módulo, padrão de `db_manipulador.py` e padrão de tela NiceGUI. Em dúvida, espelhe um módulo existente.
+> Padrões de código extraídos da base real: `snake_case` para funções/variáveis Python, `MAIUSCULAS_SNAKE` para constantes, pacotes de módulo `mod_*`, tabelas `tb_*`, rotas kebab-case, bancos WAL por módulo, padrão de `bd_manipulador.py` e padrão de tela NiceGUI. Em dúvida, espelhe um módulo existente.
+
+## Fundamentação — Domain-Driven Design (DDD) · Língua Ubíqua
+
+O uso de **Português BR** em funções, tabelas e documentação segue o **Domain-Driven Design (DDD)** e a sua **Língua Ubíqua**: o vocabulário é o mesmo usado pelos especialistas do negócio no dia a dia (servidores da prefeitura, almoxarifado, secretarias). Ex.: `solicitacao_impressao`, `empenho`, `quarentena`, `autorizar_grupo`, `cota_paginas_mensal` são termos do domínio, não abstrações técnicas. Funções/tabelas/colunas/documentação devem sempre usar esse vocabulário — em conflito entre nome técnico e termo do negócio, vence o termo do negócio.
 
 ## Sumário
 
@@ -24,7 +28,7 @@
 
 ## Visão geral
 
-A Intranet Modular é um projeto **funcional/procedural** em Python: as regras de negócio são **funções** e módulos; **classes ficam restritas aos componentes reutilizáveis do núcleo `mod_intranet`** (desde 06/09: `CrudBase` em `crud_base.py`, `GradeTabela`/`PainelLista` em `ui_painel.py`, `FormularioBuilder` em `ui_form.py` e `BotaoFabrica`/`Dialogo`/`Cartao`/`CampoBase`/`CampoCor`/`CampoTexto`/`CampoSelecao` em `ui_comum.py` — além da exceção histórica `_FormatadorBlog(HTMLParser)`, `mod_blog/manipulador_bd.py:373`). As convenções abaixo refletem o que **já existe** no repositório — não invente um padrão novo.
+A Intranet Modular é um projeto **funcional/procedural** em Python: as regras de negócio são **funções** e módulos; **classes ficam restritas aos componentes reutilizáveis do núcleo `mod_intranet`** (desde 06/09: `CrudBase` em `crud_base.py`, `GradeTabela`/`PainelLista` em `ui_painel.py`, `FormularioBuilder` em `ui_form.py` e `BotaoFabrica`/`Dialogo`/`Cartao`/`CampoBase`/`CampoCor`/`CampoTexto`/`CampoSelecao` em `ui_comum.py` — além da exceção histórica `_FormatadorBlog(HTMLParser)`, `mod_blog/bd_manipulador.py:373`). As convenções abaixo refletem o que **já existe** no repositório — não invente um padrão novo.
 
 ## Nomenclatura
 
@@ -46,7 +50,7 @@ A Intranet Modular é um projeto **funcional/procedural** em Python: as regras d
 
 ## Estilo de código
 
-- **Funcional/procedural**: prefira funções a classes. Cada tela é uma função; cada regra de banco é uma função no `db_manipulador.py`.
+- **Funcional/procedural**: prefira funções a classes. Cada tela é uma função; cada regra de banco é uma função no `bd_manipulador.py`.
 - **Interface de tela obrigatória**: `telas.py` **DEVE** expor `mostrar_tela(usuario_logado, perfil)` (nome do parâmetro pode variar: `user_nome`, `usuario_logado`).
 - Sem comentários supérfluos — o padrão do projeto mantém docstrings curtos em funções de núcleo e cabeçalhos de arquivo.
 - **Validação obrigatória** após alterar qualquer `.py`:
@@ -56,6 +60,10 @@ A Intranet Modular é um projeto **funcional/procedural** em Python: as regras d
 ```
 
 - Histórico de **caracteres corrompidos** em `main.py` (edição via PowerShell): evite ferramentas que reescrevam encoding por fora; confira imports (`get_config`, `get_connection`) ao mexer no topo dos arquivos.
+
+### Suíte de testes — pytest
+
+A suíte é **baseada em scripts standalone** em `assets/test/*.py` (checagens/asserts próprios; rodam com `.venv/bin/python assets/test/<arquivo>.py`). O comando oficial de validação é `.venv/bin/pytest`: o `pytest.ini` (raiz) limita a coleta do pytest ao runner `assets/test/test_suite.py` (`testpaths = assets/test/test_suite.py`, `pytest.ini:2`) — sem isso, o pytest tentava coletar os scripts standalone e quebrava (`INTERNALERROR` por `sys.exit` no import de `test_dashboard.py`). O runner executa TODA a suíte em subprocessos (`test_suite_standalone()`, `assets/test/test_suite.py:50`), falha se algum script retornar código ≠ 0 (≈3–5 min) e limpa as variáveis `PYTEST_*` do ambiente (`_env_limpo()`, `assets/test/test_suite.py:34`). `addopts = -p no:cacheprovider` (`pytest.ini:3`) desativa o cache `.pytest_cache/`. Detalhes e exclusões: [Testes — Plano](testes_plano/index.md).
 
 ## Modelo de classes e objetos
 
@@ -70,18 +78,18 @@ A Intranet Modular é um projeto **funcional/procedural** em Python: as regras d
 mod_<nome>/
   __init__.py
   telas.py            # OBRIGATÓRIO: expõe mostrar_tela(usuario_logado, perfil)
-  manipulador_bd.py   # init_db* + queries + regras (criador vigente das tabelas)
-  criador_bd.py       # NÃO crie/use — padrão legado/morto do projeto
+  bd_manipulador.py   # init_db* + queries + regras (criador vigente das tabelas)
+  bd_criador.py       # NÃO crie/use — padrão legado/morto do projeto
   src/                # opcional: assets JS/CSS do módulo (ex.: mod_solicita_impressao/src/impressao.js)
 ```
 
 Passos para criar:
 
-1. **Estrutura**: crie `mod_<nome>/` com `__init__.py`, `telas.py` e `db_manipulador.py`. **Não** crie `db_criador.py` (é código morto em todos os módulos).
-2. **Banco**: declare `DB_PATH` no `db_manipulador.py` apontando para `db_mod_<nome>.db` na raiz; crie `init_db()` com `PRAGMA journal_mode=WAL` e `foreign_keys=ON` quando houver FKs.
+1. **Estrutura**: crie `mod_<nome>/` com `__init__.py`, `telas.py` e `bd_manipulador.py`. **Não** crie `bd_criador.py` (é código morto em todos os módulos).
+2. **Banco**: declare `DB_PATH` no `bd_manipulador.py` apontando para `db_mod_<nome>.db` na raiz; crie `init_db()` com `PRAGMA journal_mode=WAL` e `foreign_keys=ON` quando houver FKs.
 3. **Bootstrap**: adicione a chamada `init_<nome>()` em `inicializar_bancos()` (`../mod_intranet/bd_criador.py`) — **após** o banco central.
 4. **Registro**: adicione `(chave, nome, ícone, rota)` em `MODULOS_SISTEMA` (`mod_intranet/autenticacao.py:15-22`) para semear `tb_modulos`, e registre a rota `@ui.page("/<rota>")` no `main.py` usando `pagina_restrita(título, chave_modulo="<chave>")`.
-5. **Versão**: semeie `versao_modulo:<chave>` em `conexao_bd.init_db()` (formato `1.0.AAMMDD`) para o rodapé.
+5. **Versão**: semeie `versao_modulo:<chave>` em `bd_conexao.init_db()` (formato `1.0.AAMMDD`) para o rodapé.
 6. **Logs**: rotule os logs com `observabilidade.get_logger("<modulo>")`.
 
 ## Padrão de manipulador de banco
@@ -119,13 +127,13 @@ def init_db():
 
 # ... demais funções (listar/criar/atualizar/excluir) ...
 # Escritas relevantes chamam audit_log do núcleo:
-# from mod_intranet.manipulador_bd import audit_log
+# from mod_intranet.bd_manipulador import audit_log
 # audit_log(usuario, "<chave_modulo>", "criar_x", "descrição", hash_arquivo=None)
 ```
 
 Regras:
 
-- **Padrão vigente (06/09): use `CrudBase` — nunca `sqlite3` cru em código novo.** Instancie `_crud = CrudBase(DB_PATH, "<nome>", foreign_keys=True)` (com FKs), use os atalhos `listar`/`obter`/`criar`/`atualizar`/`excluir`/`executar_muitas`/`criar_tabela` e envolva sequências multi-instrução em `with _crud.transacao() as cur:` (commit/rollback atômicos — `mod_intranet/crud_base.py:60,135`). Auditoria das escritas via `audit_reg(ator, "<modulo>", "<acao>", "<alvo>")` (`crud_base.py:43`, wrapper fail-soft de `audit_log`). Piloto: `../mod_blog/bd_manipulador.py` **100% migrado** (`_crud = CrudBase(DB_BLOG_PATH, "blog")` — `manipulador_bd.py:49`), incluindo `mod_blog/telas.py` (`audit_reg` — `telas.py:135`); no núcleo, `garantir_rastreabilidade()` usa `CrudBase.transacao` (`mod_intranet/manipulador_bd.py:49-51`). O template `_conn()` cru abaixo permanece apenas nos módulos ainda não migrados (auditoria, edit_pdf, gest_cad_usuario, renomear_empenho, solicita_impressao) — migre ao tocar neles.
+- **Padrão vigente (06/09): use `CrudBase` — nunca `sqlite3` cru em código novo.** Instancie `_crud = CrudBase(DB_PATH, "<nome>", foreign_keys=True)` (com FKs), use os atalhos `listar`/`obter`/`criar`/`atualizar`/`excluir`/`executar_muitas`/`criar_tabela` e envolva sequências multi-instrução em `with _crud.transacao() as cur:` (commit/rollback atômicos — `mod_intranet/crud_base.py:60,135`). Auditoria das escritas via `audit_reg(ator, "<modulo>", "<acao>", "<alvo>")` (`crud_base.py:43`, wrapper fail-soft de `audit_log`). Piloto: `../mod_blog/bd_manipulador.py` **100% migrado** (`_crud = CrudBase(DB_BLOG_PATH, "blog")` — `bd_manipulador.py:49`), incluindo `mod_blog/telas.py` (`audit_reg` — `telas.py:135`); no núcleo, `garantir_rastreabilidade()` usa `CrudBase.transacao` (`mod_intranet/bd_manipulador.py:49-51`). O template `_conn()` cru abaixo permanece apenas nos módulos ainda não migrados (auditoria, edit_pdf, gest_cad_usuario, renomear_empenho, solicita_impressao) — migre ao tocar neles.
 - Toda conexão aplica `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` (o `CrudBase` já faz).
 - Nunca **cross-query** entre bancos de módulos (exceção documentada: limpeza cruzada LGPD da exclusão de usuário).
 - Config do módulo em `tb_config` central (prefixo `<modulo>_*`) ou, quando isolada, numa `tb_config` local.
@@ -257,14 +265,14 @@ Servidores simples seguem com **SQLite** (padrão universal, zero dependências 
 
 ## Auditoria e versionamento
 
-- **Auditoria**: toda ação relevante (criar/editar/excluir/publicar/imprimir/autorizar/configurar/renomear) grava `audit_log(usuario, modulo, acao, descricao, hash_arquivo=None)` — `mod_intranet/manipulador_bd.py:70`; nos módulos prefira o wrapper `audit_reg(ator, modulo, acao, alvo, ...)` (`mod_intranet/crud_base.py:43`, fail-soft). A gravação é desacoplada por gancho: `registrar_hook_auditoria(fn)` (`manipulador_bd.py:26`) é chamado pelo `mod_auditoria` no import (`mod_auditoria/manipulador_bd.py:376-377`) — sem dependência cíclica núcleo↔auditoria.
+- **Auditoria**: toda ação relevante (criar/editar/excluir/publicar/imprimir/autorizar/configurar/renomear) grava `audit_log(usuario, modulo, acao, descricao, hash_arquivo=None)` — `mod_intranet/bd_manipulador.py:70`; nos módulos prefira o wrapper `audit_reg(ator, modulo, acao, alvo, ...)` (`mod_intranet/crud_base.py:43`, fail-soft). A gravação é desacoplada por gancho: `registrar_hook_auditoria(fn)` (`bd_manipulador.py:26`) é chamado pelo `mod_auditoria` no import (`mod_auditoria/db_manipulador.py:376-377`) — sem dependência cíclica núcleo↔auditoria.
 - **Hash SHA-256** em operações com arquivos (editor PDF, empenhos, impressão).
 - **Versionamento**: `1.0.AAMMDD`; versão global `versao_sistema` + por módulo `versao_modulo:<chave>` (exibidos da esquerda para a direita no rodapé). Atualize a chave do módulo quando alterar código dele — sem mexer na global nem nas dos outros.
 
 ## Checklist de aceite
 
 - [ ] `telas.py` expõe `mostrar_tela(usuario_logado, perfil)` com gate de permissão.
-- [ ] `db_manipulador.py` tem `init_db*()` com WAL; bootstrap atualizado em `inicializar_bancos()`.
+- [ ] `bd_manipulador.py` tem `init_db*()` com WAL; bootstrap atualizado em `inicializar_bancos()`.
 - [ ] Módulo registrado em `MODULOS_SISTEMA` + rota no `main.py` com `pagina_restrita(título, chave_modulo="<chave>")`.
 - [ ] `versao_modulo:<chave>` semeada e log rotulado com `get_logger("<modulo>")`.
 - [ ] Auditoria em todas as escritas; hash SHA-256 em operações com arquivos.
@@ -273,6 +281,7 @@ Servidores simples seguem com **SQLite** (padrão universal, zero dependências 
 - [ ] Componentes de UI via `mod_intranet/ui_comum` (`botao`/`botao_icone`/`CORES`/`dialogo_card`/`rodape_dialogo`/`notificar`) — sem `ui.button` cru nem hexes soltos; botões UPPERCASE legados do Quasar usam `no_caps=False` (o edit_pdf padronizou todos em `primario` sem `no_caps` em 06/09 — sem exceções cruas).
 - [ ] Acesso a dados via `CrudBase` + `audit_reg` (nunca `sqlite3` cru em código novo); telas novas usam `FormularioBuilder`/`GradeTabela`/`PainelLista` do núcleo em vez de replicar grids/inputs crus.
 - [ ] Código de teste gravado em `test/` (nunca em `/tmp` — se perde ao reiniciar a máquina).
+- [ ] Suíte validada com `.venv/bin/pytest` (suíte completa via runner `assets/test/test_suite.py`, ≈3–5 min) — scripts standalone nunca coletados diretamente pelo pytest (o `pytest.ini` limita a coleta ao runner).
 - [ ] No `mkdocs.yml`, documentação do módulo adicionada ao `nav` (se houver).
 
 > Convenções documentadas também em [Padrões de Codificação](padroes_codificacao/index.md) — este documento é a referência oficial unificada.
