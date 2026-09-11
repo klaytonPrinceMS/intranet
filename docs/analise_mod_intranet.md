@@ -20,7 +20,7 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` (`bd_cone
 
 | Tabela | Conteúdo | Criada em |
 |:---|:---|:---|
-| `tb_auditoria` | id, usuario, modulo, acao, descricao, timestamp, hash_arquivo + colunas `ip`/`user_agent` (migração `garantir_rastreabilidade`) | `bd_conexao.py:38-47` |
+| `tb_auditoria_*` | auditoria LGPD em **banco separado** `db_mod_auditoria.db` — uma tabela por módulo (`tb_auditoria_<modulo>`: id, usuario, modulo, acao, descricao, timestamp, hash_arquivo + `ip`/`user_agent`) | `mod_auditoria/db_manipulador.py` |
 | `tb_config` | chave PK / valor — seeds: `versao_sistema=1.0.260908`, `cotadisco_global_gb=10`, `backup_interval_hours=12` (legada) e padrões de aparência | `bd_conexao.py:49-74` |
 | `tb_sessoes` | id, usuario, modulo, login/logout_timestamp, cookie_hash + `ip`, `user_agent`, `dispositivo`, `mac` | `bd_conexao.py:55-63` |
 | `tb_modulos` | id, chave UNIQUE, nome, icone, rota, ativo, nativo, **ordem** — semeada com os 5 módulos nativos; `ordem` controla a exibição (migração idempotente em bancos antigos) | `autenticacao.py:29-84` |
@@ -171,7 +171,7 @@ sistema**: a data atual e de gravação devem vir SEMPRE do servidor (nunca do n
 
 **Implementado:**
 
-- Banco central `db_mod_intranet.db` em modo **WAL** + `tb_auditoria` unificada (rastreabilidade IP/UA/dispositivo/MAC via `garantir_rastreabilidade`).
+- Banco central `db_mod_intranet.db` em modo **WAL** (`tb_config`/`tb_sessoes`/`tb_modulos`); auditoria LGPD em banco separado `db_mod_auditoria.db` (`tb_auditoria_<modulo>` por módulo, rastreabilidade IP/UA/dispositivo/MAC via `garantir_rastreabilidade`).
 - Auditoria centralizada: `bd_manipulador.audit_log` registra config/auth/permissões/acessos de todos os módulos.
 - Visibilidade de módulos por permissão (drawer lateral com alerta de módulo inativo/removido).
 - Login com sessão registrada em banco (`registrar_login`) + **sessões revogáveis**: `cookie_hash` via `secrets`, revalidação a cada request (`sessao_ativa`), logout próprio preserva as demais sessões do usuário.

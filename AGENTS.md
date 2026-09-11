@@ -107,6 +107,36 @@ Não use Declarative. Use mapeamento imperativo em `models/__init__.py`:
 - Toda conexão DEVE aplicar `PRAGMA journal_mode=WAL`.
 - `CrudBase` fornece: `listar()`, `obter()`, `criar()`, `atualizar()`, `excluir()`, `executar_muitas()`, `criar_tabela()` e transação atômica `crud.transacao()`.
 
+### 4.1 Paridade SQLite ↔ PostgreSQL (obrigatória)
+
+> **REGRA: toda alteração em um banco de dados SQLite DEVE ter a MESMA
+> alteração representada para o PostgreSQL.** Os dois backends são
+> espelho um do outro.
+
+- **Estrutura idêntica — um banco por módulo:** no SQLite há um arquivo
+  `db_mod_<chave>.db` por módulo; no PostgreSQL há um **DATABASE**
+  `db_mod_<chave>` por módulo (mesmo nome, sem `.db`). Nunca crie schema
+  isolando módulo: cada módulo tem seu próprio database (schema `public`).
+- **Toda DDL/DML nova** (tabela, coluna, índice, seed, migração) deve ser
+  escrita em SQL portável (via `mod_intranet/banco_conexao.py`) e funcionar
+  em **ambos** os backends. Nada de `sqlite3` cru que ignore o `banco_conexao`
+  (isso quebra o Postgres em runtime — os `db_mod_*.db` são legado quando
+  `banco_tipo=postgres`).
+- **Acesso sempre por `banco_conexao.conexao(chave)`** (nunca `sqlite3.connect`
+  direto em banco de outro módulo). Com `banco_tipo=postgres`, a conexão é
+  **totalmente via Postgres** — nunca cair no SQLite para os módulos.
+- **Migrações idempotentes nos dois backends:** o marcador de migração deve
+  funcionar em SQLite (`sqlite_master`) e em Postgres (deve devolver "sem
+  resultado" no proxy e re-executar o DDL seguro). Toda migração nova precisa
+  ser validada rodando o sistema com `postgres` de verdade.
+- **Criar bancos/colunas:** usar `CREATE DATABASE IF NOT EXISTS`/`CREATE TABLE
+  IF NOT EXISTS`/`ALTER TABLE ... ADD COLUMN IF NOT EXISTS` — o proxy
+  `_CursorPostgres` traduz DDL SQLite→Postgres e normaliza `datetime`→string;
+  funções SQLite-only (`GROUP_CONCAT`→`STRING_AGG`, `datetime(...)`,
+  `INSERT OR IGNORE`) são traduzidas automaticamente no proxy.
+- **Regressão:** ao alterar o esquema de um módulo, testar com SQLite E com
+  Postgres (verificar schemas/tabelas criados no database do módulo).
+
 ## 5. Padrão de Telas — NiceGUI
 
 - Assinatura: `def tela_xxx(nome: str, perfil: str):`

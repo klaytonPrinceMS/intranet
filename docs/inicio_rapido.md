@@ -127,7 +127,7 @@ Validação de sintaxe de qualquer arquivo Python (padrão do projeto):
 
 ## Usar PostgreSQL (opcional, desde 08/09)
 
-O padrão é **SQLite** (um arquivo por módulo, zero dependências). Para usar **PostgreSQL** (backend duplo, um SCHEMA por módulo no banco `intranet`):
+O padrão é **SQLite** (um arquivo por módulo, zero dependências). Para usar **PostgreSQL** (backend duplo, **um DATABASE `db_mod_<chave>` por módulo**, espelhando o arquivo SQLite):
 
 1. Suba o container:
    ```bash
@@ -137,4 +137,4 @@ O padrão é **SQLite** (um arquivo por módulo, zero dependências). Para usar 
 3. Selecione **PostgreSQL** e confira o DSN (`postgresql+psycopg2://intranet:intranet@localhost:5432/intranet`).
 4. Clique **Aplicar** e **REINICIE o servidor** (`fuser -k 8080/tcp; .venv/bin/python main.py`).
 
-No boot, os módulos recriam os schemas/tabelas no Postgres (28 tabelas em 7 schemas). A migração de dados SQLite→PostgreSQL é manual. Para voltar ao SQLite, repita o passo 3 selecionando "SQLite" e reinicie.
+No boot, os módulos recriam os bancos/tabelas no Postgres (`garantir_bancos_postgres` cria os DATABASE `db_mod_<chave>` ausentes; o schema entra pelos `init_db`). A migração de dados SQLite→PostgreSQL é manual. Para voltar ao SQLite, repita o passo 3 selecionando "SQLite" e reinicie.

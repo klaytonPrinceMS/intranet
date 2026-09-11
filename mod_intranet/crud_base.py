@@ -91,21 +91,36 @@ class CrudBase:
         """Opens a connection routed by the ACTIVE backend (WAL + pragmas).
 
         Conexão via `banco_conexao.conexao(modulo)` quando o módulo é um
-        schema conhecido — SQLite (arquivo do módulo, WAL) ou PostgreSQL
-        (schema do módulo); caso contrário cai na conexão sqlite3 clássica
-        (`db_path`) com os pragmas padrão. `PRAGMA` é ignorado pelo proxy
-        no Postgres."""
-        try:
-            from mod_intranet import banco_conexao
-            if self.modulo in banco_conexao.SCHEMAS:
+        banco conhecido — SQLite (arquivo do módulo, WAL) ou PostgreSQL
+        (DATABASE `db_mod_<chave>`); caso contrário cai na conexão sqlite3
+        clássica (`db_path`) com os pragmas padrão. `PRAGMA` é ignorado pelo
+        proxy no Postgres. Com `banco_tipo=postgres` NÃO há fallback para o
+        arquivo SQLite: falha de conexão levanta exceção (fail-fast), para
+        não rebaixar silenciosamente o backend ativo."""
+        from mod_intranet import banco_conexao
+        postgres = banco_conexao.sgbd_ativo() == "postgres"
+        if banco_conexao.eh_chave_modulo(self.modulo):
+            try:
                 conn = banco_conexao.conexao(self.modulo)
-                if conn is not None:
-                    conn.execute("PRAGMA journal_mode=WAL")
-                    if self.foreign_keys:
-                        conn.execute("PRAGMA foreign_keys=ON")
-                    return conn
-        except Exception:
-            pass
+            except Exception as e:
+                if postgres:
+                    raise RuntimeError(
+                        f"falha ao conectar '{self.modulo}' no Postgres: "
+                        f"{e}") from e
+                conn = None
+            if conn is not None:
+                conn.execute("PRAGMA journal_mode=WAL")
+                if self.foreign_keys:
+                    conn.execute("PRAGMA foreign_keys=ON")
+                return conn
+            if postgres:
+                raise RuntimeError(
+                    f"conexao('{self.modulo}') indisponível com "
+                    f"banco_tipo=postgres — sem fallback para SQLite")
+        elif postgres:
+            raise RuntimeError(
+                f"módulo '{self.modulo}' desconhecido com banco_tipo=postgres "
+                f"— sem fallback para SQLite")
         conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA journal_mode=WAL")
         if self.synchronous:

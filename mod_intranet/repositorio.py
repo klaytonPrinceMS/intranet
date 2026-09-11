@@ -99,7 +99,7 @@ def engine(chave: str = "intranet"):
     """Lazily creates/reuses the SQLAlchemy Engine for a module database.
 
     Postgres (`banco_tipo='postgres'`): delega ao `banco_conexao.obter_engine_modulo`
-    (banco `intranet`, schema do módulo via `search_path`). SQLite: um engine
+    (DATABASE `db_mod_<chave>`, um banco por módulo). SQLite: um engine
     POR banco (`MODULOS_BD`), cacheado por chave (singleton por processo),
     com pragmas WAL/synchronous/foreign_keys via event listener. CRIAÇÃO
     CONDICIONAL: `metadata.create_all` e o log de "criado" só acontecem
@@ -184,14 +184,29 @@ def sessaodb(chave: str = "intranet") -> Optional[Session]:
 
 
 def garantir_bancos() -> dict[str, bool]:
-    """Ensures EVERY module database exists (creates the file if missing).
+    """Ensures EVERY module database exists on the ACTIVE backend.
 
-    Percorre `MODULOS_BD`, cria o engine de cada banco e, quando o
-    arquivo não existe, força a primeira conexão (SQLite cria o arquivo;
-    o schema entra pelo `init_db` de cada módulo, chamado em
-    `inicializar_bancos`). Retorna `{chave: criado_agora}` (fail-soft:
-    falha registra exception e segue).
+    postgres: cria TODOS os bancos dos módulos (`db_mod_<chave>`) via
+    `banco_conexao.garantir_bancos_postgres()` e força uma conexão em cada
+    engine (materializa o DATABASE recém-criado). sqlite: cria o ARQUIVO do
+    banco de cada módulo quando não existe (o schema entra pelo `init_db`
+    de cada módulo, chamado em `inicializar_bancos`). Retorna
+    `{chave: criado_agora}` (fail-soft: falha registra exception e segue).
     """
+    from mod_intranet import banco_conexao
+    if banco_conexao.sgbd_ativo() == "postgres":
+        resultado = banco_conexao.garantir_bancos_postgres()
+        for chave in MODULOS_BD:
+            eng = engine(chave)
+            if eng is None:
+                resultado[chave] = False
+                continue
+            try:
+                eng.connect().close()
+            except Exception as ex:
+                _log().warning(f"garantir_bancos('{chave}'): {ex}")
+                resultado[chave] = False
+        return resultado
     resultado: dict[str, bool] = {}
     for chave in MODULOS_BD:
         path = caminho_db(chave)

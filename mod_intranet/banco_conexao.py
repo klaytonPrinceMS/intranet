@@ -14,9 +14,11 @@ trocar de URL):
 `obter_engine()` cria a engine SQLAlchemy sob demanda (singleton por DSN,
 import lazy — sem `sqlalchemy`/driver instalado o sistema segue de pé em
 SQLite com exception registrada no loguru, fail-soft). O DSN nunca é
-logado com credenciais (`_dsn_publico` mascara usuário/senha). Os esquemas
-dos módulos continuam sendo criados por DDL próprio — a migração de dados
-SQLite→PostgreSQL é fase futura documentada.
+logado com credenciais (`_dsn_publico` mascara usuário/senha). No Postgres
+a estrutura espelha o SQLite: **um DATABASE por módulo** (`db_mod_<chave>`,
+criado por `garantir_bancos_postgres`) e o schema real vem do DDL próprio
+dos `init_db` de cada módulo — a migração de dados SQLite→PostgreSQL é fase
+futura documentada.
 """
 import sys
 import os
@@ -141,8 +143,12 @@ def sgbd_ativo():
 
     Lê `banco_tipo` direto do arquivo SQLite central (seletor de backend,
     autoritativo no boot). Valores distintos de 'sqlite'/'postgres' caem
-    em 'sqlite'.
+    em 'sqlite'. A variável de ambiente `INTRANET_FORCE_SQLITE=1` força
+    'sqlite' (usada pela suíte de testes standalone para não depender de um
+    PostgreSQL ativo).
     """
+    if os.environ.get("INTRANET_FORCE_SQLITE") == "1":
+        return "sqlite"
     tipo = _ler_config_sqlite("banco_tipo", "sqlite").strip().lower()
     return tipo if tipo in ("sqlite", "postgres") else "sqlite"
 
@@ -238,67 +244,115 @@ def engine_disponivel():
 
 
 # =============================================================================
-# PostgreSQL: engine POR MÓDULO (schema próprio) + conexão compatível
+# PostgreSQL: engine POR MÓDULO (banco próprio) + conexão compatível
 # =============================================================================
-# Cada módulo usa o SEU schema dentro do banco `intranet` (espelha o modelo
-# "um SQLite por módulo"): as tabelas `tb_*` ficam isoladas por schema e as
-# colisões de nome (ex.: tb_solicitacoes) desaparecem. A conexão define
-# `search_path` para o schema do módulo, então o SQL não qualificado funciona
-# igual no SQLite (um arquivo por módulo) e no Postgres (schema por módulo).
-
-SCHEMAS = {
-    "intranet": "intranet",
-    "blog": "blog",
-    "usuarios": "usuarios",
-    "auditoria": "auditoria",
-    "editar_pdf": "editar_pdf",
-    "empenhos": "empenhos",
-    "solicita_impressao": "solicita_impressao",
-}
+# Cada módulo usa o SEU PRÓPRIO BANCO no Postgres (espelha o modelo "um SQLite
+# por módulo"): assim como no SQLite há um `db_mod_<chave>.db` por módulo, no
+# Postgres há um DATABASE `db_mod_<chave>` por módulo. A estrutura é idêntica
+# nos dois backends e as MESMAS funções de acesso (`conexao`, proxy psycopg2
+# com tradução de DDL/datetime/GROUP_CONCAT) valem para ambos.
 
 _engines_modulo: dict[str, object] = {}
 _lock_modulo = threading.Lock()
+_bancos_criados: set = set()
+_lock_bancos = threading.Lock()
 
 
-def schema_modulo(chave: str = "intranet") -> str:
-    """PostgreSQL schema name for a module key (fallback: 'intranet')."""
-    return SCHEMAS.get(chave, SCHEMAS["intranet"])
+def eh_chave_modulo(chave: str) -> bool:
+    """True if `chave` is a known module database key."""
+    from mod_intranet.repositorio import MODULOS_BD
+    return chave in MODULOS_BD
+
+
+def banco_modulo(chave: str = "intranet") -> str:
+    """PostgreSQL database name for a module key (mirrors SQLite file).
+
+    O nome do banco espelha o arquivo SQLite (`db_mod_<chave>.db` → banco
+    `db_mod_<chave>`), mantendo a estrutura idêntica entre backends."""
+    from mod_intranet.repositorio import MODULOS_BD
+    nome = MODULOS_BD.get(chave, MODULOS_BD["intranet"])
+    return nome[:-3] if nome.endswith(".db") else nome
+
+
+def _url_com_banco(url, banco):
+    """Swaps the database (last path segment) in a postgresql DSN URL."""
+    if not url:
+        return url
+    return re.sub(r"(postgresql(?:\+psycopg2)?://[^/]+/)[^/]*$",
+                  rf"\g<1>{banco}", url, flags=re.I)
+
+
+def _garantir_bd_postgres(banco: str) -> bool:
+    """Creates the module's PostgreSQL database if it does not exist.
+
+    Conecta no banco de manutenção `postgres` e cria `db_mod_<chave>` quando
+    ausente (`CREATE DATABASE`, autocommit — não roda em transação).
+    Idempotente por processo (`_bancos_criados`). Sem isso, o banco de um
+    módulo nunca é materializado no Postgres — a causa do Postgres só ter o
+    banco central."""
+    if banco in _bancos_criados:
+        return True
+    with _lock_bancos:
+        if banco in _bancos_criados:
+            return True
+        try:
+            import psycopg2
+            from psycopg2 import sql
+            base = postgres_url()
+            dsn = _url_com_banco(base, "postgres").replace(
+                "postgresql+psycopg2://", "postgresql://")
+            conn = psycopg2.connect(dsn)
+            conn.autocommit = True
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (banco,))
+            if cur.fetchone() is None:
+                cur.execute(sql.SQL("CREATE DATABASE {}").format(
+                    sql.Identifier(banco)))
+                _log().info(f"banco_conexao: banco PostgreSQL '{banco}' criado")
+            cur.close()
+            conn.close()
+            _bancos_criados.add(banco)
+            return True
+        except Exception as e:
+            _log().exception(f"_garantir_bd_postgres('{banco}'): {e}")
+            return False
+
+
+def garantir_bancos_postgres() -> dict[str, bool]:
+    """Ensures EVERY module PostgreSQL database exists (CREATE DATABASE).
+
+    Percorre os bancos dos módulos e cria os que faltarem (idempotente).
+    Usado no boot (`garantir_bancos`) para o Postgres materializar TODOS os
+    bancos de módulo — não apenas o central."""
+    from mod_intranet.repositorio import MODULOS_BD
+    resultado: dict[str, bool] = {}
+    for chave in MODULOS_BD:
+        resultado[chave] = _garantir_bd_postgres(banco_modulo(chave))
+    return resultado
 
 
 def obter_engine_modulo(chave: str = "intranet"):
     """SQLAlchemy engine for a module on the ACTIVE backend.
 
-    postgres: engine para o banco `intranet` com `search_path` = schema do
-    módulo (cria o schema na primeira conexão); reutilizado (cache por chave).
-    sqlite: devolve `None` — o `repositorio.engine(chave)` cuida dos engines
-    SQLite por arquivo.
-    """
+    postgres: engine para o BANCO do módulo (`db_mod_<chave>`, criado se
+    necessário) — um banco por módulo, igual ao SQLite. Reutilizado (cache
+    por chave). sqlite: devolve `None` — o `repositorio.engine(chave)` cuida
+    dos engines SQLite por arquivo."""
     if sgbd_ativo() != "postgres":
         return None
-    if chave not in SCHEMAS:
-        chave = "intranet"
+    banco = banco_modulo(chave)
+    if not _garantir_bd_postgres(banco):
+        return None
     with _lock_modulo:
         if chave in _engines_modulo:
             return _engines_modulo[chave]
         try:
-            from sqlalchemy import create_engine, event
-            url = postgres_url()
+            from sqlalchemy import create_engine
+            url = _url_com_banco(postgres_url(), banco)
             eng = create_engine(url, pool_pre_ping=True, future=True)
-            schema = schema_modulo(chave)
-
-            @event.listens_for(eng, "connect")
-            def _preparar(dbapi_conn, _connection_record):
-                cur = dbapi_conn.cursor()
-                cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{schema}"')
-                cur.execute(f'SET search_path TO "{schema}"')
-                cur.close()
-                # COMMIT: sem isso o `rollback` do pool ao devolver a conexão
-                # desfaz o `SET search_path` (é transacional no Postgres).
-                dbapi_conn.commit()
-
             _engines_modulo[chave] = eng
             _log().info(f"banco_conexao: engine Postgres para o módulo "
-                        f"'{chave}' (schema '{schema}')")
+                        f"'{chave}' (banco '{banco}')")
             return eng
         except Exception as e:
             _log().exception(f"obter_engine_modulo('{chave}'): {e}")
@@ -521,9 +575,10 @@ def conexao(chave: str = "intranet"):
     """DBAPI-level connection for a module on the ACTIVE backend.
 
     sqlite: conexão sqlite3 (WAL) para o arquivo do módulo. postgres:
-    conexão psycopg2 (via SQLAlchemy) com `search_path` no schema do módulo,
-    envolvida num proxy que traduz `?`→`%s`, DDL SQLite e PRAGMA, e captura
-    `lastrowid`. Devolve `None` em falha (fail-soft).
+    conexão psycopg2 (via SQLAlchemy) para o DATABASE do módulo
+    (`db_mod_<chave>`), envolvida num proxy que traduz `?`→`%s`, DDL
+    SQLite e PRAGMA, e captura `lastrowid`. Devolve `None` em falha
+    (fail-soft).
     """
     if sgbd_ativo() == "postgres":
         eng = obter_engine_modulo(chave)

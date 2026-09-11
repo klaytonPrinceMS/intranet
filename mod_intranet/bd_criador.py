@@ -13,16 +13,18 @@ ANTES de importar aquele módulo — caso contrário falha com
 """
 
 def inicializar_bancos():
-    # 0) SQLAlchemy valida TODOS os bancos (`MODULOS_BD`): cria o ARQUIVO
-    # apenas quando não existe (sem create_all a cada boot); o schema de
-    # cada banco entra pelos `init_db` abaixo (CREATE TABLE IF NOT EXISTS).
+    # 0) Garante TODOS os bancos de módulo ANTES dos `init_db`: no SQLite
+    # cria o ARQUIVO apenas quando não existe; no Postgres cria o DATABASE
+    # `db_mod_<chave>` de cada módulo (garantir_bancos → garantir_bancos_postgres).
+    # O schema de cada banco entra pelos `init_db` abaixo (CREATE TABLE IF NOT EXISTS).
     from mod_intranet.repositorio import garantir_bancos
     garantir_bancos()
 
     from mod_intranet.bd_conexao import init_db as init_central
     from mod_intranet.bd_manipulador import garantir_rastreabilidade
 
-    # 1) Banco central primeiro (tb_auditoria, tb_config, tb_sessoes)
+    # 1) Banco central primeiro (tb_auditoria, tb_config, tb_sessoes) —
+    # com os databases já materializados no backend ativo.
     init_central()
     garantir_rastreabilidade()
 

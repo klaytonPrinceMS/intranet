@@ -64,12 +64,12 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na tr
 | Exibição única OU histórico alternável | **Implementado** (`blog_modo_exibicao` local) + **fixação da postagem exibida** no modo única (`blog_postagem_unica_id` local, fallback automático p/ mais recente) |
 | Editor com pré-visualização | **Implementado** (editor com preview, criar/editar) |
 | Publicar/Despublicar + restauração de inativas | **Implementado** (aba "Despublicadas" da tela do blog — `telas.py:251,469`; o admin standalone `/admin/blog` não lista mais inativas desde 06/09) |
-| `test/teste_fluxo_blog.py` (37/37) | **Implementado** (em `test/` — 37/37 OK) |
+| `assets/test/teste_fluxo_blog.py` (46) | **Implementado** (em `assets/test/` — 46 verificações ✅) |
 
-> Fase 3 **REALIZADO** e validado. O teste `test/teste_fluxo_blog.py` (37/37 OK)
+> Fase 3 **REALIZADO** e validado. O teste `assets/test/teste_fluxo_blog.py` (**46 verificações** ✅)
 > cobre sanitização XSS (nh3), conversores HTML/Markdown, CRUD, publicar/
 > despublicar, soft delete, config local, modo única/histórico, largura de
-> imagem e auditoria central. A checagem de auditoria foi atualizada para o
+> imagem, modo carrossel e auditoria central. A checagem de auditoria foi atualizada para o
 > banco exclusivo `db_mod_auditoria.db` (tabela `tb_auditoria_blog` — a
 > `tb_auditoria` central virou legado, migrada via `migrar_dados_existentes`).
 
@@ -96,7 +96,7 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na tr
   - Ao **criar** nova publicação a fixação é limpa (`telas.py:310`) — a nova passa a ser a exibida.
   - Trocas de modo/fixação auditadas (`audit_reg`) e com reload (padrão da tela); row dos seletores usa `.style("gap: 0.5rem")` (`telas.py:351-352`) — regra bug #2171 (sem `gap-2` Tailwind em `ui.row`).
   - "Restaurar padrão" da Administração também limpa `blog_postagem_unica_id` (`telas_administracao.py:153`), além de `blog_modo_exibicao=historico`.
-  - Testes: 4 novos asserts em `test/teste_fluxo_blog.py` (#30–33: default `None`, fixar/obter, limpar, seed da chave) — **37/37 OK**.
+  - Testes: 4 novos asserts em `assets/test/teste_fluxo_blog.py` (#30–33: default `None`, fixar/obter, limpar, seed da chave) — agora **46 verificações** ✅.
 
 ### Adições recentes (06/09) — busca no feed e correções de bugs
 
@@ -105,7 +105,7 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na tr
 - **Botões de ação → `ui_comum.botao_icone`** (padrão Gestão de Usuários): editar (`edit`), despublicar (`visibility_off`) e excluir (`delete`), todos com tooltip e `chave_modulo="blog"`, em row `w-full justify-end` `.style("gap: 0.25rem; margin-top: 0.25rem")` no rodapé do card (`telas.py:79-94`).
 - **Busca no feed**: ver bullet acima (Fluxo da tela) — `telas.py:353-402` (barra) e `telas.py:427-457` (filtro + mensagem vazia).
 - Removidos `if pode_publicar or True:` e imports não usados (`set_config`, `get_config_local`).
-- Testes: `teste_fluxo_blog` **37/37**, `verifica_ui_comum` **188/188**, `test_dashboard` **31/31**; verificação headless confirmou que o clique em Editar preenche o formulário (título no input `Título*`) e que despublicar/excluir zeram o `ativo`.
+- Testes: `teste_fluxo_blog` **46 ✅**, `verifica_ui_comum` **188/188**, `test_dashboard` **31/31**; verificação headless confirmou que o clique em Editar preenche o formulário (título no input `Título*`) e que despublicar/excluir zeram o `ativo`.
 
 ### Adições recentes (06/09) — suporte a diagramas Mermaid nas postagens
 
@@ -143,5 +143,5 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na tr
   - Bloco administrativo no modo carrossel (`telas.py:546-596`): `ui.select` múltiplo das postagens + `ui.number` do tempo, com auditoria; **reverte a seleção** se o admin tentar selecionar exatamente 1 postagem (aviso "Selecione ao menos 2 postagens para o carrossel.").
   - `atualizar()` trata o modo carrossel (`telas.py:684-694`) — lista apenas as postagens selecionadas via `listar_postagens_por_ids`.
 - **Testes**:
-  - `test/teste_fluxo_blog.py`: isolamento do banco (reatribuição de `bd._crud` para banco temporário) + nova função `teste_carrossel` (7 verificações) validando o modo carrossel.
-  - `test/teste_carrossel_blog.py`: teste headless que renderiza a tela em modo carrossel e valida o DOM (indicador de posição, botão Leitura completa, select de postagens, tempo, expansão).
+  - `assets/test/teste_fluxo_blog.py`: isolamento do banco (reatribuição de `bd._crud` para banco temporário) + nova função `teste_carrossel` (7 verificações) validando o modo carrossel.
+  - `assets/test/teste_carrossel_blog.py`: teste headless que renderiza a tela em modo carrossel e valida o DOM (indicador de posição, botão Leitura completa, select de postagens, tempo, expansão).

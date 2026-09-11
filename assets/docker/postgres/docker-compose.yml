@@ -20,7 +20,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-intranet}
       POSTGRES_DB: ${POSTGRES_DB:-intranet}
     ports:
-      - "5444:5432"
+      - "5434:5432"
     volumes:
       - intranet_pgdata:/var/lib/postgresql/data
     restart: unless-stopped

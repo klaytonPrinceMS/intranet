@@ -1,12 +1,12 @@
 # Intranet Modular — Architecture
 
-> Technical architecture of the Intranet Modular: single entry point (`main.py`), modular packages (`mod_*`), the `bd_manipulador.py` / `telas.py` / `telas_administracao.py` pattern (with `models/` SQLAlchemy as the pattern to propagate and `bd_criador.py` kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL schema), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor and audit pruning).
+> Technical architecture of the Intranet Modular: single entry point (`main.py`), modular packages (`mod_*`), the `bd_manipulador.py` / `telas.py` / `telas_administracao.py` pattern (with `models/` SQLAlchemy as the pattern to propagate and `bd_criador.py` kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor and audit pruning).
 
 ---
 
 # Intranet Modular — Arquitetura
 
-> Arquitetura técnica da Intranet Modular: entry point único (`main.py`), pacotes modulares (`mod_*`), padrão `bd_manipulador.py` / `telas.py` / `telas_administracao.py` (com `models/` SQLAlchemy como padrão a propagar e `bd_criador.py` mantido como legado/morto), um banco por módulo (SQLite WAL ou schema PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta e poda da auditoria).
+> Arquitetura técnica da Intranet Modular: entry point único (`main.py`), pacotes modulares (`mod_*`), padrão `bd_manipulador.py` / `telas.py` / `telas_administracao.py` (com `models/` SQLAlchemy como padrão a propagar e `bd_criador.py` mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta e poda da auditoria).
 
 ## Sumário
 
@@ -141,7 +141,7 @@ mod_<nome>/
 
 > **Exceção `mod_auditoria`:** é o único módulo com a nomenclatura fora do padrão — `db_manipulador.py`/`db_criador.py` (em vez de `bd_manipulador.py`/`bd_criador.py`) — mantém banco exclusivo `db_mod_auditoria.db` (uma tabela por módulo); o visualizador em `telas.py` lê esse banco via `buscar_logs()` e a escrita é feita indiretamente pelos demais módulos via `audit_log` → `registrar_auditoria`.
 
-> **Conexão e configuração:** módulos de negócio **não** têm `bd_conexao.py` próprio — usam o central `mod_intranet/bd_conexao.py` (`get_config`/`set_config` via `Repositorio`) e `mod_intranet/banco_conexao.conexao(chave)` para obter a conexão do backend ativo (SQLite WAL ou PostgreSQL, com **um schema por módulo** no Postgres).
+> **Conexão e configuração:** módulos de negócio **não** têm `bd_conexao.py` próprio — usam o central `mod_intranet/bd_conexao.py` (`get_config`/`set_config` via `Repositorio`) e `mod_intranet/banco_conexao.conexao(chave)` para obter a conexão do backend ativo (SQLite WAL ou PostgreSQL, com **um banco `db_mod_<chave>` por módulo** no Postgres).
 
 ## Bancos de dados (um por módulo, WAL)
 
@@ -150,7 +150,7 @@ mod_<nome>/
 - **Convenção:** consultar um banco somente pelo `bd_manipulador` do seu próprio módulo (evitar cross-query). Exceções conhecidas e documentadas: a limpeza cruzada LGPD da exclusão de usuário (`mod_gest_cad_usuario` varre bancos vizinhos para anonimizar/excluir dados — ver [Módulo de Gestão de Usuários](modulos/gest_cad_usuario.md)) e a escrita de auditoria (`audit_log` no núcleo grava no banco exclusivo de auditoria via `registrar_auditoria`).
 - O banco **central** (`db_mod_intranet.db`) guarda `tb_config`, `tb_sessoes` e `tb_modulos` (a antiga `tb_auditoria` central foi migrada e removida — ver [Auditoria](#auditoria-lgpd-banco-exclusivo)).
 - **SQLAlchemy em TODOS os bancos (06/09):** o mapa `MODULOS_BD` (`repositorio.py:57-65`) registra os 7 bancos (`intranet`, `blog`, `editar_pdf`, `usuarios`, `empenhos`, `auditoria`, `solicita_impressao`); `engine(chave)`/`sessaodb(chave)`/`Repositorio(chave_db=...)` operam em qualquer um deles — ver [Arquitetura de acesso a dados do núcleo](#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809).
-- **Backend duplo controlado pelo sistema (08/09):** além do SQLite, o sistema agora suporta **PostgreSQL opcional** — a chave `banco_tipo` em `tb_config` central (`'sqlite'` padrão | `'postgres'`) seleciona o backend. No Postgres, **um SCHEMA por módulo** dentro do banco `intranet` preserva o isolamento "um banco por módulo" e evita colisão de nomes de tabela (ex.: `tb_solicitacoes`). SQLite continua o padrão. Ver [Backend duplo (08/09)](#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809) abaixo.
+- **Backend duplo controlado pelo sistema (08/09):** além do SQLite, o sistema agora suporta **PostgreSQL opcional** — a chave `banco_tipo` em `tb_config` central (`'sqlite'` padrão | `'postgres'`) seleciona o backend. No Postgres, **um DATABASE `db_mod_<chave>` por módulo** preserva o isolamento "um banco por módulo" e evita colisão de nomes de tabela (ex.: `tb_solicitacoes`). SQLite continua o padrão. Ver [Backend duplo (08/09)](#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809) abaixo.
 
 ### Arquitetura de acesso a dados do núcleo — backend duplo (08/09)
 
@@ -166,8 +166,8 @@ mod_intranet/
                          engine()/sessaodb(chave) roteiam para o Postgres
                          quando banco_tipo='postgres'
   banco_conexao.py     ← backend duplo: conexao(chave), config_backend(),
-                         salvar_backend(), SCHEMAS (um schema por módulo),
-                         sgbd_ativo(), obter_engine_modulo(chave)
+                         salvar_backend(), banco_modulo()/_garantir_bd_postgres()
+                         (um banco por módulo), sgbd_ativo(), obter_engine_modulo(chave)
   bd_conexao.py        ← delega get_config/set_config para Repositorio
                          fallback sqlite3 raw em caso de falha
   autenticacao.py      ← todas as operações de sessão e módulo via Repositorio
@@ -191,35 +191,38 @@ mod_intranet/
 |:---|:---|:---|
 | `MODULOS_BD` | `repositorio.py:57-65` | mapa chave→arquivo dos 7 bancos: `intranet`→`db_mod_intranet.db`, `blog`→`db_mod_blog.db`, `editar_pdf`→`db_mod_edit_pdf.db`, `usuarios`→`db_mod_gest_cad_usuario.db`, `empenhos`→`db_mod_renomear_empenho.db`, `auditoria`→`db_mod_auditoria.db`, `solicita_impressao`→`db_mod_solicita_impressao.db` |
 | `caminho_db(chave)` | `repositorio.py:80` | caminho do banco; chave desconhecida → central (fail-soft) |
-| `engine(chave="intranet")` | `repositorio.py:98` | **roteia para o backend ativo:** com `banco_tipo='postgres'` delega a `banco_conexao.obter_engine_modulo(chave)` (schema do módulo no banco `intranet`); senão SQLite — criação condicional: banco existente → nada é criado nem logado; banco central novo → `metadata.create_all` uma vez; banco de módulo novo → arquivo criado na primeira conexão (schema via `init_db` do módulo) |
+| `engine(chave="intranet")` | `repositorio.py:98` | **roteia para o backend ativo:** com `banco_tipo='postgres'` delega a `banco_conexao.obter_engine_modulo(chave)` (banco do módulo `db_mod_<chave>`); senão SQLite — criação condicional: banco existente → nada é criado nem logado; banco central novo → `metadata.create_all` uma vez; banco de módulo novo → arquivo criado na primeira conexão (schema via `init_db` do módulo) |
 | `sessaodb(chave="intranet")` | `repositorio.py:158` | Session por banco (factory cacheada); roteia para o Postgres quando o backend é `postgres` |
-| `garantir_bancos()` | `repositorio.py:177` | percorre `MODULOS_BD`, cria engine de cada banco e força a primeira conexão quando o arquivo está ausente; retorna `{chave: criado}` |
+| `garantir_bancos()` | `repositorio.py:177` | percorre `MODULOS_BD` e garante os bancos no backend ativo: no Postgres chama `banco_conexao.garantir_bancos_postgres()` e materializa cada DATABASE com uma conexão (`:186-209`); no SQLite cria o engine de cada banco e força a primeira conexão quando o arquivo está ausente; retorna `{chave: criado}` |
 | `inicializar_bancos()` | `mod_intranet_inicializacao_bd.py:13` | passo 0 do boot chama `garantir_bancos()` ANTES dos `init_db` dos módulos |
 
 **Backend duplo (08/09):**
 
-O PostgreSQL é ativado pelo admin em `/configuracoes` → card **"Banco de dados — SQLite ou PostgreSQL"** (ícone `storage`): select `banco_tipo` + campo DSN `postgres_url`, salvos via `banco_conexao.salvar_backend`. O `banco_tipo` é lido **DIRETO do arquivo SQLite central** (`_ler_config_sqlite` — `banco_conexao.py:57`) — seletor de backend autoritativo no boot, sem recursão. Alteração exige **reiniciar o servidor**.
+O PostgreSQL é ativado pelo admin em `/configuracoes` → card **"Banco de dados — SQLite ou PostgreSQL"** (ícone `storage`): select `banco_tipo` + campo DSN `postgres_url`, salvos via `banco_conexao.salvar_backend`. O `banco_tipo` é lido **DIRETO do arquivo SQLite central** (`_ler_config_sqlite` — `banco_conexao.py:60`) — seletor de backend autoritativo no boot, sem recursão. Alteração exige **reiniciar o servidor**.
 
 | Função | Local | Comportamento |
 |:---|:---|:---|
-| `SCHEMAS` | `banco_conexao.py:248` | mapa chave→schema no Postgres: `intranet`→`intranet`, `blog`→`blog`, `usuarios`→`usuarios`, `auditoria`→`auditoria`, `editar_pdf`→`editar_pdf`, `empenhos`→`empenhos`, `solicita_impressao`→`solicita_impressao` — **um schema por módulo** dentro do banco `intranet` |
-| `schema_modulo(chave)` | `banco_conexao.py:262` | schema do módulo (fallback: `intranet`) |
-| `obter_engine_modulo(chave)` | `banco_conexao.py:267` | engine Postgres para o banco `intranet` com `search_path` = schema do módulo; `CREATE SCHEMA IF NOT EXISTS` + `SET search_path` no connect, com commit para sobreviver ao rollback do pool |
-| `conexao(chave)` | `banco_conexao.py:488` | devolve uma conexão DBAPI para o backend ativo: sqlite (arquivo do módulo, WAL) ou postgres (proxy psycopg2 com tradução — ver abaixo) |
-| `conexao_central()` | `banco_conexao.py:518` | conexão do banco central seguindo o backend ativo |
-| `sgbd_ativo()` | `banco_conexao.py:138` | `'sqlite'`\|`'postgres'` (fail-soft: valor inválido cai em `sqlite`) |
-| `config_backend()` | `banco_conexao.py:115` | dict `{banco_tipo, postgres_url}` lido do SQLite central |
-| `salvar_backend(banco_tipo, postgres_url)` | `banco_conexao.py:128` | grava `banco_tipo`/`postgres_url` no arquivo SQLite central (exige restart para aplicar) |
-| `definir_banco_tipo(valor)` / `definir_postgres_url(url)` | `banco_conexao.py:100/110` | gravam as chaves no SQLite central |
+| `banco_modulo(chave)` | `banco_conexao.py:263` | nome do DATABASE do módulo no Postgres — espelha o arquivo SQLite (`db_mod_<chave>.db` → `db_mod_<chave>`); fallback: central |
+| `_garantir_bd_postgres(banco)` | `banco_conexao.py:281` | cria o banco ausente via `CREATE DATABASE` no banco de manutenção `postgres` (autocommit — não roda em transação; idempotente por processo `_bancos_criados`) |
+| `garantir_bancos_postgres()` | `banco_conexao.py:317` | percorre `MODULOS_BD` e garante TODOS os bancos de módulo (`CREATE DATABASE`); usado no boot por `garantir_bancos()` |
+| `obter_engine_modulo(chave)` | `banco_conexao.py:330` | engine SQLAlchemy para o BANCO do módulo (`db_mod_<chave>`, criado se necessário) — cache por chave; `None` em SQLite (o `repositorio.engine` cuida dos arquivos) |
+| `conexao(chave)` | `banco_conexao.py:570` | devolve uma conexão DBAPI para o backend ativo: sqlite (arquivo do módulo, WAL) ou postgres (proxy psycopg2 com tradução — ver abaixo) |
+| `conexao_central()` | `banco_conexao.py:601` | conexão do banco central seguindo o backend ativo |
+| `sgbd_ativo()` | `banco_conexao.py:141` | `'sqlite'`\|`'postgres'` (fail-soft: valor inválido cai em `sqlite`) |
+| `config_backend()` | `banco_conexao.py:118` | dict `{banco_tipo, postgres_url}` lido do SQLite central |
+| `salvar_backend(banco_tipo, postgres_url)` | `banco_conexao.py:131` | grava `banco_tipo`/`postgres_url` no arquivo SQLite central (exige restart para aplicar) |
+| `definir_banco_tipo(valor)` / `definir_postgres_url(url)` | `banco_conexao.py:103/113` | gravam as chaves no SQLite central |
 
-**Tradução SQLite→Postgres no proxy psycopg2** (`_PrepararCursor`, `banco_conexao.py:340`):
+**Tradução SQLite→Postgres no proxy psycopg2** (`_CursorPostgres`, `banco_conexao.py:390`):
 
 - `?` → `%s`; `datetime('now','localtime')` → `LOCALTIMESTAMP` (com cast `::text` em `DEFAULT` de coluna TEXT).
-- DDL SQLite→Postgres (`_ddl_postgres`, `banco_conexao.py:307`): `AUTOINCREMENT` removido, `INTEGER PRIMARY KEY` → `SERIAL PRIMARY KEY`, `BLOB` → `BYTEA`, `DATETIME` → `TIMESTAMP`, remoção de `FOREIGN KEY ... REFERENCES ...`.
+- DDL SQLite→Postgres (`_ddl_postgres`, `banco_conexao.py:358`): `AUTOINCREMENT` removido, `INTEGER PRIMARY KEY` → `SERIAL PRIMARY KEY`, `BLOB` → `BYTEA`, `DATETIME` → `TIMESTAMP`, remoção de `FOREIGN KEY ... REFERENCES ...`.
+- **`GROUP_CONCAT(` → `STRING_AGG(`** (`_preparar`, `banco_conexao.py:401`) — `GROUP_CONCAT` é SQLite-only; corrige `UndefinedFunction` na tela de usuários e em qualquer query agregada (11/09).
 - `INSERT OR IGNORE` → `ON CONFLICT DO NOTHING`; `INSERT OR REPLACE` → `ON CONFLICT`.
 - `PRAGMA`/`sqlite_master`/FTS5 (`CREATE VIRTUAL TABLE`/`CREATE TRIGGER`) ignorados (sem efeito/resultado no Postgres).
 - `PRAGMA table_info` → `information_schema.columns`.
 - `lastrowid` via `RETURNING id` com SAVEPOINT (não aborta transação em tabela sem coluna `id`); SAVEPOINT por statement para falha isolada não desfazer a transação.
+- **Datas normalizadas para string** (`_normalizar_valor`, `banco_conexao.py:516`): `fetchone`/`fetchall`/`fetchmany` convertem `datetime`→`%Y-%m-%d %H:%M:%S` e `date`→`isoformat()` — o app trata datas como string (padrão SQLite); corrige `TypeError: 'datetime.datetime' object is not subscriptable` em TODAS as telas que fazem `(data or '')[:16]` (blog, empenho, impressão, pdf, usuários) (11/09).
 
 **Modelo de credenciais PostgreSQL:**
 
@@ -289,8 +292,9 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 ## Documentação embutida (`/documentacao`)
 
 - `mod_intranet/documentacao.py` executa `python -m mkdocs build` (docs/ → site/) e monta `site/` como rota estática FastAPI (`app.mount("/documentacao", StaticFiles(...))`).
-- O build roda no boot (`main.py:330-331`) e **falhas nunca derrubam o servidor** (apenas avisam nos logs).
+- O build roda no boot (`main.py:578-585`) e **falhas nunca derrubam o servidor** (apenas avisam nos logs).
 - Timeout do `subprocess.run`: **120s** (aumentado de 60s em 06/09 para instalações com grande volume de documentação).
+- **Portas separadas (11/09):** o **site/aplicação** roda na porta `8080` (`porta_site`) e a **documentação** é servida na **porta do mkdocs** (`porta_documentacao`, padrão **8000**) — via `iniciar_servidor(porta)` (`documentacao.py:51`, `ThreadingHTTPServer` em thread daemon servindo `site/`) e `porta_documentacao()` (`:85`). As duas portas são configuráveis no wizard do assistente e na CLI (`--portasite`/`--portadocumentacao` — `ativacao.py:867-873`; defaults em `_config_padrao()`, `:256,259`); `main.py:578-585` inicia o servidor da documentação na porta configurada.
 - Tema do MkDocs: **`readthedocs`** (definido em `mkdocs.yml` — não alterar para `material`).
 
 ## Estrutura de diretórios (Fase 0)

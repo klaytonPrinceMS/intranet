@@ -23,7 +23,7 @@ def get_connection():
     """Opens a connection to the module's own database (FKs enabled).
 
     Conexão via `banco_conexao.conexao` — SQLite (db_mod_gest_cad_usuario.db,
-    WAL) ou PostgreSQL (schema `usuarios`)."""
+    WAL) ou PostgreSQL (DATABASE `db_mod_gest_cad_usuario`)."""
     from mod_intranet.banco_conexao import conexao
     conn = conexao("usuarios")
     if conn is None:
@@ -555,6 +555,21 @@ def soft_delete_usuario(ator, user_nome, motivo=None):
     return True, f"'{user_nome}' movido para a lista de excluídos"
 
 
+def _conexao_cruzada(chave, arquivo, *, fallback_central=False):
+    """Abre o banco de OUTRO módulo pelo backend ativo (SQLite/Postgres).
+
+    Nunca usa `sqlite3` cru. No Postgres devolve sempre o DATABASE do módulo
+    (`db_mod_<chave>`). No SQLite só abre se o ARQUIVO existir; senão devolve
+    o banco central quando `fallback_central=True` (cópia legada do blog) ou
+    `None` (módulo ainda inexistente — o chamador ignora)."""
+    from mod_intranet import banco_conexao
+    if banco_conexao.sgbd_ativo() == "postgres":
+        return banco_conexao.conexao(chave)
+    if os.path.exists(arquivo):
+        return banco_conexao.conexao(chave)
+    return _central() if fallback_central else None
+
+
 def _vinculos_cruzados_excluir(user_nome):
     """Remove/anonimiza referências do usuário nos demais módulos (LGPD).
     Blog: postagens e comentários apagados. EditorPDF: arquivos físicos,
@@ -562,39 +577,29 @@ def _vinculos_cruzados_excluir(user_nome):
     com autoria anonimizada."""
     det = []
     try:
-        # Blog tem banco próprio (db_mod_blog.db); o central guarda cópia legada
+        # Blog tem banco próprio (db_mod_blog.db); sem o arquivo no SQLite,
+        # limpa a cópia legada do banco central.
         blog_db = os.path.join(BASE_DIR, "db_mod_blog.db")
-        if os.path.exists(blog_db):
-            c = sqlite3.connect(blog_db)
-            cc = c.cursor()
-            cc.execute("PRAGMA foreign_keys=ON")
-            cc.execute("SELECT id FROM tb_postagens WHERE autor=?", (user_nome,))
-            ids = [r[0] for r in cc.fetchall()]
-            if ids:
-                q = ",".join("?" * len(ids))
-                cc.execute(f"DELETE FROM tb_comentarios WHERE postagem_id IN ({q})", ids)
-                det.append(f"{len(ids)} postagem(ns)")
-            cc.execute("DELETE FROM tb_comentarios WHERE autor=?", (user_nome,))
-            cc.execute("DELETE FROM tb_postagens WHERE autor=?", (user_nome,))
-            c.commit(); c.close()
-        else:  # instalação sem banco do blog ainda: limpa a cópia legada do central
-            c = _central(); cc = c.cursor()
-            cc.execute("SELECT id FROM tb_postagens WHERE autor=?", (user_nome,))
-            ids = [r[0] for r in cc.fetchall()]
-            if ids:
-                q = ",".join("?" * len(ids))
-                cc.execute(f"DELETE FROM tb_comentarios WHERE postagem_id IN ({q})", ids)
-                det.append(f"{len(ids)} postagem(ns) (legado)")
-            cc.execute("DELETE FROM tb_comentarios WHERE autor=?", (user_nome,))
-            cc.execute("DELETE FROM tb_postagens WHERE autor=?", (user_nome,))
-            c.commit(); c.close()
+        c = _conexao_cruzada("blog", blog_db, fallback_central=True)
+        cc = c.cursor()
+        cc.execute("PRAGMA foreign_keys=ON")
+        cc.execute("SELECT id FROM tb_postagens WHERE autor=?", (user_nome,))
+        ids = [r[0] for r in cc.fetchall()]
+        if ids:
+            q = ",".join("?" * len(ids))
+            cc.execute(f"DELETE FROM tb_comentarios WHERE postagem_id IN ({q})", ids)
+            det.append(f"{len(ids)} postagem(ns)")
+        cc.execute("DELETE FROM tb_comentarios WHERE autor=?", (user_nome,))
+        cc.execute("DELETE FROM tb_postagens WHERE autor=?", (user_nome,))
+        c.commit(); c.close()
     except Exception as e:
         det.append("blog: falhou")
         _log().exception(f"_vinculos_cruzados_excluir: blog falhou para {user_nome} | {e}")
     try:
         pdf_db = os.path.join(BASE_DIR, "db_mod_edit_pdf.db")
-        if os.path.exists(pdf_db):
-            c = sqlite3.connect(pdf_db); cc = c.cursor()
+        c = _conexao_cruzada("editar_pdf", pdf_db)
+        if c is not None:
+            cc = c.cursor()
             cc.execute("SELECT nome_arquivo FROM tb_arquivos WHERE usuario=?", (user_nome,))
             nomes = [r[0] for r in cc.fetchall()]
             pasta = os.path.join(BASE_DIR, "mod_edit_pdf", "editorPDF")
@@ -618,8 +623,9 @@ def _vinculos_cruzados_excluir(user_nome):
         _log().exception(f"_vinculos_cruzados_excluir: pdf falhou para {user_nome} | {e}")
     try:
         emp_db = os.path.join(BASE_DIR, "db_mod_renomear_empenho.db")
-        if os.path.exists(emp_db):
-            c = sqlite3.connect(emp_db); cc = c.cursor()
+        c = _conexao_cruzada("empenhos", emp_db)
+        if c is not None:
+            cc = c.cursor()
             cc.execute("UPDATE tb_empenhos SET usuario='(usuário excluído)' WHERE usuario=?",
                        (user_nome,))
             n = cc.rowcount
@@ -635,20 +641,19 @@ def _vinculos_cruzados_excluir(user_nome):
 def _vinculos_cruzados_renomear(nome_atual, novo_nome):
     """Propaga o renomeio para colunas de autoria nos demais módulos."""
     planos = []
-    blog_db = os.path.join(BASE_DIR, "db_mod_blog.db")
-    if os.path.exists(blog_db):
-        planos.append((sqlite3.connect(blog_db),
-                       [("tb_postagens", "autor"), ("tb_comentarios", "autor")]))
-    else:
-        planos.append((_central(),
-                       [("tb_postagens", "autor"), ("tb_comentarios", "autor")]))
-    pdf_db = os.path.join(BASE_DIR, "db_mod_edit_pdf.db")
-    if os.path.exists(pdf_db):
-        planos.append((sqlite3.connect(pdf_db),
+    c_blog = _conexao_cruzada("blog", os.path.join(BASE_DIR, "db_mod_blog.db"),
+                              fallback_central=True)
+    planos.append((c_blog,
+                   [("tb_postagens", "autor"), ("tb_comentarios", "autor")]))
+    c_pdf = _conexao_cruzada("editar_pdf",
+                             os.path.join(BASE_DIR, "db_mod_edit_pdf.db"))
+    if c_pdf is not None:
+        planos.append((c_pdf,
                        [("tb_arquivos", "usuario"), ("tb_cota_disco", "usuario")]))
-    emp_db = os.path.join(BASE_DIR, "db_mod_renomear_empenho.db")
-    if os.path.exists(emp_db):
-        planos.append((sqlite3.connect(emp_db), [("tb_empenhos", "usuario")]))
+    c_emp = _conexao_cruzada("empenhos",
+                             os.path.join(BASE_DIR, "db_mod_renomear_empenho.db"))
+    if c_emp is not None:
+        planos.append((c_emp, [("tb_empenhos", "usuario")]))
     for conn, tabelas in planos:
         try:
             cc = conn.cursor()

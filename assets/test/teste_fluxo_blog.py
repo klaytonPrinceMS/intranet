@@ -5,7 +5,7 @@ publicar/despublicar, soft delete, configuração local, auditoria central,
 modo de exibição (única/histórico) e largura de imagem.
 
 Execute (da raiz do projeto):
-    .venv/bin/python testes/teste_fluxo_blog.py
+    .venv/bin/python assets/test/teste_fluxo_blog.py
 """
 import os
 import sys

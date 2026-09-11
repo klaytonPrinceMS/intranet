@@ -37,6 +37,12 @@ from nicegui.elements.number import Number  # noqa: E402
 
 from mod_blog import bd_manipulador as bd
 
+# Hermeticidade: o teste lê os bancos dos módulos no SQLite, independentemente
+# do backend persistido (banco_tipo pode estar 'postgres' na máquina).
+from unittest import mock as _mock  # noqa: E402
+from mod_intranet import banco_conexao as _bc  # noqa: E402
+_mock.patch.object(_bc, "sgbd_ativo", return_value="sqlite").start()
+
 print("INICIANDO TESTES — modo carrossel do Blog")
 
 

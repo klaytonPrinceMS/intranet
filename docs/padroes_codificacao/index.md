@@ -193,13 +193,13 @@ Soft delete para entidades sensíveis, com coluna de motivo e auditoria.
 ## 10. PostgreSQL opcional (08/09) — backend duplo ATIVO
 
 - **SQLite segue o padrão universal** (`banco_tipo = 'sqlite'`) — servidores simples não instalam nada extra; todos os módulos operam na camada única `banco_conexao.conexao(chave)`.
-- **Backend duplo controlado pelo sistema**: `banco_tipo` = `sqlite`|`postgres` e `postgres_url` (DSN) na `tb_config` central, lidos **DIRETO do arquivo SQLite central** (`_ler_config_sqlite` — seletor de boot). No Postgres, **um SCHEMA por módulo** no banco `intranet` preserva o isolamento.
+- **Backend duplo controlado pelo sistema**: `banco_tipo` = `sqlite`|`postgres` e `postgres_url` (DSN) na `tb_config` central, lidos **DIRETO do arquivo SQLite central** (`_ler_config_sqlite` — seletor de boot). No Postgres, **um DATABASE `db_mod_<chave>` por módulo** preserva o isolamento (espelha o arquivo SQLite — `banco_modulo`/`_garantir_bd_postgres`/`garantir_bancos_postgres` em `banco_conexao.py:263/281/317`).
 - **Ativação pelo admin, sem código**: `/configuracoes` → card **"Banco de dados — SQLite ou PostgreSQL"** → `salvar_backend()`; **reiniciar o servidor** para aplicar.
-- **Camada única**: `conexao(chave)` (`banco_conexao.py:488`) devolve conexão DBAPI do backend ativo — sqlite (arquivo, WAL) ou postgres (proxy psycopg2 com tradução `?`→`%s`, DDL, `ON CONFLICT`, `PRAGMA`/`sqlite_master`/FTS5 degradados, `lastrowid` via `RETURNING`, SAVEPOINT por statement). `repositorio.engine/sessaodb` roteiam para o Postgres quando ativo; `CrudBase._conectar` também roteia (módulo em `SCHEMAS`).
+- **Camada única**: `conexao(chave)` (`banco_conexao.py:570`) devolve conexão DBAPI do backend ativo — sqlite (arquivo, WAL) ou postgres (proxy psycopg2 com tradução `?`→`%s`, DDL, `ON CONFLICT`, `PRAGMA`/`sqlite_master`/FTS5 degradados, `lastrowid` via `RETURNING`, SAVEPOINT por statement). `repositorio.engine/sessaodb` roteiam para o Postgres quando ativo; `CrudBase._conectar` também roteia (módulo em `MODULOS_BD`).
 - **Fail-soft**: sem driver instalado, o sistema segue de pé em SQLite (exception registrada no loguru); DSN nunca logado com credenciais (`_dsn_publico`).
 - **Container pronto**: `assets/docker/postgres/docker-compose.yml` (postgres:16-alpine, base `intranet`, porta 5432, volume persistente, healthcheck).
 - **Dependências**: `requirements.txt` — `sqlalchemy>=2.0` e `psycopg2-binary>=2.9` habilitadas (instalar para usar `banco_tipo='postgres'`).
-- **Migração de dados SQLite→PostgreSQL permanece manual** — o Postgres inicia com os schemas vazios (recriados pelos `init_db`); detalhes em [Configurações](../configuracoes.md).
+- **Migração de dados SQLite→PostgreSQL permanece manual** — o Postgres inicia com os bancos de módulo vazios (recriados pelos `init_db`); detalhes em [Configurações](../configuracoes.md).
 
 ## 11. Administração do módulo em arquivo dedicado — `telas_administracao.py` (06/09)
 

@@ -97,23 +97,25 @@ Componentes reutilizáveis que eliminam o boilerplate replicado nos módulos —
 
 ### Seleção de SGBD — `mod_intranet/banco_conexao.py` (08/09)
 
-Backend **duplo e controlado pelo sistema**: **SQLite** (padrão, um arquivo por módulo) ou **PostgreSQL** (opcional, **um SCHEMA por módulo** no banco `intranet`). O seletor `banco_tipo` e o DSN `postgres_url` vivem **no arquivo SQLite central** e são lidos **DIRETO dele** (`_ler_config_sqlite`, `banco_conexao.py:57`) — seletor de backend autoritativo no boot, sem recursão (`sgbd_ativo → get_config → engine → sgbd_ativo`).
+Backend **duplo e controlado pelo sistema**: **SQLite** (padrão, um arquivo por módulo) ou **PostgreSQL** (opcional, **um DATABASE `db_mod_<chave>` por módulo**, espelhando o arquivo SQLite). O seletor `banco_tipo` e o DSN `postgres_url` vivem **no arquivo SQLite central** e são lidos **DIRETO dele** (`_ler_config_sqlite`, `banco_conexao.py:60`) — seletor de backend autoritativo no boot, sem recursão (`sgbd_ativo → get_config → engine → sgbd_ativo`).
 
 | Função | Local | Comportamento |
 |:---|:---|:---|
-| `_ler_config_sqlite(chave)` | `banco_conexao.py:57` | lê `banco_tipo`/`postgres_url` direto do `db_mod_intranet.db` (evita recursão); fail-soft → default |
-| `_gravar_config_sqlite(chave, valor)` | `banco_conexao.py:80` | upsert portável `ON CONFLICT (chave) DO UPDATE` no arquivo SQLite central |
-| `config_backend()` | `banco_conexao.py:115` | dict `{banco_tipo, postgres_url}` lido do SQLite central (usado pelo card admin) |
-| `salvar_backend(banco_tipo, postgres_url)` | `banco_conexao.py:128` | grava o seletor no arquivo SQLite central — **exige reiniciar o servidor** para aplicar |
-| `sgbd_ativo()` | `banco_conexao.py:138` | `'sqlite'`\|`'postgres'` (fail-soft: valor inválido cai em `sqlite`) |
-| `SCHEMAS` | `banco_conexao.py:248` | mapa chave→schema no Postgres: `intranet`, `blog`, `usuarios`, `auditoria`, `editar_pdf`, `empenhos`, `solicita_impressao` |
-| `obter_engine_modulo(chave)` | `banco_conexao.py:267` | engine Postgres do banco `intranet` com `search_path` = schema do módulo (`CREATE SCHEMA IF NOT EXISTS` + `SET search_path` no connect, **commit** para sobreviver ao rollback do pool) |
-| `conexao(chave)` | `banco_conexao.py:488` | **camada única dos módulos**: conexão DBAPI do backend ativo — sqlite (arquivo do módulo, WAL) ou postgres (proxy psycopg2 com tradução) |
-| `conexao_central()` | `banco_conexao.py:518` | atalho `conexao('intranet')` |
-| `obter_engine()` | `banco_conexao.py:191` | engine SQLAlchemy sob demanda (lazy singleton) com troca de DSN; `None` em SQLite ou sem driver (fail-soft) |
-| `_dsn_publico(url)` | `banco_conexao.py:40` | mascara credenciais do DSN em logs (`postgresql+psycopg2://***@host/db`) |
+| `_ler_config_sqlite(chave)` | `banco_conexao.py:60` | lê `banco_tipo`/`postgres_url` direto do `db_mod_intranet.db` (evita recursão); fail-soft → default |
+| `_gravar_config_sqlite(chave, valor)` | `banco_conexao.py:83` | upsert portável `ON CONFLICT (chave) DO UPDATE` no arquivo SQLite central |
+| `config_backend()` | `banco_conexao.py:118` | dict `{banco_tipo, postgres_url}` lido do SQLite central (usado pelo card admin) |
+| `salvar_backend(banco_tipo, postgres_url)` | `banco_conexao.py:131` | grava o seletor no arquivo SQLite central — **exige reiniciar o servidor** para aplicar |
+| `sgbd_ativo()` | `banco_conexao.py:141` | `'sqlite'`\|`'postgres'` (fail-soft: valor inválido cai em `sqlite`) |
+| `banco_modulo(chave)` | `banco_conexao.py:263` | nome do DATABASE do módulo no Postgres — espelha o arquivo (`db_mod_<chave>.db` → `db_mod_<chave>`); fallback: central |
+| `_garantir_bd_postgres(banco)` | `banco_conexao.py:281` | cria o banco ausente via `CREATE DATABASE` no banco de manutenção `postgres` (autocommit; idempotente por processo) |
+| `garantir_bancos_postgres()` | `banco_conexao.py:317` | garante TODOS os bancos de módulo no boot (chamado por `repositorio.garantir_bancos()`) |
+| `obter_engine_modulo(chave)` | `banco_conexao.py:330` | engine SQLAlchemy para o BANCO do módulo (`db_mod_<chave>`, criado se necessário) — cache por chave; `None` em SQLite |
+| `conexao(chave)` | `banco_conexao.py:570` | **camada única dos módulos**: conexão DBAPI do backend ativo — sqlite (arquivo do módulo, WAL) ou postgres (proxy psycopg2 com tradução) |
+| `conexao_central()` | `banco_conexao.py:601` | atalho `conexao('intranet')` |
+| `obter_engine()` | `banco_conexao.py:194` | engine SQLAlchemy sob demanda (lazy singleton) com troca de DSN; `None` em SQLite ou sem driver (fail-soft) |
+| `_dsn_publico(url)` | `banco_conexao.py:43` | mascara credenciais do DSN em logs (`postgresql+psycopg2://***@host/db`) |
 
-**Proxy psycopg2 (`_CursorPostgres`, `banco_conexao.py:339`):** traduz `?`→`%s`; `datetime('now','localtime')`→`LOCALTIMESTAMP`; DDL SQLite→Postgres (`_ddl_postgres`, `:307` — `AUTOINCREMENT` removido, `INTEGER PRIMARY KEY`→`SERIAL PRIMARY KEY`, `BLOB`→`BYTEA`, `DATETIME`→`TIMESTAMP`, remoção de `FOREIGN KEY`); `INSERT OR IGNORE`→`ON CONFLICT DO NOTHING`; `INSERT OR REPLACE`→`ON CONFLICT`; `PRAGMA`/`sqlite_master`/FTS5 (`CREATE VIRTUAL TABLE`/`CREATE TRIGGER`) ignorados; `PRAGMA table_info`→`information_schema.columns`; `lastrowid` via `RETURNING id` com SAVEPOINT e SAVEPOINT por statement (falha isolada não desfaz a transação).
+**Proxy psycopg2 (`_CursorPostgres`, `banco_conexao.py:390`):** traduz `?`→`%s`; `datetime('now','localtime')`→`LOCALTIMESTAMP`; DDL SQLite→Postgres (`_ddl_postgres`, `:358` — `AUTOINCREMENT` removido, `INTEGER PRIMARY KEY`→`SERIAL PRIMARY KEY`, `BLOB`→`BYTEA`, `DATETIME`→`TIMESTAMP`, remoção de `FOREIGN KEY`); `INSERT OR IGNORE`→`ON CONFLICT DO NOTHING`; `INSERT OR REPLACE`→`ON CONFLICT`; `PRAGMA`/`sqlite_master`/FTS5 (`CREATE VIRTUAL TABLE`/`CREATE TRIGGER`) ignorados; `PRAGMA table_info`→`information_schema.columns`; `lastrowid` via `RETURNING id` com SAVEPOINT e SAVEPOINT por statement (falha isolada não desfaz a transação).
 
 **Roteamento:** `repositorio.engine(chave)`/`sessaodb(chave)` roteiam para o Postgres via `obter_engine_modulo(chave)` quando `banco_tipo='postgres'`; senão mantêm SQLite por arquivo. `CrudBase._conectar` também roteia pelo backend ativo.
 

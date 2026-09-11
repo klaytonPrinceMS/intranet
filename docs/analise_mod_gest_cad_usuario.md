@@ -91,7 +91,9 @@ Os testes refletem o comportamento atual do núcleo:
 - **Senha provisória** é digitada pelo administrador (não gerada aleatória):
   geração aleatória continua **não implementada** — desvio documentado.
 - Controle granular é aplicado via `validar_acesso_modulo`/`listar_modulos_permitidos`,
-  usados no menu lateral, cards do dashboard e página `/modulo/{slug}`
+  usados no **menu lateral** (filtro `modulos_do_usuario`, `main.py:251`) e na guarda de
+  página `/modulo/{slug}` (`autenticacao.py:421`); o **dashboard `/`** exibe o feed do
+  Blog e o **Resumo do sistema** apenas para administradores (geral/de módulo, `main.py:254`).
 
 ### Adições recentes (05/09)
 

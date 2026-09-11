@@ -51,14 +51,17 @@ Criador vigente: `init_db()` em `bd_manipulador.py:61-215` (executado no import 
 ## Testes
 
 ```bash
-.venv/bin/python test/test_fase1_login.py
-.venv/bin/python test/test_fresh_install.py
+.venv/bin/python assets/test/teste_boot.py            # 16 verificações
+.venv/bin/python assets/test/teste_fluxo_autenticacao.py  # login, troca obrigatória, sessão/auditoria (19 OK)
+.venv/bin/python assets/test/teste_fluxo_permissoes.py    # perfis/papéis por módulo (13 OK)
+.venv/bin/python assets/test/test_fase1_login.py
+.venv/bin/python assets/test/test_fresh_install.py
 ```
 
 ## Pontos de atenção
 
 - Tabela real é `tb_usuarios` (não `tb_usuario`); rota real é `/users` (não `/gestao-usuarios`).
 - `bd_criador.py` é morto — não executar.
-- Testes `testes/teste_fluxo_autenticacao.py`/`teste_fluxo_permissoes.py` citados no PLANO não existem (há `test/test_fase1_login.py`).
+- Todos os testes de fluxo existem em `assets/test/` (local canónico; `test/` e `testes/` não existem na raiz): `teste_boot.py`, `teste_fluxo_autenticacao.py`, `teste_fluxo_permissoes.py` (Fase 2.5).
 
 Ver [Análise do Módulo](../analise_mod_gest_cad_usuario.md).

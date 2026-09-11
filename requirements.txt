@@ -9,6 +9,11 @@ bcrypt>=5.0.0
 pypdf>=5.0
 loguru>=0.7.3
 
+# CLI do assistente de ativação (argumentos de linha de comando + cores)
+# `python main.py --help` e `python main.py --postgres --portapostgres 5444 ...`
+typer>=0.12
+rich>=13.0
+
 # Documentação MkDocs — build em RUNTIME (/documentacao via mod_intranet/documentacao.py)
 mkdocs>=1.6.1
 mkdocs-material>=9.7.7

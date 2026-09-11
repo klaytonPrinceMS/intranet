@@ -16,6 +16,11 @@ from mod_intranet.tema_modulo import ler_tema
 from mod_intranet.ui_comum import (campo_selecao, campo_texto, botao,
                                    botao_icone)
 
+# Registro dos timers do carrossel por wrap: cada re-render (atualizar/página)
+# cancela o timer anterior do MESMO wrap antes de criar outro — evita acúmulo
+# de timers e a corrida que gerava "The parent slot of Timer has been deleted".
+_carrossel_timers = {}
+
 
 def _renderizar_conteudo_postagem(conteudo):
     """Renders post content supporting Mermaid diagrams (ui.mermaid).
@@ -346,9 +351,12 @@ def _renderizar_carrossel(wrap, posts, tempo_seg, usuario_logado, perfil,
             barra_acoes()
 
     def avancar():
-        if not expandido["v"] and n:
-            idx["v"] = (idx["v"] + 1) % n
-            montar()
+        try:
+            if not expandido["v"] and n:
+                idx["v"] = (idx["v"] + 1) % n
+                montar()
+        except RuntimeError:
+            pass  # página navegada/fechada — timer já será encerrado
 
     try:
         montar()
@@ -361,8 +369,17 @@ def _renderizar_carrossel(wrap, posts, tempo_seg, usuario_logado, perfil,
                 "text-body2 text-grey-6 italic")
         return
     # Timer ÚNICO da rotação — criado fora do `with wrap:` para não ser
-    # destruído/recriado a cada `montar()` (evita aceleração).
-    ui.timer(tempo_seg, avancar)
+    # destruído/recriado a cada `montar()` (evita aceleração). Antes de criar,
+    # cancela o timer anterior do MESMO wrap (evita acúmulo em re-renders).
+    antigo = _carrossel_timers.pop(id(wrap), None)
+    if antigo is not None:
+        try:
+            antigo.cancel(with_current_invocation=True)
+            antigo.delete()
+        except Exception:
+            pass
+    novo_timer = ui.timer(tempo_seg, avancar)
+    _carrossel_timers[id(wrap)] = novo_timer
 
 
 def renderizar_postagens(wrap, usuario_logado, perfil, pode_publicar,

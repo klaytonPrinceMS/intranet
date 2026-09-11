@@ -33,11 +33,14 @@ EXCLUIR = {
 
 def _env_limpo():
     """Environment without pytest markers (NiceGUI's is_pytest would demand
-    NICEGUI_SCREEN_TEST_PORT inside `ui.run` in the subprocess)."""
+    NICEGUI_SCREEN_TEST_PORT inside `ui.run` in the subprocess), and forcing
+    the SQLite backend so the standalone tests never depend on a live
+    PostgreSQL (o backend persistido pode ser 'postgres' na máquina)."""
     env = dict(__import__("os").environ)
     for k in list(env):
         if k.startswith("PYTEST_"):
             del env[k]
+    env["INTRANET_FORCE_SQLITE"] = "1"
     return env
 
 

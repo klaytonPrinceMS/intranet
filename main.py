@@ -15,6 +15,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from nicegui import ui, app
 from fastapi.responses import FileResponse, Response, RedirectResponse
 
+# Patches no NiceGUI: timers cujo slot da página foi deletado param em silêncio
+# (evita "The parent slot of Timer has been deleted" ao navegar/fechar página).
+from mod_intranet.nicegui_patch import aplicar as _aplicar_nicegui_patch
+_aplicar_nicegui_patch()
+
 from mod_intranet.bd_conexao import (
     get_config
 )
@@ -22,10 +27,16 @@ from mod_intranet import autenticacao
 from mod_intranet.tema_modulo import notificar
 
 # ================== ASSISTENTE DE ATIVAÇÃO (terminal) ==================
-# Prompt inicial: ENTER = configuração padrão; "sim" = modo de ativação
-# (escolher banco de dados SQLite/PostgreSQL, OpenTelemetry e portas).
+# Sem argumentos: assistente interativo (ENTER = básico SQLite; 1 = configurar).
+# Com argumentos (Typer): configura direto, ex.:
+#   python main.py --postgres --portapostgres 5444 --otel \
+#       --portatelemetria 3000 --portadocumentacao 8081
+#   python main.py --help
 from mod_intranet import ativacao
-_cfg = ativacao.iniciar()
+_cli_cfg = None
+if any(a.startswith("-") for a in sys.argv[1:]):
+    _cli_cfg = ativacao.config_do_cli(**ativacao.cli_opcoes())
+_cfg = ativacao.iniciar(cli_cfg=_cli_cfg)
 ativacao.aplicar_banco(_cfg)
 
 # ================== OBSERVABILIDADE (console colorido) ==================
@@ -565,12 +576,18 @@ if __name__ in ("__main__", "__mp_main__"):
         return iniciar_agendador()
 
     def _passo_docs():
-        from mod_intranet.documentacao import construir_e_montar_documentacao
-        construir_e_montar_documentacao()
+        from mod_intranet.documentacao import (
+            construir_e_montar_documentacao,
+            iniciar_servidor,
+        )
+        construir_e_montar_documentacao(
+            porta=_cfg.get("porta_documentacao", 8000))
+        iniciar_servidor(_cfg.get("porta_documentacao", 8000))
 
     ativacao.progresso_boot([
         ("Agendadores (backup/limpeza/monitor)", _passo_agendador),
-        ("Documentação MkDocs (/documentacao)", _passo_docs),
+        (f"Documentação MkDocs (http://localhost:"
+         f"{_cfg.get('porta_documentacao', 8000)})", _passo_docs),
     ])
 
     observabilidade.get_logger().info("Intranet iniciada (boot concluído)")

@@ -68,7 +68,7 @@ A suíte é **baseada em scripts standalone** em `assets/test/*.py` (checagens/a
 ## Modelo de classes e objetos
 
 - **Default: funções.** Os módulos `mod_*` não usam classes para regras de negócio (sem ORM, sem DTOs, sem "service objects").
-- **Classes no núcleo (06/09)**: componentes reutilizáveis de acesso a dados e UI vivem como classes em `mod_intranet` — `CrudBase`/`audit_reg` (`crud_base.py`), `GradeTabela`/`PainelLista` (`ui_painel.py`), `FormularioBuilder` (`ui_form.py`) e `BotaoFabrica`/`Dialogo`/`Cartao`/`CampoBase`+subclasses (`ui_comum.py`, com **wrappers finos funcionais** `botao`/`dialogo_card`/`campo_*` preservando a API antiga, byte-idêntica — provas em `test/verifica_ui_comum.py`, 187 OK). Regra: **não crie classes nos módulos** — importe as do núcleo.
+- **Classes no núcleo (06/09)**: componentes reutilizáveis de acesso a dados e UI vivem como classes em `mod_intranet` — `CrudBase`/`audit_reg` (`crud_base.py`), `GradeTabela`/`PainelLista` (`ui_painel.py`), `FormularioBuilder` (`ui_form.py`) e `BotaoFabrica`/`Dialogo`/`Cartao`/`CampoBase`+subclasses (`ui_comum.py`, com **wrappers finos funcionais** `botao`/`dialogo_card`/`campo_*` preservando a API antiga, byte-idêntica — provas em `assets/test/verifica_ui_comum.py`, 190 OK). Regra: **não crie classes nos módulos** — importe as do núcleo.
 - **Exceção histórica**: subclasses de classes da stdlib para tarefas específicas (`_FormatadorBlog(HTMLParser)`). Use `CamelCase` + underscore inicial para indicar uso interno.
 - **Handlers de eventos**: funções aninhadas (`def tentar_login(): ...`) dentro da função de página — padrão presente em `main.py:87-107`.
 
@@ -201,7 +201,7 @@ Regras:
 7. **Telas**: troque `ui.tabs()`/`ui.tab()` crus por `aba_modulo.menu_modulo(...)`, inputs de busca crus por `aba_modulo.campo_busca(...)` e barras de ações por `aba_modulo.barra_acoes(...)` (ver tabela acima).
 
 !!! tip "Migração gradual e por tela"
-    O visual é idêntico (comprovado por prova byte-a-byte em `test/verifica_ui_comum.py` — **187 verificações** — e suítes de teste; ver [Análise do Núcleo](analise_mod_intranet.md)), então cada `ui.button` substituído não muda a aparência: só elimina duplicação. Migre um arquivo por vez e valide com `ast.parse` + suítes.
+    O visual é idêntico (comprovado por prova byte-a-byte em `assets/test/verifica_ui_comum.py` — **190 verificações** — e suítes de teste; ver [Análise do Núcleo](analise_mod_intranet.md)), então cada `ui.button` substituído não muda a aparência: só elimina duplicação. Migre um arquivo por vez e valide com `ast.parse` + suítes.
 
 #### Helpers de tela padronizados — `mod_intranet/aba_modulo.py`
 
@@ -217,7 +217,7 @@ Além da fábrica de botões, o núcleo padroniza os **componentes de tela** rep
 
 **Regra do cabeçalho (06/09): cor de destaque = cor dos botões do módulo.** A borda esquerda do `cabecalho` usa `tema["cor_botao"]` — a mesma chave que colore os botões via `ui_comum.botao(chave_modulo=...)` — garantindo identidade visual única por módulo (título e fundo seguem `cor_titulo`/`cor_fundo` do tema). Módulos migrados (zero `cor_borda="#..."` hardcoded nas telas): renomear_empenho (`chave_modulo="empenhos"` — `mod_renomear_empenho/telas.py:85`), auditoria (`mod_auditoria/telas.py:345`), blog (`mod_blog/telas.py:159`), solicita_impressao (`mod_solicita_impressao/telas.py:49`) e gest_cad_usuario (`mod_gest_cad_usuario/telas.py:97`). Exceção registrada: `mod_edit_pdf` mantém header custom (estrutura diferente — label de admin + cota com `ui.linear_progress`, `mod_edit_pdf/telas.py:610-625`).
 
-Equivalência visual dos helpers e dos pilotos comprovada por `test/verifica_ui_comum.py` (**187 verificações** byte-a-byte).
+Equivalência visual dos helpers e dos pilotos comprovada por `assets/test/verifica_ui_comum.py` (**190 verificações** byte-a-byte).
 
 #### Componentes de dados e tela reutilizáveis — classes do núcleo (06/09)
 
@@ -237,13 +237,13 @@ Em telas e manipuladores novos, importe do núcleo em vez de replicar o boilerpl
 
 Servidores simples seguem com **SQLite** (padrão universal, zero dependências extras); demandas maiores ativam PostgreSQL **pelo admin, sem tocar em código** (suporte **ativo** desde 08/09 — não é mais fase futura):
 
-- **Backend duplo controlado pelo sistema**: `banco_tipo` = `sqlite` (padrão) \| `postgres` e `postgres_url` (DSN) na `tb_config` central. No Postgres, **um SCHEMA por módulo** no banco `intranet` preserva o isolamento (ver [Backend duplo](arquitetura.md#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809)).
+- **Backend duplo controlado pelo sistema**: `banco_tipo` = `sqlite` (padrão) \| `postgres` e `postgres_url` (DSN) na `tb_config` central. No Postgres, **um DATABASE `db_mod_<chave>` por módulo** preserva o isolamento (espelha o arquivo SQLite — `banco_modulo`/`_garantir_bd_postgres`/`garantir_bancos_postgres`, `banco_conexao.py:263/281/317`; ver [Backend duplo](arquitetura.md#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809)).
 - **Seletor no boot**: `banco_tipo`/`postgres_url` são lidos **DIRETO do arquivo SQLite central** (`_ler_config_sqlite` — `banco_conexao.py:57`), autoritativo no boot, sem recursão.
 - **Toggle no admin**: `/configuracoes` → card **"Banco de dados — SQLite ou PostgreSQL"** (ícone `storage`) → `salvar_backend()` (`banco_conexao.py:128`); **reiniciar o servidor** para aplicar.
 - **Camada única**: todos os módulos conectam via `banco_conexao.conexao(chave)` — sqlite (arquivo, WAL) ou postgres (proxy psycopg2 com tradução `?`→`%s`, DDL, `INSERT OR IGNORE/REPLACE`→`ON CONFLICT`, `PRAGMA`/`sqlite_master`/FTS5 degradados, `lastrowid` via `RETURNING`); `repositorio.engine/sessaodb` roteiam para o Postgres quando ativo; `CrudBase._conectar` também roteia pelo backend ativo.
 - **Container pronto**: `assets/docker/postgres/docker-compose.yml` — `postgres:16-alpine`, usuário/senha/base `intranet`, porta `5432`, volume persistente, healthcheck.
 - **Dependências**: `requirements.txt` — `sqlalchemy>=2.0` e `psycopg2-binary>=2.9` habilitadas (instalar para usar `banco_tipo='postgres'`).
-- **Migração de dados SQLite→PostgreSQL permanece manual** — o Postgres inicia com os schemas vazios, recriados pelos `init_db` dos módulos; os bancos SQLite existentes não são movidos automaticamente.
+- **Migração de dados SQLite→PostgreSQL permanece manual** — o Postgres inicia com os bancos de módulo vazios, recriados pelos `init_db` dos módulos; os bancos SQLite existentes não são movidos automaticamente.
 
 ## Configurabilidade (regra de projeto)
 
@@ -280,7 +280,7 @@ Servidores simples seguem com **SQLite** (padrão universal, zero dependências 
 - [ ] Valores ajustáveis (cores, tempos, textos, pastas…) em `tb_config` + cupê Administração — nada de literais hardcoded (ver [Configurabilidade](#configurabilidade-regra-de-projeto)).
 - [ ] Componentes de UI via `mod_intranet/ui_comum` (`botao`/`botao_icone`/`CORES`/`dialogo_card`/`rodape_dialogo`/`notificar`) — sem `ui.button` cru nem hexes soltos; botões UPPERCASE legados do Quasar usam `no_caps=False` (o edit_pdf padronizou todos em `primario` sem `no_caps` em 06/09 — sem exceções cruas).
 - [ ] Acesso a dados via `CrudBase` + `audit_reg` (nunca `sqlite3` cru em código novo); telas novas usam `FormularioBuilder`/`GradeTabela`/`PainelLista` do núcleo em vez de replicar grids/inputs crus.
-- [ ] Código de teste gravado em `test/` (nunca em `/tmp` — se perde ao reiniciar a máquina).
+- [ ] Código de teste gravado em `assets/test/` (nunca em `/tmp` — se perde ao reiniciar a máquina).
 - [ ] Suíte validada com `.venv/bin/pytest` (suíte completa via runner `assets/test/test_suite.py`, ≈3–5 min) — scripts standalone nunca coletados diretamente pelo pytest (o `pytest.ini` limita a coleta ao runner).
 - [ ] No `mkdocs.yml`, documentação do módulo adicionada ao `nav` (se houver).
 

@@ -121,11 +121,11 @@ As principais chaves, agrupadas por dono:
 | Impressão | variáveis de tempo e padrões na aba Administração → Configurações do módulo | — | ver [Módulo de Solicitação de Impressão](modulos/solicitacao_impressao.md) |
 | E-mail/SMTP | `smtp_*` | — | credenciais (aba "E-mail" de Configurações) |
 | Logs | `log_ativo`, `log_nivel`, `log_rotacao` (`1 month`), `log_retencao` (`4 months`), `log_console` (`auto`), `log_otel_envio` (`1`), `log_otel_nivel` (`DEBUG`) | — | observabilidade loguru (console e envio ao Loki configuráveis) |
-| Telemetria OTel | `otel_ativo` (`1`), `otel_endpoint` (`localhost:4317`, env `OTEL_ENDPOINT` tem prioridade), `otel_auto_start_stack` (`1`) | — | stack local (Docker) ou servidor dedicado; troca exige restart |
+| Telemetria OTel | `otel_ativo` (`1`/`0`), `otel_endpoint` (`localhost:4317`, env `OTEL_ENDPOINT` tem prioridade), `otel_auto_start_stack` (`1`) | — | stack local (Docker) ou servidor dedicado; troca exige restart. Desde 11/09 a escolha `0`/`1` também é **persistida pelo assistente de ativação do boot** (`set_config("otel_ativo", ...)`) — a opção "não" sobrevive ao restart |
 | Grafana | `grafana_url` (`http://localhost:3000`, env `GRAFANA_URL` tem prioridade) | — | URL base do Grafana (health-check/API/status) |
 | Avisos | `notificacao_timeout` (`10`, 1–30 s) | — | tempo de exibição dos toasts via `tema_modulo.notificar()` |
 | Hora do servidor | `hora_ntp_ativa` (`1`) | — | sincronização NTP.br da hora do servidor (`mod_intranet/hora_servidor.py`): `1` = ativa (default), `0` = usa o relógio local; aplicada sem restart |
-| Banco | `banco_tipo` (`sqlite`), `postgres_url` (`postgresql+psycopg2://intranet:intranet@localhost:5432/intranet`) | `PADRAO_CONFIG` (`bd_conexao.py:40-41`) | seleção do SGBD: `sqlite` (padrão, zero dependências extras) ou `postgres` (backend duplo via `banco_conexao` — conexão DBAPI por módulo, um SCHEMA por módulo no banco `intranet`); lidos no boot via `banco_conexao._ler_config_sqlite`; troca exige **reiniciar o servidor** — ver [Card "Banco de dados" (SQLite ou PostgreSQL)](#card-banco-de-dados-sqlite-ou-postgresql-0809) |
+| Banco | `banco_tipo` (`sqlite`), `postgres_url` (`postgresql+psycopg2://intranet:intranet@localhost:5432/intranet`) | `PADRAO_CONFIG` (`bd_conexao.py:40-41`) | seleção do SGBD: `sqlite` (padrão, zero dependências extras) ou `postgres` (backend duplo via `banco_conexao` — conexão DBAPI por módulo, **um DATABASE `db_mod_<chave>` por módulo**, espelhando o arquivo SQLite); lidos no boot via `banco_conexao._ler_config_sqlite`; troca exige **reiniciar o servidor** — ver [Card "Banco de dados" (SQLite ou PostgreSQL)](#card-banco-de-dados-sqlite-ou-postgresql-0809) |
 
 > Os padrões de aparência vivem em `PADRAO_CONFIG` (`mod_intranet/bd_conexao.py:13-24`) e são restaurados via tela de configurações (abas com "Restaurar padrão" por cartão).
 
@@ -150,7 +150,7 @@ O padrão permanece **SQLite** (atende servidores simples, zero dependências ex
 
 - `banco_tipo` em `tb_config` central (`'sqlite'` padrão | `'postgres'`): lido **DIRETO do arquivo SQLite central** (`_ler_config_sqlite`, `banco_conexao.py:57`) — seletor de backend autoritativo no boot, sem recursão.
 - `postgres_url` (DSN) também no arquivo SQLite central; credenciais da URL usadas como estão (container `intranet/intranet`).
-- Postgres: **um SCHEMA por módulo** dentro do banco `intranet` (`SCHEMAS`, `banco_conexao.py:248`) — `intranet`, `blog`, `usuarios`, `auditoria`, `editar_pdf`, `empenhos`, `solicita_impressao` — `search_path` setado por conexão (schema criado via `CREATE SCHEMA IF NOT EXISTS` no connect, com commit para sobreviver ao rollback do pool). Isso preserva o isolamento "um banco por módulo" e evita colisões de nome de tabela (ex.: `tb_solicitacoes`).
+- Postgres: **um DATABASE `db_mod_<chave>` por módulo** (espelha o arquivo SQLite `db_mod_<chave>.db`) — `banco_modulo(chave)` (`banco_conexao.py:263`) resolve o nome e `_garantir_bd_postgres(banco)` (`:281`) cria o banco ausente via `CREATE DATABASE` no banco de manutenção `postgres` (autocommit, idempotente por processo); `garantir_bancos_postgres()` (`:317`) garante TODOS os bancos de módulo no boot. Isso preserva o isolamento "um banco por módulo" e evita colisões de nome de tabela (ex.: `tb_solicitacoes`).
 - `conexao(chave)` devolve uma conexão DBAPI para o backend ativo: sqlite (arquivo do módulo, WAL) ou postgres (proxy psycopg2 com tradução `?`→`%s`, DDL SQLite→Postgres, `INSERT OR IGNORE`→`ON CONFLICT DO NOTHING`, `PRAGMA`/FTS5 ignorados, `lastrowid` via `RETURNING id` com SAVEPOINT, SAVEPOINT por statement). Detalhes em [Arquitetura — Backend duplo](arquitetura.md#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809).
 - `repositorio.engine(chave)`/`sessaodb(chave)` roteiam para o Postgres quando `banco_tipo='postgres'` (senão mantêm SQLite por arquivo).
 - Fail-soft: sem `sqlalchemy`/driver instalado, registra exception no loguru e a aplicação **segue de pé em SQLite**.
@@ -168,7 +168,33 @@ O padrão permanece **SQLite** (atende servidores simples, zero dependências ex
 | Healthcheck | `pg_isready` |
 | Aviso | **apenas dev/staging** — não exponha a porta `5432` em produção |
 
-> **Nota (08/09):** o suporte ao PostgreSQL está **ativo** — não é mais fase futura. Os módulos migrados para a camada única (`banco_conexao.conexao(chave)`) operam no backend selecionado: `mod_intranet/bd_conexao.get_connection`, `mod_auditoria`, `mod_edit_pdf`, `mod_gest_cad_usuario`, `mod_renomear_empenho`, `mod_solicita_impressao`; `CrudBase._conectar` também roteia pelo backend ativo (módulo em `SCHEMAS`). A **migração de dados** SQLite→PostgreSQL permanece manual — os bancos SQLite existentes não são movidos automaticamente (o Postgres inicia com os schemas vazios, recriados pelos `init_db` dos módulos).
+> **Nota (08/09):** o suporte ao PostgreSQL está **ativo** — não é mais fase futura. Os módulos migrados para a camada única (`banco_conexao.conexao(chave)`) operam no backend selecionado: `mod_intranet/bd_conexao.get_connection`, `mod_auditoria`, `mod_edit_pdf`, `mod_gest_cad_usuario`, `mod_renomear_empenho`, `mod_solicita_impressao`; `CrudBase._conectar` também roteia pelo backend ativo (módulo em `MODULOS_BD`). A **migração de dados** SQLite→PostgreSQL permanece manual — os bancos SQLite existentes não são movidos automaticamente (o Postgres inicia com os bancos de módulo vazios, recriados pelos `init_db` dos módulos).
+
+### Assistente de ativação no boot (11/09)
+
+O boot do `main.py` exibe o **assistente de ativação** (`mod_intranet/ativacao.py`, `iniciar()` — `:805`) com regra nova:
+
+- **ENTER / terminal não interativo → modo BÁSICO**: **apenas SQLite**, **sem Postgres e sem OpenTelemetry** — boot rápido e autossuficiente. `_config_padrao()` (`:167`) tem `otel_ativo: False` e o caminho default **ignora** a `tb_config` central (removidos `_config_persistida` e `preparar_servicos_padrao`).
+- **`1` → modo de ativação**: o usuário opta por subir PostgreSQL (container) e/ou OpenTelemetry (Grafana+Loki+Tempo+Mimir+collector), com portas perguntadas **só para os serviços ativados** (faixa 1–65535). **Todas as perguntas binárias aceitam apenas `1` (ativar/configurar) ou ENTER/`0` (não/básico)** — via `_escolha_1_enter` (`:673`, banco em `iniciar():845`) e `_sim_nao` (`:696`, serviços em `iniciar():850,866` e fallback `_confirmar_fallback_sqlite` `:706`); teclas como `sim`/`nao`/`s`/`x` ou textos (`sqlite`/`postgres`) são recusadas com `"Opção inválida — digite 1 para ..."` (`:680`) e a pergunta **repete** até `1`/ENTER/`0`; `EOFError`/`Ctrl+C` caem no padrão (sem loop). O prompt inicial **repete até resposta válida** (só ENTER ou `1` — `iniciar():821-834`); `perguntar()` (`:104`) repete qualquer pergunta até resposta válida. Porta padrão (5432/3000) ocupada → avisa e **sugere portas livres** (`_portas_livres`, `:147`) → pede outra porta → reescreve o compose (`aplicar_portas`, `:238`) → `down` + `up -d` → aguarda online (retry com até 5 tentativas em `_executar_e_persistir():924`; fallback SQLite se não subir). DSN validado por `_verificar_postgres` (`:413`, remove `+psycopg2`); SDK OTel instalado via pip quando ativado (`_garantir_sdk_otel`, `:623`).
+- **Persistência**: a escolha `otel_ativo` é gravada na `tb_config` central (`set_config("otel_ativo", "1"/"0")`, `_executar_e_persistir():948-951`) — a opção "não" sobrevive ao restart (o `main.py` consulta `get_config("otel_ativo", "1") == "1"`). O `banco_tipo`/`postgres_url` escolhidos no modo de ativação também são persistidos via `ativacao.aplicar_banco(cfg)` (`:205`).
+
+Detalhes de uso: [Manual de Instalação](manual_de_uso_instalacao/index.md#21-assistente-de-ativacao-boot).
+
+### Inicialização por argumentos de linha de comando (11/09)
+
+Além do assistente interativo, o boot aceita **argumentos de linha de comando** via **Typer** — `python main.py --help` explica cada chamada em PT-BR e encerra; sem argumentos, o assistente assume:
+
+| Flag | Default | Efeito |
+|:---|:---|:---|
+| `--postgres` | desligado | usa PostgreSQL (sobe o container) em vez do SQLite |
+| `--portapostgres` | `5432` | porta do PostgreSQL (a 5432 costuma estar ocupada por um Postgres nativo — use outra, ex.: 5444) |
+| `--otel` | desligado | ativa o OpenTelemetry (Grafana+Loki+Tempo+Mimir) |
+| `--portatelemetria` | `3000` | porta do painel Grafana/telemetria |
+| `--portadocumentacao` | `8080` | porta do site e da documentação `/documentacao` |
+
+- `cli_opcoes(args=None)` (`ativacao.py:727`) parseia os flags (Typer via `get_command().make_context()`; `click.exceptions.Exit` → `SystemExit`); `config_do_cli(...)` (`:754`) monta o `cfg` e `iniciar(cli_cfg=...)` (`:774`) sobe **direto, sem assistente**, reaproveitando `_executar_e_persistir(cfg)` (`:873`) — subir serviços + persistir + resumo.
+- `main.py:31-34` detecta flags em `sys.argv[1:]` e chama `ativacao.config_do_cli(**ativacao.cli_opcoes())`.
+- **Dependências**: `requirements.txt:12-15` (bloco "CLI do assistente de ativação") — `typer>=0.12` e `rich>=13.0`. O `rich` também gera as **cores do terminal** do assistente (`_MAPA_RICH` `:35`, `_abre_fecha` `:44`, `c()` `:61`, `banner()` `:74`, `barra()` `:83`) — sem códigos ANSI manuais; saída não-TTY fica **sem cor**.
 
 ### Card "Cores" — ordem interna e prévia ao vivo (06/09)
 

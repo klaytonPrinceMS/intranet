@@ -17,6 +17,8 @@
 - **Renomeador** (`teste_fluxo_renameador.py`): documento-modelo `DOC_0201.pdf` ponta a ponta (31/31 OK); organizador (16/16); edição embutida (18/18).
 - **Editor de PDF** (`test/test_editor_pdf.py`): 20 verificações.
 - **Auditoria** (`test/test_auditoria.py`): índices, rastreabilidade IP/UA, poda por retenção, acesso exclusivo do admin geral e preferência de campos/ordem por usuário (12 verificações).
+- **Ativação** (`test_ativacao.py`, 11/09): assistente de boot — regra padrão SQLite **ignorando a `tb_config`**, `_garantir_sdk_otel`, persistência `otel_ativo`, portas/DSN/faixa, `_compose_cmd`, `_mascarar_comando`, `_validar_senha`, `aplicar_portas` (57 verificações).
+- **Blog na Home** (`teste_home_blog.py`, 11/09): feed da página inicial nos modos carrossel/única/histórico via `renderizar_postagens` (3 verificações, headless).
 
 ## Critérios de entrada/saída
 
