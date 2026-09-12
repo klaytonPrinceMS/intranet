@@ -156,12 +156,15 @@ _opts = ativacao.cli_opcoes(
      "--portadocumentacao", "8001"])
 check(_opts == {"postgres": True, "portapostgres": 5444, "otel": True,
                 "portatelemetria": 3100, "portasite": 8081,
-                "portadocumentacao": 8001},
+                "portadocumentacao": 8001, "config": False},
       "cli_opcoes parseia todos os flags")
 check(ativacao.cli_opcoes([]) == {"postgres": False, "portapostgres": 5432,
                                   "otel": False, "portatelemetria": 3000,
-                                  "portasite": 8080, "portadocumentacao": 8000},
+                                  "portasite": 8080, "portadocumentacao": 8000,
+                                  "config": False},
       "cli_opcoes sem args → defaults")
+check(ativacao.cli_opcoes(["--config"])["config"] is True,
+      "cli_opcoes --config abre o assistente")
 _cfgcli = ativacao.config_do_cli(postgres=True, portapostgres=5444, otel=True,
                                  portatelemetria=3100, portasite=8081,
                                  portadocumentacao=8001)

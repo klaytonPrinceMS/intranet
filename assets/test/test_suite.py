@@ -10,6 +10,7 @@ comando obrigatório `.venv/bin/pytest` rode a suíte baseada em scripts.
 
 Usage:
     .venv/bin/pytest
+    .venv/bin/python assets/test/test_suite.py   # roda direto, com progresso
 """
 import pathlib
 import subprocess
@@ -52,15 +53,50 @@ def _scripts():
 
 def test_suite_standalone():
     """Runs every standalone test script and asserts all exit 0."""
+    falhas = _rodar_suite(progresso=True)
+    assert not falhas, "Falharam:\n\n" + "\n\n".join(falhas)
+
+
+def _rodar_suite(progresso=False):
+    """Executes every script, optionally printing live progress.
+
+    Executa cada script e devolve a lista de falhas (vazia = tudo OK).
+    Com `progresso=True`, imprime uma linha por script na hora (evita a
+    sensacao de travamento: a suite completa leva varios minutos).
+    """
+    import time as _time
     falhas = []
+    total = 0
     for p in _scripts():
+        total += 1
+        if progresso:
+            print(f"[{total}] {p.name} ...", flush=True)
+        ini = _time.time()
         try:
             r = subprocess.run([sys.executable, str(p)], capture_output=True,
                                text=True, timeout=240, env=_env_limpo())
         except subprocess.TimeoutExpired:
             falhas.append(f"{p.name}: timeout 240s")
+            if progresso:
+                print(f"    FALHOU (timeout 240s)", flush=True)
             continue
+        dur = _time.time() - ini
         if r.returncode != 0:
             saida = (r.stdout or "")[-1200:] + "\n" + (r.stderr or "")[-1200:]
             falhas.append(f"{p.name}: exit={r.returncode}\n{saida}")
-    assert not falhas, "Falharam:\n\n" + "\n\n".join(falhas)
+            if progresso:
+                print(f"    FALHOU em {dur:.0f}s (exit={r.returncode})",
+                      flush=True)
+        elif progresso:
+            print(f"    OK em {dur:.0f}s", flush=True)
+    return falhas
+
+
+if __name__ == "__main__":
+    _falhas = _rodar_suite(progresso=True)
+    if _falhas:
+        print(f"\nSUITE: {_falhas.__len__()} script(s) falharam:", flush=True)
+        for f in _falhas:
+            print(f"\n--- {f}", flush=True)
+        sys.exit(1)
+    print("\nSUITE OK: todos os scripts passaram.", flush=True)

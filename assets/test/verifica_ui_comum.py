@@ -574,6 +574,7 @@ def _cfg_fake(chave, default=""):
 
 _CFG_REAL = tm._cfg
 tm._cfg = _cfg_fake
+_LER_TEMA_REAL.cache_clear()
 try:
     _BD.update({
         "usuarios_cor_botao": "#00838F", "usuarios_cor_texto_botao": "#FFFFFF",
@@ -586,6 +587,7 @@ try:
           "(a) valor não vazio do módulo vence o tema do sistema")
 
     _BD.clear()
+    _LER_TEMA_REAL.cache_clear()
     _BD.update({"intranet_cor_botao": "#00FF00",
                 "intranet_cor_texto_botao": "#FF0000",
                 "intranet_btn_tamanho": "large"})
@@ -596,12 +598,14 @@ try:
           "(b) módulo vazio NÃO herda do sistema — usa o default do parâmetro")
 
     _BD.clear()
+    _LER_TEMA_REAL.cache_clear()
     t = _LER_TEMA_REAL("usuarios")
     check((t["cor_botao"], t["cor_texto_botao"], t["btn_tamanho"]) ==
           ("#000000", "#FFFFFF", "medium"),
           "(b2) módulo vazio sem default: usa o padrão do PRÓPRIO módulo (PADROES_TEMA)")
 
     _BD.clear()
+    _LER_TEMA_REAL.cache_clear()
     t = _LER_TEMA_REAL("usuarios", cor_botao="#1565C0",
                        cor_texto_botao="#FFFFFF", btn_tamanho="medium")
     check((t["cor_botao"], t["cor_texto_botao"], t["btn_tamanho"]) ==
@@ -617,16 +621,19 @@ try:
           "(d) cor_fundo/cor_titulo/texto_header NÃO herdam do sistema")
 
     _BD.clear()
+    _LER_TEMA_REAL.cache_clear()
     _BD.update({"intranet_cor_botao": ""})
     t = _LER_TEMA_REAL("intranet", cor_botao="#1565C0")
     check(t["cor_botao"] == "#1565C0",
           "(e) ler_tema('intranet') vazio usa o default (não auto-herda)")
     _BD.update({"intranet_cor_botao": "#00FF00"})
+    _LER_TEMA_REAL.cache_clear()
     t = _LER_TEMA_REAL("intranet", cor_botao="#1565C0")
     check(t["cor_botao"] == "#00FF00",
           "(e) ler_tema('intranet') lê as próprias chaves intranet_*")
 finally:
     tm._cfg = _CFG_REAL
+    _LER_TEMA_REAL.cache_clear()
     _BD.clear()
 
 # ================== 16. edit_pdf migrado (fonte) ==================
