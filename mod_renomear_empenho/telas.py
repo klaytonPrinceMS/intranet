@@ -6,7 +6,7 @@ Organizador (admin), Solicitação e Configurações (admin)."""
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
-from nicegui import ui
+from nicegui import ui, run
 
 from mod_intranet import observabilidade
 _log = observabilidade.get_logger("renomear_empenho")
@@ -24,6 +24,7 @@ from mod_renomear_empenho.bd_manipulador import (
     PASTA_TEMP_FERR, gerar_matriz_organizador, validar_presenca_matriz,
     PASTA_ORGANIZADOR,
     listar_navegacao, listar_pendentes, status_arquivo, renomear_manual,
+    arquivo_ja_processado, pesquisar_levantamento,
     raizes_navegacao, criar_solicitacao, listar_solicitacoes_acao_pendente,
     listar_solicitacoes, obter_solicitacao, marcar_solicitacao_enviada,
     marcar_solicitacoes_zip_gerado, marcar_solicitacao_pendente,
@@ -133,10 +134,13 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
     baixar, revisar/renomear (editar) e solicitar envio — em qualquer pasta
     monitorada. O download respeita a permissão (`empenhos_autorizar_download`
     ou admin); bloqueado apenas avisa. Checkbox por arquivo monta o lote
-    para solicitar e/ou baixar (ZIP quando múltiplo)."""
+    para solicitar e/ou baixar (ZIP quando múltiplo). Campo de pesquisa
+    filtra os documentos da pasta atual por nome (a pesquisa global de
+    conteúdo continua na aba Pesquisar)."""
     from mod_intranet.bd_conexao import get_config
     pasta_atual = {}
     selecionados = {}
+    filtro_nome = {"texto": ""}
     pode_baixar = bool(eh_admin or autorizado)
 
     def _baixar(caminho):
@@ -292,20 +296,44 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                 .props("data-testid=empenhos-lote-email")
             inp_msg = ui.textarea("Mensagem (opcional)").props("outlined dense").classes("w-full")
 
-            def _enviar_lote():
+            async def _enviar_lote():
+                # Anti-disconnect (§5.1): N solicitações × ~0,35 s (SQLite +
+                # auditoria) travavam o event-loop e derrubavam o websocket
+                # ("sistema desconectado"). Roda o I/O em run.io_bound.
+                if getattr(_enviar_lote, "ocupado", False):
+                    ui.notify("Aguarde o lote em andamento…", type="warning")
+                    return
                 dest = (inp_mail.value or "").strip()
                 if "@" not in dest:
                     ui.notify("Informe um e-mail válido", type="negative")
                     return
-                lote_id = uuid4().hex
-                feitas = 0
-                for cam, nom in list(selecionados.items()):
-                    try:
-                        criar_solicitacao(cam, nom, usuario_logado, dest,
-                                          inp_msg.value or "", lote_id=lote_id)
-                        feitas += 1
-                    except Exception:
-                        _log.exception("falha ao criar solicitação em lote")
+                _enviar_lote.ocupado = True
+                btn_confirmar.disable()
+                with ui.row().classes("w-full items-center justify-center") \
+                        .style("gap: 0.5rem") as linha_status:
+                    ui.spinner(size="lg").props("aria-label=Registrando lote")
+                    ui.label("Registrando solicitações…").classes("text-caption text-grey-7")
+
+                def _gravar():
+                    lote_id = uuid4().hex
+                    feitas = 0
+                    for cam, nom in list(selecionados.items()):
+                        try:
+                            criar_solicitacao(cam, nom, usuario_logado, dest,
+                                              inp_msg.value or "", lote_id=lote_id)
+                            feitas += 1
+                        except Exception:
+                            _log.exception("falha ao criar solicitação em lote")
+                    return feitas
+
+                try:
+                    feitas = await run.io_bound(_gravar)
+                finally:
+                    _enviar_lote.ocupado = False
+                try:
+                    linha_status.clear()
+                except Exception:
+                    pass
                 selecionados.clear()
                 ui.notify(f"{feitas} solicitação(ões) registrada(s) — aguardando o administrador.",
                           type="positive")
@@ -314,8 +342,8 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
 
             with ui.row().classes("w-full justify-end gap-2 mt-2"):
                 botao("Cancelar", on_click=dlg.close, variante="texto", chave_modulo="empenhos")
-                botao("Solicitar lote", icone="send", on_click=_enviar_lote,
-                      variante="solido", chave_modulo="empenhos") \
+                btn_confirmar = botao("Solicitar lote", icone="send", on_click=_enviar_lote,
+                       variante="solido", chave_modulo="empenhos") \
                     .props("data-testid=empenhos-lote-confirmar")
         dlg.open()
 
@@ -351,6 +379,128 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
             selecionados[p["caminho"]] = p["nome"]
         _carregar()
 
+    def _card_pdf(p, sub=None, presente=1):
+        with ui.card().classes("w-full p-3 mt-1"):
+            with ui.row().classes("w-full items-center gap-2"):
+                ui.checkbox("", value=p["caminho"] in selecionados,
+                            on_change=lambda e, cam=p["caminho"], nom=p["nome"]:
+                            _alternar_selecao(e.value, cam, nom)) \
+                    .props("dense").props("data-testid=empenhos-selecionar") \
+                    .tooltip("Selecionar para o lote")
+                ui.icon("picture_as_pdf")
+                with ui.column().classes("flex-1").style("min-width: 0"):
+                    ui.label(p["nome"]).classes("font-medium text-wrap")
+                    if sub:
+                        ui.label(sub).classes("text-caption text-grey-6")
+                cor = {"processado": "green", "pendente": "orange"}.get(p["status"], "grey")
+                ui.badge(p["status"], color=cor)
+                if presente is not None:
+                    if presente:
+                        ui.badge("na pasta", color="green")
+                    else:
+                        ui.badge("fora da pasta", color="grey")
+                with ui.row().classes("items-center gap-2"):
+                    # Três ações sempre disponíveis em qualquer pasta com PDF:
+                    # baixar (respeita permissão no handler), editar e solicitar.
+                    botao_icone("download", on_click=lambda c=p["caminho"]: _baixar(c),
+                                 chave_modulo="empenhos").tooltip("Baixar")
+                    botao_icone("edit", on_click=lambda c=p["caminho"]: _revisar_renomear(c),
+                             chave_modulo="empenhos").tooltip("Revisar / renomear (editar campos)")
+                    botao_icone("mail", on_click=lambda c=p["caminho"]: _solicitar(c),
+                             chave_modulo="empenhos").tooltip("Solicitar envio")
+
+    def _buscar_dados(termo, raiz):
+        """Coleta resultados na árvore da pasta atual (nome + presença).
+
+        Combina o FTS5 dos processados (banco do módulo, 42+ campos) com o
+        levantamento (detectados/pendentes anotados pelo monitor, com nome,
+        campos e conteúdo). Só caminhos sob a raiz navegável atual; mostra
+        só o nome do arquivo + se ainda está nas pastas monitoradas.
+        """
+        achados, vistos = [], set()
+
+        def _dentro(caminho):
+            real = os.path.realpath(caminho or "")
+            if not real or not (real == raiz or real.startswith(raiz + os.sep)):
+                return None
+            return real
+
+        def _sub(real):
+            rel = os.path.relpath(os.path.dirname(real), raiz)
+            return None if rel == "." else rel
+        # processados (FTS5 do módulo)
+        try:
+            fileiras = pesquisar(termo, limite=100) or []
+        except Exception:
+            _log.exception("pesquisa FTS5 falhou no navegar")
+            fileiras = []
+        for eid, final, num, parc, usr, dt, caminho in fileiras:
+            try:
+                real = _dentro(caminho)
+                if not real or real.lower() in vistos:
+                    continue
+                if not os.path.exists(real):
+                    continue
+                vistos.add(real.lower())
+                achados.append({"nome": os.path.basename(final or "") or os.path.basename(real),
+                                "caminho": real, "status": status_arquivo(real),
+                                "sub": _sub(real), "presente": 1})
+            except Exception:
+                continue
+        # levantamento (pendentes/detectados com nome, campos e conteúdo)
+        try:
+            fileiras_lev = pesquisar_levantamento(termo, limite=100) or []
+        except Exception:
+            _log.exception("pesquisa no levantamento falhou no navegar")
+            fileiras_lev = []
+        for lid, nome, caminho, presente, status, numero, ficha, ano in fileiras_lev:
+            try:
+                real = _dentro(caminho)
+                if not real or real.lower() in vistos:
+                    continue
+                vistos.add(real.lower())
+                em_disco = os.path.exists(real)
+                achados.append({"nome": os.path.basename(nome or "") or os.path.basename(real),
+                                "caminho": real, "status": status or status_arquivo(real),
+                                "sub": _sub(real),
+                                "presente": 1 if (presente and em_disco) else 0})
+            except Exception:
+                continue
+        return achados
+
+    async def _filtrar(e):
+        termo = e.args if isinstance(e.args, str) else (e.args and e.args[0]) or ""
+        filtro_nome["texto"] = termo
+        filtro_nome["seq"] = filtro_nome.get("seq", 0) + 1
+        minha_vez = filtro_nome["seq"]
+        if not termo.strip():
+            _carregar()
+            return
+        raiz = os.path.realpath(pasta_atual.get("caminho") or pasta_monitorada())
+        wrap.clear()
+        with wrap:
+            with ui.row().classes("w-full items-center justify-center") \
+                    .style("gap: 0.5rem") as linha_status:
+                ui.spinner(size="lg").props("aria-label=Pesquisando empenhos")
+                ui.label("Pesquisando (FTS5 + conteúdo)…").classes("text-caption text-grey-7")
+        try:
+            achados = await run.io_bound(_buscar_dados, termo, raiz)
+        except Exception:
+            _log.exception("busca no navegar falhou")
+            achados = []
+        if minha_vez != filtro_nome.get("seq"):
+            return  # tecla mais nova já disparou outra busca
+        wrap.clear()
+        with wrap:
+            ui.label(f"Pesquisa '{termo.strip()}': {len(achados)} resultado(s) "
+                     f"nesta pasta e subpastas (nome + presença).") \
+                .classes("text-caption text-grey-7") \
+                .props("data-testid=empenhos-navegar-contagem")
+            if not achados:
+                ui.label("Nada encontrado.").classes("text-caption text-grey-5")
+            for p in achados:
+                _card_pdf(p, sub=p.get("sub"), presente=p.get("presente", 1))
+
     def _carregar():
         wrap.clear()
         pasta = pasta_atual.get("caminho")
@@ -379,30 +529,12 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                               on_click=lambda cam=d["caminho"]: _ir(cam),
                               variante="texto", compacto=True,
                               chave_modulo="empenhos", extra_classes="text-left")
-            # pdfs
+            # pdfs da pasta atual (a pesquisa usa FTS5 + levantamento)
             ui.label("Documentos (PDF)").classes("text-subtitle2 font-bold text-grey-7 mt-3")
             if not nav["pdfs"]:
                 ui.label("Nenhum PDF nesta pasta.").classes("text-caption text-grey-5")
             for p in nav["pdfs"]:
-                with ui.card().classes("w-full p-3 mt-1"):
-                    with ui.row().classes("w-full items-center gap-2"):
-                        ui.checkbox("", value=p["caminho"] in selecionados,
-                                    on_change=lambda e, cam=p["caminho"], nom=p["nome"]:
-                                    _alternar_selecao(e.value, cam, nom)) \
-                            .props("dense").props("data-testid=empenhos-selecionar") \
-                            .tooltip("Selecionar para o lote")
-                        ui.icon("picture_as_pdf")
-                        ui.label(p["nome"]).classes("font-medium flex-1 text-wrap")
-                        cor = {"processado": "green", "pendente": "orange"}.get(p["status"], "grey")
-                        ui.badge(p["status"], color=cor)
-                        # Três ações sempre disponíveis em qualquer pasta com PDF:
-                        # baixar (respeita permissão no handler), editar e solicitar.
-                        botao_icone("download", on_click=lambda c=p["caminho"]: _baixar(c),
-                                     chave_modulo="empenhos").tooltip("Baixar")
-                        botao_icone("edit", on_click=lambda c=p["caminho"]: _revisar_renomear(c),
-                                 chave_modulo="empenhos").tooltip("Revisar / renomear (editar campos)")
-                        botao_icone("mail", on_click=lambda c=p["caminho"]: _solicitar(c),
-                                 chave_modulo="empenhos").tooltip("Solicitar envio")
+                _card_pdf(p)
 
     def _ir(cam):
         pasta_atual["caminho"] = cam
@@ -435,6 +567,13 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
             .props('data-testid=empenhos-processar')
         botao("Atualizar", icone="refresh", on_click=_carregar,
               variante="contorno", chave_modulo="empenhos")
+    with ui.row().classes("w-full gap-2 flex-wrap items-center mt-2"):
+        inp_pesquisa = ui.input("Pesquisar (conteúdo + todos os campos)",
+                                placeholder="ex.: nome, nº empenho, pagador, CPF, 345") \
+            .props("outlined dense").classes("w-72") \
+            .props("data-testid=empenhos-navegar-pesquisa") \
+            .tooltip("Busca FTS5 no banco do módulo + levantamento: pasta atual e subpastas")
+        inp_pesquisa.on("update:model-value", _filtrar)
     with ui.card().classes("w-full p-3 mt-2"):
         ui.label("Lote — marque o checkbox dos arquivos para solicitar e/ou baixar em conjunto.").classes("text-caption text-grey-6")
         with ui.row().classes("w-full items-center gap-2 flex-wrap"):

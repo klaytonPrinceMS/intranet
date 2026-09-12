@@ -621,6 +621,41 @@ def init_db_empenho():
     cur.execute("CREATE INDEX IF NOT EXISTS idx_aud_arq_num ON tb_arquivos_auditoria(numero_empenho)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_aud_arq_orig ON tb_arquivos_auditoria(nome_original)")
 
+    # ---- Levantamento (inventário) dos arquivos nas pastas monitoradas ----
+    # O monitor anota todo PDF novo (inclusive o nome) com campos extraídos
+    # e conteúdo para busca; a listagem mostra só o nome + se o arquivo
+    # ainda está nas pastas monitoradas (presente 1/0). FTS5 só no SQLite
+    # (o proxy Postgres ignora CREATE VIRTUAL TABLE — há fallback LIKE).
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS tb_levantamento (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome_arquivo TEXT NOT NULL,
+            caminho_atual TEXT NOT NULL UNIQUE,
+            presente INTEGER DEFAULT 1,
+            status TEXT DEFAULT 'detectado',
+            numero_empenho TEXT,
+            parcela INTEGER DEFAULT 1,
+            ficha TEXT,
+            ano TEXT,
+            tipo_especial TEXT,
+            conteudo_texto TEXT,
+            tamanho INTEGER DEFAULT 0,
+            mtime REAL DEFAULT 0,
+            data_deteccao DATETIME DEFAULT CURRENT_TIMESTAMP,
+            data_visto DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_lev_nome ON tb_levantamento(nome_arquivo)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_lev_presente ON tb_levantamento(presente)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_lev_num ON tb_levantamento(numero_empenho)")
+    try:
+        cur.execute(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS tb_levantamento_fts USING fts5("
+            "nome_arquivo, numero_empenho, ficha, ano, tipo_especial, conteudo_texto)"
+        )
+    except Exception as e:
+        _log().debug(f"tb_levantamento_fts indisponível ({e}) — usa fallback LIKE")
+
     # Linha do tempo cronológica por arquivo (detectado/renomeado/removido/erro).
     cur.execute("""
         CREATE TABLE IF NOT EXISTS tb_eventos_arquivos (
@@ -1331,6 +1366,10 @@ def processar_pdf(usuario, caminho_arquivo, numero=None, parcela=None, regex_cus
         hash_dst = hash_arquivo(destino)
         registrar_arquivo_renomeado(nome_original, nome_final, caminho_arquivo, destino,
                                     dados, usuario, hash_src, hash_dst)
+        try:
+            atualizar_levantamento_renomeado(nome_original, nome_final, destino, dados)
+        except Exception as e:
+            _log().debug(f"processar: levantamento pós-renomeação falhou: {e}")
         tipo_log = f" tipo {dados['tipo_especial']}" if dados.get("tipo_especial") else ""
         audit_log(usuario, "renomear-empenho", "processar",
                   f"{nome_original} → {nome_final}{tipo_log} (nº {numero})",
@@ -1542,6 +1581,222 @@ def _registrar_removidos_monitor(usuario="sistema", pastas=None):
         conn.close()
 
 
+def _nome_final_especial(nome_arquivo):
+    """True se o nome já é final de tipo especial (EC_0024, EE_9570, EG_0089, AE_*)."""
+    try:
+        return bool(re.match(r"^(EC|EE|EG)_\d+\.pdf$|^AE_.+\.pdf$",
+                             (nome_arquivo or "").strip(), re.IGNORECASE))
+    except Exception:
+        return False
+
+
+def _levantamento_fts_sincronizar(cur, lid, nome, numero, ficha, ano, tipo, conteudo):
+    """Sincroniza a linha FTS do levantamento (delete+insert; SQLite).
+
+    No PostgreSQL a tabela virtual não existe (proxy ignora o CREATE) —
+    a escrita falha silenciosamente e a busca usa fallback LIKE.
+    """
+    try:
+        cur.execute("DELETE FROM tb_levantamento_fts WHERE rowid=?", (lid,))
+        cur.execute(
+            "INSERT INTO tb_levantamento_fts "
+            "(rowid, nome_arquivo, numero_empenho, ficha, ano, tipo_especial, conteudo_texto)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (lid, nome or "", numero or "", ficha or "", ano or "",
+             tipo or "", conteudo or ""),
+        )
+    except Exception as e:
+        _log().debug(f"levantamento FTS indisponível ({e}) — usa fallback LIKE")
+
+
+def levantar_arquivos(usuario="sistema"):
+    """Inventaria os PDFs das pastas monitoradas (levantamento + anotação).
+
+    Para cada PDF novo anota nome, caminho, campos extraídos (nº/ficha/
+    parcela/ano/tipo) e conteúdo para busca; arquivos já anotados e sem
+    alteração (tamanho/mtime) são só revisitados. Quem sumiu do disco
+    fica com presente=0. Retorna (novos, revisitados, ausentes).
+    """
+    pastas = pastas_monitoradas()
+    novos, vistos, ausentes = 0, 0, 0
+    caminhos_vivos = set()
+    conn = _conn()
+    try:
+        cur = conn.cursor()
+        for pasta in pastas:
+            if not pasta_acessivel(pasta):
+                continue
+            try:
+                passeio = list(os.walk(pasta))
+            except Exception:
+                continue
+            for raiz, _ds, arqs in passeio:
+                for f in sorted(arqs):
+                    if not f.lower().endswith(".pdf"):
+                        continue
+                    caminho = os.path.realpath(os.path.join(raiz, f))
+                    if not os.path.isfile(caminho):
+                        continue
+                    caminhos_vivos.add(caminho)
+                    try:
+                        est = os.stat(caminho)
+                        tamanho, mtime = est.st_size, est.st_mtime
+                    except Exception:
+                        tamanho, mtime = 0, 0
+                    cur.execute("SELECT id, tamanho, mtime FROM tb_levantamento "
+                                "WHERE caminho_atual=?", (caminho,))
+                    linha = cur.fetchone()
+                    if linha and linha[1] == tamanho and linha[2] == mtime:
+                        st = ("renomeado" if (arquivo_ja_processado(f)
+                                              or _nome_final_especial(f)
+                                              or _arquivo_registrado_no_bd(caminho))
+                              else "detectado")
+                        cur.execute("UPDATE tb_levantamento SET presente=1, status=?, "
+                                    "data_visto=datetime('now','localtime') WHERE id=?",
+                                    (st, linha[0]))
+                        vistos += 1
+                        continue
+                    # novo ou alterado: extrai campos + conteúdo (best-effort)
+                    try:
+                        texto = extrair_texto_pdf(caminho) or ""
+                    except Exception:
+                        texto = ""
+                    try:
+                        tipo = detectar_tipo_especial(texto)
+                    except Exception:
+                        tipo = None
+                    numero = ficha = ano = None
+                    parcela = 1
+                    try:
+                        if tipo:
+                            de = extrair_dados_tipo_especial(texto, tipo) or {}
+                            numero, ficha, ano = de.get("numero"), de.get("ficha"), de.get("ano")
+                        else:
+                            dd = extrair_dados_empenho(texto) or {}
+                            numero, ficha, ano = dd.get("empenho"), dd.get("ficha"), dd.get("ano")
+                            try:
+                                parcela = int(dd.get("parcela") or 1)
+                            except (TypeError, ValueError):
+                                parcela = 1
+                    except Exception:
+                        pass
+                    status = "renomeado" if (arquivo_ja_processado(f)
+                                             or _nome_final_especial(f)
+                                             or _arquivo_registrado_no_bd(caminho)) else "detectado"
+                    if linha:
+                        cur.execute(
+                            """UPDATE tb_levantamento SET nome_arquivo=?, presente=1, status=?,
+                               numero_empenho=?, parcela=?, ficha=?, ano=?, tipo_especial=?,
+                               conteudo_texto=?, tamanho=?, mtime=?,
+                               data_visto=datetime('now','localtime') WHERE id=?""",
+                            (f, status, numero, parcela, ficha, ano, tipo,
+                             texto[:20000], tamanho, mtime, linha[0]),
+                        )
+                        _levantamento_fts_sincronizar(cur, linha[0], f, numero, ficha,
+                                                      ano, tipo, texto[:20000])
+                        vistos += 1
+                    else:
+                        cur.execute(
+                            """INSERT INTO tb_levantamento
+                               (nome_arquivo, caminho_atual, presente, status, numero_empenho,
+                                parcela, ficha, ano, tipo_especial, conteudo_texto, tamanho, mtime)
+                               VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                            (f, caminho, status, numero, parcela, ficha, ano, tipo,
+                             texto[:20000], tamanho, mtime),
+                        )
+                        _levantamento_fts_sincronizar(cur, cur.lastrowid, f, numero,
+                                                      ficha, ano, tipo, texto[:20000])
+                        novos += 1
+        # presença: quem não foi visto e está marcado presente sai do ar
+        cur.execute("SELECT id, caminho_atual FROM tb_levantamento WHERE presente=1")
+        for lid, cam in cur.fetchall():
+            if cam not in caminhos_vivos and not os.path.isfile(cam or ""):
+                cur.execute("UPDATE tb_levantamento SET presente=0, "
+                            "data_visto=datetime('now','localtime') WHERE id=?", (lid,))
+                ausentes += 1
+        conn.commit()
+    finally:
+        conn.close()
+    _log().info(f"levantamento: {novos} novo(s), {vistos} revisitado(s), {ausentes} ausente(s)")
+    return novos, vistos, ausentes
+
+
+def atualizar_levantamento_renomeado(nome_original, nome_final, caminho_final, dados=None):
+    """Aponta o levantamento para o arquivo renomeado (nome/caminho/status)."""
+    dados = dados or {}
+    conn = _conn()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM tb_levantamento WHERE nome_arquivo=? "
+                    "ORDER BY id DESC LIMIT 1", (nome_original,))
+        linha = cur.fetchone()
+        if not linha:
+            return
+        lid = linha[0]
+        try:
+            est = os.stat(caminho_final)
+            tamanho, mtime = est.st_size, est.st_mtime
+        except Exception:
+            tamanho, mtime = 0, 0
+        cur.execute(
+            """UPDATE tb_levantamento SET nome_arquivo=?, caminho_atual=?, presente=1,
+               status='renomeado', numero_empenho=?, parcela=?, ficha=?, ano=?,
+               tamanho=?, mtime=?, data_visto=datetime('now','localtime') WHERE id=?""",
+            (nome_final, os.path.realpath(caminho_final), dados.get("empenho"),
+             dados.get("parcela") or 1, dados.get("ficha"), dados.get("ano"),
+             tamanho, mtime, lid),
+        )
+        _levantamento_fts_sincronizar(cur, lid, nome_final, dados.get("empenho"),
+                                      dados.get("ficha"), dados.get("ano"),
+                                      dados.get("tipo_especial"), "")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def pesquisar_levantamento(termo, limite=100):
+    """Busca no levantamento: FTS5 (nome+campos+conteúdo) com fallback LIKE.
+
+    Cobre também os pendentes (ainda sem índice de processados). Retorna
+    tuplas (id, nome, caminho, presente, status, numero, ficha, ano).
+    """
+    if not termo or not str(termo).strip():
+        return []
+    tokens = [t for t in str(termo).strip().split() if t]
+    if not tokens:
+        return []
+    conn = _conn()
+    try:
+        cur = conn.cursor()
+        try:
+            query = _fts_query_prefixada(tokens)
+            cur.execute(
+                """SELECT l.id, l.nome_arquivo, l.caminho_atual, l.presente, l.status,
+                          l.numero_empenho, l.ficha, l.ano
+                   FROM tb_levantamento_fts f
+                   JOIN tb_levantamento l ON l.id = f.rowid
+                   WHERE tb_levantamento_fts MATCH ?
+                   ORDER BY rank LIMIT ?""",
+                (query, limite),
+            )
+            return cur.fetchall()
+        except Exception as e:
+            _log().debug(f"pesquisar_levantamento FTS indisponível, fallback LIKE: {e}")
+            like = f"%{str(termo).strip()}%"
+            cur.execute(
+                """SELECT id, nome_arquivo, caminho_atual, presente, status,
+                          numero_empenho, ficha, ano
+                   FROM tb_levantamento
+                   WHERE nome_arquivo LIKE ? OR numero_empenho LIKE ?
+                     OR ficha LIKE ? OR ano LIKE ? OR conteudo_texto LIKE ?
+                   ORDER BY id DESC LIMIT ?""",
+                (like, like, like, like, like, limite),
+            )
+            return cur.fetchall()
+    finally:
+        conn.close()
+
+
 def mover_quarentena(usuario, caminho_arquivo, motivo):
     """Moves a failed PDF to the quarantine folder and records it (LGPD audit).
 
@@ -1611,6 +1866,17 @@ def _fts_insert_sql():
 def _fts_escape(token):
     """Escapa aspas para uso seguro em frase FTS5 (aspas duplas duplicadas)."""
     return (token or "").replace('"', '""').strip()
+
+
+def _fts_query_prefixada(tokens):
+    """Monta MATCH com prefixo no último token (busca incremental).
+
+    Ex.: ["45"] → '"45"*'; ["joao","si"] → '"joao" AND "si"*'. Permite
+    resultado já na 1ª letra e refino a cada tecla (LIKE cobre o fallback).
+    """
+    partes = [f'"{_fts_escape(t)}"' for t in tokens[:-1]]
+    partes.append(f'"{_fts_escape(tokens[-1])}"*')
+    return " AND ".join(partes)
 
 
 def extrair_campos_regex(texto):
@@ -2033,7 +2299,13 @@ def rodar_monitor(usuario="sistema"):
     Apenas a raiz de cada pasta é varrida (não recursivo). Pastas inacessíveis
     (ex.: host de rede fora do ar) são puladas com aviso, sem derrubar o monitor.
     A numeração sequencial é única entre pastas (contador global no banco).
+    Antes de processar, levanta/inventaria os PDFs (anota novos inclusive
+    pelo nome) para busca e listagem com presença.
     """
+    try:
+        levantar_arquivos(usuario)
+    except Exception as e:
+        _log().debug(f"rodar_monitor: levantamento falhou: {e}")
     pastas = pastas_monitoradas()
     resultados = []
     for pasta in pastas:
@@ -2477,7 +2749,8 @@ def renomear_manual(usuario, caminho_arquivo, novo_numero=None, novoTemplate=Non
 
     if tipo_especial:
         de = extrair_dados_tipo_especial(texto, tipo_especial)
-        num = novo_numero if novo_numero is not None else de.get("numero")
+        num_txt = novo_numero if novo_numero is not None else de.get("numero")
+        num = int(re.sub(r"\D", "", str(num_txt or "0")) or 0)
         if not num or num <= 0:
             return False, "Número do documento não identificado"
         nome_novo = montar_nome_tipo_especial(tipo_especial, num, de.get("ano"))

@@ -1,8 +1,9 @@
 """Administration panel for the Empenho Renamer module.
 
 Panel de administrao do Renomeador de Empenhos: pastas monitoradas,
-aparência, template de nome, campos de busca, auditoria, quarentena e
-regras regex dinâmicas.
+aparência, template de nome, campos de busca, quarentena e
+regras regex dinâmicas (a auditoria vive no banco de auditoria e é
+exibida exclusivamente no menu Auditoria).
 """
 from nicegui import ui
 
@@ -17,7 +18,7 @@ from mod_renomear_empenho.bd_manipulador import (
     template_nome_atual, montar_nome_final, NOME_FINAL_PADRAO,
     listar_campos_busca, salvar_campo_busca, excluir_campo_busca,
     restaurar_campos_busca_padrao,
-    listar_arquivos_auditoria, listar_quarentena, reprocesse_quarentena,
+    listar_quarentena, reprocesse_quarentena,
     reprocessar_fila, promover_quarentena, separar_documentos_quarentena,
     listar_regras, salvar_regra, alternar_regra,
 )
@@ -49,7 +50,7 @@ def mostrar_administracao(
     """Renders the full administration panel for the Empenho Renamer.
 
     Monta todas as abas de administração: pastas monitoradas, aparência,
-    template do nome final, campos de busca, auditoria, Quarentena e regras
+    template do nome final, campos de busca, Quarentena e regras
     regex. Recebe os parâmetros de tema já resolvidos; usa get_config /
     set_config do módulo de conexão para ler/gravar em tb_config.
 
@@ -146,15 +147,22 @@ def mostrar_administracao(
             value=get_config("empenhos_autorizar_download", "0") == "1"
         ).props("dense")             .tooltip("Quando ativo, usuários comuns podem baixar/enviar os empenhos (RF-39).")
 
+        sw_auto = ui.switch(
+            "Renomeação automática pelo monitor",
+            value=get_config("empenhos_renomeacao_automatica", "1") != "0"
+        ).props("dense")             .tooltip("Quando desligado, o monitor automático não renomeia — use o botão manual 'Processar pasta agora', a fila ou a revisão.")
+
         def salvar():
             """Applies the module-specific settings and reloads after 1s.
 
             Grava texto do cabeçalho, intervalo do monitor (reagendado ao
-            vivo) e permissão de download para usuários comuns; audita,
+            vivo), renomeação automática e permissão de download para
+            usuários comuns; audita,
             notifica e recarrega após 1 segundo. Falha registra loguru."""
             try:
                 set_config("empenhos_texto_header", (inp_texto.value or "").strip())
                 set_config("empenhos_autorizar_download", "1" if sw_autorizar.value else "0")
+                set_config("empenhos_renomeacao_automatica", "1" if sw_auto.value else "0")
                 try:
                     iv = max(1, int((inp_intervalo.value or "60").strip() or 60))
                     set_config("empenhos_monitor_intervalo_seg", str(iv))
@@ -176,12 +184,14 @@ def mostrar_administracao(
         def restaurar():
             """Restores the module-specific defaults and reloads after 1s.
 
-            Restaura texto do cabeçalho vazio, download desautorizado e
+            Restaura texto do cabeçalho vazio, download desautorizado,
+            renomeação automática ligada e
             intervalo do monitor 60 s (reagendado ao vivo); audita, notifica
             e recarrega após 1 segundo. Falha registra loguru."""
             try:
                 set_config("empenhos_texto_header", "")
                 set_config("empenhos_autorizar_download", "0")
+                set_config("empenhos_renomeacao_automatica", "1")
                 set_config("empenhos_monitor_intervalo_seg", "60")
                 try:
                     _rotinas.reagendar_monitor_empenho(60)
@@ -329,53 +339,6 @@ def mostrar_administracao(
 
             botao("Restaurar padrão", icone="restore", on_click=restaurar_campos,
                   variante="restaurar", chave_modulo="empenhos")
-
-    # ================= Auditoria =================
-    with card_admin(
-        "Auditoria dos arquivos escaneados / renomeados",
-        icone="history",
-        chave_modulo="empenhos", extra_classes="mt-2", grade=False,
-    ):
-        colunas_aud = [
-            {"name": "nome_orig", "label": "Origem", "field": "nome_orig", "align": "left"},
-            {"name": "nome_final", "label": "Nome final", "field": "nome_final", "align": "left"},
-            {"name": "num", "label": "Empenho", "field": "num", "align": "left"},
-            {"name": "parc", "label": "Parc", "field": "parc"},
-            {"name": "ficha", "label": "Ficha", "field": "ficha"},
-            {"name": "ano", "label": "Ano", "field": "ano"},
-            {"name": "status", "label": "Status", "field": "status"},
-            {"name": "usr", "label": "Usuário", "field": "usr"},
-            {"name": "dt", "label": "Renomeado em", "field": "dt"},
-        ]
-        filtro_status = ui.select(
-            {
-                "": "Todos",
-                "renomeado": "Renomeado",
-                "detectado": "Detectado",
-                "erro": "Erro",
-                "removido": "Removido",
-            },
-            label="Status", value=""
-        ).props("outlined dense").classes("w-56")
-        tabela_aud = ui.table(
-            columns=colunas_aud, rows=[], row_key="id"
-        ).props("flat bordered dense").classes("w-full")
-
-        def _refresh_aud():
-            sel = filtro_status.value or None
-            tabela_aud.rows = [
-                {
-                    "id": r[0], "nome_orig": r[1] or "—", "nome_final": r[2] or "—",
-                    "num": r[3] or "—", "parc": r[4] or "—", "ficha": r[5] or "—",
-                    "ano": r[6] or "—", "status": r[7] or "—",
-                    "usr": (r[8] or "—")[:12], "dt": (r[10] or "")[:16]
-                }
-                for r in listar_arquivos_auditoria(status=sel)
-            ]
-            tabela_aud.update()
-
-        filtro_status.on("update:model-value", lambda e: _refresh_aud())
-        _refresh_aud()
 
     # ================= Quarentena (4b) =================
     with card_admin("Quarentena", icone="block", chave_modulo="empenhos",

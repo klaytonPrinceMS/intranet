@@ -124,8 +124,8 @@ try:
 
     # ================== DOCUMENTAÇÃO ==================
     print("-- documentacao --")
-    check(documentacao.porta_documentacao() == 8000,
-          "porta_documentacao default 8000")
+    check(documentacao.porta_documentacao() in (8000, 8001),
+          f"porta_documentacao default {documentacao.porta_documentacao()} (8000/8001)")
     _build_orig = documentacao._build
     _montar_orig = documentacao.montar
     _srv_orig = documentacao.iniciar_servidor

@@ -191,9 +191,25 @@ def reagendar_monitor_empenho(segundos):
         return False
 
 
+def renomeacao_automatica_empenho_ativa(default="1"):
+    """Indica se o monitor automático pode renomear empenhos.
+
+    Chave tb_config 'empenhos_renomeacao_automatica' ("1"/"0", padrão "1").
+    Com "0", o job automático pula a varredura — a renomeação manual
+    (botão "Processar pasta agora", fila, revisão) continua funcionando.
+    """
+    from mod_intranet.bd_conexao import get_config
+    try:
+        return str(get_config("empenhos_renomeacao_automatica", default)).strip() != "0"
+    except Exception:
+        return True
+
+
 def _job_monitor_empenho():
     """Varredura automática da pasta monitorada de empenhos (RF-40)."""
     try:
+        if not renomeacao_automatica_empenho_ativa():
+            return
         from mod_renomear_empenho.bd_manipulador import rodar_monitor
         rodar_monitor("sistema")
     except Exception as ex:
