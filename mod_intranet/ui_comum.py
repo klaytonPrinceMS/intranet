@@ -847,3 +847,90 @@ def card_admin(titulo, *, icone="settings", chave_modulo="intranet",
                     "w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
                 ).style(f"gap:{gap}")
     return alvo
+
+
+class ItemMenuDrawer:
+    """Accessible drawer menu item with Bootstrap list-group look (no global CSS).
+
+    Item de menu do drawer acessível com visual Bootstrap list-group (sem CSS
+    global): `ui.item` `w-full rounded-lg my-0.5` com `.style('min-width: 0')`,
+    seção avatar com ícone `text-primary shrink-0 aria-hidden` e
+    `ui.item_label` `truncate max-w-full grow`. O Bootstrap local
+    (`assets/css/frameworks/bootstrap@5.3.8.min.css`, servido em
+    `/css/frameworks/*` via `tema_css.montar_rotas_static()`) NÃO é injetado
+    aqui — o reset global quebraria o Quasar; o visual list-group (borda
+    arredondada, hover, estado ativo) é replicado com Tailwind (`.classes()`)
+    + Quasar (`.props()`), com `focus-visible` ring, tooltip PT-BR, estado
+    ativo (`bg-blue-100` + `aria-current="page"`) e `data-testid` via
+    `.props()` (`menu-home`, `menu-<chave>`, `menu-admin`, `menu-docs`,
+    `menu-sair`). Itens só-ícone (rótulo vazio) recebem `aria-label`.
+    `chave_modulo` é reservada para tematização futura — o ícone usa
+    `text-primary` (Quasar primary já tematizado via `ui.colors` no layout),
+    sem `ler_tema` por item (economia de consultas). Falha de montagem
+    registra exception e retorna `None` (fail-soft).
+    """
+
+    def __init__(self, rotulo, *, icone, on_click, tooltip=None,
+                 chave_modulo="intranet", testid=None, ativo=False):
+        self.rotulo = rotulo
+        self.icone = icone
+        self.on_click = on_click
+        self.tooltip = tooltip
+        self.chave_modulo = chave_modulo
+        self.testid = testid
+        self.ativo = ativo
+
+    def montar(self):
+        """Builds the `ui.item` drawer entry; returns it (or `None`).
+
+        Monta o `ui.item` do drawer e devolve o elemento (ou `None` em
+        falha de montagem, fail-soft).
+        """
+        from nicegui import ui
+        try:
+            base = ("w-full rounded-lg my-0.5 cursor-pointer "
+                    "focus-visible:ring-2 focus-visible:outline-none")
+            estado = " bg-blue-100 font-bold" if self.ativo \
+                else " hover:bg-blue-50"
+            item = ui.item(on_click=self.on_click).classes(base + estado)
+            item.style("min-width: 0")
+            if self.testid:
+                item.props(f"data-testid={self.testid}")
+            if self.ativo:
+                item.props('aria-current="page"')
+            rotulo_txt = (self.rotulo or "").strip()
+            if not rotulo_txt:
+                item.props(f'aria-label="{self.tooltip or self.icone}"')
+            if self.tooltip:
+                item.tooltip(self.tooltip)
+            with item:
+                with ui.item_section().props("avatar"):
+                    ui.icon(self.icone).classes("text-primary shrink-0") \
+                        .props('aria-hidden="true"')
+                if self.rotulo:
+                    ui.item_label(self.rotulo) \
+                        .classes("truncate max-w-full grow") \
+                        .style("min-width: 0")
+            return item
+        except Exception as e:
+            _log().exception(f"item_menu_drawer: falha ao montar item "
+                             f"{self.rotulo!r} (icone={self.icone!r}): {e}")
+            return None
+
+
+def item_menu_drawer(rotulo, *, icone, on_click, tooltip=None,
+                     chave_modulo="intranet", testid=None, ativo=False):
+    """Accessible drawer menu item (delegates to `ItemMenuDrawer`).
+
+    Wrapper fino da classe `ItemMenuDrawer` — assinatura e saída idênticas.
+    Fábrica DDD PT-BR do item do menu hambúrguer: `ui.item` acessível
+    `w-full rounded-lg my-0.5` com `.style('min-width: 0')`, avatar com ícone
+    `text-primary shrink-0 aria-hidden`, rótulo `truncate max-w-full grow`,
+    tooltip PT-BR, anel `focus-visible`, estado ativo e `data-testid` via
+    `.props()` (ex. `menu-home`, `menu-<chave>`, `menu-admin`, `menu-docs`,
+    `menu-sair`); itens só-ícone recebem `aria-label`. Retorna o `ui.item`
+    criado (ou `None` em falha de montagem, fail-soft).
+    """
+    return ItemMenuDrawer(
+        rotulo, icone=icone, on_click=on_click, tooltip=tooltip,
+        chave_modulo=chave_modulo, testid=testid, ativo=ativo).montar()

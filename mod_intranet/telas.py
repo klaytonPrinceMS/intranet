@@ -210,100 +210,129 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
             titulo_modulo = nome_cadastrado
 
     # ===== HEADER (parte 1) =====
-    with ui.header(elevated=True).classes("items-center justify-between bg-primary px-4"):
-        with ui.row().classes("items-center").style("gap: 0.5rem"):
-            ui_comum.botao_icone("menu", on_click=lambda: drawer.toggle(),
-                                 variante="icone_branco")
-            ui.icon(icone_sistema).classes("text-white")
-            ui.label(titulo_sistema).classes("text-h6 text-white font-bold")
-            ui.separator().props("vertical")
-            ui.label(titulo_modulo).classes("text-subtitle1 text-white opacity-90")
-        with ui.row().classes("items-center").style("gap: 0.5rem"):
-            # Nome de TRATAMENTO clicável -> Meu Perfil (nome completo ou social)
-            trat = autenticacao.nome_de_tratamento(nome_usuario)
-            ui_comum.botao(trat, variante="texto_branco",
-                           on_click=lambda: _dialogo_meu_perfil(nome_usuario),
-                           tooltip="Meu Perfil — editar meus dados e senha")
-            # Tema claro/escuro (preferência individual do usuário)
-            escuro_atual = autenticacao.tema_escuro(nome_usuario)
-            ui_comum.botao_icone(
-                "dark_mode" if escuro_atual else "light_mode",
-                on_click=lambda: _alternar_tema(nome_usuario),
-                variante="icone_branco",
-                tooltip="Tema atual: "
-                        + ("escuro" if escuro_atual else "claro")
-                        + " — clique para alternar (só para você)")
-            ui.badge(rotulo_perfil, color="primary-4").props("outline")
-            ui_comum.botao_icone("logout", _logout, variante="icone_branco",
-                                 tooltip="Sair")
+    with ui.header(elevated=True).classes("w-full bg-primary px-3 sm:px-4 py-1").style("min-width: 0"):
+        with ui.row().classes("w-full items-center justify-between flex-wrap").style("gap: 0.5rem; min-width: 0"):
+            with ui.row().classes("items-center flex-wrap flex-1").style("gap: 0.5rem; min-width: 0"):
+                _btn_menu = ui_comum.botao_icone("menu", on_click=lambda: drawer.toggle(),
+                                     variante="icone_branco",
+                                     tooltip="Abrir menu de navegação")
+                if _btn_menu is not None:
+                    _btn_menu.props('data-testid=menu-hamburguer aria-label="Abrir menu de navegação"')
+                ui.icon(icone_sistema).classes("text-white shrink-0")
+                ui.label(titulo_sistema).classes("text-h6 text-white font-bold whitespace-nowrap")
+                ui.separator().props("vertical").classes("hidden sm:block")
+                ui.label(titulo_modulo).classes("text-subtitle2 text-white opacity-90 flex-1").style("min-width: 8ch; overflow-wrap: anywhere")
+            with ui.row().classes("items-center flex-wrap justify-end").style("gap: 0.5rem; min-width: 0"):
+                # Nome de TRATAMENTO clicável -> Meu Perfil (nome completo ou social)
+                trat = autenticacao.nome_de_tratamento(nome_usuario)
+                ui_comum.botao(trat, variante="texto_branco",
+                               on_click=lambda: _dialogo_meu_perfil(nome_usuario),
+                               tooltip="Meu Perfil — editar meus dados e senha").classes("max-w-[14ch] truncate").style("min-width: 0")
+                # Tema claro/escuro (preferência individual do usuário)
+                escuro_atual = autenticacao.tema_escuro(nome_usuario)
+                ui_comum.botao_icone(
+                    "dark_mode" if escuro_atual else "light_mode",
+                    on_click=lambda: _alternar_tema(nome_usuario),
+                    variante="icone_branco",
+                    tooltip="Tema atual: "
+                            + ("escuro" if escuro_atual else "claro")
+                            + " — clique para alternar (só para você)")
+                ui.badge(rotulo_perfil, color="primary-4").props("outline").classes("max-w-[16ch] truncate").style("min-width: 0")
+                ui_comum.botao_icone("logout", _logout, variante="icone_branco",
+                                     tooltip="Sair")
 
     # ===== DRAWER/SIDEBAR (parte 2) =====
     # Por padrão o drawer abre FECHADO — o usuário abre via botão hambúrguer.
-    with ui.left_drawer(bordered=True, elevated=False, value=False) as drawer:
-        # ===== HOME: página inicial de boas-vindas =====
-        with ui.item(on_click=lambda: ui.navigate.to("/")).classes(
-                "rounded-lg mx-2 my-0.5 mt-2 hover:bg-blue-50 cursor-pointer"):
-            with ui.item_section().props("avatar"):
-                ui.icon("home").classes("text-primary")
-            ui.item_label("Home")
+    # Visual Bootstrap list-group SEM injeção global: o Bootstrap local
+    # (assets/css/frameworks/bootstrap@5.3.8.min.css, servido em
+    # /css/frameworks/* via tema_css.montar_rotas_static()) tem reset global
+    # que quebraria o Quasar — por isso item_menu_drawer replica o visual
+    # (borda arredondada, hover, ativo) via Tailwind (.classes()) + Quasar
+    # (.props()). RNF-UI-01 320/768/1024: w-full + min-width: 0, sem gap-*.
+    with ui.left_drawer(bordered=True, elevated=False, value=False).classes("p-2").style("min-width: 0") as drawer:
+        with ui.column().classes("w-full").style("gap: 0.25rem; min-width: 0"):
+            # ===== HOME: página inicial de boas-vindas =====
+            ui_comum.item_menu_drawer(
+                "Home", icone="home",
+                on_click=lambda: ui.navigate.to("/"),
+                tooltip="Ir para a página inicial",
+                chave_modulo=chave_modulo or "intranet",
+                testid="menu-home",
+                ativo=(not chave_modulo))
 
-        ui.separator()
-        for chave, nome, icone, rota, ativa in autenticacao.modulos_do_usuario(nome_usuario):
-            if ativa:
-                with ui.item(on_click=lambda r=rota: ui.navigate.to(r)).classes(
-                        "rounded-lg mx-2 my-0.5 hover:bg-blue-50 cursor-pointer"):
-                    with ui.item_section().props("avatar"):
-                        ui.icon(icone).classes("text-primary")
-                    ui.item_label(nome)
-            else:
-                # Módulo removido/desativado com vínculo remanescente: alerta chamativo
-                with ui.item(on_click=lambda n=nome: notificar(
-                        f"⚠ '{n}' está indisponível/removido. Procure o administrador.",
-                        type="warning", position="top")) \
-                        .classes("rounded-lg mx-2 my-0.5 bg-orange-2 border border-orange-6 cursor-pointer"):
-                    with ui.item_section().props("avatar"):
-                        ui.icon("report_problem").classes("text-orange-9")
-                    with ui.item_section():
-                        ui.item_label(nome).classes("text-orange-10 font-bold")
-                        ui.item_label("Módulo indisponível").classes("text-caption text-orange-9")
+            ui.separator().classes("w-full")
+            for chave, nome, icone, rota, ativa in autenticacao.modulos_do_usuario(nome_usuario):
+                if ativa:
+                    ui_comum.item_menu_drawer(
+                        nome, icone=icone,
+                        on_click=lambda r=rota: ui.navigate.to(r),
+                        tooltip=f"Abrir o módulo {nome}",
+                        chave_modulo=chave_modulo or "intranet",
+                        testid=f"menu-{chave}",
+                        ativo=(chave == chave_modulo))
+                else:
+                    # Módulo removido/desativado com vínculo remanescente: alerta chamativo
+                    with ui.item(on_click=lambda n=nome: notificar(
+                            f"⚠ '{n}' está indisponível/removido. Procure o administrador.",
+                            type="warning", position="top")) \
+                            .classes("w-full rounded-lg my-0.5 bg-orange-2 border border-orange-6 cursor-pointer "
+                                     "focus-visible:ring-2 focus-visible:outline-none") \
+                            .style("min-width: 0") \
+                            .props(f'data-testid=menu-{chave}-indisponivel aria-label="{nome} — módulo indisponível"') \
+                            .tooltip(f"'{nome}' está indisponível — procure o administrador"):
+                        with ui.item_section().props("avatar"):
+                            ui.icon("report_problem").classes("text-orange-9 shrink-0").props('aria-hidden="true"')
+                        with ui.item_section().style("min-width: 0"):
+                            ui.item_label(nome).classes("text-orange-10 font-bold truncate max-w-full").style("min-width: 0")
+                            ui.item_label("Módulo indisponível").classes("text-caption text-orange-9 truncate max-w-full").style("min-width: 0")
 
-        # ===== SISTEMA: menu de Administração — exclusivo do administrador geral =====
-        if autenticacao.perfil_global_de(nome_usuario) == "administrador_geral":
-            ui.separator()
-            if chave_modulo:
-                _nome_mod_atual = autenticacao.nome_do_modulo(chave_modulo) or chave_modulo
-                _admin_label = "Administração"
-                _admin_tooltip = f"Configurações de {_nome_mod_atual}"
-            else:
-                _admin_label = "Administração (sistema)"
-                _admin_tooltip = "Configurações gerais do sistema"
-            with ui.item(on_click=lambda cm=chave_modulo: ui.navigate.to(
-                    f"/admin/{cm}" if cm else "/configuracoes")).classes(
-                    "rounded-lg mx-2 my-0.5 hover:bg-blue-50 cursor-pointer") \
-                    .tooltip(_admin_tooltip):
-                with ui.item_section().props("avatar"):
-                    ui.icon("admin_panel_settings").classes("text-primary")
-                ui.item_label(_admin_label)
+            # ===== SISTEMA: menu de Administração — exclusivo do administrador geral =====
+            if autenticacao.perfil_global_de(nome_usuario) == "administrador_geral":
+                ui.separator().classes("w-full")
+                if chave_modulo:
+                    _nome_mod_atual = autenticacao.nome_do_modulo(chave_modulo) or chave_modulo
+                    _admin_label = "Administração"
+                    _admin_tooltip = f"Configurações de {_nome_mod_atual}"
+                else:
+                    _admin_label = "Administração (sistema)"
+                    _admin_tooltip = "Configurações gerais do sistema"
+                ui_comum.item_menu_drawer(
+                    _admin_label, icone="admin_panel_settings",
+                    on_click=lambda cm=chave_modulo: ui.navigate.to(
+                        f"/admin/{cm}" if cm else "/configuracoes"),
+                    tooltip=_admin_tooltip,
+                    chave_modulo=chave_modulo or "intranet",
+                    testid="menu-admin",
+                    ativo=False)
 
-            # Documentação MkDocs servida em /documentacao (main.py monta o site/)
-            with ui.item(on_click=lambda: ui.navigate.to(
-                    "/documentacao", new_tab=True)).classes(
-                    "rounded-lg mx-2 my-0.5 hover:bg-blue-50 cursor-pointer") \
-                    .tooltip("Abre a documentação técnica em nova aba"):
-                with ui.item_section().props("avatar"):
-                    ui.icon("menu_book").classes("text-primary")
-                ui.item_label("Documentação")
+                # Documentação MkDocs servida em /documentacao (main.py monta o site/)
+                ui_comum.item_menu_drawer(
+                    "Documentação", icone="menu_book",
+                    on_click=lambda: ui.navigate.to(
+                        "/documentacao", new_tab=True),
+                    tooltip="Abre a documentação técnica em nova aba",
+                    chave_modulo=chave_modulo or "intranet",
+                    testid="menu-docs",
+                    ativo=False)
+
+            ui.separator().classes("w-full")
+            ui_comum.item_menu_drawer(
+                "Sair", icone="logout", on_click=_logout,
+                tooltip="Encerrar a sessão e sair do sistema",
+                chave_modulo=chave_modulo or "intranet",
+                testid="menu-sair",
+                ativo=False)
 
     # ===== FOOTER (parte 4) =====
-    with ui.footer().classes("bg-grey-8"):
-        with ui.row().classes("w-full items-center justify-between px-4 py-1.5"):
+    with ui.footer().classes("bg-grey-8 w-full").style("min-width: 0"):
+        with ui.row().classes("w-full items-center justify-between flex-wrap px-4 py-1.5").style("gap: 0.5rem; min-width: 0"):
             texto_rodape = _obter_config("texto_rodape", "uso interno") or "uso interno"
             ui.label(f"{titulo_sistema} Básica — {texto_rodape}").classes(
                 "text-caption opacity-80")
             # Versões (esquerda -> direita): 1ª global do sistema, seguida da
             # parte do módulo atual mesclada (ocultando AAMMDD iguais).
             # Sempre exibido num rótulo único; o detalhe completo fica no tooltip.
-            with ui.row().classes("items-center").style("gap: 0.5rem"):
+            with ui.row().classes("items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
                 versao = _obter_versao()
                 versao_mod = _obter_versao_modulo(chave_modulo) if chave_modulo else None
                 resultado = _formatar_versao_rodape(versao, versao_mod)
