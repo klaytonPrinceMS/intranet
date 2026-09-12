@@ -158,17 +158,24 @@ def achar_botoes(texto):
             if isinstance(e, Button) and e.text == texto]
 
 
-def clicar(botao_el):
-    """Dispara os handlers de clique do botão (fluxo real do NiceGUI)."""
+async def clicar(botao_el):
+    """Dispara os handlers de clique do botão (fluxo real do NiceGUI).
+
+    Suporta handlers síncronos e assíncronos (Aplicar via io_bound):
+    se o handler devolver awaitable, aguarda a conclusão.
+    """
+    import inspect as _inspect
     for lst in list(botao_el._event_listeners.values()):
         if lst.type == "click" and lst.handler:
-            lst.handler(None)
+            ret = lst.handler(None)
+            if _inspect.isawaitable(ret):
+                await ret
 
 
-def clicar_seguro(botao_el):
+async def clicar_seguro(botao_el):
     """clicar() capturando exceção — devolve None ou o erro."""
     try:
-        clicar(botao_el)
+        await clicar(botao_el)
         return None
     except Exception as ex:
         return ex
@@ -223,9 +230,9 @@ async def main():
     aplicar = achar_botoes("Aplicar")
     check(len(achar_botoes("APLICAR")) == 0,
           "sem botão APLICAR geral na barra do menu_mod")
-    check(len(aplicar) == 8,
+    check(len(aplicar) == 9,
           "um botão 'Aplicar' por card (Cores, Textos, Gerais, Ícones, "
-          "E-mail, Páginas, Obs, OTel)")
+          "E-mail, Páginas, Obs, OTel, Banco)")
 
     # ================== 1) ATIVAÇÃO ==================
     print("-- ATIVAÇÃO (campo existe, habilitado e editável) --")
@@ -270,7 +277,7 @@ async def main():
     _timer_calls.clear()
     _rb_calls.clear()
     horas_vigentes = get_config("backup_interval_hours", "12")
-    erros = [clicar_seguro(b) for b in aplicar]
+    erros = [(await clicar_seguro(b)) for b in aplicar]
     check(all(e is None for e in erros),
           "Aplicar de todos os cards sem edição roda sem crash")
     for k, v in ORIG.items():
@@ -280,8 +287,8 @@ async def main():
               f"Aplicar sem editar preserva '{k}' (anti-zeramento)")
     check(len(_obs_calls) == 1,
           "Aplicar (Obs) reconfigura a observabilidade (1 chamada)")
-    check(len(_timer_calls) == len(aplicar),
-          "cada Aplicar agenda o recarregamento da página (ui.timer)")
+    check(len(_timer_calls) == len(aplicar) - 1,
+          "cada Aplicar agenda o recarregamento da página (ui.timer) — exceto Banco (exige restart)")
     check(all(a[0] == 1.0 for a in _timer_calls),
           "todos os Aplicar recarregam após 1 segundo")
     chaves_rb = {c for c, _h in _rb_calls}
@@ -319,7 +326,7 @@ async def main():
         if achados:
             achados[0].set_value(novo)
     _obs_calls.clear()
-    erros = [clicar_seguro(b) for b in aplicar]
+    erros = [(await clicar_seguro(b)) for b in aplicar]
     check(all(e is None for e in erros),
           "Aplicar de todos os cards após editar roda sem crash")
     esperados = {
@@ -352,7 +359,7 @@ async def main():
     }
     for rotulo, (_k, invalido, _e) in CLAMPS.items():
         achar_campos(rotulo)[0].set_value(invalido)
-    erro = clicar_seguro(aplicar[2])  # Aplicar do card Gerais
+    erro = await clicar_seguro(aplicar[2])  # Aplicar do card Gerais
     check(erro is None, "Aplicar (Gerais) com limites estourados (0 / -3 / 99) sem crash")
     for rotulo, (k, _i, esperado) in CLAMPS.items():
         check(get_config(k, None) == esperado,
@@ -368,7 +375,7 @@ async def main():
         achar_campos(rotulo)[0].set_value(invalido)
     achar_campos("Tamanho dos botões")[0].set_value("gigante")
     achar_campos("Cor primária (menus e destaques)")[0].set_value("")
-    erros = [clicar_seguro(aplicar[0]), clicar_seguro(aplicar[2])]
+    erros = [(await clicar_seguro(aplicar[0])), (await clicar_seguro(aplicar[2]))]
     check(all(e is None for e in erros),
           "Aplicar (Cores/Gerais) com entrada não numérica ('abc') não derruba")
     for rotulo, (k, _i, esperado) in CLAMPS2.items():
@@ -402,14 +409,14 @@ async def main():
     for i, (nome_grupo, esperados) in enumerate(GRUPOS):
         _rb_calls.clear()
         antes = len(achar_botoes("Restaurar"))
-        clicar(restaurar[i])
+        await clicar(restaurar[i])
         dialogo = achar_botoes("Restaurar")
         if len(dialogo) <= antes:
             check(False, f"'{nome_grupo}': diálogo de confirmação abre")
             continue
         check(achar_botoes("Cancelar") and len(dialogo) == antes + 1,
               f"'{nome_grupo}': diálogo com Cancelar + Restaurar")
-        clicar(dialogo[antes])
+        await clicar(dialogo[antes])
         falta = [k for k, v in esperados.items() if get_config(k, None) != v]
         check(not falta, f"'{nome_grupo}': banco volta ao padrão codificado"
                          + (f" — faltam {falta}" if falta else ""))
@@ -433,12 +440,12 @@ async def main():
           "8 botões 'Restaurar padrão' (4 Config + E-mail + Páginas + "
           "Observabilidade + Telemetria)")
     antes = len(achar_botoes("Restaurar"))
-    erro = clicar_seguro(restaurar[5])  # Páginas do sistema (aba Módulo)
+    erro = await clicar_seguro(restaurar[5])  # Páginas do sistema (aba Módulo)
     check(erro is None, f"MÓDULO: abrir diálogo do restore sem crash"
           + (f" — erro: {erro}" if erro else ""))
     dialogo = achar_botoes("Restaurar")
     if len(dialogo) > antes:
-        erro = clicar_seguro(dialogo[antes])
+        erro = await clicar_seguro(dialogo[antes])
         check(erro is None, f"MÓDULO: confirmar restore sem crash"
               + (f" — erro: {erro}" if erro else ""))
         conn = auth.get_connection()

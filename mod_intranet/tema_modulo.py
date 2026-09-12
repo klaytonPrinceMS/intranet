@@ -30,6 +30,7 @@ cada renderização da tela. O próprio módulo Intranet usa o prefixo
 """
 import sys
 import os
+from functools import lru_cache
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
@@ -62,7 +63,7 @@ PADROES_TEMA = {
                  "cor_titulo": "#212121", "btn_tamanho": "medium"},
     "auditoria": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
                   "cor_titulo": "#212121", "btn_tamanho": "medium"},
-    "editar_pdf": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
+    "editar_pdf": {"cor_botao": "#522e2e", "cor_texto_botao": "#FFFFFF",
                    "cor_titulo": "#212121", "btn_tamanho": "medium"},
     "empenhos": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
                  "cor_titulo": "#212121", "btn_tamanho": "medium"},
@@ -81,6 +82,7 @@ def prefixo_da_chave(chave_modulo: str) -> str:
     return PREFIXO_POR_CHAVE.get(chave_modulo, chave_modulo)
 
 
+@lru_cache(maxsize=32)
 def _cfg(chave, default):
     """Reads one central `tb_config` key as stripped text (fail-soft).
 
@@ -94,6 +96,7 @@ def _cfg(chave, default):
         return default
 
 
+@lru_cache(maxsize=16)
 def ler_tema(chave_modulo: str, cor_botao=None, cor_texto_botao=None,
              cor_fundo="", cor_titulo=None, btn_tamanho=None,
              texto_header=""):
@@ -154,6 +157,14 @@ def salvar_tema(chave_modulo: str, valores: dict) -> None:
     for campo, chave in mapa.items():
         if campo in valores:
             set_config(chave, valores[campo] or "")
+    try:
+        _cfg.cache_clear()
+    except Exception:
+        pass
+    try:
+        ler_tema.cache_clear()
+    except Exception:
+        pass
 
 
 def restaurar_tema(chave_modulo: str, defaults: dict) -> None:
@@ -461,6 +472,8 @@ def bloco_aparencia(usuario_logado, chave_modulo, tema: dict,
                 inp_texto_header = ui_comum.campo_texto(
                     "Texto do cabeçalho", valor=tema.get("texto_header", ""))
 
+        _estado_tema = {"ocupado": False}
+
         def salvar():
             """Applies ONLY this card's colors: saves, audits, reloads after 1s.
 
@@ -480,7 +493,14 @@ def bloco_aparencia(usuario_logado, chave_modulo, tema: dict,
             }
             if inp_texto_header is not None:
                 valores["texto_header"] = inp_texto_header.value or ""
-            salvar_tema(chave_modulo, valores)
+            if _estado_tema["ocupado"]:
+                notificar("Aguarde a operação em andamento…", type="warning")
+                return
+            _estado_tema["ocupado"] = True
+            try:
+                salvar_tema(chave_modulo, valores)
+            finally:
+                _estado_tema["ocupado"] = False
             try:
                 audit_log(usuario_logado, prefixo_auditoria, "configuracao",
                           ao_salvar_descricao)

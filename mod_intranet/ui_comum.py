@@ -368,12 +368,15 @@ def rodape_salvar_restaurar(salvar, restaurar=None, *, chave_modulo="intranet",
                 _log().error(f"rodape_salvar_restaurar: ação extra inválida "
                              f"ignorada ({item!r}): {e}")
         if callable(restaurar):
-            botao(rotulo_restaurar, on_click=restaurar, variante="restaurar",
+            _btn_restaurar = botao(rotulo_restaurar, on_click=restaurar, variante="restaurar",
                   chave_modulo=chave_modulo)
+        else:
+            _btn_restaurar = None
         _btn_aplicar = botao(rotulo_salvar, icone=icone_salvar, on_click=salvar,
                              variante="solido", chave_modulo=chave_modulo)
         if _btn_aplicar is not None and data_testid:
             _btn_aplicar.props(f'data-testid={data_testid}')
+        return (_btn_restaurar, _btn_aplicar)
 
 
 def _valor_config(chave, padrao, origem):

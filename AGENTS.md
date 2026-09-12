@@ -145,6 +145,23 @@ Não use Declarative. Use mapeamento imperativo em `models/__init__.py`:
 - Valide o papel do ator antes de qualquer escrita.
 - Gestão de estado: `ui.notify()`, `ui.spinner()`, desabilitar botões durante requisições
 
+### 5.1 Anti-disconnect — handlers nunca bloqueiam o event-loop (09/2026)
+- **Regra:** `on_click` rápido (`set_config`, `UPDATE` curto) pode ser `sync`. I/O pesado
+  (`subprocess` mkdocs, SMTP, `shutil.copy2`, `observabilidade.configurar()`, `rodar_monitor`)
+  DEVE rodar em `await run.io_bound(fn)` dentro de handler `async`, com spinner
+  (`ui.spinner` + `aria-label`), botão desabilitado e trava de reentrância (`ocupado`).
+- **Reload único:** `ui.timer(1.0, ui.navigate.reload())` só após conclusão + `notificar()`
+  visível. Card Banco **nunca recarrega** (exige restart) — usa `_aplicar_card_sem_reload`.
+- **Docs/SMTP/Backup SEMPRE async:** `documentacao.reconstruir()`, `email_util.testar_conexao()`,
+  `rotinas.backup_modulo()`/`rodar_agora`/`salvar_intervalo` — nunca `sync` no clique.
+- **Backup seguro:** `PRAGMA wal_checkpoint(TRUNCATE)` antes do `copy2` + `except OSError → None`
+  (falha de backup nunca derruba o handler).
+- **Rodapé padrão:** `ui_comum.rodape_salvar_restaurar()` retorna `(btn_restaurar, btn_aplicar)` e
+  todo Aplicar tem `data-testid` (`config-aplicar-<card>`, `config-reconstruir-docs`).
+  Avisos via `tema_modulo.notificar()` (respeita `notificacao_timeout`), nunca `ui.notify` cru.
+- **Testes headless:** `clicar()` do teste deve aguardar handlers `async`
+  (`inspect.isawaitable → await`) — ver `assets/test/teste_aba_config_intranet.py`.
+
 ### Boas Práticas NiceGUI + Bootstrap/Tailwind
 - Use `.classes()` para Tailwind e `.props()` para Quasar
 - Prefira componentes com CSS do Bootstrap

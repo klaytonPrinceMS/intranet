@@ -76,26 +76,57 @@ def painel_backup(usuario: str, chave_modulo: str):
                     precision=0,
                 ).props("outlined dense").classes("w-40")
 
-                def salvar_intervalo():
-                    h = max(1, int(inp_horas.value or 12))
-                    set_config(f"backup_horas:{chave_modulo}", h)
-                    reagendar_backup(chave_modulo, h)
-                    audit_log(usuario, "intranet", "config_alterada",
-                              f"backup_horas:{chave_modulo}={h}h")
-                    ui.notify(f"Intervalo salvo: {h}h (aplicado sem reiniciar)",
-                              type="positive")
+                async def salvar_intervalo():
+                    from nicegui import run as _run_rot
+                    from mod_intranet.tema_modulo import notificar as _notificar
+                    def _gravar():
+                        h = max(1, int(inp_horas.value or 12))
+                        set_config(f"backup_horas:{chave_modulo}", h)
+                        reagendar_backup(chave_modulo, h)
+                        return h
+                    try:
+                        h = await _run_rot.io_bound(_gravar)
+                    except Exception:
+                        _notificar("Erro ao salvar intervalo", type="negative")
+                        return
+                    try:
+                        audit_log(usuario, "intranet", "config_alterada",
+                                  f"backup_horas:{chave_modulo}={h}h")
+                    except Exception:
+                        pass
+                    _notificar(f"Intervalo salvo: {h}h (aplicado sem reiniciar)",
+                               type="positive")
 
                 _botao_tema("Salvar intervalo", on_click=salvar_intervalo)
 
-                def rodar_agora():
-                    gerado = backup_modulo(chave_modulo)
+                async def rodar_agora():
+                    from nicegui import run as _run_rot2
+                    from mod_intranet.tema_modulo import notificar as _notificar2
+                    _bk_status = ui.row().classes("w-full items-center justify-center") \
+                        .style("gap: 0.5rem")
+                    with _bk_status:
+                        ui.spinner(size="lg").props("aria-label=Gerando backup")
+                        ui.label("Gerando cópia…").classes("text-caption text-grey-7")
+                    try:
+                        gerado = await _run_rot2.io_bound(lambda: backup_modulo(chave_modulo))
+                    finally:
+                        try:
+                            _bk_status.clear()
+                        except Exception:
+                            pass
                     if gerado:
-                        audit_log(usuario, "intranet", "backup_manual",
-                                  f"módulo={chave_modulo} arquivo={gerado}")
-                        ui.notify(f"Cópia gerada: {gerado}", type="positive")
-                        grade.refresh()
+                        try:
+                            audit_log(usuario, "intranet", "backup_manual",
+                                      f"módulo={chave_modulo} arquivo={gerado}")
+                        except Exception:
+                            pass
+                        _notificar2(f"Cópia gerada: {gerado}", type="positive")
+                        try:
+                            grade.refresh()
+                        except Exception:
+                            pass
                     else:
-                        ui.notify("Falha ao gerar a cópia", type="negative")
+                        _notificar2("Falha ao gerar a cópia", type="negative")
 
                 _botao_tema("Fazer backup agora", icone="backup",
                            on_click=rodar_agora)
@@ -232,10 +263,21 @@ def backup_modulo(chave):
     origem = os.path.join(BASE_DIR, arquivo)
     if not os.path.exists(origem):
         return None
-    os.makedirs(PASTA_BACKUP, exist_ok=True)
-    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    destino = os.path.join(PASTA_BACKUP, f"{stamp}_{arquivo}")
-    shutil.copy2(origem, destino)
+    try:
+        try:
+            _con = sqlite3.connect(origem, timeout=10)
+            try:
+                _con.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            finally:
+                _con.close()
+        except Exception:
+            pass
+        os.makedirs(PASTA_BACKUP, exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        destino = os.path.join(PASTA_BACKUP, f"{stamp}_{arquivo}")
+        shutil.copy2(origem, destino)
+    except OSError:
+        return None
     _podar_backups()
     return os.path.basename(destino)
 

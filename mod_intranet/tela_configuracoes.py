@@ -326,6 +326,84 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         notificar(msg_final, type="positive")
         _reload_apos()
 
+    _estado_aplicar = {"ocupado": False, "reload_agendado": False}
+
+    def _pode_escrever() -> bool:
+        """Gate DDD: só administrador_geral aplica (dupla camada com a guarda da rota)."""
+        try:
+            return autenticacao.perfil_global_de(user_nome) == "administrador_geral"
+        except Exception:
+            return False
+
+    async def _aplicar_card_async(rotulo, audit_desc, salvar_fn, msg=None,
+                                  extra_msg="", recarregar=True):
+        """Versão assíncrona do Aplicar: não bloqueia o event-loop (sem disconnect).
+
+        Executa `salvar_fn` em `run.io_bound` (thread), com trava de
+        reentrância (`ocupado`), spinner de progresso e reload único
+        (`reload_agendado`). Mantém `_aplicar_card` síncrono legado para
+        compatibilidade dos testes estáticos.
+        """
+        from nicegui import run as _run
+        if not _pode_escrever():
+            notificar("Sem permissão — só administrador geral aplica.",
+                      type="negative")
+            return
+        if _estado_aplicar["ocupado"]:
+            notificar("Aguarde a operação em andamento…", type="warning")
+            return
+        _estado_aplicar["ocupado"] = True
+        _status = ui.row().classes("w-full items-center justify-center") \
+            .style("gap: 0.5rem")
+        with _status:
+            ui.spinner(size="lg").props(f"aria-label=Aplicando {rotulo}")
+            ui.label(f"Aplicando {rotulo}…").classes("text-caption text-grey-7")
+        try:
+            await _run.io_bound(salvar_fn)
+        except Exception:
+            from mod_intranet import observabilidade as _obs
+            _obs.get_logger("intranet").exception(
+                f"falha ao aplicar card '{rotulo}'")
+            try:
+                _status.clear()
+            except Exception:
+                pass
+            _estado_aplicar["ocupado"] = False
+            notificar(f"Erro ao aplicar {rotulo}", type="negative")
+            return
+        try:
+            audit_log(user_nome, "intranet", "config_alterada", audit_desc)
+        except Exception:
+            pass
+        msg_final = msg or f"{rotulo} aplicado — recarregando…"
+        if extra_msg:
+            msg_final += f" {extra_msg}"
+        notificar(msg_final, type="positive")
+        try:
+            _status.clear()
+        except Exception:
+            pass
+        _estado_aplicar["ocupado"] = False
+        if recarregar:
+            _reload_apos()
+
+    def _aplicar_card_sem_reload(rotulo, audit_desc, salvar_fn):
+        """Aplicar síncrono sem reload (ex.: Banco exige restart do servidor)."""
+        try:
+            salvar_fn()
+        except Exception:
+            from mod_intranet import observabilidade as _obs2
+            _obs2.get_logger("intranet").exception(
+                f"falha ao aplicar card '{rotulo}'")
+            notificar(f"Erro ao aplicar {rotulo}", type="negative")
+            return
+        try:
+            audit_log(user_nome, "intranet", "config_alterada", audit_desc)
+        except Exception:
+            pass
+        notificar("Banco de dados atualizado — REINICIE o servidor para aplicar.",
+                  type="warning", close_button="Fechar")
+
     def aplicar_cores():
         """Applies ONLY the 'Configurações de cores' card fields.
 
@@ -474,6 +552,48 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         notificar(f"Páginas aplicadas — {extra}", type="positive",
                   multi_line=("Avisos:" in extra),
                   close_button="Fechar" if "Avisos:" in extra else False)
+        _reload_apos()
+
+    async def _aplicar_paginas_async():
+        """Versão assíncrona: grava páginas em io_bound, reload único."""
+        from nicegui import run as _run_pag
+        if not _pode_escrever():
+            notificar("Sem permissão — só administrador geral aplica.",
+                      type="negative")
+            return
+        if _estado_aplicar["ocupado"]:
+            notificar("Aguarde a operação em andamento…", type="warning")
+            return
+        _estado_aplicar["ocupado"] = True
+        _pag_status = ui.row().classes("w-full items-center justify-center") \
+            .style("gap: 0.5rem")
+        with _pag_status:
+            ui.spinner(size="lg").props("aria-label=Aplicando páginas")
+            ui.label("Aplicando páginas…").classes("text-caption text-grey-7")
+        try:
+            extra = await _run_pag.io_bound(aplicar_paginas)
+        except Exception:
+            from mod_intranet import observabilidade as _obs
+            _obs.get_logger("intranet").exception("falha ao aplicar páginas")
+            try:
+                _pag_status.clear()
+            except Exception:
+                pass
+            _estado_aplicar["ocupado"] = False
+            notificar("Erro ao aplicar Páginas do sistema", type="negative")
+            return
+        try:
+            audit_log(user_nome, "intranet", "config_alterada", "páginas aplicadas")
+        except Exception:
+            pass
+        notificar(f"Páginas aplicadas — {extra}", type="positive",
+                  multi_line=("Avisos:" in extra),
+                  close_button="Fechar" if "Avisos:" in extra else False)
+        try:
+            _pag_status.clear()
+        except Exception:
+            pass
+        _estado_aplicar["ocupado"] = False
         _reload_apos()
 
 
@@ -907,7 +1027,8 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                                 campos=[(f_icone, "icone",
                                          PADRAO_CONFIG["icone_sistema"])],
                                 pos_acao=remover_fav)),
-                        chave_modulo="intranet")
+                        chave_modulo="intranet",
+                        data_testid="config-aplicar-icones")
 
             # ============================================================
             # ABA: E-MAIL / SMTP
@@ -963,14 +1084,26 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     estado_campos["smtp_de"] = sm_de.value
                     estado_campos["smtp_tls"] = sm_tls.value
 
-                    def testar_smtp():
-                        set_config("smtp_servidor", sm_serv.value or "")
-                        set_config("smtp_porta", sm_port.value or "587")
-                        set_config("smtp_usuario", sm_user.value or "")
-                        set_config("smtp_senha", sm_senha.value or "")
-                        set_config("smtp_de", sm_de.value or "")
-                        set_config("smtp_tls", "1" if sm_tls.value else "0")
-                        ok, msg = email_util.testar_conexao()
+                    async def testar_smtp():
+                        from nicegui import run as _run_smtp
+                        _smtp_status = ui.row().classes("w-full items-center justify-center") \
+                            .style("gap: 0.5rem")
+                        with _smtp_status:
+                            ui.spinner(size="lg").props("aria-label=Testando SMTP")
+                            ui.label("Testando conexão SMTP…").classes("text-caption text-grey-7")
+                        try:
+                            set_config("smtp_servidor", sm_serv.value or "")
+                            set_config("smtp_porta", sm_port.value or "587")
+                            set_config("smtp_usuario", sm_user.value or "")
+                            set_config("smtp_senha", sm_senha.value or "")
+                            set_config("smtp_de", sm_de.value or "")
+                            set_config("smtp_tls", "1" if sm_tls.value else "0")
+                            ok, msg = await _run_smtp.io_bound(email_util.testar_conexao)
+                        finally:
+                            try:
+                                _smtp_status.clear()
+                            except Exception:
+                                pass
                         notificar(msg, type="positive" if ok else "negative",
                                   multi_line=True, close_button="Fechar")
 
@@ -993,7 +1126,8 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                                     sm_tls.set_value(True),
                                     estado_campos.update(smtp_tls=True)))),
                         acoes_extra=[("Testar conexão SMTP", "mail", testar_smtp)],
-                        chave_modulo="intranet")
+                        chave_modulo="intranet",
+                        data_testid="config-aplicar-smtp")
 
             # ============================================================
             # ABA: OBSERVABILIDADE / LOGS
@@ -1119,7 +1253,8 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                                       lambda: confirmar(
                                           "LIMPEZA TOTAL dos logs", limpar_logs),
                                       None, "perigo")],
-                        chave_modulo="intranet")
+                        chave_modulo="intranet",
+                        data_testid="config-aplicar-obs")
 
                 with ui_comum.card_admin(
                         "Telemetria OTel — stack local ou servidor dedicado",
@@ -1192,7 +1327,8 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                                         (sw_otel_auto, "otel_auto_start_stack", True),
                                         (inp_grafana_url, "grafana_url",
                                          "http://localhost:3000")])),
-                        chave_modulo="intranet")
+                        chave_modulo="intranet",
+                        data_testid="config-aplicar-otel")
 
             # ============================================================
             # ABA: DOCUMENTAÇÃO
@@ -1206,18 +1342,38 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                              "Edições em docs/*.md valem após reconstruir.") \
                         .classes("text-caption text-grey-7 max-w-3xl -mt-2")
 
-                    def reconstruir_docs():
-                        ok, msg = documentacao.reconstruir()
+                    async def reconstruir_docs():
+                        from nicegui import run as _run_docs
+                        if not _pode_escrever():
+                            notificar("Sem permissão — só administrador geral aplica.",
+                                      type="negative")
+                            return
+                        _docs_status = ui.row().classes("w-full items-center justify-center") \
+                            .style("gap: 0.5rem")
+                        with _docs_status:
+                            ui.spinner(size="lg").props("aria-label=Reconstruindo documentação")
+                            ui.label("Reconstruindo documentação… (até 2 min, sem travar a tela)").classes("text-caption text-grey-7")
+                        try:
+                            ok, msg = await _run_docs.io_bound(documentacao.reconstruir)
+                        finally:
+                            try:
+                                _docs_status.clear()
+                            except Exception:
+                                pass
                         if ok:
-                            audit_log(user_nome, "intranet", "documentacao_reconstruida",
-                                      msg[:200])
+                            try:
+                                audit_log(user_nome, "intranet", "documentacao_reconstruida",
+                                          msg[:200])
+                            except Exception:
+                                pass
                         notificar(msg, type="positive" if ok else "negative",
                                   multi_line=True, close_button="Fechar")
 
                     with ui.row().classes("w-full items-center justify-center flex-wrap") \
                             .style("gap: 0.5rem"):
                         _botao_padrao("Reconstruir documentação", tipo="primario",
-                              icone="menu_book", on_click=reconstruir_docs)
+                              icone="menu_book", on_click=reconstruir_docs) \
+                            .props("data-testid=config-reconstruir-docs")
                         _botao_padrao(icone="open_in_new", tipo="icone",
                                       tooltip="Abrir a documentação em nova aba",
                                       on_click=lambda: ui.navigate.to(
@@ -1251,12 +1407,21 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     def aplicar_banco():
                         salvar_backend(sel_banco.value or "sqlite",
                                        inp_pg_url.value or "")
+
+                    def _salvar_banco_sem_reload():
+                        aplicar_banco()
                         notificar(
                             "Banco de dados atualizado — REINICIE o servidor "
                             "para aplicar (as conexões ativas seguem no "
-                            "backend anterior).", type="warning")
+                            "backend anterior).", type="warning",
+                            close_button="Fechar")
 
-                    _aplicar_card("Banco de dados", "config_banco", aplicar_banco)
+                    ui_comum.rodape_salvar_restaurar(
+                        salvar=lambda: _aplicar_card_sem_reload(
+                            "Banco de dados", "config_banco",
+                            aplicar_banco),
+                        chave_modulo="intranet",
+                        data_testid="config-aplicar-banco")
 
             # ============================================================
             # ABA: MÓDULO
@@ -1464,7 +1629,8 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         restaurar=lambda: confirmar(
                             "nomes, URLs, ícones e ordem das páginas",
                             restaurar_paginas_padrao),
-                        chave_modulo="intranet")
+                        chave_modulo="intranet",
+                        data_testid="config-aplicar-paginas")
 
                 # ---- Registro de módulos e vínculos órfãos ----
                 from mod_gest_cad_usuario import bd_manipulador as gest_usuarios
