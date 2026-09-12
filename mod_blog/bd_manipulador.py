@@ -22,6 +22,7 @@ from html.parser import HTMLParser
 
 from mod_intranet.bd_conexao import get_connection, DB_PATH, get_config, set_config
 from mod_intranet.crud_base import CrudBase, audit_reg
+from mod_intranet.decoradores import requer_pode_publicar, auditado, falha_suave
 from nh3 import clean
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -415,105 +416,106 @@ def _pode_publicar(usuario):
         return False
 
 
+@falha_suave(default=None, nivel="exception")
+@requer_pode_publicar(arg_usuario="autor")
+@auditado(modulo="blog", acao="criar_postagem")
 def criar_postagem(titulo, conteudo, autor):
     """Creates a post (sanitized) after checking publish permission.
 
     Valida permissão (`_pode_publicar`), sanitiza título e conteúdo com nh3,
     grava no banco próprio, audita `criar_postagem` e registra no loguru.
     Retorna o id criado ou None em falha/sem permissão."""
-    if not _pode_publicar(autor):
-        _log().warning(f"'{autor}' sem permissão de publicação bloqueado")
-        return None
     titulo_sanitizado = _sanitizar_texto(titulo)
     conteudo_sanitizado = _sanitizar_texto(conteudo)
-    
-    try:
-        post_id = _crud.criar(
-            "INSERT INTO tb_postagens (titulo, conteudo, autor) VALUES (?, ?, ?)",
-            (titulo_sanitizado, conteudo_sanitizado, autor))
-        _log().info(f"postagem criada #{post_id} por {autor}")
-        audit_reg(autor, "blog", "criar_postagem",
-                  f"Postagem #{post_id} criada por {autor}")
-        return post_id
-    except Exception:
-        _log().exception("Erro ao criar postagem")
-        return None
+    post_id = _crud.criar(
+        "INSERT INTO tb_postagens (titulo, conteudo, autor) VALUES (?, ?, ?)",
+        (titulo_sanitizado, conteudo_sanitizado, autor))
+    _log().info(f"postagem criada #{post_id} por {autor}")
+    return post_id
 
 
+@falha_suave(default=False, nivel="exception")
+@requer_pode_publicar(arg_usuario="autor")
+@auditado(modulo="blog", acao="atualizar_postagem")
 def atualizar_postagem(id_post, titulo, conteudo, autor):
     """Updates title/content (sanitized) after checking permission. Returns bool.
 
     Valida permissão, sanitiza com nh3, atualiza `data_atualizacao` e audita
     `atualizar_postagem`. False em falha/sem permissão/postagem inexistente."""
-    if not _pode_publicar(autor):
-        return False
     titulo_sanitizado = _sanitizar_texto(titulo)
     conteudo_sanitizado = _sanitizar_texto(conteudo)
-    
-    try:
-        afetadas = _crud.atualizar(
-            "UPDATE tb_postagens SET titulo=?, conteudo=?, "
-            "data_atualizacao=datetime('now') WHERE id=?",
-            (titulo_sanitizado, conteudo_sanitizado, id_post))
-        _log().info(f"postagem atualizada #{id_post} por {autor}")
-        audit_reg(autor, "blog", "atualizar_postagem",
-                  f"Postagem #{id_post} atualizada por {autor}")
-        return afetadas > 0
-    except Exception:
-        _log().exception(f"Erro ao atualizar postagem #{id_post}")
-        return False
+    afetadas = _crud.atualizar(
+        "UPDATE tb_postagens SET titulo=?, conteudo=?, "
+        "data_atualizacao=datetime('now') WHERE id=?",
+        (titulo_sanitizado, conteudo_sanitizado, id_post))
+    _log().info(f"postagem atualizada #{id_post} por {autor}")
+    return afetadas > 0
 
 
+@falha_suave(default=False, nivel="exception")
+@requer_pode_publicar(arg_usuario="autor")
+@auditado(modulo="blog", acao="excluir_postagem")
 def excluir_postagem(id_post, autor):
     """Soft-deletes a post (ativo=0) after checking permission. Returns bool."""
-    if not _pode_publicar(autor):
-        return False
-    try:
-        afetadas = _crud.atualizar(
-            "UPDATE tb_postagens SET ativo=0 WHERE id=?", (id_post,))
-        _log().info(f"postagem excluída (ativo=0) #{id_post} por {autor}")
-        audit_reg(autor, "blog", "excluir_postagem",
-                  f"Postagem #{id_post} excluída (soft delete) por {autor}")
-        return afetadas > 0
-    except Exception:
-        _log().exception(f"Erro ao excluir postagem #{id_post}")
-        return False
+    afetadas = _crud.atualizar(
+        "UPDATE tb_postagens SET ativo=0 WHERE id=?", (id_post,))
+    _log().info(f"postagem excluída (ativo=0) #{id_post} por {autor}")
+    return afetadas > 0
 
 
+@falha_suave(default=(0, 0), nivel="exception")
+@requer_pode_publicar(arg_usuario="autor")
+@auditado(modulo="blog", acao="excluir_postagens_em_lote")
+def excluir_postagens_em_lote(ids, autor):
+    """Soft-deletes multiple posts (ativo=0) after checking permission. Returns (ok_count, falha_count)."""
+    if not ids:
+        return 0, 0
+    ok, falha = 0, 0
+    for pid in ids:
+        try:
+            pid_int = int(pid)
+        except (ValueError, TypeError):
+            falha += 1
+            continue
+        try:
+            afetadas = _crud.atualizar(
+                "UPDATE tb_postagens SET ativo=0 WHERE id=?", (pid_int,))
+            if afetadas and afetadas > 0:
+                ok += 1
+            else:
+                falha += 1
+        except Exception:
+            _log().exception(f"Erro ao excluir postagem #{pid_int} em lote")
+            falha += 1
+    if ok:
+        _log().info(f"exclusão em lote: {ok} postagem(ns) por {autor} (falhas: {falha})")
+    return ok, falha
+
+
+@falha_suave(default=False, nivel="exception")
+@requer_pode_publicar(arg_usuario="autor")
+@auditado(modulo="blog", acao="despublicar_postagem")
 def despublicar_postagem(id_post, autor):
     """Remove uma postagem da exibição pública (ativo=0, despublicar).
 
     Equivale a ocultar do histórico sem a remover do banco. Permite republicar
     posteriormente via publicar_postagem.
     """
-    if not _pode_publicar(autor):
-        return False
-    try:
-        afetadas = _crud.atualizar(
-            "UPDATE tb_postagens SET ativo=0 WHERE id=?", (id_post,))
-        _log().info(f"postagem despublicada (ativo=0) #{id_post} por {autor}")
-        audit_reg(autor, "blog", "despublicar_postagem",
-                  f"Postagem #{id_post} despublicada por {autor}")
-        return afetadas > 0
-    except Exception:
-        _log().exception(f"Erro ao despublicar postagem #{id_post}")
-        return False
+    afetadas = _crud.atualizar(
+        "UPDATE tb_postagens SET ativo=0 WHERE id=?", (id_post,))
+    _log().info(f"postagem despublicada (ativo=0) #{id_post} por {autor}")
+    return afetadas > 0
 
 
+@falha_suave(default=False, nivel="exception")
+@requer_pode_publicar(arg_usuario="autor")
+@auditado(modulo="blog", acao="publicar_postagem")
 def publicar_postagem(id_post, autor):
     """Reativa/publica uma postagem despublicada (ativo=1)."""
-    if not _pode_publicar(autor):
-        return False
-    try:
-        afetadas = _crud.atualizar(
-            "UPDATE tb_postagens SET ativo=1 WHERE id=?", (id_post,))
-        _log().info(f"postagem republicada (ativo=1) #{id_post} por {autor}")
-        audit_reg(autor, "blog", "publicar_postagem",
-                  f"Postagem #{id_post} republicada por {autor}")
-        return afetadas > 0
-    except Exception:
-        _log().exception(f"Erro ao republicar postagem #{id_post}")
-        return False
+    afetadas = _crud.atualizar(
+        "UPDATE tb_postagens SET ativo=1 WHERE id=?", (id_post,))
+    _log().info(f"postagem republicada (ativo=1) #{id_post} por {autor}")
+    return afetadas > 0
 
 
 def listar_comentarios(postagem_id):
@@ -526,27 +528,20 @@ def listar_comentarios(postagem_id):
         "WHERE postagem_id=? ORDER BY data_criacao", (postagem_id,))
 
 
+@falha_suave(default=False, nivel="exception")
+@requer_pode_publicar(arg_usuario="autor")
+@auditado(modulo="blog", acao="criar_comentario")
 def criar_comentario(postagem_id, autor, conteudo):
     """Creates a sanitized comment after checking permission. Returns bool.
 
     Regra do módulo: usuário comum não comenta — a tentativa é bloqueada com
     warning no loguru. Conteúdo sanitizado com nh3; audita `criar_comentario`."""
-    if not _pode_publicar(autor):
-        _log().warning(f"'{autor}' sem permissão de comentar bloqueado")
-        return False
     conteudo_sanitizado = _sanitizar_texto(conteudo)
-    
-    try:
-        _crud.criar(
-            "INSERT INTO tb_comentarios (postagem_id, autor, conteudo) VALUES (?, ?, ?)",
-            (postagem_id, autor, conteudo_sanitizado))
-        _log().info(f"comentario criado na postagem #{postagem_id} por {autor}")
-        audit_reg(autor, "blog", "criar_comentario",
-                  f"Comentário criado na postagem #{postagem_id} por {autor}")
-        return True
-    except Exception:
-        _log().exception(f"Erro ao criar comentario na postagem #{postagem_id}")
-        return False
+    _crud.criar(
+        "INSERT INTO tb_comentarios (postagem_id, autor, conteudo) VALUES (?, ?, ?)",
+        (postagem_id, autor, conteudo_sanitizado))
+    _log().info(f"comentario criado na postagem #{postagem_id} por {autor}")
+    return True
 
 
 def _merge_style(base, extra):

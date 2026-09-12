@@ -481,7 +481,7 @@ def _config_padrao():
         "porta_site": 8080,
         "porta_postgres": 5432,
         "porta_grafana": 3000,
-        "porta_documentacao": 8000,  # porta do mkdocs (documentação)
+        "porta_documentacao": 8001,  # porta do mkdocs (documentação, evita 8000 do snap)
     }
 
 
@@ -1281,43 +1281,85 @@ def _confirmar_fallback_sqlite(motivo):
 # Argumentos de linha de comando (Typer)
 # =============================================================================
 
+def config_persistida():
+    """Loads the persisted boot config from tb_config (no prompts).
+
+    Carrega a configuração persistida em tb_config (banco_tipo,
+    postgres_url, otel_ativo, portas) e completa com os padrões de
+    _config_padrao() quando a chave ainda não existe (primeira execução).
+    Usado por `python main.py` sem argumentos — sobe direto com o que já
+    está configurado, sem perguntas."""
+    base = _config_padrao()
+    try:
+        from mod_intranet.bd_conexao import get_config as _gc
+        # banco
+        bt = (_gc("banco_tipo", base["banco_tipo"]) or base["banco_tipo"]).strip().lower()
+        base["banco_tipo"] = bt if bt in ("sqlite", "postgres") else "sqlite"
+        base["subir_postgres"] = base["banco_tipo"] == "postgres"
+        pg_url = (_gc("postgres_url", base["postgres_url"]) or base["postgres_url"]).strip()
+        if pg_url:
+            base["postgres_url"] = pg_url
+            m = re.search(r":(\d+)/", pg_url)
+            if m:
+                try:
+                    base["porta_postgres"] = _porta_valida(m.group(1), base["porta_postgres"])
+                except Exception:
+                    pass
+        # otel — em modo direto nunca tenta OTel; só via --config/--ativ-otel
+        base["otel_ativo"] = False
+        base["subir_postgres"] = False
+    except Exception:
+        pass
+    return base
+
+
 def _cli_app():
     """Builds the Typer app with the boot options (help em PT-BR).
 
-    `python main.py --help` explica cada chamada. Sem argumentos, o
-    assistente interativo assume."""
+    `python main.py --help` explica cada chamada. Sem argumentos, sobe
+    direto com a configuração persistida. `--config` abre o assistente
+    interativo."""
     import typer
     cli = typer.Typer(
         add_completion=False,
         help="Intranet Modular — inicialização do sistema.\n\n"
-             "Sem argumentos, abre o assistente interativo (ENTER = básico "
-             "SQLite; 1 + ENTER = configurar). Com argumentos, configura e "
-             "sobe direto.")
+             "Sem argumentos, sobe direto com a configuração persistida "
+             "(modo padrão). Use --config para abrir o assistente interativo "
+             "(ENTER = básico SQLite; 1 + ENTER = configurar) ou passe "
+             "--postgres/--otel/--porta* para configurar direto.")
 
     @cli.callback(invoke_without_command=True)
     def _root(
+        # --- configuração (assistente) ---
+        config: bool = typer.Option(
+            False, "--config", "-c",
+            help="Abre o assistente interativo de configuração (otel, "
+                 "postgres e portas). Sem a flag, 'python main.py' sobe direto "
+                 "no modo padrão com a configuração já persistida."),
+        # --- ativação de serviços (docker) — Opção C: prefixo --ativ- ---
+        otel: bool = typer.Option(
+            False, "--ativ-otel", "--otel", "-o",
+            help="Ativa o OpenTelemetry (Grafana+Loki+Tempo+Mimir)."),
         postgres: bool = typer.Option(
-            False, "--postgres",
+            False, "--ativ-postgres", "--ativ-postgress", "--postgres", "-p",
             help="Usa PostgreSQL (sobe o container) em vez do SQLite."),
+        # --- portas (agrupadas, em ordem alfabética, prefixo --porta-) ---
+        portadocumentacao: int = typer.Option(
+            8000, "--porta-docs", "--portadocumentacao", "-d",
+            help="Porta da documentação (mkdocs; padrão 8000), separada do site."),
         portapostgres: int = typer.Option(
-            5432, "--portapostgres",
+            5432, "--porta-db", "--portapostgres", "-k",
             help="Porta do PostgreSQL (padrão 5432). A 5432 costuma estar "
                  "ocupada por um Postgres nativo — use outra, ex.: 5444."),
-        otel: bool = typer.Option(
-            False, "--otel",
-            help="Ativa o OpenTelemetry (Grafana+Loki+Tempo+Mimir)."),
-        portatelemetria: int = typer.Option(
-            3000, "--portatelemetria",
-            help="Porta do painel Grafana/telemetria (padrão 3000)."),
         portasite: int = typer.Option(
-            8080, "--portasite",
+            8080, "--porta-site", "--portasite", "-s",
             help="Porta do site/aplicação (padrão 8080)."),
-        portadocumentacao: int = typer.Option(
-            8000, "--portadocumentacao",
-            help="Porta da documentação (mkdocs; padrão 8000), separada do "
-                 "site."),
+        portatelemetria: int = typer.Option(
+            3000, "--porta-grafana", "--portatelemetria", "-t",
+            help="Porta do painel Grafana/telemetria (padrão 3000)."),
+        # --- utilitários ---
         scan_ports: bool = typer.Option(
-            False, "--scan-ports",
+            False, "--scan-ports", "-S",
             help="Lista as portas em uso no servidor e o serviço de cada uma "
                  "(segurança/instalação) e encerra."),
     ):
@@ -1356,6 +1398,7 @@ def cli_opcoes(args=None):
         "portasite": _porta_valida(p.get("portasite", 8080), 8080),
         "portadocumentacao": _porta_valida(
             p.get("portadocumentacao", 8000), 8000),
+        "config": bool(p.get("config", False)),
     }
 
 

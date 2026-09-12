@@ -99,12 +99,11 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                    chave_modulo="usuarios", cor_titulo=t_cor_titulo, cor_fundo=t_cor_fundo_cab)
 
         # ===== BARRA SUPERIOR (linha única): abas à esquerda | busca larga + botão à direita =====
-        with ui.row().classes("w-full items-center justify-between gap-4 flex-nowrap "
-                              "bg-white rounded-lg shadow-sm px-3 py-1"):
-            with ui.tabs().props("dense inline-label").classes("min-w-0 overflow-x-auto") as tabs:
+        with ui.row().classes("w-full items-center justify-between flex-wrap bg-white rounded-lg shadow-sm px-3 py-2").style("gap: 0.75rem; min-width: 0"):
+            with ui.tabs().props("dense inline-label").classes("min-w-0 max-w-full overflow-x-auto flex-1") as tabs:
                 tab_users = ui.tab("Usuários", icon="people")
                 tab_sessoes = ui.tab("Sessões Ativas", icon="wifi")
-            with ui.row().classes("items-center gap-2 flex-nowrap shrink-0").style("width:min(46%, 620px)"):
+            with ui.row().classes("items-center flex-wrap justify-end flex-1").style("gap: 0.5rem; min-width: 0; width: min(100%, 620px)"):
                 campo_busca(
                     "🔍  Buscar… nome, e-mail, telefone, perfil, id ou estado "
                     "(provisório, bloqueado, sessão, excluído)", ao_digitar,
@@ -449,7 +448,7 @@ def _dlg_sessoes(ator, nome):
             log.warning(f"_duracao: falha ao calcular duração de sessão | {e}")
             return "—"
 
-    with dialogo_card(largura="w-[820px]", chave_modulo="usuarios") as (dlg, card):
+    with dialogo_card(largura="w-full max-w-[820px] mx-4", chave_modulo="usuarios") as (dlg, card):
         with ui.card_section().classes("w-full gap-1"):
             ui.label(f"Sessões — {gest.nome_de_tratamento(nome)}").classes("text-h6")
             ui.label(f"@{nome} · rastreabilidade LGPD: IP, dispositivo e MAC "
@@ -535,7 +534,7 @@ def _dlg_novo(ator, refresh):
     `notificar` e rodapé padrão (`rodape_dialogo`) com "Criar usuário"
     (primário compacto do tema).
     """
-    with dialogo_card(largura="w-[560px]", chave_modulo="usuarios") as (dlg, card):
+    with dialogo_card(largura="w-full max-w-[560px] mx-4", chave_modulo="usuarios") as (dlg, card):
         with ui.card_section().classes("w-full overflow-auto gap-2"):
             ui.label("Novo usuário").classes("text-h6")
             ui.label("Senha provisória — troca obrigatória no primeiro acesso.").classes(
@@ -603,7 +602,7 @@ def _dlg_editar(ator, nome_atual, refresh):
         return
     _, _, _, email, fone, perfil, _, _, _deletado, completo = row
 
-    with dialogo_card(largura="w-[560px]", chave_modulo="usuarios") as (dlg, card):
+    with dialogo_card(largura="w-full max-w-[560px] mx-4", chave_modulo="usuarios") as (dlg, card):
         with ui.card_section().classes("w-full overflow-auto gap-2"):
             ui.label(f"Editar — {gest.nome_de_tratamento(nome_atual)}").classes("text-h6")
             ui.separator()
@@ -798,7 +797,7 @@ def _dlg_duplicar(ator, origem, refresh):
     origem_perfil = row[5]
     acessos = gest.listar_acessos(origem)
 
-    with dialogo_card(largura="w-[560px]", chave_modulo="usuarios") as (dlg, card):
+    with dialogo_card(largura="w-full max-w-[560px] mx-4", chave_modulo="usuarios") as (dlg, card):
         with ui.card_section().classes("w-full overflow-auto gap-2"):
             ui.label(f"Duplicar usuário — @{origem}").classes("text-h6")
             ui.label("O novo usuário herdará o perfil global e os acessos por módulo "

@@ -25,6 +25,7 @@ import os
 import re
 import threading
 from datetime import datetime, date
+from functools import lru_cache, cache
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
@@ -57,6 +58,7 @@ def _dsn_publico(url):
         return "<dsn>"
 
 
+@lru_cache(maxsize=32)
 def _ler_config_sqlite(chave, default=""):
     """Reads a selector config key straight from the central SQLite file.
 
@@ -94,6 +96,18 @@ def _gravar_config_sqlite(chave, valor):
             conn.commit()
         finally:
             conn.close()
+        try:
+            _ler_config_sqlite.cache_clear()
+        except Exception:
+            pass
+        try:
+            _sgbd_ativo_cached.cache_clear()
+        except Exception:
+            pass
+        try:
+            postgres_url.cache_clear()
+        except Exception:
+            pass
         return True
     except Exception as e:
         _log().warning(f"_gravar_config_sqlite('{chave}'): {e}")
@@ -138,6 +152,13 @@ def salvar_backend(banco_tipo, postgres_url) -> bool:
     return ok1 and ok2
 
 
+@lru_cache(maxsize=1)
+def _sgbd_ativo_cached():
+    """Cached internal helper for sgbd_ativo (without env-var check)."""
+    tipo = _ler_config_sqlite("banco_tipo", "sqlite").strip().lower()
+    return tipo if tipo in ("sqlite", "postgres") else "sqlite"
+
+
 def sgbd_ativo():
     """Returns the active SGBD ('sqlite' or 'postgres') from the central file.
 
@@ -149,10 +170,10 @@ def sgbd_ativo():
     """
     if os.environ.get("INTRANET_FORCE_SQLITE") == "1":
         return "sqlite"
-    tipo = _ler_config_sqlite("banco_tipo", "sqlite").strip().lower()
-    return tipo if tipo in ("sqlite", "postgres") else "sqlite"
+    return _sgbd_ativo_cached()
 
 
+@lru_cache(maxsize=2)
 def postgres_url(como_admin=False):
     """Returns the configured PostgreSQL DSN (SQLAlchemy format).
 
@@ -359,6 +380,7 @@ def obter_engine_modulo(chave: str = "intranet"):
             return None
 
 
+@lru_cache(maxsize=64)
 def _ddl_postgres(ddl: str) -> str:
     """Translates SQLite CREATE TABLE DDL into PostgreSQL-compatible DDL.
 

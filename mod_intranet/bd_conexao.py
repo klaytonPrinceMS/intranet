@@ -13,6 +13,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 import sqlite3
+from functools import lru_cache
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "db_mod_intranet.db")
@@ -213,7 +214,25 @@ def set_config(chave, valor):
     try:
         from mod_intranet.repositorio import Repositorio
         with Repositorio() as repo:
-            return repo.definir_config(chave, valor)
+            ok = repo.definir_config(chave, valor)
+            if ok:
+                try:
+                    favicon_versao.cache_clear()
+                except Exception:
+                    pass
+                try:
+                    from mod_intranet import tema_modulo as _tm
+                    _tm._cfg.cache_clear()
+                    _tm.ler_tema.cache_clear()
+                except Exception:
+                    pass
+                if chave == "empenhos_template_nome":
+                    try:
+                        from mod_renomear_empenho.bd_manipulador import template_nome_atual as _tn
+                        _tn.cache_clear()
+                    except Exception:
+                        pass
+            return ok
     except Exception:
         pass
     conn = get_connection()
@@ -228,6 +247,7 @@ def set_config(chave, valor):
         conn.close()
 
 
+@lru_cache(maxsize=1)
 def favicon_versao():
     """mtime do favicon atual — muda quando o .ico é trocado (cache-busting da aba)."""
     try:

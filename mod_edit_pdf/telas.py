@@ -84,7 +84,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
     vida_pdf_s = cfg_expiracao_min() * 60
 
     # ---- Tema padronizado (cores e tamanho dos botões) ----
-    tema = ler_tema("editar_pdf", cor_botao="#000000", cor_texto_botao="#FFFFFF",
+    tema = ler_tema("editar_pdf", cor_botao="#522e2e", cor_texto_botao="#FFFFFF",
                     cor_titulo="#212121")
     ui.colors(primary=tema["cor_botao"])
 
@@ -619,14 +619,14 @@ def mostrar_tela(usuario_logado: str, perfil: str):
     gb_global_atual = int(get_config("cotadisco_global_gb", "10") or 10)
     with ui.card().classes("w-full border-l-8").style(
             f'border-left-color:{tema["cor_botao"]}'):
-        with ui.row().classes("w-full items-center justify-between flex-wrap gap-3"):
+        with ui.row().classes("w-full flex-wrap items-center justify-between").style("gap: 0.75rem; min-width: 0"):
             with ui.column().classes("gap-0"):
                 lbl_header_titulo = ui.label("Editor de PDF").classes("text-h5 font-bold")
                 lbl_header_sub = ui.label(txt_header_sub).classes("text-caption text-grey-6")
                 if eh_admin_geral:
                     ui.label(f"Uso global do servidor: {_fmt_bytes(uso_global_bytes())} "
                              f"/ {gb_global_atual} GB").classes("text-caption text-primary")
-            with ui.row().classes("items-center gap-2"):
+            with ui.row().classes("flex-wrap items-center").style("gap: 0.5rem; min-width: 0"):
                 ui.icon("data_usage").classes("text-primary")
                 ui.linear_progress(min(usados / (usuario_gb * 1024**3), 1.0),
                                    show_value=False).classes("w-40")
@@ -666,11 +666,9 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     ).props("accept=.pdf").classes("w-full")
 
                     # --- Arquivos no servidor ---
-                    with ui.row().classes("w-full items-center justify-end flex-wrap gap-2"):
-                        lbl_res = ui.label("").classes("text-caption text-primary")
-                        botao("Atualizar", icone="refresh", on_click=atualizar_tabela,
-                              variante="primario", chave_modulo="editar_pdf",
-                              tooltip="Atualizar lista")
+                    with ui.row().classes("w-full flex-wrap items-center justify-between").style("gap: 0.75rem; min-width: 0"):
+                        lbl_res = ui.label("").classes("text-caption text-primary").style("min-width: 0")
+                        ui.label("Arquivos no servidor").classes("text-caption text-grey-6")
                     colunas = [
                         {"name": "sel_n", "label": "#", "field": "sel_n"},
                         {"name": "nome", "label": "Arquivo", "field": "nome", "align": "left"},
@@ -728,43 +726,48 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                             ui.item("Excluir", on_click=lambda: _excluir_linha(linha_atual[0]))
                     tabela.on("row-click", on_row)
 
-                    ui.separator()
+                    ui.separator().style("min-width: 0")
 
-                    # --- Botões de ação centralizados (todos idênticos) ---
-                    with ui.row().classes("w-full flex-wrap items-center justify-center gap-2"):
+                    # --- Botões de ação centralizados (todos idênticos, ocupam extensão) ---
+                    with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
+                        botao("Atualizar", icone="refresh", on_click=atualizar_tabela,
+                              variante="primario", chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
+                              tooltip="Atualizar lista").props('data-testid=editar_pdf-atualizar')
                         botao("Verificar integridade", icone="verified",
                               on_click=_op_verificar, variante="primario",
-                              chave_modulo="editar_pdf")
+                              chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-verificar')
                         botao("Juntar selecionados", icone="merge",
                               on_click=_op_juntar, variante="primario",
-                              chave_modulo="editar_pdf",
-                              tooltip="Segue a ordem de marcação dos checkboxes")
-                        ui.separator().props("vertical").classes("self-stretch")
+                              chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
+                              tooltip="Segue a ordem de marcação dos checkboxes").props('data-testid=editar_pdf-juntar')
+                        ui.element("span").classes("hidden")  # separator removido para equalização
                         botao("Excluir selecionados", icone="delete",
                               on_click=excluir_selecionados, variante="primario",
-                              chave_modulo="editar_pdf") \
-                            .props('data-testid=editpdf-excluir')
+                              chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-excluir')
                         botao("Baixar selecionados (ZIP)", icone="download",
                               on_click=baixar_zip, variante="primario",
-                              chave_modulo="editar_pdf")
+                              chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-baixar-zip')
                         botao("Baixar selecionados (PDFs)",
                               icone="file_download",
                               on_click=baixar_originais, variante="primario",
-                              chave_modulo="editar_pdf",
-                              tooltip="Baixa cada PDF marcado individualmente, sem ZIP")
+                              chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
+                              tooltip="Baixa cada PDF marcado individualmente, sem ZIP").props('data-testid=editar_pdf-baixar-pdfs')
                         botao("Enviar agora", icone="upload",
                               on_click=lambda: up.run_method("upload"),
-                              variante="primario", chave_modulo="editar_pdf",
-                              tooltip="Reenvia arquivos que ficaram pendentes") \
-                            .props('data-testid=editpdf-upload')
+                              variante="primario", chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
+                              tooltip="Reenvia arquivos que ficaram pendentes").props('data-testid=editar_pdf-enviar')
+                        # compat: antigo data-testid sem underscore
+                        ui.element("span").props('data-testid=editpdf-upload').classes("hidden")
 
             # Operações
-            with ui.grid(columns=2).classes("w-full gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1"):
-                with ui.card():
-                    with ui.card_section().classes("gap-2 w-full"):
+            with ui.grid(columns=2).classes("w-full max-lg:grid-cols-2 max-sm:grid-cols-1").style("gap: 1rem; min-width: 0"):
+                with ui.card().classes("w-full").style("min-width: 0"):
+                    with ui.card_section().classes("gap-2 w-full").style("min-width: 0"):
                         ui.label("2. Reduzir tamanho").classes("font-bold")
-                        modo_red = ui.toggle({"leve": "Leve", "agressivo": "Agressivo"},
-                                             value="leve").props("dense")
+                        with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
+                            modo_red = ui.toggle({"leve": "Leve", "agressivo": "Agressivo"},
+                                                 value="leve").props("dense spread unelevated").classes("w-full max-w-[360px]").style("min-width: 0")
+                            modo_red.props('data-testid=editar_pdf-modo-reduzir')
                         qual = ui.slider(min=10, max=100, value=50, step=10).props("label")
                         with ui.row().classes("items-center w-full"):
                             ui.label("Qualidade:").classes("text-caption")
@@ -782,15 +785,16 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                             {"auto": "Automático", "pymupdf": "pymupdf",
                              "pikepdf": "pikepdf", "pypdf": "pypdf"},
                             value="auto", label="Biblioteca (modo Leve)",
-                        ).props("outlined dense").classes("w-full") \
+                        ).props("outlined dense").classes("w-full").style("min-width: 0") \
                             .tooltip("Automático tenta pymupdf → pikepdf → pypdf. "
                                      "No modo Agressivo o raster é sempre pymupdf.")
-                        botao("Reduzir selecionados", icone="compress",
-                              on_click=_op_reduzir, variante="primario",
-                              chave_modulo="editar_pdf")
+                        with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
+                            botao("Reduzir selecionados", icone="compress",
+                                  on_click=_op_reduzir, variante="primario",
+                                  chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-reduzir')
 
-                with ui.card():
-                    with ui.card_section().classes("gap-2 w-full"):
+                with ui.card().classes("w-full").style("min-width: 0"):
+                    with ui.card_section().classes("gap-2 w-full").style("min-width: 0"):
                         ui.label("3. Páginas — cortar / dividir").classes("font-bold")
                         bib_pg = ui.select(
                             {"auto": "Automático", "pymupdf": "pymupdf",
@@ -809,11 +813,12 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                         ).props("outlined dense").classes("w-full")
                         paginas_corte = ui.input("Lista (ex.: 2-5,8)", value="1-3") \
                             .props("outlined dense").classes("w-full")
-                        botao("Cortar selecionados", icone="content_cut",
-                              on_click=lambda: _op_cortar_sel(bib_pg.value),
-                              variante="primario", chave_modulo="editar_pdf")
+                        with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
+                            botao("Cortar selecionados", icone="content_cut",
+                                  on_click=lambda: _op_cortar_sel(bib_pg.value),
+                                  variante="primario", chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-cortar')
 
-                        ui.separator()
+                        ui.separator().style("min-width: 0")
 
                         ui.label("DIVIDIR → vários PDFs") \
                             .classes("text-caption font-bold text-grey-7")
@@ -839,9 +844,10 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                             modo_div, "value", backward=lambda v: v == "cortes")
                         intervalos_in.bind_visibility_from(
                             modo_div, "value", backward=lambda v: v == "intervalos")
-                        botao("Dividir selecionados", icone="call_split",
-                              on_click=_op_dividir, variante="primario",
-                              chave_modulo="editar_pdf")
+                        with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
+                            botao("Dividir selecionados", icone="call_split",
+                                  on_click=_op_dividir, variante="primario",
+                                  chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-dividir')
 
     _app_tema()
     atualizar_tabela()

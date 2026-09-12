@@ -27,16 +27,34 @@ from mod_intranet import autenticacao
 from mod_intranet.tema_modulo import notificar
 
 # ================== ASSISTENTE DE ATIVAÇÃO (terminal) ==================
-# Sem argumentos: assistente interativo (ENTER = básico SQLite; 1 = configurar).
-# Com argumentos (Typer): configura direto, ex.:
+# Sem argumentos: sobe direto com a configuração persistida (modo padrão).
+# --config: assistente interativo (ENTER = básico SQLite; 1 = configurar
+#           otel, postgres e portas). --help mostra a ajuda.
+# Com outros argumentos (Typer): configura direto, ex.:
 #   python main.py --postgres --portapostgres 5444 --otel \
 #       --portatelemetria 3000 --portadocumentacao 8081
 #   python main.py --help
 from mod_intranet import ativacao
-_cli_cfg = None
-if any(a.startswith("-") for a in sys.argv[1:]):
-    _cli_cfg = ativacao.config_do_cli(**ativacao.cli_opcoes())
-_cfg = ativacao.iniciar(cli_cfg=_cli_cfg)
+_cfg = None
+_args = sys.argv[1:]
+# print(f"[debug] _args={_args} _cfg_before={_cfg}", file=sys.stderr)
+if not _args:
+    # modo padrão: sem perguntas, usa o que já está persistido
+    _cfg = ativacao.config_persistida()
+elif any(a in ("--config", "-c") for a in _args):
+    # --config/-c: força o wizard interativo (pode vir com outras flags, mas prioriza wizard)
+    _cfg = ativacao.iniciar(cli_cfg=None)
+elif any(a.startswith("-") for a in _args):
+    # deixa o Typer cuidar de --help/--scan-ports/--postgres/--otel
+    _cli_opts = ativacao.cli_opcoes(_args)
+    if _cli_opts.get("config"):
+        _cfg = ativacao.iniciar(cli_cfg=None)
+    else:
+        _cli_opts.pop("config", None)
+        _cli_cfg = ativacao.config_do_cli(**_cli_opts)
+        _cfg = ativacao.iniciar(cli_cfg=_cli_cfg)
+else:
+    _cfg = ativacao.config_persistida()
 ativacao.aplicar_banco(_cfg)
 
 # ================== OBSERVABILIDADE (console colorido) ==================
@@ -173,9 +191,9 @@ def page_login():
         ui.navigate.to("/")
         return
 
-    with ui.row().classes("w-full h-screen items-center justify-center"):
+    with ui.row().classes("w-full h-screen items-center justify-center p-4").style("min-width: 0"):
         from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn
-        with ui.card().classes("w-[420px] p-10 shadow-2xl").style(_estilo_cartao_fn()):
+        with ui.card().classes("w-full max-w-[420px] p-6 sm:p-10 shadow-2xl mx-4").style(f"{_estilo_cartao_fn()}; min-width: 0"):
             with ui.column().classes("items-center w-full gap-1"):
                 ui.icon(icone, size="64px").classes("text-primary")
                 ui.label(titulo_login).classes("text-h5 font-bold text-primary")

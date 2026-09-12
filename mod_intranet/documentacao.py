@@ -13,7 +13,7 @@ from starlette.staticfiles import StaticFiles
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_DIR = os.path.join(BASE_DIR, "site")
 ROTA = "/documentacao"
-PORTA_PADRAO = 8000
+PORTA_PADRAO = 8001
 
 _montado = False
 _servidor = None
@@ -51,35 +51,42 @@ def montar() -> bool:
 def iniciar_servidor(porta=PORTA_PADRAO) -> bool:
     """Serves site/ on the mkdocs port in a background thread (daemon).
 
-    Serve a documentação gerada na PORTA DO MKDOCS (padrão 8000), separada
+    Serve a documentação gerada na PORTA DO MKDOCS (padrão 8001), separada
     da porta do site (8080). Idempotente: a primeira chamada inicia; as
-    seguintes apenas confirmam. Falha NUNCA derruba o servidor."""
+    seguintes apenas confirmam. Falha NUNCA derruba o servidor. Se a porta
+    pedida estiver ocupada (ex.: 8000 do snap), tenta as próximas 5."""
     global _servidor, _porta_atual
     if _servidor is not None:
         return True
     if not os.path.exists(os.path.join(SITE_DIR, "index.html")):
         return False
-    try:
-        from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+    # tenta a porta pedida e as próximas 5 se estiver ocupada
+    for tentativa in range(6):
+        try:
+            from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-        class _Handler(SimpleHTTPRequestHandler):
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, directory=SITE_DIR, **kwargs)
+            class _Handler(SimpleHTTPRequestHandler):
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, directory=SITE_DIR, **kwargs)
 
-            def log_message(self, *args):  # silencia o log padrão por request
-                pass
+                def log_message(self, *args):  # silencia o log padrão por request
+                    pass
 
-        porta = int(porta or PORTA_PADRAO)
-        _servidor = ThreadingHTTPServer(("0.0.0.0", porta), _Handler)
-        _porta_atual = porta
-        threading.Thread(target=_servidor.serve_forever, daemon=True).start()
-        print(f"[documentacao] OK: servindo em http://localhost:{porta}")
-        return True
-    except Exception as e:
-        print(f"[documentacao] aviso: não foi possível servir na porta "
-              f"{porta}: {e}")
-        _servidor = None
-        return False
+            p = int((porta or PORTA_PADRAO) + tentativa) if tentativa else int(porta or PORTA_PADRAO)
+            _servidor = ThreadingHTTPServer(("0.0.0.0", p), _Handler)
+            _porta_atual = p
+            threading.Thread(target=_servidor.serve_forever, daemon=True).start()
+            if tentativa:
+                print(f"[documentacao] porta {porta} em uso, usando {p}")
+            print(f"[documentacao] OK: servindo em http://localhost:{p}")
+            return True
+        except Exception as e:
+            if tentativa == 0:
+                print(f"[documentacao] aviso: não foi possível servir na porta "
+                      f"{porta}: {e}")
+            _servidor = None
+            continue
+    return False
 
 
 def porta_documentacao():
@@ -97,10 +104,13 @@ def construir_e_montar_documentacao(logar=True, porta=None) -> bool:
         if logar:
             print(f"[documentacao] FALHA no mkdocs build: {erro}")
         return False
+    ok_serve = iniciar_servidor(porta or PORTA_PADRAO)
     if montar():
         if logar:
-            print(f"[documentacao] OK: servindo em http://localhost:"
-                  f"{iniciar_servidor(porta or PORTA_PADRAO) and porta_documentacao()}")
+            if ok_serve:
+                print(f"[documentacao] OK: servindo em http://localhost:{porta_documentacao()}")
+            else:
+                print(f"[documentacao] montado em /documentacao (porta {porta} ocupada, docs via rota interna)")
     elif logar:
         print("[documentacao] build OK, mas nao foi possivel montar a rota agora")
     return True

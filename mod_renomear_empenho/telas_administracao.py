@@ -18,6 +18,7 @@ from mod_renomear_empenho.bd_manipulador import (
     listar_campos_busca, salvar_campo_busca, excluir_campo_busca,
     restaurar_campos_busca_padrao,
     listar_arquivos_auditoria, listar_quarentena, reprocesse_quarentena,
+    reprocessar_fila, promover_quarentena, separar_documentos_quarentena,
     listar_regras, salvar_regra, alternar_regra,
 )
 from mod_intranet import rotinas as _rotinas
@@ -376,9 +377,21 @@ def mostrar_administracao(
         filtro_status.on("update:model-value", lambda e: _refresh_aud())
         _refresh_aud()
 
-    # ================= Quarentena =================
+    # ================= Quarentena (4b) =================
     with card_admin("Quarentena", icone="block", chave_modulo="empenhos",
                     extra_classes="mt-2", grade=False):
+        ui.label("Falhas de leitura/extração vão para a quarentena com motivo. Clique na linha para reprocessar individualmente (com regex alternativa) ou use o lote abaixo. Separe múltiplos documentos quando o motivo indicar 2+ empenhos.").classes("text-caption text-grey-6")
+        with ui.row().classes("w-full gap-2 mt-1 mb-1"):
+            def _reprocessar_fila_admin():
+                try:
+                    ok, msg, _det = reprocessar_fila(usuario=usuario_logado)
+                    ui.notify(msg, type="positive" if ok else "warning")
+                    _refresh_q()
+                except Exception:
+                    _log.exception("erro ao reprocessar fila da quarentena em lote (admin)")
+                    ui.notify("Falha ao reprocessar fila", type="negative")
+            botao("Reprocessar fila", icone="replay", on_click=_reprocessar_fila_admin, variante="solido", chave_modulo="empenhos").tooltip("Tenta reprocessar todos os pendentes com as regex ativas, sem reiniciar").props('data-testid=empenhos-reprocessar-fila-admin')
+            botao("Atualizar", icone="refresh", on_click=lambda: _refresh_q(), variante="contorno", chave_modulo="empenhos")
         colunas_q = [
             {"name": "arquivo", "label": "Arquivo", "field": "arquivo", "align": "left"},
             {"name": "motivo", "label": "Motivo", "field": "motivo", "align": "left"},
@@ -398,14 +411,18 @@ def mostrar_administracao(
 
         def on_q_click(e):
             linha = e.args[1]
-            with ui.dialog() as dlg, ui.card().classes("w-[480px]"):
-                ui.label("Reprocessar com nova regex").classes("text-h6")
+            eh_multi = "Múltiplos documentos" in (linha.get("motivo") or "")
+            with ui.dialog() as dlg, ui.card().classes("w-[520px]"):
+                ui.label("Múltiplos documentos — separar" if eh_multi else "Reprocessar com nova regex").classes("text-h6")
                 ui.label(linha["arquivo"]).classes("text-caption text-grey-6")
-                padrao = ui.input("Regex alternativa (opcional)").props("outlined dense").classes("w-full")
+                if eh_multi:
+                    ui.label("Este PDF contém 2+ empenhos (ex.: lote escaneado). Separe em um arquivo por documento e reprocesse.").classes("text-caption text-orange-8 mt-1")
+                    ui.label(linha.get("motivo") or "").classes("text-caption bg-yellow-50 p-2 rounded w-full")
+                padrao = ui.input("Regex alternativa (opcional)").props("outlined dense").classes("w-full") if not eh_multi else None
 
                 def tentar():
                     try:
-                        ok, msg = reprocesse_quarentena(linha["qid"], padrao.value or None, usuario_logado)
+                        ok, msg = reprocesse_quarentena(linha["qid"], (padrao.value if padrao else None) or None, usuario_logado)
                         ui.notify(("Sucesso: " + msg) if ok else ("Falha: " + msg),
                                   type="positive" if ok else "warning")
                         dlg.close()
@@ -413,11 +430,21 @@ def mostrar_administracao(
                     except Exception:
                         _log.exception(f"erro ao reprocessar Quarentena qid={linha['qid']}")
 
+                def separar():
+                    try:
+                        ok, msg = separar_documentos_quarentena(linha["qid"], usuario_logado)
+                        ui.notify(msg, type="positive" if ok else "negative")
+                        dlg.close()
+                        _refresh_q()
+                    except Exception:
+                        _log.exception(f"erro ao separar quarentena qid={linha['qid']}")
+
                 with ui.row().classes("w-full justify-end gap-2 mt-2"):
                     botao("Cancelar", on_click=dlg.close,
                         variante="texto", chave_modulo="empenhos")
-                    botao("Reprocessar", on_click=tentar,
-                        variante="solido", chave_modulo="empenhos")
+                    if eh_multi:
+                        botao("Separar documentos", icone="content_cut", on_click=separar, variante="solido", chave_modulo="empenhos")
+                    botao("Reprocessar", on_click=tentar, variante="solido" if not eh_multi else "texto", chave_modulo="empenhos")
             dlg.open()
 
         tabela_q.on("row-click", on_q_click)
