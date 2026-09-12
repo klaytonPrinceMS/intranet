@@ -195,6 +195,7 @@ Autorização exclusiva para criar/editar se não existirem:
 **kbp-qa:** QA Sênior, data-testid via `.props('data-testid=...')`, pytest-playwright, pirâmide testes
 **kbp-devSecOps:** Segurança, bandit 1.9.4, semgrep 1.176.1, pip-audit 2.10.1, safety 3.8.1, gitleaks 8.24.3, k6 — apenas localhost/staging
 **kbp-commit:** Commit e push padronizados, estuda o diff e as secoes ativas para comentar no formato AAMMDD HHMM
+**kbp-doc_teste:** Gera massa fictícia de PDFs de empenho via `assets/test/fabrica_documentos.py` (faker, todos os campos monitorados); padrão 15 documentos quando sem quantidade
 
 ### 8.1 Criação de subagentes (padrão kbp-*)
 

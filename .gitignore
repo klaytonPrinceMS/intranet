@@ -212,4 +212,7 @@ assets/test/screenshots/
 assets/test/tmp_ferramentas_pdf/
 
 # ---- Pastas de agentes e manipuladores IA
-.opencode
+.opencode/*
+!.opencode/agent/
+.opencode/agent/*
+!.opencode/agent/*.md

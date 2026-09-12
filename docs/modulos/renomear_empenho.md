@@ -56,7 +56,7 @@ Criador vigente: `init_db_empenho()` em `bd_manipulador.py:289`.
 
 ## Regras de negócio
 
-- Contador sequencial persistido em banco, único entre pastas; template de nome configurável (`doc_{contador:04d}_numEmpenho_{empenho}_p{parcela:03d}.pdf`).
+- Contador sequencial persistido em banco, único entre pastas; template de nome configurável (`doc_{contador:04d}_{empenho}_{parcela:03d}.pdf` — ex.: `doc_0001_345_001.pdf`).
 - Tipos especiais usam nome próprio (`EC_%04d.pdf`), não o sequencial DOC.
 - **Gate de validação**: renomeação somente com nº identificado; falha → quarentena com motivo (PLANO 4b/4c atendidos).
 - **Quarentena (4b)**: `promover_quarentena`/`mover_quarentena` grava motivo (300 chars) e timestamp; reprocessamento individual (`reprocesse_quarentena` com regex alternativa) e em lote (`reprocessar_fila` + botão "Reprocessar fila") sem reiniciar; múltiplos documentos detectados por `detectar_documentos_no_pdf` → botão "Separar documentos".

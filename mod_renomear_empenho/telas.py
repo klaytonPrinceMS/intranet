@@ -13,12 +13,13 @@ _log = observabilidade.get_logger("renomear_empenho")
 
 from mod_renomear_empenho.bd_manipulador import (
     rodar_monitor, listar_empenhos, pesquisar, listar_quarentena,
-    reprocesse_quarentena, salvar_regra, listar_regras, organizar_pastas,
+    reprocesse_quarentena, reprocessar_fila, promover_quarentena, separar_documentos_quarentena, salvar_regra, listar_regras, organizar_pastas,
     pasta_monitorada, pastas_monitoradas, salvar_pastas_monitoradas,
     alternar_regra, listar_arquivos_auditoria, listar_eventos_arquivo,
     listar_campos_busca, salvar_campo_busca, excluir_campo_busca,
-    restaurar_campos_busca_padrao, template_nome_atual, montar_nome_final,
-    NOME_FINAL_PADRAO, extrair_dados_empenho,
+    restaurar_campos_busca_padrao,     template_nome_atual, montar_nome_final, montar_nome_tipo_especial,
+    NOME_FINAL_PADRAO, extrair_dados_empenho, extrair_texto_pdf,
+    detectar_tipo_especial, extrair_dados_tipo_especial,
     ferramenta_cortar, ferramenta_juntar, ferramenta_reduzir, ferramenta_fontes,
     PASTA_TEMP_FERR, gerar_matriz_organizador, validar_presenca_matriz,
     PASTA_ORGANIZADOR,
@@ -37,6 +38,7 @@ from mod_intranet.ui_comum import botao, botao_icone, campo_cor, campo_selecao
 
 from mod_intranet.autenticacao import eh_admin_do_modulo
 import zipfile, shutil
+from uuid import uuid4
 
 
 def _tema_s(get_config, chave, default):
@@ -127,27 +129,102 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
     """Browse tab: protected navigation of monitored folders (PDFs only).
 
     Navegação com breadcrumb e anti-travessia (só raízes protegidas), status
-    por arquivo (processado/pendente), download, revisão/renomeação manual
-    (pendentes), solicitação de envio (pendentes ou quando
-    `empenhos_autorizar_download=1`) e botão "Processar pasta agora"."""
+    por arquivo (processado/pendente). Todo PDF exibe os três ícones:
+    baixar, revisar/renomear (editar) e solicitar envio — em qualquer pasta
+    monitorada. O download respeita a permissão (`empenhos_autorizar_download`
+    ou admin); bloqueado apenas avisa. Checkbox por arquivo monta o lote
+    para solicitar e/ou baixar (ZIP quando múltiplo)."""
     from mod_intranet.bd_conexao import get_config
     pasta_atual = {}
+    selecionados = {}
+    pode_baixar = bool(eh_admin or autorizado)
 
     def _baixar(caminho):
+        if not (eh_admin or autorizado):
+            ui.notify("Download bloqueado pelo administrador — use Solicitar envio.",
+                      type="warning")
+            return
         if os.path.exists(caminho):
             ui.download(caminho, os.path.basename(caminho))
 
     def _revisar_renomear(caminho):
         nome = os.path.basename(caminho)
+        # Extrai valores atuais (podem vir parciais quando o OCR falha);
+        # todos os campos ficam editáveis, inclusive os reconhecidos.
+        try:
+            texto = extrair_texto_pdf(caminho) or ""
+        except Exception:
+            texto = ""
+        try:
+            tipo_detectado = detectar_tipo_especial(texto)
+        except Exception:
+            tipo_detectado = None
+        dados_doc, dados_esp = {}, {}
+        try:
+            dados_doc = extrair_dados_empenho(texto) or {}
+        except Exception:
+            dados_doc = {}
+        if tipo_detectado:
+            try:
+                dados_esp = extrair_dados_tipo_especial(texto, tipo_detectado) or {}
+            except Exception:
+                dados_esp = {}
+        eh_especial = bool(tipo_detectado)
         with ui.dialog() as dlg, ui.card().classes("w-[520px]"):
             ui.label(f"Revisar / renomear — {nome}").classes("text-h6")
-            ui.label("O sistema normalizará o nome conforme o conteúdo e o tipo do "
-                     "documento (DOC, EC, EE, EG, AE).").classes("text-caption text-grey-6")
+            ui.label("Confira os campos extraídos do conteúdo (DOC, EC, EE, EG, AE). "
+                     "Campos não identificados ficam vazios para preenchimento manual — "
+                     "a renomeação usa os valores desta tela.").classes("text-caption text-grey-6")
+            sel_tipo = ui.select(
+                {"": "DOC (empenho de parcela)", "EC": "EC — Complementação",
+                 "EE": "EE — Estimativo", "EG": "EG — Global", "AE": "AE — Anulação"},
+                label="Tipo de documento",
+                value=tipo_detectado or "").props("outlined dense").classes("w-full") \
+                .props("data-testid=empenhos-revisar-tipo")
+            inp_ficha = ui.input("Ficha", value=str(dados_doc.get("ficha") or "")) \
+                .props("outlined dense").classes("w-full") \
+                .props("data-testid=empenhos-revisar-ficha")
+            inp_empenho = ui.input(
+                "Nº empenho / Nº documento especial",
+                value=str(dados_esp.get("numero") if eh_especial and dados_esp.get("numero")
+                          else (dados_doc.get("empenho") or ""))) \
+                .props("outlined dense").classes("w-full") \
+                .props("data-testid=empenhos-revisar-empenho")
+            inp_parcela = ui.input("Parcela (só DOC)",
+                                   value=str(dados_doc.get("parcela") or "")) \
+                .props("outlined dense").classes("w-full") \
+                .props("data-testid=empenhos-revisar-parcela")
+            inp_ano = ui.input(
+                "Ano", value=str(dados_esp.get("ano") if eh_especial and dados_esp.get("ano")
+                                 else (dados_doc.get("ano") or ""))) \
+                .props("outlined dense").classes("w-full") \
+                .props("data-testid=empenhos-revisar-ano")
+            if not (dados_doc.get("empenho") or dados_esp.get("numero")):
+                ui.label("Nº não identificado automaticamente — informe manualmente.").classes("text-caption text-orange-8")
+            if not dados_doc.get("parcela") and not (sel_tipo.value or ""):
+                ui.label("Parcela não identificada — informe manualmente (padrão 1).").classes("text-caption text-orange-8")
             res = ui.column().classes("w-full mt-1")
 
             def _confirmar():
                 try:
-                    ok, msg = renomear_manual(usuario_logado, caminho)
+                    tipo = (sel_tipo.value or "").strip() or None
+                    ficha = (inp_ficha.value or "").strip() or None
+                    ano = (inp_ano.value or "").strip() or None
+                    num_txt = (inp_empenho.value or "").strip()
+                    parc_txt = (inp_parcela.value or "").strip()
+                    if tipo:
+                        if not num_txt:
+                            raise ValueError("Informe o nº do documento especial")
+                        ok, msg = renomear_manual(usuario_logado, caminho,
+                                                 novo_numero=num_txt,
+                                                 tipo_especial=tipo)
+                    else:
+                        if not num_txt:
+                            raise ValueError("Informe o nº do empenho")
+                        ok, msg = renomear_manual(
+                            usuario_logado, caminho, novo_numero=num_txt,
+                            novo_parcela=parc_txt or None,
+                            nova_ficha=ficha, novo_ano=ano)
                     if ok:
                         ui.notify(f"Renomeado → {msg}", type="positive")
                         dlg.close()
@@ -155,6 +232,9 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                     else:
                         with res:
                             ui.label(f"Não foi possível renomear: {msg}").classes("text-negative")
+                except ValueError as ve:
+                    with res:
+                        ui.label(str(ve)).classes("text-negative")
                 except Exception as e:
                     with res:
                         ui.label(f"Erro: {e}").classes("text-negative")
@@ -188,11 +268,95 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                       variante="solido", chave_modulo="empenhos")
         dlg.open()
 
+    def _alternar_selecao(marcado, caminho, nome):
+        if marcado:
+            selecionados[caminho] = nome
+        else:
+            selecionados.pop(caminho, None)
+        _atualizar_lote()
+
+    def _atualizar_lote():
+        try:
+            lbl_lote.text = f"{len(selecionados)} selecionado(s)"
+        except Exception:
+            pass
+
+    def _solicitar_lote():
+        if not selecionados:
+            ui.notify("Selecione ao menos 1 arquivo (checkbox).", type="warning")
+            return
+        with ui.dialog() as dlg, ui.card().classes("w-[460px]"):
+            ui.label(f"Solicitar envio em lote — {len(selecionados)} arquivo(s)").classes("text-h6")
+            inp_mail = ui.input("Seu e-mail", placeholder="usuario@dominio.com",
+                                value=usuario_logado).props("outlined dense").classes("w-full") \
+                .props("data-testid=empenhos-lote-email")
+            inp_msg = ui.textarea("Mensagem (opcional)").props("outlined dense").classes("w-full")
+
+            def _enviar_lote():
+                dest = (inp_mail.value or "").strip()
+                if "@" not in dest:
+                    ui.notify("Informe um e-mail válido", type="negative")
+                    return
+                lote_id = uuid4().hex
+                feitas = 0
+                for cam, nom in list(selecionados.items()):
+                    try:
+                        criar_solicitacao(cam, nom, usuario_logado, dest,
+                                          inp_msg.value or "", lote_id=lote_id)
+                        feitas += 1
+                    except Exception:
+                        _log.exception("falha ao criar solicitação em lote")
+                selecionados.clear()
+                ui.notify(f"{feitas} solicitação(ões) registrada(s) — aguardando o administrador.",
+                          type="positive")
+                dlg.close()
+                _carregar()
+
+            with ui.row().classes("w-full justify-end gap-2 mt-2"):
+                botao("Cancelar", on_click=dlg.close, variante="texto", chave_modulo="empenhos")
+                botao("Solicitar lote", icone="send", on_click=_enviar_lote,
+                      variante="solido", chave_modulo="empenhos") \
+                    .props("data-testid=empenhos-lote-confirmar")
+        dlg.open()
+
+    def _baixar_lote():
+        if not selecionados:
+            ui.notify("Selecione ao menos 1 arquivo (checkbox).", type="warning")
+            return
+        if not (eh_admin or autorizado):
+            ui.notify("Download bloqueado pelo administrador — use Solicitar envio.",
+                      type="warning")
+            return
+        existentes = [(c, n) for c, n in list(selecionados.items()) if os.path.exists(c)]
+        if not existentes:
+            ui.notify("Nenhum arquivo selecionado existe mais.", type="negative")
+            return
+        if len(existentes) == 1:
+            ui.download(existentes[0][0], os.path.basename(existentes[0][0]))
+            return
+        itens = [{"arquivo_caminho": c, "nome_arquivo": n,
+                  "solicitante_nome": usuario_logado} for c, n in existentes]
+        ok, res = gerar_zip_solicitacoes(itens)
+        if ok:
+            ui.download(res, os.path.basename(res))
+        else:
+            ui.notify(f"Erro ZIP: {res}", type="negative")
+
+    def _limpar_selecao():
+        selecionados.clear()
+        _carregar()
+
+    def _marcar_visiveis():
+        for p in (pasta_atual.get("pdfs") or []):
+            selecionados[p["caminho"]] = p["nome"]
+        _carregar()
+
     def _carregar():
         wrap.clear()
         pasta = pasta_atual.get("caminho")
         nav = listar_navegacao(pasta)
         pasta_atual["caminho"] = nav["atual"]
+        pasta_atual["pdfs"] = nav.get("pdfs") or []
         with wrap:
             # breadcrumb (trilha)
             raiz = raizes_navegacao()[0] if raizes_navegacao() else pasta_monitorada()
@@ -222,19 +386,22 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
             for p in nav["pdfs"]:
                 with ui.card().classes("w-full p-3 mt-1"):
                     with ui.row().classes("w-full items-center gap-2"):
+                        ui.checkbox("", value=p["caminho"] in selecionados,
+                                    on_change=lambda e, cam=p["caminho"], nom=p["nome"]:
+                                    _alternar_selecao(e.value, cam, nom)) \
+                            .props("dense").props("data-testid=empenhos-selecionar") \
+                            .tooltip("Selecionar para o lote")
                         ui.icon("picture_as_pdf")
                         ui.label(p["nome"]).classes("font-medium flex-1 text-wrap")
                         cor = {"processado": "green", "pendente": "orange"}.get(p["status"], "grey")
                         ui.badge(p["status"], color=cor)
+                        # Três ações sempre disponíveis em qualquer pasta com PDF:
+                        # baixar (respeita permissão no handler), editar e solicitar.
                         botao_icone("download", on_click=lambda c=p["caminho"]: _baixar(c),
                                      chave_modulo="empenhos").tooltip("Baixar")
-                        if p["status"] == "pendente":
-                            botao_icone("edit", on_click=lambda c=p["caminho"]: _revisar_renomear(c),
-                                 chave_modulo="empenhos").tooltip("Revisar / renomear")
-                            botao_icone("mail", on_click=lambda c=p["caminho"]: _solicitar(c),
-                                 chave_modulo="empenhos").tooltip("Solicitar envio")
-                        elif autorizado:
-                            botao_icone("mail", on_click=lambda c=p["caminho"]: _solicitar(c),
+                        botao_icone("edit", on_click=lambda c=p["caminho"]: _revisar_renomear(c),
+                                 chave_modulo="empenhos").tooltip("Revisar / renomear (editar campos)")
+                        botao_icone("mail", on_click=lambda c=p["caminho"]: _solicitar(c),
                                  chave_modulo="empenhos").tooltip("Solicitar envio")
 
     def _ir(cam):
@@ -268,6 +435,21 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
             .props('data-testid=empenhos-processar')
         botao("Atualizar", icone="refresh", on_click=_carregar,
               variante="contorno", chave_modulo="empenhos")
+    with ui.card().classes("w-full p-3 mt-2"):
+        ui.label("Lote — marque o checkbox dos arquivos para solicitar e/ou baixar em conjunto.").classes("text-caption text-grey-6")
+        with ui.row().classes("w-full items-center gap-2 flex-wrap"):
+            lbl_lote = ui.label("0 selecionado(s)").classes("font-bold flex-1") \
+                .props("data-testid=empenhos-lote-contador")
+            botao("Marcar visíveis", icone="checklist", on_click=_marcar_visiveis,
+                  variante="texto", chave_modulo="empenhos")
+            botao("Solicitar lote", icone="mail", on_click=_solicitar_lote,
+                  variante="solido", chave_modulo="empenhos") \
+                .props("data-testid=empenhos-lote-solicitar")
+            botao("Baixar lote", icone="download", on_click=_baixar_lote,
+                  variante="contorno", chave_modulo="empenhos") \
+                .props("data-testid=empenhos-lote-baixar")
+            botao("Limpar", on_click=_limpar_selecao,
+                  variante="texto", chave_modulo="empenhos")
     wrap = ui.column().classes("w-full")
 
     def _processar():
@@ -905,6 +1087,18 @@ def _tela_config(usuario_logado, eh_admin, t_cor_botao, t_cor_txt_botao, t_cor_f
         _refresh_aud()
 
     with ui.expansion("Quarentena", icon="block").classes("w-full mt-2"):
+        ui.label("Falhas de leitura/extração vão para a quarentena com motivo. Clique na linha para reprocessar individualmente (com regex alternativa) ou use o lote abaixo. Separe múltiplos documentos quando o motivo indicar 2+ empenhos.").classes("text-caption text-grey-6")
+        with ui.row().classes("w-full gap-2 mt-1 mb-1"):
+            def _reprocessar_fila_lote():
+                try:
+                    ok, msg, _det = reprocessar_fila(usuario=usuario_logado)
+                    ui.notify(msg, type="positive" if ok else "warning")
+                    _refresh_q()
+                except Exception:
+                    _log.exception("erro ao reprocessar fila da quarentena em lote")
+                    ui.notify("Falha ao reprocessar fila", type="negative")
+            botao("Reprocessar fila", icone="replay", on_click=_reprocessar_fila_lote, variante="solido", chave_modulo="empenhos").tooltip("Tenta reprocessar todos os pendentes com as regex ativas, sem reiniciar").props('data-testid=empenhos-reprocessar-fila')
+            botao("Atualizar", icone="refresh", on_click=lambda: _refresh_q(), variante="contorno", chave_modulo="empenhos")
         colunas_q = [
             {"name": "arquivo", "label": "Arquivo", "field": "arquivo", "align": "left"},
             {"name": "motivo", "label": "Motivo", "field": "motivo", "align": "left"},
@@ -922,24 +1116,37 @@ def _tela_config(usuario_logado, eh_admin, t_cor_botao, t_cor_txt_botao, t_cor_f
 
         def on_q_click(e):
             linha = e.args[1]
-            with ui.dialog() as dlg, ui.card().classes("w-[480px]"):
-                ui.label("Reprocessar com nova regex").classes("text-h6")
+            eh_multi = "Múltiplos documentos" in (linha.get("motivo") or "")
+            with ui.dialog() as dlg, ui.card().classes("w-[520px]"):
+                ui.label("Múltiplos documentos — separar" if eh_multi else "Reprocessar com nova regex").classes("text-h6")
                 ui.label(linha["arquivo"]).classes("text-caption text-grey-6")
-                padrao = ui.input("Regex alternativa (opcional)").props("outlined dense").classes("w-full")
+                if eh_multi:
+                    ui.label("Este PDF contém 2+ empenhos (ex.: lote escaneado). Separe em um arquivo por documento e reprocesse.").classes("text-caption text-orange-8 mt-1")
+                    ui.label(linha.get("motivo") or "").classes("text-caption bg-yellow-50 p-2 rounded w-full")
+                padrao = ui.input("Regex alternativa (opcional)").props("outlined dense").classes("w-full") if not eh_multi else None
 
                 def tentar():
                     try:
-                        ok, msg = reprocesse_quarentena(linha["qid"], padrao.value or None, usuario_logado)
+                        ok, msg = reprocesse_quarentena(linha["qid"], (padrao.value if padrao else None) or None, usuario_logado)
                         ui.notify(("Sucesso: " + msg) if ok else ("Falha: " + msg),
                                   type="positive" if ok else "warning")
                         dlg.close(); _refresh_q()
                     except Exception:
                         _log.exception(f"erro ao reprocessar quarentena qid={linha['qid']}")
 
+                def separar():
+                    try:
+                        ok, msg = separar_documentos_quarentena(linha["qid"], usuario_logado)
+                        ui.notify(msg, type="positive" if ok else "negative")
+                        dlg.close(); _refresh_q()
+                    except Exception:
+                        _log.exception(f"erro ao separar quarentena qid={linha['qid']}")
+
                 with ui.row().classes("w-full justify-end gap-2 mt-2"):
                     botao("Cancelar", on_click=dlg.close, variante="texto", chave_modulo="empenhos")
-                    botao("Reprocessar", on_click=tentar, variante="solido",
-                        chave_modulo="empenhos")
+                    if eh_multi:
+                        botao("Separar documentos", icone="content_cut", on_click=separar, variante="solido", chave_modulo="empenhos")
+                    botao("Reprocessar", on_click=tentar, variante="solido" if not eh_multi else "texto", chave_modulo="empenhos")
             dlg.open()
 
         tabela_q.on("row-click", on_q_click)

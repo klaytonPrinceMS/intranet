@@ -10,9 +10,11 @@ import sqlite3
 import shutil
 import io
 from datetime import datetime
+from functools import lru_cache
 
 from mod_intranet.bd_conexao import get_connection, get_config
 from mod_intranet.bd_manipulador import audit_log, hash_arquivo
+from mod_intranet.decoradores import valida_regex
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MOD_DIR = os.path.join(BASE_DIR, "mod_renomear_empenho")
@@ -109,7 +111,7 @@ def salvar_pastas_monitoradas(lista):
     return limpos
 
 REGEX_PADRAO = r"(?:empenho|emp|ne)[\s\.: nº]*(\d{4,10})(?:[-/](\d{1,3}))?"
-NOME_FINAL_PADRAO = "doc_{contador:04d}_numEmpenho_{empenho}_p{parcela:03d}.pdf"
+NOME_FINAL_PADRAO = "doc_{contador:04d}_{empenho}_{parcela:03d}.pdf"
 PAGINAS_EXTRACAO = 3
 
 # ================= TIPOS ESPECIAIS (EC/EE/EG/AE) =================
@@ -160,7 +162,10 @@ def arquivo_ja_processado(nome_arquivo):
     nome = (nome_arquivo or "").strip().lower()
     if not nome:
         return False
-    # padrão DOC: doc_0001_numEmpenho_345_p001.pdf
+    # padrão DOC vigente: doc_0001_345_001.pdf (contador, empenho, parcela)
+    if re.match(r"^doc_\d+_\d+_\d+\.pdf$", nome):
+        return True
+    # padrão DOC legado: doc_0001_numEmpenho_345_p001.pdf (mantido p/ retrocompatibilidade)
     if re.match(r"^doc_\d+_numempenho_\d+_p\d+\.pdf$", nome):
         return True
     # padrão DOC com ano: doc_0001_0000331_0000345_(1)_2026.pdf (projeto de origem)
@@ -246,15 +251,18 @@ def extrair_dados_tipo_especial(texto, tipo):
 
 # Padrões padrão de extração dos campos do cabeçalho do empenho (editáveis
 # via tb_campos_busca, sem tocar no código). Cada entrada: campo -> (rótulo, regex).
+# Expandido para >=40 campos — cada campo pode ser adicionado/editado sem código
+# pela aba Configurações (Campos de busca), que grava em tb_campos_busca.
 TEMPLATE_NOME_PADRAO = NOME_FINAL_PADRAO
 CAMPOS_BUSCA_PADRAO = {
+    # --- identificação ---
     "ficha": (
         "Ficha",
-        r"N['°o]?\s*da\s*Ficha[\s\S]{0,40}?(\d{1,10})\s*/\s*(\d{4})",
+        r"(?:N['°o]?\s*da\s*)?Ficha\s*[:\s]*(\d[\d\s]{3,10})(?:\s*/\s*(\d{4}))?",
     ),
     "empenho": (
         "Empenho",
-        r"N['°o]?\s*do\s*Empenho[\s\S]{0,40}?(\d{1,10})\s*/\s*(\d{4})",
+        r"(?:N['°o]?\s*do\s*Empenho|NOTA\s*DE\s*EMPENHO\s*N['°o]?)[\s\S]{0,40}?(\d{1,10})\s*/\s*(\d{4})",
     ),
     "parcela": (
         "Parcela",
@@ -264,17 +272,208 @@ CAMPOS_BUSCA_PADRAO = {
         "Ano",
         r"(?:EMPENHO\s*PARCELA|Exerc[íi]cio)[^\d]{0,30}?/\s*(\d{4})",
     ),
+    "exercicio": (
+        "Exercício",
+        r"Exerc[íi]cio\s*[:\s]*(\d{4})",
+    ),
+    "processo": (
+        "Processo",
+        r"Processo\s*n['°o]?\s*[:\s]*(\d+/\d{4})",
+    ),
+    "tipo_empenho": (
+        "Tipo de Empenho",
+        r"Tipo\s*de\s*Empenho\s*[:\s]*([A-Za-záâãéêíóôõúçÁÂÃÉÊÍÓÔÕÚÇ]+)",
+    ),
+    "modalidade": (
+        "Modalidade",
+        r"Modalidade\s*[:\s]*([A-ZÁÂÃÉÊÍÓÔÕÚÇ /]+?)(?:\n|$)",
+    ),
+    "contrato_numero": (
+        "Contrato Nº",
+        r"Contrato\s*N['°o]?\s*[:\s]*([^\n]{1,30})",
+    ),
+    # --- estrutura orçamentária ---
+    "orgao": (
+        "Órgão",
+        r"Org[aã]o\s*[:\s]*(\d+\s*[-–]\s*[^\n]{2,60})",
+    ),
+    "unidade": (
+        "Unidade Orçamentária",
+        r"Unidade(?:\s*Or[çc]ament[áa]ria)?\s*[:\s]*(\d+\s*[-–]\s*[^\n]{2,60})",
+    ),
+    "sub_unidade": (
+        "Sub-Unidade",
+        r"Sub\s*Unidade\s*[:\s]*(\d+\s*[-–]\s*[^\n]{2,60})",
+    ),
+    "funcao": (
+        "Função",
+        r"Fun[çc][aã]o\s*[:\s]*(\d+\s*[-–]\s*[^\n]{2,60})",
+    ),
+    "subfuncao": (
+        "Subfunção",
+        r"Subfun[çc][aã]o\s*[:\s]*(\d+\s*[-–]\s*[^\n]{2,60})",
+    ),
+    "programa": (
+        "Programa",
+        r"Programa\s*[:\s]*([^\n]{2,80})",
+    ),
+    "projeto_atividade": (
+        "Projeto/Atividade",
+        r"Projeto/Atividade\s*[:\s]*([^\n]{2,80})",
+    ),
+    "elemento_despesa": (
+        "Elemento de Despesa",
+        r"Elemento(?:\s*de\s*Despesa)?\s*[:\s]*([\d\s]+[-–][^\n]{3,60})",
+    ),
+    "subelemento": (
+        "SubElemento",
+        r"SubElemento\s*[:\s]*([\d\s]+[-–][^\n]{3,60})",
+    ),
+    "fonte_recurso": (
+        "Fonte de Recurso",
+        r"Fonte\s*(?:de\s*)?Recurso\s*[:\s]*([\d\s]+[-–][^\n]{3,60})",
+    ),
+    "subfonte": (
+        "SubFonte",
+        r"SubFonte\s*[:\s]*([^\n]{3,80})",
+    ),
+    "dotacao": (
+        "Dotação",
+        r"Dota[çc][aã]o\s*[:\s]*([^\n]{3,80})",
+    ),
+    # --- favorecido / recebedor ---
+    "favorecido_nome": (
+        "Favorecido",
+        r"Favorecido\s*[:\s]*(?:\d+\s*[-–]\s*)?(?!Endere[çc]o|Cidade|Bairro|CNPJ|CPF|Telefone)([A-ZÁÂÃÉÊÍÓÔÕÚÇ][A-ZÁÂÃÉÊÍÓÔÕÚÇ ]{5,80})",
+    ),
+    "favorecido_codigo": (
+        "Código Favorecido",
+        r"Favorecido\s*[:\s]*(\d+)\s*[-–]",
+    ),
+    "favorecido_cpf": (
+        "CPF/CNPJ Favorecido",
+        r"CNPJ/CPF\s*[:\s]*([\d\.\-/\s]{11,20})",
+    ),
+    "favorecido_endereco": (
+        "Endereço Favorecido",
+        r"Endere[çc]o\s*[:\s]*([^\n]{5,80})",
+    ),
+    "favorecido_bairro": (
+        "Bairro",
+        r"Bairro\s*[:\s]*([^\n]{2,40})",
+    ),
+    "favorecido_cidade": (
+        "Cidade",
+        r"Cidade\s*[:\s]*([^\n]{3,50})",
+    ),
+    "favorecido_uf": (
+        "UF",
+        r"\bUF\s*[:\s]*([A-Za-z ]{2,30})",
+    ),
+    "recebedor_nome": (
+        "Recebedor",
+        r"(?:QUITADO|Recebedor|Favorecido)\s*[:\s]*([A-ZÁÂÃÉÊÍÓÔÕÚÇ][A-ZÁÂÃÉÊÍÓÔÕÚÇ ]{4,80})",
+    ),
+    # --- financeiro ---
+    "valor_bruto": (
+        "Valor Bruto",
+        r"Valor\s*Bruto\s*[:\s]*([\d\.\,\s]{2,20})",
+    ),
+    "valor_liquido": (
+        "Valor Líquido",
+        r"VALOR\s*L[ÍI]QUIDO\s*[:\s]*([\d\.\,]+)",
+    ),
+    "especificacao": (
+        "Especificação/Histórico",
+        r"(?:Especifica[çc][aã]o|Hist[óo]rico)\s*[:\s]*([^\n]{10,300})",
+    ),
+    "saldo_anterior": (
+        "Saldo Anterior",
+        r"Saldo\s*Anterior\s*[:\s]*([\d\.\,]+)",
+    ),
+    "saldo_disponivel": (
+        "Saldo Disponível",
+        r"Saldo\s*Dispon[íi]vel\s*[:\s]*([\d\.\,]+)",
+    ),
+    "diarias_numero": (
+        "Diária Nº",
+        r"Di[áa]ria\s*N['°o]?\s*[:\s]*(\d+)",
+    ),
+    # --- bancário ---
+    "banco": (
+        "Banco",
+        r"Banco\s*[:\s]*(\d+)",
+    ),
+    "agencia": (
+        "Agência",
+        r"Ag[eê]ncia\s*[:\s]*([\d\-O\s]{1,10})",
+    ),
+    "conta": (
+        "Conta",
+        r"Conta\s*[:\s]*([\d\.\-]{5,20})",
+    ),
+    "pix": (
+        "PIX",
+        r"PIX\s*[:\s]*([^\n]{3,50})",
+    ),
+    "conta_pagamento": (
+        "Conta Pagamento",
+        r"CONTA\s*[:\s]*([\d\.\-\s]{5,30})",
+    ),
+    "conta_recebimento": (
+        "Conta Recebimento",
+        r"(?:SubFonte|RECURSOS\s*DISPON[ÍI]VEIS|DISPONIBILIDADE)[^\n:]*[:\s]*([^\n]{5,60})",
+    ),
+    # --- autorizador / responsáveis ---
+    "autorizador_nome": (
+        "Autorizador",
+        r"Ordenador\s*da\s*Despesa\s*[^\n]{0,20}([A-ZÁÂÃÉÊÍÓÔÕÚÇ][A-Za-záâãéêíóôõúç ]{6,60})",
+    ),
+    "autorizador_cargo": (
+        "Cargo Autorizador",
+        r"Secret[áa]ri[ao]\s*de\s*([^\n]{3,50})",
+    ),
+    "contador_cpf": (
+        "CPF Contador",
+        r"CPF\s*[:\s]*([\d\.\-]{11,18})",
+    ),
+    # --- datas ---
+    "data_emissao": (
+        "Data do Empenho",
+        r"Data\s*do\s*Empenho\s*[:\s]*([\d/]{8,12})",
+    ),
+    "data_vencimento": (
+        "Data Vencimento",
+        r"Data\s*Venc(?:imento|\.)\s*[:\s]*([\d/]{8,12})",
+    ),
+    "data_quitacao": (
+        "Data Quitação",
+        r"Data\s*Quita[çc][aã]o\s*[:\s]*([\d/]{8,12})",
+    ),
+    "decreto": (
+        "Decreto",
+        r"Decreto\s*N['°o]?\s*([\d/]+)",
+    ),
 }
 
-# Colunas do índice FTS5 (RF-41) — cabeçalho do empenho (>=30 campos) + campos
+# Colunas do índice FTS5 (RF-41) — cabeçalho do empenho (>=40 campos) + campos
 # customizados extraídos por regex dinâmico (via tb_regex_regras.campo_destino).
 FTS_COLS = [
     "nome_arquivo_original", "nome_arquivo_final", "numero_empenho", "parcela",
     "usuario", "data_criacao", "status", "caminho_arquivo",
-    "pagador", "cpf_cnpj", "orgao", "valor", "data_emissao", "data_vencimento",
-    "modalidade", "processo", "dotacao", "favorecido", "cnpj_favorecido",
-    "endereco", "municipio", "uf", "cep", "telefone", "email", "observacao",
-    "texto_extraido", "campos_regex", "hash_arquivo", "tags", "conteudo_texto", "nota_interna",
+    "orgao", "unidade", "sub_unidade", "funcao", "subfuncao", "programa",
+    "projeto_atividade", "elemento_despesa", "subelemento", "fonte_recurso",
+    "subfonte", "dotacao",
+    "favorecido_nome", "favorecido_codigo", "favorecido_cpf", "favorecido_endereco",
+    "favorecido_bairro", "favorecido_cidade", "favorecido_uf",
+    "recebedor_nome", "autorizador_nome", "autorizador_cargo", "contador_cpf",
+    "banco", "agencia", "conta", "conta_pagamento", "conta_recebimento", "pix",
+    "valor_bruto", "valor_liquido", "especificacao", "saldo_anterior",
+    "saldo_disponivel", "processo", "exercicio", "tipo_empenho", "modalidade",
+    "contrato_numero", "data_emissao", "data_vencimento", "data_quitacao",
+    "decreto", "diarias_numero",
+    "texto_extraido", "campos_regex", "campos_json", "hash_arquivo", "tags",
+    "conteudo_texto", "nota_interna",
 ]
 
 
@@ -333,6 +532,27 @@ def init_db_empenho():
     _migrar_coluna(conn, "tb_empenhos", "tipo_especial", "TEXT")
     _migrar_coluna(conn, "tb_empenhos", "ficha", "TEXT")
     _migrar_coluna(conn, "tb_empenhos", "ano", "TEXT")
+    # --- 40+ campos: colunas explicitas + JSON com todos os campos ---
+    for _col in (
+        "orgao", "unidade", "sub_unidade", "funcao", "subfuncao", "programa",
+        "projeto_atividade", "elemento_despesa", "subelemento", "fonte_recurso",
+        "subfonte", "dotacao",
+        "favorecido_nome", "favorecido_codigo", "favorecido_cpf",
+        "favorecido_endereco", "favorecido_bairro", "favorecido_cidade", "favorecido_uf",
+        "recebedor_nome",
+        "valor_bruto", "valor_liquido", "especificacao",
+        "saldo_anterior", "saldo_disponivel", "diarias_numero",
+        "banco", "agencia", "conta", "conta_pagamento", "conta_recebimento", "pix",
+        "autorizador_nome", "autorizador_cargo", "contador_cpf",
+        "processo", "exercicio", "tipo_empenho", "modalidade", "contrato_numero",
+        "data_emissao", "data_vencimento", "data_quitacao", "decreto",
+        "campos_json",
+    ):
+        _migrar_coluna(conn, "tb_empenhos", _col, "TEXT")
+    # migra inclusões futuras de CAMPOS_BUSCA_PADRAO: todo campo novo vira coluna em tb_empenhos
+    for _campo in CAMPOS_BUSCA_PADRAO:
+        if _campo not in ("ficha", "empenho", "parcela", "ano"):
+            _migrar_coluna(conn, "tb_empenhos", _campo, "TEXT")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_empenho_numero ON tb_empenhos(numero_empenho)")
     cur.execute("""
         CREATE TABLE IF NOT EXISTS tb_indexador_pesquisa (
@@ -463,7 +683,36 @@ def init_db_empenho():
     cur.execute("CREATE INDEX IF NOT EXISTS idx_solic_status ON tb_solicitacoes(status)")
     _migrar_coluna(conn, "tb_solicitacoes", "motivo_recusa", "TEXT")
 
-    # FTS5 — índice de busca full-text (RF-41): cabeçalho do empenho (>=30 campos).
+    # FTS5 — índice de busca full-text (RF-41): cabeçalho do empenho (>=40 campos).
+    # Semeia campos novos em tb_campos_busca (sem duplicar os já cadastrados).
+    for _campo, (_rotulo, _padrao) in CAMPOS_BUSCA_PADRAO.items():
+        try:
+            cur.execute(
+                "INSERT OR IGNORE INTO tb_campos_busca (campo, rotulo, padrao_regra) VALUES (?, ?, ?)",
+                (_campo, _rotulo, _padrao),
+            )
+        except Exception:
+            pass
+    # Migra regex antigas para as novas mais tolerantes (aceitam variações OCR)
+    try:
+        for _campo, (_rotulo, _padrao) in CAMPOS_BUSCA_PADRAO.items():
+            cur.execute("UPDATE tb_campos_busca SET padrao_regra=?, rotulo=? WHERE campo=?", (_padrao, _rotulo, _campo))
+    except Exception:
+        pass
+    # Se o FTS já existe com colunas antigas (32), recria para o novo conjunto (>=42).
+    try:
+        cur.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='tb_indexador_pesquisa_fts5'")
+        _fts_row = cur.fetchone()
+        _fts_sql = (_fts_row[0] if _fts_row else "") or ""
+        _precisa_recriar = False
+        for _c in FTS_COLS:
+            if _c not in _fts_sql:
+                _precisa_recriar = True
+                break
+        if _precisa_recriar and _fts_row:
+            cur.execute("DROP TABLE IF EXISTS tb_indexador_pesquisa_fts5")
+    except Exception as e:
+        _log().debug(f"FTS check: {e}")
     cur.execute(
         "CREATE VIRTUAL TABLE IF NOT EXISTS tb_indexador_pesquisa_fts5 USING fts5("
         + ", ".join(FTS_COLS) + ")"
@@ -483,6 +732,14 @@ def init_db_empenho():
     """)
     conn.commit()
     conn.close()
+    try:
+        _campos_busca_ativos.cache_clear()
+    except Exception:
+        pass
+    try:
+        template_nome_atual.cache_clear()
+    except Exception:
+        pass
 
 
 # ================= TEXTO / EXTRAÇÃO =================
@@ -549,6 +806,226 @@ def extrair_texto_pdf(caminho):
     return ""
 
 
+def _inicio_documento(texto_pagina):
+    """True se a página parece início de um documento de empenho.
+
+    Sinais fortes: NOTA DE EMPENHO/COMPLEMENTAÇÃO/ANULAÇÃO, EMPENHO PARCELA,
+    PREFEITURA + CNPJ. Anexo de transferência/FROTA não é início."""
+    t = texto_pagina or ""
+    # TED e FROTA são anexos, não novos empenhos
+    if re.search(r"COMPROVANTE\s*DE\s*TRANSFERENCIA|AGENDAMENTO\s*DE\s*VIAGENS", t, re.I):
+        return False
+    if re.search(r"NOTA\s*DE\s*(EMPENHO|COMPLEMENTA|ANULA)", t, re.I):
+        return True
+    if re.search(r"EMPENHO\s*PARCELA", t, re.I):
+        return True
+    # fallback: cabeçalho da prefeitura + número de ficha/empenho na mesma página
+    if re.search(r"PREFEITURA\s*MUNICIPAL", t, re.I) and re.search(r"N['°o]?\s*da\s*Ficha|N['°o]?\s*do\s*Empenho", t, re.I):
+        return True
+    return False
+
+
+def detectar_documentos_no_pdf(caminho):
+    """Detecta múltiplos documentos em um único PDF escaneado.
+
+    Varre página a página (via pymupdf) e agrupa em segmentos lógicos:
+    cada vez que `_inicio_documento` é True, inicia novo segmento.
+    TED/FROTA são anexos e ficam no segmento anterior.
+
+    Retorna lista de dicts: {pag_inicio, pag_fim, empenho, tipo, texto}.
+    Retorna [] se não conseguir abrir ou se PDF tem 0 páginas."""
+    try:
+        import pymupdf
+    except Exception:
+        return []
+    try:
+        doc = pymupdf.open(caminho)
+    except Exception as e:
+        _log().debug(f"detectar_documentos: falha ao abrir {caminho}: {e}")
+        return []
+    if len(doc) == 0:
+        doc.close()
+        return []
+    textos_por_pagina = []
+    for i in range(len(doc)):
+        try:
+            textos_por_pagina.append(doc[i].get_text() or "")
+        except Exception:
+            textos_por_pagina.append("")
+    doc.close()
+    # identifica páginas de início
+    inicios = []
+    for idx, txt in enumerate(textos_por_pagina):
+        if _inicio_documento(txt):
+            inicios.append(idx)
+    if not inicios:
+        # nenhum início detectado: trata como documento único
+        texto_full = "\n".join(textos_por_pagina)
+        dados = extrair_dados_empenho(texto_full)
+        return [{"pag_inicio": 0, "pag_fim": len(textos_por_pagina) - 1,
+                 "empenho": dados.get("empenho"), "tipo": detectar_tipo_especial(texto_full),
+                 "paginas": len(textos_por_pagina)}]
+    # constrói segmentos a partir dos inícios
+    segmentos = []
+    for s_idx, pag_ini in enumerate(inicios):
+        pag_fim = (inicios[s_idx + 1] - 1) if s_idx + 1 < len(inicios) else len(textos_por_pagina) - 1
+        texto_seg = "\n".join(textos_por_pagina[pag_ini:pag_fim + 1])
+        dados = extrair_dados_empenho(texto_seg)
+        # identificador do documento: ficha (mais estável que nº/AE) ou empenho
+        ident = dados.get("ficha") or dados.get("empenho")
+        segmentos.append({
+            "pag_inicio": pag_ini,
+            "pag_fim": pag_fim,
+            "empenho": ident,
+            "ficha": dados.get("ficha"),
+            "tipo": detectar_tipo_especial(texto_seg),
+            "paginas": pag_fim - pag_ini + 1,
+        })
+    return segmentos
+
+
+def eh_multiplo_documento(caminho):
+    """True se o PDF contém 2+ documentos distintos (empenhos diferentes).
+
+    Critério: `detectar_documentos_no_pdf` retorna >=2 segmentos E
+    os nº de empenho distintos são >=2 (evita falso-positivo de
+    empenho 345 + anexos/FROTA/TED do mesmo empenho)."""
+    segs = detectar_documentos_no_pdf(caminho)
+    if len(segs) < 2:
+        return False, segs
+    nums = set()
+    for s in segs:
+        n = s.get("empenho")
+        if n:
+            # normaliza: remove zeros e não-dígitos
+            nums.add(re.sub(r"\D", "", str(n)).lstrip("0") or "0")
+    # também verifica nº via regex direta por segmento (fallback)
+    if len(nums) < 2:
+        # pode ser EC/EE/EG com números em `numero` em vez de `empenho`
+        return False, segs
+    return True, segs
+
+
+def separar_pdf_por_documentos(caminho, destino_dir=None, usuario="sistema"):
+    """Separa um PDF com múltiplos documentos em um PDF por segmento.
+
+    Usa `detectar_documentos_no_pdf` para achar os intervalos de páginas
+    e grava cada um como arquivo separado via pymupdf.
+
+    Retorna lista de (caminho_novo, segmento) ou [] em falha."""
+    try:
+        import pymupdf
+    except Exception as e:
+        _log().warning(f"separar_pdf: pymupdf indisponível: {e}")
+        return []
+    segs = detectar_documentos_no_pdf(caminho)
+    if len(segs) < 2:
+        return []
+    if destino_dir is None:
+        destino_dir = os.path.dirname(caminho)
+    os.makedirs(destino_dir, exist_ok=True)
+    base = os.path.splitext(os.path.basename(caminho))[0]
+    out = []
+    try:
+        src = pymupdf.open(caminho)
+    except Exception as e:
+        _log().warning(f"separar_pdf: falha ao abrir {caminho}: {e}")
+        return []
+    for seg in segs:
+        ini, fim = seg["pag_inicio"], seg["pag_fim"]
+        dst = pymupdf.open()
+        try:
+            dst.insert_pdf(src, from_page=ini, to_page=fim)
+        except Exception as e:
+            _log().warning(f"separar_pdf: falha ao copiar p{ini}-{fim}: {e}")
+            continue
+        nome_seg = f"{base}_parte{ini+1:02d}_p{ini+1}-{fim+1}.pdf"
+        caminho_seg = os.path.join(destino_dir, nome_seg)
+        # evita colisão
+        c = 1
+        while os.path.exists(caminho_seg):
+            nome_seg = f"{base}_parte{ini+1:02d}_p{ini+1}-{fim+1}_{c}.pdf"
+            caminho_seg = os.path.join(destino_dir, nome_seg)
+            c += 1
+        try:
+            dst.save(caminho_seg)
+            out.append((caminho_seg, seg))
+        except Exception as e:
+            _log().warning(f"separar_pdf: falha ao salvar {caminho_seg}: {e}")
+        finally:
+            dst.close()
+    src.close()
+    return out
+
+
+def separar_documentos_quarentena(qid, usuario="sistema"):
+    """Separa o PDF de um item da quarentena marcado como multi-documento.
+
+    Remove o arquivo original da quarentena e re-injeta cada parte
+    separada na pasta monitorada para reprocessamento normal.
+
+    Retorna (ok: bool, msg: str)."""
+    conn = _conn()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT nome_arquivo, caminho_atual, motivo FROM tb_quarentena WHERE id=?", (qid,))
+        row = cur.fetchone()
+        if not row or not row[1] or not os.path.exists(row[1]):
+            return False, "Arquivo da quarentena não encontrado"
+        nome, caminho_atual, motivo = row
+        if "Múltiplos documentos" not in (motivo or ""):
+            # tenta separar de qualquer forma se detectar multi
+            eh_multi, _ = eh_multiplo_documento(caminho_atual)
+            if not eh_multi:
+                return False, "Arquivo não é múltiplo documento"
+    finally:
+        conn.close()
+    partes = separar_pdf_por_documentos(caminho_atual, destino_dir=os.path.dirname(caminho_atual), usuario=usuario)
+    if not partes:
+        return False, "Falha ao separar — nenhuma parte gerada"
+    # move cada parte para a 1ª pasta monitorada (ou mesma pasta) para reprocessamento
+    pastas = pastas_monitoradas()
+    destino_base = pastas[0] if pastas and pasta_acessivel(pastas[0]) else os.path.dirname(caminho_atual)
+    os.makedirs(destino_base, exist_ok=True)
+    movidas = []
+    for caminho_seg, seg in partes:
+        # se destino_dir era a quarentena, mover para a pasta monitorada
+        if os.path.dirname(caminho_seg) != destino_base:
+            novo = os.path.join(destino_base, os.path.basename(caminho_seg))
+            try:
+                shutil.move(caminho_seg, novo)
+                movidas.append(novo)
+            except Exception as e:
+                _log().warning(f"separar quarentena: move {caminho_seg}: {e}")
+                movidas.append(caminho_seg)
+        else:
+            movidas.append(caminho_seg)
+    # remove original da quarentena; marca como processado
+    try:
+        os.remove(caminho_atual)
+    except Exception:
+        pass
+    c2 = _conn()
+    try:
+        cc = c2.cursor()
+        cc.execute("UPDATE tb_quarentena SET processado=1 WHERE id=?", (qid,))
+        c2.commit()
+    finally:
+        c2.close()
+    audit_log(usuario, "renomear-empenho", "separar_documentos",
+              f"{nome}: separado em {len(movidas)} partes", hash_arquivo=None)
+    # reprocessa cada parte
+    sucessos = 0
+    for p in movidas:
+        try:
+            r = processar_pdf(usuario, p)
+            if r.get("ok"):
+                sucessos += 1
+        except Exception as e:
+            _log().warning(f"separar quarentena reprocess {p}: {e}")
+    return True, f"Separado em {len(movidas)} arquivos; {sucessos} processado(s)"
+
+
 def extrair_numero(texto):
     """Applies active regex rules. Returns (numero, parcela) — (None,1) if not found."""
     conn = _conn()
@@ -588,6 +1065,7 @@ def _proximo_contador():
         conn.close()
 
 
+@lru_cache(maxsize=1)
 def _campos_busca_ativos():
     """Regex ativas de tb_campos_busca: {campo: (rotulo, padrao)}."""
     conn = _conn()
@@ -618,14 +1096,33 @@ def extrair_dados_empenho(texto):
         except re.error:
             continue
         if m:
-            out[campo] = m.group(1) if m.group(1) else None
+            # parcela: usa o 2º grupo (nº da parcela), quando houver
+            if campo == "parcela" and (m.lastindex or 0) >= 2 and m.group(2) and m.group(2).strip().isdigit():
+                out[campo] = m.group(2).strip()
+                # guarda também o ano se a regex de parcela o trouxer como 3º grupo
+                if (m.lastindex or 0) >= 3 and m.group(3) and out.get("ano") is None:
+                    out["ano"] = m.group(3).strip()
+            else:
+                out[campo] = m.group(1).strip() if m.group(1) else None
             # captura o ano do 2º grupo quando presente (ex.: X/2026) e ainda não definido
-            if campo != "ano" and (m.lastindex or 0) >= 2 and m.group(2):
-                if out.get("ano") is None:
-                    out["ano"] = m.group(2)
+            if campo != "ano" and campo != "parcela" and (m.lastindex or 0) >= 2 and m.group(2):
+                if out.get("ano") is None and m.group(2).strip().isdigit() and len(m.group(2).strip()) == 4:
+                    out["ano"] = m.group(2).strip()
+    # normaliza: limpa espaços duplos e remove quebras residuais nos valores
+    _num_fields = {"ficha", "empenho", "processo", "valor_bruto", "valor_liquido",
+                   "saldo_anterior", "saldo_disponivel", "banco", "agencia", "conta",
+                   "conta_pagamento", "conta_recebimento", "favorecido_codigo",
+                   "favorecido_cpf", "contador_cpf", "pix", "diarias_numero", "decreto"}
+    for k in list(out.keys()):
+        if out[k] and isinstance(out[k], str):
+            out[k] = re.sub(r"\s+", " ", out[k]).strip()
+            if k in _num_fields:
+                # remove espaços internos em números (ex.: "1 .000,00" -> "1.000,00", "00003 17" -> "0000317")
+                out[k] = re.sub(r"\s+", "", out[k])
     return out
 
 
+@lru_cache(maxsize=1)
 def template_nome_atual():
     """Template de nome final configurado (empenhos_template_nome) ou o padrão."""
     from mod_intranet.bd_conexao import get_config
@@ -681,6 +1178,21 @@ def processar_pdf(usuario, caminho_arquivo, numero=None, parcela=None, regex_cus
       do arquivo em tb_arquivos_auditoria.
     """
     nome_original = os.path.basename(caminho_arquivo)
+    # --- detecção de múltiplos documentos em um único PDF ---
+    # Se o arquivo contém 2+ empenhos distintos (ex.: lote escaneado), vai
+    # para a quarentena com botão "Separar documentos" em vez de renomear.
+    if numero is None and not regex_custom:
+        try:
+            eh_multi, segs = eh_multiplo_documento(caminho_arquivo)
+            if eh_multi:
+                nums = ", ".join(str(s.get("empenho") or "?") for s in segs)
+                motivo = f"Múltiplos documentos detectados ({len(segs)} empenhos: {nums}) — use Separar"
+                _log().warning(f"processar_pdf: {nome_original}: {motivo}")
+                registrar_arquivo_detectado(nome_original, caminho_arquivo, usuario, status="erro", motivo=motivo)
+                mover_quarentena(usuario, caminho_arquivo, motivo)
+                return {"ok": False, "motivo": motivo, "multi": True, "segmentos": segs}
+        except Exception as e:
+            _log().debug(f"processar_pdf: detecção multi-doc falhou: {e}")
     texto = extrair_texto_pdf(caminho_arquivo)
 
     if not texto.strip():
@@ -758,25 +1270,54 @@ def processar_pdf(usuario, caminho_arquivo, numero=None, parcela=None, regex_cus
         mover_quarentena(usuario, caminho_arquivo, f"Falha ao renomear: {e}")
         return {"ok": False, "motivo": str(e)}
 
+    # --- grava os 40+ campos extraídos nas tabelas ---
+    # Normaliza: garante que todo campo de CAMPOS_BUSCA_PADRAO exista em `dados`
+    # (None se não extraído) e prepara o JSON com todos os campos para tabela/F.T.S.
+    _todos_campos = set(CAMPOS_BUSCA_PADRAO.keys()) | set(dados.keys())
+    # campos_json = snapshot completo dos dados extraídos (sem None vazios, para tabela)
+    try:
+        _campos_json = json.dumps({k: v for k, v in dados.items() if v not in (None, "")}, ensure_ascii=False)
+    except Exception:
+        _campos_json = "{}"
+    # Colunas explicitas de tb_empenhos que espelham CAMPOS_BUSCA_PADRAO (além das 5 chaves)
+    _cols_extras = [c for c in CAMPOS_BUSCA_PADRAO.keys() if c not in ("ficha", "empenho", "parcela", "ano")]
+    # Linha base: sempre grava numero/parcela/ficha/ano + usuario/caminho + tipo_especial
     conn = _conn()
     try:
         cur = conn.cursor()
-        if dados.get("tipo_especial"):
-            cur.execute(
-                """INSERT INTO tb_empenhos
-                   (nome_arquivo_original, nome_arquivo_final, tipo_especial, numero_empenho,
-                    ficha, ano, usuario, caminho_arquivo)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (nome_original, nome_final, dados["tipo_especial"], numero,
-                 dados.get("ficha"), dados.get("ano"), usuario, destino),
-            )
-        else:
-            cur.execute(
-                """INSERT INTO tb_empenhos
-                   (nome_arquivo_original, nome_arquivo_final, numero_empenho, parcela, usuario, caminho_arquivo)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
-                (nome_original, nome_final, numero, parcela, usuario, destino),
-            )
+        # Constrói INSERT dinâmico: base + 40+ colunas extras + campos_json
+        _base_cols = ["nome_arquivo_original", "nome_arquivo_final", "numero_empenho", "parcela",
+                      "tipo_especial", "ficha", "ano", "usuario", "caminho_arquivo", "campos_json"]
+        _base_vals = [nome_original, nome_final, numero, parcela,
+                      dados.get("tipo_especial"), dados.get("ficha"), dados.get("ano"), usuario, destino, _campos_json]
+        _cols = list(_base_cols)
+        _vals = list(_base_vals)
+        for _c in _cols_extras:
+            _cols.append(_c)
+            _vals.append(dados.get(_c))
+        _ph = ", ".join("?" for _ in _cols)
+        _col_sql = ", ".join(_cols)
+        try:
+            cur.execute(f"INSERT INTO tb_empenhos ({_col_sql}) VALUES ({_ph})", _vals)
+        except Exception as e:
+            # fallback: inserção mínima se alguma coluna ainda não existe (migração pendente)
+            _log().warning(f"processar_pdf: insert dinâmico falhou ({e}), fallback mínimo")
+            if dados.get("tipo_especial"):
+                cur.execute(
+                    """INSERT INTO tb_empenhos
+                       (nome_arquivo_original, nome_arquivo_final, tipo_especial, numero_empenho,
+                        ficha, ano, usuario, caminho_arquivo, campos_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (nome_original, nome_final, dados["tipo_especial"], numero,
+                     dados.get("ficha"), dados.get("ano"), usuario, destino, _campos_json),
+                )
+            else:
+                cur.execute(
+                    """INSERT INTO tb_empenhos
+                       (nome_arquivo_original, nome_arquivo_final, numero_empenho, parcela, usuario, caminho_arquivo, campos_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (nome_original, nome_final, numero, parcela, usuario, destino, _campos_json),
+                )
         eid = cur.lastrowid
         cur.execute(
             "INSERT INTO tb_indexador_pesquisa (empenho_id, conteudo_texto) "
@@ -1100,35 +1641,57 @@ def extrair_campos_regex(texto):
 
 def reindexar_empenho(eid):
     """Reconstrói a linha FTS5 do empenho `eid` a partir de tb_empenhos +
-    texto indexado + campos extraídos por regex dinâmico."""
+    texto indexado + campos extraídos por regex dinâmico (40+ cols)."""
     conn = _conn()
     try:
         cur = conn.cursor()
-        cur.execute(
-            "SELECT id, nome_arquivo_original, nome_arquivo_final, numero_empenho, "
-            "parcela, usuario, data_criacao, status, caminho_arquivo "
-            "FROM tb_empenhos WHERE id=?", (eid,))
+        # Lê registro completo de tb_empenhos, incluindo campos_json e os 40+ campos explicitos
+        cur.execute("SELECT * FROM tb_empenhos WHERE id=?", (eid,))
         row = cur.fetchone()
         if not row:
             return
+        # Mapeia colunas -> valores via PRAGMA
+        cur.execute("PRAGMA table_info(tb_empenhos)")
+        _colunas = [r[1] for r in cur.fetchall()]
+        _mapa = {col: row[i] for i, col in enumerate(_colunas) if i < len(row)}
         cur.execute("SELECT conteudo_texto FROM tb_indexador_pesquisa WHERE empenho_id=?", (eid,))
         idx = cur.fetchone()
-        texto = idx[0] if idx else ""
-        campos = extrair_campos_regex(texto)
-        campos_json = json.dumps(campos, ensure_ascii=False)
+        texto = idx[0] if idx else (_mapa.get("campos_json") or "")
+        # campos extraídos de forma dinâmica (tb_regex_regras) + campos do cabeçalho (tb_empenhos)
+        campos_dyn = extrair_campos_regex(texto)
+        try:
+            _dados_json = json.loads(_mapa.get("campos_json") or "{}")
+        except Exception:
+            _dados_json = {}
+        # mescla: dados do documento (40 campos) têm prioridade sobre dinâmicos
+        _todos = {**campos_dyn, **{k: v for k, v in _dados_json.items() if v not in (None, "")}}
+        # completa com colunas explicitas de tb_empenhos (expandidas)
+        for _c in _colunas:
+            if _c not in _todos and _c not in ("id", "nome_arquivo_original", "nome_arquivo_final",
+                                                "numero_empenho", "parcela", "usuario", "data_criacao",
+                                                "status", "caminho_arquivo", "campos_json", "tipo_especial"):
+                v = _mapa.get(_c)
+                if v not in (None, ""):
+                    _todos[_c] = str(v)
+        campos_json = json.dumps(_todos, ensure_ascii=False)
         valores = {
-            "nome_arquivo_original": row[1] or "",
-            "nome_arquivo_final": row[2] or "",
-            "numero_empenho": str(row[3] or ""),
-            "parcela": str(row[4] or ""),
-            "usuario": row[5] or "",
-            "data_criacao": (row[6] or "")[:19],
-            "status": row[7] or "",
-            "caminho_arquivo": row[8] or "",
+            "nome_arquivo_original": _mapa.get("nome_arquivo_original") or "",
+            "nome_arquivo_final": _mapa.get("nome_arquivo_final") or "",
+            "numero_empenho": str(_mapa.get("numero_empenho") or ""),
+            "parcela": str(_mapa.get("parcela") or ""),
+            "usuario": _mapa.get("usuario") or "",
+            "data_criacao": (_mapa.get("data_criacao") or "")[:19],
+            "status": _mapa.get("status") or "",
+            "caminho_arquivo": _mapa.get("caminho_arquivo") or "",
             "texto_extraido": texto,
-            "campos_regex": campos_json,
-            "conteudo_texto": f"{texto} " + " ".join(f"{k}:{v}" for k, v in campos.items()),
+            "campos_regex": json.dumps(campos_dyn, ensure_ascii=False),
+            "campos_json": campos_json,
+            "conteudo_texto": f"{texto} " + " ".join(f"{k}:{v}" for k, v in _todos.items()),
         }
+        # preenche automaticamente cada FTS_COL que corresponda a um campo extraído
+        for _c in FTS_COLS:
+            if _c not in valores:
+                valores[_c] = str(_todos.get(_c, "") or _mapa.get(_c, "") or "")
         vals = [valores.get(c, "") for c in FTS_COLS]
         try:
             cur.execute("DELETE FROM tb_indexador_pesquisa_fts5 WHERE rowid=?", (eid,))
@@ -1217,7 +1780,10 @@ def listar_quarentena(limite=100):
 
 
 def reprocesse_quarentena(qid, novo_padrao=None, usuario="sistema"):
-    """Reprocessa item da quarentena aplicando a regex informada (ou as regras ativas)."""
+    """Reprocesses one quarantine item with an optional custom regex (or active rules).
+
+    Reprocessa um item da quarentena aplicando a regex informada (ou as regras
+    ativas quando None). Sem reiniciar — as regras são lidas do banco na hora."""
     conn = _conn()
     try:
         cur = conn.cursor()
@@ -1226,10 +1792,15 @@ def reprocesse_quarentena(qid, novo_padrao=None, usuario="sistema"):
         if not row or not row[1] or not os.path.exists(row[1]):
             _log().warning(f"reprocesse_quarentena: item {qid} indisponível")
             return False, "Arquivo indisponível"
+        caminho = os.path.realpath(os.path.abspath(row[1]))
+        quar_real = os.path.realpath(os.path.abspath(PASTA_QUARENTENA))
+        if not (caminho == quar_real or caminho.startswith(quar_real + os.sep)):
+            _log().warning(f"reprocesse_quarentena: caminho fora da quarentena bloqueado: {caminho}")
+            return False, "Caminho fora da quarentena"
     finally:
         conn.close()
 
-    res = processar_pdf(usuario, row[1], regex_custom=novo_padrao)
+    res = processar_pdf(usuario, caminho, regex_custom=novo_padrao)
     if res.get("ok"):
         c = _conn()
         try:
@@ -1242,18 +1813,64 @@ def reprocesse_quarentena(qid, novo_padrao=None, usuario="sistema"):
     return False, res.get("motivo", "?")
 
 
+def promover_quarentena(usuario, caminho_arquivo, motivo):
+    """Promotes a failed file to quarantine — alias of mover_quarentena (PLANO 4b).
+
+    Promove um arquivo com falha para a quarentena — alias de `mover_quarentena`
+    (nome previsto no PLANO 4b). Mantém compatibilidade com o roadmap sem
+    duplicar lógica."""
+    return mover_quarentena(usuario, caminho_arquivo, motivo)
+
+
+def reprocessar_fila(usuario="sistema", novo_padrao=None):
+    """Reprocesses the whole quarantine queue in batch without restarting.
+
+    Reprocessa toda a fila da quarentena em lote, sem reiniciar o servidor.
+    Itera sobre itens pendentes (`processado=0`), aplica `reprocesse_quarentena`
+    em cada um (com `novo_padrao` opcional ou regras ativas) e retorna
+    `(ok, mensagem, detalhes)` onde detalhes = lista de (qid, ok, msg).
+
+    Hardening: valida tamanho de regex e confina caminho à quarentena."""
+    if novo_padrao and len(novo_padrao) > REGEX_MAX_LEN:
+        return False, f"Regex deve ter 1-{REGEX_MAX_LEN} caracteres", []
+    if novo_padrao:
+        try:
+            re.compile(novo_padrao)
+        except re.error as e:
+            return False, f"Regex inválida: {e}", []
+    pendentes = [r for r in listar_quarentena(limite=500) if not r[4]]
+    if not pendentes:
+        return True, "Fila vazia — nada a reprocessar", []
+    detalhes = []
+    sucessos = 0
+    for qid, nome, motivo, data, proc, caminho in pendentes:
+        try:
+            ok, msg = reprocesse_quarentena(qid, novo_padrao=novo_padrao, usuario=usuario)
+            detalhes.append((qid, ok, msg))
+            if ok:
+                sucessos += 1
+        except Exception as e:
+            _log().warning(f"reprocessar_fila qid={qid}: {e}")
+            detalhes.append((qid, False, str(e)))
+    total = len(pendentes)
+    if sucessos == total:
+        return True, f"Fila reprocessada: {sucessos}/{total} com sucesso", detalhes
+    if sucessos > 0:
+        return True, f"Fila reprocessada: {sucessos}/{total} com sucesso ({total - sucessos} falha(s) permanecem na quarentena)", detalhes
+    return False, f"Nenhum item reprocessado ({total} falha(s)) — verifique as regex ativas", detalhes
+
+
 # ================= REGRAS =================
 
+REGEX_MAX_LEN = 200
+
+@valida_regex(arg="padrao", max_len=200)
 def salvar_regra(nome, padrao, ativo=True, campo_destino=None):
     """Creates/updates a regex rule (validated before saving). Returns (ok, msg).
 
-    A regex é compilada antes de gravar (recusa padrão inválido);
+    Valida tamanho (ReDoS), compila antes de gravar (recusa inválido);
     `campo_destino` (opcional) alimenta uma coluna FTS customizada. Aplicada
     imediatamente, sem reiniciar."""
-    try:
-        re.compile(padrao)  # valida antes de salvar
-    except re.error as e:
-        return False, f"Regex inválida: {e}"
     conn = _conn()
     try:
         cur = conn.cursor()
@@ -1324,7 +1941,13 @@ def listar_campos_busca():
 
 
 def salvar_campo_busca(campo, rotulo, padrao, ativo=True):
-    """Cria/atualiza um campo de busca com sua regex. Valida a regex antes."""
+    """Cria/atualiza um campo de busca com sua regex. Valida a regex antes.
+
+    Campos novos são persistidos sem reiniciar e, na próxima captura
+    (processar_pdf), passam a ser extraídos de cada PDF e gravados em
+    `tb_empenhos.campos_json` + coluna dedicada (se o nome for válido
+    para coluna SQLite). A inclusão futura é feita só pela UI de
+    Configurações (sem tocar no código)."""
     if not campo or not campo.strip() or not padrao or not padrao.strip():
         return False, "Informe campo e padrão (regex)"
     try:
@@ -1332,6 +1955,8 @@ def salvar_campo_busca(campo, rotulo, padrao, ativo=True):
     except re.error as e:
         return False, f"Regex inválida: {e}"
     campo_n = campo.strip().lower()
+    if not re.match(r"^[a-z_][a-z0-9_]*$", campo_n):
+        return False, "Nome do campo deve usar apenas letras minúsculas, números e _ (ex.: dotacao)"
     conn = _conn()
     try:
         cur = conn.cursor()
@@ -1342,9 +1967,25 @@ def salvar_campo_busca(campo, rotulo, padrao, ativo=True):
              (rotulo or "").strip() or campo_n, padrao.strip(), 1 if ativo else 0),
         )
         conn.commit()
-        return True, "Campo de busca salvo (aplicado imediatamente)"
+        try:
+            _campos_busca_ativos.cache_clear()
+        except Exception:
+            pass
     finally:
         conn.close()
+    # inclusão futura: adiciona coluna dedicada em tb_empenhos para o novo campo
+    try:
+        _c = _conn()
+        try:
+            _migrar_coluna(_c, "tb_empenhos", campo_n, "TEXT")
+            _c.commit()
+        finally:
+            _c.close()
+    except Exception as e:
+        _log().debug(f"salvar_campo_busca: migra coluna {campo_n}: {e}")
+    audit_log("sistema", "renomear-empenho", "campo_cadastro",
+              f"campo {campo_n} cadastrado/atualizado (regex)")
+    return True, "Campo de busca salvo (aplicado imediatamente — novos PDFs já trazem o campo)"
 
 
 def excluir_campo_busca(cid):
@@ -1354,6 +1995,10 @@ def excluir_campo_busca(cid):
         cur = conn.cursor()
         cur.execute("DELETE FROM tb_campos_busca WHERE id=?", (cid,))
         conn.commit()
+        try:
+            _campos_busca_ativos.cache_clear()
+        except Exception:
+            pass
         return cur.rowcount
     finally:
         conn.close()
@@ -1371,6 +2016,10 @@ def restaurar_campos_busca_padrao():
                 (campo, rotulo, padrao, rotulo, padrao),
             )
         conn.commit()
+        try:
+            _campos_busca_ativos.cache_clear()
+        except Exception:
+            pass
         return True
     finally:
         conn.close()
@@ -1533,9 +2182,12 @@ def gerar_matriz_organizador():
             linhas.append(f"  {sub}: {len(docs)} doc(s)")
             capa_caixa.append(f"{sub}: {len(docs)} doc(s) -> " + ", ".join(docs))
             total += len(docs)
+        # capa por caixa — gera TXT e PDF (4b/4c: capas PDF/TXT)
+        conteudo_capa = f"CAPA DA CAIXA {caixa}\n" + "\n".join(capa_caixa) + "\n"
         try:
             with open(os.path.join(PASTA_ORGANIZADOR, caixa, "capa.txt"), "w", encoding="utf-8") as f:
-                f.write(f"CAPA DA CAIXA {caixa}\n" + "\n".join(capa_caixa) + "\n")
+                f.write(conteudo_capa)
+            _gerar_pdf_texto(conteudo_capa, os.path.join(PASTA_ORGANIZADOR, caixa, "capa.pdf"))
         except Exception:
             _log().warning(f"gerar_matriz: falha ao gravar capa de {caixa}")
     linhas.append(f"\nTOTAL DE DOCUMENTOS: {total}")
@@ -1797,11 +2449,15 @@ def _basename_sem_ext(path):
 
 
 def renomear_manual(usuario, caminho_arquivo, novo_numero=None, novoTemplate=None,
-                    novo_parcela=None, tipo_especial=None):
+                    novo_parcela=None, tipo_especial=None,
+                    nova_ficha=None, novo_ano=None):
     """Renomeia manualmente um PDF na pasta monitorada.
 
     - novo_numero define o nº (se dor tipo especial, usa EC_xxxx etc.)
     - caso contrário, usa novoTemplate (padrão doc_{contador}...).
+    - novo_parcela, nova_ficha e novo_ano sobrescrevem os campos extraídos
+      (edição manual por campo — vale mesmo quando o OCR falhou num campo;
+      os demais campos reconhecidos são preservados).
     Aplica o GATE de validação: só renomeia se a extração gerar resultado sem
     divergência crítica (nº identificado). Retorna (ok, msg).
     """
@@ -1832,6 +2488,10 @@ def renomear_manual(usuario, caminho_arquivo, novo_numero=None, novoTemplate=Non
             dados["empenho"] = str(novo_numero)
         if novo_parcela is not None:
             dados["parcela"] = novo_parcela
+        if nova_ficha is not None:
+            dados["ficha"] = nova_ficha
+        if novo_ano is not None:
+            dados["ano"] = novo_ano
         num = int(re.sub(r"\D", "", str(dados.get("empenho") or "0")))
         if num <= 0:
             return False, "Número de empenho não identificado; informe um nº válido"

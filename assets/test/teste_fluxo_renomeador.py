@@ -12,6 +12,8 @@ import os
 import shutil
 import tempfile
 
+import pytest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from mod_renomear_empenho import bd_manipulador as bd
@@ -34,6 +36,16 @@ def _redirecionar_para_temp():
     # isola a lista de pastas monitoradas (não depende de tb_config central)
     bd.pastas_monitoradas = lambda: [bd.PASTA_MONITORADA]
     return _bak
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _isolamento_pytest():
+    """Sob pytest, isola banco + pasta monitorada em temp (igual ao main()),
+    para não sujar o ambiente real nem sofrer interferência do monitor."""
+    _redirecionar_para_temp()
+    bd.init_db_empenho()
+    yield
+    shutil.rmtree(_bak, ignore_errors=True)
 
 
 def test_extração_campos():
@@ -59,7 +71,7 @@ def test_template_nome():
     # padrão do módulo: empenho como inteiro
     nome = bd.montar_nome_final(bd.NOME_FINAL_PADRAO, 7, d)
     print(f"  padrão -> {nome}")
-    assert nome == "doc_0007_numEmpenho_345_p001.pdf", nome
+    assert nome == "doc_0007_345_001.pdf", nome
     # template custom usando a string crua do cabeçalho
     custom = bd.montar_nome_final("DOC_{contador:04d}_{ficha}_{empenho_cru}_({parcela})_{ano}.pdf", 9, d)
     print(f"  custom -> {custom}")
@@ -169,6 +181,7 @@ def test_processamento_tipo_especial():
 
 def test_ja_processado_classificacao():
     print("\n=== Teste: classificação de já-processado ===")
+    assert bd.arquivo_ja_processado("doc_0014_345_001.pdf") is True
     assert bd.arquivo_ja_processado("doc_0014_numEmpenho_345_p001.pdf") is True
     assert bd.arquivo_ja_processado("renomeador_empenhos.py") is False
     assert bd.arquivo_ja_processado("DOC_0201.pdf") is False
@@ -216,8 +229,8 @@ def test_navegacao_pendas():
     # nenhum .py aparece na navegação
     assert all(n.lower().endswith(".pdf") for n in pdfs), "Navegação deve conter só PDFs"
     # os arquivos processados estão marcados como processado
-    assert "doc_0001_numEmpenho_345_p001.pdf" in pdfs
-    assert pdfs["doc_0001_numEmpenho_345_p001.pdf"] == "processado"
+    assert "doc_0001_345_001.pdf" in pdfs
+    assert pdfs["doc_0001_345_001.pdf"] == "processado"
     # dirs contém a subpasta
     assert any(d["nome"] == "subdir" for d in nav["dirs"])
     # proteção de raiz: navegar fora cai dentro
