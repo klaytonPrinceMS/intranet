@@ -1,12 +1,12 @@
-# Renomear Empenhos — `mod_renomear_empenho`
+# Empenho Renamer — `mod_renomear_empenho` — Module Analysis
 
-> Módulo de renomeação de empenhos: rota `/renomear-empenho` (chave `empenhos`) · banco próprio `db_mod_renomear_empenho.db` · extração de texto de PDF (excl. tipos EC/EE/EG/AE), monitor multi-pasta (local/UNC), fila, pesquisa FTS5, organizador físico, solicitações comum→admin e configurações.
+> Empenho PDF renaming module: route `/renomear-empenho` (key `empenhos`) · own DB `db_mod_renomear_empenho.db` · text extraction with dynamic regex (incl. special types EC/EE/EG/AE), multi-folder monitor (local/UNC), queue, FTS5 search, quarantine with individual+batch reprocessing without restart, physical organizer (`capa.pdf/txt` + `matrizDeDocumentos.pdf/.txt`) and common→admin request flow.
 
 ---
 
-# Renomear Empenhos — `mod_renomear_empenho`
+# Renomear Empenhos — `mod_renomear_empenho` — Análise do Módulo
 
-> Módulo de renomeação de empenhos: rota `/renomear-empenho` (chave `empenhos`) · banco próprio `db_mod_renomear_empenho.db` · extração de texto de PDF por regex dinâmica, tipos especiais EC/EE/EG/AE, quarentena, renomeação sequencial, organizador físico e fluxo de solicitações.
+> Módulo de renomeação de empenhos: rota `/renomear-empenho` (chave `empenhos`) · banco próprio `db_mod_renomear_empenho.db` · extração de texto de PDF por regex dinâmica, tipos especiais EC/EE/EG/AE, quarentena com reprocessamento individual e em lote sem reiniciar, organizador físico com `capa.pdf/txt` e `matrizDeDocumentos.pdf/.txt` e fluxo de solicitações comum→admin.
 
 ## Propósito
 
@@ -96,11 +96,12 @@ Acesso pela chave do módulo `empenhos`; perfil define o que é visível (abas a
 
 ## Regras de negócio relevantes
 
-- **Extração** (pipeline tolerante a escaneados, `bd_manipulador.py:475`): `pymupdf → pdfplumber → OCR (pytesseract, por+eng) → pikepdf`. PDF sem texto vai à quarentena ("possivelmente escaneado").
+- **Extração** (pipeline tolerante a escaneados, `bd_manipulador.py:475`): `pymupdf → pdfplumber → OCR (pytesseract, por+eng) → pikepdf` (fallback com ordem `pymupdf` primeira; plano previa `pytesseract→pdfplumber→pikepdf→pymupdf` — libs idênticas, ordem otimizada para nativo primeiro). `cp1252`/`Latin-1` e mojibake neutralizados via normalização de texto (`?` tolerante); PDF sem texto vai à quarentena ("possivelmente escaneado").
 - **Renomeação**: contador sequencial persistido em banco, único entre pastas; tipos especiais usam nome próprio. Template de nome configurável.
-- **Organizador**: distribui renomeados em `mod_renomear_empenho/organizadorPasta/caixa_NN/sub_X` (~200 páginas/pasta, 4 pastas/caixa, configuráveis); gera `capa.txt`/`matrizDeDocumentos.txt/.pdf` e valida presença.
+- **Quarentena e regras dinâmicas (4b)**: falha de extração/validação ou PDF sem texto → `mover_quarentena`/`promover_quarentena` (`bd_manipulador.py:1530`) com motivo truncado a 300 chars, cópia para `mod_renomear_empenho/quarentena/<timestamp>_<nome>` e registro em `tb_quarentena`. **Identificação manual**: diálogo "Revisar/renomear" na Navegar (`renomear_manual` com gate) normaliza o nome sem reiniciar. **Regex dinâmico**: `tb_regex_regras` (`nome_regra UNIQUE`, `padrao_regra`, `ativo`, `campo_destino` → coluna FTS) editável em Configurações/Quarentena; `salvar_regra` valida `re.compile` antes de gravar e vale **sem reiniciar** (lida a cada `processar_pdf`/`extrair_numero`). **Reprocessamento**: individual — clique na linha da quarentena → "Reprocessar com nova regex" (`reprocesse_quarentena(qid, novo_padrao)`); em lote — botão **"Reprocessar fila"** (`reprocessar_fila(usuario, novo_padrao)`, `bd_manipulador.py:1792`) itera todos `processado=0` com regras ativas e reporta `sucessos/total` sem reiniciar (aliases PLANO: `promover_quarentena`→`mover_quarentena`, `reprocessar_fila`→batch). **Múltiplos documentos**: `detectar_documentos_no_pdf`/`eh_multiplo_documento` (`bd_manipulador.py:815`) agrupa por `_inicio_documento`; quarentena com motivo "Múltiplos documentos detectados (N empenhos: ...)" oferece botão **"Separar documentos"** (`separar_documentos_quarentena`/`separar_pdf_por_documentos`) que divide em `*_parteNN_pA-B.pdf`, move para a pasta monitorada e reprocessa cada parte.
+- **Organizador físico (4c)**: distribui renomeados em `mod_renomear_empenho/organizadorPasta/caixa_NN/sub_X` com **~200 páginas por subpasta e 4 pastas por caixa** (padrões configuráveis via `tb_config` `empenhos_organizador_paginas_pasta`/`empenhos_organizador_pastas_caixa`, `bd_manipulador.py:1988`). Ao final, `gerar_matriz_organizador` (`bd_manipulador.py:2090`) gera **capa por caixa** (`organizadorPasta/caixa_NN/capa.txt` **e** `capa.pdf` via pymupdf) e **matriz geral** (`organizadorPasta/matrizDeDocumentos.txt` **e** `matrizDeDocumentos.pdf`). `validar_presenca_matriz` (`bd_manipulador.py:2121`) confere que todo `.pdf` listado na matriz existe em disco; `organizar_pastas` já encadeia a geração de capas/matriz e retorna `"<N> organizado(s). Matriz gerada (TOTAL documentos)."`.
 - **Solicitações**: `pendente → (email) enviado | (ZIP) zip_gerado → confirmar | recusado`; agrupadas por `lote_id`; ZIP em `mod_renomear_empenho/downloads/solic_*.zip`.
-- **Auditoria**: ações `processar`, `revisao_manual`, `solicitacao*`, `configuracao`, `quarentena` na trilha central **com hash SHA-256**; + trilha por arquivo local.
+- **Auditoria**: ações `processar`, `revisao_manual`, `solicitacao*`, `configuracao`, `quarentena`, `separar_documentos` na trilha central **com hash SHA-256**; + trilha por arquivo local (`tb_arquivos_auditoria`/`tb_eventos_arquivos`).
 
 ## Integrações com o núcleo
 
@@ -117,9 +118,9 @@ Acesso pela chave do módulo `empenhos`; perfil define o que é visível (abas a
 - Monitor automático varre **só a raiz** de cada pasta monitorada; navegação/fila manuais são **recursivas** (comportamento intencional) — não equivaler automaticidade a recursividade.
 - Intervalo padrão do monitor é **60 s** (não 10 s); ajustado em `mod_intranet/rotinas.py:36`.
 
-## Status — Fases do PLANO
+## Status — Fases do PLANO (4b/4c concluídos)
 
-**Implementado:** banco próprio em WAL; auditoria central com hash SHA-256; perfis/papéis por módulo; fila de quarentena com motivo e reprocessamento (regex aplicada na hora); regex dinâmicas persistidas (com `campo_destino` para FTS); renomeação automática sequencial; organizador físico completo (capas/matriz); indexação FTS5 (RF-41); ferramentas de PDF (RF-45); monitor automático multi-pasta (RF-40); ações de usuário comum (RF-39); tipos especiais EC/EE/EG/AE corrigidos; gate de validação; trilha por arquivo; solicitações comum→admin.
+**Implementado:** banco próprio em WAL; auditoria central com hash SHA-256; perfis/papéis por módulo; **quarentena com motivo + reprocessamento individual e em lote sem reiniciar** (`promover_quarentena`/`mover_quarentena`, `reprocesse_quarentena` + `reprocessar_fila` com botão "Reprocessar fila" — PLANO 4b); **regex dinâmicas persistidas** (`campo_destino` → FTS) com identificação manual (`renomear_manual`) e cadastro sem reiniciar; **separação de múltiplos documentos** (`detectar_documentos_no_pdf`/`separar_documentos_quarentena` com botão "Separar documentos"); renomeação automática sequencial; **organizador físico completo (PLANO 4c)** — ~200 páginas/subpasta, 4 subpastas/caixa (configuráveis), **capas `capa.txt` + `capa.pdf` por caixa** e `matrizDeDocumentos.txt/.pdf` geral com `validar_presenca_matriz` em `mod_renomear_empenho/organizadorPasta/`; indexação FTS5 (RF-41); ferramentas de PDF (RF-45); monitor automático multi-pasta (RF-40); ações de usuário comum (RF-39); tipos especiais EC/EE/EG/AE corrigidos; gate de validação; trilha por arquivo; solicitações comum→admin.
 
 ---
 
@@ -153,6 +154,10 @@ Mapeamento para esta implementação:
 - **Não-reprocessamento** e **gate de validação** que a referência não garantia.
 - **Anti-travessia** na navegação e suporte nativo a **pasta de rede/UNC**.
 - **Sem duplicação**: editor de PDF, usuários e auditoria continuam nos módulos próprios.
+
+### Adições recentes (09/2026) — responsividade global RNF-UI-01
+
+- **Auditado 320/768/1024** (`kbp-web-design`) — proposta P0/P1/P2 por `container`/`row`/`grid`: `menu_modulo` `overflow-x-auto`, filtros/busca `flex-wrap` `flex-1 min-w`, tabelas `overflow-x-auto`, `scroll_area` altura explícita, grids `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`, dialogs `w-full max-w`; header `flex-wrap` `truncate`. Ver [Padrões](padroes_codificacao/index.md) §8.1.
 
 ### Lacunas / diferenças assumidas
 

@@ -135,7 +135,7 @@ usado pelo assistente de ativação e pela CLI (`--scan-ports`) para diagnóstic
   (o `ss -ltnp`/`netstat` sem sudo não revela o nome do processo).
 - Propósito: diagnosticar **portas ocupadas** durante a instalação (ex.: Postgres
   nativo na 5432, Grafana na 3000) e listar o que escuta no servidor — ver
-  [Manual de Instalação](../manual_de_uso_instalacao/index.md#21-assistente-de-ativacao-boot).
+  [Manual de Instalação](../manual_de_uso_instalacao/index.md#21-assistente-de-ativacao-boot-via-config-c).
 - Ativado pelo assistente (`_msg_porta_em_uso`, `ativacao.py:190`, com cache por
   processo `_portas_em_uso_cached` `:171`) e pela CLI (`cli_opcoes(['--scan-ports'])`,
   `ativacao.py:885` — imprime o resumo e encerra com **exit 0**).

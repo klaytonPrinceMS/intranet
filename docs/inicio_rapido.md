@@ -33,19 +33,25 @@ O `requirements.txt` instala todas as dependências (NiceGUI, APScheduler, nh3, 
 ## Passo 2 — Subir o servidor
 
 ```bash
-.venv/bin/python main.py
+.venv/bin/python main.py                 # sem argumentos → sobe direto com a configuração persistida (tb_config)
+.venv/bin/python main.py --help          # ajuda em PT-BR — "Sem argumentos, sobe direto com a configuração persistida"
+.venv/bin/python main.py --config        # abre o assistente interativo (alias -c)
 ```
 
-- O servidor sobe na porta **8080** (`reload=False`, `show=False`, `tailwind=True` — Tailwind local sem CDN).
+- O servidor sobe na porta **8080** (`porta_site`, `reload=False`, `show=False`, `tailwind=True` — Tailwind local sem CDN); a documentação mkdocs sobe na porta **8000** (`porta_documentacao`).
+- **Sem argumentos**, o boot carrega `config_persistida()` (`mod_intranet/ativacao.py:1284`) — lê `tb_config` (banco_tipo, postgres_url, otel_ativo, portas) com fallback em `_config_padrao()` — e sobe direto. O assistente só abre com `--config`/`-c`.
 - No boot, `inicializar_bancos()` cria os bancos `db_mod_*` (SQLite WAL) caso não existam e o usuário seed `master`/`master`.
 - Pastas operacionais são criadas automaticamente em runtime pelo boot/rotinas (`os.makedirs(..., exist_ok=True)`): na raiz, `backup/` e `logs/`; dentro dos módulos, `mod_edit_pdf/editorPDF/`, `mod_renomear_empenho/doc/`, `mod_renomear_empenho/organizadorPasta/`, `mod_renomear_empenho/quarentena/` (regra de ouro do AGENTS.md: artefatos de módulo vivem dentro de `mod_*`).
-- A documentação é compilada (MkDocs) e servida em `http://localhost:8080/documentacao`.
+- A documentação é compilada (MkDocs) e servida em **http://localhost:8000** (porta mkdocs, separada do site).
 
 Acesse no navegador:
 
 ```
-http://localhost:8080
+http://localhost:8080          # site
+http://localhost:8000          # documentação (mkdocs)
 ```
+
+> **CLI Opção C (ativacao.py):** ativação com prefixo `--ativ-` (`--ativ-postgres` com aliases `--ativ-postgress` typo + `--postgres`, `-p`; `--ativ-otel` alias `--otel`, `-o`) e portas com prefixo `--porta-` (`--porta-docs` alias `--portadocumentacao`, `-d`; `--porta-db` alias `--portapostgres`, `-k`; `--porta-site` alias `--portasite`, `-s`; `--porta-grafana` alias `--portatelemetria`, `-t`), agrupadas por tipo e em ordem alfabética dentro do grupo, com contrações curtas `-c/-o/-p/-d/-k/-s/-t/-S` — ver [Manual de Instalação](manual_de_uso_instalacao/index.md#22-inicializacao-por-linha-de-comando-typer-opcao-c) e [Configurações](configuracoes.md#inicializacao-por-argumentos-de-linha-de-comando-opcao-c-092026).
 
 ## Passo 3 — Primeiro acesso
 

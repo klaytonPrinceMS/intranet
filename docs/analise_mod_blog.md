@@ -144,4 +144,8 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na tr
   - `atualizar()` trata o modo carrossel (`telas.py:684-694`) — lista apenas as postagens selecionadas via `listar_postagens_por_ids`.
 - **Testes**:
   - `assets/test/teste_fluxo_blog.py`: isolamento do banco (reatribuição de `bd._crud` para banco temporário) + nova função `teste_carrossel` (7 verificações) validando o modo carrossel.
-  - `assets/test/teste_carrossel_blog.py`: teste headless que renderiza a tela em modo carrossel e valida o DOM (indicador de posição, botão Leitura completa, select de postagens, tempo, expansão).
+   - `assets/test/teste_carrossel_blog.py`: teste headless que renderiza a tela em modo carrossel e valida o DOM (indicador de posição, botão Leitura completa, select de postagens, tempo, expansão).
+
+### Adições recentes (09/2026) — responsividade global RNF-UI-01
+
+- **Já responsivo** — filtros justificados (`flex-wrap` `gap` via `.style`), exibição centralizada (`w-full justify-center`), seleção em lote com `grid mobile-first`; dialogs `w-full max-w`. Auditado 320/768/1024 (`kbp-web-design`) com checklist P0/P1/P2 e proposta por `container`/`row`/`grid` (cards `grid-cols-1 sm:grid-cols-2`). Ver [Padrões](padroes_codificacao/index.md) §8.1.

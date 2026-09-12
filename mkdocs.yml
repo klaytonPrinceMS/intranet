@@ -21,6 +21,7 @@ nav:
       - Introdução: intro.md
       - Visão Geral: visao_geral.md
       - Guia de Início Rápido: inicio_rapido.md
+      - Guia Rápido OTel: inicio_rapido_otel.md
       - Requisitos do Sistema: requisitos.md
       - Configurações e Variáveis de Ambiente: configuracoes.md
       - Arquitetura: arquitetura.md
@@ -46,6 +47,7 @@ nav:
   - Segurança:
       - Ferramentas de Segurança: seguranca/ferramentas_de_seguranca.md
       - Riscos de IA/ML: seguranca/riscos_ia_ml.md
+      - Auditoria do Menu (12/09/2026): seguranca/auditoria_menu_2026-09-12.md
   - Testes:
       - Casos: testes_casos/index.md
       - Plano: testes_plano/index.md

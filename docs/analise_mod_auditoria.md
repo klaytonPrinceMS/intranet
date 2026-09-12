@@ -58,6 +58,10 @@ Criador vigente: `init_db_auditoria()` em `db_manipulador.py:25-38` (executado n
 - A preferência de colunas é por usuário (`auditoria_campos:<usuario>`); como o módulo é exclusivo do admin geral, na prática vale para qualquer auditor.
 - `db_criador.py` é legado — não executar como fonte de verdade.
 
+### Adições recentes (09/2026) — responsividade global RNF-UI-01
+
+- **Auditado 320/768/1024** (`kbp-web-design`) com checklist P0/P1/P2 por `container`/`row`/`grid`: tabs/filtros/tabela `overflow-x-auto`, barra de filtros `flex-wrap` `gap` via `.style`, `truncate` em colunas longas, dialogs `w-full max-w`. Proposta por `container`/`row`/`grid` (header `flex-wrap` `min-width:0`) registrada na auditoria; ver [Padrões](padroes_codificacao/index.md) §8.1.
+
 ## Status
 
 | Item | Situação |

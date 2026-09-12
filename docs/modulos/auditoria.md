@@ -35,6 +35,7 @@ Criador vigente: `init_db_auditoria()` em `db_manipulador.py:25-38` (executado n
 - **Colunas padrão**: Data/Hora, Usuário, Módulo, Ação (cores por tipo — `CORES_ACAO`), Descrição (100 chars), Hash, IP, dispositivo.
 - **Aba Observabilidade** (quando a stack OTel está no ar): atalhos para os dashboards Grafana (Visão Geral, Traces, Logs) + aviso LGPD sobre a senha do Grafana.
 - **Painel Administração**: `auditoria_limite`, `auditoria_retencao_dias`, `auditoria_texto_header` + card padrão **"Configurações de cores"** (`auditoria_*` — vazios usam o padrão do PRÓPRIO módulo via `PADROES_TEMA["auditoria"]` = `#000000`, sem herança do tema do sistema); salvar audita a si mesmo. O cabeçalho usa `chave_modulo="auditoria"` (`telas.py:345`): a borda de destaque é a **mesma cor dos botões do módulo**.
+- **Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 `kbp-web-design`)**: `overflow-x-auto` em tabs/filtros/tabela, barra de filtros `flex-wrap` `gap` via `.style`, `truncate` em colunas longas, dialogs `w-full max-w`; proposta P0/P1/P2 por `container`/`row`/`grid` (header `flex-wrap` `min-width:0`).
 - **Versionamento**: `versao_modulo:auditoria = 1.0.260908`.
 
 ## Permissões

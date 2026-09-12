@@ -162,4 +162,4 @@ Verifica: Docker disponível?
 
 ## Documentação Completa
 
-Consulte o [README completo](docker/README.md) para mais detalhes.
+Consulte o `assets/docker/README.md` no repositório para mais detalhes.

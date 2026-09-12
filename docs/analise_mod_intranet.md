@@ -159,6 +159,29 @@ sistema**: a data atual e de gravação devem vir SEMPRE do servidor (nunca do n
 - **Robustez**: todas as funções com `try/except` + loguru (`_log()` →
   `observabilidade.get_logger("intranet")`), fail-soft (nunca derruba a hora).
 
+## Ativação e CLI — Opção C (09/2026)
+
+> **Boot sem argumentos → config persistida; `--config` → wizard; demais flags via Typer com prefixos semânticos.**
+
+- **`python main.py` (sem args)** sobe direto com `config_persistida()` (`mod_intranet/ativacao.py:1284`) — lê `tb_config` (banco_tipo, postgres_url + porta via regex `r":(\d+)/"`, otel_ativo, porta_site/porta_documentacao/porta_postgres/porta_grafana) e completa com `_config_padrao()` (`ativacao.py:468`) quando a chave ainda não existe (primeira execução → SQLite + sem OTel). Depois `aplicar_banco(cfg)` (`ativacao.py:507` → `_garantir_tb_config` + `banco_conexao.definir_*`) persiste o seletor via arquivo SQLite central.
+- **`python main.py --config` / `-c`** abre o **wizard interativo** (`ativacao.iniciar(cli_cfg=None)` `main.py:43-45` → `ativacao.py:1442`): ENTER = básico SQLite, `1`+ENTER = configurar (banco → serviços → portas). Todas as perguntas binárias via `_escolha_1_enter` (`:1237`) e `_sim_nao` (`:1260`); `perguntar()` (`:106`) repete até resposta válida; `_porta_valida` (`:140`) valida 1–65535.
+- **CLI Typer — Opção C** (`ativacao._cli_app()` `ativacao.py:1331`, help PT-BR: *"Sem argumentos, sobe direto com a configuração persistida"*): flags agrupadas por tipo e em ordem alfabética dentro do grupo, com contrações curtas:
+
+  | Grupo | Flag (Opção C) | Alias | Curta |
+  |:---|:---|:---|:---:|
+  | Ativação | `--ativ-otel` | `--otel` | `-o` |
+  | | `--ativ-postgres` | `--ativ-postgress` (typo) + `--postgres` | `-p` |
+  | Portas | `--porta-db` | `--portapostgres` | `-k` |
+  | | `--porta-docs` | `--portadocumentacao` | `-d` |
+  | | `--porta-grafana` | `--portatelemetria` | `-t` |
+  | | `--porta-site` | `--portasite` | `-s` |
+  | Config | `--config` | — | `-c` |
+  | Utilitário | `--scan-ports` | — | `-S` |
+
+  `main.py:38-56` decide: sem args → `config_persistida()`; `--config`/`-c` → wizard (prioridade); flags `-` → `cli_opcoes(args)` (`:1387`, Typer `get_command().make_context()`) → `config_do_cli(...)` (`:1420`, monta `cfg` com `_porta_valida`) → `iniciar(cli_cfg)` (`:1442`, reaproveita `_executar_e_persistir` `:1531`). `--scan-ports`/`-S` imprime `port_scanner.resumo_portas()` e encerra exit 0.
+
+Documentação de uso: [Manual de Instalação — Inicialização por linha de comando (Typer) — Opção C](manual_de_uso_instalacao/index.md#22-inicializacao-por-linha-de-comando-typer-opcao-c) e [Configurações — Opção C](configuracoes.md#inicializacao-por-argumentos-de-linha-de-comando-opcao-c-092026).
+
 ## Pontos de atenção
 
 - Bootstrap: `inicializar_bancos()` roda antes de qualquer import de módulo (`main.py:15-16`) — ordem crítica.
@@ -198,16 +221,16 @@ sistema**: a data atual e de gravação devem vir SEMPRE do servidor (nunca do n
 - **`main.py:196-198`**: Os três cards `_stat` são **sempre renderizados** dentro do bloco de admin: "Usuários ativos" (`people`), "Postagens" (`article`) e "Registros de auditoria" (`history`). Antes, o de auditoria era condicionado a `if eh_admin` — redundante agora que o bloco inteiro já é `if eh_admin`.
 - **`main.py:213-234`**: O **Feed do Blog** agora ocupa largura total (`ui.column` `w-full gap-4`, sem `col-span-*`). Cabeçalho "Publicações recentes" + botão "Abrir Blog completo" inalterados; cards de postagens via `_card_postagem` e `pode_publicar_blog` permanecem iguais.
 
-#### Menu lateral — item "Home" no topo do drawer
+#### Menu lateral — fábrica `item_menu_drawer` (refatorado 12/09/2026)
 
-- **`layout_tela.py:135-144`**: Adicionado no **TOPO do drawer** (antes da seção "MÓDULOS") um item "Home" sob o rótulo de seção "PÁGINA INICIAL". O item usa ícone `home` e `ui.item_label("Home")`, navegando para `/` via `ui.navigate.to("/")`. Seguido de `ui.separator()` antes de "MÓDULOS" (`layout_tela.py:144`). Antes, o drawer começava direto com "MÓDULOS" — agora há um atalho explícito para a página inicial visível em todas as rotas.
+- **`mod_intranet/ui_comum.py:850` + `mod_intranet/telas.py:_montar_layout`**: o drawer (abre **fechado** `value=False`, `p-2`, coluna `w-full` com `gap` via `.style`) monta TODOS os itens pela fábrica **`item_menu_drawer()` / classe `ItemMenuDrawer`** — `ui.item` acessível `w-full rounded-lg my-0.5` com `.style('min-width: 0')`, avatar com ícone `text-primary shrink-0 aria-hidden`, rótulo `truncate max-w-full grow`, tooltip PT-BR, anel `focus-visible`, estado ativo (`bg-blue-100` + `aria-current="page"`) e `data-testid` via `.props()` (`menu-home`, `menu-<chave>`, `menu-admin`, `menu-docs`, `menu-sair`; indisponível: `menu-<chave>-indisponivel` com `aria-label`); itens só-ícone recebem `aria-label`; falha retorna `None` (fail-soft). Ordem: **Home** (topo, `ativo` quando `chave_modulo=None`) → separador → módulos de `autenticacao.modulos_do_usuario` (inativo vira item laranja de alerta) → Administração contextual + Documentação (só `administrador_geral`) → separador → **Sair**. **Sem labels de seção** desde 06/09 (apenas separadores). **Bootstrap local avaliado e dispensado**: `assets/css/frameworks/bootstrap@5.3.8.min.css` (servido em `/css/frameworks/*` via `tema_css.montar_rotas_static()`) NÃO é injetado — o reset global quebraria o Quasar; o visual list-group é replicado com Tailwind + Quasar (justificativa no código). Header com hambúrguer (`data-testid=menu-hamburguer`, `aria-label`). RNF-UI-01 320/768/1024: `w-full` + `min-width: 0`, sem `gap-*`.
 - **Padrão de exibição** — **REALIZADO**: todos os módulos seguem o padrão do **módulo exemplo `mod_edit_pdf`** — área cheia (`w-full`, sem `max-w-*` centralizador) e cupê **"Aparência"** padronizado na aba/expansão Administração com as **6 chaves** `cor_botao`, `cor_texto_botao`, `cor_fundo`, `cor_titulo`, `btn_tamanho`, `texto_header` em `tb_config` (prefixos `blog_*`, `usuarios_*`, `auditoria_*`, `empenhos_*`, `solicita_impressao_*`; o `editar_pdf` usa `editpdf_*`). `aba_modulo.cabecalho()` passou a aceitar `cor_titulo`/`cor_fundo`, aplicando o tema sem restart. Áreas que já eram `w-full` (auditoria, empenhos) mantidas; blog/usuários/solicita tiveram o `max-w-* mx-auto` centralizador removido.
 
 #### Tela de Configurações — reorganizada no padrão menu_mod (abas)
 
 - **`tela_configuracoes.py:189-198`**: a tela `/configuracoes` deixou de ser um empilhamento de 8 cartões sequenciais com um único "SALVAR TUDO" no topo e passou a usar `ui.tabs` + `ui.tab_panels` (padrão menu_mod, como a Gestão de Usuários): barra com **5 abas** à esquerda e botão **"APLICAR"** à direita.
 - **`tela_configuracoes.py:190-194`**: as 5 abas são `Config` (`tune`), `E-mail` (`mail`), `Módulo` (`extension`), `Observabilidade` (`query_stats`) e `Documentação` (`menu_book`).
-- **Botão único "APLICAR"**: grava todas as abas via `salvar_tudo` e recarrega (`ui.navigate.reload`) para aplicar cores/botões/cards imediatamente.
+- **Botão único "APLICAR" por card**: cada card grava só os próprios campos via `_aplicar_card_async` (handler `async` + `run.io_bound`, spinner, trava `ocupado`, reload único — anti-disconnect AGENTS.md §5.1, 12/09/2026); o card Banco **nunca recarrega** (exige restart). Ver [Configurações — Anti-disconnect](configuracoes.md#anti-disconnect-no-aplicar-handlers-async-12092026-agentsmd-51).
 - **`tela_configuracoes.py:98-175`**: `salvar_tudo` mantido, agora comentado **por aba** (Config → cores/ícone/textos/gerais; E-mail → `smtp_*`; Módulo → `tb_modulos`; Observabilidade → `log_*`/`otel_*`/`grafana_url` + `observabilidade.configurar()` (endpoint/OTel exigem restart).
 - **Conteúdo por aba**: Config reúne, nesta ordem: **Ícones** (grid único responsivo com 3 itens — ícone do sistema, "Restaurar padrão" e upload do favicon `.ico`), **Cores** (8 seletores em grade 4+4 + prévia única ao vivo), **Textos fixos** (+ nome do sistema, rótulo dentro do input) e **Gerais RF-57** (padrão responsivo da aba Módulo: 1 col celular, 2 médio, linha cheia desktop) (`tela_configuracoes.py:316-355`) e Configurações gerais RF-57 (`tela_configuracoes.py:357-400`); E-mail/SMTP RF-58 (`tela_configuracoes.py:402-453`, com "Testar conexão SMTP" em `tela_configuracoes.py:438-447`); Observabilidade (`tela_configuracoes.py:656-850`, com "Limpar TODOS os logs" em `tela_configuracoes.py:844`); Documentação (`tela_configuracoes.py:506-528`, rebuild MkDocs + abrir `/documentacao` em nova aba); Módulo (`tela_configuracoes.py:578-865`, páginas do sistema + registro de módulos e vínculos órfãos).
 - **Não mudou**: chaves em `tb_config` (`cor_principal`, `texto_*`, `smtp_*`, `log_*`, `backup_interval_hours`, `sessao_retencao`), restrição a `administrador_geral` (`tela_configuracoes.py:59-63`), autenticação e a rota `/configuracoes` em `main.py`.
@@ -250,7 +273,7 @@ sistema**: a data atual e de gravação devem vir SEMPRE do servidor (nunca do n
 - **`tela_configuracoes.py:566-636`**: `refresh_modulos()` remonta a **lista ÚNICA de módulos** na ordem vigente de `tb_modulos.ordem` (substituiu os grupos separados "Indispensáveis"/"Demais") — todos reordenáveis; indispensáveis (auditoria, usuarios) destacados com fundo âmbar + cadeado, reordenáveis porém nunca desativáveis. Mantém `estado_campos["paginas"][chave] = (inp_nome, inp_icone, switch)` (contrato do `salvar_tudo`).
 - **`tela_configuracoes.py:638-669`**: `_mover(idx, direcao)` troca o módulo com o vizinho (-1 sobe, +1 desce), **persiste de imediato** via `autenticacao.reordenar_modulos`, notifica e remonta a lista — edições pendentes (nome/ícone/ativo) são preservadas entre remontagens.
 - **`tela_configuracoes.py:673-720`**: `restaurar_paginas_padrao()` agora também **restaura a ordem nativa** (nativos voltam à sequência de `MODULOS_SISTEMA`) e **renumera os não-nativos** após os nativos em ordem alfabética.
-- **`layout_tela.py:147`**: sem mudança de código — o menu lateral já usa `modulos_do_usuario`, que herda a nova ordem via `modulos_registrados()`.
+- **`mod_intranet/telas.py:_montar_layout`**: sem mudança de código na ordenação — o menu lateral já usa `modulos_do_usuario`, que herda a nova ordem via `modulos_registrados()`.
 
 #### URL/slug editável dos módulos — `rotas_modulos.py` + `alterar_rota_modulo`
 
@@ -468,7 +491,7 @@ Novo subsistema central em `mod_intranet/observabilidade.py` (validado com `ast.
 #### Aparência unificada, APLICAR e cards (05/09)
 
 - **Card único "Cores"** com todos os seletores juntos (principal, fundo, botões, texto, tamanho, títulos, fundo/texto dos cards) + **prévia única ao vivo** (`previa()` `@ui.refreshable` lendo do estado: cabeçalho, card e botões refletem os campos antes de salvar, independente da ordem dos cards).
-- **"SALVAR TUDO" → "APLICAR"**: grava e recarrega (`ui.navigate.reload`) — cores, tamanhos e botões valem na hora, sem F5 manual.
+- **"SALVAR TUDO" → "APLICAR" por card**: cada card grava só os próprios campos e recarrega (`ui.timer(1.0, ui.navigate.reload())` único após `notificar()`); desde 12/09/2026 os handlers são `async` com `run.io_bound` (anti-disconnect, AGENTS.md §5.1) e o card Banco **nunca recarrega** (exige restart) — cores, tamanhos e botões valem na hora, sem F5 manual.
 - **Cards padronizados**: chaves `intranet_cor_fundo_card`/`intranet_cor_texto_card` (+ `intranet_cor_titulo` consumida) e helpers `tema_modulo.estilo_cartao()`/`titulo_cartao()`/`ler_cartao()` aplicados aos cards do login, painel, configurações e diálogos.
 
 #### Padrão próprio do tema de botões — vazio = padrão do módulo (06/09)
@@ -582,3 +605,8 @@ Pilotos migrados:
     monkeypatch sem tocar no banco, equivalência byte-a-byte das variantes/delegações/
     helpers e checagens de fonte dos pilotos). Regra nova: **TODO código de teste fica
     em `test/`** — nunca em `/tmp` (arquivos em `/tmp` se perdem ao reiniciar a máquina).
+
+#### Responsividade global — RNF-UI-01 (09/2026)
+
+- **`main.py` login** `w-[420px] p-10` → `w-full max-w-[420px] mx-4 p-6 sm:p-10`, wrapper `p-4 min-width:0`; **header** `flex-wrap`, títulos `truncate`, badges `max-w`, `gap` via `.style` (nunca `gap-*` em `ui.row`). Validado 320/768/1024 (`kbp-web-design`).
+- **Padrão global** para todo `mod_*`: containers `w-full p-4 sm:p-6` `min-width:0`, `flex-wrap` + `gap` via `.style()`, `truncate`/`max-w`, `overflow-x-auto` tabs/tabelas, dialogs `w-full max-w`, grids `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`, `scroll_area` altura explícita. Checklist P0/P1/P2 e proposta por `container`/`row`/`grid` por módulo (`intranet`, `gest`, `auditoria`, `renomear`, `solicita`, `edit`, `blog`, `tela_configuracoes`, `ui_comum`) na auditoria `kbp-web-design`.

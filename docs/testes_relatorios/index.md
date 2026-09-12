@@ -19,6 +19,7 @@
 | Renomeador (organizador) | 16/16 OK |
 | Renomeador (edição) | 18/18 OK |
 | Editor de PDF | 20 verificações |
+| `ui_comum` + drawer (12/09/2026) | `assets/test/verifica_ui_comum.py` — **190/190 OK** (fábrica `ItemMenuDrawer`/`item_menu_drawer` + drawer `menu-hamburguer/menu-home/menu-<chave>/menu-<chave>-indisponivel/menu-admin/menu-docs/menu-sair`, ARIA e `campo_modulo`; sem commit — validado via `.venv/bin/python assets/test/verifica_ui_comum.py`) |
 | Segurança (DevSecOps) | [Relatório de Segurança (06/09/2026)](seguranca_2026-09-06.md) — bandit 0 High/24 Medium/86 Low, semgrep 31, pip-audit sem CVEs, gitleaks 1 segredo real |
 
 ## Sugestão de expansão

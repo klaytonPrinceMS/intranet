@@ -24,7 +24,7 @@ O **Playwright** é um framework de automação de navegador que executa o siste
 - **`test/e2e/01_login.spec.js`** — login com `qacomum` (comum) e `qamaster` (admin); verifica que o dashboard abre sem erros fatais e que usuário comum é **barrado** em `/configuracoes` e em `/admin/auditoria`.
 - **`test/e2e/02_varredura.spec.js`** — como `qamaster`, visita as principais rotas (páginas, módulos e painéis `/admin/*`) e **coleta erros** de console, `pageerror`, requisições falhas e respostas HTTP ≥ 400, listando-os no terminal e falhando apenas se houver erros fatais.
 
-Os testes capturam e reportam erros para facilitar a identificação de problemas:
+Os testes capturam e reportam erros para facilitar a identificação de problemas (seletores estáveis via `data-testid`: hambúrguer `menu-hamburguer`, itens `menu-home`/`menu-<chave>`/`menu-admin`/`menu-docs`/`menu-sair` — fábrica `ui_comum.item_menu_drawer`, 12/09/2026; em testes headless Python, `clicar()` deve aguardar handlers `async` via `inspect.isawaitable` — padrão `teste_aba_config_intranet.py`/AGENTS.md §5.1):
 
 ```text
 === ERROS COLETADOS (N) ===

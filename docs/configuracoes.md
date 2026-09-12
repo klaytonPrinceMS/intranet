@@ -131,7 +131,7 @@ As principais chaves, agrupadas por dono:
 
 ### Menu "Administração" (06/09)
 
-A tela `/configuracoes` é aberta pelo item **"Administração"** do menu lateral (antes "Configurações"), com ícone unificado `admin_panel_settings` (`layout_tela.py:184-191`) e guarda `pagina_restrita("Administração")` (`main.py:442`) — exclusivo do `administrador_geral`. O drawer **não exibe mais labels de seção** ("PÁGINA INICIAL"/"MÓDULOS"/"SISTEMA" foram removidos; restam apenas separadores entre os grupos de itens). No header das páginas de módulo, o tooltip do botão de backup passou a **"Administração do módulo (backup e agendamento)"** (`layout_tela.py:145`), alinhando a nomenclatura: toda área de gestão — central ou do módulo — chama-se **Administração**.
+A tela `/configuracoes` é aberta pelo item **"Administração"** do menu lateral (antes "Configurações", fábrica `ui_comum.item_menu_drawer` com `testid="menu-admin"`, `mod_intranet/telas.py:_montar_layout`) e guarda `pagina_restrita("Administração")` (`main.py:442`) — exclusivo do `administrador_geral`. O drawer **não exibe mais labels de seção** ("PÁGINA INICIAL"/"MÓDULOS"/"SISTEMA" foram removidos; restam apenas separadores entre os grupos de itens). No header das páginas de módulo, o tooltip do botão de backup passou a **"Administração do módulo (backup e agendamento)"** (`layout_tela.py:145`), alinhando a nomenclatura: toda área de gestão — central ou do módulo — chama-se **Administração**.
 
 ### Card "Banco de dados" (SQLite ou PostgreSQL) (08/09)
 
@@ -170,31 +170,38 @@ O padrão permanece **SQLite** (atende servidores simples, zero dependências ex
 
 > **Nota (08/09):** o suporte ao PostgreSQL está **ativo** — não é mais fase futura. Os módulos migrados para a camada única (`banco_conexao.conexao(chave)`) operam no backend selecionado: `mod_intranet/bd_conexao.get_connection`, `mod_auditoria`, `mod_edit_pdf`, `mod_gest_cad_usuario`, `mod_renomear_empenho`, `mod_solicita_impressao`; `CrudBase._conectar` também roteia pelo backend ativo (módulo em `MODULOS_BD`). A **migração de dados** SQLite→PostgreSQL permanece manual — os bancos SQLite existentes não são movidos automaticamente (o Postgres inicia com os bancos de módulo vazios, recriados pelos `init_db` dos módulos).
 
-### Assistente de ativação no boot (11/09)
+### Assistente de ativação no boot — Opção C (09/2026)
 
-O boot do `main.py` exibe o **assistente de ativação** (`mod_intranet/ativacao.py`, `iniciar()` — `:805`) com regra nova:
+O boot do `main.py` **sem argumentos** não exibe mais o assistente — carrega `config_persistida()` (`ativacao.py:1284`) direto de `tb_config` e sobe. O **assistente interativo** só abre com `--config`/`-c` (`main.py:43-45` → `ativacao.iniciar(cli_cfg=None)`):
 
-- **ENTER / terminal não interativo → modo BÁSICO**: **apenas SQLite**, **sem Postgres e sem OpenTelemetry** — boot rápido e autossuficiente. `_config_padrao()` (`:167`) tem `otel_ativo: False` e o caminho default **ignora** a `tb_config` central (removidos `_config_persistida` e `preparar_servicos_padrao`).
-- **`1` → modo de ativação**: o usuário opta por subir PostgreSQL (container) e/ou OpenTelemetry (Grafana+Loki+Tempo+Mimir+collector), com portas perguntadas **só para os serviços ativados** (faixa 1–65535). **Todas as perguntas binárias aceitam apenas `1` (ativar/configurar) ou ENTER/`0` (não/básico)** — via `_escolha_1_enter` (`:673`, banco em `iniciar():845`) e `_sim_nao` (`:696`, serviços em `iniciar():850,866` e fallback `_confirmar_fallback_sqlite` `:706`); teclas como `sim`/`nao`/`s`/`x` ou textos (`sqlite`/`postgres`) são recusadas com `"Opção inválida — digite 1 para ..."` (`:680`) e a pergunta **repete** até `1`/ENTER/`0`; `EOFError`/`Ctrl+C` caem no padrão (sem loop). O prompt inicial **repete até resposta válida** (só ENTER ou `1` — `iniciar():821-834`); `perguntar()` (`:104`) repete qualquer pergunta até resposta válida. Porta padrão (5432/3000) ocupada → avisa e **sugere portas livres** (`_portas_livres`, `:147`) → pede outra porta → reescreve o compose (`aplicar_portas`, `:238`) → `down` + `up -d` → aguarda online (retry com até 5 tentativas em `_executar_e_persistir():924`; fallback SQLite se não subir). DSN validado por `_verificar_postgres` (`:413`, remove `+psycopg2`); SDK OTel instalado via pip quando ativado (`_garantir_sdk_otel`, `:623`).
-- **Persistência**: a escolha `otel_ativo` é gravada na `tb_config` central (`set_config("otel_ativo", "1"/"0")`, `_executar_e_persistir():948-951`) — a opção "não" sobrevive ao restart (o `main.py` consulta `get_config("otel_ativo", "1") == "1"`). O `banco_tipo`/`postgres_url` escolhidos no modo de ativação também são persistidos via `ativacao.aplicar_banco(cfg)` (`:205`).
+- **`python main.py`** (sem args) → `config_persistida()` (`ativacao.py:1284`): lê `banco_tipo`, `postgres_url` (+ porta extraída via regex `r":(\d+)/"`), `otel_ativo` e `porta_*` de `tb_config` com fallback em `_config_padrao()` (`ativacao.py:468` — `otel_ativo: False`, `porta_site: 8080`, `porta_documentacao: 8000`); primeira execução (chaves ausentes) usa o padrão puro. Depois `aplicar_banco(cfg)` persiste o seletor via `banco_conexao`.
+- **`python main.py --config` / `-c`** → **ENTER / não-TTY → modo BÁSICO**: **apenas SQLite**, **sem Postgres e sem OpenTelemetry** — boot rápido (`_config_padrao()` com `otel_ativo: False`). **`1` → modo de ativação** (`iniciar()`, `ativacao.py:1442`): o usuário opta por subir PostgreSQL e/ou OpenTelemetry (portas só para serviços ativados, faixa 1–65535). **Todas as perguntas binárias aceitam apenas `1` (ativar/configurar) ou ENTER/`0` (não/básico)** — via `_escolha_1_enter` (`:1237`, banco) e `_sim_nao` (`:1260`, serviços e fallback `_confirmar_fallback_sqlite` `:1270`); `sim`/`nao`/`s`/`x` ou textos (`sqlite`/`postgres`) são recusadas com `"Opção inválida — digite 1 para ..."` e a pergunta **repete** até `1`/ENTER/`0`; `EOFError`/`Ctrl+C` caem no padrão. O prompt inicial **repete até resposta válida** (só ENTER ou `1` — `iniciar():1458-1472`); `perguntar()` (`:106`) repete qualquer pergunta até resposta válida. Porta padrão (5432/3000) ocupada → avisa `_msg_porta_em_uso` (`:191`) e **sugere portas livres** (`_portas_livres`, `:148`) → pede outra porta → reescreve compose (`aplicar_portas`, `:540`) → `down` + `up -d` → aguarda online (retry 5 tentativas em `_executar_e_persistir():1557`; fallback SQLite confirmado via `_confirmar_fallback_sqlite`). DSN validado por `_verificar_postgres` (`:715`, remove `+psycopg2`); SDK OTel instalado via pip quando ativado (`_garantir_sdk_otel`, `:1131`).
+- **Persistência**: `otel_ativo` gravado em `tb_config` (`set_config("otel_ativo", "1"/"0")`, `_executar_e_persistir():1609`) — o "não" sobrevive ao restart (`main.py:74` consulta `get_config("otel_ativo")`). O `banco_tipo`/`postgres_url` também persistidos via `ativacao.aplicar_banco(cfg)` (`:507` → `_garantir_tb_config` + `banco_conexao.definir_*`).
 
-Detalhes de uso: [Manual de Instalação](manual_de_uso_instalacao/index.md#21-assistente-de-ativacao-boot).
+Detalhes de uso: [Manual de Instalação](manual_de_uso_instalacao/index.md#21-assistente-de-ativacao-boot-via-config-c).
 
-### Inicialização por argumentos de linha de comando (11/09)
+### Inicialização por argumentos de linha de comando — Opção C (09/2026)
 
-Além do assistente interativo, o boot aceita **argumentos de linha de comando** via **Typer** — `python main.py --help` explica cada chamada em PT-BR e encerra; sem argumentos, o assistente assume:
+Além do assistente, o boot aceita **argumentos Typer** com prefixos semânticos **Opção C** — `python main.py --help` explica cada chamada **em PT-BR** com *"Sem argumentos, sobe direto com a configuração persistida"* (`ativacao._cli_app()` `ativacao.py:1338`) e encerra; **sem argumentos, não abre assistente** — sobe com `config_persistida()`.
 
-| Flag | Default | Efeito |
-|:---|:---|:---|
-| `--postgres` | desligado | usa PostgreSQL (sobe o container) em vez do SQLite |
-| `--portapostgres` | `5432` | porta do PostgreSQL (a 5432 costuma estar ocupada por um Postgres nativo — use outra, ex.: 5444) |
-| `--otel` | desligado | ativa o OpenTelemetry (Grafana+Loki+Tempo+Mimir) |
-| `--portatelemetria` | `3000` | porta do painel Grafana/telemetria |
-| `--portadocumentacao` | `8080` | porta do site e da documentação `/documentacao` |
+| Grupo | Flag (Opção C) | Alias | Curta | Default | Efeito |
+|:---|:---|:---|:---:|:---:|---|
+| **Ativação** | `--ativ-otel` | `--otel` | `-o` | desligado | ativa OpenTelemetry (Grafana+Loki+Tempo+Mimir) |
+| | `--ativ-postgres` | `--ativ-postgress` (typo), `--postgres` | `-p` | desligado | usa PostgreSQL (sobe container) em vez do SQLite |
+| **Portas** | `--porta-db` | `--portapostgres` | `-k` | `5432` | porta do PostgreSQL (5432 ocupada → use 5444) |
+| | `--porta-docs` | `--portadocumentacao` | `-d` | `8000` | porta da documentação mkdocs (separada do site) |
+| | `--porta-grafana` | `--portatelemetria` | `-t` | `3000` | porta do painel Grafana/telemetria |
+| | `--porta-site` | `--portasite` | `-s` | `8080` | porta do site/aplicação |
+| **Config** | `--config` | — | `-c` | desligado | abre o assistente interativo (ENTER=básico; 1=configurar) |
+| **Utilitário** | `--scan-ports` | — | `-S` | desligado | lista portas em uso + serviço (localhost) e encerra exit 0 |
 
-- `cli_opcoes(args=None)` (`ativacao.py:727`) parseia os flags (Typer via `get_command().make_context()`; `click.exceptions.Exit` → `SystemExit`); `config_do_cli(...)` (`:754`) monta o `cfg` e `iniciar(cli_cfg=...)` (`:774`) sobe **direto, sem assistente**, reaproveitando `_executar_e_persistir(cfg)` (`:873`) — subir serviços + persistir + resumo.
-- `main.py:31-34` detecta flags em `sys.argv[1:]` e chama `ativacao.config_do_cli(**ativacao.cli_opcoes())`.
-- **Dependências**: `requirements.txt:12-15` (bloco "CLI do assistente de ativação") — `typer>=0.12` e `rich>=13.0`. O `rich` também gera as **cores do terminal** do assistente (`_MAPA_RICH` `:35`, `_abre_fecha` `:44`, `c()` `:61`, `banner()` `:74`, `barra()` `:83`) — sem códigos ANSI manuais; saída não-TTY fica **sem cor**.
+> **Agrupamento e ordem (Opção C):** flags agrupadas por tipo — `config` → `ativação` (`--ativ-*`, alfabética: otel, postgres) → `portas` (`--porta-*`, alfabética: docs, db, grafana, site) → `utilitários` (`--scan-ports`), com contrações curtas `-c/-o/-p/-d/-k/-s/-t/-S` (`ativacao._cli_app()` `ativacao.py:1346`).
+
+- `cli_opcoes(args=None)` (`ativacao.py:1387`) parseia via Typer (`get_command().make_context()`; `click.exceptions.Exit` → `SystemExit`); `config_do_cli(...)` (`:1420`) monta o `cfg` e `iniciar(cli_cfg=...)` (`:1442`) sobe **direto, sem assistente**, reaproveitando `_executar_e_persistir(cfg)` (`:1531`). Validação de portas via `_porta_valida` (`:140`).
+- `main.py:38-56` decide: sem args → `config_persistida()`; `--config`/`-c` → wizard; flags `-` → `cli_opcoes` → `config_do_cli` → `iniciar(cli_cfg)`; senão → `config_persistida()`. `--config` tem prioridade sobre demais flags.
+- `--scan-ports`/`-S` processado em `cli_opcoes()` (`:1404`): imprime `port_scanner.resumo_portas()` e sai exit 0 — apenas `127.0.0.1`.
+- Help atualizado (`_cli_app` `ativacao.py:1338`): *"Intranet Modular — inicialização do sistema. Sem argumentos, sobe direto com a configuração persistida (modo padrão). Use --config para abrir o assistente interativo (ENTER = básico SQLite; 1 + ENTER = configurar) ou passe --postgres/--otel/--porta* para configurar direto."*
+- **Dependências**: `requirements.txt:12-15` (bloco "CLI do assistente de ativação") — `typer>=0.12` e `rich>=13.0`. O `rich` também gera as **cores do terminal** do assistente (`_MAPA_RICH` `:37`, `_abre_fecha` `:46`, `c()` `:63`, `banner()` `:76`, `barra()` `:85`) — sem códigos ANSI manuais; saída não-TTY fica **sem cor**.
 
 ### Card "Cores" — ordem interna e prévia ao vivo (06/09)
 
@@ -231,8 +238,25 @@ Helpers do padrão:
 
 - **`_v(chave_estado, chave_config, padrao)`** (`:263-275`): valor do campo que **nunca zera** — campo fora do estado mantém o valor vigente no banco (limpeza intencional continua possível).
 - **`_reload_apos()`** (`:277-282`): recarrega a página após **1 segundo** — padrão do botão "Aplicar" de cada card.
-- **`_aplicar_card(rotulo, audit_desc, salvar_fn, msg, extra_msg)`** (`:284-308`): grava EXCLUSIVAMENTE os campos do card (`salvar_fn`), audita `config_alterada`, notifica e recarrega após 1 s; falha registra loguru (`observabilidade.get_logger("intranet")`) e notifica negativo **sem recarregar**.
+- **`_aplicar_card(rotulo, audit_desc, salvar_fn, msg, extra_msg)`** (`:284-308`): grava EXCLUSIVAMENTE os campos do card (`salvar_fn`), audita `config_alterada`, notifica e recarrega após 1 s; falha registra loguru (`observabilidade.get_logger("intranet")`) e notifica negativo **sem recarregar**. Mantido como legado síncrono para compatibilidade dos testes estáticos.
 - **`_aplicar_paginas()`** (`:454-473`): wrapper do card "Páginas do sistema" — chama `aplicar_paginas()`, notifica com avisos de URL não alterada e recarrega.
+
+### Anti-disconnect no Aplicar — handlers async (12/09/2026, AGENTS.md §5.1)
+
+Handlers de clique **nunca bloqueiam o event-loop** (era a causa do disconnect no Aplicar):
+
+| Regra | Padrão |
+|:---|:---|
+| `on_click` rápido (`set_config`, `UPDATE` curto) | pode ser `sync` |
+| I/O pesado (`subprocess` mkdocs, SMTP, `shutil.copy2`, `observabilidade.configurar()`, `rodar_monitor`) | **DEVE** rodar em `await run.io_bound(fn)` dentro de handler `async`, com spinner (`ui.spinner` + `aria-label`), botão desabilitado e trava de reentrância (`ocupado`) |
+| Reload | `ui.timer(1.0, ui.navigate.reload())` **único**, só após conclusão + `notificar()` visível |
+| Card Banco | **nunca recarrega** — exige restart do servidor (`_aplicar_card_sem_reload`: notifica warning "REINICIE o servidor") |
+| Docs/SMTP/Backup | **SEMPRE async** (`documentacao.reconstruir()`, `email_util.testar_conexao()`, `rotinas.backup_modulo()`/`rodar_agora`/`salvar_intervalo`) |
+| Backup seguro | `PRAGMA wal_checkpoint(TRUNCATE)` antes do `copy2` + `except OSError → None` (falha de backup nunca derruba o handler) |
+| Rodapé padrão | `ui_comum.rodape_salvar_restaurar()` retorna `(btn_restaurar, btn_aplicar)`; todo Aplicar tem `data-testid` (`config-aplicar-<card>`, `config-reconstruir-docs`); avisos via `tema_modulo.notificar()` (respeita `notificacao_timeout`), nunca `ui.notify` cru |
+| Testes headless | `clicar()` do teste aguarda handlers `async` (`inspect.isawaitable → await`) — ver `assets/test/teste_aba_config_intranet.py` |
+
+Implementação em `mod_intranet/tela_configuracoes.py`: `_aplicar_card_async(...)` (spinner + `run.io_bound(salvar_fn)` + trava `ocupado` + reload único opcional `recarregar=True`), `_aplicar_paginas_async()` (mesmo padrão para páginas) e gate `_pode_escrever()` (só `administrador_geral` aplica — dupla camada com a guarda da rota). Cobertura: `assets/test/test_seg_aplicar.py` (DoS de event-loop, path traversal, injeção, SMTP timeout), `assets/test/test_rodape_testid.py` (rodapé + `data-testid` + Banco sem reload) e `assets/test/test_tema_cache_trava.py` (cache + trava `ocupado`).
 
 Cada card é `card_admin` recolhível (`aberto=False`) com o rodapé padrão de 2 botões — **"Restaurar padrão" + "Aplicar"** — exclusivos do card (`rodape_salvar_restaurar`, `ui_comum.py:338`; rótulo padrão do salvar agora é **"Aplicar"**). O card "Cores" foi renomeado para **"Configurações de cores"** (`tela_configuracoes.py:492`) e o card de Observabilidade foi dividido em **"Observabilidade e logs (loguru)"** (`:988`) + **"Telemetria OTel — stack local ou servidor dedicado"** (`:1110`).
 

@@ -167,6 +167,19 @@ Regras:
 - Aparência/tema por módulo: bloco "Administração" com `ui.color_input` e chaves `tb_config` com prefixo do módulo.
 - Conteúdo HTML do Blog passa obrigatoriamente por `nh3` (gravação e renderização).
 
+#### Responsividade global — RNF-UI-01 (09/2026) — padrão obrigatório
+
+Toda tela nova ou retrabalhada deve seguir o padrão **mobile-first** auditado `kbp-web-design` em **320 / 768 / 1024 px** (tema `readthedocs`):
+
+- **Containers**: `w-full p-4 sm:p-6` com `.style('min-width: 0')` no pai.
+- **Rows**: `flex-wrap` + `gap` via `.style('gap: 0.5rem')` — **nunca** `gap-*` Tailwind em `ui.row`/`ui.column` (bug #2171); adicione `.style('min-width: 0')` em cada célula flex.
+- **Tabs/menus**: `w-full overflow-x-auto` para não quebrar em 320 px.
+- **Tabelas/grades**: envolver em `overflow-x-auto`; `ui.scroll_area` exige pai com altura explícita (`h-[320px]`/`max-h-[60vh]`).
+- **Dialogs**: `w-full max-w-[420px] mx-4` (login) ou `max-w-[560px]` com `p-6 sm:p-10`.
+- **Grids**: `grid-cols-1 sm:grid-cols-2 md:grid-cols-3` (`card_admin` com `grade=True` já faz).
+- **Badges/títulos**: `truncate` + `max-w-[18ch]` para evitar estouro.
+- **Exemplos já corrigidos**: `main.py` login `w-[420px] p-10` → `w-full max-w-[420px] mx-4 p-6 sm:p-10` e header `flex-wrap` `truncate`; `mod_gest_cad_usuario` barra superior `flex-nowrap` → `flex-wrap` com busca `flex-1 min-w`; `mod_edit_pdf` botões `justify-center`; `mod_blog` filtros justificados. Proposta por `container`/`row`/`grid` (P0/P1/P2) disponível na auditoria `kbp-web-design` por módulo.
+
 ### Componentes de UI padronizados — `mod_intranet/ui_comum.py`
 
 O núcleo expõe uma **fábrica central de componentes de UI** (`mod_intranet/ui_comum.py`) que unifica as variantes de botão do tema (`tema_modulo.botao`) com as variantes semânticas do painel de configurações (`_botao_padrao`), para que o mesmo dado tenha a mesma aparência em qualquer tela. `mod_intranet` é o módulo base: os demais módulos `mod_*` devem importar os componentes daqui em vez de criar `ui.button` crus ou repetir hexes soltos — hoje são 41 ocorrências dos hexes semânticos `#C62828`/`#EF6C00`/`#2E7D32` e 136 `ui.button(...)` diretos nos módulos de negócio.
@@ -178,7 +191,8 @@ O núcleo expõe uma **fábrica central de componentes de UI** (`mod_intranet/ui
 | `botao_icone(...)` (`ui_comum.py:153`) | ação de linha de tabela (`flat round dense size=sm`) |
 | `dialogo_card(...)` (`ui_comum.py:176`) | context manager `ui.dialog` + `ui.card` com estilo do tema; faz `yield (dlg, card)` |
 | `rodape_dialogo(dlg, acoes)` (`ui_comum.py:204`) | rodapé de diálogo: "Cancelar" + ações compactas `(rotulo, on_click[, kwargs])` alinhadas à direita |
-| `rodape_salvar_restaurar(...)` (`ui_comum.py:231`) | rodapé dos cupês de aparência/módulo (já padrão via `tema_modulo`) |
+| `rodape_salvar_restaurar(...)` (`ui_comum.py:231`) | rodapé dos cupês de aparência/módulo (já padrão via `tema_modulo`) — retorna `(btn_restaurar, btn_aplicar)`; Aplicar com `data-testid` (`config-aplicar-<card>`) |
+| `item_menu_drawer(rotulo, *, icone, on_click, tooltip, chave_modulo, testid, ativo)` / `ItemMenuDrawer` (`ui_comum.py:850`) | **fábrica DDD PT-BR do menu hambúrguer** (12/09/2026) — `ui.item` acessível `w-full rounded-lg my-0.5` + `.style('min-width: 0')`, avatar `text-primary shrink-0 aria-hidden`, rótulo `truncate max-w-full grow`, tooltip PT-BR, `focus-visible` ring, ativo `bg-blue-100` + `aria-current="page"`, `data-testid` via `.props()` (`menu-home`, `menu-<chave>`, `menu-admin`, `menu-docs`, `menu-sair`), `aria-label` em só-ícone, fail-soft (`None`); Bootstrap local dispensado (reset quebraria o Quasar — justificativa no código) |
 | `campo_texto(rotulo, valor=None, *, ..., senha=False, placeholder=None)` (`ui_comum.py:314`) | campo de texto padronizado (`ui.textarea` quando `multiline`, senão `ui.input`; props `outlined dense`, classes `w-full`, tooltip, `ao_mudar`, valor opcional de `tb_config` via `chave`/`padrao`). `senha=True` cria o input com `password=True, password_toggle_button=True` (campo de senha com botão exibir/ocultar; sem efeito com `multiline`); `placeholder` é repassado ao construtor quando informado; **sem valor resolvido (`valor=None` sem `chave`) o kwarg `value` NÃO é repassado** — réplica crua byte-idêntica (`ui.input` sem `value` usa `''`, não `None`) |
 | `campo_selecao(rotulo, opcoes, valor=None, *, ..., tooltip=None)` (`ui_comum.py:374`) | campo de seleção padronizado (`ui.select(opcoes, label=rotulo, value=valor_resolvido)`; props `outlined dense`, classes `w-full`, `ao_mudar`, valor opcional de `tb_config` via `chave`/`padrao`); `tooltip` só quando informado |
 | `notificar` | reexportado de `tema_modulo` (toast com tempo configurável) |
@@ -269,6 +283,33 @@ Servidores simples seguem com **SQLite** (padrão universal, zero dependências 
 - **Hash SHA-256** em operações com arquivos (editor PDF, empenhos, impressão).
 - **Versionamento**: `1.0.AAMMDD`; versão global `versao_sistema` + por módulo `versao_modulo:<chave>` (exibidos da esquerda para a direita no rodapé). Atualize a chave do módulo quando alterar código dele — sem mexer na global nem nas dos outros.
 
+## Padrão de CLI — Typer com prefixos semânticos (Opção C, 09/2026)
+
+> **PT-BR: CLI em Português BR, agrupada por tipo e ordem alfabética; EN no help via Typer docstring bilíngue.**
+
+O `main.py` + `mod_intranet/ativacao.py` é o padrão de linha de comando do projeto — **não crie argparse cru nem flags ad-hoc**:
+
+- **Sem argumentos → `config_persistida()`** (`ativacao.py:1284`): carrega `tb_config` (banco_tipo, postgres_url + porta via regex, otel_ativo, porta_*) com fallback em `_config_padrao()` (`ativacao.py:468`); primeira instalação usa padrão puro. É o modo padrão — help atualizado: *"Sem argumentos, sobe direto com a configuração persistida"* (`ativacao._cli_app()` `ativacao.py:1338`).
+- **`--config` / `-c` → wizard interativo** (`main.py:43-45` → `ativacao.iniciar(cli_cfg=None)` `ativacao.py:1442`): ENTER=básico SQLite, `1`=configurar. Tem **prioridade** sobre demais flags.
+- **Flags Typer — Opção C** (`ativacao._cli_app()` `ativacao.py:1331`, `@cli.callback(invoke_without_command=True)`):
+
+  | Grupo | Flag canônica | Aliases | Curta | Tipo |
+  |:---|:---|:---|:---:|---|
+  | Ativação | `--ativ-otel` | `--otel` | `-o` | bool |
+  | | `--ativ-postgres` | `--ativ-postgress` (typo compat) + `--postgres` | `-p` | bool |
+  | Portas | `--porta-db` | `--portapostgres` | `-k` | int 1–65535 |
+  | | `--porta-docs` | `--portadocumentacao` | `-d` | int |
+  | | `--porta-grafana` | `--portatelemetria` | `-t` | int |
+  | | `--porta-site` | `--portasite` | `-s` | int |
+  | Config | `--config` | — | `-c` | bool |
+  | Utilitário | `--scan-ports` | — | `-S` | bool → lista portas e encerra exit 0 |
+
+  Regras: **prefixo `--ativ-` para ativação** (serviços que sobem container/docker), **prefixo `--porta-` para portas**, **agrupadas por tipo e em ordem alfabética dentro do grupo** (`config` → `ativação`: otel, postgres → `portas`: db, docs, grafana, site → `utilitários`: scan-ports), com **contrações curtas** `-c/-o/-p/-d/-k/-s/-t/-S`. Qualquer flag nova segue o mesmo agrupamento/ordem.
+
+- **Implementação:** `_cli_app()` constrói `typer.Typer(add_completion=False, help=PT-BR)`, `@cli.callback` declara as 8 opções tipadas; `cli_opcoes(args=None)` (`ativacao.py:1387`) faz `get_command(_cli_app()).make_context("main", args)` (captura `click.exceptions.Exit` → `SystemExit`), valida portas via `_porta_valida` (`:140`) e trata `--scan-ports` → `port_scanner.resumo_portas()` + `SystemExit(0)`; `config_do_cli(...)` (`:1420`) monta o `cfg` com DSN `postgresql+psycopg2://intranet:intranet@localhost:{porta}/intranet`; `iniciar(cli_cfg)` (`:1442`) reaproveita `_executar_e_persistir(cfg)` (`:1531`). `main.py:38-56` decide o fluxo (sem args / --config / flags com `-` / fallback).
+- **Docstring bilíngue obrigatória** quando tocar CLI: comentário `EN` no topo da função/classe e explicação `PT-BR` abaixo (regra do projeto).
+- **Help em PT-BR**, sem inglês técnico; aliases legados mantidos para compatibilidade (ex.: `--postgres`, `--otel`, `--portapostgres` etc.).
+
 ## Checklist de aceite
 
 - [ ] `telas.py` expõe `mostrar_tela(usuario_logado, perfil)` com gate de permissão.
@@ -278,7 +319,9 @@ Servidores simples seguem com **SQLite** (padrão universal, zero dependências 
 - [ ] Auditoria em todas as escritas; hash SHA-256 em operações com arquivos.
 - [ ] `ast.parse` passou em todos os arquivos alterados.
 - [ ] Valores ajustáveis (cores, tempos, textos, pastas…) em `tb_config` + cupê Administração — nada de literais hardcoded (ver [Configurabilidade](#configurabilidade-regra-de-projeto)).
-- [ ] Componentes de UI via `mod_intranet/ui_comum` (`botao`/`botao_icone`/`CORES`/`dialogo_card`/`rodape_dialogo`/`notificar`) — sem `ui.button` cru nem hexes soltos; botões UPPERCASE legados do Quasar usam `no_caps=False` (o edit_pdf padronizou todos em `primario` sem `no_caps` em 06/09 — sem exceções cruas).
+- [ ] Componentes de UI via `mod_intranet/ui_comum` (`botao`/`botao_icone`/`CORES`/`dialogo_card`/`rodape_dialogo`/`notificar`/`item_menu_drawer`) — sem `ui.button`/`ui.item` cru nem hexes soltos; itens do drawer SEMPRE pela fábrica `item_menu_drawer` (com `testid="menu-*"`); **todos os botões centralizados** em linhas `w-full justify-center flex-wrap` com `.style('gap: 0.75rem')` + `.style('min-width: 0')`, **mesmo formato** `size=md` `min-w-[180px]` e **cor única** por módulo via `chave_modulo` (`RNF-UI-01`, 06/09; ref. botão `Aplicar configurações`/`Aplicar`); botões UPPERCASE legados do Quasar usam `no_caps=False` (o edit_pdf padronizou todos em `primario` sem `no_caps` em 06/09 — sem exceções cruas).
+- [ ] **Anti-disconnect AGENTS.md §5.1 (12/09/2026)**: `on_click` rápido pode ser `sync`; I/O pesado (`subprocess` mkdocs, SMTP, `copy2`, `observabilidade.configurar()`, `rodar_monitor`) DEVE usar `await run.io_bound(fn)` em handler `async` com spinner + botão desabilitado + trava `ocupado`; reload único (`ui.timer(1.0, ui.navigate.reload())`) após `notificar()`; card Banco nunca recarrega; Aplicar com `data-testid` (`config-aplicar-<card>`); avisos via `tema_modulo.notificar()`.
+- [ ] **Responsividade global RNF-UI-01 (09/2026)**: containers `w-full p-4 sm:p-6` com `min-width:0`; `flex-wrap` + `gap` via `.style()` (nunca `gap-*` em `ui.row`); `truncate`/`max-w` em badges/títulos; `overflow-x-auto` em tabs/tabelas; dialogs `w-full max-w-[420px] mx-4` / `max-w-[560px]`; grids `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`; `ui.scroll_area` com pai de altura explícita; validado em 320/768/1024 (auditoria `kbp-web-design`).
 - [ ] Acesso a dados via `CrudBase` + `audit_reg` (nunca `sqlite3` cru em código novo); telas novas usam `FormularioBuilder`/`GradeTabela`/`PainelLista` do núcleo em vez de replicar grids/inputs crus.
 - [ ] Código de teste gravado em `assets/test/` (nunca em `/tmp` — se perde ao reiniciar a máquina).
 - [ ] Suíte validada com `.venv/bin/pytest` (suíte completa via runner `assets/test/test_suite.py`, ≈3–5 min) — scripts standalone nunca coletados diretamente pelo pytest (o `pytest.ini` limita a coleta ao runner).

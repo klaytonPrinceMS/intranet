@@ -19,6 +19,24 @@
 - **Auditoria** (`test/test_auditoria.py`): índices, rastreabilidade IP/UA, poda por retenção, acesso exclusivo do admin geral e preferência de campos/ordem por usuário (12 verificações).
 - **Ativação** (`test_ativacao.py`, 11/09): assistente de boot — regra padrão SQLite **ignorando a `tb_config`**, `_garantir_sdk_otel`, persistência `otel_ativo`, portas/DSN/faixa, `_compose_cmd`, `_mascarar_comando`, `_validar_senha`, `aplicar_portas` (57 verificações).
 - **Blog na Home** (`teste_home_blog.py`, 11/09): feed da página inicial nos modos carrossel/única/histórico via `renderizar_postagens` (3 verificações, headless).
+- **Anti-disconnect + segurança do Aplicar** (`test_seg_aplicar.py`, 12/09/2026, delta a1b1650): handlers pesados `async` com `run.io_bound` + trava `ocupado`; path traversal (backup); injeção de rota/DSN mascarado; SMTP `timeout=15` + `io_bound`; `db_mod_*.db` no `.gitignore`.
+- **Rodapé + `data-testid`** (`test_rodape_testid.py`, 12/09/2026, delta a1b1650): `rodape_salvar_restaurar` retorna `(restaurar, aplicar)`, Aplicar com `data-testid`, Banco sem reload, docs/SMTP via `io_bound` (UI real headless; `clicar()` aguarda `awaitable`).
+- **Tema + trava** (`test_tema_cache_trava.py`, 12/09/2026, delta a1b1650): cache `ler_tema` com invalidação em `salvar_tema`, clamp `notificacao_timeout`, `notificar`, `paleta_escura`, trava `ocupado`.
+- **E-mail/docs/observabilidade** (`test_email_docs_obs.py`, 12/09/2026): `enviar_email`/`testar_conexao` com mock SMTP, `documentacao.reconstruir` com mocks (sem mkdocs real), `observabilidade.configurar` em `LOG_DIR` isolado.
+- **Backup/rotinas** (`test_rotinas_backup.py`, 12/09/2026, delta a1b1650): checkpoint WAL + `OSError→None` em `backup_modulo`, handlers async, `_podar_backups`/`listar_backups`/`limpar_editor_pdf` (pastas em `/tmp`, sem tocar `backup/`).
+- **Papéis do ator** (`test_autenticacao_papeis.py`, 12/09/2026): hash/senha, `papel_no_modulo`/`validar_acesso_modulo`, ciclo conceder→revogar com usuário temporário (LGPD).
+- **Paridade SQLite↔PostgreSQL** (`test_banco_conexao.py`, 12/09/2026, AGENTS.md §4): `sgbd_ativo`, `_CursorPostgres._preparar` (traduções), `_ddl_postgres`, `conexao('intranet')` com PRAGMA WAL (só leitura).
+- **Cobertura total** (`test_cobertura_total.py`, 12/09/2026): smoke de import + contrato de TODAS as funções/classes dos 64 arquivos `mod_*/` (puras com asserts + guardas anti-disconnect).
+- **Drawer / menu hambúrguer** (`verifica_ui_comum.py`, 12/09 + roteiro manual): fábrica `ItemMenuDrawer`/`item_menu_drawer` (`ui_comum.py:852-937`) e drawer (`telas.py:218-332`) — testids `menu-hamburguer/menu-home/menu-<chave>/menu-<chave>-indisponivel/menu-admin/menu-docs/menu-sair` (190/190 OK); matriz manual 3 perfis × 3 larguras em [Testes — Casos](../testes_casos/index.md) (seção "Roteiro manual — drawer × perfis × larguras").
+
+## Drawer / menu hambúrguer — estratégia (pirâmide)
+
+> EN — Drawer test strategy: unit base (`verifica_ui_comum.py`, byte-identical factory props/classes/ARIA, 190/190) + manual/E2E top (profile × width matrix in Test Cases). Selectors always via `get_by_test_id`.
+
+> PT — Estratégia do drawer: base unitária (`verifica_ui_comum.py`, fábrica byte-idêntica em props/classes/ARIA, 190/190) + topo manual/E2E (matriz perfis × larguras nos Casos de Teste). Seletores sempre via `get_by_test_id`.
+
+- **Base (unitário, automático):** `verifica_ui_comum.py` prova props/classes/estilo/tooltip/ARIA da fábrica idênticos à construção crua de referência (stub NiceGUI, sem servidor).
+- **Topo (manual/E2E, poucos):** roteiro [manual do drawer](../testes_casos/index.md) (seção "Roteiro manual — drawer × perfis × larguras") — perfis `comum`/`administrador_modulo`/`administrador_geral` × larguras 320/768/1024: drawer abre/fecha via `menu-hamburguer`, 100% largura sem overflow (RNF-UI-01), foco por teclado com anel `focus-visible`, ARIA (`aria-current` no ativo, `aria-hidden` nos ícones, `aria-label` no hambúrguer/indisponível). Regra de visibilidade: `menu-admin`/`menu-docs` só para `administrador_geral`.
 
 ## Critérios de entrada/saída
 
@@ -69,7 +87,7 @@ cd assets/test && npm install && npm run test:e2e
 
 `assets/test/test_suite.py`:
 
-- `test_suite_standalone()` (`test_suite.py:50`) — percorre `assets/test/*.py` (`_scripts()`, `test_suite.py:44-47`), executa cada script em subprocesso com timeout de 240 s (`subprocess.run([sys.executable, str(p)], ..., timeout=240, env=_env_limpo())`, `test_suite.py:55-56`) e falha se `returncode != 0` (`test_suite.py:60-62`).
+- `test_suite_standalone()` (`test_suite.py:50`) — percorre `assets/test/*.py` (`_scripts()`, `test_suite.py:44-47`), executa cada script em subprocesso com timeout de 240 s (`subprocess.run([sys.executable, str(p)], ..., timeout=240, env=_env_limpo())`) e falha se `returncode != 0`. Execução direta com progresso: `.venv/bin/python assets/test/test_suite.py` (bloco `__main__` + `_rodar_suite(progresso=True)` — imprime `[N] script ... OK em Xs`, 12/09/2026).
 - `_env_limpo()` (`test_suite.py:34-41`) — remove as variáveis `PYTEST_*` do ambiente do subprocesso; sem isso, o NiceGUI ativa o modo de teste e exige `NICEGUI_SCREEN_TEST_PORT`.
 - **Excluídos** (`EXCLUIR`, `test_suite.py:23-31`) — não entram na suíte automatizada:
   - **Helpers**: `debug_boot.py`, `step_boot.py`, `diag_config.py`, `wtest.py`, `criar_postagens_blog.py` e `test_server.py` (sobe a app na 8080 e bloqueia).

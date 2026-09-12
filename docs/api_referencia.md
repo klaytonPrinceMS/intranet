@@ -210,18 +210,21 @@ Tela: `mostrar_tela(usuario_logado, perfil)` — `telas.py:64`.
 | `extrair_texto_pdf(caminho)` | `:475` | pipeline `pymupdf → pdfplumber → OCR (pytesseract) → pikepdf` |
 | `extrair_numero(texto)` | `:537` | número do empenho por regex |
 | `processar_pdf(usuario, caminho, numero, parcela, regex_custom)` | `:659` | extração + renomeação + FTS5 + auditoria |
-| `mover_quarentena(usuario, caminho, motivo)` | `:987` | fila de quarentena |
-| `listar_empenhos(status, limite=200)` | `:1025` | últimos registros |
-| `extrair_campos_regex(texto)` | `:1056` | campos customizados de `tb_regex_regras` |
-| `reindexar_empenho(eid)` / `rebuild_fts()` | `:1082` / `:1121` | manutenção FTS5 |
-| `pesquisar(termo, limite=50)` | `:1135` | busca **FTS5 MATCH** (fallback `LIKE`) |
-| `listar_quarentena(limite=100)` | `:1177` | pendências |
-| `reprocesse_quarentena(qid, novo_padrao)` | `:1192` | reprocessa com regex aplicada na hora |
-| `salvar_regra(nome, padrao, ativo, campo_destino)` | `:1220` | regex dinâmica (vale sem restart) |
-| `rodar_monitor(usuario="sistema")` | `:1354` | job do APScheduler (RF-40) |
-| `organizar_pastas()` | `:1392` | caixas/subpastas físicas |
-| `gerar_matriz_organizador()` | `:1495` | capas `capa.txt` + `matrizDeDocumentos.txt`/`.pdf` |
-| `validar_presenca_matriz()` | `:1526` | validação da matriz |
+| `mover_quarentena(usuario, caminho, motivo)` / `promover_quarentena` (alias PLANO 4b) | `:1530` | fila de quarentena (move para `quarentena/<ts>_<nome>`, motivo 300 chars) |
+| `listar_empenhos(status, limite=200)` | `:1568` | últimos registros |
+| `extrair_campos_regex(texto)` | `:1601` | campos customizados de `tb_regex_regras` |
+| `reindexar_empenho(eid)` / `rebuild_fts()` | `:1627` / `:1692` | manutenção FTS5 |
+| `pesquisar(termo, limite=50)` | `:1706` | busca **FTS5 MATCH** (fallback `LIKE`) |
+| `listar_quarentena(limite=100)` | `:1752` | pendências (`processado` flag) |
+| `reprocesse_quarentena(qid, novo_padrao)` | `:1767` | reprocessa **individual** com regex aplicada na hora |
+| `reprocessar_fila(usuario, novo_padrao)` | `:1792` | **lote** — reprocessa toda fila `processado=0` sem reiniciar (botão "Reprocessar fila") |
+| `detectar_documentos_no_pdf(caminho)` / `eh_multiplo_documento` | `:815` | detecta 2+ empenhos (expansão por `_inicio_documento`) |
+| `separar_pdf_por_documentos` / `separar_documentos_quarentena(qid)` | `:897` / `:948` | separa `*_parteNN_pA-B.pdf` e reprocessa |
+| `salvar_regra(nome, padrao, ativo, campo_destino)` | `:1793` | regex dinâmica (vale sem restart, `re.compile` check) |
+| `rodar_monitor(usuario="sistema")` | `:1949` | job do APScheduler (RF-40) |
+| `organizar_pastas()` | `:1987` | caixas/subpastas físicas (~200 págs, 4/cx, gera capas+matriz) |
+| `gerar_matriz_organizador()` | `:2090` | capas **`capa.txt` + `capa.pdf` por caixa** + `matrizDeDocumentos.txt/.pdf` |
+| `validar_presenca_matriz()` | `:2121` | validação da matriz (todo PDF listado existe) |
 | `ferramenta_cortar` / `ferramenta_juntar` / `ferramenta_reduzir` | `:1561` / `:1584` / `:1605` | reutilizam as `op_*` do `mod_edit_pdf` |
 | `listar_navegacao(pasta)` / `status_arquivo(caminho)` | `:1661` / `:1692` | navegação protegida / status por arquivo |
 | `renomear_manual(usuario, caminho, ...)` | `:1772` | revisão manual com gate de validação |

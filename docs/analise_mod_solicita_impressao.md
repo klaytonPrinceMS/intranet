@@ -356,6 +356,10 @@ central — ver [Análise do Núcleo](analise_mod_intranet.md#hora-do-servidor-n
   frase por linha)"** e select **"Tipo de papel padrão"** (sulfite/fotográfico/vergê) —
   `telas.py:1359-1390` e `telas_administracao.py:416-447`.
 
+### Adições recentes (09/2026) — responsividade global RNF-UI-01
+
+- **Auditado 320/768/1024** (`kbp-web-design`) — proposta P0/P1/P2 por `container`/`row`/`grid`: abas `overflow-x-auto`, formulário `grid-cols-1 sm:grid-cols-2`, lista de solicitações `overflow-x-auto`, dialogs `w-full max-w`, barra de ações `flex-wrap` `gap` via `.style`. Ver [Padrões](padroes_codificacao/index.md) §8.1.
+
 ## Status
 
 | Item | Situação |

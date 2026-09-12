@@ -1,6 +1,12 @@
+# Empenho Renamer Module — `mod_renomear_empenho`
+
+> Empenho renaming and management module: route `/renomear-empenho` (key `empenhos`) · own DB `db_mod_renomear_empenho.db` · PDF text extraction (incl. special types EC/EE/EG/AE), multi-folder monitor (local/UNC), rename queue, FTS5 search, quarantine with batch reprocessing without restart, physical organizer with `capa.pdf/txt` + `matrizDeDocumentos.pdf/.txt`, request flow and settings.
+
+---
+
 # Módulo Renomear Empenho — `mod_renomear_empenho`
 
-> Módulo de renomeação e gestão de empenhos: rota `/renomear-empenho` (chave `empenhos`) · banco próprio `db_mod_renomear_empenho.db` · extração de texto de PDF (inclui tipos especiais EC/EE/EG/AE), monitor multi-pasta (local/UNC), fila de renomeação, pesquisa FTS5, organizador físico, fluxo de solicitações comum→admin e configurações do módulo.
+> Módulo de renomeação e gestão de empenhos: rota `/renomear-empenho` (chave `empenhos`) · banco próprio `db_mod_renomear_empenho.db` · extração de texto de PDF (inclui tipos especiais EC/EE/EG/AE), monitor multi-pasta (local/UNC), fila de renomeação, pesquisa FTS5, quarentena com reprocessamento em lote sem reiniciar, organizador físico com `capa.pdf/txt` + `matrizDeDocumentos.pdf/.txt`, fluxo de solicitações comum→admin e configurações do módulo.
 
 ## Propósito
 
@@ -40,17 +46,21 @@ Criador vigente: `init_db_empenho()` em `bd_manipulador.py:289`.
 - **Pesquisa FTS5** (RF-41): 32 colunas do cabeçalho; regras regex com `campo_destino` alimentam colunas customizadas; trigger de exclusão mantém o índice sincronizado.
 - **Gate de validação**: `renomear_manual`/`processar_pdf` só renomeiam quando o nº é identificado sem divergência crítica; caso contrário vão para a quarentena com motivo.
 - **Não-reprocessamento**: `arquivo_ja_processado` (nomes DOC) + `_arquivo_registrado_no_bd` (autoritativo via `tb_empenhos`) impedem reprocessar itens já renomeados (inclusive tipos especiais, cujo nome não discrimina por contagem de dígitos).
-- **Organizador completo** (RF-44): distribui em `mod_renomear_empenho/organizadorPasta/caixa_NN/sub_X` (~200 páginas/pasta, 4 pastas/caixa — configuráveis); gera `capa.txt` por caixa e `matrizDeDocumentos.txt/.pdf`; `validar_presenca_matriz` confere presença.
+- **Quarentena e regras dinâmicas (4b)**: falhas vão para `mod_renomear_empenho/quarentena/<timestamp>_<nome>` via `mover_quarentena`/`promover_quarentena` (aliases PLANO) com motivo em `tb_quarentena`; admin reprocessa **individualmente** (clique na linha → regex alternativa → `reprocesse_quarentena`) ou **em lote** (botão **"Reprocessar fila"** → `reprocessar_fila` itera `processado=0` com regras ativas, sem reiniciar); **identificação manual** via "Revisar/renomear" (`renomear_manual` com gate); **regex dinâmicas** em `tb_regex_regras` (`nome_regra UNIQUE`, `padrao_regra` validado por `re.compile`, `campo_destino` → FTS) e `tb_campos_busca` — cadastro/edição sem reiniciar, leitura a cada extração. **Múltiplos documentos**: `detectar_documentos_no_pdf`/`eh_multiplo_documento` detecta 2+ empenhos (critério: ≥2 `NOTA DE EMPENHO`/`EMPENHO PARCELA` com nº distintos); quarentena marca "Múltiplos documentos detectados" e expõe **"Separar documentos"** (`separar_documentos_quarentena`/`separar_pdf_por_documentos` → `*_parteNN_pA-B.pdf` na pasta monitorada + reprocesso).
+- **Organizador físico (4c / RF-44)**: distribui em `mod_renomear_empenho/organizadorPasta/caixa_NN/sub_X` com **~200 páginas por subpasta e 4 subpastas por caixa** (configuráveis via `tb_config` `empenhos_organizador_paginas_pasta`/`empenhos_organizador_pastas_caixa`, `bd_manipulador.py:1988`); `gerar_matriz_organizador` gera **capa por caixa** (`caixa_NN/capa.txt` **e** `caixa_NN/capa.pdf`) e **matriz geral** (`matrizDeDocumentos.txt` **e** `matrizDeDocumentos.pdf` na raiz do organizador); `validar_presenca_matriz` confere presença de todos os PDFs listados; `organizar_pastas` já encadeia a geração e retorna total + mensagem da matriz; estrutura visível em `mod_renomear_empenho/organizadorPasta/`.
 - **Ferramentas de PDF embutidas** (RF-45): corte (pares/ímpares/intervalo), mesclagem e redução; saídas em `mod_renomear_empenho/datahora_cortePDF/`, `mod_renomear_empenho/datahora_mergePDF/`, `mod_renomear_empenho/datahora_reducaoPDF/`.
 - **Solicitações de envio** (RF-39): comum registra pedido (e-mail + mensagem); admin envia por e-mail (SMTP central `mod_intranet/email_util`) ou gera ZIP (`mod_renomear_empenho/downloads/solic_*.zip`); agrupamento por lote; histórico completo.
 - **Painel Administração**: aparência (`empenhos_*` — cor do botão/texto/fundo/título, tamanho, texto do cabeçalho), pastas monitoradas, intervalo do monitor, autorização de download/ZIP/e-mail para comuns, template de nome final, campos de busca e regras regex.
+- **Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 `kbp-web-design`)**: proposta P0/P1/P2 por `container`/`row`/`grid` — `menu_modulo` `overflow-x-auto`, filtros/busca `flex-wrap` `flex-1 min-w`, tabelas `overflow-x-auto`, `scroll_area` altura explícita, grids `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`, dialogs `w-full max-w`; cabeçalho `flex-wrap` `truncate`.
 - **Versionamento**: `versao_modulo:empenhos = 1.0.<data>` (seed em `bd_conexao.init_db()`), exibido no rodapé.
 
 ## Regras de negócio
 
 - Contador sequencial persistido em banco, único entre pastas; template de nome configurável (`doc_{contador:04d}_numEmpenho_{empenho}_p{parcela:03d}.pdf`).
 - Tipos especiais usam nome próprio (`EC_%04d.pdf`), não o sequencial DOC.
-- **Gate de validação**: renomeação somente com nº identificado; falha → quarentena com motivo (PLANO 4c atendido).
+- **Gate de validação**: renomeação somente com nº identificado; falha → quarentena com motivo (PLANO 4b/4c atendidos).
+- **Quarentena (4b)**: `promover_quarentena`/`mover_quarentena` grava motivo (300 chars) e timestamp; reprocessamento individual (`reprocesse_quarentena` com regex alternativa) e em lote (`reprocessar_fila` + botão "Reprocessar fila") sem reiniciar; múltiplos documentos detectados por `detectar_documentos_no_pdf` → botão "Separar documentos".
+- **Organizador (4c)**: ~200 páginas/subpasta e 4 subpastas/caixa (configuráveis); capas `capa.txt` + `capa.pdf` por caixa e matriz `matrizDeDocumentos.txt/.pdf` geral; `validar_presenca_matriz` garante que todo PDF da matriz existe em `organizadorPasta/`.
 - Não-reprocessamento: DOC por padrão de nome; tipos especiais e demais por registro no banco (`tb_empenhos`/`tb_arquivos_auditoria`).
 - Anti-travessia: navegação/renomeação restritas às raízes protegidas (`pastas_monitoradas` + `mod_renomear_empenho/organizadorPasta`).
 - Auditoria: `audit_log` (central) **com hash SHA-256** em toda operação + trilha por arquivo em `tb_arquivos_auditoria`/`tb_eventos_arquivos`.

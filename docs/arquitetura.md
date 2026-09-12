@@ -254,7 +254,7 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 2. Revalida existência/situação ativa do usuário no banco.
 3. Revalida `sessao_ativa` (sessões antigas sem hash são adotadas).
 4. Valida `validar_acesso_modulo(nome, chave)` — sem permissão: audita `acesso_negado`, notifica e redireciona `/`.
-5. Monta o **layout de 4 partes**: header (hambúrguer, backup, "Meu Perfil", badge de perfil, logout), drawer lateral (módulos liberados), rodapé com versões, área principal.
+5. Monta o **layout de 4 partes**: header (hambúrguer com `data-testid=menu-hamburguer`, "Meu Perfil", badge de perfil, logout), drawer lateral (fábrica `ui_comum.item_menu_drawer` com `data-testid` `menu-*`, módulos liberados), rodapé com versões, área principal.
 6. Se `precisa_trocar_senha`, abre o diálogo persistente de troca obrigatória.
 
 ## Agendadores (APScheduler)

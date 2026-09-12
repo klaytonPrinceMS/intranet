@@ -128,3 +128,7 @@ Oito melhorias na tela de usuários (`mod_gest_cad_usuario/telas.py`), todas na 
 - **Labels de senha dinâmicos** (`telas.py:549`, `telas.py:753`, `telas.py:892`): os diálogos de novo usuário (`_dlg_novo`), redefinir (`_dlg_senha`) e duplicar (`_dlg_duplicar`) exibem "mín. X" com `gest.senha_minima()` (chave `usuarios_senha_min`) em vez do "mín. 6" fixo.
 - **Import atualizado** (`telas.py:28-31`): `btn_style` removido; `bloco_aparencia`, `rodape_salvar_restaurar` e `campo_modulo` importados de `mod_intranet.tema_modulo` (`campo_modulo` restaurado em 06/09 após remoção acidental).
 - Cobertura: `test/verifica_ui_comum.py` — verificação **"gest_cad: painel adm via cupês padrão (bloco_aparencia + rodapé + campo_modulo)"** (`verifica_ui_comum.py:968-969`); suíte completa: **179 OK, 0 falhas**. Demais suítes: dashboard 31, config 50, boot 16, autenticação 19, permissões 13.
+
+### Adições recentes (09/2026) — responsividade global RNF-UI-01
+
+- **Barra superior** `flex-nowrap` → `flex-wrap`, tabs `overflow-x-auto`, busca `flex-1 min-w` (`campo_busca` `grow min-w-[220px]`), dialogs `w-full max-w` — validado 320/768/1024 (`kbp-web-design`). Tabelas com `overflow-x-auto` (parcial). Proposta P0/P1/P2 por `container`/`row`/`grid` (header `flex-wrap` `truncate`, filtros `sm:grid-cols-2`) registrada na auditoria.

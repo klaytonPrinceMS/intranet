@@ -194,6 +194,29 @@ Autorização exclusiva para criar/editar se não existirem:
 **kbp-doc:** Audita `/docs`, gera `estrutura.md` na raiz (NÃO commitar), padrão MkDocs tema readthedocs, docstring bilíngue EN no topo / PT-BR abaixo
 **kbp-qa:** QA Sênior, data-testid via `.props('data-testid=...')`, pytest-playwright, pirâmide testes
 **kbp-devSecOps:** Segurança, bandit 1.9.4, semgrep 1.176.1, pip-audit 2.10.1, safety 3.8.1, gitleaks 8.24.3, k6 — apenas localhost/staging
+**kbp-commit:** Commit e push padronizados, estuda o diff e as secoes ativas para comentar no formato AAMMDD HHMM
+
+### 8.1 Criação de subagentes (padrão kbp-*)
+
+Todo subagente do projeto segue este padrão (ver `.opencode/agent/kbp-qa.md` como exemplo):
+
+1. **Arquivo:** `.opencode/agent/kbp-<nome>.md` (minúsculas, prefixo `kbp-`).
+2. **Frontmatter obrigatório:**
+   ```markdown
+   ---
+   description: Uma frase com responsabilidade + quando acionar.
+   mode: subagent
+   ---
+   ```
+3. **Corpo:** `Você é o subagente **kbp-<nome>**` + `## Responsabilidades` +
+   `## Regras obrigatórias` + `## Critérios de aceite` (ou `Retorno`). Texto em PT-BR,
+   funções `snake_case`, classes `PascalCase`, língua ubíqua do DDD.
+4. **Responsabilidade única** por subagente; nunca `commit`/`push` dentro de outro
+   subagente (chame o `kbp-commit`); nunca segredos, `db_mod_*.db`, `backup/`, `logs/`,
+   `site/`, `estrutura.md` no stage.
+5. **Ativação:** `.opencode/` está no `.gitignore` (vale só na máquina) e o OpenCode
+   carrega agentes no boot — após criar/editar, **saia e reinicie o OpenCode**.
+   Para versionar um agente, remova a linha `.opencode` do `.gitignore`.
 
 ## 9. Skills
 

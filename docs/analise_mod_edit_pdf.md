@@ -97,3 +97,7 @@ módulo ficou exclusiva do painel central `/configuracoes`.
 
 Regra de uniformidade e mapeamento de prefixos cobertos por `test/test_tema.py` (18 verificações
 standalone).
+
+### Adições recentes (09/2026) — responsividade global RNF-UI-01
+
+- **Já responsivo** — botões centralizados `w-full justify-center flex-wrap` `gap` via `.style` `min-width:0`, toggle `spread`, grids responsivos `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`; `overflow-x-auto` em tabelas, `scroll_area` altura explícita. Auditado 320/768/1024 (`kbp-web-design`) com checklist P0/P1/P2 por `container`/`row`/`grid` (sem pendências P0).

@@ -172,13 +172,55 @@ Soft delete para entidades sensíveis, com coluna de motivo e auditoria.
 - **Fonte única de botões, diálogos e rodapés**: importe de `mod_intranet.ui_comum` — `botao()` (variantes `primario`/`secundario` (aliases `solido`/`contorno`)/`texto`/`neutro`/`restaurar`/`restaurar_fill`/`perigo`/`icone`), `botao_icone()`, `dialogo_card()`, `rodape_dialogo()`, `rodape_salvar_restaurar()`, paleta `CORES` e `notificar` (reexportado de `tema_modulo`).
 - **Nada de `ui.button` cru nem hex solto** (`#C62828`, `#EF6C00`, `#2E7D32`…): use `botao(variante=...)` e `CORES[...]`. `tema_modulo.botao()` e `_botao_padrao` (`tela_configuracoes.py`) apenas delegam à fábrica central.
 - **Migração de botões CONCLUÍDA nos módulos (06/09)**: ~120 botões crus (`ui.button`) migrados para `ui_comum.botao/botao_icone(chave_modulo=...)` em 12 arquivos — `mod_auditoria` (telas+admin), `mod_edit_pdf` (telas), `mod_gest_cad_usuario` (telas), `mod_renomear_empenho` (telas+admin), `mod_solicita_impressao` (telas+admin). Efeito: ao alterar cor/tamanho dos botões do módulo na administração (`<prefixo>_cor_botao`/`cor_texto_botao`/`btn_tamanho`), a cor aplica em TODOS os botões do módulo (a fábrica lê o tema a cada render). Mapeamento de variantes: `unelevated`→`"solido"`; `flat`→`"texto"`; `outline`→`"contorno"`; ícone `round/dense`→`botao_icone`; ações destrutivas→`"perigo"` ou `cor="negative"`; "Restaurar padrão"→`"restaurar"`; verde→`texto` com `cor="green-8"`; laranja→`cor="orange-9"`; Resetar cota (solicita_impressao)→`"restaurar_fill"` (família restaurar).
+- **RNF-UI-01 — Padrão global de botões: centralizados, mesmo formato, cor única (REALIZADO 06/09, referência: `Aplicar configurações`):** todos os botões de ação do sistema (todos os `mod_*` + `mod_intranet`) usam **fábrica central** `ui_comum.botao(chave_modulo=...)`, **centralizados** em linhas `w-full justify-center flex-wrap` com `.style('gap: 0.75rem')` e `.style('min-width: 0')`, **mesmo formato** `size=md` `min-w-[180px]` `no-caps` `shadow-sm` ( `contorno`/`texto`/`restaurar`/`perigo` mantêm mesma largura/altura, só borda/cor muda) e **cor única por módulo** via tema (`<prefixo>_cor_botao`/`cor_texto_botao`, `ui.colors(primary=cor)` + `cabecalho` borda + `botao` fundo, `#000000` quando vazio via `PADROES_TEMA`). Referência de tamanho/cor: botão **Aplicar configurações** / **Aplicar** do `card_admin`/`bloco_aparencia`. Validado por `assets/test/verifica_ui_comum.py` (190 verificações) — ver [Requisitos — RNF-UI-01](../2_levantamento_requisitos/index.md).
 - **Exceções INTENCIONAIS de `ui.button` cru** (documentadas como tais): `ui_comum.py:163` (a própria fábrica), `ui_comum.py:326` (Cancelar de `rodape_dialogo` — padrão de diálogo) e `tela_configuracoes.py:493,497` (preview AO VIVO da aba Cores — usa valores não salvos dos campos).
-- **`rodape_salvar_restaurar` na fábrica (06/09)** (`ui_comum.py:338`): "Restaurar padrão" usa a variante `restaurar` (antes `flat` cinza) e o botão de salvar usa `solido` do tema do módulo — ambos via `botao(chave_modulo=...)`. "Restaurar padrão" tem aparência ÚNICA no projeto (contorno âmbar), inclusive nos sites que usavam contorno/primário em empenhos e edit_pdf. Contraste WCAG: a variante `restaurar` usa `text-color=amber-10` (escurecida de `amber-9`, ~3,8:1 em card branco — melhora o AA do anterior ~2,2:1). **Padrão de 2 botões por card (06/09)**: o rótulo padrão do salvar é **"Aplicar"** (antes "Salvar") — grava EXCLUSIVAMENTE o card em questão; novo parâmetro `acoes_extra` aceita tuplas `(rotulo, icone, on_click[, tooltip[, variante]])` (variante default `solido`) renderizadas antes do "Restaurar padrão"; a row usa `flex-wrap` (responsividade mobile).
+- **`rodape_salvar_restaurar` na fábrica (06/09)** (`ui_comum.py:338`): "Restaurar padrão" usa a variante `restaurar` (antes `flat` cinza) e o botão de salvar usa `solido` do tema do módulo — ambos via `botao(chave_modulo=...)`. "Restaurar padrão" tem aparência ÚNICA no projeto (contorno âmbar), inclusive nos sites que usavam contorno/primário em empenhos e edit_pdf. Contraste WCAG: a variante `restaurar` usa `text-color=amber-10` (escurecida de `amber-9`, ~3,8:1 em card branco — melhora o AA do anterior ~2,2:1). **Padrão de 2 botões por card (06/09)**: o rótulo padrão do salvar é **"Aplicar"** (antes "Salvar") — grava EXCLUSIVAMENTE o card em questão; novo parâmetro `acoes_extra` aceita tuplas `(rotulo, icone, on_click[, tooltip[, variante]])` (variante default `solido`) renderizadas antes do "Restaurar padrão"; a row usa `flex-wrap` (responsividade mobile) e **centralização `justify-center` com `.style('min-width: 0')` conforme RNF-UI-01**.
 - **Painéis de administração no padrão `card_admin` (06/09)** (`ui_comum.py:781`): `ui.card` w-full com borda esquerda temática (cor_botao do módulo, fallback `#607D8B`) + fundo `estilo_cartao`; dentro, `ui.expansion` como cabeçalho retrátil — **o título do card é colorido com a cor de título do módulo** (`<prefixo>_cor_titulo` via `ler_tema`, fail-soft → `#212121`) via `header-style`; `grade=True` (padrão) cria a grade responsiva do projeto (1 campo/linha em tela pequena, 2 em média `sm:`, 3 em grande `md:`) e o `with` do chamador entra na grade; `grade=False` para conteúdo livre (tabelas/textareas). Aplicado em: blog (2 seções), auditoria, empenhos (8 seções, `grade=False`), `tema_modulo.bloco_aparencia` (card_admin próprio; `com_card=False` para callers que já têm card: gest_cad_usuario, edit_pdf, solicita_impressao admin + telas).
 - **Fail-soft obrigatório**: falha de tema/BD cai nos padrões com registro loguru (`observabilidade.get_logger("intranet")`); variante inválida levanta `ValueError` (erro de programação — falha rápida).
 - **Helpers de tela em `mod_intranet/aba_modulo.py`**: `cabecalho(titulo, subtitulo, ..., chave_modulo=None)` (card de cabeçalho com cores resolvidas pelo tema do módulo — **a borda de destaque é a MESMA cor dos botões do módulo**, `<prefixo>_cor_botao`; parâmetros explícitos vencem; sem chave → defaults `ui_comum.CORES`), `menu_modulo(itens, valor=None)` (abas de menu com ícone em cima/nome embaixo), `campo_busca(placeholder, on_change, valor_inicial, tooltip)` (`outlined dense clearable debounce='150'`) e `barra_acoes(busca, acoes)` (barra branca com busca à esquerda e botões `ui_comum.botao` primários à direita; itens malformados ignorados com loguru). Não recrie `ui.tabs`/`ui.input` crus.
 - **Classes do núcleo em telas novas (06/09)**: em vez de `ui.grid`/`ui.input`/`ui.button` crus, use os componentes padronizados — `GradeTabela` (`ui_painel.py:30`, grid com cabeçalho caption + células + coluna de ações), `PainelLista` (`ui_painel.py:93`, busca + filtro + paginação client-side + `atualizar()`) e `FormularioBuilder` (`ui_form.py:32`, construtor fluente com `build()`/`valores()`). `ui_comum.py` é orientado a classes internamente (`BotaoFabrica`/`Dialogo`/`Cartao`/`CampoBase`) — as funções `botao`/`dialogo_card`/`campo_*` permanecem como wrappers finos; ambos os estilos são aceitos, comportamento idêntico.
 - **Equivalência comprovada**: `test/verifica_ui_comum.py` (**188 verificações** byte-a-byte, stub de nicegui, tema fixado via monkeypatch sem tocar no banco — inclui checks de migração dos botões dos módulos: perigo/solido/botao_icone, rodapé e variante restaurar) e `test/teste_classes_crud.py` (**68 verificações** — CrudBase em SQLite real, gancho de auditoria, `banco_conexao`, equivalência wrapper↔classe, GradeTabela/PainelLista/FormularioBuilder) — TODO código de teste fica em `test/`, nunca em `/tmp`.
+
+### 8.1 Responsividade global — RNF-UI-01 extensão mobile-first (09/2026)
+
+Padrão obrigatório para **toda tela nova ou retrabalhada** (auditado `kbp-web-design` em 320 / 768 / 1024 px). O layout é **mobile-first** e validado no tema `readthedocs`.
+
+| Regra | Padrão | Onde aplicar |
+|:---|:---|:---|
+| `gap` via `.style()` | `.style('gap: 0.5rem')` / `gap: 0.75rem` / `gap: 1rem` | `ui.row`/`ui.column` — **nunca** `gap-*` Tailwind em `row`/`column` (bug #2171) |
+| `min-width:0` | `.style('min-width: 0')` em cells/containers flex | toda `row`/`column` com filho `truncate`/`w-full` para evitar estouro flex |
+| `flex-wrap` | `.classes('flex-wrap')` ou `flex-wrap` em row | header, barra de ações, linha de botões, filtros |
+| `truncate` + `max-w` | `.classes('truncate max-w-[18ch]')` | badges, títulos, breadcrumbs, chips |
+| `overflow-x-auto` | `.classes('overflow-x-auto')` | `ui.tabs`, tabelas, grades, breadcrumbs longos |
+| `scroll_area` altura explícita | pai com `h-[320px]`/`max-h-[60vh]` | `ui.scroll_area` precisa de pai com altura fixa |
+| Dialogs/cards | `w-full max-w-[420px] mx-4` / `max-w-[560px]` | `ui.dialog` + `ui.card` — login usa `w-full max-w-[420px] mx-4 p-6 sm:p-10` |
+| Grids mobile-first | `grid-cols-1 sm:grid-cols-2 md:grid-cols-3` | `ui.grid` / `card_admin` (`grade=True`) |
+| Containers | `w-full p-4 sm:p-6` com `min-width:0` | wrapper da página (`q-page`) |
+
+**Exemplos já corrigidos (referência):**
+
+- `main.py` — login: `w-[420px] p-10` → `w-full max-w-[420px] mx-4 p-6 sm:p-10`, `p-4 min-width:0`; header: `flex-wrap`, `truncate`, badge `max-w`, `gap` via `.style`.
+- `mod_gest_cad_usuario` — barra superior: `flex-nowrap` → `flex-wrap`, tabs `overflow-x-auto`, busca `flex-1 min-w-[220px]`, dialogs `w-full max-w`.
+- `mod_edit_pdf` — já com botões `w-full justify-center`, toggle `spread`, grids responsivos.
+
+### 8.2 Decoradores transversais — `mod_intranet/decoradores.py` (09/2026)
+
+Padrão obrigatório para concerns transversais (DDD PT-BR, docstring bilíngue EN/PT-BR):
+
+| Decorador (PT-BR / EN alias) | Uso | `arquivo:linha` piloto |
+|:---|:---|:---|
+| `requer_pode_publicar(arg_usuario="autor")` / `require_permission` | permissão de publicação do Blog antes de `criar/atualizar/excluir` | `mod_blog/bd_manipulador.py:424,448,458,472,501,521,534` (7 funcs) |
+| `auditado(modulo="blog", acao="criar_postagem")` / `audited` | auditoria LGPD fail-soft via `audit_reg` após sucesso | mesmo piloto |
+| `falha_suave(default=None)` / `fail_soft` | `try/except + _log` + `return default` | piloto `mod_blog` + `mod_intranet/hora_servidor.py:54` |
+| `com_conexao(commit=True)` / `with_connection` | injeta `cur` de `_conn()` com `commit/rollback/close` | a propagar para `mod_gest_cad_usuario` (30 funcs), `mod_renomear_empenho` (40 funcs) |
+| `valida_regex(arg="padrao", max_len=200)` / `validate_regex` | `re.compile` + `len>max` antes de `salvar_regra` | `mod_renomear_empenho/bd_manipulador.py:1863` (`salvar_regra`) |
+| `invalida_cache(*funcs)` / `invalidate_cache` | `cache_clear()` após `set_config`/`salvar_tema` | `mod_intranet/bd_conexao.py:209`, `mod_intranet/tema_modulo.py:132` |
+| `ttl_cache(ttl=60, maxsize=32)` | cache TTL para `offset_ntp`/`tags_permitidas` | `mod_intranet/hora_servidor.py:97` |
+
+Ordem recomendada (externo → interno): `@falha_suave` → `@requer_pode_publicar` → `@auditado` → `def func`. Validado por `assets/test/teste_fluxo_blog.py:1` (46 checks).
+- `mod_blog` — já com filtros justificados, exibição centralizada, seleção em lote.
+
+**Proposta por `container`/`row`/`grid`** (checklist P0/P1/P2 da auditoria `kbp-web-design` por módulo — `intranet`, `gest`, `auditoria`, `renomear`, `solicita`, `edit`, `blog`, `tela_configuracoes`, `ui_comum`) deve ser seguida em novas telas; ver [Requisitos — RNF-UI-01](../2_levantamento_requisitos/index.md) e [Convenções](../convencoes_codigo.md) checklist.
 
 ## 9. Configurabilidade (regra de projeto)
 
@@ -211,13 +253,20 @@ Soft delete para entidades sensíveis, com coluna de motivo e auditoria.
   - `../../mod_edit_pdf/telas_administracao.py` — `mostrar_administracao(usuario_logado, eh_admin)` (cotas GB/usuário, lotes, textos, aparência, manutenção).
   - `../../mod_renomear_empenho/telas_administracao.py` — `mostrar_administracao(...)` (pastas, aparência, template, regex, auditoria, Quarentena, regras) — recebe também `t_cor_botao`/`t_cor_texto_botao`/`t_cor_fundo`/`t_cor_titulo`/`t_tamanho`/`texto_header` já resolvidos e os callables `_btn_cls`/`_btn_style` + `get_config`/`set_config`.
   - `../../mod_solicita_impressao/telas_administracao.py` — `mostrar_administracao(usuario_logado, eh_admin)` com **6 sub-abas** (Solicitações, Secretarias, Setores, Responsáveis, Cotas, Config).
-- **Botão "Administração" do drawer é contextual** (`layout_tela.py:184-200`): dentro de um módulo, navega para `/admin/{chave_modulo}`; no Home, navega para `/configuracoes`. Tooltip muda conforme o contexto ("Configurações de {nome_modulo}" vs "Configurações gerais do sistema").
+- **Botão "Administração" do drawer é contextual** (`mod_intranet/telas.py:_montar_layout`, via fábrica `ui_comum.item_menu_drawer`, `testid="menu-admin"`): dentro de um módulo, navega para `/admin/{chave_modulo}`; no Home, navega para `/configuracoes`. Tooltip muda conforme o contexto ("Configurações de {nome_modulo}" vs "Configurações gerais do sistema").
 - **Por que arquivo separado**:
   1. O admin do módulo fica **standalone** — não depende do estado das abas de negócio (cota, filtros, login refresh, etc.).
   2. Permite URL direta (`/admin/blog`, `/admin/auditoria` etc.) e acesso contextual pelo drawer.
   3. `telas.py` continua focado em fluxo de negócio; `telas_administracao.py` concentra TODA a configuração do módulo.
 - **Fail-soft + loguru obrigatórios** (regra geral do projeto): todo `mostrar_administracao` envolve leituras/gravações em `try/except`, registrando via `observabilidade.get_logger("<modulo>")` — `_FMT` do `observabilidade.py` já garante `{module}:{function}:{line}` no log.
 - **Migração de admin embutido no `telas.py`**: ao criar um novo módulo, **não** coloque o painel de administração como aba dentro de `mostrar_tela` — extraia para `mod_<nome>/telas_administracao.py` e adicione a entrada correspondente no `dispatch` de `main.py:439-524`. Módulos já migrados (06/09): `blog`, `usuarios`, `auditoria`, `editar_pdf`, `empenhos`, `solicita_impressao`.
+
+### 11.1 Menu hambúrguer — fábrica `item_menu_drawer` + anti-disconnect (12/09/2026)
+
+> Padrão obrigatório para navegação e handlers (AGENTS.md §5.1).
+
+- **Itens do drawer via fábrica** `ui_comum.item_menu_drawer()` / `ItemMenuDrawer` (`mod_intranet/ui_comum.py:850`) — nunca `ui.item` cru: `w-full rounded-lg my-0.5` + `.style('min-width: 0')`, avatar `text-primary shrink-0 aria-hidden`, rótulo `truncate max-w-full grow`, tooltip PT-BR, `focus-visible` ring, ativo (`bg-blue-100` + `aria-current="page"`), `data-testid` via `.props()` (`menu-home`, `menu-<chave>`, `menu-admin`, `menu-docs`, `menu-sair`), `aria-label` em item só-ícone, fail-soft (`None`). Drawer abre **fechado**; header com hambúrguer `data-testid=menu-hamburguer`. **Bootstrap local dispensado** (reset global quebraria o Quasar — visual replicado com Tailwind + Quasar; justificativa no código).
+- **Handlers nunca bloqueiam o event-loop**: `on_click` rápido pode ser `sync`; I/O pesado (`subprocess` mkdocs, SMTP, `copy2`, `observabilidade.configurar()`, `rodar_monitor`) **DEVE** usar `await run.io_bound(fn)` em handler `async` com spinner, botão desabilitado e trava `ocupado`. Reload **único** (`ui.timer(1.0, ui.navigate.reload())`) após `notificar()`; card Banco **nunca recarrega**. Rodapé via `ui_comum.rodape_salvar_restaurar()` com `data-testid` (`config-aplicar-<card>`); avisos via `tema_modulo.notificar()`. Detalhes: [Configurações — Anti-disconnect](../configuracoes.md#anti-disconnect-no-aplicar-handlers-async-12092026-agentsmd-51). Testes headless: `clicar()` aguarda `awaitable`.
 
 ## 12. SQLAlchemy ORM + Dataclasses (07/09) — padrão a propagar
 
@@ -434,3 +483,26 @@ Ao migrar um módulo `mod_*` existente:
 6. Garantir que todos os `except` usem loguru.
 
 > Ver detalhes em [Arquitetura — Arquitetura de acesso a dados do núcleo](../arquitetura.md#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809) e [Módulo Núcleo — Repositório](../modulos/intranet.md#repositorio-mod_intranetrepositoriopy-0709-multi-banco-0609).
+
+## 13. Padrão de CLI — Typer com prefixos semânticos (Opção C, 09/2026)
+
+> **PT-BR obrigatório no help; EN no topo da docstring via rich/typer.**
+
+O único ponto de CLI do projeto é `main.py` + `mod_intranet/ativacao.py` — não crie `argparse` ad-hoc:
+
+- **Sem argumentos → `config_persistida()`** (`ativacao.py:1284`): carrega `tb_config` com fallback em `_config_padrao()`; help: *"Sem argumentos, sobe direto com a configuração persistida"* (`ativacao._cli_app()` `:1338`).
+- **`--config`/`-c` → wizard** (`main.py:43-45`): ENTER=básico, `1`=configurar; tem prioridade.
+- **Flags Opção C** (`ativacao._cli_app()` `:1331`): prefixo `--ativ-` (otel, postgres) + `--porta-` (db, docs, grafana, site) + `--scan-ports`, agrupadas por tipo e em ordem alfabética dentro do grupo, com contrações `-c/-o/-p/-d/-k/-s/-t/-S` e aliases legados (`--postgres`/`--otel`/`--portapostgres` etc. + typo `--ativ-postgress`).
+
+| Grupo | Flag | Alias | Curta |
+|:---|:---|:---|:---:|
+| Ativação | `--ativ-otel` | `--otel` | `-o` |
+| | `--ativ-postgres` | `--ativ-postgress`, `--postgres` | `-p` |
+| Portas | `--porta-db` | `--portapostgres` | `-k` |
+| | `--porta-docs` | `--portadocumentacao` | `-d` |
+| | `--porta-grafana` | `--portatelemetria` | `-t` |
+| | `--porta-site` | `--portasite` | `-s` |
+| Config | `--config` | — | `-c` |
+| Utilitário | `--scan-ports` | — | `-S` |
+
+- `cli_opcoes()` (`:1387`) via `Typer.get_command().make_context`, `config_do_cli()` (`:1420`) com `_porta_valida`, `iniciar(cli_cfg)` reaproveita `_executar_e_persistir`. `main.py:38-56` decide o fluxo. Ver [Manual de Instalação — Typer Opção C](../manual_de_uso_instalacao/index.md#22-inicializacao-por-linha-de-comando-typer-opcao-c) e [Configurações — Opção C](../configuracoes.md#inicializacao-por-argumentos-de-linha-de-comando-opcao-c-092026).
