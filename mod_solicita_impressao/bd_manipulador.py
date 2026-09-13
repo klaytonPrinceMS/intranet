@@ -349,8 +349,11 @@ def init_db():
     cur.execute("SELECT COUNT(*) FROM tb_configuracoes_modulo WHERE chave='versao_modulo'")
     if not cur.fetchone()[0]:
         cur.execute(
-            "INSERT INTO tb_configuracoes_modulo (chave, valor) VALUES ('versao_modulo', '1.0.260908')"
+            "INSERT INTO tb_configuracoes_modulo (chave, valor) VALUES ('versao_modulo', '1.0.260913')"
         )
+    # Bump 260913 — atualiza banco existente que ainda está em 260908
+    cur.execute("UPDATE tb_configuracoes_modulo SET valor='1.0.260913' "
+                "WHERE chave='versao_modulo' AND valor='1.0.260908'")
 
     # Seeds fixos de secretarias/setores (idempotente — só insere se sigla/nome ainda não existe)
     _SECRETARIAS_PADRAO = [

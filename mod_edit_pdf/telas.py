@@ -84,7 +84,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
     vida_pdf_s = cfg_expiracao_min() * 60
 
     # ---- Tema padronizado (cores e tamanho dos botões) ----
-    tema = ler_tema("editar_pdf", cor_botao="#522e2e", cor_texto_botao="#FFFFFF",
+    tema = ler_tema("editar_pdf", cor_botao="#000000", cor_texto_botao="#FFFFFF",
                     cor_titulo="#212121")
     ui.colors(primary=tema["cor_botao"])
 

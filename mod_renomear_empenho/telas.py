@@ -135,27 +135,35 @@ def mostrar_tela(usuario_logado: str, perfil: str):
     cabecalho("Renomeador de Empenhos", texto_header, chave_modulo="empenhos",
               cor_titulo=t_cor_titulo, cor_fundo=t_cor_fundo)
 
-    tabs_el = menu_modulo(
-        [("navegar", "Navegar", "folder_open"),
-         ("fila", "Fila Renomeação", "move_to_inbox"),
-         ("pesquisa", "Pesquisar", "search"),
-         ("organizador", "Organizador", "inventory_2"),
-         ("solicitacao", "Solicitação", "mail")],
-        valor="navegar")
-    with ui.tab_panels(tabs_el, value="navegar").classes("w-full"):
+    # Permissões: comum vê só Navegar (com busca integrada, pode selecionar e solicitar);
+    # Fila, Organizador e Solicitação são exclusivas do admin. Pesquisar removido — busca foi para o Navegar.
+    # Padrão de menu segue Solicitação de Impressão: row bg-white rounded-lg shadow-sm com tabs dense inline-label.
+    if eh_admin:
+        _abas = [
+            ("navegar", "Navegar", "folder_open"),
+            ("fila", "Fila Renomeação", "move_to_inbox"),
+            ("organizador", "Organizador", "inventory_2"),
+            ("solicitacao", "Solicitação", "mail"),
+        ]
+    else:
+        _abas = [
+            ("navegar", "Navegar", "folder_open"),
+        ]
+    _icones = {"navegar": "folder_open", "fila": "move_to_inbox", "organizador": "inventory_2", "solicitacao": "mail"}
+    with ui.row().classes("w-full items-center justify-between gap-4 flex-nowrap bg-white rounded-lg shadow-sm px-3 py-1"):
+        with ui.tabs().props("dense inline-label").classes("min-w-0 overflow-x-auto") as tabs_el:
+            for key, label, _ico in _abas:
+                ui.tab(key, label, icon=_icones.get(key))
+    with ui.tab_panels(tabs_el, value="navegar").classes("w-full bg-transparent"):
         with ui.tab_panel("navegar"):
             _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style)
-        with ui.tab_panel("fila"):
-            _tela_fila(usuario_logado, eh_admin, _btn_cls, _btn_style)
-        with ui.tab_panel("pesquisa"):
-            _tela_pesquisar(usuario_logado, _btn_cls, _btn_style)
-        with ui.tab_panel("organizador"):
-            if eh_admin:
+        if eh_admin:
+            with ui.tab_panel("fila"):
+                _tela_fila(usuario_logado, eh_admin, _btn_cls, _btn_style)
+            with ui.tab_panel("organizador"):
                 _tela_organizador(usuario_logado, _btn_cls, _btn_style)
-            else:
-                ui.label("Acesso restrito ao administrador do módulo.").classes("text-negative")
-        with ui.tab_panel("solicitacao"):
-            _tela_solicitacao(usuario_logado, eh_admin, _btn_cls, _btn_style)
+            with ui.tab_panel("solicitacao"):
+                _tela_solicitacao(usuario_logado, eh_admin, _btn_cls, _btn_style)
 
 
 # ============================================================ ABA NAVEGAR
@@ -178,6 +186,7 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
     pasta_atual = {}
     selecionados = {}
     filtro_nome = {"texto": ""}
+    filtro_pendente = {"ativo": False}
     pode_baixar = bool(eh_admin or autorizado)
     # modelo visual capturado por closure (híbrido default — uma tela por CSS)
     def _eh_bs():
@@ -205,6 +214,9 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
             ui.download(caminho, os.path.basename(caminho))
 
     def _revisar_renomear(caminho):
+        if not eh_admin:
+            ui.notify("Ação restrita ao administrador do módulo.", type="warning")
+            return
         nome = os.path.basename(caminho)
         # Extrai valores atuais (podem vir parciais quando o OCR falha);
         # todos os campos ficam editáveis, inclusive os reconhecidos.
@@ -302,12 +314,43 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                       variante="solido", chave_modulo="empenhos")
         dlg.open()
 
+    def _processar_auto(caminho):
+        if not eh_admin:
+            ui.notify("Ação restrita ao administrador do módulo.", type="warning")
+            return
+        ok, msg = renomear_manual(usuario_logado, caminho)
+        ui.notify(f"Renomeado → {msg}" if ok else f"Falha: {msg}",
+                  type="positive" if ok else "negative")
+        if ok:
+            _carregar()
+
+    def _email_cadastrado():
+        try:
+            from mod_gest_cad_usuario.bd_manipulador import obter_usuario as _obter_u
+            row = _obter_u(usuario_logado)
+            if row and len(row) > 3 and (row[3] or "").strip():
+                return (row[3] or "").strip()
+        except Exception:
+            pass
+        try:
+            from mod_intranet.autenticacao import _gest as _g
+            row = _g().obter_usuario(usuario_logado)
+            if row and len(row) > 3 and (row[3] or "").strip():
+                return (row[3] or "").strip()
+        except Exception:
+            pass
+        return ""
+
     def _solicitar(caminho):
         nome = os.path.basename(caminho)
         with ui.dialog() as dlg, ui.card().classes("w-[460px]"):
             ui.label(f"Solicitar envio — {nome}").classes("text-h6")
-            inp_mail = ui.input("Seu e-mail", placeholder="usuario@dominio.com", value=usuario_logado) \
-                .props("outlined dense").classes("w-full")
+            email_padrao = _email_cadastrado()
+            inp_mail = ui.input("Seu e-mail", placeholder="usuario@dominio.com", value=email_padrao) \
+                .props("outlined dense clearable").classes("w-full").props("data-testid=empenhos-solicitar-email") \
+                .tooltip("Preenchido com seu e-mail cadastrado; edite se desejar outro")
+            if not email_padrao:
+                ui.label("Nenhum e-mail cadastrado — digite o destino.").classes("text-caption text-orange-7")
             inp_msg = ui.textarea("Mensagem (opcional)").props("outlined dense").classes("w-full")
 
             def _enviar():
@@ -344,9 +387,13 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
             return
         with ui.dialog() as dlg, ui.card().classes("w-[460px]"):
             ui.label(f"Solicitar envio em lote — {len(selecionados)} arquivo(s)").classes("text-h6")
+            email_padrao = _email_cadastrado()
             inp_mail = ui.input("Seu e-mail", placeholder="usuario@dominio.com",
-                                value=usuario_logado).props("outlined dense").classes("w-full") \
-                .props("data-testid=empenhos-lote-email")
+                                value=email_padrao).props("outlined dense clearable").classes("w-full") \
+                .props("data-testid=empenhos-lote-email") \
+                .tooltip("Preenchido com seu e-mail cadastrado; edite se desejar outro")
+            if not email_padrao:
+                ui.label("Nenhum e-mail cadastrado — digite o destino.").classes("text-caption text-orange-7")
             inp_msg = ui.textarea("Mensagem (opcional)").props("outlined dense").classes("w-full")
 
             async def _enviar_lote():
@@ -432,65 +479,89 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
             selecionados[p["caminho"]] = p["nome"]
         _carregar()
 
+    def _detalhes_linha(p):
+        # Tenta extrair empenho/parcela/data para a linha Excel — do nome, do levantamento ou do mtime
+        nome = p.get("nome") or ""
+        empenho = p.get("numero_empenho") or p.get("empenho") or "—"
+        parcela = p.get("parcela") or "—"
+        data = p.get("data") or p.get("dt") or "—"
+        # parse doc_0001_345_001.pdf
+        import re as _re
+        m = _re.match(r"doc_\d+_(\d+)_(\d+)\.pdf$", nome, _re.I)
+        if m:
+            if empenho == "—":
+                empenho = m.group(1).lstrip("0") or "0"
+            if parcela == "—":
+                parcela = m.group(2).lstrip("0") or "0"
+        # fallback mtime
+        if data == "—":
+            try:
+                import datetime as _dt
+                ts = os.path.getmtime(p.get("caminho") or "")
+                data = _dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+            except Exception:
+                data = "—"
+        return empenho, parcela, data
+
     def _card_pdf(p, sub=None, presente=1):
+        # Linha estilo Excel — mesmas infos/botões do Navegar, visual do Pesquisar (border, hover)
+        empenho, parcela, data = _detalhes_linha(p)
         _hb = _eh_hibrido()
         _bs = _eh_bs()
         _mod = _modelo_atual()
-        if _hb:
-            card_cls = _visual.classes_card_pdf_hibrido()
-        elif _bs or _mod in _visual.FRAMEWORKS:
-            card_cls = _visual.classes_card_pdf(True)
-        else:
-            card_cls = _visual.classes_card_pdf(False)
-        with ui.card().classes(card_cls):
-            with ui.row().classes("w-full items-center").style("gap: 0.6rem"):
-                if _hb:
-                    with ui.element("div").classes("empenho-card-top flex-1").style("min-width:0"):
-                        pass
-                ui.checkbox("", value=p["caminho"] in selecionados,
-                            on_change=lambda e, cam=p["caminho"], nom=p["nome"]:
-                            _alternar_selecao(e.value, cam, nom)) \
-                    .props("dense").props("data-testid=empenhos-selecionar") \
-                    .tooltip("Selecionar para o lote")
-                ui.icon("picture_as_pdf").classes("text-primary").props('aria-hidden="true"')
-                with ui.column().classes("flex-1").style("min-width: 0"):
-                    ui.label(p["nome"]).classes("font-medium text-wrap").style("min-width: 0; overflow-wrap: anywhere")
-                    if sub:
-                        ui.label(sub).classes("text-caption text-grey-6").style("min-width: 0")
-                # badges — híbrido; demais frameworks/Bootstrap usam badge bg-*; PIC usa Quasar
-                if _hb:
-                    bg = {"processado": "bg-success", "pendente": "bg-warning text-dark"}.get(p["status"], "bg-secondary")
-                    ui.html(f'<span class="badge empenho-badge-hibrido {bg} rounded-pill">{p["status"]}</span>').classes("shrink-0")
-                    if presente is not None:
-                        if presente:
-                            ui.html('<span class="badge empenho-badge-hibrido bg-success rounded-pill">na pasta</span>').classes("shrink-0")
-                        else:
-                            ui.html('<span class="badge empenho-badge-hibrido bg-secondary rounded-pill">fora da pasta</span>').classes("shrink-0")
-                elif _bs or _modelo_atual() in _visual.FRAMEWORKS:
-                    bg = {"processado": "bg-success", "pendente": "bg-warning text-dark"}.get(p["status"], "bg-secondary")
-                    ui.html(f'<span class="badge {bg} rounded-pill">{p["status"]}</span>').classes("shrink-0")
-                    if presente is not None:
-                        if presente:
-                            ui.html('<span class="badge bg-success rounded-pill">na pasta</span>').classes("shrink-0")
-                        else:
-                            ui.html('<span class="badge bg-secondary rounded-pill">fora da pasta</span>').classes("shrink-0")
-                else:
-                    cor = _visual.cor_badge_pic(p["status"])
-                    ui.badge(p["status"], color=cor).classes("empenho-badge-soft shrink-0").props('aria-label=status')
-                    if presente is not None:
-                        if presente:
-                            ui.badge("na pasta", color="green").classes("empenho-badge-soft shrink-0")
-                        else:
-                            ui.badge("fora da pasta", color="grey").classes("empenho-badge-soft shrink-0")
-                with ui.row().classes("items-center shrink-0").style("gap: 0.35rem"):
-                    # Três ações sempre disponíveis em qualquer pasta com PDF:
-                    # baixar (respeita permissão no handler), editar e solicitar.
-                    botao_icone("download", on_click=lambda c=p["caminho"]: _baixar(c),
-                                 chave_modulo="empenhos").tooltip("Baixar")
+        # linha Excel: borda inferior, hover, padding — como tabela Pesquisar (flat bordered dense)
+        with ui.row().classes("w-full items-center bg-white hover:bg-grey-2 border-b border-grey-3 px-2 py-1").style("gap: 0.5rem; min-width: 0"):
+            ui.checkbox("", value=p["caminho"] in selecionados,
+                        on_change=lambda e, cam=p["caminho"], nom=p["nome"]:
+                        _alternar_selecao(e.value, cam, nom)) \
+                .props("dense").props("data-testid=empenhos-selecionar") \
+                .tooltip("Selecionar para o lote")
+            ui.icon("picture_as_pdf").classes("text-primary shrink-0").props('aria-hidden="true"')
+            with ui.column().classes("flex-1").style("min-width: 0"):
+                ui.label(p["nome"]).classes("font-medium text-wrap").style("min-width: 0; overflow-wrap: anywhere; font-size: 0.9rem")
+                if sub:
+                    ui.label(sub).classes("text-caption text-grey-6").style("min-width: 0")
+            # colunas Excel — empenho / parcela / data (largura fixa, como Pesquisar)
+            ui.label(str(empenho)).classes("text-caption shrink-0").style("min-width: 5ch; text-align: center").tooltip("Empenho")
+            ui.label(str(parcela)).classes("text-caption shrink-0").style("min-width: 4ch; text-align: center").tooltip("Parcela")
+            ui.label(str(data)).classes("text-caption text-grey-7 shrink-0").style("min-width: 10ch; text-align: center").tooltip("Data")
+            # badges
+            if _hb:
+                bg = {"processado": "bg-success", "pendente": "bg-warning text-dark"}.get(p["status"], "bg-secondary")
+                ui.html(f'<span class="badge empenho-badge-hibrido {bg} rounded-pill">{p["status"]}</span>').classes("shrink-0")
+                if presente is not None:
+                    if presente:
+                        ui.html('<span class="badge empenho-badge-hibrido bg-success rounded-pill">na pasta</span>').classes("shrink-0")
+                    else:
+                        ui.html('<span class="badge empenho-badge-hibrido bg-secondary rounded-pill">fora da pasta</span>').classes("shrink-0")
+            elif _bs or _modelo_atual() in _visual.FRAMEWORKS:
+                bg = {"processado": "bg-success", "pendente": "bg-warning text-dark"}.get(p["status"], "bg-secondary")
+                ui.html(f'<span class="badge {bg} rounded-pill">{p["status"]}</span>').classes("shrink-0")
+                if presente is not None:
+                    if presente:
+                        ui.html('<span class="badge bg-success rounded-pill">na pasta</span>').classes("shrink-0")
+                    else:
+                        ui.html('<span class="badge bg-secondary rounded-pill">fora da pasta</span>').classes("shrink-0")
+            else:
+                cor = _visual.cor_badge_pic(p["status"])
+                ui.badge(p["status"], color=cor).classes("empenho-badge-soft shrink-0").props('aria-label=status')
+                if presente is not None:
+                    if presente:
+                        ui.badge("na pasta", color="green").classes("empenho-badge-soft shrink-0")
+                    else:
+                        ui.badge("fora da pasta", color="grey").classes("empenho-badge-soft shrink-0")
+            with ui.row().classes("items-center shrink-0").style("gap: 0.25rem"):
+                botao_icone("download", on_click=lambda c=p["caminho"]: _baixar(c),
+                             chave_modulo="empenhos").tooltip("Baixar")
+                if eh_admin:
                     botao_icone("edit", on_click=lambda c=p["caminho"]: _revisar_renomear(c),
-                             chave_modulo="empenhos").tooltip("Revisar / renomear (editar campos)")
-                    botao_icone("mail", on_click=lambda c=p["caminho"]: _solicitar(c),
-                             chave_modulo="empenhos").tooltip("Solicitar envio")
+                             chave_modulo="empenhos").tooltip("Editar campos (lápis — livre)") \
+                        .props("data-testid=empenhos-navegar-editar")
+                    botao_icone("auto_fix_high", on_click=lambda c=p["caminho"]: _processar_auto(c),
+                             chave_modulo="empenhos").tooltip("Processar (auto)") \
+                        .props("data-testid=empenhos-navegar-processar")
+                botao_icone("mail", on_click=lambda c=p["caminho"]: _solicitar(c),
+                         chave_modulo="empenhos").tooltip("Solicitar envio")
 
     def _buscar_dados(termo, raiz):
         """Coleta resultados na árvore da pasta atual (nome + presença).
@@ -527,7 +598,8 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                 vistos.add(real.lower())
                 achados.append({"nome": os.path.basename(final or "") or os.path.basename(real),
                                 "caminho": real, "status": status_arquivo(real),
-                                "sub": _sub(real), "presente": 1})
+                                "sub": _sub(real), "presente": 1,
+                                "numero_empenho": num, "parcela": parc, "data": (dt or "")[:10]})
             except Exception:
                 continue
         # levantamento (pendentes/detectados com nome, campos e conteúdo)
@@ -546,7 +618,8 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                 achados.append({"nome": os.path.basename(nome or "") or os.path.basename(real),
                                 "caminho": real, "status": status or status_arquivo(real),
                                 "sub": _sub(real),
-                                "presente": 1 if (presente and em_disco) else 0})
+                                "presente": 1 if (presente and em_disco) else 0,
+                                "numero_empenho": numero, "parcela": "", "data": ""})
             except Exception:
                 continue
         return achados
@@ -573,53 +646,94 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
             achados = []
         if minha_vez != filtro_nome.get("seq"):
             return  # tecla mais nova já disparou outra busca
+        # filtro "só pendentes" também na busca
+        _total_achados = len(achados)
+        if filtro_pendente.get("ativo"):
+            achados = [p for p in achados if (p.get("status") or "") == "pendente"]
         wrap.clear()
         with wrap:
-            ui.label(f"Pesquisa '{termo.strip()}': {len(achados)} resultado(s) "
-                     f"nesta pasta e subpastas (nome + presença).") \
-                .classes("text-caption text-grey-7") \
-                .props("data-testid=empenhos-navegar-contagem")
+            if filtro_pendente.get("ativo") and _total_achados:
+                ui.label(f"Pesquisa '{termo.strip()}': {len(achados)} pendente(s) de {_total_achados} resultado(s) "
+                         f"nesta pasta e subpastas (só a renomear).") \
+                    .classes("text-caption text-orange-7") \
+                    .props("data-testid=empenhos-navegar-contagem")
+            else:
+                ui.label(f"Pesquisa '{termo.strip()}': {len(achados)} resultado(s) "
+                         f"nesta pasta e subpastas (nome + presença).") \
+                    .classes("text-caption text-grey-7") \
+                    .props("data-testid=empenhos-navegar-contagem")
             if not achados:
                 ui.label("Nada encontrado.").classes("text-caption text-grey-5")
-            for p in achados:
-                _card_pdf(p, sub=p.get("sub"), presente=p.get("presente", 1))
+            else:
+                with ui.row().classes("w-full bg-grey-3 border border-grey-3 rounded-t px-2 py-1 font-bold text-caption").style("gap: 0.5rem"):
+                    ui.label("").style("min-width: 2ch")
+                    ui.icon("picture_as_pdf").classes("text-grey-7 shrink-0").props('aria-hidden="true"')
+                    ui.label("Arquivo").classes("flex-1").style("min-width: 0")
+                    ui.label("Empenho").style("min-width: 5ch; text-align: center")
+                    ui.label("Parcela").style("min-width: 4ch; text-align: center")
+                    ui.label("Data").style("min-width: 10ch; text-align: center")
+                    ui.label("Status").style("min-width: 8ch; text-align: center")
+                    ui.label("Pasta").style("min-width: 7ch; text-align: center")
+                    ui.label("Ações").style("min-width: 8ch; text-align: center")
+                with ui.column().classes("w-full border border-t-0 border-grey-3 rounded-b overflow-hidden").style("gap: 0"):
+                    for p in achados:
+                        _card_pdf(p, sub=p.get("sub"), presente=p.get("presente", 1))
 
     def _carregar():
         wrap.clear()
         pasta = pasta_atual.get("caminho")
         nav = listar_navegacao(pasta)
         pasta_atual["caminho"] = nav["atual"]
-        pasta_atual["pdfs"] = nav.get("pdfs") or []
+        # filtro "só pendentes" — aplica antes de exibir e de alimentar Marcar visíveis/lote
+        _todos = nav.get("pdfs") or []
+        if filtro_pendente.get("ativo"):
+            _exibir = [p for p in _todos if (p.get("status") or "") == "pendente"]
+        else:
+            _exibir = _todos
+        pasta_atual["pdfs"] = _exibir
+        pasta_atual["pdfs_total"] = _todos
         with wrap:
-            # breadcrumb (trilha) — PIC suave com fundo leve; Bootstrap com breadcrumb bg-light
+            # Navegação contida num único card — [seta RAIZ(pastas monitoradas), pastas(...)]
             _bs_bc = _eh_bs()
             raiz = raizes_navegacao()[0] if raizes_navegacao() else pasta_monitorada()
-            bc_cls = "w-full items-center flex-wrap empenho-breadcrumb-pic" if not _bs_bc else "w-full items-center flex-wrap bg-light rounded-3 px-3 py-2 border"
-            with ui.row().classes(bc_cls).style("gap: 0.35rem"):
-                botao_icone("arrow_upward", on_click=_subir,
-                                chave_modulo="empenhos").tooltip("Pasta anterior")
-                if nav["atual"] != raiz:
-                    botao("Raiz", on_click=lambda: _ir(raiz), variante="texto",
-                          compacto=True, chave_modulo="empenhos")
-                    rel = os.path.relpath(nav["atual"], raiz)
-                    ui.label("/ " + rel).classes("text-caption text-grey-7").style("min-width: 0; overflow-wrap: anywhere")
+            with ui.card().classes("w-full bg-white border rounded-lg shadow-sm p-3 mt-2"):
+                with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem"):
+                    botao_icone("arrow_upward", on_click=_subir, chave_modulo="empenhos").tooltip("Pasta anterior")
+                    if nav["atual"] != raiz:
+                        botao("•", on_click=lambda: _ir(raiz), variante="texto", compacto=True, chave_modulo="empenhos").tooltip("Pasta raiz (pastas monitoradas)").props('data-testid=empenhos-raiz-dot')
+                        rel = os.path.relpath(nav["atual"], raiz)
+                        ui.label("/ " + rel).classes("text-caption text-grey-7").style("min-width: 0; overflow-wrap: anywhere")
+                    else:
+                        ui.label("•").classes("text-caption font-bold text-grey-7").props('data-testid=empenhos-raiz-dot').tooltip("Pasta raiz (pastas monitoradas)")
+                    if nav["dirs"]:
+                        ui.separator().props("vertical").classes("mx-1")
+                        for d in nav["dirs"]:
+                            botao(d["nome"], icone="folder", on_click=lambda cam=d["caminho"]: _ir(cam),
+                                   variante="texto", compacto=True, chave_modulo="empenhos", extra_classes="text-left").props(f'data-testid=empenhos-pasta-{d["nome"]}')
+            # pdfs da pasta atual — visual Excel do Pesquisar (linhas com borda, hover)
+            if not _exibir:
+                if _todos and filtro_pendente.get("ativo"):
+                    ui.label(f"Nenhum pendente nesta pasta — {len(_todos)} já processado(s). Desative o filtro para ver todos.").classes("text-caption text-grey-5")
                 else:
-                    ui.label("Raiz (pastas monitoradas)").classes("text-caption text-grey-7")
-            # subpastas
-            if nav["dirs"]:
-                ui.label("Pastas").classes("text-subtitle2 font-bold text-grey-7 mt-2")
-                with ui.row().classes("w-full flex-wrap").style("gap: 0.5rem"):
-                    for d in nav["dirs"]:
-                        botao(d["nome"], icone="folder",
-                              on_click=lambda cam=d["caminho"]: _ir(cam),
-                              variante="texto", compacto=True,
-                              chave_modulo="empenhos", extra_classes="text-left")
-            # pdfs da pasta atual (a pesquisa usa FTS5 + levantamento)
-            ui.label("Documentos (PDF)").classes("text-subtitle2 font-bold text-grey-7 mt-3")
-            if not nav["pdfs"]:
-                ui.label("Nenhum PDF nesta pasta.").classes("text-caption text-grey-5")
-            for p in nav["pdfs"]:
-                _card_pdf(p)
+                    ui.label("Nenhum PDF nesta pasta.").classes("text-caption text-grey-5")
+            else:
+                if filtro_pendente.get("ativo") and _todos:
+                    ui.label(f"Filtro ativo — mostrando {len(_exibir)} pendente(s) de {len(_todos)} nesta pasta.").classes("text-caption text-orange-7") \
+                        .props("data-testid=empenhos-filtro-info")
+                # cabeçalho Excel
+                with ui.row().classes("w-full bg-grey-3 border border-grey-3 rounded-t px-2 py-1 font-bold text-caption").style("gap: 0.5rem"):
+                    ui.label("").style("min-width: 2ch")
+                    ui.icon("picture_as_pdf").classes("text-grey-7 shrink-0").props('aria-hidden="true"')
+                    ui.label("Arquivo").classes("flex-1").style("min-width: 0")
+                    ui.label("Empenho").style("min-width: 5ch; text-align: center")
+                    ui.label("Parcela").style("min-width: 4ch; text-align: center")
+                    ui.label("Data").style("min-width: 10ch; text-align: center")
+                    ui.label("Status").style("min-width: 8ch; text-align: center")
+                    ui.label("Pasta").style("min-width: 7ch; text-align: center")
+                    ui.label("Ações").style("min-width: 8ch; text-align: center")
+                with ui.column().classes("w-full border border-t-0 border-grey-3 rounded-b overflow-hidden").style("gap: 0"):
+                    for p in _exibir:
+                        _card_pdf(p)
 
     def _ir(cam):
         pasta_atual["caminho"] = cam
@@ -645,65 +759,83 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                 return True
         return False
 
-    with ui.row().classes("w-full flex-wrap items-center").style("gap: 0.5rem"):
-        botao("Processar pasta agora", icone="play_arrow",
-                  on_click=lambda: _processar(), variante="solido",
-                  chave_modulo="empenhos") \
-            .props('data-testid=empenhos-processar')
-        botao("Atualizar", icone="refresh", on_click=_carregar,
-              variante="contorno", chave_modulo="empenhos")
-    # Pesquisa — híbrido; demais frameworks/Bootstrap com input-group; PIC suave
+    def _alternar_filtro():
+        filtro_pendente["ativo"] = not filtro_pendente["ativo"]
+        ui.notify("Mostrando apenas pendentes" if filtro_pendente["ativo"] else "Mostrando todos", type="info")
+        # reaplica filtro na listagem atual (sem perder pesquisa)
+        if filtro_nome.get("texto", "").strip():
+            # se há pesquisa ativa, refaz a busca com o filtro
+            try:
+                ui.timer(0.1, lambda: _filtrar(type("e", (), {"args": filtro_nome["texto"]})()), once=True)
+            except Exception:
+                _carregar()
+        else:
+            _carregar()
+
+    # Barra combinada — [{campo de pesquisa}, x selecionados, marcar ... limpar, baixar, solicitar] — processar/atualizar dentro do card do pesquisar
+    # (processar=run, atualizar=refresh já dentro da barra acima)
     _hb_pesq = _eh_hibrido()
     _bs_pesq = _eh_bs()
     _mod_pesq = _modelo_atual()
     _fw_pesq = _mod_pesq in _visual.FRAMEWORKS
-    with ui.row().classes("w-full flex-wrap items-center mt-2 empenho-hibrido" if _hb_pesq else "w-full flex-wrap items-center mt-2").style("gap: 0.5rem"):
+    with ui.row().classes("w-full items-center flex-wrap bg-white border rounded-lg shadow-sm px-3 py-2 mt-2").style("gap: 0.5rem"):
+        # campo de pesquisa dentro da barra — 25ch visíveis, expande até 70ch conforme espaço
         if _hb_pesq:
-            with ui.element("div").classes("input-group w-full sm:w-80 empenho-hibrido"):
+            with ui.element("div").classes("input-group flex-1 empenho-hibrido").style("min-width: 25ch; max-width: 70ch; flex: 1 1 25ch"):
                 ui.html('<span class="input-group-text"><i class="q-icon notranslate material-icons" aria-hidden="true">search</i></span>')
-                inp_pesquisa = ui.input("Pesquisar (conteúdo + todos os campos)",
-                                        placeholder="ex.: nome, nº empenho, pagador, CPF, 345") \
+                inp_pesquisa = ui.input(placeholder="Pesquisar (conteúdo + todos os campos)",
+                                        label="Pesquisar") \
                     .props("outlined dense clearable debounce=300").classes("w-full empenho-hibrido") \
                     .props("data-testid=empenhos-navegar-pesquisa") \
                     .tooltip("Busca FTS5 no banco do módulo + levantamento: pasta atual e subpastas")
         elif _bs_pesq or _fw_pesq:
-            with ui.element("div").classes("input-group w-full sm:w-80"):
+            with ui.element("div").classes("input-group flex-1").style("min-width: 25ch; max-width: 70ch; flex: 1 1 25ch"):
                 ui.html('<span class="input-group-text bg-white"><i class="q-icon notranslate material-icons" aria-hidden="true">search</i></span>')
-                inp_pesquisa = ui.input("Pesquisar (conteúdo + todos os campos)",
-                                        placeholder="ex.: nome, nº empenho, pagador, CPF, 345") \
+                inp_pesquisa = ui.input(placeholder="Pesquisar (conteúdo + todos os campos)",
+                                        label="Pesquisar") \
                     .props("outlined dense").classes("w-full").props("data-testid=empenhos-navegar-pesquisa") \
                     .tooltip("Busca FTS5 no banco do módulo + levantamento: pasta atual e subpastas")
         else:
-            inp_pesquisa = ui.input("Pesquisar (conteúdo + todos os campos)",
-                                placeholder="ex.: nome, nº empenho, pagador, CPF, 345") \
-                .props("outlined dense clearable debounce=300").classes("w-72 empenho-input-soft") \
+            inp_pesquisa = ui.input(placeholder="Pesquisar (conteúdo + todos os campos)",
+                                    label="Pesquisar") \
+                .props("outlined dense clearable debounce=300").classes("flex-1 empenho-input-soft").style("min-width: 25ch; max-width: 70ch; flex: 1 1 25ch") \
                 .props("data-testid=empenhos-navegar-pesquisa") \
                 .tooltip("Busca FTS5 no banco do módulo + levantamento: pasta atual e subpastas")
         inp_pesquisa.on("update:model-value", _filtrar)
-    # Lote — PIC suave vs Bootstrap card+alert
-    _bs_lote = _eh_bs()
-    _lote_cls = _visual.classes_card_lote(_bs_lote)
-    if _bs_lote:
-        with ui.element("div").classes(_lote_cls):
-            ui.html('<div class="alert alert-light border d-flex align-items-center gap-2 mb-2 py-2"><i class="q-icon notranslate material-icons" aria-hidden="true">checklist</i><span class="small text-muted">Marque o checkbox dos arquivos para solicitar e/ou baixar em conjunto.</span></div>')
-            with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem"):
-                lbl_lote = ui.label("0 selecionado(s)").classes("font-bold flex-1").props("data-testid=empenhos-lote-contador")
-                botao("Marcar visíveis", icone="checklist", on_click=_marcar_visiveis, variante="texto", chave_modulo="empenhos")
-                botao("Solicitar lote", icone="mail", on_click=_solicitar_lote, variante="solido", chave_modulo="empenhos").props("data-testid=empenhos-lote-solicitar")
-                botao("Baixar lote", icone="download", on_click=_baixar_lote, variante="contorno", chave_modulo="empenhos").props("data-testid=empenhos-lote-baixar")
-                botao("Limpar", on_click=_limpar_selecao, variante="texto", chave_modulo="empenhos")
-    else:
-        with ui.card().classes(_lote_cls):
-            ui.label("Lote — marque o checkbox dos arquivos para solicitar e/ou baixar em conjunto.").classes("text-caption text-grey-6")
-            with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem"):
-                lbl_lote = ui.label("0 selecionado(s)").classes("font-bold flex-1").props("data-testid=empenhos-lote-contador")
-                botao("Marcar visíveis", icone="checklist", on_click=_marcar_visiveis, variante="texto", chave_modulo="empenhos")
-                botao("Solicitar lote", icone="mail", on_click=_solicitar_lote, variante="solido", chave_modulo="empenhos").props("data-testid=empenhos-lote-solicitar")
-                botao("Baixar lote", icone="download", on_click=_baixar_lote, variante="contorno", chave_modulo="empenhos").props("data-testid=empenhos-lote-baixar")
-                botao("Limpar", on_click=_limpar_selecao, variante="texto", chave_modulo="empenhos")
+
+        async def _toggle_pendentes(e):
+            filtro_pendente["ativo"] = bool(e.value)
+            termo = (filtro_nome.get("texto") or "").strip()
+            if termo:
+                # re-executa a pesquisa com o novo filtro (pendente)
+                class _Ev:
+                    args = termo
+                await _filtrar(_Ev())
+            else:
+                _carregar()
+
+        sw_pendentes = ui.switch("Só pendentes", value=False).props("dense").classes("shrink-0 ml-1") \
+            .props("data-testid=empenhos-filtro-pendentes") \
+            .tooltip("Mostrar somente o que precisa ser renomeado (pendente) nesta pasta — oculta processados") \
+            .on("update:model-value", _toggle_pendentes)
+        botao_icone("filter_alt", on_click=lambda: sw_pendentes.set_value(not sw_pendentes.value), chave_modulo="empenhos").tooltip("Filtro: todos / apenas pendentes").props("data-testid=empenhos-filtro-icone").classes("ml-1")
+        if eh_admin:
+            botao_icone("directions_run", on_click=lambda: _processar(), chave_modulo="empenhos").tooltip("Processar pasta agora").props("data-testid=empenhos-processar")
+        botao_icone("refresh", on_click=lambda: _carregar(), chave_modulo="empenhos").tooltip("Atualizar").props("data-testid=empenhos-atualizar")
+        ui.separator().props("vertical").classes("mx-1")
+        lbl_lote = ui.label("0 selecionados").classes("font-bold text-caption shrink-0").props("data-testid=empenhos-lote-contador")
+        botao_icone("checklist", on_click=_marcar_visiveis, chave_modulo="empenhos").tooltip("Marcar visíveis").props("data-testid=empenhos-lote-marcar")
+        with ui.element("div").classes("flex-1"):
+            pass
+        botao_icone("cleaning_services", on_click=_limpar_selecao, chave_modulo="empenhos").tooltip("Limpar seleção").props("data-testid=empenhos-lote-limpar")
+        botao_icone("download", on_click=_baixar_lote, chave_modulo="empenhos").tooltip("Baixar lote").props("data-testid=empenhos-lote-baixar")
+        botao_icone("mail", on_click=_solicitar_lote, chave_modulo="empenhos").tooltip("Solicitar lote por e-mail").props("data-testid=empenhos-lote-solicitar")
     wrap = ui.column().classes("w-full")
 
     def _processar():
+        if not eh_admin:
+            ui.notify("Ação restrita ao administrador do módulo.", type="warning")
+            return
         try:
             res = rodar_monitor(usuario_logado)
             ok = sum(1 for r in res if r.get("ok"))
@@ -740,26 +872,119 @@ def _tela_fila(usuario_logado, eh_admin, _btn_cls, _btn_style):
                 with ui.element("div").classes("alert alert-light border rounded-3 text-center py-4 w-full" if _bs else "w-full text-center py-4 bg-grey-1 rounded-xl"):
                     ui.icon("inbox").classes("text-grey-5")
                     ui.label("Nenhum documento aguardando renomeação.").classes("text-caption text-grey-5")
-            for p in pendentes:
-                card_cls = _visual.classes_card_pdf(_bs)
-                with ui.card().classes(card_cls):
-                    with ui.row().classes("w-full items-center").style("gap: 0.6rem"):
-                        ui.icon("description").classes("text-orange-7")
-                        ui.label(p["nome"]).classes("flex-1 text-wrap font-medium").style("min-width: 0; overflow-wrap: anywhere")
-                        if _bs:
-                            ui.html('<span class="badge bg-warning text-dark rounded-pill">pendente</span>')
-                        else:
-                            ui.badge("pendente", color="orange").classes("empenho-badge-soft")
+            # Visual Excel igual ao Navegar — mesma linha com bordas, hover e colunas
+            def _detalhes_fila(p):
+                nome = p.get("nome") or ""
+                import re as _re
+                m = _re.match(r"doc_\d+_(\d+)_(\d+)\.pdf$", nome, _re.I)
+                empenho = m.group(1).lstrip("0") or "0" if m else "—"
+                parcela = m.group(2).lstrip("0") or "0" if m else "—"
+                try:
+                    import datetime as _dt
+                    ts = os.path.getmtime(p.get("caminho") or "")
+                    data = _dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+                except Exception:
+                    data = "—"
+                return empenho, parcela, data
 
-                        def _renomear(cam=p["caminho"]):
-                            ok, msg = renomear_manual(usuario_logado, cam)
-                            ui.notify(f"Renomeado → {msg}" if ok else f"Falha: {msg}",
-                                      type="positive" if ok else "negative")
-                            _carregar()
+            def _editar_fila(caminho):
+                # Lápis — permite escrever o que quiser nos campos (mesma tela do Navegar)
+                nome = os.path.basename(caminho)
+                try:
+                    texto = extrair_texto_pdf(caminho) or ""
+                except Exception:
+                    texto = ""
+                try:
+                    tipo_detectado = detectar_tipo_especial(texto)
+                except Exception:
+                    tipo_detectado = None
+                dados_doc, dados_esp = {}, {}
+                try:
+                    dados_doc = extrair_dados_empenho(texto) or {}
+                except Exception:
+                    dados_doc = {}
+                if tipo_detectado:
+                    try:
+                        dados_esp = extrair_dados_tipo_especial(texto, tipo_detectado) or {}
+                    except Exception:
+                        dados_esp = {}
+                eh_especial = bool(tipo_detectado)
+                with ui.dialog() as dlg, ui.card().classes("w-[520px]"):
+                    ui.label(f"Editar — {nome}").classes("text-h6")
+                    ui.label("Preencha livremente os campos — a renomeação usa o que for digitado.").classes("text-caption text-grey-6")
+                    sel_tipo = ui.select(
+                        {"": "DOC (empenho de parcela)", "EC": "EC — Complementação",
+                         "EE": "EE — Estimativo", "EG": "EG — Global", "AE": "AE — Anulação"},
+                        label="Tipo de documento", value=tipo_detectado or "").props("outlined dense").classes("w-full")
+                    inp_ficha = ui.input("Ficha", value=str(dados_doc.get("ficha") or "")).props("outlined dense").classes("w-full")
+                    inp_empenho = ui.input("Nº empenho / Nº documento especial",
+                        value=str(dados_esp.get("numero") if eh_especial and dados_esp.get("numero") else (dados_doc.get("empenho") or ""))).props("outlined dense").classes("w-full")
+                    inp_parcela = ui.input("Parcela (só DOC)", value=str(dados_doc.get("parcela") or "")).props("outlined dense").classes("w-full")
+                    inp_ano = ui.input("Ano", value=str(dados_esp.get("ano") if eh_especial and dados_esp.get("ano") else (dados_doc.get("ano") or ""))).props("outlined dense").classes("w-full")
+                    res = ui.column().classes("w-full mt-1")
+                    def _confirmar():
+                        try:
+                            tipo = (sel_tipo.value or "").strip() or None
+                            ficha = (inp_ficha.value or "").strip() or None
+                            ano = (inp_ano.value or "").strip() or None
+                            num_txt = (inp_empenho.value or "").strip()
+                            parc_txt = (inp_parcela.value or "").strip()
+                            if tipo:
+                                if not num_txt:
+                                    raise ValueError("Informe o nº do documento especial")
+                                ok, msg = renomear_manual(usuario_logado, caminho, novo_numero=num_txt, tipo_especial=tipo)
+                            else:
+                                if not num_txt:
+                                    raise ValueError("Informe o nº do empenho")
+                                ok, msg = renomear_manual(usuario_logado, caminho, novo_numero=num_txt, novo_parcela=parc_txt or None, nova_ficha=ficha, novo_ano=ano)
+                            if ok:
+                                ui.notify(f"Renomeado → {msg}", type="positive")
+                                dlg.close()
+                                _carregar()
+                            else:
+                                with res:
+                                    ui.label(f"Não foi possível renomear: {msg}").classes("text-negative")
+                        except ValueError as ve:
+                            with res:
+                                ui.label(str(ve)).classes("text-negative")
+                        except Exception as e:
+                            with res:
+                                ui.label(f"Erro: {e}").classes("text-negative")
+                    with ui.row().classes("w-full justify-end gap-2 mt-2"):
+                        botao("Cancelar", on_click=dlg.close, variante="texto", chave_modulo="empenhos")
+                        botao("Renomear", icone="auto_fix_high", on_click=_confirmar, variante="solido", chave_modulo="empenhos")
+                dlg.open()
 
-                        botao("Processar", icone="auto_fix_high", on_click=_renomear,
-                            variante="solido", compacto=True,
-                            chave_modulo="empenhos")
+            if pendentes:
+                # cabeçalho Excel — mesmo do Navegar
+                with ui.row().classes("w-full bg-grey-3 border border-grey-3 rounded-t px-2 py-1 font-bold text-caption").style("gap: 0.5rem"):
+                    ui.icon("description").classes("text-grey-7 shrink-0").props('aria-hidden="true"')
+                    ui.label("Arquivo").classes("flex-1").style("min-width: 0")
+                    ui.label("Empenho").style("min-width: 5ch; text-align: center")
+                    ui.label("Parcela").style("min-width: 4ch; text-align: center")
+                    ui.label("Data").style("min-width: 10ch; text-align: center")
+                    ui.label("Status").style("min-width: 8ch; text-align: center")
+                    ui.label("Ações").style("min-width: 12ch; text-align: center")
+                with ui.column().classes("w-full border border-t-0 border-grey-3 rounded-b overflow-hidden").style("gap: 0"):
+                    for p in pendentes:
+                        empenho, parcela, data = _detalhes_fila(p)
+                        with ui.row().classes("w-full items-center bg-white hover:bg-grey-2 border-b border-grey-3 px-2 py-1").style("gap: 0.5rem; min-width: 0"):
+                            ui.icon("description").classes("text-orange-7 shrink-0")
+                            ui.label(p["nome"]).classes("flex-1 text-wrap font-medium").style("min-width: 0; overflow-wrap: anywhere; font-size: 0.9rem")
+                            ui.label(str(empenho)).classes("text-caption shrink-0").style("min-width: 5ch; text-align: center")
+                            ui.label(str(parcela)).classes("text-caption shrink-0").style("min-width: 4ch; text-align: center")
+                            ui.label(str(data)).classes("text-caption text-grey-7 shrink-0").style("min-width: 10ch; text-align: center")
+                            if _bs:
+                                ui.html('<span class="badge bg-warning text-dark rounded-pill">pendente</span>').classes("shrink-0")
+                            else:
+                                ui.badge("pendente", color="orange").classes("empenho-badge-soft shrink-0")
+                            with ui.row().classes("items-center shrink-0").style("gap: 0.25rem"):
+                                botao_icone("edit", on_click=lambda c=p["caminho"]: _editar_fila(c), chave_modulo="empenhos").tooltip("Editar campos (lápis — livre)").props("data-testid=empenhos-fila-editar")
+                                def _renomear(cam=p["caminho"]):
+                                    ok, msg = renomear_manual(usuario_logado, cam)
+                                    ui.notify(f"Renomeado → {msg}" if ok else f"Falha: {msg}", type="positive" if ok else "negative")
+                                    _carregar()
+                                botao_icone("auto_fix_high", on_click=_renomear, chave_modulo="empenhos").tooltip("Processar (auto)").props("data-testid=empenhos-fila-processar")
 
     with ui.row().classes("w-full flex-wrap").style("gap: 0.5rem"):
         botao("Processar todos", icone="play_arrow",

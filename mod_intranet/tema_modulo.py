@@ -63,7 +63,7 @@ PADROES_TEMA = {
                  "cor_titulo": "#212121", "btn_tamanho": "medium"},
     "auditoria": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
                   "cor_titulo": "#212121", "btn_tamanho": "medium"},
-    "editar_pdf": {"cor_botao": "#522e2e", "cor_texto_botao": "#FFFFFF",
+    "editar_pdf": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
                    "cor_titulo": "#212121", "btn_tamanho": "medium"},
     "empenhos": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
                  "cor_titulo": "#212121", "btn_tamanho": "medium"},

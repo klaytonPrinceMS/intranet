@@ -21,7 +21,7 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` (`bd_cone
 | Tabela | Conteúdo | Criada em |
 |:---|:---|:---|
 | `tb_auditoria_*` | auditoria LGPD em **banco separado** `db_mod_auditoria.db` — uma tabela por módulo (`tb_auditoria_<modulo>`: id, usuario, modulo, acao, descricao, timestamp, hash_arquivo + `ip`/`user_agent`) | `mod_auditoria/db_manipulador.py` |
-| `tb_config` | chave PK / valor — seeds: `versao_sistema=1.0.260908`, `cotadisco_global_gb=10`, `backup_interval_hours=12` (legada) e padrões de aparência | `bd_conexao.py:49-74` |
+| `tb_config` | chave PK / valor — seeds: `versao_sistema=1.0.260913`, `versao_modulo:intranet=1.0.260913`, `cotadisco_global_gb=10`, `backup_interval_hours=12` (legada) e padrões de aparência | `bd_conexao.py:49-74` |
 | `tb_sessoes` | id, usuario, modulo, login/logout_timestamp, cookie_hash + `ip`, `user_agent`, `dispositivo`, `mac` | `bd_conexao.py:55-63` |
 | `tb_modulos` | id, chave UNIQUE, nome, icone, rota, ativo, nativo, **ordem** — semeada com os 5 módulos nativos; `ordem` controla a exibição (migração idempotente em bancos antigos) | `autenticacao.py:29-84` |
 
@@ -71,7 +71,7 @@ Não há mais um botão único "APLICAR" geral: cada card é recolhível (`card_
 
 ## Versionamento no rodapé — `layout_tela._montar_layout`
 
-O rodapé mostra as versões **da esquerda para a direita**: 1ª a versão global do sistema (`v{versao_sistema}`), e quando o usuário está dentro de um módulo (`chave_modulo`), 2ª a versão **individual do módulo atual** (`v{versao_modulo:<chave>}`). Sem módulo específico (Dashboard/Configurações) aparece só a global. A versão individual é lida de `tb_config` (chave `versao_modulo:<chave>`, mesmo estilo `1.0.AAMMDD`) com fallback `1.0` quando o módulo ainda não versionou. Ex.: `/edit-pdf` mostra `v1.0.260908` (sistema) + `v1.0.260908` (mod_edit_pdf).
+O rodapé mostra as versões **da esquerda para a direita**: 1ª a versão global do sistema (`v{versao_sistema}`), e quando o usuário está dentro de um módulo (`chave_modulo`), 2ª a versão **individual do módulo atual** (`v{versao_modulo:<chave>}`). Sem módulo específico (Dashboard/Configurações) aparece só a global. A versão individual é lida de `tb_config` (chave `versao_modulo:<chave>`, mesmo estilo `1.0.AAMMDD`) com fallback `1.0` quando o módulo ainda não versionou. Ex.: `/edit-pdf` mostra `v1.0.260913` (sistema — bump 13/09/2026) + `v1.0.260913` (mod intranet/empenhos/solicita — ver `bd_conexao.py:130-201`).
 
 **Seed centralizado**: `versao_modulo:<chave>` é semeada para os 5 módulos (`usuarios`, `auditoria`, `editar_pdf`, `empenhos`, `blog`) em `bd_conexao.init_db()` com `INSERT OR IGNORE` — idempotente, não sobrescreve edição manual. Para refletir numa base existente, chame `init_db()` novamente.
 

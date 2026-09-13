@@ -12,7 +12,7 @@
 
 Módulo para solicitação de impressão de PDFs. Usuários **comuns** anexam um PDF por solicitação (upload automático), informam cópias, papel (A4/A3), cor (PB/Color), frente/verso, sulfite, observações e a secretaria/setor de crédito. O sistema conta as páginas, renomeia o arquivo no padrão definido, aplica regras de cota mensal hierárquica e fluxo de autorização quando exigido. Apenas administradores do módulo imprimem; responsáveis cadastrados autorizam.
 
-**Versionamento**: `versao_modulo:solicita_impressao = 1.0.260908`.
+**Versionamento**: `versao_modulo:solicita_impressao = 1.0.260913`.
 
 ## Banco de dados
 

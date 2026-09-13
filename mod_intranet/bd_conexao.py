@@ -130,16 +130,16 @@ def init_db():
     """)
     cur.execute("SELECT COUNT(*) FROM tb_config")
     if (cur.fetchone()[0] or 0) == 0:
-        cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('versao_sistema', '1.0.260908')")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('versao_sistema', '1.0.260913')")
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('cotadisco_global_gb', '10')")
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('backup_interval_hours', '12')")
     for _chave_mod, _ver in (
         ("usuarios", "1.0.260908"),
         ("auditoria", "1.0.260908"),
         ("editar_pdf", "1.0.260908"),
-        ("empenhos", "1.0.260908"),
+        ("empenhos", "1.0.260913"),
         ("blog", "1.0.260908"),
-        ("solicita_impressao", "1.0.260908"),
+        ("solicita_impressao", "1.0.260913"),
     ):
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES (?, ?) "
                     "ON CONFLICT DO NOTHING",
@@ -183,6 +183,22 @@ def init_db():
                     "WHERE chave LIKE 'versao_modulo:%'")
     cur.execute("INSERT INTO tb_config (chave, valor) "
                      "VALUES ('migracao_padronizacao_260908', '1') ON CONFLICT DO NOTHING")
+    # Migração 260913 — solicita_impressao: seeds iniciais + bump de versão (sem reexecutar 260908)
+    cur.execute("UPDATE tb_config SET valor='1.0.260913' "
+                "WHERE chave='versao_modulo:solicita_impressao' AND valor != '1.0.260913'")
+    # Migração 13/09/2026 — bump versão do módulo empenhos (padrão PIC + contagem padronizada + CSS docs)
+    cur.execute("SELECT COUNT(*) FROM tb_config WHERE chave='migracao_versao_empenhos_260913'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("UPDATE tb_config SET valor='1.0.260913' WHERE chave='versao_modulo:empenhos'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('migracao_versao_empenhos_260913', '1') ON CONFLICT DO NOTHING")
+    # Migração 13/09/2026 — bump versão intranet/sistema (contagem padronizada + PIC + CSS docs)
+    cur.execute("SELECT COUNT(*) FROM tb_config WHERE chave='migracao_versao_intranet_260913'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("UPDATE tb_config SET valor='1.0.260913' WHERE chave='versao_sistema'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('versao_sistema', '1.0.260913') ON CONFLICT DO NOTHING")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('versao_modulo:intranet', '1.0.260913') ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260913' WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('migracao_versao_intranet_260913', '1') ON CONFLICT DO NOTHING")
     # Seed do contador de acessos (se ainda não existir) + data inicial da contagem
     try:
         cur.execute("SELECT valor FROM tb_config WHERE chave='contador_acessos_inicio'")

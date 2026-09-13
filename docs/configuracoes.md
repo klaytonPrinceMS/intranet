@@ -102,7 +102,7 @@ As principais chaves, agrupadas por dono:
 
 | Grupo | Chave | Default | Descrição |
 |:---|:---|:---|:---|
-| Sistema | `versao_sistema` | `1.0.260908` | versão global exibida no rodapé |
+| Sistema | `versao_sistema` | `1.0.260913` | versão global exibida no rodapé |
 | Sistema | `cotadisco_global_gb` | `10` | cota global do editor PDF (GB) |
 | Sistema (legada) | `backup_interval_hours` | `12` | semente legada; os jobs usam `backup_horas:<modulo>` |
 | Sistema | `sessao_retencao` | `50` | histórico de sessões retido por usuário |
