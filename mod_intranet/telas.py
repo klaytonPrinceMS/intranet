@@ -286,6 +286,8 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
                             ui.item_label(nome).classes("text-orange-10 font-bold truncate max-w-full").style("min-width: 0")
                             ui.item_label("Módulo indisponível").classes("text-caption text-orange-9 truncate max-w-full").style("min-width: 0")
 
+            # Padrão PIC definido — exemplos de CSS removidos do menu (mantidos em disco/docs para comparação direta via URL se necessário).
+
             # ===== SISTEMA: menu de Administração — exclusivo do administrador geral =====
             if autenticacao.perfil_global_de(nome_usuario) == "administrador_geral":
                 ui.separator().classes("w-full")

@@ -19,6 +19,12 @@ O sistema possui exatamente **três perfis globais** (campo `user_perfil` em `tb
 - `administrador_geral`: vê todos os módulos, incluindo `/configuracoes`, `/users` e `/auditoria`.
 - `administrador_modulo` (administrador do módulo): alteração/restrição limitada aos módulos vinculados.
 
+## Dashboard `/` — Home redesenhada (09/2026, Water escopado só no card)
+
+- **Sem botão Atualizar** — o Resumo é recalculado **a cada acesso** (`_orquestrar_resumo_dados()` `main.py:250`): sem `lbl_fb_resumo/atualizar_resumo`, altura `gap-1 px-2 py-1` ícone 36px (`home_visual.injetar_water_card()` `home_visual.py:176` `.home-resumo-water/.home-stat-water` border `#dfe8f0` bg `#fafcfd`, `page_dashboard` fixa `modelo="water"` `main.py:502`), tooltip único no card (`Usuarios/Sessões/Noticias/Logs/Visitas/Fila geral/Para autorizar/Quarentena/PDFs/Auditoria 24h` + `Logs>9999` alerta backup `db_mod_auditoria.db`).
+- **"Resumo do sistema"** (8 métricas, **só `administrador_geral`/`administrador_modulo`**): Usuários, Sessões, **Visitas** (`contador_acessos_total` — só logins, `bd_conexao.incrementar_contador_acessos()` `main.py:229`, `contador_acessos_inicio` `YYYY-MM-DD` tooltip simplificado `"Visitas"`), Postagens, Quarentena pendente (`tb_quarentena processado=0`), PDFs ativos (`tb_arquivos ativo=1`), Logs, Auditoria 24h (`SUM WHERE timestamp >= -1 day`).
+- **"Resumo do sistema — Impressão"** (2 métricas, **só autorizador** `tb_responsaveis_autorizacao ativo=1` via `_eh_autorizador_impressao()` `main.py:446` **ou `administrador_geral`**): Fila geral e Para autorizar (por secretaria/setor, `main.py:460` `_contar_fila_para_autorizar()`; admin geral = fila geral). Serviço `http://localhost:8080` water OK; comparativo `/home-*` revertido e hambúrguer sem seção comparativa.
+
 ## Configurações (`/configuracoes`, apenas geral)
 
 - Personalização: cor primária, título, ícones, botões do sistema (cor/texto/tamanho), pasta raiz.

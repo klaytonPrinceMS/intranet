@@ -68,6 +68,55 @@ Criador vigente: `init_db_empenho()` em `bd_manipulador.py:289`.
 - **Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 `kbp-web-design`)**: proposta P0/P1/P2 por `container`/`row`/`grid` — `menu_modulo` `overflow-x-auto`, filtros/busca `flex-wrap` `flex-1 min-w`, tabelas `overflow-x-auto`, `scroll_area` altura explícita, grids `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`, dialogs `w-full max-w`; cabeçalho `flex-wrap` `truncate`.
 - **Versionamento**: `versao_modulo:empenhos = 1.0.<data>` (seed em `bd_conexao.init_db()`), exibido no rodapé.
 
+## CSS frameworks — padrão PIC (12/09/2026)
+
+> Standard visual **PIC** defined in `tb_config empenhos_modelo_visual=pic` — 17 CSS remain on disk for direct URL comparison (200), drawer shows only the default Empenhos.
+>
+> Padrão visual **PIC** definido em `tb_config empenhos_modelo_visual=pic` — 17 CSS permanecem em disco para comparação direta via URL (200), drawer exibe apenas Empenhos padrão.
+
+O padrão do módulo é **PIC — Quasar nativo suave (sem framework)** (`mod_renomear_empenho/visual.py:MODELO_PADRAO="pic"`, `CHAVE_CONFIG="empenhos_modelo_visual"`). Antes as 12 telas por CSS (`spectre`, `chota`, `milligram`, `skeleton`, `water`, `mvp`, `tachyons`, `uikit`, `foundation`, `semantic`, `materialize`, `primer`) + os 5 legados (`bootstrap`, `bulma`, `daisyui`, `pico`, `picnic`/`hibrido`) apareciam no drawer `mod_intranet/telas.py` como `Empenhos — PIC + por CSS`. Agora o drawer contém apenas **Empenhos padrão** (`/renomear-empenho`, chave `empenhos`) e o bloco de exemplos foi removido — comentário `Padrão PIC definido — exemplos de CSS removidos do menu (mantidos em disco/docs para comparação direta via URL se necessário).` (`telas.py:289`).
+
+Os **17 frameworks** permanecem em disco em `assets/css/frameworks/` (17 arquivos principais + `daisyui themes` auxiliar) e continuam registrados em `mod_intranet/tema_css.py:FRAMEWORKS_CSS` e servidos em `/css/frameworks/*` por `tema_css.montar_rotas_static()` (`main.py:129`). Cada um tem **tela dedicada** `/renomear-empenho-{nome}` em `main.py:572-637` via `visual.FORCAR_MODELO` + `tema_css.injetar_framework()` por página (sem CDN, sem reset global fora do escopo) — todas respondem `200` quando autenticado, permitindo **comparação direta via URL sem poluir o menu**. Ver `assets/css/frameworks/README.md` para versões, origens, licenças e avaliação de compatibilidade.
+
+| Grupo | Frameworks | Rotas dedicadas | No menu? |
+|:---|:---|:---|:---:|
+| Legados mantidos em disco | `bootstrap`, `bulma`, `daisyui`, `pico`, `picnic` | `/renomear-empenho-bootstrap` (bootstrap) | Não |
+| 12 novos | `spectre`, `chota`, `milligram`, `skeleton`, `water`, `mvp`, `tachyons`, `uikit`, `foundation`, `semantic`, `materialize`, `primer` | `/renomear-empenho-spectre` … `/renomear-empenho-primer` | Não — rota direta (200) |
+| **Padrão** | **PIC** (sem arquivo) | `/renomear-empenho` + `/renomear-empenho-pic` | **Sim** |
+
+`visual.FRAMEWORKS` lista apenas os 12 novos; `visual.VALIDOS=("pic",)+FRAMEWORKS` e `visual.ROTULOS` mapeiam rótulos amigáveis. A troca de modelo continua via `visual.salvar_modelo()` se necessário, mas o `tb_config` permanece `pic`.
+
+## Contagem de acessos — apenas logins (padronizada)
+
+> Access counter now **login-only** (navigations/refresh never count), centralized in `mod_intranet/bd_conexao.incrementar_contador_acessos()` via `tb_config` (`contador_acessos_total` + `contador_acessos_inicio`).
+>
+> Contador de acessos agora **apenas logins** (navegações/refresh nunca contam), centralizado em `mod_intranet/bd_conexao.incrementar_contador_acessos()` via `tb_config` (`contador_acessos_total` + `contador_acessos_inicio`).
+
+**Antes:** contagem inline em `main.py` (incrementava em navegações/refresh). **Agora:** padronizada e centralizada em `mod_intranet/bd_conexao.incrementar_contador_acessos()` (`bd_conexao.py:200`) — conta **apenas logins bem-sucedidos**, nunca navegações, refreshs ou trocas de aba.
+
+| Item | Detalhe |
+|:---|:---|
+| Função central | `mod_intranet/bd_conexao.incrementar_contador_acessos() -> int` — docstring bilíngue EN no topo / PT-BR abaixo |
+| Persistência | `tb_config contador_acessos_total` (total acumulado, default `"0"`) + `contador_acessos_inicio` (data `YYYY-MM-DD` do início da contagem) via `get_config`/`set_config` (delegam a `Repositorio`/SQLAlchemy → `banco_conexao.conexao`) |
+| Seed | `bd_conexao.init_db()` semeia `contador_acessos_total="0"` e `contador_acessos_inicio=hoje` se ausentes (`bd_conexao.py:186-197`) |
+| Chamada única | `main.py:tentar_login` (`page_login`, `main.py:227-231`) após `autenticacao.registrar_login(nome, "sistema")` — bloco `try` com `incrementar_contador_acessos()` fail-soft |
+| Leitura | `main._orquestrar_resumo_dados()` (`main.py:248-321`) apenas lê `get_config("contador_acessos_total")` para o card **Acessos** do Resumo do sistema (exibido no dashboard para `administrador_geral`/`administrador_modulo`) — nunca incrementa |
+| Dashboard | `_orquestrar_resumo_dados` coleta 9 contadores (5 base + fila impressão, quarentena, PDFs, auditoria 24h); `n_acessos` vem do contador padronizado; `_stat` exibe `>9999` com tooltip do total real |
+
+Fluxo:
+
+```python
+# main.py:tentar_login (após validar credenciais)
+sessao = autenticacao.registrar_login(nome, "sistema")
+try:
+    from mod_intranet.bd_conexao import incrementar_contador_acessos
+    incrementar_contador_acessos()  # só logins
+except Exception:
+    pass
+```
+
+Antes o incremento era inline em `main`; agora a função documentada é a **única fonte da verdade** (read elsewhere, write only here).
+
 ## Regras de negócio
 
 - Contador sequencial persistido em banco, único entre pastas; template de nome configurável (`doc_{contador:04d}_{empenho}_{parcela:03d}.pdf` — ex.: `doc_0001_345_001.pdf`).

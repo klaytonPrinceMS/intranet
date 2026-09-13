@@ -66,6 +66,9 @@ PADRAO_CONFIG = {
     "intranet_cor_texto_card": "",
     # Avisos do sistema (toasts): tempo de exibição em segundos (1-30)
     "notificacao_timeout": "10",
+    # Contador de acessos ao sistema (incrementado a cada login bem-sucedido)
+    "contador_acessos_total": "0",
+    "contador_acessos_inicio": "",
 }
 
 
@@ -178,11 +181,62 @@ def init_db():
                     "WHERE chave='versao_sistema'")
         cur.execute("UPDATE tb_config SET valor='1.0.260908' "
                     "WHERE chave LIKE 'versao_modulo:%'")
-        cur.execute("INSERT INTO tb_config (chave, valor) "
-                    "VALUES ('migracao_padronizacao_260908', '1') ON CONFLICT DO NOTHING")
+    cur.execute("INSERT INTO tb_config (chave, valor) "
+                     "VALUES ('migracao_padronizacao_260908', '1') ON CONFLICT DO NOTHING")
+    # Seed do contador de acessos (se ainda não existir) + data inicial da contagem
+    try:
+        cur.execute("SELECT valor FROM tb_config WHERE chave='contador_acessos_inicio'")
+        row = cur.fetchone()
+        if not row or not (row[0] or "").strip():
+            import datetime as _dt
+            hoje = _dt.datetime.now().strftime("%Y-%m-%d")
+            cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('contador_acessos_inicio', ?) ON CONFLICT DO NOTHING", (hoje,))
+            cur.execute("UPDATE tb_config SET valor=? WHERE chave='contador_acessos_inicio' AND (valor IS NULL OR valor='')", (hoje,))
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('contador_acessos_total', '0') ON CONFLICT DO NOTHING")
+    except Exception:
+        pass
     conn.commit()
     conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
     conn.close()
+
+
+def incrementar_contador_acessos() -> int:
+    """Increments the global access counter — login-only, never navigation/refresh.
+
+    EN: Centralized counter for **successful logins only** (not page navigations,
+    refreshes or tab switches). Called exclusively in `main.tentar_login`
+    after `autenticacao.registrar_login` validates credentials. Persists in
+    `tb_config` (`contador_acessos_total` + `contador_acessos_inicio`) via
+    `get_config`/`set_config` (which delegate to `Repositorio`/SQLAlchemy and
+    then to `banco_conexao.conexao`). `main._orquestrar_resumo_dados` only
+    reads (`get_config`). Previously incremented inline in `main`; now this
+    function is the single source of truth. Fail-soft — returns `0` on error.
+    Returns the new total.
+
+    PT-BR: Incrementa o contador global de acessos — **apenas logins**, nunca
+    navegações, refreshes ou trocas de aba. Chamado somente em
+    `main.tentar_login` após `autenticacao.registrar_login` validar as
+    credenciais. Persiste em `tb_config` (`contador_acessos_total` +
+    `contador_acessos_inicio`) via `get_config`/`set_config` (que delegam ao
+    `Repositorio`/SQLAlchemy e então a `banco_conexao.conexao`).
+    `main._orquestrar_resumo_dados` apenas lê (`get_config`). Antes contava
+    inline em `main`; agora esta função é a única fonte da verdade. Fail-soft
+    — retorna `0` em erro. Retorna o novo total.
+    """
+    import datetime as _dt
+    try:
+        total = get_config("contador_acessos_total", "0") or "0"
+        try:
+            novo = int(str(total).strip() or 0) + 1
+        except Exception:
+            novo = 1
+        set_config("contador_acessos_total", str(novo))
+        inicio = (get_config("contador_acessos_inicio", "") or "").strip()
+        if not inicio:
+            set_config("contador_acessos_inicio", _dt.datetime.now().strftime("%Y-%m-%d"))
+        return novo
+    except Exception:
+        return 0
 
 
 def get_config(chave, default=""):

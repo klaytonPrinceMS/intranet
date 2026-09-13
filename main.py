@@ -224,6 +224,12 @@ def page_login():
                 # hash amarra o cookie do navegador à linha da sessão no banco:
                 # encerrar a sessão pelo admin derruba este navegador no próximo request
                 sessao = autenticacao.registrar_login(nome, "sistema")
+                # Contador padronizado — só logins, nunca navegações/refreshs
+                try:
+                    from mod_intranet.bd_conexao import incrementar_contador_acessos
+                    incrementar_contador_acessos()
+                except Exception:
+                    pass
                 app.storage.user["usuario"] = {"nome": nome, "perfil": perfil, "sessao": sessao}
                 notificar(f"Bem-vindo(a), {nome}!", type="positive")
                 ui.navigate.to("/")
@@ -241,16 +247,128 @@ def page_login():
 
 
 # ================== DASHBOARD ==================
-@ui.page("/")
-def page_dashboard():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Início")
-    if not user:
-        return
+def _orquestrar_resumo_dados():
+    """Coleta os 9 contadores do Resumo — 5 base + fila impressão, quarentena, pdf uso, auditoria 24h."""
+    from mod_gest_cad_usuario import bd_manipulador as gest
+    try:
+        n_users = len(gest.listar_usuarios(filtro_ativo=None))
+    except Exception:
+        n_users = len(gest.listar_usuarios(filtro_ativo=True))
+    from mod_blog import bd_manipulador as blog
+    n_posts = blog.contar_postagens(ativo=True)
+    from mod_auditoria.db_manipulador import contar_registros
+    n_logs = contar_registros()
+    # Sessões ativas
+    try:
+        from mod_intranet.bd_conexao import get_connection
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM tb_sessoes WHERE logout_timestamp IS NULL")
+        n_sessoes = cur.fetchone()[0]
+        conn.close()
+    except Exception:
+        n_sessoes = 0
+    # Acessos (logins desde inicio)
+    try:
+        from mod_intranet.bd_conexao import get_config
+        n_acessos = int((get_config("contador_acessos_total", "0") or "0").strip() or 0)
+    except Exception:
+        n_acessos = 0
+    # 1) Fila impressão pendente (status aberto)
+    try:
+        from mod_solicita_impressao.bd_manipulador import get_connection as _conn_sol
+        c2 = _conn_sol()
+        cur2 = c2.cursor()
+        cur2.execute("SELECT COUNT(*) FROM tb_solicitacoes WHERE status NOT IN ('impresso','recusado','cancelado')")
+        n_fila = cur2.fetchone()[0]
+        c2.close()
+    except Exception:
+        n_fila = 0
+    # 2) Quarentena empenhos pendente
+    try:
+        from mod_renomear_empenho.bd_manipulador import _conn as _conn_emp
+        c3 = _conn_emp()
+        cur3 = c3.cursor()
+        cur3.execute("SELECT COUNT(*) FROM tb_quarentena WHERE processado=0")
+        n_quar = cur3.fetchone()[0]
+        c3.close()
+    except Exception:
+        n_quar = 0
+    # 4) Uso PDF global — arquivos ativos
+    try:
+        from mod_edit_pdf.bd_manipulador import _conn as _conn_pdf
+        c4 = _conn_pdf()
+        cur4 = c4.cursor()
+        cur4.execute("SELECT COUNT(*) FROM tb_arquivos WHERE ativo=1")
+        n_pdf = cur4.fetchone()[0]
+        c4.close()
+    except Exception:
+        n_pdf = 0
+    # 5) Auditoria 24h
+    try:
+        from mod_auditoria.db_manipulador import get_tabelas_auditoria, get_auditoria_connection
+        conn_a = get_auditoria_connection()
+        cur_a = conn_a.cursor()
+        n_24h = 0
+        for tbl in get_tabelas_auditoria():
+            try:
+                cur_a.execute(f"SELECT COUNT(*) FROM {tbl} WHERE timestamp >= datetime('now','localtime','-1 day')")
+                n_24h += cur_a.fetchone()[0]
+            except Exception:
+                continue
+        conn_a.close()
+    except Exception:
+        n_24h = 0
+    return n_users, n_posts, n_logs, n_sessoes, n_acessos, n_fila, n_quar, n_pdf, n_24h
 
-    nome = user["nome"]
-    eh_admin = user.get("perfil") in ("administrador_geral", "administrador_modulo")
 
+def _stat(rotulo, valor, icone, *, modelo="pic"):
+    """Card de métrica do Resumo — ícone ampliado + número lateral (4 dígitos, >9999) — altura -25% + tooltip descritivo."""
+    from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn3
+    from mod_intranet import home_visual as _hv
+    classes = _hv.classes_stat(modelo)
+    # Tooltip simples — rótulo curto
+    _desc_base = {
+        "Usuários ativos": "Usuarios",
+        "Sessões ativas": "Sessões",
+        "Postagens": "Noticias",
+        "Registros de auditoria": "Logs",
+        "Acessos": "Visitas",
+        "Acessos ao sistema": "Visitas",
+        "Fila impressão": "Fila impressão",
+        "Fila geral": "Fila geral",
+        "Para autorizar": "Para autorizar",
+        "Quarentena": "Quarentena",
+        "PDFs": "PDFs",
+        "Auditoria 24h": "Auditoria 24h",
+    }.get(rotulo, rotulo)
+    # Formata 4 dígitos; acima de 9999 exibe ">9999" e alerta de backup da auditoria
+    try:
+        v = int(valor)
+        texto_valor = str(v) if v <= 9999 else ">9999"
+        v_int = v
+    except Exception:
+        texto_valor = str(valor)
+        v_int = None
+    _desc = _desc_base
+    if v_int is not None and v_int > 9999:
+        # Alerta específico para auditoria; demais >9999 mostram total real no tooltip
+        if rotulo == "Registros de auditoria":
+            _desc = f"{_desc_base} Total real: {v_int}. ⚠️ Alerta: volume elevado — realize backup do banco de auditoria (db_mod_auditoria.db) e avalie retenção/poda."
+        else:
+            _desc = f"{_desc_base} Total real: {v_int}."
+    with ui.card().classes(classes).style(_estilo_cartao_fn3()).tooltip(_desc):
+        # Layout horizontal: ícone à esquerda + número à direita — exibe 4 dígitos (tooltip só no card)
+        with ui.row().classes("w-full items-center justify-center gap-2 px-2 py-1").style("min-width: 0"):
+            with ui.element("div").classes("home-stat-icon bg-primary/10 shrink-0"):
+                ui.icon(icone).classes("text-primary text-2xl")
+            ui.label(texto_valor).classes("text-h6 font-extrabold text-grey-9 leading-none min-w-[4ch] text-center").style("min-width: 0")
+
+
+def _construir_dashboard(nome: str, perfil: str, eh_admin: bool, modelo: str = "pic"):
+    """Constrói o conteúdo da Home (banner + resumo dinâmico + feed)."""
+    from mod_intranet import home_visual as _hv
+    _hv.aplicar_modelo(modelo)
     with ui.column().classes("w-full p-6 gap-6"):
         # Banner de boas-vindas
         with ui.card().classes("w-full bg-primary text-white shadow-lg"):
@@ -268,55 +386,49 @@ def page_dashboard():
                                         type="positive", position="top", timeout=2),
                  once=True)
 
-        # ---- Resumo do sistema (somente administradores: geral e de módulos) ----
-        # Fica logo abaixo das boas-vindas e acima das postagens do blog.
+        # ---- Resumo do sistema (somente administradores) ----
+        # Fica logo abaixo das boas-vindas e acima das postagens. Sem botão
+        # Atualizar — os dados são calculados automaticamente a cada acesso
+        # (dinâmico), sem ação manual.
+        # Dados para os Resumos — coletados uma vez (fail-soft 0)
+        n_users = n_posts = n_logs = n_sessoes = n_acessos = n_fila = n_quar = n_pdf = n_24h = 0
+        if eh_admin or _eh_autorizador_impressao(nome):
+            try:
+                n_users, n_posts, n_logs, n_sessoes, n_acessos, n_fila, n_quar, n_pdf, n_24h = _orquestrar_resumo_dados()
+            except Exception:
+                pass
         if eh_admin:
-            def orquestrar_resumo():
-                from mod_gest_cad_usuario import bd_manipulador as gest
-                n_users = len(gest.listar_usuarios(filtro_ativo=True))
-                from mod_blog import bd_manipulador as blog
-                n_posts = blog.contar_postagens(ativo=True)
-                from mod_auditoria.db_manipulador import contar_registros
-                n_logs = contar_registros()
-                return n_users, n_posts, n_logs
-
             from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2
-            with ui.card().classes("w-full border-l-4").style(
+            from mod_intranet import home_visual as _hv2
+            with ui.card().classes(_hv2.classes_card_resumo(modelo)).style(
                     f"border-left-color:#000000;{_estilo_cartao_fn2()}"):
-                with ui.card_section().classes("gap-4 w-full"):
-                    with ui.row().classes("w-full items-center justify-between flex-wrap gap-2"):
-                        ui.label("Resumo do sistema").classes("text-h6 font-bold text-grey-9")
-                        with ui.row().classes("items-center gap-2"):
-                            lbl_fb_resumo = ui.label("").classes("text-caption text-green-8")
-                            from mod_intranet.tema_modulo import botao as _botao_tema
-                            _botao_tema("Atualizar", icone="refresh",
-                                        variante="contorno",
-                                        on_click=lambda: atualizar_resumo())
-
-                    resumo_wrap = ui.row().classes("w-full justify-center gap-4")
-
-                    def render_resumo():
-                        resumo_wrap.clear()
-                        n_users, n_posts, n_logs = orquestrar_resumo()
-                        with resumo_wrap:
-                            _stat("Usuários ativos", n_users, "people")
-                            _stat("Postagens", n_posts, "article")
-                            _stat("Registros de auditoria", n_logs, "history")
-
-                    def atualizar_resumo():
-                        render_resumo()
-                        lbl_fb_resumo.set_text("Atualizado ✓")
-                        # feedback de 2s: reverte o rótulo via timer
-                        ui.timer(2.0, lambda: lbl_fb_resumo.set_text(""), once=True)
-
-                    render_resumo()
+                with ui.card_section().classes("gap-3 w-full"):
+                    ui.label("Resumo do sistema").classes("text-h6 font-bold text-grey-9")
+                    with ui.row().classes(_hv2.classes_wrap_resumo(modelo)):
+                        _stat("Usuários ativos", n_users, "people", modelo=modelo)
+                        _stat("Sessões ativas", n_sessoes, "sensors", modelo=modelo)
+                        _stat("Acessos", n_acessos, "login", modelo=modelo)
+                        _stat("Postagens", n_posts, "article", modelo=modelo)
+                        _stat("Quarentena", n_quar, "warning", modelo=modelo)
+                        _stat("PDFs", n_pdf, "picture_as_pdf", modelo=modelo)
+                        _stat("Registros de auditoria", n_logs, "history", modelo=modelo)
+                        _stat("Auditoria 24h", n_24h, "schedule", modelo=modelo)
+        # Somente autorizador de impressão vê este card (admin geral também é autorizador implícito via perfil)
+        if _eh_autorizador_impressao(nome) or perfil == "administrador_geral":
+            from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2b
+            from mod_intranet import home_visual as _hv2b
+            n_para_autorizar = _contar_fila_para_autorizar(nome, eh_admin_geral=(perfil == "administrador_geral"))
+            with ui.card().classes(_hv2b.classes_card_resumo(modelo)).style(
+                    f"border-left-color:#EF6C00;{_estilo_cartao_fn2b()}"):
+                with ui.card_section().classes("gap-3 w-full"):
+                    ui.label("Resumo do sistema — Impressão").classes("text-h6 font-bold text-grey-9")
+                    with ui.row().classes(_hv2b.classes_wrap_resumo(modelo)):
+                        _stat("Fila geral", n_fila, "print", modelo=modelo)
+                        _stat("Para autorizar", n_para_autorizar, "rule", modelo=modelo)
 
         # ---- Feed do Blog (RF-09) — respeita o padrão de exibição ----
-        # A Home mostra as postagens no MESMO padrão configurado no Blog
-        # (histórico/única/carrossel): a fonte única é
-        # `mod_blog.telas.renderizar_postagens`, também usada pela tela do Blog.
         from mod_blog.telas import renderizar_postagens
-        pode_publicar_blog = (user.get("perfil") == "administrador_geral"
+        pode_publicar_blog = (perfil == "administrador_geral"
                               or autenticacao.eh_admin_do_modulo(nome, "blog"))
         with ui.column().classes("w-full gap-4"):
             with ui.row().classes("w-full items-center justify-between"):
@@ -326,20 +438,68 @@ def page_dashboard():
                             variante="contorno",
                             on_click=lambda: ui.navigate.to("/blog"))
             _feed_wrap = ui.column().classes("w-full gap-4")
-            renderizar_postagens(_feed_wrap, nome, user.get("perfil", ""),
+            renderizar_postagens(_feed_wrap, nome, perfil,
                                  pode_publicar_blog,
                                  lambda: ui.navigate.reload())
 
 
-def _stat(rotulo, valor, icone):
-    from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn3
-    with ui.card().classes("flex-1 min-w-[140px] max-w-[240px] bg-grey-1 "
-                           "transition-transform hover:-translate-y-0.5 hover:shadow-lg") \
-            .style(_estilo_cartao_fn3()):
-        with ui.column().classes("items-center justify-center gap-1 px-2 py-3"):
-            ui.icon(icone).classes("text-primary text-3xl")
-            ui.label(str(valor)).classes("text-h5 font-bold text-grey-9")
-            ui.label(rotulo).classes("text-caption text-grey-6 text-center")
+def _eh_autorizador_impressao(nome: str) -> bool:
+    """Verifica se o usuário é responsável por autorizar impressão (qualquer secretaria/setor)."""
+    try:
+        from mod_solicita_impressao.bd_manipulador import get_connection as _csol
+        c = _csol()
+        cur = c.cursor()
+        cur.execute("SELECT 1 FROM tb_responsaveis_autorizacao WHERE user_nome=? AND ativo=1 LIMIT 1", (nome,))
+        ok = cur.fetchone() is not None
+        c.close()
+        return ok
+    except Exception:
+        return False
+
+
+def _contar_fila_para_autorizar(nome: str, eh_admin_geral: bool = False) -> int:
+    """Conta solicitações pendentes que o usuário pode autorizar (por secretaria/setor)."""
+    try:
+        from mod_solicita_impressao.bd_manipulador import get_connection as _csol
+        c = _csol()
+        cur = c.cursor()
+        # Admin geral pode autorizar tudo — conta igual à fila geral
+        if eh_admin_geral:
+            cur.execute("SELECT COUNT(*) FROM tb_solicitacoes WHERE status NOT IN ('impresso','recusado','cancelado')")
+            n = cur.fetchone()[0]
+            c.close()
+            return n
+        # Busca vínculos ativos do usuário
+        cur.execute("SELECT secretaria_id, setor_id FROM tb_responsaveis_autorizacao WHERE user_nome=? AND ativo=1", (nome,))
+        vins = cur.fetchall()
+        if not vins:
+            c.close()
+            return 0
+        total = 0
+        for sec_id, set_id in vins:
+            if set_id is None:
+                cur.execute("SELECT COUNT(*) FROM tb_solicitacoes WHERE secretaria_id=? AND status NOT IN ('impresso','recusado','cancelado')", (sec_id,))
+                total += cur.fetchone()[0]
+            else:
+                cur.execute("SELECT COUNT(*) FROM tb_solicitacoes WHERE secretaria_id=? AND (setor_id=? OR setor_id IS NULL) AND status NOT IN ('impresso','recusado','cancelado')", (sec_id, set_id))
+                total += cur.fetchone()[0]
+        c.close()
+        return total
+    except Exception:
+        return 0
+
+
+@ui.page("/")
+def page_dashboard():
+    from mod_intranet.telas import pagina_restrita
+    user = pagina_restrita("Início")
+    if not user:
+        return
+    # Resumo do sistema: só admin geral/modulo; Impressão: só autorizador (admin geral implícito)
+    perfil = user.get("perfil", "")
+    nome = user["nome"]
+    eh_admin = perfil in ("administrador_geral", "administrador_modulo")
+    _construir_dashboard(nome, perfil, eh_admin, modelo="water")
 
 
 # ================== MÓDULOS ==================
@@ -407,6 +567,74 @@ def page_renomear_empenho():
         return
     from mod_renomear_empenho.telas import mostrar_tela
     mostrar_tela(user["nome"], user.get("perfil", ""))
+
+
+# Comparativo visual — pic padrão + uma tela por CSS novo (12)
+def _page_empenho_forcado(modelo: str, titulo: str):
+    from mod_renomear_empenho import visual as _visual_cmp
+    _orig = _visual_cmp.FORCAR_MODELO
+    _visual_cmp.FORCAR_MODELO = modelo
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita(titulo, chave_modulo="empenhos")
+        if not user:
+            return
+        from mod_renomear_empenho.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    finally:
+        _visual_cmp.FORCAR_MODELO = _orig
+
+@ui.page("/renomear-empenho-pic")
+def page_renomear_empenho_pic():
+    return _page_empenho_forcado("pic", "Renomear Empenhos — PIC")
+
+@ui.page("/renomear-empenho-spectre")
+def page_renomear_empenho_spectre():
+    return _page_empenho_forcado("spectre", "Renomear Empenhos — Spectre")
+
+@ui.page("/renomear-empenho-chota")
+def page_renomear_empenho_chota():
+    return _page_empenho_forcado("chota", "Renomear Empenhos — Chota")
+
+@ui.page("/renomear-empenho-milligram")
+def page_renomear_empenho_milligram():
+    return _page_empenho_forcado("milligram", "Renomear Empenhos — Milligram")
+
+@ui.page("/renomear-empenho-skeleton")
+def page_renomear_empenho_skeleton():
+    return _page_empenho_forcado("skeleton", "Renomear Empenhos — Skeleton")
+
+@ui.page("/renomear-empenho-water")
+def page_renomear_empenho_water():
+    return _page_empenho_forcado("water", "Renomear Empenhos — Water")
+
+@ui.page("/renomear-empenho-mvp")
+def page_renomear_empenho_mvp():
+    return _page_empenho_forcado("mvp", "Renomear Empenhos — MVP")
+
+@ui.page("/renomear-empenho-tachyons")
+def page_renomear_empenho_tachyons():
+    return _page_empenho_forcado("tachyons", "Renomear Empenhos — Tachyons")
+
+@ui.page("/renomear-empenho-uikit")
+def page_renomear_empenho_uikit():
+    return _page_empenho_forcado("uikit", "Renomear Empenhos — UIkit")
+
+@ui.page("/renomear-empenho-foundation")
+def page_renomear_empenho_foundation():
+    return _page_empenho_forcado("foundation", "Renomear Empenhos — Foundation")
+
+@ui.page("/renomear-empenho-semantic")
+def page_renomear_empenho_semantic():
+    return _page_empenho_forcado("semantic", "Renomear Empenhos — Semantic")
+
+@ui.page("/renomear-empenho-materialize")
+def page_renomear_empenho_materialize():
+    return _page_empenho_forcado("materialize", "Renomear Empenhos — Materialize")
+
+@ui.page("/renomear-empenho-primer")
+def page_renomear_empenho_primer():
+    return _page_empenho_forcado("primer", "Renomear Empenhos — Primer")
 
 
 if rotas_modulos is not None:

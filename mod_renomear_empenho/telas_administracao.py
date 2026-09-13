@@ -24,6 +24,7 @@ from mod_renomear_empenho.bd_manipulador import (
 )
 from mod_intranet import rotinas as _rotinas
 from mod_intranet.bd_manipulador import audit_log
+from mod_renomear_empenho import visual as _visual
 
 
 def _tema(chave, default, get_config):
@@ -72,6 +73,59 @@ def mostrar_administracao(
         from mod_renomear_empenho.bd_manipulador import _PASTA_MONITORADA_PADRAO
     except Exception:
         _PASTA_MONITORADA_PADRAO = ""
+
+    # --- modelo visual comutável (uma tela por CSS) ---
+    _modelo_admin = _visual.ler_modelo(get_config)
+    _visual.aplicar_modelo(_modelo_admin)
+
+    # ================= Modelo visual — uma tela por CSS =================
+    with card_admin("Modelo visual — uma tela por CSS", icone="palette",
+                    chave_modulo="empenhos", extra_classes="mt-4", grade=False):
+        ui.label("Uma tela dedicada por framework em assets/css/frameworks "
+                 "(bootstrap, bulma, daisyui, pico, picnic) + PIC nativo + "
+                 "Híbrido (padrão — mistura PIC+Bootstrap). Injeção por página "
+                 "via tema_css.injetar_framework, sem CDN.").classes("text-caption text-grey-6")
+        modelo_atual = _visual.ler_modelo(get_config)
+        rot = _visual.ROTULOS.get(modelo_atual, modelo_atual)
+        if modelo_atual in _visual.FRAMEWORKS:
+            ui.html(f'<div class="alert alert-info py-2 small mb-2">{rot} <strong>ativo</strong> — tela /renomear-empenho-{modelo_atual} com CSS local.</div>')
+        else:
+            ui.html('<div class="alert alert-light border py-2 small mb-2">PIC <strong>ativo</strong> — padrão suave (padrão).</div>')
+        opcoes = {k: v for k, v in _visual.ROTULOS.items()}
+        sel_modelo = ui.select(
+            opcoes,
+            label="Modelo visual padrão (/renomear-empenho)",
+            value=modelo_atual,
+        ).props("outlined dense").classes("w-full sm:w-80").props("data-testid=empenhos-modelo-visual")
+        ui.label("O padrão vale para /renomear-empenho. Cada CSS também tem rota dedicada "
+                 "/renomear-empenho-{framework} para comparar lado a lado sem trocar o padrão.").classes("text-caption text-grey-6")
+
+        def salvar_modelo():
+            novo = (sel_modelo.value or "pic").strip().lower()
+            if novo not in _visual.VALIDOS:
+                novo = "pic"
+            try:
+                _visual.salvar_modelo(novo, set_config)
+                try:
+                    audit_log(usuario_logado, "renomear-empenho", "configuracao",
+                              f"modelo visual alterado para {novo}")
+                except Exception:
+                    pass
+                notificar(f"Modelo visual '{novo}' aplicado — recarregando…", type="positive")
+                ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
+            except Exception:
+                _log.exception("erro ao salvar modelo visual de empenhos")
+
+        def restaurar_modelo():
+            try:
+                _visual.salvar_modelo("pic", set_config)
+                notificar("Modelo visual restaurado para PIC — recarregando…", type="positive")
+                ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
+            except Exception:
+                _log.exception("erro ao restaurar modelo visual")
+
+        rodape_salvar_restaurar(salvar_modelo, restaurar=restaurar_modelo,
+                                chave_modulo="empenhos", data_testid="config-aplicar-empenhos-modelo")
 
     # ================= Pastas monitoradas =================
     with card_admin("Pastas monitoradas (inclui rede/UNC)", icone="folder_open",

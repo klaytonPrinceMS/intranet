@@ -44,8 +44,8 @@ O sistema é composto por um **núcleo** (`mod_intranet`) e **6 módulos de neg�
 ```mermaid
 flowchart TD
     U[Usuário] -->|/login| L[Autenticação bcrypt]
-    L -->|ok| S[Sessão revogável<br/>tb_sessoes + cookie_hash]
-    S --> D[Dashboard /<br/>boas-vindas + resumo admin + feed do Blog]
+    L -->|ok| S[Sessão revogável<br/>tb_sessoes + cookie_hash<br/>+ Visitas ++contador_acessos_total]
+    S --> D[Dashboard /<br/>boas-vindas + Resumo dinâmico Water + feed do Blog]
     D --> M[Drawer lateral<br/>módulos liberados]
     M --> R1[/blog] & R2[/users] & R3[/edit-pdf] & R4[/renomear-empenho] & R5[/solicita-impressao] & R6[/auditoria]
     R1 & R2 & R3 & R4 & R5 & R6 --> G[pagina_restrita<br/>autenticação + permissão + layout]
@@ -55,12 +55,23 @@ flowchart TD
 ```
 
 1. O usuário acessa `/login` e informa usuário/senha (`autenticar` → bcrypt).
-2. Login bem-sucedido cria uma **sessão revogável** (`registrar_login`) amarrada a um cookie HTTP-Only (`cookie_hash`).
-3. O usuário é levado ao **Dashboard** `/` (saudação + feed do Blog + estatísticas para admins).
+2. Login bem-sucedido cria uma **sessão revogável** (`registrar_login`) amarrada a um cookie HTTP-Only (`cookie_hash`) e incrementa **uma única vez** o contador `tb_config contador_acessos_total` (`bd_conexao.incrementar_contador_acessos()` só em `main.py:tentar_login()` — nunca em navegação/refresh; `contador_acessos_inicio` em `YYYY-MM-DD` semeado em `bd_conexao.init_db()`).
+3. O usuário é levado ao **Dashboard** `/` (saudação + **Resumo dinâmico sem botão Atualizar** + feed do Blog) — ver detalhe abaixo.
 4. A navegação por módulos ocorre pelo **menu lateral** (drawer), que só mostra módulos liberados ao usuário.
 5. Toda rota de módulo passa pela guarda `pagina_restrita` (autenticação + permissão + layout de 4 partes).
 6. Ações relevantes gravam a **trilha de auditoria** (`audit_log` → banco exclusivo `db_mod_auditoria.db`, tabela por módulo) com IP/user-agent/hash quando aplicável.
 7. Em segundo plano, **APScheduler** executa backups por módulo, limpezas e monitor de pasta.
+
+### Dashboard `/` — Resumo dinâmico (redesign 09/2026)
+
+> Home visual **Water escopado só no card** (`home_visual.injetar_water_card()` → `.home-resumo-water/.home-stat-water` border `#dfe8f0` bg `#fafcfd`, ícone 36px, `modelo="water"` fixo em `page_dashboard`).
+
+- **Sem botão Atualizar**: `_orquestrar_resumo_dados()` (`main.py:250`) recalcula **a cada acesso** (9 contadores: usuários `filtro_ativo=None`, sessões `WHERE logout IS NULL`, visitas `contador_acessos_total`, postagens, quarentena `processado=0`, PDFs `ativo=1`, auditoria 24h `SUM WHERE timestamp >= -1 day`, fila impressão pendente, logs totais).
+- **2 cards, altura -50%+25%**: `gap-1 px-2 py-1`, ícone 36px `text-2xl`, número `text-h6` 4 dígitos (`>9999` com total real no tooltip único do card; `Logs>9999` com alerta `⚠️ realize backup do banco de auditoria (db_mod_auditoria.db)`), layout horizontal ícone esq + número, tooltip simples (`Usuarios/Sessões/Noticias/Logs/Visitas/Fila geral/Para autorizar/Quarentena/PDFs/Auditoria 24h`).
+- **Visibilidade por papel**:
+    - **"Resumo do sistema"** (8 métricas: Usuários, Sessões, Visitas, Postagens, Quarentena, PDFs, Logs, Logs 24h) — **só `administrador_geral`/`administrador_modulo`** (`eh_admin` `main.py:500`).
+    - **"Resumo do sistema — Impressão"** (Fila geral + Para autorizar) — **só autorizador** (`tb_responsaveis_autorizacao ativo=1` via `_eh_autorizador_impressao()` `main.py:446`) **ou `administrador_geral`** (`_contar_fila_para_autorizar()` `main.py:460`; admin geral = fila geral).
+- Comparativo `/home-*` revertido e hambúrguer sem seção comparativa; serviço `http://localhost:8080` water OK.
 
 ## Perfis de usuário
 

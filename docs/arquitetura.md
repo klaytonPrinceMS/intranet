@@ -257,6 +257,10 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 5. Monta o **layout de 4 partes**: header (hambúrguer com `data-testid=menu-hamburguer`, "Meu Perfil", badge de perfil, logout), drawer lateral (fábrica `ui_comum.item_menu_drawer` com `data-testid` `menu-*`, módulos liberados), rodapé com versões, área principal.
 6. Se `precisa_trocar_senha`, abre o diálogo persistente de troca obrigatória.
 
+### Dashboard `/` — Home redesenhada (09/2026)
+
+`page_dashboard()` (`main.py:492` fixa `modelo="water"`) → `_construir_dashboard()` (`main.py:368` `home_visual.aplicar_modelo("water")`) com `_orquestrar_resumo_dados()` (`main.py:250`, 9 contadores a cada acesso, sem botão Atualizar) e `_stat()` (`main.py:325`, altura `gap-1 px-2 py-1` ícone 36px `text-h6`, 4 dígitos `>9999` tooltip único no card). Visual **Water escopado só no card** (`home_visual.injetar_water_card()` `home_visual.py:176` `.home-resumo-water/.home-stat-water` `#dfe8f0`/`#fafcfd`). **Geral** (8 métricas, só `administrador_geral`/`administrador_modulo`): `[Usuarios,Sessões,Visitas,Postagens,Quarentena,PDFs,Logs,Logs 24h]` + **Impressão** (Fila geral + Para autorizar, só autorizador `tb_responsaveis_autorizacao` ou `administrador_geral` via `_eh_autorizador_impressao()`/`_contar_fila_para_autorizar()` `main.py:446/460`); contador `contador_acessos_total` só em login (`bd_conexao.incrementar_contador_acessos()` `main.py:229`); comparativo `/home-*` revertido e hambúrguer sem seção comparativa. Serviço `http://localhost:8080`.
+
 ## Agendadores (APScheduler)
 
 `rotinas.iniciar_agendador()` (`mod_intranet/rotinas.py:177-233`) — `BackgroundScheduler(daemon=True)`:

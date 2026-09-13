@@ -352,6 +352,66 @@ def init_db():
             "INSERT INTO tb_configuracoes_modulo (chave, valor) VALUES ('versao_modulo', '1.0.260908')"
         )
 
+    # Seeds fixos de secretarias/setores (idempotente — só insere se sigla/nome ainda não existe)
+    _SECRETARIAS_PADRAO = [
+        ("Saúde", "SEC_SAU", 1000, 20),
+        ("Educação", "SEC_EDU", 1500, 20),
+        ("Administração", "SEC_ADM", 600, 10),
+        ("Social", "SEC_SOC", 400, 10),
+        ("Governo", "SEC_GOV", 1000, 10),
+        ("Infraestrutura", "SEC_INF", 200, 10),
+        ("Finanças", "SEC_FIN", 300, 10),
+    ]
+    for _nome, _sigla, _cota, _lim in _SECRETARIAS_PADRAO:
+        try:
+            cur.execute(
+                "SELECT id FROM tb_secretarias WHERE sigla=? OR nome=?",
+                (_sigla.strip(), _nome.strip()),
+            )
+            if not cur.fetchone():
+                cur.execute(
+                    "INSERT INTO tb_secretarias (nome, sigla, cota_paginas_mensal, limite_pedidos_abertos) "
+                    "VALUES (?, ?, ?, ?)",
+                    (_nome.strip(), _sigla.strip(), int(_cota), int(_lim)),
+                )
+        except Exception:
+            pass
+    # Mapa sigla -> id para vínculo de setores
+    _mapa_sigla_id = {}
+    try:
+        for row in cur.execute("SELECT id, sigla FROM tb_secretarias").fetchall():
+            if row[1]:
+                _mapa_sigla_id[row[1].strip()] = row[0]
+    except Exception:
+        pass
+    _SETORES_PADRAO = [
+        ("DTI", "SEC_ADM", 0, 2),
+        ("Cohab", "SEC_EDU", 200, 3),
+        ("Florianita", "SEC_EDU", 200, 3),
+        ("Centro Educacional", "SEC_EDU", 200, 3),
+    ]
+    for _nome_setor, _sigla_secr, _cota_s, _lim_s in _SETORES_PADRAO:
+        try:
+            _sid = _mapa_sigla_id.get(_sigla_secr.strip())
+            if not _sid:
+                cur.execute("SELECT id FROM tb_secretarias WHERE sigla=?", (_sigla_secr.strip(),))
+                _r = cur.fetchone()
+                _sid = _r[0] if _r else None
+            if not _sid:
+                continue
+            cur.execute(
+                "SELECT id FROM tb_setores WHERE nome=? AND secretaria_id=?",
+                (_nome_setor.strip(), int(_sid)),
+            )
+            if not cur.fetchone():
+                cur.execute(
+                    "INSERT INTO tb_setores (nome, secretaria_id, cota_paginas_mensal, limite_pedidos_abertos) "
+                    "VALUES (?, ?, ?, ?)",
+                    (_nome_setor.strip(), int(_sid), int(_cota_s), int(_lim_s)),
+                )
+        except Exception:
+            pass
+
     # Índices
     cur.execute("CREATE INDEX IF NOT EXISTS idx_sol_usuario ON tb_solicitacoes(usuario_solicitante)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_sol_status ON tb_solicitacoes(status)")

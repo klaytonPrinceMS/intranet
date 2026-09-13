@@ -44,6 +44,66 @@ FRAMEWORKS_CSS = {
         "aviso": "Projeto em manutenção reduzida; Sirva para páginas independentes, evite em "
                  "componentes Quasar padronizados.",
     },
+    "spectre": {
+        "arquivo": "spectre@0.5.9.min.css",
+        "descricao": "Spectre.css 0.5.9 — leve, cards/badges próximo ao Bootstrap.",
+        "aviso": "Reset moderado; injeção por página.",
+    },
+    "chota": {
+        "arquivo": "chota@0.8.0.min.css",
+        "descricao": "Chota 0.8.0 — micro-framework (≈12KB), grid simples.",
+        "aviso": "Leve, pouco conflito.",
+    },
+    "milligram": {
+        "arquivo": "milligram@1.4.1.min.css",
+        "descricao": "Milligram 1.4.1 — minimalista (≈9KB), tipografia limpa.",
+        "aviso": "Leve.",
+    },
+    "skeleton": {
+        "arquivo": "skeleton@2.0.4.min.css",
+        "descricao": "Skeleton 2.0.4 — boilerplate leve (≈12KB).",
+        "aviso": "Leve.",
+    },
+    "water": {
+        "arquivo": "water@2.1.1.min.css",
+        "descricao": "Water.css 2.1.1 — classless (estiliza tags direto).",
+        "aviso": "Classless: afeta body/h1/button globais.",
+    },
+    "mvp": {
+        "arquivo": "mvp@1.14.min.css",
+        "descricao": "MVP.css 1.14 — classless minimalista.",
+        "aviso": "Classless.",
+    },
+    "tachyons": {
+        "arquivo": "tachyons@4.12.0.min.css",
+        "descricao": "Tachyons 4.12.0 — utilitários atômicos.",
+        "aviso": "Utilitários; baixo conflito mas muitas classes.",
+    },
+    "uikit": {
+        "arquivo": "uikit@3.21.5.min.css",
+        "descricao": "UIkit 3.21.5 — rico, uk-card/uk-badge.",
+        "aviso": "Reset moderado, bom para teste impactante.",
+    },
+    "foundation": {
+        "arquivo": "foundation@6.8.1.min.css",
+        "descricao": "Foundation 6.8.1 — grid .grid-x, .card.",
+        "aviso": "Reset moderado.",
+    },
+    "semantic": {
+        "arquivo": "semantic@2.5.0.min.css",
+        "descricao": "Semantic UI 2.5 — enterprise .ui .card.",
+        "aviso": "Reset pesado (540KB), testar escopado.",
+    },
+    "materialize": {
+        "arquivo": "materialize@1.0.0.min.css",
+        "descricao": "Materialize 1.0 — Material Design .card, .btn.",
+        "aviso": "Reset moderado.",
+    },
+    "primer": {
+        "arquivo": "primer@21.0.9.min.css",
+        "descricao": "Primer 21 — GitHub design system.",
+        "aviso": "Reset moderado, 843KB.",
+    },
 }
 
 

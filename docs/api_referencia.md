@@ -26,8 +26,8 @@
 
 | Rota | Tipo | Módulo | Acesso | Definição |
 |:---|:---|:---|:---|:---|
-| `/login` | `@ui.page` | `mod_intranet` | público | `main.py:115` |
-| `/` | `@ui.page` | `mod_intranet` | usuários ativos | `main.py:189` |
+| `/login` | `@ui.page` | `mod_intranet` | público (incrementa `contador_acessos_total` só em login ok — `bd_conexao.incrementar_contador_acessos()` `main.py:229`) | `main.py:115` |
+| `/` | `@ui.page` | `mod_intranet` | usuários ativos — dashboard Water escopado (`home_visual.aplicar_modelo("water")`, sem botão Atualizar, `_orquestrar_resumo_dados()` a cada acesso; Geral só admin, Impressão só autorizador — `main.py:492/368/250`) | `main.py:189` |
 | `/blog` | `@ui.page` | `mod_blog` | liberados (`blog`) | `main.py:297` |
 | `/users` | `@ui.page` | `mod_gest_cad_usuario` | admin do módulo / geral | `main.py:311` |
 | `/auditoria` | `@ui.page` | `mod_auditoria` | `administrador_geral` | `main.py:325` |
@@ -119,6 +119,12 @@
 | `capturar_contexto` / `rotulo_dispositivo` / `mac_best_effort` | `contexto.py:48` / `:74` / `:112` | ContextVar IP/UA |
 | `construir_e_montar_documentacao()` | `documentacao.py:44` | build + mount do MkDocs |
 | `registrar_modulo(chave, rota)` / `montar_rotas_ativas()` | `rotas_modulos.py:44` / `:56` | re-registro ao vivo de slugs customizados |
+| `_orquestrar_resumo_dados()` | `main.py:250` | 9 contadores do Resumo (usuários `filtro_ativo=None`, sessões `logout IS NULL`, visitas `contador_acessos_total`, fila `tb_solicitacoes NOT IN impresso/recusado/cancelado`, quarentena `processado=0`, PDFs `ativo=1`, auditoria 24h `SUM COUNT ... -1 day`) — sem botão Atualizar, a cada acesso |
+| `_stat(rotulo, valor, icone, modelo)` | `main.py:325` | card de métrica altura `gap-1 px-2 py-1` ícone 36px `text-2xl` `text-h6`, 4 dígitos `>9999` tooltip único no card (`_desc_base` Usuarios/Sessões/Noticias/Logs/Visitas/... + alerta `>9999` auditoria) |
+| `_construir_dashboard(nome, perfil, eh_admin, modelo)` | `main.py:368` | Home Water escopado (`home_visual.aplicar_modelo("water")`, Geral 8 métricas só admin + Impressão Fila geral/Para autorizar só autorizador) |
+| `_eh_autorizador_impressao(nome)` / `_contar_fila_para_autorizar(nome, eh_admin_geral)` | `main.py:446` / `:460` | visibilidade Impressão (`tb_responsaveis_autorizacao ativo=1` por secretaria/setor; admin geral = fila geral) |
+| `injetar_water_card()` / `aplicar_modelo(modelo)` / `classes_stat` / `classes_card_resumo` | `home_visual.py:176` / `:155` / `:246` / `:237` | visual Home — Water só no card (`.home-resumo-water/.home-stat-water` `#dfe8f0`/`#fafcfd`), `pic` suave, helpers de classes |
+| `incrementar_contador_acessos()` / `contador_acessos_total` / `contador_acessos_inicio` | `bd_conexao.py:200` / `:70` | contador Visitas — só logins (nunca navegação), seed `YYYY-MM-DD`, `contador_acessos_inicio` `DD/MM/YYYY` no tooltip (agora simplificado `"Visitas"`) |
 
 ## Funções-chave — Gestão de Usuários
 
