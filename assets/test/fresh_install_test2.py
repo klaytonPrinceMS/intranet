@@ -1,6 +1,9 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
+# REGRA DE OURO (AGENTS.md): nada fora da raiz — caminho absoluto, nunca CWD.
+_RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from mod_intranet.bd_conexao import get_connection
 
 # Conexao previa "vazia" ao banco central (como o mostra() do step_boot)
@@ -11,10 +14,10 @@ c.close()
 from mod_intranet.bd_criador import inicializar_bancos
 inicializar_bancos()
 import sqlite3
-c = sqlite3.connect('db_mod_intranet.db')
+c = sqlite3.connect(os.path.join(_RAIZ, 'db_mod_intranet.db'))
 print('central tabelas:', [r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'")])
 c.close()
-c2 = sqlite3.connect('db_mod_gest_cad_usuario.db')
+c2 = sqlite3.connect(os.path.join(_RAIZ, 'db_mod_gest_cad_usuario.db'))
 m = c2.execute("SELECT user_nome,user_perfil FROM tb_usuarios WHERE user_nome='master'").fetchone()
 print('master:', m)
 c2.close()

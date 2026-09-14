@@ -638,6 +638,7 @@ def init_db_empenho():
             ficha TEXT,
             ano TEXT,
             tipo_especial TEXT,
+            usuario TEXT,
             conteudo_texto TEXT,
             tamanho INTEGER DEFAULT 0,
             mtime REAL DEFAULT 0,
@@ -648,6 +649,7 @@ def init_db_empenho():
     cur.execute("CREATE INDEX IF NOT EXISTS idx_lev_nome ON tb_levantamento(nome_arquivo)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_lev_presente ON tb_levantamento(presente)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_lev_num ON tb_levantamento(numero_empenho)")
+    _migrar_coluna(conn, "tb_levantamento", "usuario", "TEXT")
     try:
         cur.execute(
             "CREATE VIRTUAL TABLE IF NOT EXISTS tb_levantamento_fts USING fts5("
@@ -1643,7 +1645,7 @@ def levantar_arquivos(usuario="sistema"):
                         tamanho, mtime = est.st_size, est.st_mtime
                     except Exception:
                         tamanho, mtime = 0, 0
-                    cur.execute("SELECT id, tamanho, mtime FROM tb_levantamento "
+                    cur.execute("SELECT id, tamanho, mtime, usuario FROM tb_levantamento "
                                 "WHERE caminho_atual=?", (caminho,))
                     linha = cur.fetchone()
                     if linha and linha[1] == tamanho and linha[2] == mtime:
@@ -1654,6 +1656,13 @@ def levantar_arquivos(usuario="sistema"):
                         cur.execute("UPDATE tb_levantamento SET presente=1, status=?, "
                                     "data_visto=datetime('now','localtime') WHERE id=?",
                                     (st, linha[0]))
+                        # Adota o usuário logado (o agendador "sistema" nunca
+                        # sobrescreve um nome real já anotado).
+                        _dono = (linha[3] or "").strip() if len(linha) > 3 else ""
+                        _ator = (usuario or "").strip()
+                        if _ator and _ator != "sistema" and (not _dono or _dono == "sistema"):
+                            cur.execute("UPDATE tb_levantamento SET usuario=? WHERE id=?",
+                                        (_ator, linha[0]))
                         vistos += 1
                         continue
                     # novo ou alterado: extrai campos + conteúdo (best-effort)
@@ -1684,12 +1693,15 @@ def levantar_arquivos(usuario="sistema"):
                                              or _nome_final_especial(f)
                                              or _arquivo_registrado_no_bd(caminho)) else "detectado"
                     if linha:
+                        _dono_ant = (linha[3] or "").strip() if len(linha) > 3 else ""
+                        _ator = (usuario or "").strip()
+                        _dono = _ator if (_ator and _ator != "sistema") else (_dono_ant or _ator)
                         cur.execute(
                             """UPDATE tb_levantamento SET nome_arquivo=?, presente=1, status=?,
                                numero_empenho=?, parcela=?, ficha=?, ano=?, tipo_especial=?,
-                               conteudo_texto=?, tamanho=?, mtime=?,
+                               usuario=?, conteudo_texto=?, tamanho=?, mtime=?,
                                data_visto=datetime('now','localtime') WHERE id=?""",
-                            (f, status, numero, parcela, ficha, ano, tipo,
+                            (f, status, numero, parcela, ficha, ano, tipo, _dono,
                              texto[:20000], tamanho, mtime, linha[0]),
                         )
                         _levantamento_fts_sincronizar(cur, linha[0], f, numero, ficha,
@@ -1699,10 +1711,10 @@ def levantar_arquivos(usuario="sistema"):
                         cur.execute(
                             """INSERT INTO tb_levantamento
                                (nome_arquivo, caminho_atual, presente, status, numero_empenho,
-                                parcela, ficha, ano, tipo_especial, conteudo_texto, tamanho, mtime)
-                               VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                                parcela, ficha, ano, tipo_especial, usuario, conteudo_texto, tamanho, mtime)
+                               VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                             (f, caminho, status, numero, parcela, ficha, ano, tipo,
-                             texto[:20000], tamanho, mtime),
+                             (usuario or "").strip(), texto[:20000], tamanho, mtime),
                         )
                         _levantamento_fts_sincronizar(cur, cur.lastrowid, f, numero,
                                                       ficha, ano, tipo, texto[:20000])
@@ -1758,7 +1770,7 @@ def pesquisar_levantamento(termo, limite=100):
     """Busca no levantamento: FTS5 (nome+campos+conteúdo) com fallback LIKE.
 
     Cobre também os pendentes (ainda sem índice de processados). Retorna
-    tuplas (id, nome, caminho, presente, status, numero, ficha, ano).
+    tuplas (id, nome, caminho, presente, status, numero, parcela, ficha, ano, usuario).
     """
     if not termo or not str(termo).strip():
         return []
@@ -1772,7 +1784,7 @@ def pesquisar_levantamento(termo, limite=100):
             query = _fts_query_prefixada(tokens)
             cur.execute(
                 """SELECT l.id, l.nome_arquivo, l.caminho_atual, l.presente, l.status,
-                          l.numero_empenho, l.ficha, l.ano
+                          l.numero_empenho, l.parcela, l.ficha, l.ano, l.usuario
                    FROM tb_levantamento_fts f
                    JOIN tb_levantamento l ON l.id = f.rowid
                    WHERE tb_levantamento_fts MATCH ?
@@ -1785,7 +1797,7 @@ def pesquisar_levantamento(termo, limite=100):
             like = f"%{str(termo).strip()}%"
             cur.execute(
                 """SELECT id, nome_arquivo, caminho_atual, presente, status,
-                          numero_empenho, ficha, ano
+                          numero_empenho, parcela, ficha, ano, usuario
                    FROM tb_levantamento
                    WHERE nome_arquivo LIKE ? OR numero_empenho LIKE ?
                      OR ficha LIKE ? OR ano LIKE ? OR conteudo_texto LIKE ?
@@ -2609,6 +2621,103 @@ def pasta_navegavel(pasta):
     return False
 
 
+def anotar_arquivos(pdfs):
+    """Anota cada dict {nome, caminho, status} com a leitura do reconhecimento.
+
+    Preenche `numero_empenho`, `parcela`, `usuario` e `data` a partir do
+    levantamento (leitura feita ao reconhecer o arquivo) e, quando o arquivo
+    já foi processado, sobrescreve com `tb_empenhos` (numero/parcela/usuario
+    de quem processou). Processados sem linha recebem os dados do nome final
+    (`doc_<cont>_<empenho>_<parcela>.pdf` / `EC|EE|EG|AE_<n>.pdf`). Idempotente.
+    """
+    if not pdfs:
+        return pdfs
+    conn = _conn()
+    try:
+        cur = conn.cursor()
+        chaves = []
+        for p in pdfs:
+            cam = p.get("caminho") or ""
+            chaves.append(cam)
+            try:
+                chaves.append(os.path.realpath(cam))
+            except Exception:
+                pass
+        chaves = [c for c in dict.fromkeys(chaves) if c]
+        lev = {}
+        for i in range(0, len(chaves), 100):
+            lote = chaves[i:i + 100]
+            ph = ",".join("?" for _ in lote)
+            try:
+                cur.execute(
+                    f"SELECT caminho_atual, numero_empenho, parcela, usuario, "
+                    f"data_deteccao FROM tb_levantamento WHERE caminho_atual IN ({ph})",
+                    lote,
+                )
+                for cam, num, parc, usr, dt in cur.fetchall():
+                    lev[cam] = (num, parc, usr, dt)
+            except Exception:
+                break
+        emp = {}
+        try:
+            nomes = [os.path.basename(p.get("caminho") or "") for p in pdfs]
+            cams = [p.get("caminho") or "" for p in pdfs]
+            ph_c = ",".join("?" for _ in cams)
+            ph_n = ",".join("?" for _ in nomes)
+            cur.execute(
+                f"SELECT caminho_arquivo, nome_arquivo_final, numero_empenho, parcela, "
+                f"usuario, data_criacao FROM tb_empenhos WHERE caminho_arquivo IN ({ph_c}) "
+                f"OR nome_arquivo_final IN ({ph_n})",
+                cams + nomes,
+            )
+            for cam, final, num, parc, usr, dt in cur.fetchall():
+                if cam:
+                    emp[cam] = (num, parc, usr, dt)
+                if final:
+                    emp[final] = (num, parc, usr, dt)
+        except Exception:
+            pass
+        import re as _re
+        for p in pdfs:
+            cam = p.get("caminho") or ""
+            nome = p.get("nome") or os.path.basename(cam)
+            num = parc = usr = dt = None
+            try:
+                real = os.path.realpath(cam)
+            except Exception:
+                real = cam
+            if real in lev:
+                num, parc, usr, dt = lev[real]
+            elif cam in lev:
+                num, parc, usr, dt = lev[cam]
+            if cam in emp:
+                num, parc, usr, dt = emp[cam]
+            elif nome in emp:
+                num, parc, usr, dt = emp[nome]
+            if (num is None or num == "") and nome:
+                # Fallback ao nome final (cru, sem normalizar: zeros à esquerda
+                # só são aparados na exibição, em `_detalhes_linha`).
+                m = _re.match(r"doc_\d+_(\d+)_(\d+)\.pdf$", nome, _re.I)
+                if m:
+                    num = m.group(1)
+                    if parc is None:
+                        parc = m.group(2)
+                else:
+                    m2 = _re.match(r"(EC|EE|EG|AE)_(\d+)\.pdf$", nome, _re.I)
+                    if m2:
+                        num = m2.group(2)
+            p["numero_empenho"] = num
+            p["parcela"] = parc
+            p["usuario"] = (usr or "").strip() if isinstance(usr, str) else usr
+            p["data"] = (dt or "")[:10] if isinstance(dt, str) else dt
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+    return pdfs
+
+
 def listar_navegacao(pasta):
     """Lista o conteúdo (só PDFs e subpastas) de um diretório para a navegação.
 
@@ -2637,6 +2746,10 @@ def listar_navegacao(pasta):
                 pdfs.append({"nome": nome, "caminho": caminho, "status": status_arquivo(caminho)})
     except Exception as e:
         _log().warning(f"listar_navegacao: erro em {p}: {e}")
+    try:
+        anotar_arquivos(pdfs)
+    except Exception as e:
+        _log().debug(f"listar_navegacao: anotação falhou: {e}")
     return {"raiz": e_raiz, "atual": p, "dirs": dirs, "pdfs": pdfs}
 
 
@@ -2699,6 +2812,10 @@ def listar_pendentes(recursivo=False, limite=500):
                         continue
                     pendentes.append({"nome": f, "caminho": cam})
                     if len(pendentes) >= limite:
+                        try:
+                            anotar_arquivos(pendentes)
+                        except Exception:
+                            pass
                         return pendentes
         else:
             for f in sorted(os.listdir(pasta)):
@@ -2709,7 +2826,15 @@ def listar_pendentes(recursivo=False, limite=500):
                     continue
                 pendentes.append({"nome": f, "caminho": cam})
                 if len(pendentes) >= limite:
+                    try:
+                        anotar_arquivos(pendentes)
+                    except Exception:
+                        pass
                     return pendentes
+    try:
+        anotar_arquivos(pendentes)
+    except Exception as e:
+        _log().debug(f"listar_pendentes: anotação falhou: {e}")
     return pendentes
 
 

@@ -210,7 +210,9 @@ Todo subagente do projeto segue este padrão (ver `.opencode/agent/kbp-qa.md` co
    ---
    ```
 3. **Corpo:** `Você é o subagente **kbp-<nome>**` + `## Responsabilidades` +
-   `## Regras obrigatórias` + `## Critérios de aceite` (ou `Retorno`). Texto em PT-BR,
+   `## Regras obrigatórias` + `## Critérios de aceite` (ou `Retorno`) +
+   `## Usuários pré-cadastrados (seed)` (mesma seção do §8.2 abaixo — TODO subagente
+   DEVE conhecer os usuários de seed para logins de teste/QA). Texto em PT-BR,
    funções `snake_case`, classes `PascalCase`, língua ubíqua do DDD.
 4. **Responsabilidade única** por subagente; nunca `commit`/`push` dentro de outro
    subagente (chame o `kbp-commit`); nunca segredos, `db_mod_*.db`, `backup/`, `logs/`,
@@ -218,6 +220,24 @@ Todo subagente do projeto segue este padrão (ver `.opencode/agent/kbp-qa.md` co
 5. **Ativação:** `.opencode/` está no `.gitignore` (vale só na máquina) e o OpenCode
    carrega agentes no boot — após criar/editar, **saia e reinicie o OpenCode**.
    Para versionar um agente, remova a linha `.opencode` do `.gitignore`.
+
+### 8.2 Usuários pré-cadastrados (seed) — conhecimento OBRIGATÓRIO de todo subagente
+
+> Fonte única de verdade: seed idempotente em `mod_gest_cad_usuario/bd_manipulador.py`
+> (`init_db`, linhas ~185–224). Se a pasta `.opencode/` for apagada e os subagentes
+> forem recriados a partir deste `AGENTS.md`, TODOS os subagentes DEVEM carregar esta
+> seção (§8.2) intacta — ela é parte do padrão `kbp-*` (ver §8.1 item 3).
+
+| Usuário | Senha | Perfil | Observações |
+|---|---|---|---|
+| `master` | `master` | `administrador_geral` | Senha padrão; 1º login FORÇA troca de senha/credenciais (`marcar_trocar_senha`) |
+| `qacomum` | `123456` | `comum` | Teste/QA (docs); acesso pré-liberado a `blog`, `editar_pdf`, `empenhos`; troca de senha forçada no 1º login |
+| `qamaster` | `123456` | `administrador_geral` | Teste/QA (docs); troca de senha forçada no 1º login |
+
+**Regras:**
+- São criados só se ainda não existem (idempotente). Nunca criar/duplicar em outra parte do código.
+- Senha padrão é provisória: qualquer fluxo que use `master`/`qacomum`/`qamaster` deve supor que a senha inicial pode já ter sido trocada pelo usuário.
+- Nunca expor senhas fora deste contexto interno (não logar, não commitar em `estrutura.md`/docs públicas).
 
 ## 9. Skills
 

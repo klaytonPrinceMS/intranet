@@ -216,3 +216,4 @@ assets/test/tmp_ferramentas_pdf/
 !.opencode/agent/
 .opencode/agent/*
 !.opencode/agent/*.md
+/mod_blog

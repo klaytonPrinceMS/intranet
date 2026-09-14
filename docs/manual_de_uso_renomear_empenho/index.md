@@ -17,18 +17,21 @@ O módulo atende à função de almoxarifado/gestão de empenhos. Usuários `com
 ### 1. Navegar
 
 - Navegação **recursiva** pelas pastas monitoradas e pelo organizador, mostrando apenas PDFs (com breadcrumb e botão de "pasta anterior").
-- Cada PDF mostra o status (`processado` / `pendente`). Para pendentes: **baixar**, **revisar/renomear** (normaliza o nome conforme o conteúdo e o tipo — DOC, EC, EE, EG, AE) e **solicitar envio**.
+- Cada linha exibe as colunas **Arquivo, Empenho, Parcela, Usuário, Data, Status** (+ Pasta/Ações) — os valores vêm da **leitura feita no reconhecimento** (`tb_levantamento`) e, quando o arquivo já foi processado, da leitura do processamento (`tb_empenhos`); **zeros à esquerda são normalizados só na exibição**. Para pendentes: **baixar**, **revisar/renomear** (normaliza o nome conforme o conteúdo e o tipo — DOC, EC, EE, EG, AE) e **solicitar envio**. O campo de pesquisa da aba usa o mesmo conjunto de colunas nos resultados.
 - Botões: **Processar pasta agora** (varre a raiz de todas as pastas monitoradas, com resumo ok/total) e **Atualizar**.
+
+!!! warning "Botão TEMPORÁRIO só para QA — REMOVER antes de produção"
+    O botão **"Gerar 25 (TEMP)"** (ícone `science`, totalmente à direita do menu de abas) **não faz parte da operação normal**: cada clique cria **+25 PDFs fictícios** na pasta `doc` do módulo para massa de teste (via `assets/test/fabrica_documentos.py:criar_lote_principal`). **Será removido antes de produção** (marcador `TEMPORARIO-25-ARQUIVOS-REMOVER-EM-PRODUCAO` em `mod_renomear_empenho/telas.py:153-183`).
 
 ### 2. Fila Renomeação
 
-- Lista recursiva de PDFs ainda **pendentes** de renomeação.
+- Lista recursiva de PDFs ainda **pendentes** de renomeação, com as colunas **Arquivo, Empenho, Parcela, Usuário, Data, Status** — mesma leitura do reconhecimento/processamento do Navegar (zeros à esquerda normalizados só na exibição).
 - **Processar** individualmente ou **Processar todos**. Pastas inacessíveis (ex.: rede fora do ar) são puladas.
 
 ### 3. Pesquisar
 
 - **Busca textual** via índice FTS5 (nome final, empenho, parcela, usuário e campos do cabeçalho indexado), com fallback `LIKE`.
-- Tabela "Empenhos renomeados" com nome final, empenho, parcela, tipo, usuário e data.
+- Tabela "Empenhos renomeados" com nome final, empenho, parcela, tipo, usuário e data (a coluna **Usuário** já existia e foi mantida).
 
 ### 4. Organizador *(admin — PLANO 4c)*
 
@@ -59,7 +62,7 @@ O módulo atende à função de almoxarifado/gestão de empenhos. Usuários `com
 
 ## Fluxos principais
 
-- **Monitor de pastas:** varre a raiz de cada pasta monitorada (local/UNC), processando PDFs novos e registrando os removidos; em rede, pastas inacessíveis são puladas.
+- **Monitor de pastas:** varre a raiz de cada pasta monitorada (local/UNC), processando PDFs novos e registrando os removidos; em rede, pastas inacessíveis são puladas. O **levantamento (`levantar_arquivos`) grava todos os campos + usuário** no reconhecimento — cada PDF inventariado anota nº/parcela/ficha/ano/tipo/conteúdo e o ator; na revisita, o usuário logado é adotado sem que o agendador `"sistema"` sobrescreva nome real.
 - **Extração:** fallback `pymupdf` → `pdfplumber` → OCR `pytesseract` → `pikepdf` (trata OCR e encoding `cp1252`/`Latin-1`, mojibake `?` tolerante).
 - **Tipos especiais:** EC (complementação), EE (estimativo), EG (global) e AE (anulação) são detectados pelo conteúdo e renomeados com nome próprio.
 - **Indexação FTS5:** busca por pagador, CPF, valor, órgão etc. (`tb_indexador_pesquisa_fts5`).

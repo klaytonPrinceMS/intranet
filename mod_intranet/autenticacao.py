@@ -14,11 +14,11 @@ SESSION_COOKIE_NAME = "intranet_session"
 
 MODULOS_SISTEMA = [
     ("blog", "Blog", "article", "/blog"),
-    ("usuarios", "Usuários", "manage_accounts", "/users"),
-    ("auditoria", "Auditoria", "history", "/auditoria"),
     ("editar_pdf", "Editor PDF", "picture_as_pdf", "/edit-pdf"),
     ("empenhos", "Empenhos", "folder_open", "/renomear-empenho"),
     ("solicita_impressao", "Solicitação de Impressão", "print", "/solicita-impressao"),
+    ("usuarios", "Usuários", "manage_accounts", "/users"),
+    ("auditoria", "Auditoria", "history", "/auditoria"),
 ]
 
 CHAVE_POR_ROTA = {rota.strip("/"): chave for chave, _, _, rota in MODULOS_SISTEMA}
@@ -32,8 +32,10 @@ def _garantir_tb_modulos():
     Cria a tabela `tb_modulos` (incluindo a coluna `ordem`) e a semeia com os
     módulos nativos de `MODULOS_SISTEMA`, uma única vez por processo. Em
     bancos antigos aplica migração idempotente: adiciona a coluna `ordem` via
-    `ALTER TABLE` e inicializa a sequência — nativos seguem `MODULOS_SISTEMA`
-    (1..n) e não-nativos ficam após os nativos em ordem alfabética. Falhas são
+    `ALTER TABLE` e numera SOMENTE as linhas com `ordem=0` — nativos zerados
+    seguem `MODULOS_SISTEMA` e não-nativos zerados ficam após os numerados em
+    ordem alfabética. Linhas já numeradas (ordem do usuário via ↑/↓) NUNCA são
+    reescritas aqui, então a personalização sobrevive a reinícios. Falhas são
     registradas via loguru e re-lançadas (o cadastro de módulos é crítico).
     Usa `Repositorio` (SQLAlchemy ORM) para operações no banco.
     """
@@ -67,14 +69,19 @@ def _garantir_tb_modulos():
             cur.execute("ALTER TABLE tb_modulos ADD COLUMN ordem INTEGER NOT NULL DEFAULT 0")
         cur.execute("SELECT COUNT(*) FROM tb_modulos WHERE ordem=0")
         if cur.fetchone()[0] > 0:
-            for idx, (chave, _, _, _) in enumerate(MODULOS_SISTEMA, start=1):
-                cur.execute("UPDATE tb_modulos SET ordem=? WHERE chave=? AND nativo=1", (idx, chave))
-            cur.execute("SELECT COALESCE(MAX(ordem), 0) FROM tb_modulos WHERE nativo=1")
-            max_nativo = cur.fetchone()[0]
-            cur.execute("SELECT chave FROM tb_modulos WHERE nativo=0 AND ordem=0 ORDER BY nome")
-            for i, (chave,) in enumerate(cur.fetchall()):
-                cur.execute("UPDATE tb_modulos SET ordem=? WHERE chave=?",
-                            (max_nativo + i + 1, chave))
+            # Preenche SOMENTE as linhas zeradas, preservando a ordem do usuário:
+            # nativos zerados seguem MODULOS_SISTEMA; demais, após os numerados.
+            cur.execute("SELECT COALESCE(MAX(ordem), 0) FROM tb_modulos WHERE ordem<>0")
+            proxima = cur.fetchone()[0] + 1
+            for chave, _, _, _ in MODULOS_SISTEMA:
+                cur.execute("SELECT 1 FROM tb_modulos WHERE chave=? AND ordem=0", (chave,))
+                if cur.fetchone():
+                    cur.execute("UPDATE tb_modulos SET ordem=? WHERE chave=?", (proxima, chave))
+                    proxima += 1
+            cur.execute("SELECT chave FROM tb_modulos WHERE ordem=0 ORDER BY nome")
+            for (chave,) in cur.fetchall():
+                cur.execute("UPDATE tb_modulos SET ordem=? WHERE chave=?", (proxima, chave))
+                proxima += 1
         conn.commit()
         _modulos_ok = True
     except Exception:

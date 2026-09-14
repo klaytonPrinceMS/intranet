@@ -31,4 +31,9 @@
 
 Ver [Registro de Mudanças](../registro_de_mudancas/index.md) — todos os itens da Fase 9 concluídos (RF-04/16, RF-08, RF-09, RF-26, RF-32, RF-35, RF-36, **RF-41**, **RF-45**, **RF-40**, **RF-44**, **RF-39**, **RF-58**, **RF-57**), conforme `PLANO.md`.
 
+**Pendências abertas da sessão de 14/09/2026 (Blog, NÃO implementadas):**
+
+- Espaçamento acima das seções "Como usar / Dicas / Limites" das postagens-guia.
+- Checagem de subtítulos das postagens-guia.
+
 Veja também [Visão de Produto](../visao_de_produto/index.md) e [Arquitetura](../arquitetura_de_software_das/index.md).

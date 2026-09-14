@@ -16,8 +16,8 @@
 ## Blog (`/blog`)
 
 - Leitura de publicações e histórico (somente leitura).
-- Controles de criação/edição/exclusão/comentário ficam ocultos **e** bloqueados no backend para `comum`.
-- Postagens podem conter **diagramas Mermaid** (bloco ```mermaid ... ```) renderizados no navegador — o `comum` apenas visualiza.
+- Controles de criação/edição/exclusão/comentário ficam ocultos **e** bloqueados no backend para `comum` (publicar é exclusivo do administrador — ver [Manual do Administrador](../manual_de_uso_administrador/index.md), seção "Blog — publicar com o editor WYSIWYG").
+- Postagens podem conter **imagens** (exibidas no corpo do texto, ajustadas à largura do card) e **diagramas Mermaid** (bloco ```mermaid ... ```) renderizados no navegador — o `comum` apenas visualiza.
 
 ## Editor de PDF (`/edit-pdf`)
 

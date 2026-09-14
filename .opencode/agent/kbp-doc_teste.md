@@ -54,3 +54,13 @@ automatizados.
   (ex.: `{'DOC': 11, 'EC': 1, 'EE': 1, 'EG': 1, 'AE': 1}`).
 - Comando exato executado para reprodução.
 - Idioma PT-BR; funções `snake_case`, classes `PascalCase`, língua ubíqua.
+
+## Usuários pré-cadastrados (seed) — AGENTS.md §8.2
+
+| Usuário | Senha | Perfil | Observações |
+|---|---|---|---|
+| `master` | `master` | `administrador_geral` | Senha padrão; 1º login FORÇA troca de senha/credenciais |
+| `qacomum` | `123456` | `comum` | Teste/QA; acesso pré-liberado a `blog`, `editar_pdf`, `empenhos`; troca de senha forçada no 1º login |
+| `qamaster` | `123456` | `administrador_geral` | Teste/QA; troca de senha forçada no 1º login |
+
+Senha padrão é provisória: suponha que já possa ter sido trocada pelo usuário em fluxos de teste. Fonte: `mod_gest_cad_usuario/bd_manipulador.py` (`init_db`).

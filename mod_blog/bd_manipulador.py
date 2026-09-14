@@ -29,8 +29,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_BLOG_PATH = os.path.join(BASE_DIR, "db_mod_blog.db")
 
 # Conjunto de tags permitidas para o sistema de blog (padrão; editável em
-# tb_config central na chave 'blog_tags_permitidas', CSV)
-_TAGS_PADRAO = "b,i,u,strong,em,p,a,img,h1,h2,h3,ul,ol,li,blockquote,code,pre"
+# tb_config central na chave 'blog_tags_permitidas', CSV). `div`/`br` são
+# estruturais do editor WYSIWYG (linhas e quebras) — sempre permitidas em
+# `_sanitizar_texto`, sem atributos.
+_TAGS_PADRAO = "b,i,u,strong,em,p,a,img,h1,h2,h3,ul,ol,li,blockquote,code,pre,div,br"
 TAGS_PERMITIDAS = set(_TAGS_PADRAO.split(","))
 
 
@@ -104,102 +106,103 @@ AUTOR_PADRAO = "master"
 # Postagens de guia de uso voltadas ao usuário comum (não administrativo),
 # cada uma encerrando com um fluxograma Mermaid (```mermaid) ao final. São
 # semeadas automaticamente em bancos novos (tabela vazia) por `init_db`.
+# PADRÃO ÚNICO (14/09/2026, espelho da postagem "Editor de PDF — Como usar"):
+# `# **Título**` (faixa gigante centralizada), `### subtítulo`, parágrafo
+# de apresentação e seções em **negrito** com listas; diagrama centralizado
+# no render (`_renderizar_conteudo_postagem`).
 POSTAGENS_PADRAO = [
     {
         "titulo": "Editor de PDF — Como usar",
-        "conteudo": """**Editor de PDF** — um espaço pessoal e rápido para trabalhar com seus PDFs: enviar, reduzir, juntar, cortar, dividir, verificar e baixar. Cada usuário só enxerga os próprios arquivos.
+        "conteudo": """# **Editor de PDF**
+### Um espaço pessoal e rápido para trabalhar com seus PDFs:
+Enviar, reduzir, juntar, cortar, dividir, verificar e baixar. Cada usuário só enxerga os próprios arquivos, respeitando ao máximo a Lei Geral de Proteção de Dados.
 
-# Como usar
-- **Envie** seus PDFs pelo campo *Envie um ou mais PDFs* (arraste ou clique; só aceita .pdf).
-- **Marque** na tabela os arquivos que quer usar. A ordem de marcação é a ordem do **Juntar**.
-- Escolha a operação: **Juntar**, **Reduzir**, **Cortar** ou **Dividir**.
-- **Baixe** o resultado (ZIP ou arquivos individuais).
-- **Exclua** o que não precisa para liberar espaço.
+**Como usar**
+- **Envie** seus PDFs pelo campo *Envie um ou mais PDFs* (arraste ou clique; só aceita .pdf, até 10 arquivos e 1024 MB por vez).
+- **Marque** na tabela os arquivos que quer usar (as badges `#` mostram a ordem). A ordem de marcação é a ordem do **Juntar**.
+- Escolha a operação: **Juntar selecionados**, **Reduzir**, **Cortar** ou **Dividir** — ou **Verificar integridade** para conferir um arquivo.
+- **Baixe** o resultado (ZIP, arquivos individuais ou pelo menu da linha) e **Exclua** o que não precisa.
+- Acompanhe a coluna **Expira em** (contagem regressiva) e os avisos de recusas nominais do lote.
 
-# Dicas
-- Os arquivos **expirem automaticamente** em alguns minutos — conclua o trabalho com calma, mas não deixe para depois.
-- Para reduzir, use o modo **Leve** no dia a dia; o **Agressivo** transforma texto em imagem (perde a busca no texto).
-- Você tem uma **cota de espaço** por usuário — exclua PDFs antigos para liberar.
-
-# Limites
-- Cada usuário **só vê os próprios arquivos**.
-- O upload em lote tem limite de arquivos e de tamanho por vez.
+**Dicas**
+- Os arquivos **expirem automaticamente em 10 minutos** (padrão, ajustável pelo admin) — conclua com calma, mas não deixe para depois.
+- Para reduzir, use o modo **Leve** no dia a dia; o **Agressivo** transforma texto em imagem (perde a busca no texto). Há ajustes de qualidade/DPI e 4 modos de Dividir.
+- Você tem uma **cota de 1 GB** (10 GB global) — exclua PDFs antigos para liberar espaço.
 
 ```mermaid
 flowchart TD
-    A[Entrar em Editor de PDF] --> B[Enviar um ou mais PDFs]
-    B --> C[Selecionar os arquivos na lista]
-    C --> D[Escolher a operação]
-    D -->|Juntar| E[Juntar selecionados]
-    D -->|Reduzir| F[Reduzir tamanho]
-    D -->|Cortar ou dividir| G[Cortar / Dividir páginas]
-    E --> H[Baixar o resultado]
-    F --> H
-    G --> H
-    H --> I[Baixar ou excluir ao terminar]
+    A[Entrar em Editor de PDF] --> B[Enviar PDFs: até 10 por vez]
+    B --> C[Marcar arquivos na ordem do Juntar]
+    C --> D[Escolher: Juntar, Reduzir, Cortar, Dividir ou Verificar]
+    D --> E[Baixar ZIP, individuais ou da linha]
+    E --> F[Excluir ao terminar e liberar a cota]
 ```""",
     },
     {
         "titulo": "Solicitação de Impressão — Como usar",
-        "conteudo": """**Solicitação de Impressão** — central de pedidos de impressão. Anexe seus PDFs, escolha as opções e envie a solicitação. O pedido pode precisar de **autorização** e é impresso pelo setor responsável.
+        "conteudo": """# **Solicitação de Impressão**
+### Central de pedidos de impressão:
+Envie os PDFs e acompanhe tudo em um único Pedido com N arquivos e status único. Pode precisar de **autorização**; quem imprime e confirma é o admin do módulo.
 
-# Como usar
-- Na aba **Nova Solicitação**, **anexe os PDFs** (até 10 por solicitação).
-- Preencha: **quantidade de cópias**, **tamanho do papel**, **cor** e, se aplicável, **frente e verso**.
-- Se desmarcar *papel sulfite*, você deve **levar o papel**.
-- Escolha a **secretaria** (e o setor, se houver) e clique **Enviar solicitação**.
-- Acompanhe em **Minhas Solicitações** o andamento de cada pedido.
+**Como usar**
+- Na aba **Nova Solicitação**, **anexe os PDFs** (até 10 por envio — todos entram no mesmo Pedido).
+- Preencha: **cópias**, **tipo e tamanho do papel**, **cor**, **frente e verso**, **borda** (só com frente e verso) e **observações**.
+- Papel **Fotográfico/Vergê**: traga o próprio papel (aviso "(trazer)").
+- Escolha a **secretaria** (e o setor) e clique **Enviar solicitação**.
+- Acompanhe em **Minhas Solicitações** (com contagem regressiva do rascunho) e na aba **Autorização**.
 
-# Status possíveis
-- **Autorizado** — pronto para impressão.
+**Status possíveis**
+- **Pendente** — enviado, aguardando definição (sem responsável vinculado).
 - **Aguardando autorização** — o responsável vai avaliar.
+- **Autorizado** — liberado; o admin ainda precisa **Imprimir e Confirmar**.
 - **Excedente de cota** — ultrapassou a cota do mês; precisa de autorização.
-- **Recusado / Cancelado / Impresso** — fim do fluxo.
+- **Recusado** — pode **Reenviar**; **Cancelado** — sai da lista; **Impresso** — fim do fluxo (arquivos apagados do servidor).
 
-# Dicas
-- Enquanto o pedido estiver pendente/aguardando, você pode **cancelar** em *Minhas Solicitações*.
-- Baixe o **PDF com marca d'água** se precisar conferir.
-- Cada arquivo anexado gera **uma solicitação separada** com as mesmas opções.
+**Dicas**
+- Respeite o **limite de pedidos abertos** e a **cota em páginas**.
+- A **marca d'água** é opcional e aplicada na impressão (configurada pelo admin).
+- Relatórios, impressoras e cotas ficam na **Administração** do módulo.
 
 ```mermaid
 flowchart TD
-    A[Entrar em Solicitação de Impressão] --> B[Aba Nova Solicitação]
-    B --> C[Anexar PDFs]
-    C --> D[Preencher opções: cópias, papel, cor, frente e verso]
-    D --> E[Escolher secretaria / setor]
-    E --> F[Enviar solicitação]
-    F --> G{Acompanhar status}
-    G -->|Aguardando autorização| H[Responsável autoriza]
-    G -->|Autorizado| I[Setor imprime]
-    G -->|Excedente de cota| J[Depende de autorização]
-    G -->|Recusado ou cancelado| K[Revisar e enviar de novo]
+    A[Entrar em Solicitação] --> B[Aba Nova Solicitação: anexar até 10 PDFs]
+    B --> C[Preencher cópias, papel, cor, borda e observações]
+    C --> D[Enviar: 1 Pedido com N arquivos]
+    D --> E{Tem responsável?}
+    E -->|Não| F[Pendente]
+    E -->|Sim| G[Aguardando autorização]
+    G --> H[Responsável autoriza ou recusa]
+    H --> I[Autorizado: admin imprime e confirma]
+    I --> J[Impresso: fim]
 ```""",
     },
     {
         "titulo": "Empenhos — Como usar",
-        "conteudo": """**Empenhos** — o módulo monitora as pastas com PDFs de empenhos, **extrai automaticamente** o número e organiza/renomeia os documentos. Você pode navegar, processar, pesquisar e solicitar o envio de um documento.
+        "conteudo": """# **Empenhos**
+### Renomeação automática dos seus empenhos:
+O módulo monitora as pastas, **extrai automaticamente** o número e organiza/renomeia. O uso comum acontece na aba **Navegar**; o resto é do admin.
 
-# Como usar
-- Na aba **Navegar**, abra as pastas monitoradas e veja os PDFs com status **processado** (verde) ou **pendente** (laranja).
-- **Processe** os pendentes (na aba **Fila Renomeação** ou pela ação na pasta) — o módulo renomeia e organiza sozinho.
-- Use o botão **Baixar** para obter o documento já processado.
-- **Solicite o envio** por e-mail quando precisar que o documento seja enviado a alguém.
-- Na aba **Pesquisar**, busque por conteúdo nos empenhos indexados.
+**Como usar (aba Navegar)**
+- Abra as pastas e use a **busca integrada** (conteúdo + todos os campos).
+- Status **processado** (verde) ou **pendente** (laranja); filtro **Só pendentes**, **Marcar visíveis** e envio em lote.
+- **Processar pasta agora** (tudo), **Processar (auto)** ou o lápis para **revisar** (Ficha/Empenho/Parcela/Ano, tipos DOC/EC/EE/EG/AE).
+- **Solicitar envio** por e-mail é livre (avulso ou em lote); **Baixar** exige liberação do admin.
+- Acompanhe o **Histórico completo** na aba **Solicitação**.
 
-# Dicas
-- A renomeação usa o **número do empenho** lido do próprio PDF (texto ou OCR).
-- Documentos **pendentes** podem ser solicitados sempre; **processados** dependem de liberação do administrador.
-- O histórico das solicitações fica na aba **Solicitação**.
+**Para o admin**
+- Abas **Fila Renomeação**, **Organizador** (caixas, capas, matriz, ferramentas PDF) e **Quarentena** (reprocessar a fila, separar documentos).
+- Pastas locais ou de rede (UNC), template de nome e regras por campo nas Configurações.
 
 ```mermaid
 flowchart TD
-    A[Entrar em Empenhos] --> B[Aba Navegar: abrir pastas]
+    A[Entrar em Empenhos: aba Navegar] --> B[Buscar ou abrir pastas]
     B --> C{PDF pendente?}
-    C -->|Sim| D[Processar / revisar renomeação]
-    C -->|Não| E[Ver arquivos processados]
-    D --> F[Baixar ou solicitar envio]
-    E --> F
-    F --> G[Pesquisar na aba Pesquisar]
+    C -->|Sim| D[Processar pasta agora, auto ou revisar]
+    C -->|Não| E[Arquivo processado]
+    D --> F[Solicitar envio por e-mail, livre]
+    E --> G[Baixar, com liberação do admin]
+    F --> H[Histórico na Solicitação]
+    G --> H
 ```""",
     },
 ]
@@ -291,6 +294,11 @@ def init_db():
                         (_chave_local, _valor))
         # Postagens de guia "Como usar" (apenas em banco recém-criado, tabela vazia).
         _semear_postagens_padrao(cur)
+    # Pasta de imagens do editor (dentro do módulo; servida em /img_postagens/*).
+    try:
+        os.makedirs(PASTA_IMAGENS, exist_ok=True)
+    except Exception:
+        pass
 
 
 def get_config_local(chave, default=""):
@@ -376,13 +384,106 @@ def obter_postagem(id_post):
 _URL_SCHEMES = {"http", "https", "data", "mailto", "relative"}
 # Atributos permitidos por tag (usados na sanitização; essenciais p/ links e
 # imagens, incluindo data:/URLs relativas pedidas pelo PLANO Fase 3).
+# `img` aceita `class` (CSS online/frameworks) e `style` (CSS local inline,
+# sanitizado pelo nh3) para edição da imagem pelo autor.
 _ATTRS = {
     "a": {"href"},
-    "img": {"src", "alt", "title", "width", "height"},
+    "img": {"src", "alt", "title", "width", "height", "class", "style"},
     "code": {"class"},
     "pre": {"class"},
     "blockquote": {"class"},
 }
+
+# Pasta de imagens enviadas pelo editor (dentro do módulo, servida em
+# `/img_postagens/*` via `mod_blog.montar_rotas_static`, montada no main.py).
+MOD_DIR = os.path.dirname(os.path.abspath(__file__))
+PASTA_IMAGENS = os.path.join(MOD_DIR, "img_postagens")
+# Limites do envio de imagem do editor (valores fixos do módulo).
+IMAGEM_EXTENSOES = {".jpg", ".jpeg", ".png"}
+IMAGEM_MAX_BYTES = 5 * 1024 * 1024
+IMAGEM_EXPIRACAO_MIN = 5
+
+
+def _nome_usuario_seguro(usuario):
+    """Normaliza o login para uso no nome do arquivo (só [a-z0-9_-])."""
+    base = re.sub(r"[^a-zA-Z0-9_-]", "_", (usuario or "anonimo").strip() or "anonimo")
+    return base[:40].lower() or "anonimo"
+
+
+def salvar_imagem_postagem(nome_original, conteudo, usuario):
+    """Salva uma imagem do editor em `img_postagens` (JPG/PNG, até 5 MB).
+
+    Nome padrão `dataHora_nomeDoUsuario.ext` (`AAMMDDHHMM_usuario`), com sufixo
+    contador em colisão. Valida extensão e assinatura do arquivo (JPEG FFD8,
+    PNG 89504E47). Retorna `(True, nome_servidor)` ou `(False, motivo)`.
+    """
+    try:
+        import datetime as _dt
+        ext = os.path.splitext(nome_original or "")[1].lower()
+        if ext not in IMAGEM_EXTENSOES:
+            return False, "Envie um arquivo .jpg ou .png"
+        if not conteudo or len(conteudo) > IMAGEM_MAX_BYTES:
+            return False, "Arquivo vazio ou maior que 5 MB"
+        if ext in (".jpg", ".jpeg"):
+            ok_tipo = conteudo[:2] == b"\xff\xd8"
+        else:
+            ok_tipo = conteudo[:8] == b"\x89PNG\r\n\x1a\n"
+        if not ok_tipo:
+            return False, "O arquivo não é uma imagem JPG/PNG válida"
+        os.makedirs(PASTA_IMAGENS, exist_ok=True)
+        base = f"{_dt.datetime.now().strftime('%y%m%d%H%M')}_{_nome_usuario_seguro(usuario)}"
+        nome = f"{base}{ext}"
+        for i in range(2, 1000):
+            if not os.path.exists(os.path.join(PASTA_IMAGENS, nome)):
+                break
+            nome = f"{base}_{i}{ext}"
+        with open(os.path.join(PASTA_IMAGENS, nome), "wb") as fh:
+            fh.write(conteudo)
+        _log().info(f"imagem do editor salva: {nome} por {usuario}")
+        return True, nome
+    except Exception as e:
+        _log().exception(f"salvar_imagem_postagem falhou: {e}")
+        return False, f"Falha ao salvar a imagem: {e}"
+
+
+def expirar_imagens_orfas(minutos=IMAGEM_EXPIRACAO_MIN):
+    """Remove imagens não concretizadas em postagem (órfãs há +5 min).
+
+    Uma imagem é órfã quando seu nome não aparece em nenhum `conteudo` de
+    `tb_postagens`. Chamado pelo agendador a cada 1 min (`cleanup_blog_imagens`).
+    Retorna a quantidade removida.
+    """
+    try:
+        import time as _time
+        if not os.path.isdir(PASTA_IMAGENS):
+            return 0
+        try:
+            with _crud.transacao() as cur:
+                cur.execute("SELECT conteudo FROM tb_postagens")
+                textos = " ".join((r[0] or "") for r in cur.fetchall())
+        except Exception:
+            textos = ""
+        agora = _time.time()
+        removidas = 0
+        for nome in os.listdir(PASTA_IMAGENS):
+            caminho = os.path.join(PASTA_IMAGENS, nome)
+            if not os.path.isfile(caminho):
+                continue
+            try:
+                if agora - os.path.getmtime(caminho) < minutos * 60:
+                    continue
+                if nome in textos:
+                    continue
+                os.remove(caminho)
+                removidas += 1
+            except Exception:
+                continue
+        if removidas:
+            _log().info(f"imagens órfãs expiradas: {removidas}")
+        return removidas
+    except Exception as e:
+        _log().exception(f"expirar_imagens_orfas falhou: {e}")
+        return 0
 
 
 def _sanitizar_texto(texto):
@@ -390,11 +491,13 @@ def _sanitizar_texto(texto):
 
     Para links e imagens são aceitos os esquemas http/https (e relativos), além
     de data: para imagens, conforme PLANO Fase 3. URLs relativas são mantidas.
+    `div`/`br` (estrutura de linhas do editor WYSIWYG) são sempre permitidas,
+    sem atributos.
     """
     if isinstance(texto, str):
         return clean(
             texto,
-            tags=tags_permitidas(),
+            tags=tags_permitidas() | {"div", "br"},
             attributes=_ATTRS,
             url_schemes=_URL_SCHEMES,
             url_relative="pass_through",
@@ -416,17 +519,34 @@ def _pode_publicar(usuario):
         return False
 
 
+def mover_mermaid_para_fim(conteudo):
+    """Move blocos ```mermaid para o fim do texto (ordem preservada).
+
+    PADRÃO DO MÓDULO: diagramas sempre encerram a postagem (e renderizam
+    centralizados em `_renderizar_conteudo_postagem`). Sem fence completo,
+    devolve o conteúdo intacto.
+    """
+    if not isinstance(conteudo, str) or "```mermaid" not in conteudo:
+        return conteudo
+    blocos = [m.group(0) for m in _FENCE_MERMAID.finditer(conteudo)]
+    if not blocos:
+        return conteudo
+    resto = _FENCE_MERMAID.sub("", conteudo).rstrip()
+    return (resto + "\n\n" + "\n\n".join(blocos) + "\n") if resto else ("\n\n".join(blocos) + "\n")
+
+
 @falha_suave(default=None, nivel="exception")
 @requer_pode_publicar(arg_usuario="autor")
 @auditado(modulo="blog", acao="criar_postagem")
 def criar_postagem(titulo, conteudo, autor):
     """Creates a post (sanitized) after checking publish permission.
 
-    Valida permissão (`_pode_publicar`), sanitiza título e conteúdo com nh3,
-    grava no banco próprio, audita `criar_postagem` e registra no loguru.
-    Retorna o id criado ou None em falha/sem permissão."""
+    Valida permissão (`_pode_publicar`), move ```mermaid para o fim,
+    sanitiza título e conteúdo com nh3, grava no banco próprio, audita
+    `criar_postagem` e registra no loguru. Retorna o id criado ou None
+    em falha/sem permissão."""
     titulo_sanitizado = _sanitizar_texto(titulo)
-    conteudo_sanitizado = _sanitizar_texto(conteudo)
+    conteudo_sanitizado = _sanitizar_texto(mover_mermaid_para_fim(conteudo))
     post_id = _crud.criar(
         "INSERT INTO tb_postagens (titulo, conteudo, autor) VALUES (?, ?, ?)",
         (titulo_sanitizado, conteudo_sanitizado, autor))
@@ -440,10 +560,11 @@ def criar_postagem(titulo, conteudo, autor):
 def atualizar_postagem(id_post, titulo, conteudo, autor):
     """Updates title/content (sanitized) after checking permission. Returns bool.
 
-    Valida permissão, sanitiza com nh3, atualiza `data_atualizacao` e audita
-    `atualizar_postagem`. False em falha/sem permissão/postagem inexistente."""
+    Valida permissão, move ```mermaid para o fim, sanitiza com nh3, atualiza
+    `data_atualizacao` e audita `atualizar_postagem`. False em falha/sem
+    permissão/postagem inexistente."""
     titulo_sanitizado = _sanitizar_texto(titulo)
-    conteudo_sanitizado = _sanitizar_texto(conteudo)
+    conteudo_sanitizado = _sanitizar_texto(mover_mermaid_para_fim(conteudo))
     afetadas = _crud.atualizar(
         "UPDATE tb_postagens SET titulo=?, conteudo=?, "
         "data_atualizacao=datetime('now') WHERE id=?",
@@ -544,6 +665,61 @@ def criar_comentario(postagem_id, autor, conteudo):
     return True
 
 
+def ajustar_imagem_html(html_texto, alinhamento=None, largura=None):
+    """Aplica alinhamento/largura à ÚLTIMA `<img>` do HTML (puro, testável).
+
+    Reescreve só as props de layout do `style` (`float`, `margin*`,
+    `display`, `max/min/width`), preservando o restante do CSS do autor e o
+    outro eixo quando só um muda (`largura=None` mantém a atual;
+    `alinhamento=None` mantém o atual). `largura="original"` remove o
+    `max-width` (vale o padrão do render). Retorna `(novo_html, detalhe)`;
+    levanta `ValueError` se não há imagem.
+    """
+    html_atual = html_texto or ""
+    tags = list(re.finditer(r"<img\b[^>]*>", html_atual, flags=re.IGNORECASE))
+    if not tags:
+        raise ValueError("Nenhuma imagem no texto")
+    m = tags[-1]
+    tag = m.group(0)
+    ms = re.search(r'style="([^"]*)"', tag, flags=re.IGNORECASE)
+    props = {}
+    for parte in (ms.group(1) if ms else "").split(";"):
+        if ":" in parte:
+            k, v = parte.split(":", 1)
+            props[k.strip().lower()] = v.strip()
+    if alinhamento is None:
+        if props.get("float") == "right":
+            alinhamento = "direita"
+        elif props.get("float") == "left":
+            alinhamento = "esquerda"
+        elif (props.get("display") == "block"
+              and "auto" in props.get("margin", "")):
+            alinhamento = "centro"
+    larg_atual = props.get("max-width")
+    if largura is None:
+        largura = larg_atual or "original"
+    for k in ("float", "margin", "margin-left", "margin-right",
+              "margin-top", "margin-bottom", "display",
+              "max-width", "min-width", "width"):
+        props.pop(k, None)
+    if largura and largura != "original":
+        props["max-width"] = largura
+    props["height"] = "auto"
+    if alinhamento == "esquerda":
+        props.update({"float": "left", "margin": "0 12px 12px 0"})
+    elif alinhamento == "direita":
+        props.update({"float": "right", "margin": "0 0 12px 12px"})
+    elif alinhamento == "centro":
+        props.update({"display": "block", "margin": "8px auto"})
+    estilo = ";".join(f"{k}:{v}" for k, v in props.items())
+    if ms:
+        nova = tag[:ms.start(1)] + estilo + tag[ms.end(1):]
+    else:
+        nova = tag[:-1].rstrip() + f' style="{estilo}">'
+    detalhe = (alinhamento or "") + (" " + largura if largura else "")
+    return html_atual[:m.start()] + nova + html_atual[m.end():], detalhe.strip() or "padrão"
+
+
 def _merge_style(base, extra):
     """Concatena estilos CSS sem duplicar o separador ';'."""
     base = (base or "").strip()
@@ -555,7 +731,10 @@ def _merge_style(base, extra):
 class _FormatadorBlog(HTMLParser):
     """Reescreve HTML sanitizado aplicando o padrão visual do Blog:
     - h1/h2/h3: negrito + centralizado
-    - img: alinhada à esquerda, limites 200-400px, responsiva
+    - img: alinhada à esquerda, limites 200-400px, responsiva — SALVO quando o
+      autor definiu alinhamento/tamanho no `style` (botões do editor): `float`
+      ou margens `auto` do autor vencem o padrão; `max-width` do autor dispensa
+      os limites padrão (inclusive o `min-width`, que estouraria % pequenas)
     """
 
     _VOID = {"br", "hr", "img", "input", "meta", "link"}
@@ -572,11 +751,19 @@ class _FormatadorBlog(HTMLParser):
         if tag in ("h1", "h2", "h3"):
             style = _merge_style(style, "text-align:center;font-weight:bold;")
         elif tag == "img":
-            style = _merge_style(
-                style,
-                f"float:left;margin:0 12px 12px 0;max-width:{self.img_max}px;"
-                f"min-width:{self.img_min}px;",
-            )
+            declaradas = {p.split(":", 1)[0].strip().lower()
+                          for p in style.split(";") if ":" in p}
+            tem_max = "max-width" in declaradas
+            alinhada = ("float" in declaradas
+                        or ("margin-left" in declaradas and "margin-right" in declaradas)
+                        or ("margin" in declaradas and "auto" in style))
+            padrao = ""
+            if not alinhada:
+                padrao += "float:left;margin:0 12px 12px 0;"
+            if not tem_max:
+                padrao += (f"max-width:{self.img_max}px;"
+                           f"min-width:{self.img_min}px;")
+            style = _merge_style(style, padrao)
             if "loading" not in d:
                 d["loading"] = "lazy"
         if style:
@@ -653,6 +840,7 @@ def formatar_conteudo_para_exibicao(conteudo):
     - Imagens alinhadas à esquerda, limites 200-400px responsivas
     - Texto puro/Markdown com alinhamento justificado
     - HTML sanitizado (nh3) preservado e estilizado
+    - Markdown leve (`#`, `-`, `**`) dentro de HTML do editor WYSIWYG convertido
     """
     if not conteudo:
         return ""
@@ -663,11 +851,64 @@ def formatar_conteudo_para_exibicao(conteudo):
     if "<" not in limpo:
         corpo = _markdown_leve(html.escape(limpo, quote=False))
         return f'<div style="text-align:justify">{corpo}</div>'
+    # HTML (ex. do editor WYSIWYG, que envolve tudo em <p>) -> converte o
+    # Markdown digitado nos blocos antes de aplicar os estilos do padrão
+    limpo = _markdown_em_html(limpo)
     # HTML sanitizado -> aplica estilos do padrão (largura de imagem configurável)
     min_l, max_l = _largura_imagem()
     parser = _FormatadorBlog(img_min=min_l, img_max=max_l)
     parser.feed(limpo)
     return f'<div style="text-align:justify">{parser.getvalue()}</div>'
+
+
+def _markdown_em_html(limpo):
+    """Converte Markdown leve dentro de blocos HTML (texto do editor WYSIWYG).
+
+    O editor envolve cada linha em `<p>` (e a primeira pode vir solta, com as
+    demais em `<div>`, que o nh3 mantém sem atributos) — por isso normaliza
+    `<div>` para `<p>` e converte também eventual primeira linha solta:
+    `<p>#..</p>` → `<h1..3>`, `<p>- ..</p>` vizinhos → `<ul><li>` e
+    `**x**` → `<b>x</b>` (só em texto, nunca em atributos). Conteúdo de
+    `code`/`pre` é preservado intacto.
+    """
+    # Normaliza blocos do editor: <div> (sem atributos pós-nh3) equivale a <p>.
+    limpo = re.sub(r"<div[^>]*>", "<p>", limpo, flags=re.IGNORECASE)
+    limpo = re.sub(r"</div\s*>", "</p>", limpo, flags=re.IGNORECASE)
+
+    def _titulo_solteiro(m):
+        nivel = len(m.group(1))
+        return f"<h{nivel}>{m.group(2).strip()}</h{nivel}>"
+
+    limpo = re.sub(r"\A\s*(#{1,3})\s+([^<]*?)(?=<|\Z)", _titulo_solteiro, limpo)
+
+    def _item_solteiro(m):
+        return f"<ul><li>{m.group(1).strip()}</li></ul>"
+
+    limpo = re.sub(r"\A\s*[-*]\s+([^<]*?)(?=<|\Z)", _item_solteiro, limpo)
+    partes = re.split(r"(<(?:code|pre)[^>]*>.*?</(?:code|pre)>)", limpo,
+                      flags=re.DOTALL | re.IGNORECASE)
+    for i in range(0, len(partes), 2):
+        parte = partes[i]
+
+        def _titulo(m):
+            nivel = len(m.group(1))
+            return f"<h{nivel}>{m.group(2).strip()}</h{nivel}>"
+
+        parte = re.sub(r"<p>\s*(#{1,3})\s+(.*?)</p>", _titulo, parte,
+                       flags=re.DOTALL)
+
+        def _grupo_lista(m):
+            itens = re.findall(r"<p>\s*[-*]\s+(.*?)</p>", m.group(0),
+                               flags=re.DOTALL)
+            return "<ul>" + "".join(f"<li>{it.strip()}</li>" for it in itens) + "</ul>"
+
+        parte = re.sub(r"(?:<p>\s*[-*]\s+.*?</p>\s*)+", _grupo_lista, parte,
+                       flags=re.DOTALL)
+        toks = re.split(r"(<[^>]+>)", parte)
+        for j in range(0, len(toks), 2):
+            toks[j] = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", toks[j])
+        partes[i] = "".join(toks)
+    return "".join(partes)
 
 
 def _largura_imagem():

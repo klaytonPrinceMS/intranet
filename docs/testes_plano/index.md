@@ -28,6 +28,17 @@
 - **Paridade SQLite↔PostgreSQL** (`test_banco_conexao.py`, 12/09/2026, AGENTS.md §4): `sgbd_ativo`, `_CursorPostgres._preparar` (traduções), `_ddl_postgres`, `conexao('intranet')` com PRAGMA WAL (só leitura).
 - **Cobertura total** (`test_cobertura_total.py`, 12/09/2026): smoke de import + contrato de TODAS as funções/classes dos 64 arquivos `mod_*/` (puras com asserts + guardas anti-disconnect).
 - **Drawer / menu hambúrguer** (`verifica_ui_comum.py`, 12/09 + roteiro manual): fábrica `ItemMenuDrawer`/`item_menu_drawer` (`ui_comum.py:852-937`) e drawer (`telas.py:218-332`) — testids `menu-hamburguer/menu-home/menu-<chave>/menu-<chave>-indisponivel/menu-admin/menu-docs/menu-sair` (190/190 OK); matriz manual 3 perfis × 3 larguras em [Testes — Casos](../testes_casos/index.md) (seção "Roteiro manual — drawer × perfis × larguras").
+- **Sessões de 14/09/2026 — validações materializadas em `assets/test/`** (catálogo em `assets/test/README.md`; 8 scripts novos, todos verdes, 73 checks; 3 specs E2E novos — requerem `npm run test:e2e` + servidor :8080, não executados aqui por falta de Node):
+  - **Header — nome** (`test_header_nome.py`, 9): tratamento `qacomum`/`qamaster`, botão único `header-nome-usuario`, sem `hidden sm:*`, CSS escopado, tooltip (sessão: nome truncado `io de Teste QA C`).
+  - **Rodapé auto-hide** (`test_rodape_hover.py`, 7): testid, CSS `opacity:0`→hover, faixa 5px, textos preservados.
+  - **Blog — editor + imagens** (`test_blog_editor_imagens.py`, 17): upload JPG/PNG (aceite/recusa 5MB/assinatura), nome `dataHora_usuario`, tag nh3, rota `/img_postagens`, job, expiração de órfãs.
+  - **Blog — Markdown no editor** (`test_blog_markdown_editor.py`, 8): Markdown em `<p>`/`<div>`/1ª solta, listas, negrito, `code/pre`, `#hashtag`, `div/br`.
+  - **Blog — controles da imagem** (`test_blog_imagem_controles.py`, 12): `bd_manipulador.ajustar_imagem_html()` pura (eixos, CSS do autor, última img, sem-img) + feed respeita autor/padrão (refatoração: lógica extraída do `telas.py`, a tela delega).
+  - **Blog — Mermaid ao fim** (`test_blog_mermaid_fim.py`, 7): `mover_mermaid_para_fim` (meio→fim com ordem, sem fence/incompleto intacto, idempotente, seeds conformes) + render centralizado (`justify-center`, `max-width:680px`).
+  - **Empenhos — anotação** (`test_empenho_anotar.py`, 7): `anotar_arquivos` (levantamento, override `tb_empenhos`, fallbacks de nome; sem normalizar zeros — só a exibição).
+  - **Ordem dos módulos** (`test_ordem_modulos.py`, 6): ordem padrão + `reordenar` 1-based + boot simulado preserva (sessão: ordem resetava no restart).
+  - Convenções do README aplicadas a todos: standalone, veredito por exit code, docstring bilíngue EN/PT-BR + `Execute:`, sem destruição (`qa_*` ou snapshot/restore em `finally`), seletores por `data-testid`.
+  - Suíte no fechamento: 37 scripts OK; 2 falhas PREEXISTENTES documentadas no README e em [Testes — Casos](../testes_casos/index.md) (seção "Falhas preexistentes conhecidas"): `test_dashboard.py` (7 checks de layout antigo) e `verifica_ui_comum.py` (1 check `ui.tabs()` anterior à sessão).
 
 ## Drawer / menu hambúrguer — estratégia (pirâmide)
 
@@ -79,7 +90,7 @@ cd assets/test && npm install && npm run test:e2e
 ```
 
 - Config em `assets/test/playwright.config.js` (`testDir: './e2e'`, `playwright.config.js:24`); o `webServer` inicia/reutiliza o servidor na porta 8080 (`playwright.config.js:44-49`).
-- Specs em `assets/test/e2e/*.spec.js` (`01_login`, `02_varredura`, `03_exclusao_blog`).
+- Specs em `assets/test/e2e/*.spec.js` (`01_login`, `02_varredura`, `03_exclusao_blog`, `04_header_nome`, `05_rodape_hover`, `06_blog_editor` — os 3 últimos da sessão de 14/09/2026, não executados aqui por falta de Node; exigem `npm run test:e2e` + servidor :8080).
 - Credenciais QA garantidas pelo global setup (`e2e/_global_setup.js` → `_garantir_credenciais.py`): `qacomum`/`qamaster` = `123456`.
 - Detalhes: [Testes E2E com Playwright](../testes_playwright.md).
 

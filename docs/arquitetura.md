@@ -198,7 +198,7 @@ mod_intranet/
 
 **Backend duplo (08/09):**
 
-O PostgreSQL é ativado pelo admin em `/configuracoes` → card **"Banco de dados — SQLite ou PostgreSQL"** (ícone `storage`): select `banco_tipo` + campo DSN `postgres_url`, salvos via `banco_conexao.salvar_backend`. O `banco_tipo` é lido **DIRETO do arquivo SQLite central** (`_ler_config_sqlite` — `banco_conexao.py:60`) — seletor de backend autoritativo no boot, sem recursão. Alteração exige **reiniciar o servidor**.
+O PostgreSQL é ativado pelo admin em `/configuracoes` → aba **Config** (ao final, após o card "Ícones") → card **"Banco de dados — SQLite ou PostgreSQL"** (ícone `storage`, `data-testid="config-aplicar-banco"`, sem reload): select `banco_tipo` + campo DSN `postgres_url`, salvos via `banco_conexao.salvar_backend` (`config_backend()`/`salvar_backend`). O `banco_tipo` é lido **DIRETO do arquivo SQLite central** (`_ler_config_sqlite` — `banco_conexao.py:60`) — seletor de backend autoritativo no boot, sem recursão. Alteração exige **reiniciar o servidor**.
 
 | Função | Local | Comportamento |
 |:---|:---|:---|

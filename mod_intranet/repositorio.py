@@ -672,7 +672,7 @@ class Repositorio:
         if self.sessoes is None:
             return False
         try:
-            for idx, chave in enumerate(chaves_ordenadas):
+            for idx, chave in enumerate(chaves_ordenadas, start=1):
                 self.sessoes.execute(
                     text("UPDATE tb_modulos SET ordem=:o WHERE chave=:c"),
                     {"o": idx, "c": chave},

@@ -1030,6 +1030,50 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         chave_modulo="intranet",
                         data_testid="config-aplicar-icones")
 
+                # ---- Banco de dados (SQLite / PostgreSQL) ----
+                with ui_comum.card_admin("Banco de dados — SQLite ou PostgreSQL",
+                                     icone="storage",
+                                     chave_modulo="intranet", grade=False,
+                                     aberto=False):
+                    ui.label(
+                        "SQLite é o padrão (um arquivo por módulo, zero "
+                        "dependências extras). PostgreSQL é opcional: suba o "
+                        "container em assets/docker/postgres e marque "
+                        "'PostgreSQL' abaixo. APÓS REINICIAR o servidor, todos "
+                        "os módulos passam a usar o banco `intranet` do "
+                        "PostgreSQL (um schema por módulo), mantendo o mesmo "
+                        "esquema e isolamento.").classes(
+                        "text-caption text-grey-7 max-w-3xl -mt-2")
+                    from mod_intranet.banco_conexao import config_backend, salvar_backend
+                    _backend = config_backend()
+                    sel_banco = ui_comum.campo_selecao(
+                        "Tipo de banco de dados", valor=_backend["banco_tipo"],
+                        opcoes={"sqlite": "SQLite (padrão)",
+                                "postgres": "PostgreSQL"},
+                        ao_mudar=lambda e: _mudou("banco_tipo", e.value))
+                    inp_pg_url = ui_comum.campo_texto(
+                        "DSN PostgreSQL (postgresql+psycopg2://usuário:senha@host:5432/intranet)",
+                        valor=_backend["postgres_url"])
+
+                    def aplicar_banco():
+                        salvar_backend(sel_banco.value or "sqlite",
+                                       inp_pg_url.value or "")
+
+                    def _salvar_banco_sem_reload():
+                        aplicar_banco()
+                        notificar(
+                            "Banco de dados atualizado — REINICIE o servidor "
+                            "para aplicar (as conexões ativas seguem no "
+                            "backend anterior).", type="warning",
+                            close_button="Fechar")
+
+                    ui_comum.rodape_salvar_restaurar(
+                        salvar=lambda: _aplicar_card_sem_reload(
+                            "Banco de dados", "config_banco",
+                            aplicar_banco),
+                        chave_modulo="intranet",
+                        data_testid="config-aplicar-banco")
+
             # ============================================================
             # ABA: E-MAIL / SMTP
             # ============================================================
@@ -1378,50 +1422,6 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                                       tooltip="Abrir a documentação em nova aba",
                                       on_click=lambda: ui.navigate.to(
                                           "/documentacao", new_tab=True))
-
-                # ---- Banco de dados (SQLite / PostgreSQL) ----
-                with ui_comum.card_admin("Banco de dados — SQLite ou PostgreSQL",
-                                     icone="storage",
-                                     chave_modulo="intranet", grade=False,
-                                     aberto=False):
-                    ui.label(
-                        "SQLite é o padrão (um arquivo por módulo, zero "
-                        "dependências extras). PostgreSQL é opcional: suba o "
-                        "container em assets/docker/postgres e marque "
-                        "'PostgreSQL' abaixo. APÓS REINICIAR o servidor, todos "
-                        "os módulos passam a usar o banco `intranet` do "
-                        "PostgreSQL (um schema por módulo), mantendo o mesmo "
-                        "esquema e isolamento.").classes(
-                        "text-caption text-grey-7 max-w-3xl -mt-2")
-                    from mod_intranet.banco_conexao import config_backend, salvar_backend
-                    _backend = config_backend()
-                    sel_banco = ui_comum.campo_selecao(
-                        "Tipo de banco de dados", valor=_backend["banco_tipo"],
-                        opcoes={"sqlite": "SQLite (padrão)",
-                                "postgres": "PostgreSQL"},
-                        ao_mudar=lambda e: _mudou("banco_tipo", e.value))
-                    inp_pg_url = ui_comum.campo_texto(
-                        "DSN PostgreSQL (postgresql+psycopg2://usuário:senha@host:5432/intranet)",
-                        valor=_backend["postgres_url"])
-
-                    def aplicar_banco():
-                        salvar_backend(sel_banco.value or "sqlite",
-                                       inp_pg_url.value or "")
-
-                    def _salvar_banco_sem_reload():
-                        aplicar_banco()
-                        notificar(
-                            "Banco de dados atualizado — REINICIE o servidor "
-                            "para aplicar (as conexões ativas seguem no "
-                            "backend anterior).", type="warning",
-                            close_button="Fechar")
-
-                    ui_comum.rodape_salvar_restaurar(
-                        salvar=lambda: _aplicar_card_sem_reload(
-                            "Banco de dados", "config_banco",
-                            aplicar_banco),
-                        chave_modulo="intranet",
-                        data_testid="config-aplicar-banco")
 
             # ============================================================
             # ABA: MÓDULO

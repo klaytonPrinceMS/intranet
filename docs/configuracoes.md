@@ -136,16 +136,16 @@ A tela `/configuracoes` é aberta pelo item **"Administração"** do menu latera
 
 ### Card "Banco de dados" (SQLite ou PostgreSQL) (08/09)
 
-O padrão permanece **SQLite** (atende servidores simples, zero dependências extras — todos os módulos operam via `CrudBase`/`sqlite3`). Para demandas maiores, o **PostgreSQL é opcional e configurável pelo admin** em `/configuracoes` → aba **Documentação** → card **"Banco de dados — SQLite ou PostgreSQL"** (ícone `storage`, `tela_configuracoes.py:1226-1259`), sem tocar em código:
+O padrão permanece **SQLite** (atende servidores simples, zero dependências extras — todos os módulos operam via `CrudBase`/`sqlite3`). Para demandas maiores, o **PostgreSQL é opcional e configurável pelo admin** em `/configuracoes` → aba **Config** (ao final, após o card "Ícones") → card **"Banco de dados — SQLite ou PostgreSQL"** (ícone `storage`, `tela_configuracoes.py:1033-1075`, `data-testid="config-aplicar-banco"`), sem tocar em código:
 
 | Item | Detalhe |
 |:---|:---|
-| Card | `ui_comum.card_admin("Banco de dados — SQLite ou PostgreSQL", icone="storage")` (`tela_configuracoes.py:1227`) |
+| Card | `ui_comum.card_admin("Banco de dados — SQLite ou PostgreSQL", icone="storage")` (`tela_configuracoes.py:1034`, aba Config, após o card "Ícones") |
 | Select `banco_tipo` | `sqlite` (padrão) \| `postgres` — lido de `config_backend()` (`banco_conexao.py:115`) |
 | Campo `postgres_url` | DSN do Postgres (default do container: `postgresql+psycopg2://intranet:intranet@localhost:5432/intranet`) |
 | Salvar | `banco_conexao.salvar_backend(banco_tipo, postgres_url)` grava no arquivo SQLite central |
 | Aviso | **"Banco de dados atualizado — REINICIE o servidor para aplicar (as conexões ativas seguem no backend anterior)"** — a troca exige restart (o backend é resolvido no boot) |
-| Auditoria | `aplicar_banco` audita `config_banco` via `_aplicar_card("Banco de dados", ...)` (`tela_configuracoes.py:1259`) |
+| Auditoria | `aplicar_banco` audita `config_banco` via `_aplicar_card_sem_reload("Banco de dados", ...)` (`tela_configuracoes.py:1070-1075`, `data-testid="config-aplicar-banco"`) — **sem reload**, exige restart |
 
 **Backend duplo controlado pelo sistema** (`mod_intranet/banco_conexao.py`):
 
@@ -233,7 +233,7 @@ O painel `/configuracoes` **não tem mais o botão "APLICAR" geral** na barra de
 | `aplicar_obs` | Observabilidade e logs (loguru) | `tela_configuracoes.py:382-402` |
 | `aplicar_otel` | Telemetria OTel | `tela_configuracoes.py:404-410` |
 | `aplicar_paginas` | Páginas do sistema | `tela_configuracoes.py:412-452` |
-| `aplicar_banco` | Banco de dados (SQLite ou PostgreSQL) — aba Documentação | `tela_configuracoes.py:1246-1257` |
+| `aplicar_banco` | Banco de dados (SQLite ou PostgreSQL) — aba Config, após o card "Ícones" (sem reload, exige restart) | `tela_configuracoes.py:1058-1075` |
 
 Helpers do padrão:
 
@@ -330,6 +330,16 @@ Na aba **Módulo → Páginas do sistema** (renomeada de "Registro/Nome de módu
 - **Campo "URL da página" (slug editável, 05/09)** — cada linha da lista ganhou um campo **"URL da página"** editável (`_campo_empilhado("URL da página", rota, ...)` em `tela_configuracoes.py:660-662`), ligado em `campos_url[chave] = inp_url` / `estado_campos["urls"]` (`tela_configuracoes.py:593-594`). Ao aplicar, `aplicar_paginas()` (`tela_configuracoes.py:412-452`) compara o valor com a rota vigente no BD e chama `autenticacao.alterar_rota_modulo` (`autenticacao.py:196-232`), que valida a URL (regex `[a-z0-9_\-/]+`), impede colisão entre módulos, grava `tb_modulos.rota` e **re-registra a página ao vivo** via `rotas_modulos.registrar_modulo` — sem restart. A notificação informa "N URL(s) alterada(s) — recarregue com F5". O registro dinâmico de rotas vive em `mod_intranet/rotas_modulos.py` (`DEFAULT_ROTAS`, `REGISTRO_MODULOS`, `_registradas`, `_normalizar_rota`, `registrar_modulo`, `montar_rotas_ativas`), com `REGISTRO_MODULOS["chave"] = page_*` preenchido em `main.py` após cada decorator fixo e `montar_rotas_ativas()` antes do START (`main.py:426`). Os decorators fixos são mantidos — links antigos continuam válidos.
 - **Grid responsivo (05/09)** — `COLUNAS_MODULOS` (`tela_configuracoes.py:44-47`) deixou de usar `columns=` inline e agora é **responsiva**: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-[56px_minmax(12ch,1fr)_minmax(22ch,1fr)_minmax(22ch,1fr)_minmax(20ch,1fr)_150px]` — 6 colunas em desktop (setas, chave, nome, URL, ícone, situação), empilhando em telas pequenas. O cabeçalho é oculto em sm/md (`hidden lg:grid`, `tela_configuracoes.py:619`), o `overflow-x-auto` foi removido e os inputs usam `w-full max-w-[30ch]`.
 - O grid ganhou cabeçalho com **tooltips** explicando cada coluna e colunas `56px minmax(30ch, 1fr) minmax(30ch, 1fr) minmax(30ch, 1fr) 150px` (`tela_configuracoes.py:581-593`).
+
+### Ordem padrão do menu + persistência após reorder + restart (14/09/2026)
+
+Ordem padrão vigente (instalações novas e "Restaurar padrão") — `mod_intranet/autenticacao.py:15-22` (`MODULOS_SISTEMA`):
+
+`blog → editar_pdf → empenhos → solicita_impressao → usuarios → auditoria`
+
+Comportamento garantido: no primeiro boot o menu abre nessa sequência; após o usuário reordenar via ↑/↓ (persistência imediata por `reordenar_modulos`), a ordem **permanece como ele deixou, inclusive após reinícios** (validado após 2 restarts, incl. ciclo reordenar-via-API + restart com assert; `/login` 200).
+
+Causa raiz corrigida: `Repositorio.reordenar_modulos` (`mod_intranet/repositorio.py:675`) gravava o primeiro item com `ordem=0` (`enumerate` 0-based); no boot seguinte `_garantir_tb_modulos` (`mod_intranet/autenticacao.py:29-80`) via `COUNT(*) WHERE ordem=0 > 0` reescrevia TODOS os nativos para `MODULOS_SISTEMA`, apagando a personalização a cada reinício. Correção em 3 pontos: `repositorio.py:675` `enumerate(..., start=1)` (1-based); `_garantir_tb_modulos` endurecido — numera SOMENTE linhas com `ordem=0` (nativas zeradas seguem `MODULOS_SISTEMA`, demais após as numeradas por nome) e nunca reescreve linhas já numeradas; `MODULOS_SISTEMA` reordenado para a sequência acima. Detalhes em [Registro de Mudanças](registro_de_mudancas/index.md).
 
 ## Sem variáveis de ambiente `.env`
 

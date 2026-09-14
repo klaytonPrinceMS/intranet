@@ -23,7 +23,7 @@ Criador vigente: `init_db_empenho()` em `bd_manipulador.py:289`.
 | `tb_empenhos` | nome original/final, numero_empenho, parcela, **tipo_especial**, ficha, ano, usuario, data, status, caminho + 40+ colunas espelho de `CAMPOS_BUSCA_PADRAO` e `campos_json` |
 | `tb_indexador_pesquisa` | fallback comum (`empenho_id`, `conteudo_texto`) |
 | `tb_indexador_pesquisa_fts5` | **VIRTUAL TABLE FTS5 com 59 colunas** do cabeçalho (RF-41, `FTS_COLS` em `bd_manipulador.py:461`) + trigger de exclusão + `campo_destino` nas regras |
-| `tb_levantamento` | **inventário vivo** — `nome_arquivo`, `caminho_atual UNIQUE`, `presente` (1/0), `status` (detectado/renomeado), `numero_empenho`, `parcela`, `ficha`, `ano`, `tipo_especial`, `conteudo_texto` (≤20k), `tamanho`, `mtime`, `data_deteccao`, `data_visto`; índices `idx_lev_nome`, `idx_lev_presente`, `idx_lev_num` (`bd_manipulador.py:630`) |
+| `tb_levantamento` | **inventário vivo** — `nome_arquivo`, `caminho_atual UNIQUE`, `presente` (1/0), `status` (detectado/renomeado), `numero_empenho`, `parcela`, `ficha`, `ano`, `tipo_especial`, **`usuario` (`TEXT`, CREATE + `_migrar_coluna` idempotente — ator do reconhecimento)**, `conteudo_texto` (≤20k), `tamanho`, `mtime`, `data_deteccao`, `data_visto`; índices `idx_lev_nome`, `idx_lev_presente`, `idx_lev_num` (`bd_manipulador.py:630`) |
 | `tb_levantamento_fts` | **VIRTUAL TABLE FTS5** `nome_arquivo, numero_empenho, ficha, ano, tipo_especial, conteudo_texto` sobre o levantamento — **só no SQLite**; no Postgres o `CREATE VIRTUAL TABLE` é ignorado pelo proxy (`_CursorPostgres`) e a busca usa **fallback `LIKE`** (`bd_manipulador.py:651`, `pesquisar_levantamento:1757`) |
 | `tb_quarentena` | nome_arquivo, motivo, caminho_atual, data_insercao, processado |
 | `tb_regex_regras` | nome_regra UNIQUE, padrao_regra, substituicao, ativo, **campo_destino** (FTS customizado) |
@@ -36,16 +36,17 @@ Criador vigente: `init_db_empenho()` em `bd_manipulador.py:289`.
 
 ### Levantamento — inventário pelo monitor
 
-- **Coleta:** `levantar_arquivos(usuario)` em `bd_manipulador.py:1612` varre **todas** as pastas monitoradas com `os.walk` (recursivo só para inventário), anota todo PDF novo com **nome, campos extraídos e conteúdo** para busca; arquivos sem alteração (`tamanho`/`mtime` idênticos) são só revisitados (`presente=1`), ausentes ficam `presente=0`. Chamada **antes** de processar em `rodar_monitor()` (`bd_manipulador.py:2305`).
-- **Atualização pós-renomeação:** `atualizar_levantamento_renomeado()` (`bd_manipulador.py:1724`) aponta o registro para `nome_final`/`caminho_final`/`status='renomeado'` e ressincroniza o FTS via `_levantamento_fts_sincronizar()` (`bd_manipulador.py:1593` — `DELETE+INSERT` por `rowid`; falha silenciosa no Postgres).
-- **Busca no levantamento:** `pesquisar_levantamento(termo, limite=100)` (`bd_manipulador.py:1757`) tenta `MATCH` com **prefixo** via `_fts_query_prefixada()` (`bd_manipulador.py:1871` — `'"tok"*'` no último token, 1 letra já filtra) e cai em `LIKE` (`nome_arquivo`, `numero_empenho`, `ficha`, `ano`, `conteudo_texto`) quando FTS indisponível (Postgres).
+- **Coleta:** `levantar_arquivos(usuario)` em `bd_manipulador.py:1614` varre **todas** as pastas monitoradas com `os.walk` (recursivo só para inventário), anota todo PDF novo com **nome, campos extraídos (nº/parcela/ficha/ano/tipo), conteúdo e usuário** para busca — o **ator é gravado no `INSERT`** e na **releitura** (mesmo `tamanho`/`mtime`, só `presente=1`/`status`/`data_visto`); na **revisita adota o usuário logado sem que o agendador `"sistema"` sobrescreva nome real** (só adota quando ator ≠ `"sistema"` e dono vazio ou `"sistema"`). Arquivos sem alteração são só revisitados (`presente=1`), ausentes ficam `presente=0`. Chamada **antes** de processar em `rodar_monitor()` (`bd_manipulador.py:2305`).
+- **Anotação para exibição:** `anotar_arquivos(pdfs)` (`bd_manipulador.py:2624`) anexa `numero_empenho`/`parcela`/`usuario`/`data` do levantamento a cada dict; quando processado, **sobrescreve com `tb_empenhos`** (nº/parcela/usuário de quem processou, com fallback ao nome final `doc_<cont>_<empenho>_<parcela>.pdf` / `EC|EE|EG|AE_<n>.pdf`). `listar_navegacao` e `listar_pendentes` retornam os dicts já anotados.
+- **Atualização pós-renomeação:** `atualizar_levantamento_renomeado()` (`bd_manipulador.py:1736`) aponta o registro para `nome_final`/`caminho_final`/`status='renomeado'` e ressincroniza o FTS via `_levantamento_fts_sincronizar()` (`bd_manipulador.py:1593` — `DELETE+INSERT` por `rowid`; falha silenciosa no Postgres).
+- **Busca no levantamento:** `pesquisar_levantamento(termo, limite=100)` (`bd_manipulador.py:1769`) tenta `MATCH` com **prefixo** via `_fts_query_prefixada()` (`bd_manipulador.py:1871` — `'"tok"*'` no último token, 1 letra já filtra) e cai em `LIKE` (`nome_arquivo`, `numero_empenho`, `ficha`, `ano`, `conteudo_texto`) quando FTS indisponível (Postgres); **retorna também `parcela` e `usuario`** — tuplas `(id, nome, caminho, presente, status, numero, parcela, ficha, ano, usuario)`.
 
 ## Funcionalidades
 
 - **6 abas internas** (padrão `mod_solicita_impressao/telas.py`, com tabs manuais):
-  - **Navegar**: navegação recursiva e protegida (anti-travessia) das pastas monitoradas + organizador, mostrando apenas PDFs; breadcrumb; baixar; revisar/renomear manual; solicitar envio. Botões "Processar pasta agora" e "Atualizar". Campo **Pesquisar (conteúdo + todos os campos)** com **busca FTS5 assíncrona** — vê abaixo.
-  - **Fila Renomeação**: lista recursiva de PDFs pendentes, "Processar" individual e "Processar todos".
-  - **Pesquisar**: busca FTS5 (`MATCH`, fallback `LIKE`) + tabela de empenhos renomeados.
+  - **Navegar**: navegação recursiva e protegida (anti-travessia) das pastas monitoradas + organizador, mostrando apenas PDFs; breadcrumb; baixar; revisar/renomear manual; solicitar envio. Botões "Processar pasta agora" e "Atualizar". Lista, cabeçalhos e resultados de pesquisa exibem as colunas **Arquivo, Empenho, Parcela, Usuário, Data, Status** (+ Pasta/Ações) — valores da leitura do reconhecimento/processamento via `anotar_arquivos`, com **zeros à esquerda normalizados só na exibição**. Campo **Pesquisar (conteúdo + todos os campos)** com **busca FTS5 assíncrona** — vê abaixo.
+  - **Fila Renomeação**: lista recursiva de PDFs pendentes, "Processar" individual e "Processar todos". Cada linha exibe **Arquivo, Empenho, Parcela, Usuário, Data, Status** (leitura do reconhecimento via `anotar_arquivos`; zeros à esquerda normalizados só na exibição).
+  - **Pesquisar**: busca FTS5 (`MATCH`, fallback `LIKE`) + tabela de empenhos renomeados (coluna **Usuário** já existente, mantida).
   - **Organizador** (admin): organizar caixas, gerar capas/matriz, validar matriz, inventário e ferramentas de PDF (cortar/mesclar/reduzir).
   - **Solicitação**: fluxo comum→admin (e-mail/ZIP/recusa) com agrupamento por lote e histórico; admin confirma/recusa.
   - **Configurações** (admin): pastas monitoradas (multi-pasta, UNC), aparência, template de nome, campos de busca, quarentena e regras regex — **sem aba de Auditoria** (removida; auditoria vive no menu Auditoria via `audit_log` central).
@@ -86,6 +87,19 @@ Os **17 frameworks** permanecem em disco em `assets/css/frameworks/` (17 arquivo
 
 `visual.FRAMEWORKS` lista apenas os 12 novos; `visual.VALIDOS=("pic",)+FRAMEWORKS` e `visual.ROTULOS` mapeiam rótulos amigáveis. A troca de modelo continua via `visual.salvar_modelo()` se necessário, mas o `tb_config` permanece `pic`.
 
+## Botão TEMPORÁRIO de massa de teste — REMOVER em produção (14/09/2026)
+
+> Temporary QA-only button that creates 25 fictitious PDFs per click — MUST be removed before production.
+>
+> Botão TEMPORÁRIO só para QA que cria 25 PDFs fictícios por clique — REMOVER obrigatoriamente antes de produção.
+
+!!! warning "TEMPORARIO-25-ARQUIVOS-REMOVER-EM-PRODUCAO — remover antes de produção"
+    O botão **"Gerar 25 (TEMP)"** (`mod_renomear_empenho/telas.py:153-183`) existe **apenas para gerar massa de teste** e **NÃO pode ir para produção**. A remoção é apagar o bloco marcado + o handler `_gerar_25_temp` (linhas 153-183).
+
+- **Onde:** totalmente à direita do `menu_mod` (row `justify-between flex-nowrap`: `ui.tabs` `flex-1 min-w-0 overflow-x-auto` à esquerda e botão `shrink-0 ml-auto` à direita), rótulo "Gerar 25 (TEMP)" ícone `science` variante `secundario` `data-testid=empenhos-gerar-25-temp`.
+- **Comportamento esperado:** cada clique cria **+25 PDFs fictícios** na 1ª pasta de `pastas_monitoradas()` (fallback `_PASTA_MONITORADA_PADRAO` = `mod_renomear_empenho/doc`) via `assets/test/fabrica_documentos.py:criar_lote_principal(pasta_doc, quantidade=25)`; handler async `_gerar_25_temp` com `await run.io_bound(_criar)` (anti-disconnect AGENTS.md §5.1 — nunca bloqueia o event-loop); audita `audit_log(usuario,"empenhos","gerar_massa_temp",...)` e exibe `notificar` positiva (`"<N> arquivos criados na pasta doc."`) ou negativa (`"Falha ao criar arquivos: ..."`) em falha.
+- **Arquivos:linhas:** `mod_renomear_empenho/telas.py:153-183` (botão + handler), `assets/test/fabrica_documentos.py:53` (`criar_lote_principal`), `mod_renomear_empenho/bd_manipulador.py:30-34` (`_PASTA_MONITORADA_PADRAO`/`pastas_monitoradas`).
+
 ## Contagem de acessos — apenas logins (padronizada)
 
 > Access counter now **login-only** (navigations/refresh never count), centralized in `mod_intranet/bd_conexao.incrementar_contador_acessos()` via `tb_config` (`contador_acessos_total` + `contador_acessos_inicio`).
@@ -122,7 +136,7 @@ Antes o incremento era inline em `main`; agora a função documentada é a **ún
 - Contador sequencial persistido em banco, único entre pastas; template de nome configurável (`doc_{contador:04d}_{empenho}_{parcela:03d}.pdf` — ex.: `doc_0001_345_001.pdf`).
 - Tipos especiais usam nome próprio (`EC_%04d.pdf`), não o sequencial DOC; `renomear_manual` com `tipo_especial` converte `novo_numero` string→int (`re.sub`+`int`) antes de `montar_nome_tipo_especial`.
 - **Gate de validação**: renomeação somente com nº identificado; falha → quarentena com motivo (PLANO 4b/4c atendidos).
-- **Levantamento:** todo PDF nas pastas monitoradas é anotado (nome/campos/conteúdo) antes do processamento; `presente` indica se ainda está em disco — a pesquisa Navegar mostra `na pasta`/`fora da pasta`.
+- **Levantamento:** todo PDF nas pastas monitoradas é anotado no reconhecimento (nome/campos/conteúdo **+ usuário do ator**) antes do processamento; `presente` indica se ainda está em disco — a pesquisa Navegar mostra `na pasta`/`fora da pasta`; Navegar e Fila exibem **Arquivo, Empenho, Parcela, Usuário, Data, Status** via `anotar_arquivos` (sobrescrito por `tb_empenhos` quando processado).
 - **Quarentena (4b)**: `promover_quarentena`/`mover_quarentena` grava motivo (300 chars) e timestamp; reprocessamento individual (`reprocesse_quarentena` com regex alternativa) e em lote (`reprocessar_fila` + botão "Reprocessar fila" sem reiniciar, `run.io_bound` no admin) sem reiniciar; múltiplos documentos detectados por `detectar_documentos_no_pdf` → botão "Separar documentos".
 - **Organizador (4c)**: ~200 páginas/subpasta e 4 subpastas/caixa (configuráveis); capas `capa.txt` + `capa.pdf` por caixa e matriz `matrizDeDocumentos.txt/.pdf` geral; `validar_presenca_matriz` garante que todo PDF da matriz existe em `organizadorPasta/`.
 - Não-reprocessamento: DOC por padrão de nome; tipos especiais e demais por registro no banco (`tb_empenhos`/`tb_arquivos_auditoria`).
@@ -157,7 +171,7 @@ Antes o incremento era inline em `main`; agora a função documentada é a **ún
 ## Testes
 
 - `test/teste_fluxo_renameador.py` cobre: processamento DOC e tipos especiais EC/EE/EG, gate de validação, não-reprocessamento, classificação, fluxo de solicitações e navegação. Determinístico (roda 2x); isola `pastas_monitoradas` via monkeypatch para não vazar configuração central.
-- `data-testid` para QA Playwright: `empenhos-navegar-pesquisa`, `empenhos-navegar-contagem`, `empenhos-lote-*`, `empenhos-reprocessar-fila-admin`, `empenhos-revisar-*`.
+- `data-testid` para QA Playwright: `empenhos-navegar-pesquisa`, `empenhos-navegar-contagem`, `empenhos-lote-*`, `empenhos-reprocessar-fila-admin`, `empenhos-revisar-*`, `empenhos-gerar-25-temp` (TEMPORÁRIO — só QA, remover em produção).
 
 ## Pontos de atenção
 

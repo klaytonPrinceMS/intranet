@@ -150,10 +150,40 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             ("navegar", "Navegar", "folder_open"),
         ]
     _icones = {"navegar": "folder_open", "fila": "move_to_inbox", "organizador": "inventory_2", "solicitacao": "mail"}
-    with ui.row().classes("w-full items-center justify-between gap-4 flex-nowrap bg-white rounded-lg shadow-sm px-3 py-1"):
-        with ui.tabs().props("dense inline-label").classes("min-w-0 overflow-x-auto") as tabs_el:
+    with ui.row().classes("w-full items-center justify-between flex-nowrap bg-white rounded-lg shadow-sm px-3 py-1").style("gap: 1rem; min-width: 0"):
+        # TEMPORARIO-25-ARQUIVOS-REMOVER-EM-PRODUCAO: botão totalmente à direita do menu_mod;
+        # cada clique cria 25 arquivos na pasta doc do módulo via fábrica do sistema.
+        with ui.tabs().props("dense inline-label").classes("min-w-0 flex-1 overflow-x-auto") as tabs_el:
             for key, label, _ico in _abas:
                 ui.tab(key, label, icon=_icones.get(key))
+        async def _gerar_25_temp():
+            from mod_intranet.tema_modulo import notificar as _notificar
+            try:
+                def _criar():
+                    import sys as _sys, os as _os
+                    _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'assets', 'test'))
+                    from fabrica_documentos import criar_lote_principal
+                    from mod_renomear_empenho.bd_manipulador import pastas_monitoradas as _pastas
+                    _dest = (_pastas() or [None])[0]
+                    if not _dest:
+                        from mod_renomear_empenho.bd_manipulador import _PASTA_MONITORADA_PADRAO as _pad
+                        _dest = _pad
+                    return criar_lote_principal(_dest, quantidade=25)
+                criados = await run.io_bound(_criar)
+                audit_log(usuario_logado, "empenhos", "gerar_massa_temp", f"{len(criados)} arquivos TEMP criados")
+                _notificar(f"{len(criados)} arquivos criados na pasta doc.", type="positive")
+            except Exception as e:
+                _log().exception(f"massa TEMP: falha ao criar 25 arquivos: {e}")
+                try:
+                    from mod_intranet.tema_modulo import notificar as _n2
+                    _n2(f"Falha ao criar arquivos: {e}", type="negative")
+                except Exception:
+                    pass
+        _btn_25 = botao("Gerar 25 (TEMP)", icone="science", on_click=_gerar_25_temp,
+              variante="secundario", chave_modulo="empenhos")
+        if _btn_25 is not None:
+            _btn_25.props('data-testid=empenhos-gerar-25-temp')
+            _btn_25.classes("shrink-0 ml-auto")
     with ui.tab_panels(tabs_el, value="navegar").classes("w-full bg-transparent"):
         with ui.tab_panel("navegar"):
             _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style)
@@ -480,10 +510,21 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
         _carregar()
 
     def _detalhes_linha(p):
-        # Tenta extrair empenho/parcela/data para a linha Excel — do nome, do levantamento ou do mtime
+        # Empenho/parcela/usuário/data da leitura do reconhecimento (levantamento)
+        # ou do processamento (tb_empenhos) — já anexados por anotar_arquivos;
+        # cai para o nome final e o mtime quando ausentes.
         nome = p.get("nome") or ""
         empenho = p.get("numero_empenho") or p.get("empenho") or "—"
         parcela = p.get("parcela") or "—"
+        if isinstance(empenho, str) and empenho.isdigit():
+            empenho = empenho.lstrip("0") or "0"
+        if isinstance(parcela, str) and parcela.isdigit():
+            parcela = parcela.lstrip("0") or "0"
+        elif isinstance(parcela, int):
+            parcela = str(parcela)
+        usuario = (p.get("usuario") or "").strip() if isinstance(p.get("usuario"), str) else (p.get("usuario") or "—")
+        if not usuario:
+            usuario = "—"
         data = p.get("data") or p.get("dt") or "—"
         # parse doc_0001_345_001.pdf
         import re as _re
@@ -501,11 +542,11 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                 data = _dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
             except Exception:
                 data = "—"
-        return empenho, parcela, data
+        return empenho, parcela, usuario, data
 
     def _card_pdf(p, sub=None, presente=1):
         # Linha estilo Excel — mesmas infos/botões do Navegar, visual do Pesquisar (border, hover)
-        empenho, parcela, data = _detalhes_linha(p)
+        empenho, parcela, usuario, data = _detalhes_linha(p)
         _hb = _eh_hibrido()
         _bs = _eh_bs()
         _mod = _modelo_atual()
@@ -521,9 +562,10 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                 ui.label(p["nome"]).classes("font-medium text-wrap").style("min-width: 0; overflow-wrap: anywhere; font-size: 0.9rem")
                 if sub:
                     ui.label(sub).classes("text-caption text-grey-6").style("min-width: 0")
-            # colunas Excel — empenho / parcela / data (largura fixa, como Pesquisar)
+            # colunas Excel — empenho / parcela / usuário / data (largura fixa, como Pesquisar)
             ui.label(str(empenho)).classes("text-caption shrink-0").style("min-width: 5ch; text-align: center").tooltip("Empenho")
             ui.label(str(parcela)).classes("text-caption shrink-0").style("min-width: 4ch; text-align: center").tooltip("Parcela")
+            ui.label(str(usuario)).classes("text-caption shrink-0").style("min-width: 10ch; max-width: 18ch; overflow: hidden; text-overflow: ellipsis; text-align: center").tooltip(f"Usuário: {usuario}")
             ui.label(str(data)).classes("text-caption text-grey-7 shrink-0").style("min-width: 10ch; text-align: center").tooltip("Data")
             # badges
             if _hb:
@@ -599,7 +641,7 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                 achados.append({"nome": os.path.basename(final or "") or os.path.basename(real),
                                 "caminho": real, "status": status_arquivo(real),
                                 "sub": _sub(real), "presente": 1,
-                                "numero_empenho": num, "parcela": parc, "data": (dt or "")[:10]})
+                                "numero_empenho": num, "parcela": parc, "usuario": usr, "data": (dt or "")[:10]})
             except Exception:
                 continue
         # levantamento (pendentes/detectados com nome, campos e conteúdo)
@@ -608,7 +650,7 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
         except Exception:
             _log.exception("pesquisa no levantamento falhou no navegar")
             fileiras_lev = []
-        for lid, nome, caminho, presente, status, numero, ficha, ano in fileiras_lev:
+        for lid, nome, caminho, presente, status, numero, parcela, ficha, ano, usr in fileiras_lev:
             try:
                 real = _dentro(caminho)
                 if not real or real.lower() in vistos:
@@ -619,7 +661,7 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                                 "caminho": real, "status": status or status_arquivo(real),
                                 "sub": _sub(real),
                                 "presente": 1 if (presente and em_disco) else 0,
-                                "numero_empenho": numero, "parcela": "", "data": ""})
+                                "numero_empenho": numero, "parcela": parcela, "usuario": usr, "data": ""})
             except Exception:
                 continue
         return achados
@@ -671,6 +713,7 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                     ui.label("Arquivo").classes("flex-1").style("min-width: 0")
                     ui.label("Empenho").style("min-width: 5ch; text-align: center")
                     ui.label("Parcela").style("min-width: 4ch; text-align: center")
+                    ui.label("Usuário").style("min-width: 10ch; text-align: center")
                     ui.label("Data").style("min-width: 10ch; text-align: center")
                     ui.label("Status").style("min-width: 8ch; text-align: center")
                     ui.label("Pasta").style("min-width: 7ch; text-align: center")
@@ -727,6 +770,7 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                     ui.label("Arquivo").classes("flex-1").style("min-width: 0")
                     ui.label("Empenho").style("min-width: 5ch; text-align: center")
                     ui.label("Parcela").style("min-width: 4ch; text-align: center")
+                    ui.label("Usuário").style("min-width: 10ch; text-align: center")
                     ui.label("Data").style("min-width: 10ch; text-align: center")
                     ui.label("Status").style("min-width: 8ch; text-align: center")
                     ui.label("Pasta").style("min-width: 7ch; text-align: center")
@@ -875,17 +919,31 @@ def _tela_fila(usuario_logado, eh_admin, _btn_cls, _btn_style):
             # Visual Excel igual ao Navegar — mesma linha com bordas, hover e colunas
             def _detalhes_fila(p):
                 nome = p.get("nome") or ""
+                empenho = p.get("numero_empenho") or "—"
+                parcela = p.get("parcela") or "—"
+                if isinstance(empenho, str) and empenho.isdigit():
+                    empenho = empenho.lstrip("0") or "0"
+                if isinstance(parcela, str) and parcela.isdigit():
+                    parcela = parcela.lstrip("0") or "0"
+                elif isinstance(parcela, int):
+                    parcela = str(parcela)
+                usuario = (p.get("usuario") or "").strip() if isinstance(p.get("usuario"), str) else ""
+                if not usuario:
+                    usuario = "—"
                 import re as _re
                 m = _re.match(r"doc_\d+_(\d+)_(\d+)\.pdf$", nome, _re.I)
-                empenho = m.group(1).lstrip("0") or "0" if m else "—"
-                parcela = m.group(2).lstrip("0") or "0" if m else "—"
+                if m:
+                    if empenho == "—":
+                        empenho = m.group(1).lstrip("0") or "0"
+                    if parcela == "—":
+                        parcela = m.group(2).lstrip("0") or "0"
                 try:
                     import datetime as _dt
                     ts = os.path.getmtime(p.get("caminho") or "")
                     data = _dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
                 except Exception:
-                    data = "—"
-                return empenho, parcela, data
+                    data = p.get("data") or "—"
+                return empenho, parcela, usuario, data
 
             def _editar_fila(caminho):
                 # Lápis — permite escrever o que quiser nos campos (mesma tela do Navegar)
@@ -962,17 +1020,19 @@ def _tela_fila(usuario_logado, eh_admin, _btn_cls, _btn_style):
                     ui.label("Arquivo").classes("flex-1").style("min-width: 0")
                     ui.label("Empenho").style("min-width: 5ch; text-align: center")
                     ui.label("Parcela").style("min-width: 4ch; text-align: center")
+                    ui.label("Usuário").style("min-width: 10ch; text-align: center")
                     ui.label("Data").style("min-width: 10ch; text-align: center")
                     ui.label("Status").style("min-width: 8ch; text-align: center")
                     ui.label("Ações").style("min-width: 12ch; text-align: center")
                 with ui.column().classes("w-full border border-t-0 border-grey-3 rounded-b overflow-hidden").style("gap: 0"):
                     for p in pendentes:
-                        empenho, parcela, data = _detalhes_fila(p)
+                        empenho, parcela, usuario, data = _detalhes_fila(p)
                         with ui.row().classes("w-full items-center bg-white hover:bg-grey-2 border-b border-grey-3 px-2 py-1").style("gap: 0.5rem; min-width: 0"):
                             ui.icon("description").classes("text-orange-7 shrink-0")
                             ui.label(p["nome"]).classes("flex-1 text-wrap font-medium").style("min-width: 0; overflow-wrap: anywhere; font-size: 0.9rem")
                             ui.label(str(empenho)).classes("text-caption shrink-0").style("min-width: 5ch; text-align: center")
                             ui.label(str(parcela)).classes("text-caption shrink-0").style("min-width: 4ch; text-align: center")
+                            ui.label(str(usuario)).classes("text-caption shrink-0").style("min-width: 10ch; max-width: 18ch; overflow: hidden; text-overflow: ellipsis; text-align: center").tooltip(f"Usuário: {usuario}")
                             ui.label(str(data)).classes("text-caption text-grey-7 shrink-0").style("min-width: 10ch; text-align: center")
                             if _bs:
                                 ui.html('<span class="badge bg-warning text-dark rounded-pill">pendente</span>').classes("shrink-0")

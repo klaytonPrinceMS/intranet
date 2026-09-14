@@ -43,8 +43,13 @@ def _renderizar_conteudo_postagem(conteudo):
     for tipo, trecho in extrair_segmentos_mermaid(conteudo or ""):
         if tipo == "mermaid":
             try:
-                ui.mermaid(trecho).classes("w-full my-2") \
-                    .style("overflow-x: auto")
+                # Diagrama centralizado: coluna de largura limitada no centro
+                with ui.element("div").classes("w-full flex justify-center") \
+                        .style("min-width: 0"):
+                    with ui.element("div").classes("w-full") \
+                            .style("max-width: 680px; min-width: 0"):
+                        ui.mermaid(trecho).classes("w-full my-2") \
+                            .style("overflow-x: auto")
             except Exception:
                 observabilidade.get_logger("blog").exception(
                     "mermaid: falha ao renderizar diagrama")
@@ -512,13 +517,97 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                         inp_titulo = ui.input("Título*").props(
                             "outlined dense").classes("w-full") \
                             .props('data-testid=blog-titulo')
-                        inp_conteudo = ui.textarea(
-                            "Conteúdo*", placeholder="Use <b>, <i>, <p>, HTML simples, "
-                            "Markdown (#, **negrito**, - item), URLs de imagem "
-                            "(data:/relativas aceitas) ou ```mermaid para diagramas"
-                        ).props("outlined dense").classes("w-full") \
+                        try:
+                            _trat = autenticacao.nome_de_tratamento(usuario_logado)
+                        except Exception:
+                            _trat = usuario_logado
+                        inp_conteudo = ui.editor(
+                            placeholder=f"Olá, {_trat}! Escreva aqui a novidade — "
+                            "formate com a barra de ferramentas, anexe imagens "
+                            "pelo botão Enviar abaixo ou digite HTML/Markdown."
+                        ).classes("w-full") \
                             .props('data-testid=blog-conteudo')
                         preview_wrap = ui.column().classes("w-full hidden")
+
+                        async def _receber_imagem(e):
+                            """Salva a imagem enviada e insere a tag no editor.
+
+                            Grava em `mod_blog/img_postagens/` com o nome padrão
+                            `dataHora_usuario.ext`; a tag `<img>` inserida aceita
+                            `style` (CSS local) e `class` (CSS online/frameworks).
+                            """
+                            try:
+                                from mod_blog.bd_manipulador import salvar_imagem_postagem
+                                conteudo = await e.file.read()
+                                ok, res = salvar_imagem_postagem(
+                                    e.file.name or "imagem.png", conteudo, usuario_logado)
+                                if not ok:
+                                    ui.notify(res, type="negative")
+                                    return
+                                tag = (f'<p><img src="/img_postagens/{res}" '
+                                       f'alt="{res}" style="max-width:100%;height:auto;" /></p>')
+                                inp_conteudo.value = (inp_conteudo.value or "") + "\n" + tag
+                                ui.notify(f"Imagem enviada: {res}", type="positive")
+                            except Exception as ex:
+                                observabilidade.get_logger("blog").exception(
+                                    "Erro ao enviar imagem do editor")
+                                ui.notify(f"Erro ao enviar imagem: {ex}", type="negative")
+
+                        with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem"):
+                            up_imagem = ui.upload(
+                                label="Selecionar imagem (JPG/PNG, até 5 MB)",
+                                auto_upload=False, max_file_size=5 * 1024 * 1024,
+                                on_upload=_receber_imagem,
+                            ).props("accept=.jpg,.jpeg,.png").classes("flex-1").style("min-width: 25ch") \
+                                .props('data-testid=blog-imagem-selecionar')
+                            botao("Enviar", icone="upload",
+                                  on_click=lambda: up_imagem.run_method("upload"),
+                                  variante="secundario",
+                                  chave_modulo="blog") \
+                                .props('data-testid=blog-imagem-enviar')
+
+                        def _ajustar_imagem(alinhamento=None, largura=None):
+                            """Aplica alinhamento/largura à ÚLTIMA imagem do editor.
+
+                            Delega à pura `bd_manipulador.ajustar_imagem_html`
+                            (testável em `test_blog_imagem_controles.py`). O editor
+                            WYSIWYG (QEditor) não tem redimensionar/alinha
+                            nativo de imagem — estes botões suprem o controle.
+                            """
+                            try:
+                                from mod_blog.bd_manipulador import ajustar_imagem_html
+                                novo, detalhe = ajustar_imagem_html(
+                                    inp_conteudo.value or "", alinhamento, largura)
+                            except ValueError:
+                                ui.notify("Nenhuma imagem no texto — envie uma primeiro",
+                                          type="warning")
+                                return
+                            inp_conteudo.value = novo
+                            ui.notify(f"Imagem ajustada ({detalhe})", type="positive")
+
+                        with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem"):
+                            ui.label("Imagem:").classes("text-caption text-grey-7 font-bold")
+                            botao_icone("format_align_left",
+                                        on_click=lambda: _ajustar_imagem(alinhamento="esquerda"),
+                                        chave_modulo="blog").tooltip("Alinhar a última imagem à esquerda") \
+                                .props("data-testid=blog-img-esq")
+                            botao_icone("format_align_center",
+                                        on_click=lambda: _ajustar_imagem(alinhamento="centro"),
+                                        chave_modulo="blog").tooltip("Centralizar a última imagem") \
+                                .props("data-testid=blog-img-centro")
+                            botao_icone("format_align_right",
+                                        on_click=lambda: _ajustar_imagem(alinhamento="direita"),
+                                        chave_modulo="blog").tooltip("Alinhar a última imagem à direita") \
+                                .props("data-testid=blog-img-dir")
+                            sel_largura = ui.select(
+                                {"25%": "25% da largura", "50%": "50% da largura",
+                                 "75%": "75% da largura", "100%": "Esticar (100%)",
+                                 "original": "Original (200–400px)"},
+                                value="100%", label="Largura da imagem",
+                                on_change=lambda e: _ajustar_imagem(largura=e.value),
+                            ).props("outlined dense").classes("w-52") \
+                                .props("data-testid=blog-img-largura") \
+                                .tooltip("Largura aplicada à última imagem do texto")
 
                         def atualizar_preview():
                             preview_wrap.clear()

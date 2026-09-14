@@ -135,6 +135,14 @@ try:
 except Exception:
     print("[css] Aviso: não foi possível montar as rotas de /css/frameworks")
 
+# ================== IMAGENS DO BLOG (/img_postagens/*) ==================
+# Arquivos enviados pelo editor WYSIWYG, gravados em mod_blog/img_postagens/.
+try:
+    from mod_blog import montar_rotas_static as _montar_img_blog
+    _montar_img_blog()
+except Exception:
+    print("[blog] Aviso: não foi possível montar as rotas de /img_postagens")
+
 # ================== ROTAS DINÂMICAS DE MÓDULOS (slugs customizados) ==================
 # Permite que a URL de cada página (tb_modulos.rota) seja editada em
 # /configuracoes e re-registrada no servidor sem restart. Os decorators fixos

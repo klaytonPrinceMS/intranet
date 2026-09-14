@@ -220,14 +220,32 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
                     _btn_menu.props('data-testid=menu-hamburguer aria-label="Abrir menu de navegação"')
                 ui.icon(icone_sistema).classes("text-white shrink-0")
                 ui.label(titulo_sistema).classes("text-h6 text-white font-bold whitespace-nowrap")
-                ui.separator().props("vertical").classes("hidden sm:block")
+                ui.separator().props("vertical")
                 ui.label(titulo_modulo).classes("text-subtitle2 text-white opacity-90 flex-1").style("min-width: 8ch; overflow-wrap: anywhere")
-            with ui.row().classes("items-center flex-wrap justify-end").style("gap: 0.5rem; min-width: 0"):
-                # Nome de TRATAMENTO clicável -> Meu Perfil (nome completo ou social)
+            with ui.row().classes("items-center flex-wrap justify-end flex-1").style("gap: 0.5rem; min-width: 0"):
+                # Nome de TRATAMENTO clicável -> Meu Perfil (nome completo ou social).
+                # Um único botão sempre visível: ellipsis à direita + tooltip completo.
+                # (Sem toggles `hidden sm:*` — o tailwind embutido resolve `hidden`
+                #  acima do `sm:flex`, então o botão sumia em qualquer largura.)
+                # O conteúdo interno do q-btn é centralizado (`justify-content:center`),
+                # então o CSS escopado abaixo ancora o texto à esquerda com ellipsis.
+                try:
+                    ui.add_head_html("""
+<style>
+/* Header — nome do usuário ancorado à esquerda com ellipsis à direita */
+[data-testid="header-nome-usuario"] .q-btn__content{justify-content:flex-start !important;overflow:hidden}
+[data-testid="header-nome-usuario"] .q-btn__content>span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
+""")
+                except Exception:
+                    pass
                 trat = autenticacao.nome_de_tratamento(nome_usuario)
-                ui_comum.botao(trat, variante="texto_branco",
+                _btn_nome = ui_comum.botao(trat, variante="texto_branco",
                                on_click=lambda: _dialogo_meu_perfil(nome_usuario),
-                               tooltip="Meu Perfil — editar meus dados e senha").classes("max-w-[14ch] truncate").style("min-width: 0")
+                               tooltip=trat)
+                if _btn_nome is not None:
+                    _btn_nome.props('data-testid=header-nome-usuario')
+                    _btn_nome.classes("min-w-0 overflow-hidden whitespace-nowrap").style("min-width: 0; max-width: min(28ch, 55vw); overflow: hidden; text-overflow: ellipsis;")
                 # Tema claro/escuro (preferência individual do usuário)
                 escuro_atual = autenticacao.tema_escuro(nome_usuario)
                 ui_comum.botao_icone(
@@ -237,7 +255,7 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
                     tooltip="Tema atual: "
                             + ("escuro" if escuro_atual else "claro")
                             + " — clique para alternar (só para você)")
-                ui.badge(rotulo_perfil, color="primary-4").props("outline").classes("max-w-[16ch] truncate").style("min-width: 0")
+                ui.badge(rotulo_perfil, color="primary-4").props("outline").classes("max-w-[12ch] truncate shrink-0").style("min-width: 0")
                 ui_comum.botao_icone("logout", _logout, variante="icone_branco",
                                      tooltip="Sair")
 
@@ -326,7 +344,19 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
                 ativo=False)
 
     # ===== FOOTER (parte 4) =====
-    with ui.footer().classes("bg-grey-8 w-full").style("min-width: 0"):
+    # Rodapé escondido com reveal no hover/focus (faixa de 5px como pista).
+    # CSS escopado via [data-testid="rodape-sistema"] — sem vazamento global.
+    try:
+        ui.add_head_html("""
+<style>
+/* Rodape — escondido por padrão, revela no hover/focus */
+[data-testid="rodape-sistema"]{opacity:0;transform:translateY(calc(100% - 5px));transition:opacity .25s ease,transform .25s ease}
+[data-testid="rodape-sistema"]:hover,[data-testid="rodape-sistema"]:focus-within{opacity:1;transform:none}
+</style>
+""")
+    except Exception:
+        pass
+    with ui.footer().classes("bg-grey-8 w-full").props('data-testid=rodape-sistema').style("min-width: 0"):
         with ui.row().classes("w-full items-center justify-between flex-wrap px-4 py-1.5").style("gap: 0.5rem; min-width: 0"):
             texto_rodape = _obter_config("texto_rodape", "uso interno") or "uso interno"
             ui.label(f"{titulo_sistema} Básica — {texto_rodape}").classes(

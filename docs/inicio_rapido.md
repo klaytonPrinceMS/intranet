@@ -139,7 +139,7 @@ O padrão é **SQLite** (um arquivo por módulo, zero dependências). Para usar 
    ```bash
    cd assets/docker/postgres && docker compose up -d
    ```
-2. Acesse `/configuracoes` → aba **Documentação** → card **"Banco de dados — SQLite ou PostgreSQL"** (ícone `storage`).
+2. Acesse `/configuracoes` → aba **Config** (ao final, após o card "Ícones") → card **"Banco de dados — SQLite ou PostgreSQL"** (ícone `storage`).
 3. Selecione **PostgreSQL** e confira o DSN (`postgresql+psycopg2://intranet:intranet@localhost:5432/intranet`).
 4. Clique **Aplicar** e **REINICIE o servidor** (`fuser -k 8080/tcp; .venv/bin/python main.py`).
 

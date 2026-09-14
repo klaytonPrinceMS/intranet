@@ -37,6 +37,7 @@ Criador vigente: `init_db_empenho()` em `bd_manipulador.py:289`.
 | `tb_indexador_pesquisa` | fallback comum (`empenho_id`, `conteudo_texto`) |
 | `tb_indexador_pesquisa_fts5` | **VIRTUAL TABLE FTS5 com 32 colunas** do cabeçalho (RF-41); alimentada por trigger de exclusão + `reindexar_empenho()` |
 | `tb_quarentena` | nome_arquivo, motivo, caminho_atual, data_insercao, processado |
+| `tb_levantamento` | **inventário vivo** — `nome_arquivo`, `caminho_atual UNIQUE`, `presente` (1/0), `status` (detectado/renomeado), `numero_empenho`, `parcela`, `ficha`, `ano`, `tipo_especial`, **`usuario` (ator do reconhecimento, `TEXT`, CREATE + `_migrar_coluna` idempotente)**, `conteudo_texto` (≤20k), `tamanho`, `mtime`, `data_deteccao`, `data_visto` |
 | `tb_regex_regras` | nome_regra UNIQUE, padrao_regra, substituicao, ativo, **campo_destino** (FTS customizado) |
 | `tb_campos_busca` | regex por campo (ficha/empenho/parcela/ano...) editável sem tocar no código |
 | `tb_arquivos_auditoria` | trilha por arquivo (detectado→renomeado→removido) com **SHA-256** de origem/destino |
@@ -158,6 +159,20 @@ Mapeamento para esta implementação:
 ### Adições recentes (09/2026) — responsividade global RNF-UI-01
 
 - **Auditado 320/768/1024** (`kbp-web-design`) — proposta P0/P1/P2 por `container`/`row`/`grid`: `menu_modulo` `overflow-x-auto`, filtros/busca `flex-wrap` `flex-1 min-w`, tabelas `overflow-x-auto`, `scroll_area` altura explícita, grids `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`, dialogs `w-full max-w`; header `flex-wrap` `truncate`. Ver [Padrões](padroes_codificacao/index.md) §8.1.
+
+### Adições recentes (14/09/2026) — levantamento grava usuário + listagem exibe empenho/parcela/usuário
+
+- **Leitura no reconhecimento grava todos os campos + usuário:** `levantar_arquivos(usuario)` (`bd_manipulador.py:1614`) extrai nº/ficha/parcela/ano/tipo + conteúdo (≤20k) e grava o **ator no `INSERT`** de `tb_levantamento`; na **releitura** (mesmo `tamanho`/`mtime`) atualiza `presente=1`/`status`/`data_visto` e na **revisita adota o usuário logado sem que o agendador `"sistema"` sobrescreva nome real** (só adota quando o ator ≠ `"sistema"` e o dono está vazio ou é `"sistema"`).
+- **Anotação para exibição:** novo `anotar_arquivos(pdfs)` (`bd_manipulador.py:2624`) anexa `numero_empenho`/`parcela`/`usuario`/`data` do levantamento a cada dict de listagem; quando o arquivo já foi processado, **sobrescreve com `tb_empenhos`** (nº/parcela/usuário de quem processou, com fallback ao nome final `doc_<cont>_<empenho>_<parcela>.pdf` / `EC|EE|EG|AE_<n>.pdf`). `listar_navegacao` e `listar_pendentes` retornam os dicts já anotados; `pesquisar_levantamento` retorna também `parcela` e `usuario`.
+- **Listagem exibe nome/empenho/parcela/usuário:** abas **Navegar** e **Fila** (lista, cabeçalhos e resultados de pesquisa) exibem as colunas **Arquivo, Empenho, Parcela, Usuário, Data, Status** (+ Pasta/Ações no Navegar); valores vêm da leitura do reconhecimento/processamento, com **zeros à esquerda normalizados só na exibição**. A aba **Pesquisar** já tinha a coluna Usuário e foi mantida.
+- **Validado:** `ast.parse` OK, migração aplicada (`PRAGMA table_info(tb_levantamento)` confirma `usuario`), `listar_navegacao` real retorna empenho/parcela/usuario/data, 2 restarts com `/login` 200.
+
+### Adições recentes (14/09/2026) — botão TEMPORÁRIO de massa de teste (REMOVER em produção)
+
+!!! warning "TEMPORARIO-25-ARQUIVOS-REMOVER-EM-PRODUCAO — remover antes de produção"
+    O botão **"Gerar 25 (TEMP)"** (`mod_renomear_empenho/telas.py:153-183`) é **só para QA** e **NÃO pode ir para produção** — remover o bloco marcado + o handler `_gerar_25_temp`.
+
+- **Onde/comportamento:** totalmente à direita do `menu_mod` (row `justify-between flex-nowrap`: `ui.tabs` `flex-1 min-w-0 overflow-x-auto` à esquerda e botão `shrink-0 ml-auto` à direita), rótulo "Gerar 25 (TEMP)" ícone `science` variante `secundario` `data-testid=empenhos-gerar-25-temp`; **cada clique = +25 PDFs fictícios** na 1ª pasta de `pastas_monitoradas()` (fallback `_PASTA_MONITORADA_PADRAO` = `mod_renomear_empenho/doc`) via `assets/test/fabrica_documentos.py:criar_lote_principal(pasta_doc, quantidade=25)`; handler async `_gerar_25_temp` com `await run.io_bound(_criar)` (anti-disconnect AGENTS.md §5.1); audita `audit_log(usuario,"empenhos","gerar_massa_temp",...)` com `notificar` positiva/negativa. Detalhe e arquivos:linhas em [Módulos (resumo)](modulos/renomear_empenho.md) ("Botão TEMPORÁRIO de massa de teste").
 
 ### Lacunas / diferenças assumidas
 

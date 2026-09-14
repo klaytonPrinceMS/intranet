@@ -350,6 +350,24 @@ def iniciar_agendador():
         for chave in MAPA_BACKUPS:
             backup_modulo(chave)
 
+    def _job_cleanup_blog_imagens():
+        """Blog: a cada 1 min remove imagens do editor não concretizadas.
+
+        Imagens enviadas e não usadas em postagem em até 5 min (`expirar_imagens_orfas`).
+        """
+        try:
+            from mod_blog.bd_manipulador import expirar_imagens_orfas
+            expirar_imagens_orfas()
+        except Exception as ex:
+            try:
+                from mod_intranet import observabilidade
+                observabilidade.get_logger().error(f"cleanup_blog_imagens falhou: {ex}")
+            except Exception:
+                pass
+
+    for chave in MAPA_BACKUPS:
+        sched.add_job(_job_backup, "interval", args=[chave],
+                      hours=intervalo_backup(chave), id=f"backup:{chave}")
     def _job_cleanup_pdfs():
         """Expiração do editorPDF a cada 1 min (sem depender de login).
         Usa a rotina do módulo dono (remove disco + inativa BD + devolve cota)
@@ -385,6 +403,7 @@ def iniciar_agendador():
                       hours=intervalo_backup(chave), id=f"backup:{chave}")
     sched.add_job(_job_cleanup_pdfs, "interval", minutes=1, id="cleanup_pdf")
     sched.add_job(_job_cleanup_solicita, "interval", minutes=1, id="cleanup_solicita")
+    sched.add_job(_job_cleanup_blog_imagens, "interval", minutes=1, id="cleanup_blog_imagens")
     sched.add_job(_job_poda_auditoria, "interval", hours=24, id="poda_auditoria")
     sched.add_job(_job_monitor_empenho, "interval", seconds=intervalo_monitor_empenho(),
                   id="monitor_empenho")
