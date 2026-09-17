@@ -222,3 +222,4 @@ graphify-out/.graphify_*.json
 graphify-out/.graphify_python
 graphify-out/converted/
 /mod_blog
+/.idea
