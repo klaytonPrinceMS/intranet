@@ -217,9 +217,14 @@ Todo subagente do projeto segue este padrão (ver `.opencode/agent/kbp-qa.md` co
 4. **Responsabilidade única** por subagente; nunca `commit`/`push` dentro de outro
    subagente (chame o `kbp-commit`); nunca segredos, `db_mod_*.db`, `backup/`, `logs/`,
    `site/`, `estrutura.md` no stage.
-5. **Ativação:** `.opencode/` está no `.gitignore` (vale só na máquina) e o OpenCode
-   carrega agentes no boot — após criar/editar, **saia e reinicie o OpenCode**.
-   Para versionar um agente, remova a linha `.opencode` do `.gitignore`.
+5. **Ativação e versionamento (decisão 2026-09-17 — .opencode 100% versionado):**
+   `.opencode/` é commitado integralmente (agents, plugins, skills,
+   `package.json`/`package-lock.json`, `opencode.json`) — nenhuma regra de
+   ignore para `.opencode/`; só valem os ignores globais de segredos
+   (`.env`, `*.db*`, `*.log`). O OpenCode carrega agentes no boot — após
+   criar/editar, **saia e reinicie o OpenCode**. Codificação por IA autorizada
+   neste repositório dentro de `AGENTS.md` (§§1, 2, 7, 8): raiz permitida e
+   `mod_*/` apenas; `commit`/`push` somente com solicitação expressa.
 
 ### 8.2 Usuários pré-cadastrados (seed) — conhecimento OBRIGATÓRIO de todo subagente
 
@@ -258,3 +263,16 @@ python -m venv .venv
 .venv/bin/bandit -r mod_*/
 .venv/bin/mkdocs serve
 ```
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

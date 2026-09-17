@@ -43,6 +43,8 @@ PADRAO_CONFIG = {
     "otel_auto_start_stack": "1",
     # Observabilidade — Grafana
     "grafana_url": "http://localhost:3000",
+    # Documentação MkDocs — sobe no boot salvo docs_ativo=0 (admin religa sob demanda)
+    "docs_ativo": "1",
     # SGBD — SQLite (padrão universal) ou PostgreSQL opcional em container
     # (docker/postgres/docker-compose.yml; engine via banco_conexao.py)
     "banco_tipo": "sqlite",

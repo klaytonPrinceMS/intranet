@@ -211,9 +211,14 @@ assets/test/playwright-report/
 assets/test/screenshots/
 assets/test/tmp_ferramentas_pdf/
 
-# ---- Pastas de agentes e manipuladores IA
-.opencode/*
-!.opencode/agent/
-.opencode/agent/*
-!.opencode/agent/*.md
+# ---- Agentes OpenCode — 100% VERSIONADO (decisão 2026-09-17) ----
+# Nenhuma regra de ignore para .opencode/: agents, plugins, skills,
+# package.json/lock, opencode.json — tudo commitável por padrão.
+# Segredos seguem protegidos por regras globais (.env, *.db*, *.log).
+# ---- Graphify (dev-only): grafo commitável, custo/cache locais fora ----
+graphify-out/cost.json
+graphify-out/cache/
+graphify-out/.graphify_*.json
+graphify-out/.graphify_python
+graphify-out/converted/
 /mod_blog

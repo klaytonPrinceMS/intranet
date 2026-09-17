@@ -490,14 +490,21 @@ def _config_padrao():
 # =============================================================================
 
 def _garantir_tb_config():
-    """Creates the central SQLite file + tb_config if missing (pre-boot)."""
+    """Creates the central SQLite file + tb_config if missing (pre-boot).
+
+    Idempotente: executa CREATE TABLE IF NOT EXISTS mesmo quando o arquivo
+    já existe (ex.: arquivo vazio de um boot interrompido). Sem isso, o
+    `aplicar_banco` falhava com "no such table: tb_config" nesses casos.
+    """
     try:
         from mod_intranet.repositorio import DB_PATH
-        if not os.path.exists(DB_PATH):
-            conn = __import__("sqlite3").connect(DB_PATH)
+        import sqlite3
+        conn = sqlite3.connect(DB_PATH)
+        try:
             conn.execute("CREATE TABLE IF NOT EXISTS tb_config ("
                          "chave TEXT PRIMARY KEY, valor TEXT NOT NULL)")
             conn.commit()
+        finally:
             conn.close()
         return True
     except Exception:

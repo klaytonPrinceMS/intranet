@@ -385,12 +385,15 @@ class TestIntegracaoBackend:
     """Backend sem browser — FTS 1 letra, levantamento presença, EE string."""
 
     def test_backend_fts_1_letra_tem_hits(self):
-        from mod_renomear_empenho.bd_manipulador import pesquisar, pesquisar_levantamento, _fts_query_prefixada
+        from mod_renomear_empenho.bd_manipulador import pesquisar, pesquisar_levantamento, _fts_query_prefixada, levantar_arquivos
         # _fts_query_prefixada com 1 token deve gerar prefixo
         q = _fts_query_prefixada(["4"])
         assert q == '"4"*'
         q2 = _fts_query_prefixada(["joao", "si"])
         assert q2 == '"joao" AND "si"*'
+        # Pré-condição: tb_levantamento só tem massa após o levantamento da
+        # pasta monitorada — garante antes de pesquisar (idempotente).
+        levantar_arquivos("tester")
         # backend de verdade
         lev = pesquisar_levantamento("4", limite=100) or []
         assert len(lev) > 0, "levantamento('4') deveria ter hits (1 letra filtra)"
@@ -645,7 +648,8 @@ if __name__ == "__main__":
     except Exception as ex:
         _check(False, f"_fts_query_prefixada falhou: {ex}", cont)
     try:
-        from mod_renomear_empenho.bd_manipulador import pesquisar_levantamento
+        from mod_renomear_empenho.bd_manipulador import pesquisar_levantamento, levantar_arquivos
+        levantar_arquivos("tester")  # pré-condição: massa do levantamento
         hits = pesquisar_levantamento("4", limite=10) or []
         _check(len(hits) > 0, f"backend levantamento('4')={len(hits)} hits", cont)
     except Exception as ex:

@@ -398,9 +398,6 @@ def iniciar_agendador():
             except Exception:
                 pass
 
-    for chave in MAPA_BACKUPS:
-        sched.add_job(_job_backup, "interval", args=[chave],
-                      hours=intervalo_backup(chave), id=f"backup:{chave}")
     sched.add_job(_job_cleanup_pdfs, "interval", minutes=1, id="cleanup_pdf")
     sched.add_job(_job_cleanup_solicita, "interval", minutes=1, id="cleanup_solicita")
     sched.add_job(_job_cleanup_blog_imagens, "interval", minutes=1, id="cleanup_blog_imagens")
@@ -410,6 +407,30 @@ def iniciar_agendador():
     sched.start()
     _agendador = sched
     return sched
+
+
+def encerrar_agendador():
+    """Para o agendador de forma ordenada (idempotente, fail-soft).
+
+    Desliga o `BackgroundScheduler` sem aguardar jobs em curso
+    (`wait=False` para não travar o encerramento) e limpa a referência
+    global — uma nova chamada a `iniciar_agendador()` recria tudo.
+    Usada no shutdown gracioso (`main.py::_encerrar`).
+    """
+    global _agendador
+    sched, _agendador = _agendador, None
+    if sched is None:
+        return False
+    try:
+        sched.shutdown(wait=False)
+    except Exception:
+        try:
+            from mod_intranet import observabilidade
+            observabilidade.get_logger().warning(
+                "encerrar_agendador: falha no shutdown")
+        except Exception:
+            pass
+    return True
 
 
 def reagendar_backup(chave, horas):

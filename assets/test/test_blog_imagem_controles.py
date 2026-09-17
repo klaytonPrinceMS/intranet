@@ -4,7 +4,9 @@ EN: Blog editor image controls — left/center/right alignment and width on
     the last `<img>`, preserving the other axis and author CSS; renderer
     respects author alignment/size, defaults otherwise.
 PT: Linha "Imagem:" do editor — botões esquerda/centro/direita + seletor de
-    largura aplicados à ÚLTIMA `<img>` (`ajustar_imagem_html` pura); o render
+    largura aplicados à ÚLTIMA `<img>` (`ajustar_imagem_html` pura); linha
+    "Quebra:" com 7 estilos Word (em_linha, quadrado, justo, atraves,
+    sup_inf, atras, frente); o render (`_FormatadorBlog`) respeita
     (`_FormatadorBlog`) respeita `float`/margens `auto`/`max-width` do autor
     e só aplica o padrão (esquerda, 200–400px configuráveis) no resto.
 
@@ -99,6 +101,54 @@ min_l, max_l = _largura_imagem()
 p = fmt('<p><img src="/img_postagens/a.png"></p>')
 check("float:left" in p and f"max-width:{max_l}px" in p and f"min-width:{min_l}px" in p,
       "feed: sem estilo do autor aplica o padrão configurado")
+
+# ---------- quebra de texto (estilos Word) ----------
+nq, _d = ajustar_imagem_html(_BASE, alinhamento="em_linha")
+check("display:inline" in nq and "float" not in nq,
+      "em_linha ancora na linha sem float")
+nq, _d = ajustar_imagem_html(_BASE, alinhamento="quadrado")
+check("float:left" in nq and "margin:8px" in nq,
+      "quadrado contorna em retângulo uniforme")
+nq, _d = ajustar_imagem_html(_BASE, alinhamento="justo")
+check("float:left" in nq and "margin:2px" in nq
+      and "shape-outside:margin-box" in nq,
+      "justo cola o texto no contorno")
+nq, _d = ajustar_imagem_html(_BASE, alinhamento="atraves")
+check("float:left" in nq and ";margin:0;" in nq
+      and "shape-outside:margin-box" in nq,
+      "atraves atravessa as margens")
+nq, _d = ajustar_imagem_html(_BASE, alinhamento="sup_inf")
+check("display:block" in nq and "clear:both" in nq
+      and "float" not in nq,
+      "sup_inf isola em linha própria")
+nq, _d = ajustar_imagem_html(_BASE, alinhamento="atras")
+check("opacity:0.45" in nq and "margin:8px auto" in nq,
+      "atras vira marca d'água centralizada")
+nq, _d = ajustar_imagem_html(_BASE, alinhamento="frente")
+check("float:right" in nq and "z-index:1" in nq
+      and "position:relative" in nq,
+      "frente sobrepõe o texto à direita")
+
+# ---------- preservação do outro eixo nos novos estilos ----------
+nq, _d = ajustar_imagem_html(_BASE, alinhamento="justo")
+nq2, _d2 = ajustar_imagem_html(nq, largura="50%")
+check("shape-outside:margin-box" in nq2 and "max-width:50%" in nq2,
+      "trocar largura preserva o justo")
+nq3, _d3 = ajustar_imagem_html(nq2, alinhamento="sup_inf")
+check("clear:both" in nq3 and "max-width:50%" in nq3
+      and "shape-outside" not in nq3,
+      "trocar estilo limpa o anterior e preserva a largura")
+nq4, _d4 = ajustar_imagem_html(_BASE, alinhamento="frente")
+nq5, _d5 = ajustar_imagem_html(nq4, largura="50%")
+check("float:right" in nq5 and "z-index:1" in nq5
+      and "max-width:50%" in nq5,
+      "trocar largura preserva o frente")
+
+# ---------- feed respeita a quebra ----------
+e = fmt('<p><img src="/img_postagens/a.png" '
+        'style="max-width:100%;height:auto;display:block;clear:both;margin:8px 0;"></p>')
+check("clear:both" in e and "float:left" not in e,
+      "feed: superior/inferior sem float")
 
 print(f"RESULTADO: {_OK} OK, {_TOTAL - _OK} falha(s) de {_TOTAL} verificações")
 sys.exit(0 if _OK == _TOTAL else 1)

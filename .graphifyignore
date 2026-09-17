@@ -1,0 +1,21 @@
+# .graphifyignore — só exclui mais (nunca re-inclui o que o .gitignore já excluiu)
+# Runtime/gerados da intranet fora do grafo commitável
+graphify-out/
+site/
+logs/
+backup/
+*.db
+*.db-wal
+*.db-shm
+.venv/
+.opencode/node_modules/
+node_modules/
+mod_renomear_empenho/doc/*
+mod_renomear_empenho/quarentena/*
+mod_renomear_empenho/downloads/*
+mod_renomear_empenho/tmp_ferramentas_pdf/*
+mod_edit_pdf/editorPDF/*
+mod_solicita_impressao/solicitacaoImpressao/*
+assets/test/test-results/
+assets/test/playwright-report/
+assets/test/screenshots/

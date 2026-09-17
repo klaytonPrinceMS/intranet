@@ -51,6 +51,17 @@ Fonte: `requirements.txt` (raiz).
 | `mkdocs` | `>=1.6.1` | build da documentação embutida |
 | `mkdocs-material` | `>=9.7.7` | presente no requirements; **o tema ativo é `readthedocs`** (ver `mkdocs.yml`) |
 
+### Dependências de desenvolvimento (dev-only, equipe com internet)
+
+> Não vão para produção. O runtime intranet opera sem internet; estas
+> ferramentas rodam só nas máquinas dev. Fonte: `requirements-dev.txt`.
+> Detalhe em `ferramentas/graphify.md`.
+
+| Ferramenta | Uso | Status |
+|:---|:---|:---:|
+| `graphifyy[sql,postgres,pdf]` (`>=0.9.0`) | grafo de conhecimento (`query/path/explain`), skill `/graphify` + plugin OpenCode | ✅ Instalado (dev) |
+| `GEMINI_API_KEY` (opcional) | passada semântica de `docs/`; sem ela, o agente host assume | ⚠️ Opcional |
+
 ### Armazenamento
 
 - **SQLite** (módulo `sqlite3` da stdlib) — sem servidor externo de banco.

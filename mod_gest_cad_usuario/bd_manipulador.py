@@ -124,6 +124,13 @@ def init_db():
         """)
         conn.commit()
 
+    # Migração: flags finas de permissão por módulo (JSON em tb_acesso_usuario).
+    cur.execute("PRAGMA table_info(tb_acesso_usuario)")
+    cols_acesso = {r[1] for r in cur.fetchall()}
+    if "flags" not in cols_acesso:
+        cur.execute("ALTER TABLE tb_acesso_usuario ADD COLUMN flags TEXT NOT NULL DEFAULT '{}'")
+        conn.commit()
+
     # Migração única: usuários do BD central -> BD do módulo (legado).
     # Só roda se o BD central AINDA tiver tb_usuarios; em instalação nova
     # essa tabela não existe mais, então a migração é pulada com segurança
@@ -429,7 +436,7 @@ def editar_usuario(ator, user_nome, email="__NULO__", fone="__NULO__",
         if not sets:
             return True, "Nada a alterar"
         params.append(user_nome)
-        cur.execute(f"UPDATE tb_usuarios SET {', '.join(sets)} WHERE user_nome=?", tuple(params))
+        cur.execute(f"UPDATE tb_usuarios SET {', '.join(sets)} WHERE user_nome=?", tuple(params))  # nosec B608 — sets só literais fixos "col=?"; valores via ?
         conn.commit()
         if auditar:
             _audit(ator, "editar_usuario", user_nome, ", ".join(mudancas))
@@ -587,7 +594,7 @@ def _vinculos_cruzados_excluir(user_nome):
         ids = [r[0] for r in cc.fetchall()]
         if ids:
             q = ",".join("?" * len(ids))
-            cc.execute(f"DELETE FROM tb_comentarios WHERE postagem_id IN ({q})", ids)
+            cc.execute(f"DELETE FROM tb_comentarios WHERE postagem_id IN ({q})", ids)  # nosec B608 — q só tem "?" (len); ids via parâmetros
             det.append(f"{len(ids)} postagem(ns)")
         cc.execute("DELETE FROM tb_comentarios WHERE autor=?", (user_nome,))
         cc.execute("DELETE FROM tb_postagens WHERE autor=?", (user_nome,))
@@ -658,7 +665,7 @@ def _vinculos_cruzados_renomear(nome_atual, novo_nome):
         try:
             cc = conn.cursor()
             for tbl, col in tabelas:
-                cc.execute(f"UPDATE {tbl} SET {col}=? WHERE {col}=?", (novo_nome, nome_atual))
+                cc.execute(f"UPDATE {tbl} SET {col}=? WHERE {col}=?", (novo_nome, nome_atual))  # nosec B608 — tbl/col de lista fixa interna; valores via ?
             conn.commit()
         except Exception as e:
             _log().warning(f"_vinculos_cruzados_renomear: falha ao propagar {nome_atual}->{novo_nome} | {e}")
@@ -735,6 +742,13 @@ def duplicar_usuario(ator, usuario_origem, novo_nome, senha, email=None,
         if not gest_sys[0]:
             _log().warning(f"duplicar_usuario: falha ao replicar acesso {chave} "
                            f"para {novo_nome} | {gest_sys[1]}")
+        else:
+            _flags_origem = obter_flags(usuario_origem, chave)
+            if _flags_origem:
+                ok_f, msg_f = definir_flags(ator, novo_nome, chave, _flags_origem)
+                if not ok_f:
+                    _log().warning(f"duplicar_usuario: falha ao replicar flags {chave} "
+                                   f"para {novo_nome} | {msg_f}")
     _audit(ator, "duplicar_usuario", novo_nome,
            f"origem={usuario_origem} | perfil={perfil_origem}")
     _log().info(f"usuário duplicado: {novo_nome} a partir de {usuario_origem} por {ator}")
@@ -811,6 +825,82 @@ def validar_acesso_modulo(user_nome, modulo_chave):
         from mod_intranet import autenticacao
         return autenticacao.perfil_global_de(user_nome) == "administrador_geral"
     return obter_papel_no_modulo(user_nome, modulo_chave) is not None
+
+
+# ================= FLAGS FINAS DE PERMISSÃO (JSON) =================
+
+FLAGS_PERMISSAO = {
+    "blog.publicar": "Publicar e editar postagens do blog",
+    "blog.comentar": "Comentar nas postagens do blog",
+    "blog.configurar": "Configurar exibição e aparência do blog",
+}
+
+
+def _flags_validas(flags):
+    """Valida o dicionário de flags contra o catálogo (allowlist)."""
+    if not isinstance(flags, dict):
+        return False, "flags deve ser um dicionário {flag: bool}"
+    desconhecidas = [k for k in flags if k not in FLAGS_PERMISSAO]
+    if desconhecidas:
+        return False, f"flags desconhecidas: {', '.join(desconhecidas)}"
+    if any(not isinstance(v, bool) for v in flags.values()):
+        return False, "valores das flags devem ser booleanos"
+    return True, ""
+
+
+def obter_flags(user_nome, modulo_chave):
+    """Lê as flags finas do vínculo (dict). Fail-soft: ausente/erro/JSON inválido = {}."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT flags FROM tb_acesso_usuario WHERE user_nome=? AND modulo_chave=?",
+                    (user_nome, modulo_chave))
+        row = cur.fetchone()
+        if not row or not row[0]:
+            return {}
+        try:
+            import json
+            dados = json.loads(row[0])
+        except (ValueError, TypeError):
+            return {}
+        return dados if isinstance(dados, dict) else {}
+    except Exception:
+        return {}
+    finally:
+        conn.close()
+
+
+def definir_flags(ator, user_nome, modulo_chave, flags):
+    """Substitui as flags finas do vínculo (validadas pelo catálogo)."""
+    ok, msg = _flags_validas(flags)
+    if not ok:
+        return False, msg
+    conn = get_connection()
+    try:
+        import json
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM tb_acesso_usuario WHERE user_nome=? AND modulo_chave=?",
+                    (user_nome, modulo_chave))
+        if not cur.fetchone():
+            return False, f"sem vínculo {user_nome}@{modulo_chave} (libere o acesso primeiro)"
+        cur.execute("UPDATE tb_acesso_usuario SET flags=? WHERE user_nome=? AND modulo_chave=?",
+                    (json.dumps(flags, sort_keys=True), user_nome, modulo_chave))
+        conn.commit()
+        _audit(ator, "definir_flags", user_nome, f"{modulo_chave}={sorted(flags)}")
+        _log().info(f"flags definidas: {user_nome} {modulo_chave}={sorted(flags)} por {ator}")
+        return True, f"{modulo_chave}: {len(flags)} flag(s)"
+    finally:
+        conn.close()
+
+
+def tem_flag(user_nome, modulo_chave, flag):
+    """True se o usuário tem a flag (admin global/modular passam pelo papel)."""
+    try:
+        if obter_papel_no_modulo(user_nome, modulo_chave) == "administrador":
+            return True
+        return bool(obter_flags(user_nome, modulo_chave).get(flag))
+    except Exception:
+        return False
 
 
 # ================= SESSÕES ATIVAS =================

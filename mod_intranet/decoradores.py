@@ -90,6 +90,37 @@ def requer_permissao(modulo, arg_usuario="usuario_logado", arg_perfil="perfil"):
     return decorator
 
 
+def requer_flag(flag, arg_usuario="autor", log_msg="sem flag de permissão bloqueado"):
+    """Require a fine-grained permission flag before executing.
+
+    Exige a flag `modulo.acao` (`tem_flag`, com bypass por papel admin
+    global/modular); sem a flag retorna False (fail-closed) e loga warning.
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            sig = inspect.signature(func)
+            try:
+                bound = sig.bind_partial(*args, **kwargs)
+                usuario = bound.arguments.get(arg_usuario)
+                if usuario is None and args:
+                    for a in args:
+                        if isinstance(a, str) and a:
+                            usuario = a
+                            break
+                modulo = (flag or "").split(".")[0]
+                from mod_gest_cad_usuario.bd_manipulador import tem_flag
+                if not tem_flag(usuario, modulo, flag):
+                    _log().warning(f"'{usuario}' {log_msg} ({flag})")
+                    return None if "criar" in func.__name__ else False
+            except Exception:
+                _log().exception(f"requer_flag: falha ao validar {func.__name__}")
+                return None if "criar" in func.__name__ else False
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
 def auditado(modulo, acao, com_hash=False):
     """Audit after successful execution (fail-soft).
 

@@ -73,7 +73,7 @@ def iniciar_servidor(porta=PORTA_PADRAO) -> bool:
                     pass
 
             p = int((porta or PORTA_PADRAO) + tentativa) if tentativa else int(porta or PORTA_PADRAO)
-            _servidor = ThreadingHTTPServer(("0.0.0.0", p), _Handler)
+            _servidor = ThreadingHTTPServer(("0.0.0.0", p), _Handler)  # nosec B104 — docs propositalmente na LAN (todos leem); admin controla via docs_ativo
             _porta_atual = p
             threading.Thread(target=_servidor.serve_forever, daemon=True).start()
             if tentativa:
@@ -92,6 +92,34 @@ def iniciar_servidor(porta=PORTA_PADRAO) -> bool:
 def porta_documentacao():
     """Returns the port where the documentation server is running (or default)."""
     return _porta_atual or PORTA_PADRAO
+
+
+def habilitada_no_boot():
+    """Lê tb_config docs_ativo (padrão ligada). Fail-soft: erro = ligada."""
+    try:
+        from mod_intranet.bd_conexao import get_config
+        return (get_config("docs_ativo", "1") or "1").strip() != "0"
+    except Exception:
+        return True
+
+
+def parar_servidor():
+    """Para o servidor de documentação (idempotente, fail-soft).
+
+    Encerra o `ThreadingHTTPServer` de fundo e limpa as referências —
+    uma nova chamada a `iniciar_servidor()` recria tudo. Usada no
+    shutdown gracioso (`main.py::_encerrar`). Falha NUNCA derruba.
+    """
+    global _servidor, _porta_atual
+    srv, _servidor, _porta_atual = _servidor, None, None
+    if srv is None:
+        return False
+    try:
+        srv.shutdown()
+        srv.server_close()
+    except Exception as e:
+        print(f"[documentacao] aviso ao parar servidor: {e}")
+    return True
 
 
 def construir_e_montar_documentacao(logar=True, porta=None) -> bool:

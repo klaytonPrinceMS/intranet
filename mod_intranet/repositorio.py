@@ -95,6 +95,23 @@ def _uri(path: str) -> str:
     return f"sqlite:///{path}?check_same_thread=false"
 
 
+def _tem_schema_central(_eng) -> bool:
+    """True se TODAS as tabelas centrais do metadata já existem no engine.
+
+    Usado para o self-healing do banco central: arquivo pré-existente mas
+    sem schema (ou com schema parcial — ex.: só `tb_config` criada no
+    pre-boot) precisa do create_all mesmo com `novo_banco=False`. Checa o
+    conjunto completo de `metadata.tables` (hoje `tb_config`, `tb_sessoes`,
+    `tb_modulos`). Fail-soft: False em qualquer falha.
+    """
+    try:
+        from sqlalchemy import inspect as _insp
+        existentes = set(_insp(_eng).get_table_names() or [])
+        return set(metadata.tables) <= existentes
+    except Exception:
+        return False
+
+
 def engine(chave: str = "intranet"):
     """Lazily creates/reuses the SQLAlchemy Engine for a module database.
 
@@ -102,10 +119,14 @@ def engine(chave: str = "intranet"):
     (DATABASE `db_mod_<chave>`, um banco por módulo). SQLite: um engine
     POR banco (`MODULOS_BD`), cacheado por chave (singleton por processo),
     com pragmas WAL/synchronous/foreign_keys via event listener. CRIAÇÃO
-    CONDICIONAL: `metadata.create_all` e o log de "criado" só acontecem
-    quando o ARQUIVO do banco NÃO existe. Para módulos (não "intranet") NÃO
-    roda `create_all`: o schema de cada banco é responsabilidade do
-    `init_db` do próprio módulo. Retorna `None` em falha (fail-soft).
+    DO BANCO CENTRAL: `metadata.create_all` roda quando o ARQUIVO do banco
+    NÃO existe OU quando ele existe mas está sem schema (ausente ou parcial,
+    ex.: arquivo vazio de um boot interrompido) — sem isso, `get_config`/
+    `set_config` falhavam com "no such table: tb_config" antes do
+    `init_db` central. `create_all` é idempotente (só cria o que falta).
+    Para módulos (não "intranet") NÃO roda `create_all`: o schema de cada
+    banco é responsabilidade do `init_db` do próprio módulo. Retorna `None`
+    em falha (fail-soft).
     """
     if chave not in MODULOS_BD:
         chave = "intranet"
@@ -141,9 +162,11 @@ def engine(chave: str = "intranet"):
                 cur.execute("PRAGMA foreign_keys=ON")
                 cur.close()
 
-            if chave == "intranet" and novo_banco:
-                # Banco central inexistente: cria as tabelas do metadata
-                # (tb_config, tb_sessoes, tb_modulos) UMA vez.
+            if chave == "intranet" and (novo_banco or not _tem_schema_central(_eng)):
+                # Banco central novo OU pré-existente sem schema (total ou
+                # parcial): cria as tabelas do metadata (tb_config,
+                # tb_sessoes, tb_modulos). O segundo caso é o self-healing
+                # (arquivo vazio/parcial, ex.: boot interrompido).
                 metadata.create_all(_eng)
                 _log().info(f"repositorio: banco central criado ({path})")
             elif novo_banco:

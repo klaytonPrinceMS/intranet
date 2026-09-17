@@ -6,6 +6,11 @@
 # O ambiente de produção usa apenas requirements.txt (não instalar este arquivo).
 # ============================================================
 
+# --- Grafo de conhecimento / dev-only (Graphify, NUNCA em requirements.txt) ---
+# Ferramenta da equipe dev (com internet). Runtime intranet segue offline.
+# Instalado via: .venv/bin/pip install "graphifyy[sql,postgres,pdf]"
+graphifyy[sql,postgres,pdf]>=0.9.0
+
 # --- QA / Testes ---
 pytest>=8.0
 pytest-playwright>=0.9.0

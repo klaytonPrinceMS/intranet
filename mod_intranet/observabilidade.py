@@ -16,6 +16,7 @@ Todas as opções vivem em tb_config (área de administração do módulo Intran
 import os
 import sys
 import glob
+import time
 
 from loguru import logger
 
@@ -190,6 +191,46 @@ def limpar_todos():
         return True, f"{removidos} arquivo(s) de log removido(s)"
     except Exception as e:
         return False, str(e)
+
+
+def formatar_tamanho(tamanho_kb):
+    """Formata KB em 'X KB' ou 'Y.Y MB' (puro, testável)."""
+    try:
+        kb = float(tamanho_kb or 0)
+    except (TypeError, ValueError):
+        kb = 0.0
+    if kb >= 1024:
+        return f"{kb / 1024:.1f} MB"
+    return f"{max(1, round(kb))} KB"
+
+
+def listar_logs():
+    """Lista os arquivos de log com tamanho e marca de uso.
+
+    Retorna `[(arquivo, tamanho_kb, data_hora, em_uso)]` do mais recente
+    ao mais antigo, incluindo compactados (`.zip`). Marca `em_uso=True`
+    nos `.log` com a data de hoje (sinks ativos do loguru). Fail-soft:
+    erro devolve `[]`. Usada no card "Observabilidade e logs".
+    """
+    try:
+        os.makedirs(LOG_DIR, exist_ok=True)
+        hoje = time.strftime("%Y-%m-%d")
+        achados = []
+        for pad in ("*.log", "*.log.zip", "*.log.*.zip"):
+            for caminho in glob.glob(os.path.join(LOG_DIR, pad)):
+                try:
+                    nome = os.path.basename(caminho)
+                    kb = max(1, round(os.path.getsize(caminho) / 1024))
+                    dh = time.strftime("%Y-%m-%d %H:%M",
+                                       time.localtime(os.path.getmtime(caminho)))
+                    em_uso = (nome.endswith(".log") and hoje in nome)
+                    achados.append((nome, kb, dh, em_uso, os.path.getmtime(caminho)))
+                except OSError:
+                    continue
+        achados.sort(key=lambda r: r[4], reverse=True)
+        return [(nome, kb, dh, em_uso) for nome, kb, dh, em_uso, _ in achados]
+    except Exception:
+        return []
 
 
 def gerar_logs_teste_niveis():

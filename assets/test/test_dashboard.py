@@ -38,6 +38,7 @@ def ler(rel):
 
 MAIN = ler("main.py")
 ABAS = ler("mod_intranet/aba_modulo.py")
+HV = ler("mod_intranet/home_visual.py")
 
 MODULOS = {
     "mod_blog/telas.py": "blog_",
@@ -51,24 +52,41 @@ MODULOS = {
 print("INICIANDO TESTES — Dashboard mobile-first + padrão de exibição (Fase 1)")
 
 # ---------- Dashboard ----------
-check('eh_admin = user.get("perfil") in ("administrador_geral", "administrador_modulo")' in MAIN,
+# Produção atual (main.py:507-509): perfil extraído antes e `eh_admin = perfil
+# in (...)` — semanticamente idêntico ao `user.get("perfil") in (...)` antigo.
+check('eh_admin = perfil in ("administrador_geral", "administrador_modulo")' in MAIN
+      and 'perfil = user.get("perfil"' in MAIN,
       "resumo restrito a admins (geral e de módulos)")
 check("if eh_admin:" in MAIN, "resumo do sistema exibido somente para admins")
 check("Resumo do sistema" in MAIN and "Publicações recentes" in MAIN
       and MAIN.index("Resumo do sistema") < MAIN.index("Publicações recentes"),
       "resumo fica acima das postagens do blog")
-check('ui.row().classes("w-full justify-center gap-4")' in MAIN,
-      "cards do resumo lado a lado e centralizados")
-check("transition-transform" in MAIN,
-      "microinteração transition-transform nos cards de estatística")
-check("hover:-translate-y-0.5" in MAIN, "microinteração hover -translate-y")
-check("hover:shadow-lg" in MAIN, "microinteração hover:shadow-lg")
+# Produção atual: wrap centralizado em home_visual.classes_wrap_resumo
+# ("w-full justify-center gap-4 flex-wrap") usado via
+# `ui.row().classes(_hv2.classes_wrap_resumo(modelo))` (main.py:415,433).
+check("def classes_wrap_resumo" in HV
+      and "w-full justify-center gap-4 flex-wrap" in HV
+      and "classes_wrap_resumo" in MAIN,
+      "cards do resumo lado a lado e centralizados (via classes_wrap_resumo)")
+# Microinterações migradas para o CSS centralizado (home_visual.py):
+# .home-stat-pic/.home-stat-water com `transition:` e
+# `:hover{...transform:translateY(-2px)}` + sombra — mesmo efeito do
+# Tailwind antigo (transition-transform/hover:-translate-y/hover:shadow-lg).
+check("transition:" in HV,
+      "microinteração transition nos cards de estatística (CSS centralizado)")
+check("translateY(-2px)" in HV, "microinteração hover -translate-y (CSS centralizado)")
+check(":hover" in HV and "box-shadow" in HV,
+      "microinteração hover:shadow (CSS centralizado)")
 check('notificar(f"Bem-vindo(a), {nome}!' in MAIN
       and "timeout=2" in MAIN,
       "feedback de 2s: toast de boas-vindas com timeout=2 (via notificar)")
-check('"Atualizado ✓"' in MAIN, "feedback de 2s: rótulo 'Atualizado ✓'")
-check('ui.timer(2.0, lambda: lbl_fb_resumo.set_text(""), once=True)' in MAIN,
-      "feedback de 2s: reversão via ui.timer(2.0, once=True)")
+# Produção atual (main.py:398-400): botão "Atualizar" manual REMOVIDO de
+# propósito — dados calculados automaticamente a cada acesso; o feedback é
+# só o toast auto (ui.timer(0.1, ..., timeout=2), once=True).
+check('"Atualizado ✓" not in MAIN',
+      "feedback de 2s: sem botão 'Atualizar' manual (dados automáticos)")
+check("lbl_fb_resumo" not in MAIN and "ui.timer(0.1" in MAIN,
+      "feedback de 2s: reversão manual removida (toast auto com timeout=2)")
 # Dashboard deve ocupar a largura inteira (sem container max-w centralizador)
 check("max-w-6xl mx-auto" not in MAIN.split("# ================== DASHBOARD")[1]
       [:2000], "dashboard sem container max-w centralizador")

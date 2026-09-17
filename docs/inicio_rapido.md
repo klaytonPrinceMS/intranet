@@ -44,6 +44,22 @@ O `requirements.txt` instala todas as dependências (NiceGUI, APScheduler, nh3, 
 - Pastas operacionais são criadas automaticamente em runtime pelo boot/rotinas (`os.makedirs(..., exist_ok=True)`): na raiz, `backup/` e `logs/`; dentro dos módulos, `mod_edit_pdf/editorPDF/`, `mod_renomear_empenho/doc/`, `mod_renomear_empenho/organizadorPasta/`, `mod_renomear_empenho/quarentena/` (regra de ouro do AGENTS.md: artefatos de módulo vivem dentro de `mod_*`).
 - A documentação é compilada (MkDocs) e servida em **http://localhost:8000** (porta mkdocs, separada do site).
 
+### Lançadores iniciar.bat / iniciar.sh
+
+Para quem não vai usar o executável único (futuro, via auto-py-to-exe), há dois lançadores na raiz em modo padrão — SQLite + sem OTel, sem depender de Docker/Postgres/Grafana:
+
+```bat
+REM Windows
+iniciar.bat
+```
+
+```bash
+# Linux
+./iniciar.sh
+```
+
+Eles exportam `INTRANET_FORCE_SQLITE=1` + `INTRANET_SEM_OTEL=1` e chamam o Python do `.venv` (com fallback para o `python` do sistema).
+
 Acesse no navegador:
 
 ```

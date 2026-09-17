@@ -70,11 +70,15 @@ inicializar_bancos()
 # ================== INICIALIZAÇÃO OTEL (observabilidade) ==================
 # `otel_ativo=0` desliga a telemetria; `otel_auto_start_stack=0` usa stack
 # remota/dedicada (pula o `compose up` local e as checagens de Docker).
+# `INTRANET_SEM_OTEL=1` força o desligamento (usada por iniciar.bat/.sh
+# para subir no modo padrão, sem Docker/Postgres/Grafana).
 try:
+    _sem_otel_env = (os.environ.get("INTRANET_SEM_OTEL") or "").strip() == "1"
     _otel_ativo = _cfg.get("otel_ativo", True) and \
-        get_config("otel_ativo", "1") == "1"
-    _otel_auto_stack = get_config("otel_auto_start_stack", "1") == "1"
-    if not _otel_ativo:
+        get_config("otel_ativo", "1") == "1" and not _sem_otel_env
+    if _sem_otel_env:
+        print("[otel] Telemetria OTel desativada (INTRANET_SEM_OTEL=1)")
+    elif not _otel_ativo:
         print("[otel] Telemetria OTel desativada (otel_ativo=0)")
     else:
         from mod_intranet.docker_detector import auto_iniciar_otel
@@ -320,7 +324,13 @@ def _orquestrar_resumo_dados():
         n_24h = 0
         for tbl in get_tabelas_auditoria():
             try:
-                cur_a.execute(f"SELECT COUNT(*) FROM {tbl} WHERE timestamp >= datetime('now','localtime','-1 day')")
+                # tbl vem do sqlite_master filtrado (tb_auditoria_*); revalida
+                # como identificador antes de interpolar (defesa em profundidade).
+                if not (tbl or "").startswith("tb_auditoria_"):
+                    continue
+                if not tbl.replace("_", "").isalnum():
+                    continue
+                cur_a.execute(f"SELECT COUNT(*) FROM {tbl} WHERE timestamp >= datetime('now','localtime','-1 day')")  # nosec B608 — tbl validado acima (prefixo + identificador); valores fixos
                 n_24h += cur_a.fetchone()[0]
             except Exception:
                 continue
@@ -832,8 +842,11 @@ if __name__ in ("__main__", "__mp_main__"):
     def _passo_docs():
         from mod_intranet.documentacao import (
             construir_e_montar_documentacao,
-            iniciar_servidor,
+            iniciar_servidor, habilitada_no_boot,
         )
+        if not habilitada_no_boot():
+            print("[documentacao] Desativada (docs_ativo=0) — pulando build/servidor no boot")
+            return True
         construir_e_montar_documentacao(
             porta=_cfg.get("porta_documentacao", 8000))
         iniciar_servidor(_cfg.get("porta_documentacao", 8000))
@@ -845,6 +858,44 @@ if __name__ in ("__main__", "__mp_main__"):
     ])
 
     observabilidade.get_logger().info("Intranet iniciada (boot concluído)")
+
+    # ================== SHUTDOWN GRACIOSO ==================
+    # Ordem: agendador (para os jobs) -> docs -> OTel. Idempotente e
+    # fail-soft — falha em uma etapa nunca impede as seguintes. O caminho
+    # efetivo é o `atexit` (o uvicorn substitui os handlers de sinal ao
+    # subir o servidor); os handlers abaixo valem como melhor esforço.
+    def _encerrar():
+        try:
+            from mod_intranet import rotinas
+            if rotinas.encerrar_agendador():
+                print("[shutdown] Agendador encerrado")
+        except Exception as e:
+            print(f"[shutdown] Aviso ao encerrar agendador: {e}")
+        try:
+            from mod_intranet.documentacao import parar_servidor
+            if parar_servidor():
+                print("[shutdown] Servidor de documentação encerrado")
+        except Exception as e:
+            print(f"[shutdown] Aviso ao parar documentação: {e}")
+        try:
+            from mod_intranet.otel_integracao import finalizar_otel
+            finalizar_otel()
+        except Exception:
+            pass
+
+    import atexit as _atexit
+    import signal as _signal
+    _atexit.register(_encerrar)
+
+    def _ao_sinal(*_args):
+        _encerrar()
+        os._exit(0)
+
+    for _s in (_signal.SIGINT, _signal.SIGTERM):
+        try:
+            _signal.signal(_s, _ao_sinal)
+        except Exception:
+            pass
 
     ui.run(
         title=get_config("texto_login_titulo", "INTRANET Básica") or "INTRANET Básica",

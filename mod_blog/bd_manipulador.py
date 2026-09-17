@@ -22,7 +22,7 @@ from html.parser import HTMLParser
 
 from mod_intranet.bd_conexao import get_connection, DB_PATH, get_config, set_config
 from mod_intranet.crud_base import CrudBase, audit_reg
-from mod_intranet.decoradores import requer_pode_publicar, auditado, falha_suave
+from mod_intranet.decoradores import requer_pode_publicar, requer_flag, auditado, falha_suave
 from nh3 import clean
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -358,10 +358,10 @@ def listar_postagens(ativo=True, ordem="DESC"):
     if ativo is None:
         return _crud.listar(
             "SELECT id, titulo, conteudo, autor, data_criacao "
-            f"FROM tb_postagens ORDER BY data_criacao {order}")
+            f"FROM tb_postagens ORDER BY data_criacao {order}")  # nosec B608 — order só ASC/DESC via _ordem_sql
     return _crud.listar(
         "SELECT id, titulo, conteudo, autor, data_criacao "
-        f"FROM tb_postagens WHERE ativo=? ORDER BY data_criacao {order}",
+        f"FROM tb_postagens WHERE ativo=? ORDER BY data_criacao {order}",  # nosec B608 — order só ASC/DESC via _ordem_sql
         (1 if ativo else 0,))
 
 
@@ -651,6 +651,7 @@ def listar_comentarios(postagem_id):
 
 @falha_suave(default=False, nivel="exception")
 @requer_pode_publicar(arg_usuario="autor")
+@requer_flag("blog.comentar", arg_usuario="autor")
 @auditado(modulo="blog", acao="criar_comentario")
 def criar_comentario(postagem_id, autor, conteudo):
     """Creates a sanitized comment after checking permission. Returns bool.
@@ -669,11 +670,18 @@ def ajustar_imagem_html(html_texto, alinhamento=None, largura=None):
     """Aplica alinhamento/largura à ÚLTIMA `<img>` do HTML (puro, testável).
 
     Reescreve só as props de layout do `style` (`float`, `margin*`,
-    `display`, `max/min/width`), preservando o restante do CSS do autor e o
-    outro eixo quando só um muda (`largura=None` mantém a atual;
-    `alinhamento=None` mantém o atual). `largura="original"` remove o
-    `max-width` (vale o padrão do render). Retorna `(novo_html, detalhe)`;
-    levanta `ValueError` se não há imagem.
+    `display`, `vertical-align`, `clear`, `shape-outside`, `position`,
+    `z-index`, `opacity`, `max/min/width`), preservando o restante do CSS
+    do autor e o outro eixo quando só um muda (`largura=None` mantém a
+    atual; `alinhamento=None` mantém/infere o atual).
+    `largura="original"` remove o `max-width` (vale o padrão do render).
+    Alinhamentos: `esquerda`, `direita`, `centro` + quebras de texto estilo
+    Word — `em_linha` (na linha do texto), `quadrado` (contorno retangular),
+    `justo` (texto colado no contorno), `atraves` (texto atravessa as
+    margens), `sup_inf` (linha própria, texto acima/abaixo), `atras`
+    (atrás do texto, marca d'água), `frente` (em frente ao texto,
+    sobreposta). Retorna `(novo_html, detalhe)`; levanta `ValueError` se
+    não há imagem.
     """
     html_atual = html_texto or ""
     tags = list(re.finditer(r"<img\b[^>]*>", html_atual, flags=re.IGNORECASE))
@@ -688,18 +696,39 @@ def ajustar_imagem_html(html_texto, alinhamento=None, largura=None):
             k, v = parte.split(":", 1)
             props[k.strip().lower()] = v.strip()
     if alinhamento is None:
+        _margem = props.get("margin", "")
         if props.get("float") == "right":
-            alinhamento = "direita"
+            if (props.get("position") == "relative"
+                    and "z-index" in props):
+                alinhamento = "frente"
+            else:
+                alinhamento = "direita"
         elif props.get("float") == "left":
-            alinhamento = "esquerda"
-        elif (props.get("display") == "block"
-              and "auto" in props.get("margin", "")):
-            alinhamento = "centro"
+            if "shape-outside" in props:
+                alinhamento = ("atraves" if _margem == "0"
+                               else "justo")
+            elif _margem == "8px":
+                alinhamento = "quadrado"
+            else:
+                alinhamento = "esquerda"
+        elif props.get("display") == "inline":
+            alinhamento = "em_linha"
+        elif props.get("display") == "block":
+            if "auto" in _margem:
+                try:
+                    _opaco = float(props.get("opacity", "1") or "1")
+                except (TypeError, ValueError):
+                    _opaco = 1.0
+                alinhamento = "atras" if _opaco < 1 else "centro"
+            elif props.get("clear") == "both":
+                alinhamento = "sup_inf"
     larg_atual = props.get("max-width")
     if largura is None:
         largura = larg_atual or "original"
     for k in ("float", "margin", "margin-left", "margin-right",
               "margin-top", "margin-bottom", "display",
+              "vertical-align", "clear", "shape-outside",
+              "position", "z-index", "opacity",
               "max-width", "min-width", "width"):
         props.pop(k, None)
     if largura and largura != "original":
@@ -711,6 +740,25 @@ def ajustar_imagem_html(html_texto, alinhamento=None, largura=None):
         props.update({"float": "right", "margin": "0 0 12px 12px"})
     elif alinhamento == "centro":
         props.update({"display": "block", "margin": "8px auto"})
+    elif alinhamento == "em_linha":
+        props.update({"display": "inline", "vertical-align": "middle"})
+    elif alinhamento == "quadrado":
+        props.update({"float": "left", "margin": "8px"})
+    elif alinhamento == "justo":
+        props.update({"float": "left", "margin": "2px",
+                      "shape-outside": "margin-box"})
+    elif alinhamento == "atraves":
+        props.update({"float": "left", "margin": "0",
+                      "shape-outside": "margin-box"})
+    elif alinhamento == "sup_inf":
+        props.update({"display": "block", "clear": "both",
+                      "margin": "8px 0"})
+    elif alinhamento == "atras":
+        props.update({"display": "block", "margin": "8px auto",
+                      "opacity": "0.45"})
+    elif alinhamento == "frente":
+        props.update({"float": "right", "margin": "0 0 12px 12px",
+                      "position": "relative", "z-index": "1"})
     estilo = ";".join(f"{k}:{v}" for k, v in props.items())
     if ms:
         nova = tag[:ms.start(1)] + estilo + tag[ms.end(1):]
@@ -1043,12 +1091,12 @@ def listar_postagens_por_ids(ids, ativo=True):
         marcador = ",".join("?" * len(ids))
         if ativo is not None:
             params = [1 if ativo else 0] + list(ids)
-            sql = (f"SELECT id, titulo, conteudo, autor, data_criacao "
-                   f"FROM tb_postagens WHERE ativo=? AND id IN ({marcador})")
+            sql = (f"SELECT id, titulo, conteudo, autor, data_criacao "  # nosec B608 — marcador só tem "?" (len(ids)); ids via parâmetros
+                   f"FROM tb_postagens WHERE ativo=? AND id IN ({marcador})")  # nosec B608 — idem
         else:
             params = list(ids)
-            sql = (f"SELECT id, titulo, conteudo, autor, data_criacao "
-                   f"FROM tb_postagens WHERE id IN ({marcador})")
+            sql = (f"SELECT id, titulo, conteudo, autor, data_criacao "  # nosec B608 — marcador só tem "?" (len(ids)); ids via parâmetros
+                   f"FROM tb_postagens WHERE id IN ({marcador})")  # nosec B608 — idem
         linhas = _crud.listar(sql, tuple(params))
         pos = {i: idx for idx, i in enumerate(ids)}
         linhas.sort(key=lambda r: pos.get(r[0], 10**9))

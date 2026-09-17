@@ -205,35 +205,36 @@ def _painel_despublicadas(usuario_logado):
     from mod_blog.bd_manipulador import listar_postagens, publicar_postagem
     wrap = ui.column().classes("w-full gap-2")
 
-    def carregar():
-        wrap.clear()
+    @ui.refreshable
+    def _lista_despublicadas():
         inativos = listar_postagens(ativo=False, ordem="DESC")
-        with wrap:
-            if not inativos:
-                ui.label("Nenhuma postagem despublicada.").classes(
-                    "text-caption text-grey-5 italic")
-            for ipost in inativos:
-                iid, itit, _, iautor, idata = ipost[:5]
-                with ui.row().classes(
-                        "w-full items-center justify-between border-b py-1"):
-                    ui.label(
-                        f"#{iid} — {itit or '(sem título)'} "
-                        f"({iautor}, {(idata or '')[:10]})").classes(
-                        "text-body2 text-grey-8")
+        if not inativos:
+            ui.label("Nenhuma postagem despublicada.").classes(
+                "text-caption text-grey-5 italic")
+            return
+        for ipost in inativos:
+            iid, itit, _, iautor, idata = ipost[:5]
+            with ui.row().classes(
+                    "w-full items-center justify-between border-b py-1"):
+                ui.label(
+                    f"#{iid} — {itit or '(sem título)'} "
+                    f"({iautor}, {(idata or '')[:10]})").classes(
+                    "text-body2 text-grey-8")
 
-                    def republicar(iid=iid):
-                        if publicar_postagem(iid, usuario_logado):
-                            ui.notify(f"Postagem #{iid} republicada",
-                                      type="positive")
-                            carregar()
-                        else:
-                            ui.notify("Erro ao republicar", type="negative")
+                def republicar(iid=iid):
+                    if publicar_postagem(iid, usuario_logado):
+                        ui.notify(f"Postagem #{iid} republicada",
+                                  type="positive")
+                        _lista_despublicadas.refresh()
+                    else:
+                        ui.notify("Erro ao republicar", type="negative")
 
-                    botao("Republicar", icone="visibility",
-                          on_click=republicar, variante="texto",
-                          chave_modulo="blog")
+                botao("Republicar", icone="visibility",
+                      on_click=republicar, variante="texto",
+                      chave_modulo="blog")
 
-    carregar()
+    with wrap:
+        _lista_despublicadas()
 
 
 def _resumo_conteudo(conteudo, limite=220):
@@ -274,9 +275,10 @@ def _renderizar_carrossel(wrap, posts, tempo_seg, usuario_logado, perfil,
     voltar ao carrossel, a rotação retoma. Falha na montagem registra
     exception no loguru e exibe aviso (fail-soft, sem crash da tela).
 
-    NOTA (timer único): o `ui.timer` é criado UMA vez, FORA do `with wrap:` —
-    recriá-lo a cada `montar()` acumulava timers no cliente e acelerava a
-    rotação (ex.: configurado 10 s, girava em <2 s)."""
+    NOTA (refreshable): o conteúdo é um `@ui.refreshable` (`montar`) — as
+    ações e o timer chamam `montar.refresh()`, sem `wrap.clear()` manual.
+    O `ui.timer` continua criado UMA vez, FORA do conteúdo (recriá-lo a
+    cada refresh acumulava timers no cliente e acelerava a rotação)."""
     idx = {"v": 0}
     expandido = {"v": False}
     from mod_intranet.tema_modulo import ler_tema as _ler_tema
@@ -284,8 +286,8 @@ def _renderizar_carrossel(wrap, posts, tempo_seg, usuario_logado, perfil,
                  or "#000000")
     n = len(posts or [])
 
+    @ui.refreshable
     def montar():
-        wrap.clear()
         if n == 0:
             with wrap:
                 ui.label("Nenhuma postagem selecionada para o carrossel. "
@@ -298,20 +300,20 @@ def _renderizar_carrossel(wrap, posts, tempo_seg, usuario_logado, perfil,
         def anterior(i=i):
             idx["v"] = (i - 1) % n
             expandido["v"] = False
-            montar()
+            montar.refresh()
 
         def proximo(i=i):
             idx["v"] = (i + 1) % n
             expandido["v"] = False
-            montar()
+            montar.refresh()
 
         def expandir():
             expandido["v"] = True
-            montar()
+            montar.refresh()
 
         def voltar():
             expandido["v"] = False
-            montar()
+            montar.refresh()
 
         def barra_acoes():
             with ui.row().classes("w-full justify-center items-center"
@@ -355,33 +357,33 @@ def _renderizar_carrossel(wrap, posts, tempo_seg, usuario_logado, perfil,
                     ui.label("(sem conteúdo)").classes(
                         "text-body2 italic text-grey-5")
 
-        with wrap:
-            barra_acoes()
-            if expandido["v"]:
-                _card_postagem(post, usuario_logado, perfil, ao_atualizar,
-                               pode_publicar=pode_publicar,
-                               ao_editar=ao_editar if pode_publicar else None,
-                               selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
-            else:
-                if selecionados is not None and ao_toggle_selecao is not None:
-                    with ui.row().classes("w-full items-center").style("gap: 0.5rem; margin-top: 0.25rem"):
-                        ui.checkbox(value=(post[0] in selecionados),
-                                    on_change=lambda e, _pid=post[0]: ao_toggle_selecao(_pid, e.value)) \
-                            .props(f'data-testid=blog-selecionar-{post[0]}')
-                        ui.label("Selecionar").classes("text-caption text-grey-6")
-                card_resumo()
-            barra_acoes()
+        barra_acoes()
+        if expandido["v"]:
+            _card_postagem(post, usuario_logado, perfil, ao_atualizar,
+                           pode_publicar=pode_publicar,
+                           ao_editar=ao_editar if pode_publicar else None,
+                           selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
+        else:
+            if selecionados is not None and ao_toggle_selecao is not None:
+                with ui.row().classes("w-full items-center").style("gap: 0.5rem; margin-top: 0.25rem"):
+                    ui.checkbox(value=(post[0] in selecionados),
+                                on_change=lambda e, _pid=post[0]: ao_toggle_selecao(_pid, e.value)) \
+                        .props(f'data-testid=blog-selecionar-{post[0]}')
+                    ui.label("Selecionar").classes("text-caption text-grey-6")
+            card_resumo()
+        barra_acoes()
 
     def avancar():
         try:
             if not expandido["v"] and n:
                 idx["v"] = (idx["v"] + 1) % n
-                montar()
+                montar.refresh()
         except RuntimeError:
             pass  # página navegada/fechada — timer já será encerrado
 
     try:
-        montar()
+        with wrap:
+            montar()
     except Exception:
         observabilidade.get_logger("blog").exception(
             "falha ao montar o carrossel de postagens")
@@ -404,23 +406,22 @@ def _renderizar_carrossel(wrap, posts, tempo_seg, usuario_logado, perfil,
     _carrossel_timers[id(wrap)] = novo_timer
 
 
-def renderizar_postagens(wrap, usuario_logado, perfil, pode_publicar,
-                         ao_atualizar, ao_editar=None, termo="", data_f="",
-                         selecionados=None, ao_toggle_selecao=None):
-    """Renders the post feed honoring the configured display mode.
+def _renderizar_conteudo_blog(usuario_logado, perfil, pode_publicar,
+                              ao_atualizar, ao_editar=None, termo="",
+                              data_f="", selecionados=None,
+                              ao_toggle_selecao=None):
+    """Renders feed content into the CURRENT slot (no container handling).
 
-    Monta o feed conforme `blog_modo_exibicao` — 'historico' (lista completa),
-    'unica' (postagem fixada ou a mais recente) ou 'carrossel' (rotação
-    automática das selecionadas). É a FONTE ÚNICA do padrão de exibição:
-    usada pela tela do Blog E pela Home, para que a página inicial mostre o
-    MESMO padrão configurado no módulo. `termo` filtra título/conteúdo/autor;
-    `data_f` filtra pela data (AAAA-MM-DD)."""
+    Conteúdo do feed SEM gerenciar container: rende no slot atual — usado
+    pelo `@ui.refreshable` da tela (`_feed_blog`) e por
+    `renderizar_postagens` (compatível com a Home). Mesmos parâmetros do
+    feed, sem `wrap`. `termo` filtra título/conteúdo/autor; `data_f`
+    filtra pela data (AAAA-MM-DD)."""
     from mod_blog.bd_manipulador import (
         listar_postagens, obter_modo_exibicao, obter_postagem_unica_id,
         obter_carrossel_postagens_ids, obter_carrossel_tempo,
         listar_postagens_por_ids,
     )
-    wrap.clear()
     modo = obter_modo_exibicao()
     posts = listar_postagens(ativo=True, ordem="DESC")
     termo = (termo or "").strip().lower()
@@ -435,7 +436,8 @@ def renderizar_postagens(wrap, usuario_logado, perfil, pode_publicar,
     if modo == "carrossel":
         posts = listar_postagens_por_ids(
             obter_carrossel_postagens_ids(), ativo=True)
-        _renderizar_carrossel(wrap, posts, obter_carrossel_tempo(),
+        wrap_car = ui.column().classes("w-full gap-4").style("min-width: 0")
+        _renderizar_carrossel(wrap_car, posts, obter_carrossel_tempo(),
                               usuario_logado, perfil, pode_publicar,
                               ao_editar, ao_atualizar,
                               selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
@@ -447,20 +449,41 @@ def renderizar_postagens(wrap, usuario_logado, perfil, pode_publicar,
             if fixadas:
                 posts = fixadas
         posts = posts[:1]
+    if not posts:
+        with ui.card().classes("w-full items-center p-8"):
+            ui.icon("article", size="48px").classes("text-grey-4")
+            if termo or data_f:
+                msg = "Nenhuma publicação encontrada."
+            else:
+                msg = "Nenhuma publicação ainda." + (
+                    " Crie a primeira!" if pode_publicar else "")
+            ui.label(msg).classes("text-grey-6")
+    for post in posts:
+        _card_postagem(post, usuario_logado, perfil, ao_atualizar,
+                       pode_publicar=pode_publicar, ao_editar=ao_editar,
+                       selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
+
+
+def renderizar_postagens(wrap, usuario_logado, perfil, pode_publicar,
+                         ao_atualizar, ao_editar=None, termo="", data_f="",
+                         selecionados=None, ao_toggle_selecao=None):
+    """Renders the post feed honoring the configured display mode.
+
+    Monta o feed conforme `blog_modo_exibicao` — 'historico' (lista completa),
+    'unica' (postagem fixada ou a mais recente) ou 'carrossel' (rotação
+    automática das selecionadas). É a FONTE ÚNICA do padrão de exibição:
+    usada pela tela do Blog E pela Home, para que a página inicial mostre o
+    MESMO padrão configurado no módulo. `termo` filtra título/conteúdo/autor;
+    `data_f` filtra pela data (AAAA-MM-DD).
+
+    Compatibilidade: limpa `wrap` e delega a `_renderizar_conteudo_blog`
+    (a tela usa o `@ui.refreshable` `_feed_blog` direto no conteúdo)."""
+    wrap.clear()
     with wrap:
-        if not posts:
-            with ui.card().classes("w-full items-center p-8"):
-                ui.icon("article", size="48px").classes("text-grey-4")
-                if termo or data_f:
-                    msg = "Nenhuma publicação encontrada."
-                else:
-                    msg = "Nenhuma publicação ainda." + (
-                        " Crie a primeira!" if pode_publicar else "")
-                ui.label(msg).classes("text-grey-6")
-        for post in posts:
-            _card_postagem(post, usuario_logado, perfil, ao_atualizar,
-                           pode_publicar=pode_publicar, ao_editar=ao_editar,
-                           selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
+        _renderizar_conteudo_blog(
+            usuario_logado, perfil, pode_publicar, ao_atualizar,
+            ao_editar=ao_editar, termo=termo, data_f=data_f,
+            selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
 
 
 @tela_modulo(chave="blog", titulo="Blog")
@@ -508,193 +531,9 @@ def mostrar_tela(usuario_logado: str, perfil: str):
         with ui.tab_panel("principal"):
             container = ui.column().classes("w-full gap-4").style("min-width: 0")
 
-            if pode_publicar:
-                _edit_id = {"id": None}
-                with ui.card().classes("w-full shadow-lg").style("min-width: 0"):
-                    with ui.card_section().classes("gap-3 w-full").style("min-width: 0"):
-                        titulo_edit = ui.label("Nova publicação").classes(
-                            "text-h6 font-bold text-grey-9")
-                        inp_titulo = ui.input("Título*").props(
-                            "outlined dense").classes("w-full") \
-                            .props('data-testid=blog-titulo')
-                        try:
-                            _trat = autenticacao.nome_de_tratamento(usuario_logado)
-                        except Exception:
-                            _trat = usuario_logado
-                        inp_conteudo = ui.editor(
-                            placeholder=f"Olá, {_trat}! Escreva aqui a novidade — "
-                            "formate com a barra de ferramentas, anexe imagens "
-                            "pelo botão Enviar abaixo ou digite HTML/Markdown."
-                        ).classes("w-full") \
-                            .props('data-testid=blog-conteudo')
-                        preview_wrap = ui.column().classes("w-full hidden")
-
-                        async def _receber_imagem(e):
-                            """Salva a imagem enviada e insere a tag no editor.
-
-                            Grava em `mod_blog/img_postagens/` com o nome padrão
-                            `dataHora_usuario.ext`; a tag `<img>` inserida aceita
-                            `style` (CSS local) e `class` (CSS online/frameworks).
-                            """
-                            try:
-                                from mod_blog.bd_manipulador import salvar_imagem_postagem
-                                conteudo = await e.file.read()
-                                ok, res = salvar_imagem_postagem(
-                                    e.file.name or "imagem.png", conteudo, usuario_logado)
-                                if not ok:
-                                    ui.notify(res, type="negative")
-                                    return
-                                tag = (f'<p><img src="/img_postagens/{res}" '
-                                       f'alt="{res}" style="max-width:100%;height:auto;" /></p>')
-                                inp_conteudo.value = (inp_conteudo.value or "") + "\n" + tag
-                                ui.notify(f"Imagem enviada: {res}", type="positive")
-                            except Exception as ex:
-                                observabilidade.get_logger("blog").exception(
-                                    "Erro ao enviar imagem do editor")
-                                ui.notify(f"Erro ao enviar imagem: {ex}", type="negative")
-
-                        with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem"):
-                            up_imagem = ui.upload(
-                                label="Selecionar imagem (JPG/PNG, até 5 MB)",
-                                auto_upload=False, max_file_size=5 * 1024 * 1024,
-                                on_upload=_receber_imagem,
-                            ).props("accept=.jpg,.jpeg,.png").classes("flex-1").style("min-width: 25ch") \
-                                .props('data-testid=blog-imagem-selecionar')
-                            botao("Enviar", icone="upload",
-                                  on_click=lambda: up_imagem.run_method("upload"),
-                                  variante="secundario",
-                                  chave_modulo="blog") \
-                                .props('data-testid=blog-imagem-enviar')
-
-                        def _ajustar_imagem(alinhamento=None, largura=None):
-                            """Aplica alinhamento/largura à ÚLTIMA imagem do editor.
-
-                            Delega à pura `bd_manipulador.ajustar_imagem_html`
-                            (testável em `test_blog_imagem_controles.py`). O editor
-                            WYSIWYG (QEditor) não tem redimensionar/alinha
-                            nativo de imagem — estes botões suprem o controle.
-                            """
-                            try:
-                                from mod_blog.bd_manipulador import ajustar_imagem_html
-                                novo, detalhe = ajustar_imagem_html(
-                                    inp_conteudo.value or "", alinhamento, largura)
-                            except ValueError:
-                                ui.notify("Nenhuma imagem no texto — envie uma primeiro",
-                                          type="warning")
-                                return
-                            inp_conteudo.value = novo
-                            ui.notify(f"Imagem ajustada ({detalhe})", type="positive")
-
-                        with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem"):
-                            ui.label("Imagem:").classes("text-caption text-grey-7 font-bold")
-                            botao_icone("format_align_left",
-                                        on_click=lambda: _ajustar_imagem(alinhamento="esquerda"),
-                                        chave_modulo="blog").tooltip("Alinhar a última imagem à esquerda") \
-                                .props("data-testid=blog-img-esq")
-                            botao_icone("format_align_center",
-                                        on_click=lambda: _ajustar_imagem(alinhamento="centro"),
-                                        chave_modulo="blog").tooltip("Centralizar a última imagem") \
-                                .props("data-testid=blog-img-centro")
-                            botao_icone("format_align_right",
-                                        on_click=lambda: _ajustar_imagem(alinhamento="direita"),
-                                        chave_modulo="blog").tooltip("Alinhar a última imagem à direita") \
-                                .props("data-testid=blog-img-dir")
-                            sel_largura = ui.select(
-                                {"25%": "25% da largura", "50%": "50% da largura",
-                                 "75%": "75% da largura", "100%": "Esticar (100%)",
-                                 "original": "Original (200–400px)"},
-                                value="100%", label="Largura da imagem",
-                                on_change=lambda e: _ajustar_imagem(largura=e.value),
-                            ).props("outlined dense").classes("w-52") \
-                                .props("data-testid=blog-img-largura") \
-                                .tooltip("Largura aplicada à última imagem do texto")
-
-                        def atualizar_preview():
-                            preview_wrap.clear()
-                            if not (inp_conteudo.value or "").strip():
-                                preview_wrap.classes(replace="w-full hidden")
-                                return
-                            preview_wrap.classes(replace="w-full")
-                            preview_wrap.clear()
-                            with preview_wrap:
-                                ui.label("Pré-visualização").classes(
-                                    "text-subtitle2 text-grey-7")
-                                with ui.card().classes("w-full bg-grey-2 p-3"):
-                                    _renderizar_conteudo_postagem(inp_conteudo.value)
-
-                        def mostrar_preview():
-                            atualizar_preview()
-
-                        def publicar():
-                            if not (inp_titulo.value or "").strip() or \
-                               not (inp_conteudo.value or "").strip():
-                                ui.notify("Preencha título e conteúdo", type="warning")
-                                return
-                            try:
-                                if _edit_id["id"] is not None:
-                                    ok = atualizar_postagem(
-                                        _edit_id["id"], inp_titulo.value.strip(),
-                                        inp_conteudo.value.strip(), usuario_logado)
-                                    if ok:
-                                        ui.notify(f"Publicação #{_edit_id['id']} atualizada",
-                                                  type="positive")
-                                else:
-                                    pid = criar_postagem(inp_titulo.value.strip(),
-                                                         inp_conteudo.value.strip(),
-                                                         usuario_logado)
-                                    if pid:
-                                        ui.notify(f"Publicação #{pid} criada!",
-                                                  type="positive")
-                                        # modo 'unica': nova publicação volta a
-                                        # ser a exibida (limpa fixação antiga)
-                                        definir_postagem_unica_id(None)
-                            except Exception:
-                                observabilidade.get_logger("blog").exception(
-                                    "Erro ao salvar postagem")
-                                ui.notify("Erro ao salvar", type="negative")
-                                return
-                            _edit_id["id"] = None
-                            titulo_edit.set_text("Nova publicação")
-                            inp_titulo.set_value(None)
-                            inp_conteudo.set_value(None)
-                            preview_wrap.classes(replace="w-full hidden")
-                            atualizar()
-
-                        def cancelar_edicao():
-                            _edit_id["id"] = None
-                            titulo_edit.set_text("Nova publicação")
-                            inp_titulo.set_value(None)
-                            inp_conteudo.set_value(None)
-                            preview_wrap.classes(replace="w-full hidden")
-                            ui.notify("Edição cancelada", type="info")
-
-                        def ao_editar(pid, titulo, conteudo):
-                            _edit_id["id"] = pid
-                            titulo_edit.set_text(f"Editar publicação #{pid}")
-                            inp_titulo.set_value(titulo)
-                            inp_conteudo.set_value(conteudo)
-                            # Exceção intencional de "sem JS direto": scroll via
-                            # `ui.run_javascript` (API oficial) — `ui.scroll_to`
-                            # com selector=None falha no NiceGUI 3.15.
-                            ui.run_javascript(
-                                "window.scrollTo({top:0, behavior:'smooth'})")
-                            atualizar_preview()
-
-                        with ui.row().classes(
-                                "w-full justify-center items-center flex-wrap") \
-                                .style("gap: 0.75rem"):
-                            botao("Pré-visualizar", icone="preview",
-                                  on_click=mostrar_preview, variante="contorno",
-                                  chave_modulo="blog")
-                            botao("Publicar", icone="send",
-                                  on_click=publicar, variante="solido",
-                                  chave_modulo="blog") \
-                                .props('data-testid=blog-publicar')
-                            botao("Cancelar edição", icone="cancel",
-                                  on_click=cancelar_edicao, variante="contorno",
-                                  chave_modulo="blog")
-
-            # --- estado compartilhado da seleção em lote (usado por Exibição e Seleção) ---
+            # --- estado compartilhado da seleção em lote (Exibição no card
+            # lateral do editor + Seleção em lote abaixo; definido ANTES da UI
+            # para evitar UnboundLocalError) ---
             selecionados = set()
             _tempo_exib = {"valor": 1}
             try:
@@ -776,6 +615,250 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     observabilidade.get_logger("blog").exception("Erro ao aplicar histórico")
                     ui.notify("Erro ao aplicar histórico", type="negative")
 
+            if pode_publicar:
+                _edit_id = {"id": None}
+                with ui.card().classes("w-full shadow-lg").style("min-width: 0"):
+                    with ui.card_section().classes("gap-3 w-full").style("min-width: 0"):
+                        titulo_edit = ui.label("Nova publicação").classes(
+                            "text-h6 font-bold text-grey-9")
+                        inp_titulo = ui.input("Título*").props(
+                            "outlined dense").classes("w-full") \
+                            .props('data-testid=blog-titulo')
+                        try:
+                            _trat = autenticacao.nome_de_tratamento(usuario_logado)
+                        except Exception:
+                            _trat = usuario_logado
+                        inp_conteudo = ui.editor(
+                            placeholder=f"Olá, {_trat}! Escreva aqui a novidade — "
+                            "formate com a barra de ferramentas, anexe imagens "
+                            "pelo botão Enviar abaixo ou digite HTML/Markdown."
+                        ).classes("w-full") \
+                            .props('data-testid=blog-conteudo')
+                        preview_wrap = ui.column().classes("w-full hidden")
+
+                        async def _receber_imagem(e):
+                            """Salva a imagem enviada e insere a tag no editor.
+
+                            Grava em `mod_blog/img_postagens/` com o nome padrão
+                            `dataHora_usuario.ext`; a tag `<img>` inserida aceita
+                            `style` (CSS local) e `class` (CSS online/frameworks).
+                            """
+                            try:
+                                from mod_blog.bd_manipulador import salvar_imagem_postagem
+                                conteudo = await e.file.read()
+                                ok, res = salvar_imagem_postagem(
+                                    e.file.name or "imagem.png", conteudo, usuario_logado)
+                                if not ok:
+                                    ui.notify(res, type="negative")
+                                    return
+                                tag = (f'<p><img src="/img_postagens/{res}" '
+                                       f'alt="{res}" style="max-width:100%;height:auto;" /></p>')
+                                inp_conteudo.value = (inp_conteudo.value or "") + "\n" + tag
+                                ui.notify(f"Imagem enviada: {res}", type="positive")
+                            except Exception as ex:
+                                observabilidade.get_logger("blog").exception(
+                                    "Erro ao enviar imagem do editor")
+                                ui.notify(f"Erro ao enviar imagem: {ex}", type="negative")
+
+                        def _ajustar_imagem(alinhamento=None, largura=None):
+                            """Aplica alinhamento/largura à ÚLTIMA imagem do editor.
+
+                            Delega à pura `bd_manipulador.ajustar_imagem_html`
+                            (testável em `test_blog_imagem_controles.py`). O editor
+                            WYSIWYG (QEditor) não tem redimensionar/alinha
+                            nativo de imagem — estes botões suprem o controle.
+                            """
+                            try:
+                                from mod_blog.bd_manipulador import ajustar_imagem_html
+                                novo, detalhe = ajustar_imagem_html(
+                                    inp_conteudo.value or "", alinhamento, largura)
+                            except ValueError:
+                                ui.notify("Nenhuma imagem no texto — envie uma primeiro",
+                                          type="warning")
+                                return
+                            inp_conteudo.value = novo
+                            ui.notify(f"Imagem ajustada ({detalhe})", type="positive")
+
+                        @ui.refreshable
+                        def _prev():
+                            if not (inp_conteudo.value or "").strip():
+                                return
+                            ui.label("Pré-visualização").classes(
+                                "text-subtitle2 text-grey-7")
+                            with ui.card().classes("w-full bg-grey-2 p-3"):
+                                _renderizar_conteudo_postagem(inp_conteudo.value)
+
+                        with preview_wrap:
+                            _prev()
+
+                        def atualizar_preview():
+                            if not (inp_conteudo.value or "").strip():
+                                preview_wrap.classes(replace="w-full hidden")
+                            else:
+                                preview_wrap.classes(replace="w-full")
+                            _prev.refresh()
+
+                        def mostrar_preview():
+                            atualizar_preview()
+
+                        def publicar():
+                            if not (inp_titulo.value or "").strip() or \
+                               not (inp_conteudo.value or "").strip():
+                                ui.notify("Preencha título e conteúdo", type="warning")
+                                return
+                            try:
+                                if _edit_id["id"] is not None:
+                                    ok = atualizar_postagem(
+                                        _edit_id["id"], inp_titulo.value.strip(),
+                                        inp_conteudo.value.strip(), usuario_logado)
+                                    if ok:
+                                        ui.notify(f"Publicação #{_edit_id['id']} atualizada",
+                                                  type="positive")
+                                else:
+                                    pid = criar_postagem(inp_titulo.value.strip(),
+                                                         inp_conteudo.value.strip(),
+                                                         usuario_logado)
+                                    if pid:
+                                        ui.notify(f"Publicação #{pid} criada!",
+                                                  type="positive")
+                                        # modo 'unica': nova publicação volta a
+                                        # ser a exibida (limpa fixação antiga)
+                                        definir_postagem_unica_id(None)
+                            except Exception:
+                                observabilidade.get_logger("blog").exception(
+                                    "Erro ao salvar postagem")
+                                ui.notify("Erro ao salvar", type="negative")
+                                return
+                            _edit_id["id"] = None
+                            titulo_edit.set_text("Nova publicação")
+                            inp_titulo.set_value(None)
+                            inp_conteudo.set_value(None)
+                            preview_wrap.classes(replace="w-full hidden")
+                            atualizar()
+
+                        def cancelar_edicao():
+                            _edit_id["id"] = None
+                            titulo_edit.set_text("Nova publicação")
+                            inp_titulo.set_value(None)
+                            inp_conteudo.set_value(None)
+                            preview_wrap.classes(replace="w-full hidden")
+                            ui.notify("Edição cancelada", type="info")
+
+                        def ao_editar(pid, titulo, conteudo):
+                            _edit_id["id"] = pid
+                            titulo_edit.set_text(f"Editar publicação #{pid}")
+                            inp_titulo.set_value(titulo)
+                            inp_conteudo.set_value(conteudo)
+                            # Exceção intencional de "sem JS direto": scroll via
+                            # `ui.run_javascript` (API oficial) — `ui.scroll_to`
+                            # com selector=None falha no NiceGUI 3.15.
+                            ui.run_javascript(
+                                "window.scrollTo({top:0, behavior:'smooth'})")
+                            atualizar_preview()
+
+                        with ui.row().classes("w-full flex-wrap justify-center") \
+                                .style("gap: 1rem; align-items: stretch"):
+                            with ui.card().classes("w-1/4") \
+                                    .style("min-width: 260px"):
+                                up_imagem = ui.upload(
+                                    label="Selecionar imagem (JPG/PNG, até 5 MB)",
+                                    auto_upload=False, max_file_size=5 * 1024 * 1024,
+                                    on_upload=_receber_imagem,
+                                ).props("accept=.jpg,.jpeg,.png").classes("w-full").style("min-width: 0") \
+                                    .props('data-testid=blog-imagem-selecionar')
+                                with ui.row().classes("w-full items-center justify-center flex-wrap") \
+                                        .style("gap: 0.5rem"):
+                                    ui.label("Imagem:").classes("text-caption text-grey-7 font-bold")
+                                    botao_icone("format_align_left",
+                                                on_click=lambda: _ajustar_imagem(alinhamento="esquerda"),
+                                                chave_modulo="blog").tooltip("Alinhar a última imagem à esquerda") \
+                                        .props("data-testid=blog-img-esq")
+                                    botao_icone("format_align_center",
+                                                on_click=lambda: _ajustar_imagem(alinhamento="centro"),
+                                                chave_modulo="blog").tooltip("Centralizar a última imagem") \
+                                        .props("data-testid=blog-img-centro")
+                                    botao_icone("format_align_right",
+                                                on_click=lambda: _ajustar_imagem(alinhamento="direita"),
+                                                chave_modulo="blog").tooltip("Alinhar a última imagem à direita") \
+                                        .props("data-testid=blog-img-dir")
+                                    sel_largura = ui.select(
+                                        {"25%": "25% da largura", "50%": "50% da largura",
+                                         "75%": "75% da largura", "100%": "Esticar (100%)",
+                                         "original": "Original (200–400px)"},
+                                        value="100%", label="Largura da imagem",
+                                        on_change=lambda e: _ajustar_imagem(largura=e.value),
+                                    ).props("outlined dense").classes("w-52") \
+                                        .props("data-testid=blog-img-largura") \
+                                        .tooltip("Largura aplicada à última imagem do texto")
+                                with ui.row().classes("w-full items-center justify-center flex-wrap") \
+                                        .style("gap: 0.5rem"):
+                                    ui.label("Quebra:").classes("text-caption text-grey-7 font-bold")
+                                    botao_icone("short_text",
+                                                on_click=lambda: _ajustar_imagem(alinhamento="em_linha"),
+                                                chave_modulo="blog").tooltip("Alinhada com o texto (na linha)") \
+                                        .props("data-testid=blog-quebra-emlinha")
+                                    botao_icone("crop_square",
+                                                on_click=lambda: _ajustar_imagem(alinhamento="quadrado"),
+                                                chave_modulo="blog").tooltip("Quadrado — texto contorna em retângulo") \
+                                        .props("data-testid=blog-quebra-quadrado")
+                                    botao_icone("wrap_text",
+                                                on_click=lambda: _ajustar_imagem(alinhamento="justo"),
+                                                chave_modulo="blog").tooltip("Justo — texto colado no contorno") \
+                                        .props("data-testid=blog-quebra-justo")
+                                    botao_icone("swap_horiz",
+                                                on_click=lambda: _ajustar_imagem(alinhamento="atraves"),
+                                                chave_modulo="blog").tooltip("Através — texto atravessa as margens") \
+                                        .props("data-testid=blog-quebra-atraves")
+                                    botao_icone("unfold_more",
+                                                on_click=lambda: _ajustar_imagem(alinhamento="sup_inf"),
+                                                chave_modulo="blog").tooltip("Superior e inferior — linha própria") \
+                                        .props("data-testid=blog-quebra-supinf")
+                                    botao_icone("flip_to_back",
+                                                on_click=lambda: _ajustar_imagem(alinhamento="atras"),
+                                                chave_modulo="blog").tooltip("Atrás do texto (marca d'água)") \
+                                        .props("data-testid=blog-quebra-atras")
+                                    botao_icone("flip_to_front",
+                                                on_click=lambda: _ajustar_imagem(alinhamento="frente"),
+                                                chave_modulo="blog").tooltip("Em frente ao texto (sobreposta)") \
+                                        .props("data-testid=blog-quebra-frente")
+                            with ui.card().classes("w-1/4") \
+                                    .style("min-width: 260px; gap: 0.75rem; "
+                                           "align-items: center; justify-content: center"):
+                                botao("Enviar", icone="upload",
+                                      on_click=lambda: up_imagem.run_method("upload"),
+                                      variante="solido",
+                                      chave_modulo="blog",
+                                      extra_classes="w-4/5") \
+                                    .props('data-testid=blog-imagem-enviar')
+                                botao("Pré-visualizar", icone="preview",
+                                      on_click=mostrar_preview, variante="solido",
+                                      chave_modulo="blog",
+                                      extra_classes="w-4/5")
+                                botao("Cancelar edição", icone="cancel",
+                                      on_click=cancelar_edicao, variante="solido",
+                                      chave_modulo="blog",
+                                      extra_classes="w-4/5")
+                                botao("Publicar", icone="send",
+                                      on_click=publicar, variante="solido",
+                                      chave_modulo="blog",
+                                      extra_classes="w-4/5") \
+                                    .props('data-testid=blog-publicar')
+                            with ui.card().classes("w-1/4") \
+                                    .style("min-width: 260px; gap: 0.5rem; "
+                                           "align-items: center; justify-content: center"):
+                                botao("Aplicar à única", icone="push_pin", variante="solido", chave_modulo="blog",
+                                      on_click=_aplicar_unica_exib, tooltip="Define a única selecionada como fixa (1)",
+                                      extra_classes="w-4/5").props('data-testid=blog-aplicar-unica')
+                                botao("Exibir todas", icone="view_day", variante="solido", chave_modulo="blog",
+                                      on_click=_aplicar_historico_exib, tooltip="Modo Histórico — lista completa",
+                                      extra_classes="w-4/5").props('data-testid=blog-aplicar-historico')
+                                botao("Aplicar ao carrossel", icone="view_carousel", variante="solido", chave_modulo="blog",
+                                      on_click=_aplicar_carrossel_exib, tooltip="Define as selecionadas como carrossel (mín. 2)",
+                                      extra_classes="w-4/5").props('data-testid=blog-aplicar-carrossel')
+                                ui.number("Tempo (s)", value=_tempo_exib["valor"], min=1, max=60, step=1).classes("w-4/5").props("outlined dense").tooltip("Intervalo do carrossel em segundos").on_value_change(lambda e: _tempo_exib.update(valor=int(e.value or 10)))
+                                botao("Restaurar padrão", icone="restore", on_click=_restaurar_padrao, variante="restaurar", chave_modulo="blog",
+                                      extra_classes="w-4/5")
+
             # ---- Card 1 — FILTROS (busca + data, justificado, ocupa extensão) ----
             with ui.card().classes("w-full bg-white border rounded-lg shadow-sm p-4").style("min-width: 0"):
                 ui.label("Filtros").classes("text-subtitle2 font-bold text-grey-8")
@@ -795,24 +878,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                             tooltip="Filtra pela data de publicação (formato AAAA-MM-DD).",
                         ).style("min-width: 0")
 
-            # ---- Card 2 — EXIBIÇÃO (centralizado, ocupa extensão, sem redundância) ----
-            with ui.card().classes("w-full bg-white border rounded-lg shadow-sm p-4").style("min-width: 0"):
-                ui.label("Exibição").classes("text-subtitle2 font-bold text-grey-8")
-                ui.label("Defina o modo a partir da seleção em lote — ou exiba todas.").classes("text-caption text-grey-6 -mt-1")
-                ui.separator().classes("mb-2")
-                with ui.row().classes("w-full justify-center items-center flex-wrap").style("gap: 0.75rem"):
-                    botao("Aplicar ao carrossel", icone="view_carousel", variante="solido", chave_modulo="blog",
-                          on_click=_aplicar_carrossel_exib, tooltip="Define as selecionadas como carrossel (mín. 2)").props('data-testid=blog-aplicar-carrossel')
-                    botao("Aplicar à única", icone="push_pin", variante="solido", chave_modulo="blog",
-                          on_click=_aplicar_unica_exib, tooltip="Define a única selecionada como fixa (1)").props('data-testid=blog-aplicar-unica')
-                    botao("Exibir todas", icone="view_day", variante="solido", chave_modulo="blog",
-                          on_click=_aplicar_historico_exib, tooltip="Modo Histórico — lista completa").props('data-testid=blog-aplicar-historico')
-                    botao("Restaurar padrão", icone="restore", on_click=_restaurar_padrao, variante="restaurar", chave_modulo="blog")
-                with ui.row().classes("w-full justify-center items-center flex-wrap").style("gap: 0.75rem; margin-top: 0.5rem"):
-                    ui.number("Tempo (s)", value=_tempo_exib["valor"], min=1, max=60, step=1).classes("w-36").props("outlined dense").tooltip("Intervalo do carrossel").on_value_change(lambda e: _tempo_exib.update(valor=int(e.value or 10)))
-                    ui.label("segundos por slide").classes("text-caption text-grey-6")
-
-            # ---- Card 3 — SELEÇÃO EM LOTE (box bem delimitado, agrupado por uso) ----
+            # ---- Card 2 — SELEÇÃO EM LOTE (box bem delimitado, agrupado por uso) ----
             # helpers da seleção — definidos ANTES da UI para evitar UnboundLocalError
             _contador_holder = {}
 
@@ -936,17 +1002,25 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             posts_wrap = ui.column().classes("w-full gap-4")
 
             def atualizar():
-                renderizar_postagens(
-                    posts_wrap, usuario_logado, perfil, pode_publicar,
-                    atualizar, ao_editar if pode_publicar else None,
-                    termo=(busca_termo.value or ""),
-                    data_f=(busca_data.value or ""),
-                    selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao if pode_publicar else None)
+                _feed_blog.refresh()
                 if pode_publicar:
                     try:
                         _atualizar_contador()
                     except Exception:
                         pass
+
+            @ui.refreshable
+            def _feed_blog():
+                _renderizar_conteudo_blog(
+                    usuario_logado, perfil, pode_publicar, atualizar,
+                    ao_editar if pode_publicar else None,
+                    termo=(busca_termo.value or ""),
+                    data_f=(busca_data.value or ""),
+                    selecionados=selecionados,
+                    ao_toggle_selecao=ao_toggle_selecao if pode_publicar else None)
+
+            with posts_wrap:
+                _feed_blog()
 
             atualizar()
 
