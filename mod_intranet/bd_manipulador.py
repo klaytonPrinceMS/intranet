@@ -99,7 +99,7 @@ def audit_log(usuario, modulo, acao, descricao, hash_arquivo=None,
                         client_ip, client_user_agent, client_hostname,
                         timestamp)
         return
-    from mod_auditoria.db_manipulador import registrar_auditoria
+    from mod_auditoria.bd_manipulador import registrar_auditoria
     registrar_auditoria(usuario, modulo, acao, descricao, hash_arquivo,
                         client_ip, client_user_agent, client_hostname, timestamp)
 

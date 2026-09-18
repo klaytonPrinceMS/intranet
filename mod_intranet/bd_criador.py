@@ -32,7 +32,7 @@ def inicializar_bancos():
     # módulo. Inicializa o banco de auditoria e, uma única vez, migra os
     # registros antigos da tb_auditoria central (legado) para as novas
     # tabelas por módulo.
-    from mod_auditoria.db_manipulador import init_db_auditoria, migrar_dados_existentes
+    from mod_auditoria.bd_manipulador import init_db_auditoria, migrar_dados_existentes
     init_db_auditoria()
     try:
         migrar_dados_existentes()

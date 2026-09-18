@@ -29,7 +29,7 @@ Pattern (pilot module — to propagate to all modules):
     2. bd_conexao.py engine + session factory
     3. repositorio.py typed CRUD via Session
     4. autenticacao.py uses Repositorio for all DB ops
-    5. db_manipulador.py uses Repositorio for all DB ops
+    5. bd_manipulador.py uses Repositorio for all DB ops
 """
 from __future__ import annotations
 

@@ -277,9 +277,15 @@ Servidores simples seguem com **SQLite** (padrão universal, zero dependências 
 !!! tip "Como decidir"
     Antes de escrever um literal no código (hex, tamanho, tempo, texto, caminho), pergunte: "o administrador pode querer mudar isto?" Se sim → chave em `tb_config` + campo no cupê Administração do módulo, lida a cada render (sem restart).
 
+### Contrato de acesso a config (09/2026) — dois padrões, sem novos nomes
+
+1. **Central com prefixo** — `get_config("<modulo>_<chave>", default)` / `set_config(...)` (`mod_intranet/bd_conexao.py`, via `Repositorio`). Leitura fail-soft (devolve `default`). É o padrão para configs de comportamento/aparência.
+2. **Local do módulo** — tabela própria (`tb_config` / `tb_configuracoes_modulo`) acessada **via `CrudBase`** (`_crud.obter` / `_crud.criar` com upsert `ON CONFLICT`), leitura fail-soft (devolve `default`), escrita retornando `True`/`False`. Nomes sancionados: `get_config_local` / `set_config_local` (o par `obter_config` / `definir_config` do solicita_impressao segue o mesmo contrato).
+3. **Proibido criar novos helpers ad-hoc** (`_cfg`, `_get_config_safe`, `_valor_config` etc. ficam legados onde existem) — código novo usa 1 ou 2. Notificações pós-gravação (limpar `lru_cache`) usam `bd_conexao.registrar_hook_config(fn, apenas_chaves=...)` — nunca import de outro módulo dentro de `bd_conexao`.
+
 ## Auditoria e versionamento
 
-- **Auditoria**: toda ação relevante (criar/editar/excluir/publicar/imprimir/autorizar/configurar/renomear) grava `audit_log(usuario, modulo, acao, descricao, hash_arquivo=None)` — `mod_intranet/bd_manipulador.py:70`; nos módulos prefira o wrapper `audit_reg(ator, modulo, acao, alvo, ...)` (`mod_intranet/crud_base.py:43`, fail-soft). A gravação é desacoplada por gancho: `registrar_hook_auditoria(fn)` (`bd_manipulador.py:26`) é chamado pelo `mod_auditoria` no import (`mod_auditoria/db_manipulador.py:376-377`) — sem dependência cíclica núcleo↔auditoria.
+- **Auditoria**: toda ação relevante (criar/editar/excluir/publicar/imprimir/autorizar/configurar/renomear) grava `audit_log(usuario, modulo, acao, descricao, hash_arquivo=None)` — `mod_intranet/bd_manipulador.py:70`; nos módulos prefira o wrapper `audit_reg(ator, modulo, acao, alvo, ...)` (`mod_intranet/crud_base.py:43`, fail-soft). A gravação é desacoplada por gancho: `registrar_hook_auditoria(fn)` (`bd_manipulador.py:26`) é chamado pelo `mod_auditoria` no import (`mod_auditoria/bd_manipulador.py:376-377`) — sem dependência cíclica núcleo↔auditoria.
 - **Hash SHA-256** em operações com arquivos (editor PDF, empenhos, impressão).
 - **Versionamento**: `1.0.AAMMDD`; versão global `versao_sistema` + por módulo `versao_modulo:<chave>` (exibidos da esquerda para a direita no rodapé). Atualize a chave do módulo quando alterar código dele — sem mexer na global nem nas dos outros.
 

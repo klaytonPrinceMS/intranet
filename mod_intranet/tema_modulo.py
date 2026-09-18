@@ -651,3 +651,19 @@ def paleta_escura(tema):
         "texto_modulo": "#dcdcdc",
         "texto_card": "#f2f2f2",
     }
+
+
+def _limpar_caches_tema():
+    """Limpa os caches derivados de `tb_config` após gravação.
+
+    Registrado em `bd_conexao` via `registrar_hook_config` (o núcleo
+    nunca importa este módulo — sem ciclo núcleo→tema)."""
+    _cfg.cache_clear()
+    ler_tema.cache_clear()
+
+
+try:
+    from mod_intranet import bd_conexao as _bd_conexao
+    _bd_conexao.registrar_hook_config(_limpar_caches_tema)
+except Exception:
+    pass

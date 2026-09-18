@@ -282,8 +282,8 @@ def _admin_responsaveis(usuario_logado):
             "text-caption text-grey-6")
         secr_opts = {s[0]: (s[2] or s[1]) for s in bd.listar_secretarias(ativo=1)}
         try:
-            from mod_gest_cad_usuario import bd_manipulador as _gest
-            _usuarios = _gest.listar_usuarios(filtro_ativo=True)
+            from mod_intranet.autenticacao import listar_usuarios_ativos
+            _usuarios = listar_usuarios_ativos()
             user_opts = {u[1]: f"{u[1]} ({u[2]})" for u in _usuarios}
         except Exception:
             user_opts = {}

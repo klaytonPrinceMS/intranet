@@ -139,7 +139,7 @@ mod_<nome>/
 | `telas.py` | UI NiceGUI; `mostrar_tela(nome, perfil)`; revalida papel antes de qualquer escrita |
 | `telas_administracao.py` | painel admin standalone; `mostrar_administracao(...)` — rota `/admin/{chave_modulo}` |
 
-> **Exceção `mod_auditoria`:** é o único módulo com a nomenclatura fora do padrão — `db_manipulador.py`/`db_criador.py` (em vez de `bd_manipulador.py`/`bd_criador.py`) — mantém banco exclusivo `db_mod_auditoria.db` (uma tabela por módulo); o visualizador em `telas.py` lê esse banco via `buscar_logs()` e a escrita é feita indiretamente pelos demais módulos via `audit_log` → `registrar_auditoria`.
+> **`mod_auditoria`** segue o padrão como os demais (`bd_manipulador.py`/`bd_criador.py`) e mantém banco exclusivo `db_mod_auditoria.db` (uma tabela por módulo); o visualizador em `telas.py` lê esse banco via `buscar_logs()` e a escrita é feita indiretamente pelos demais módulos via `audit_log` → `registrar_auditoria`.
 
 > **Conexão e configuração:** módulos de negócio **não** têm `bd_conexao.py` próprio — usam o central `mod_intranet/bd_conexao.py` (`get_config`/`set_config` via `Repositorio`) e `mod_intranet/banco_conexao.conexao(chave)` para obter a conexão do backend ativo (SQLite WAL ou PostgreSQL, com **um banco `db_mod_<chave>` por módulo** no Postgres).
 
@@ -277,11 +277,11 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 
 ## Auditoria LGPD (banco exclusivo)
 
-- **`audit_log(usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent)`** (`mod_intranet/bd_manipulador.py:58-83`) é a função única de escrita — ela preenche IP/UA do contexto HTTP e delega a `registrar_auditoria` (`mod_auditoria/db_manipulador.py:99-124`).
+- **`audit_log(usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent)`** (`mod_intranet/bd_manipulador.py:58-83`) é a função única de escrita — ela preenche IP/UA do contexto HTTP e delega a `registrar_auditoria` (`mod_auditoria/bd_manipulador.py:99-124`).
 - **Banco exclusivo** `db_mod_auditoria.db` (WAL): cada módulo produtor tem a SUA tabela `tb_auditoria_<modulo>` (criada automaticamente e registrada em `tb_auditoria_meta`) — novos módulos passam a auditar sem editar o módulo de auditoria.
 - Colunas de rastreabilidade LGPD: `usuario`, `modulo`, `acao`, `descricao`, `timestamp` (horário local, RF-08), `hash_arquivo`, `ip`, `user_agent`, `client_hostname`; índices por `modulo`, `usuario` e `timestamp`.
 - Todos os módulos auditam suas ações relevantes: criação/edição/exclusão, autenticação (login/logout/falha), configurações, permissões (inclusive `acesso_negado`), operações com arquivos (com **hash SHA-256**).
-- **Migração idempotente** do legado central: `migrar_dados_existentes()` (`mod_auditoria/db_manipulador.py:273-324`) copia a antiga `tb_auditoria` do banco central para as tabelas por módulo, marca `auditoria_migracao_concluida` e remove a tabela legada.
+- **Migração idempotente** do legado central: `migrar_dados_existentes()` (`mod_auditoria/bd_manipulador.py:273-324`) copia a antiga `tb_auditoria` do banco central para as tabelas por módulo, marca `auditoria_migracao_concluida` e remove a tabela legada.
 - **Poda automática**: job diário `poda_auditoria` (`rotinas.py:74-103`) chama `podar_registros(dias)` em todas as tabelas (`auditoria_retencao_dias`, default 90).
 - Visualização: módulo `mod_auditoria` (só `administrador_geral`) — ver [Módulo de Auditoria](modulos/auditoria.md).
 

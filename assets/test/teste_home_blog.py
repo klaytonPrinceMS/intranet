@@ -128,4 +128,7 @@ if __name__ == "__main__":
         _bd.definir_postagem_unica_id(None)
         _bd.definir_carrossel_postagens_ids([])
         _bd.definir_carrossel_tempo(10)
+    if _OK != _TOTAL:
+        print(f"\n{_TOTAL - _OK} FALHA(S) de {_TOTAL} verificações ❌")
+        sys.exit(1)
     print(f"\nTODOS OS TESTES PASSARAM — {_OK} verificações ✅")

@@ -230,7 +230,7 @@ def _job_poda_auditoria():
     removidos = 0
     try:
         from mod_intranet.bd_conexao import get_config
-        from mod_auditoria.db_manipulador import podar_registros
+        from mod_auditoria.bd_manipulador import podar_registros
         try:
             dias = max(1, int(get_config("auditoria_retencao_dias", "90")))
         except (TypeError, ValueError):

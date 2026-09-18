@@ -270,6 +270,33 @@ def usuario_existe(user_nome):
     return (row[2], row[5], row[6])
 
 
+def listar_usuarios_ativos():
+    """Lista usuários ativos para seleção nas telas dos módulos.
+
+    Delega ao módulo de gestão de usuários (núcleo → módulo obrigatório,
+    carregado pelo main.py): tuplas (id, user_nome, user_perfil, ...) —
+    mesmo formato de `listar_usuarios`. Em falha devolve [] (fail-soft,
+    a tela exibe o seletor vazio)."""
+    try:
+        return _gest().listar_usuarios(filtro_ativo=True)
+    except Exception:
+        return []
+
+
+def obter_email_usuario(user_nome):
+    """E-mail cadastrado do usuário ("" quando ausente).
+
+    Delega ao módulo de gestão de usuários (núcleo → módulo obrigatório).
+    Usado para pré-preencher destinatários nas telas dos módulos."""
+    try:
+        row = _gest().obter_usuario(user_nome)
+        if row and len(row) > 3 and (row[3] or "").strip():
+            return (row[3] or "").strip()
+    except Exception:
+        pass
+    return ""
+
+
 def autenticar(user_nome, senha):
     """Retorna (ok: bool, msg: str). Em caso de sucesso msg é o perfil."""
     if not user_nome or not senha:

@@ -251,7 +251,7 @@ def teste_auditoria_central():
         return
     # A auditoria agora fica no banco exclusivo db_mod_auditoria.db, na tabela
     # por módulo tb_auditoria_blog (a tb_auditoria central virou legado).
-    from mod_auditoria.db_manipulador import get_auditoria_connection
+    from mod_auditoria.bd_manipulador import get_auditoria_connection
     antes = None
     pid = bd.criar_postagem("Auditável", "corpo", AUTOR_ADMIN)
     assert pid

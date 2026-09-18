@@ -11,7 +11,7 @@ Architecture (pilot module — pattern to propagate):
     repositorio.py   — data access layer using SQLAlchemy ORM Session
     bd_conexao.py   — session factory (engine bound to DB_PATH)
     autenticacao.py  — uses Repositorio for all DB operations
-    db_manipulador.py — uses Repositorio for all DB operations
+    bd_manipulador.py — uses Repositorio for all DB operations
 
 EN: Dataclass definitions mapped to SQLite tables via SQLAlchemy 2.0 ORM.
     PT: Definições de dataclasses mapeadas às tabelas SQLite via SQLAlchemy 2.0 ORM.

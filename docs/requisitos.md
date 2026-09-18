@@ -534,7 +534,7 @@ classDiagram
     class AuditLog["mod_intranet.bd_manipulador.audit_log"] {
         +audit_log(usuario, modulo, acao, descricao, hash_arquivo)
     }
-    class RegistrarAuditoria["mod_auditoria.db_manipulador.registrar_auditoria"] {
+    class RegistrarAuditoria["mod_auditoria.bd_manipulador.registrar_auditoria"] {
         +registrar_auditoria(usuario, modulo, acao, ...)
     }
 

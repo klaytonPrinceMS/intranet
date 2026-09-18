@@ -268,7 +268,7 @@ def _orquestrar_resumo_dados():
         n_users = len(gest.listar_usuarios(filtro_ativo=True))
     from mod_blog import bd_manipulador as blog
     n_posts = blog.contar_postagens(ativo=True)
-    from mod_auditoria.db_manipulador import contar_registros
+    from mod_auditoria.bd_manipulador import contar_registros
     n_logs = contar_registros()
     # Sessões ativas
     try:
@@ -286,39 +286,27 @@ def _orquestrar_resumo_dados():
         n_acessos = int((get_config("contador_acessos_total", "0") or "0").strip() or 0)
     except Exception:
         n_acessos = 0
-    # 1) Fila impressão pendente (status aberto)
+    # 1) Fila impressão pendente (status aberto) — via API pública do módulo
     try:
-        from mod_solicita_impressao.bd_manipulador import get_connection as _conn_sol
-        c2 = _conn_sol()
-        cur2 = c2.cursor()
-        cur2.execute("SELECT COUNT(*) FROM tb_solicitacoes WHERE status NOT IN ('impresso','recusado','cancelado')")
-        n_fila = cur2.fetchone()[0]
-        c2.close()
+        from mod_solicita_impressao import bd_manipulador as _bd_sol
+        n_fila = _bd_sol.contar_solicitacoes_pendentes()
     except Exception:
         n_fila = 0
-    # 2) Quarentena empenhos pendente
+    # 2) Quarentena empenhos pendente — via API pública do módulo
     try:
-        from mod_renomear_empenho.bd_manipulador import _conn as _conn_emp
-        c3 = _conn_emp()
-        cur3 = c3.cursor()
-        cur3.execute("SELECT COUNT(*) FROM tb_quarentena WHERE processado=0")
-        n_quar = cur3.fetchone()[0]
-        c3.close()
+        from mod_renomear_empenho import bd_manipulador as _bd_emp
+        n_quar = _bd_emp.contar_quarentena_pendente()
     except Exception:
         n_quar = 0
-    # 4) Uso PDF global — arquivos ativos
+    # 4) Uso PDF global — arquivos ativos — via API pública do módulo
     try:
-        from mod_edit_pdf.bd_manipulador import _conn as _conn_pdf
-        c4 = _conn_pdf()
-        cur4 = c4.cursor()
-        cur4.execute("SELECT COUNT(*) FROM tb_arquivos WHERE ativo=1")
-        n_pdf = cur4.fetchone()[0]
-        c4.close()
+        from mod_edit_pdf import bd_manipulador as _bd_pdf
+        n_pdf = _bd_pdf.contar_arquivos_ativos()
     except Exception:
         n_pdf = 0
     # 5) Auditoria 24h
     try:
-        from mod_auditoria.db_manipulador import get_tabelas_auditoria, get_auditoria_connection
+        from mod_auditoria.bd_manipulador import get_tabelas_auditoria, get_auditoria_connection
         conn_a = get_auditoria_connection()
         cur_a = conn_a.cursor()
         n_24h = 0

@@ -2,7 +2,7 @@
 
 Criador de BD LEGADO do módulo Auditoria, mantido apenas por compatibilidade
 histórica. O criador VIGENTE do esquema é `init_db_auditoria()` em
-`mod_auditoria/db_manipulador.py`, que cria `tb_auditoria_meta` e as tabelas
+`mod_auditoria/bd_manipulador.py`, que cria `tb_auditoria_meta` e as tabelas
 por módulo (`tb_auditoria_<modulo>`). Este arquivo cria apenas a tabela de
 metadados e não deve ser usado como fonte de verdade.
 """

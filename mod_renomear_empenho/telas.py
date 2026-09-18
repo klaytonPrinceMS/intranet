@@ -356,20 +356,10 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
 
     def _email_cadastrado():
         try:
-            from mod_gest_cad_usuario.bd_manipulador import obter_usuario as _obter_u
-            row = _obter_u(usuario_logado)
-            if row and len(row) > 3 and (row[3] or "").strip():
-                return (row[3] or "").strip()
+            from mod_intranet.autenticacao import obter_email_usuario
+            return obter_email_usuario(usuario_logado)
         except Exception:
-            pass
-        try:
-            from mod_intranet.autenticacao import _gest as _g
-            row = _g().obter_usuario(usuario_logado)
-            if row and len(row) > 3 and (row[3] or "").strip():
-                return (row[3] or "").strip()
-        except Exception:
-            pass
-        return ""
+            return ""
 
     def _solicitar(caminho):
         nome = os.path.basename(caminho)

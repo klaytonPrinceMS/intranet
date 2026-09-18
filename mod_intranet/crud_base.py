@@ -7,7 +7,7 @@ garantido (try/finally), commit/rollback, atalhos de leitura/escrita
 `criar_tabela`) e transação multi-instrução (`transacao`). Também expõe o
 wrapper de auditoria `audit_reg`. Elimina o boilerplate
 `conn = _conn(); try: ... finally: conn.close()` replicado nos
-`db_manipulador.py` dos módulos. Camada baixa: sem imports circulares —
+`bd_manipulador.py` dos módulos. Camada baixa: sem imports circulares —
 `audit_log` é importado lazily dentro de `audit_reg`.
 
 Classe base de CRUD para o banco exclusivo de cada módulo
@@ -65,7 +65,7 @@ class CrudBase:
     `foreign_keys=True`), o fechamento garantido (try/finally) e o
     commit/rollback. Os atalhos `listar`/`obter`/`criar`/`atualizar`/
     `excluir`/`executar_muitas`/`criar_tabela` cobrem os padrões repetidos
-    nos `db_manipulador.py`; sequências atômicas multi-instrução usam
+    nos `bd_manipulador.py`; sequências atômicas multi-instrução usam
     `transacao()`. Exceções são registradas no loguru e PROPAGAM — a
     camada de negócio decide o fail-soft (padrão atual dos módulos).
     """

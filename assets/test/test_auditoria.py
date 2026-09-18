@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 from mod_intranet.bd_conexao import get_config, set_config, get_connection
 from mod_intranet.bd_manipulador import audit_log
-from mod_auditoria.db_manipulador import get_auditoria_connection
+from mod_auditoria.bd_manipulador import get_auditoria_connection
 
 PASS = []
 FAIL = []

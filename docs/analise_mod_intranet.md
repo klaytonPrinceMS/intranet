@@ -20,7 +20,7 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` (`bd_cone
 
 | Tabela | Conteúdo | Criada em |
 |:---|:---|:---|
-| `tb_auditoria_*` | auditoria LGPD em **banco separado** `db_mod_auditoria.db` — uma tabela por módulo (`tb_auditoria_<modulo>`: id, usuario, modulo, acao, descricao, timestamp, hash_arquivo + `ip`/`user_agent`) | `mod_auditoria/db_manipulador.py` |
+| `tb_auditoria_*` | auditoria LGPD em **banco separado** `db_mod_auditoria.db` — uma tabela por módulo (`tb_auditoria_<modulo>`: id, usuario, modulo, acao, descricao, timestamp, hash_arquivo + `ip`/`user_agent`) | `mod_auditoria/bd_manipulador.py` |
 | `tb_config` | chave PK / valor — seeds: `versao_sistema=1.0.260913`, `versao_modulo:intranet=1.0.260913`, `cotadisco_global_gb=10`, `backup_interval_hours=12` (legada) e padrões de aparência | `bd_conexao.py:49-74` |
 | `tb_sessoes` | id, usuario, modulo, login/logout_timestamp, cookie_hash + `ip`, `user_agent`, `dispositivo`, `mac` | `bd_conexao.py:55-63` |
 | `tb_modulos` | id, chave UNIQUE, nome, icone, rota, ativo, nativo, **ordem** — semeada com os 5 módulos nativos; `ordem` controla a exibição (migração idempotente em bancos antigos) | `autenticacao.py:29-84` |

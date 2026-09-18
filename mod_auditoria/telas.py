@@ -26,7 +26,7 @@ from mod_intranet.aba_modulo import cabecalho, abas
 from mod_intranet.ui_comum import botao, botao_icone
 from mod_intranet.bd_manipulador import audit_log
 from mod_intranet.tema_modulo import campo_modulo
-from mod_auditoria.db_manipulador import (
+from mod_auditoria.bd_manipulador import (
     buscar_logs as buscar_logs_auditoria,
     get_modulos_com_auditoria,
 )

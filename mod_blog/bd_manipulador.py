@@ -371,6 +371,62 @@ def contar_postagens(ativo=True):
                        (1 if ativo else 0,))[0]
 
 
+def remover_vinculos_usuario(user_nome):
+    """Remove postagens e comentários do usuário (LGPD).
+
+    Chamado pelo módulo de gestão de usuários na exclusão definitiva:
+    cada módulo limpa o PRÓPRIO banco (isolamento total — sem cross-query
+    entre bancos). Sem o arquivo do banco no SQLite, limpa a cópia legada
+    do banco central. Retorna o nº de postagens removidas."""
+    if os.path.exists(DB_BLOG_PATH):
+        with _crud.transacao() as cc:
+            cc.execute("SELECT id FROM tb_postagens WHERE autor=?", (user_nome,))
+            ids = [r[0] for r in cc.fetchall()]
+            if ids:
+                cc.executemany("DELETE FROM tb_comentarios WHERE postagem_id=?",
+                               [(i,) for i in ids])
+            cc.execute("DELETE FROM tb_comentarios WHERE autor=?", (user_nome,))
+            cc.execute("DELETE FROM tb_postagens WHERE autor=?", (user_nome,))
+        return len(ids)
+    conn = get_connection()
+    try:
+        cc = conn.cursor()
+        cc.execute("PRAGMA foreign_keys=ON")
+        cc.execute("SELECT id FROM tb_postagens WHERE autor=?", (user_nome,))
+        ids = [r[0] for r in cc.fetchall()]
+        if ids:
+            q = ",".join("?" * len(ids))
+            cc.execute(f"DELETE FROM tb_comentarios WHERE postagem_id IN ({q})", ids)  # nosec B608 — q só tem "?" (len); ids via parâmetros
+        cc.execute("DELETE FROM tb_comentarios WHERE autor=?", (user_nome,))
+        cc.execute("DELETE FROM tb_postagens WHERE autor=?", (user_nome,))
+        conn.commit()
+        return len(ids)
+    finally:
+        conn.close()
+
+
+def renomear_autor(nome_atual, novo_nome):
+    """Propaga o renomeio para as colunas de autoria do módulo.
+
+    Chamado pelo módulo de gestão de usuários: cada módulo atualiza o
+    PRÓPRIO banco (isolamento total). Sem o arquivo do banco no SQLite,
+    atualiza a cópia legada do banco central. Exceção propaga (fail-loud)
+    e o chamador registra o aviso."""
+    if os.path.exists(DB_BLOG_PATH):
+        with _crud.transacao() as cc:
+            cc.execute("UPDATE tb_postagens SET autor=? WHERE autor=?", (novo_nome, nome_atual))
+            cc.execute("UPDATE tb_comentarios SET autor=? WHERE autor=?", (novo_nome, nome_atual))
+        return
+    conn = get_connection()
+    try:
+        cc = conn.cursor()
+        cc.execute("UPDATE tb_postagens SET autor=? WHERE autor=?", (novo_nome, nome_atual))
+        cc.execute("UPDATE tb_comentarios SET autor=? WHERE autor=?", (novo_nome, nome_atual))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def obter_postagem(id_post):
     """Fetches a single post with all columns (via CrudBase).
 

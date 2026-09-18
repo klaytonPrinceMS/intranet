@@ -242,7 +242,7 @@ Tela: `mostrar_tela(usuario_logado, perfil)` — `telas.py:44`.
 
 ## Funções-chave — Auditoria
 
-`../mod_auditoria/db_manipulador.py` (banco exclusivo `db_mod_auditoria.db`):
+`../mod_auditoria/bd_manipulador.py` (banco exclusivo `db_mod_auditoria.db`):
 
 | Função | Linha | Descrição |
 |:---|:---|:---|

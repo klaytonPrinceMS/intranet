@@ -1,6 +1,6 @@
 """Cobertura total: smoke de import + contrato de TODAS as funcoes/classes usadas.
 
-Script standalone (NAO pytest). Para cada um dos 64 arquivos em `mod_*/`:
+Script standalone (NAO pytest). Para cada um dos 60 arquivos em `mod_*/`:
   A. importa o modulo (falha de import = regressao);
   B. inventaria funcoes/classes via inspect (existencia = contrato);
   C. testa as funcoes PURAS (sem banco/rede/UI) com asserts deterministicos;
@@ -42,11 +42,11 @@ def ler(rel):
 
 print("INICIANDO TESTES — Cobertura total (import + contrato + puras)")
 
-# ================== A) SMOKE DE IMPORT (64 arquivos) ==================
+# ================== A) SMOKE DE IMPORT (60 arquivos) ==================
 print("-- A) import de todos os modulos --")
 MODULOS = [
-    "mod_auditoria.check_auditoria", "mod_auditoria.db_criador",
-    "mod_auditoria.db_manipulador", "mod_auditoria.telas",
+    "mod_auditoria.check_auditoria", "mod_auditoria.bd_criador",
+    "mod_auditoria.bd_manipulador", "mod_auditoria.telas",
     "mod_auditoria.telas_administracao",
     "mod_blog.bd_criador", "mod_blog.bd_manipulador", "mod_blog.telas",
     "mod_blog.telas_administracao",
@@ -61,10 +61,12 @@ MODULOS = [
     "mod_intranet.crud_base", "mod_intranet.decoradores",
     "mod_intranet.dialogo_backup", "mod_intranet.docker_detector",
     "mod_intranet.documentacao", "mod_intranet.email_util",
-    "mod_intranet.grafana_sync", "mod_intranet.hora_servidor",
+    "mod_intranet.grafana_sync", "mod_intranet.home_visual",
+    "mod_intranet.hora_servidor",
     "mod_intranet.instrumentacao_app", "mod_intranet.models",
-    "mod_intranet.nicegui_patch", "mod_intranet.observabilidade",
-    "mod_intranet.otel_integracao", "mod_intranet.port_scanner",
+    "mod_intranet.nicegui_patch",     "mod_intranet.observabilidade",
+    "mod_intranet.otel_integracao", "mod_intranet.pdf_operacoes",
+    "mod_intranet.port_scanner",
     "mod_intranet.repositorio", "mod_intranet.rotas_modulos",
     "mod_intranet.rotinas", "mod_intranet.tela_configuracoes",
     "mod_intranet.telas", "mod_intranet.tema_css",
@@ -72,6 +74,7 @@ MODULOS = [
     "mod_intranet.ui_form", "mod_intranet.ui_painel",
     "mod_renomear_empenho.bd_criador", "mod_renomear_empenho.bd_manipulador",
     "mod_renomear_empenho.telas", "mod_renomear_empenho.telas_administracao",
+    "mod_renomear_empenho.visual",
     "mod_solicita_impressao.bd_criador",
     "mod_solicita_impressao.bd_manipulador",
     "mod_solicita_impressao.telas",

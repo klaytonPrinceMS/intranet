@@ -562,83 +562,36 @@ def soft_delete_usuario(ator, user_nome, motivo=None):
     return True, f"'{user_nome}' movido para a lista de excluídos"
 
 
-def _conexao_cruzada(chave, arquivo, *, fallback_central=False):
-    """Abre o banco de OUTRO módulo pelo backend ativo (SQLite/Postgres).
-
-    Nunca usa `sqlite3` cru. No Postgres devolve sempre o DATABASE do módulo
-    (`db_mod_<chave>`). No SQLite só abre se o ARQUIVO existir; senão devolve
-    o banco central quando `fallback_central=True` (cópia legada do blog) ou
-    `None` (módulo ainda inexistente — o chamador ignora)."""
-    from mod_intranet import banco_conexao
-    if banco_conexao.sgbd_ativo() == "postgres":
-        return banco_conexao.conexao(chave)
-    if os.path.exists(arquivo):
-        return banco_conexao.conexao(chave)
-    return _central() if fallback_central else None
-
-
 def _vinculos_cruzados_excluir(user_nome):
     """Remove/anonimiza referências do usuário nos demais módulos (LGPD).
     Blog: postagens e comentários apagados. EditorPDF: arquivos físicos,
     registros e cota apagados. Empenhos: registros públicos preservados
-    com autoria anonimizada."""
+    com autoria anonimizada.
+
+    Isolamento total: cada módulo limpa o PRÓPRIO banco através de sua
+    API pública — nunca há cross-query entre bancos."""
     det = []
     try:
-        # Blog tem banco próprio (db_mod_blog.db); sem o arquivo no SQLite,
-        # limpa a cópia legada do banco central.
-        blog_db = os.path.join(BASE_DIR, "db_mod_blog.db")
-        c = _conexao_cruzada("blog", blog_db, fallback_central=True)
-        cc = c.cursor()
-        cc.execute("PRAGMA foreign_keys=ON")
-        cc.execute("SELECT id FROM tb_postagens WHERE autor=?", (user_nome,))
-        ids = [r[0] for r in cc.fetchall()]
-        if ids:
-            q = ",".join("?" * len(ids))
-            cc.execute(f"DELETE FROM tb_comentarios WHERE postagem_id IN ({q})", ids)  # nosec B608 — q só tem "?" (len); ids via parâmetros
-            det.append(f"{len(ids)} postagem(ns)")
-        cc.execute("DELETE FROM tb_comentarios WHERE autor=?", (user_nome,))
-        cc.execute("DELETE FROM tb_postagens WHERE autor=?", (user_nome,))
-        c.commit(); c.close()
+        from mod_blog import bd_manipulador as _blog
+        n = _blog.remover_vinculos_usuario(user_nome)
+        if n:
+            det.append(f"{n} postagem(ns)")
     except Exception as e:
         det.append("blog: falhou")
         _log().exception(f"_vinculos_cruzados_excluir: blog falhou para {user_nome} | {e}")
     try:
-        pdf_db = os.path.join(BASE_DIR, "db_mod_edit_pdf.db")
-        c = _conexao_cruzada("editar_pdf", pdf_db)
-        if c is not None:
-            cc = c.cursor()
-            cc.execute("SELECT nome_arquivo FROM tb_arquivos WHERE usuario=?", (user_nome,))
-            nomes = [r[0] for r in cc.fetchall()]
-            pasta = os.path.join(BASE_DIR, "mod_edit_pdf", "editorPDF")
-            removidos = 0
-            for nome in nomes:
-                fpath = os.path.join(pasta, nome)
-                if os.path.exists(fpath):
-                    try:
-                        os.remove(fpath)
-                        removidos += 1
-                    except OSError:
-                        pass
-                cc.execute("DELETE FROM tb_arquivos WHERE usuario=? AND nome_arquivo=?",
-                           (user_nome, nome))
-            cc.execute("DELETE FROM tb_cota_disco WHERE usuario=?", (user_nome,))
-            c.commit(); c.close()
-            if removidos or nomes:
-                det.append(f"{removidos} arquivo(s) PDF")
+        from mod_edit_pdf import bd_manipulador as _pdf
+        removidos, nomes = _pdf.remover_vinculos_usuario(user_nome)
+        if removidos or nomes:
+            det.append(f"{removidos} arquivo(s) PDF")
     except Exception as e:
         det.append("pdf: falhou")
         _log().exception(f"_vinculos_cruzados_excluir: pdf falhou para {user_nome} | {e}")
     try:
-        emp_db = os.path.join(BASE_DIR, "db_mod_renomear_empenho.db")
-        c = _conexao_cruzada("empenhos", emp_db)
-        if c is not None:
-            cc = c.cursor()
-            cc.execute("UPDATE tb_empenhos SET usuario='(usuário excluído)' WHERE usuario=?",
-                       (user_nome,))
-            n = cc.rowcount
-            c.commit(); c.close()
-            if n:
-                det.append(f"{n} empenho(s) anonimizado(s)")
+        from mod_renomear_empenho import bd_manipulador as _emp
+        n = _emp.anonimizar_usuario(user_nome)
+        if n:
+            det.append(f"{n} empenho(s) anonimizado(s)")
     except Exception as e:
         det.append("empenhos: falhou")
         _log().exception(f"_vinculos_cruzados_excluir: empenhos falhou para {user_nome} | {e}")
@@ -646,34 +599,25 @@ def _vinculos_cruzados_excluir(user_nome):
 
 
 def _vinculos_cruzados_renomear(nome_atual, novo_nome):
-    """Propaga o renomeio para colunas de autoria nos demais módulos."""
-    planos = []
-    c_blog = _conexao_cruzada("blog", os.path.join(BASE_DIR, "db_mod_blog.db"),
-                              fallback_central=True)
-    planos.append((c_blog,
-                   [("tb_postagens", "autor"), ("tb_comentarios", "autor")]))
-    c_pdf = _conexao_cruzada("editar_pdf",
-                             os.path.join(BASE_DIR, "db_mod_edit_pdf.db"))
-    if c_pdf is not None:
-        planos.append((c_pdf,
-                       [("tb_arquivos", "usuario"), ("tb_cota_disco", "usuario")]))
-    c_emp = _conexao_cruzada("empenhos",
-                             os.path.join(BASE_DIR, "db_mod_renomear_empenho.db"))
-    if c_emp is not None:
-        planos.append((c_emp, [("tb_empenhos", "usuario")]))
-    for conn, tabelas in planos:
-        try:
-            cc = conn.cursor()
-            for tbl, col in tabelas:
-                cc.execute(f"UPDATE {tbl} SET {col}=? WHERE {col}=?", (novo_nome, nome_atual))  # nosec B608 — tbl/col de lista fixa interna; valores via ?
-            conn.commit()
-        except Exception as e:
-            _log().warning(f"_vinculos_cruzados_renomear: falha ao propagar {nome_atual}->{novo_nome} | {e}")
-        finally:
-            try:
-                conn.close()
-            except Exception:
-                pass
+    """Propaga o renomeio para colunas de autoria nos demais módulos.
+
+    Isolamento total: cada módulo atualiza o PRÓPRIO banco através de
+    sua API pública — nunca há cross-query entre bancos."""
+    try:
+        from mod_blog import bd_manipulador as _blog
+        _blog.renomear_autor(nome_atual, novo_nome)
+    except Exception as e:
+        _log().warning(f"_vinculos_cruzados_renomear: falha ao propagar {nome_atual}->{novo_nome} | {e}")
+    try:
+        from mod_edit_pdf import bd_manipulador as _pdf
+        _pdf.renomear_usuario(nome_atual, novo_nome)
+    except Exception as e:
+        _log().warning(f"_vinculos_cruzados_renomear: falha ao propagar {nome_atual}->{novo_nome} | {e}")
+    try:
+        from mod_renomear_empenho import bd_manipulador as _emp
+        _emp.renomear_usuario(nome_atual, novo_nome)
+    except Exception as e:
+        _log().warning(f"_vinculos_cruzados_renomear: falha ao propagar {nome_atual}->{novo_nome} | {e}")
 
 
 def excluir_usuario_definitivo(ator, user_nome):

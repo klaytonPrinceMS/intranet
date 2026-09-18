@@ -14,21 +14,21 @@ Banco e visualizador da trilha de auditoria LGPD. A **escrita** é feita pelos d
 
 ## Banco exclusivo (`db_mod_auditoria.db`, WAL)
 
-Criador vigente: `init_db_auditoria()` em `db_manipulador.py:25-38` (executado no import e pelo bootstrap central).
+Criador vigente: `init_db_auditoria()` em `bd_manipulador.py:25-38` (executado no import e pelo bootstrap central).
 
 - **`tb_auditoria_<modulo>`** — UMA TABELA POR MÓDULO (nome sanitizado: hífen vira `_`, ex. `edit-pdf` → `tb_auditoria_edit_pdf`). Colunas: `id`, `usuario`, `modulo`, `acao`, `descricao`, `timestamp` (horário local — RF-08), `hash_arquivo`, `ip`, `user_agent`, `client_hostname`; índices por `modulo`, `usuario` e `timestamp`.
 - **`tb_auditoria_meta`** — registro dos módulos produtores (`modulo` PK, `nome`, `criada_em`).
-- **Migração idempotente** do legado: `migrar_dados_existentes()` (`db_manipulador.py:273-324`) copia a antiga `tb_auditoria` do banco central para as tabelas por módulo, marca `auditoria_migracao_concluida=1` na `tb_config` e **remove a tabela legada** do central.
-- **Poda LGPD**: `podar_registros(dias)` (`db_manipulador.py:147-171`) remove registros mais antigos que o prazo em TODAS as tabelas — chamada diariamente pelo job `poda_auditoria` (`mod_intranet/rotinas.py:74-103`, `auditoria_retencao_dias`, default 90).
+- **Migração idempotente** do legado: `migrar_dados_existentes()` (`bd_manipulador.py:273-324`) copia a antiga `tb_auditoria` do banco central para as tabelas por módulo, marca `auditoria_migracao_concluida=1` na `tb_config` e **remove a tabela legada** do central.
+- **Poda LGPD**: `podar_registros(dias)` (`bd_manipulador.py:147-171`) remove registros mais antigos que o prazo em TODAS as tabelas — chamada diariamente pelo job `poda_auditoria` (`mod_intranet/rotinas.py:74-103`, `auditoria_retencao_dias`, default 90).
 
 !!! note "Escrita automática por novos módulos"
-    `registrar_auditoria` (`db_manipulador.py:99-124`) cria a tabela do módulo e o registro em `tb_auditoria_meta` na primeira gravação — um módulo novo passa a auditar **sem nenhuma edição** neste módulo.
+    `registrar_auditoria` (`bd_manipulador.py:99-124`) cria a tabela do módulo e o registro em `tb_auditoria_meta` na primeira gravação — um módulo novo passa a auditar **sem nenhuma edição** neste módulo.
 
 ## Estrutura do pacote
 
-- `db_manipulador.py` — conexão WAL, criação/garantia de tabelas, `registrar_auditoria`, `contar_registros`, `podar_registros`, `buscar_logs` (filtros + paginação), descoberta de módulos (`get_modulos_com_auditoria`/`get_tabelas_auditoria`) e migração do legado.
+- `bd_manipulador.py` — conexão WAL, criação/garantia de tabelas, `registrar_auditoria`, `contar_registros`, `podar_registros`, `buscar_logs` (filtros + paginação), descoberta de módulos (`get_modulos_com_auditoria`/`get_tabelas_auditoria`) e migração do legado.
 - `telas.py` — visualizador (`mostrar_tela(usuario_logado, perfil)`).
-- `db_criador.py` — **legado** (cria apenas `tb_auditoria_meta`; o esquema real é o de `db_manipulador.py`).
+- `bd_criador.py` — **legado** (cria apenas `tb_auditoria_meta`; o esquema real é o de `bd_manipulador.py`).
 - `check_auditoria.py` — script diagnóstico standalone (lista chaves `auditoria%` da `tb_config` central).
 
 ## Fluxo da tela
@@ -49,14 +49,14 @@ Criador vigente: `init_db_auditoria()` em `db_manipulador.py:25-38` (executado n
 - **Leitura**: `buscar_logs` (UNION ALL entre tabelas ou tabela única), `get_modulos_com_auditoria` (menu dinâmico), `contar_registros` (resumo do dashboard).
 - **Config**: `get_config`/`set_config` centrais (`auditoria_limite`, `auditoria_retencao_dias`, `auditoria_texto_header`, `auditoria_campos:<usuario>`, tema `auditoria_*`).
 - **Poda**: job diário `poda_auditoria` do APScheduler central.
-- **Versionamento**: `versao_modulo:auditoria = 1.0.260908` (seed em `db_manipulador._semear_versao_modulo` e `conexao_bd.init_db()`), exibido no rodapé de `/auditoria`.
+- **Versionamento**: `versao_modulo:auditoria = 1.0.260908` (seed em `bd_manipulador._semear_versao_modulo` e `conexao_bd.init_db()`), exibido no rodapé de `/auditoria`.
 
 ## Pontos de atenção
 
 - Consulta além de `auditoria_limite` numa página usa os botões de paginação; a exportação CSV cobre a página corrente (na ordem do auditor).
 - Ações desconhecidas/novas podem ser filtradas por texto livre no select de Ação.
 - A preferência de colunas é por usuário (`auditoria_campos:<usuario>`); como o módulo é exclusivo do admin geral, na prática vale para qualquer auditor.
-- `db_criador.py` é legado — não executar como fonte de verdade.
+- `bd_criador.py` é legado — não executar como fonte de verdade.
 
 ### Adições recentes (09/2026) — responsividade global RNF-UI-01
 

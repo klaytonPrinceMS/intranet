@@ -168,7 +168,7 @@ def main():
     from mod_intranet.bd_manipulador import audit_log
     audit_log("zzz_teste_56", "edit-pdf", "teste_hash",
               f"sha256 origem=[{h1}]", hash_arquivo=h1)
-    from mod_auditoria.db_manipulador import get_auditoria_connection
+    from mod_auditoria.bd_manipulador import get_auditoria_connection
     conn = get_auditoria_connection()
     cur = conn.cursor()
     cur.execute("""SELECT descricao, hash_arquivo FROM tb_auditoria_edit_pdf

@@ -7,13 +7,39 @@ Conexão e configurações centrais do Intranet (banco central db_mod_intranet.d
 Camada mais baixa: sem imports circulares — só os outros módulos dependem daqui.
 Usa `Repositorio` (SQLAlchemy ORM) internamente para `get_config`/`set_config`;
 mantém `get_connection` (sqlite3 raw) para compatibilidade com código
-legado que ainda não foi migrado.
+legado que ainda não foi migrado. Notificações pós-gravação (ex.: limpar
+caches `lru_cache` de outros módulos) usam `registrar_hook_config` —
+nunca import direto (nem lazy) de outro módulo aqui dentro.
 """
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 import sqlite3
 from functools import lru_cache
+
+_HOOKS_CONFIG = []  # lista de (fn, chaves_ou_None)
+
+
+def registrar_hook_config(fn, apenas_chaves=None):
+    """Registra fn() para rodar após cada gravação de config bem-sucedida.
+
+    Usado por módulos com caches derivados de `tb_config` (ex.: tema,
+    template de empenhos): em vez de `bd_conexao` importar o módulo
+    (ciclo núcleo→módulo), o módulo se registra aqui no próprio import.
+    `apenas_chaves` restringe o disparo (ex.: "empenhos_template_nome").
+    Hooks nunca derrubam o `set_config` (cada um roda em try/except).
+    """
+    if isinstance(apenas_chaves, str):
+        chaves = {apenas_chaves}
+    elif apenas_chaves:
+        chaves = set(apenas_chaves)
+    else:
+        chaves = None
+    def _mesmo(a, b):
+        return (getattr(a, "__func__", a) is getattr(b, "__func__", b)
+                and getattr(a, "__self__", None) is getattr(b, "__self__", None))
+    if callable(fn) and all(not _mesmo(f, fn) for f, _ in _HOOKS_CONFIG):
+        _HOOKS_CONFIG.append((fn, chaves))
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "db_mod_intranet.db")
@@ -292,16 +318,11 @@ def set_config(chave, valor):
                     favicon_versao.cache_clear()
                 except Exception:
                     pass
-                try:
-                    from mod_intranet import tema_modulo as _tm
-                    _tm._cfg.cache_clear()
-                    _tm.ler_tema.cache_clear()
-                except Exception:
-                    pass
-                if chave == "empenhos_template_nome":
+                for _fn, _chaves in list(_HOOKS_CONFIG):
+                    if _chaves is not None and chave not in _chaves:
+                        continue
                     try:
-                        from mod_renomear_empenho.bd_manipulador import template_nome_atual as _tn
-                        _tn.cache_clear()
+                        _fn()
                     except Exception:
                         pass
             return ok

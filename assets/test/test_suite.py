@@ -23,8 +23,11 @@ SUITE_DIR = ROOT / "test"
 # limpa (assumem master/master ainda válidos) — não entram na suíte.
 EXCLUIR = {
     "test_suite.py",  # este próprio arquivo
-    "debug_boot.py", "step_boot.py", "diag_config.py", "wtest.py",
+    "debug_boot.py", "step_boot.py", "diag_config.py", "diag_db.py",
+    "wtest.py",  # diagnósticos sem assert/exit: sempre 0 (falso-positivo)
     "criar_postagens_blog.py",
+    "fabrica_documentos.py",  # helper importado por test_fabrica_documentos
+    "test_fabrica_documentos.py",  # pytest-style (fixtures); subprocesso roda 0 testes
     "test_fresh_install.py", "fresh_install_test.py", "fresh_install_test2.py",
     "test_fase1_login.py", "validar_fase1_login.py",
     "test_server.py",  # helper: sobe a app na 8080 (bloqueia)

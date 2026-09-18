@@ -21,12 +21,14 @@ import uuid
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
+from mod_intranet.crud_base import CrudBase
 from mod_intranet.hora_servidor import hora_servidor, hora_servidor_str
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MOD_DIR = os.path.join(BASE_DIR, "mod_solicita_impressao")
 PASTA_SOLICITACOES = os.path.join(MOD_DIR, "solicitacaoImpressao")
 DB_PATH = os.path.join(BASE_DIR, "db_mod_solicita_impressao.db")
+_crud = CrudBase(DB_PATH, "solicita_impressao")
 
 # Configurações padrão do módulo (seed em tb_configuracoes_modulo)
 CONFIG_PADRAO = {
@@ -428,34 +430,32 @@ def init_db():
 # ================= CONFIGURAÇÕES =================
 
 def obter_config(chave, default=""):
-    """Reads a module-local config key (tb_configuracoes_modulo).
+    """Reads a module-local config key (tb_configuracoes_modulo, via CrudBase).
 
-    Lê uma chave de configuração local do módulo (tb_configuracoes_modulo)."""
-    conn = get_connection()
+    Lê uma chave de configuração local do módulo; falha de leitura
+    devolve `default` (fail-soft, mesmo contrato do `get_config_local`
+    do blog)."""
     try:
-        cur = conn.cursor()
-        cur.execute("SELECT valor FROM tb_configuracoes_modulo WHERE chave=?", (chave,))
-        row = cur.fetchone()
+        row = _crud.obter("SELECT valor FROM tb_configuracoes_modulo WHERE chave=?", (chave,))
         return row[0] if row else default
-    finally:
-        conn.close()
+    except Exception:
+        return default
 
 
 def definir_config(chave, valor):
-    """Writes a module-local config key (upsert in tb_configuracoes_modulo).
+    """Writes a module-local config key (upsert, via CrudBase).
 
-    Grava uma chave de configuração local do módulo (upsert em tb_configuracoes_modulo)."""
-    conn = get_connection()
+    Grava uma chave de configuração local do módulo (upsert em
+    tb_configuracoes_modulo). Retorna True/False (fail-soft)."""
     try:
-        cur = conn.cursor()
-        cur.execute(
+        _crud.criar(
             "INSERT INTO tb_configuracoes_modulo (chave, valor) VALUES (?, ?) "
             "ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor",
             (chave, str(valor)),
         )
-        conn.commit()
-    finally:
-        conn.close()
+        return True
+    except Exception:
+        return False
 
 
 # ================= IMPRESSORAS =================
@@ -1375,6 +1375,19 @@ def listar_solicitacoes(usuario=None, status=None, secretaria_id=None, setor_id=
         params.append(int(limite))
         cur.execute(sql, params)
         return cur.fetchall()
+    finally:
+        conn.close()
+
+
+def contar_solicitacoes_pendentes():
+    """Conta solicitações com status em aberto (usado no Resumo do main.py).
+
+    Pendente = status fora de ('impresso', 'recusado', 'cancelado')."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM tb_solicitacoes WHERE status NOT IN ('impresso','recusado','cancelado')")
+        return cur.fetchone()[0]
     finally:
         conn.close()
 

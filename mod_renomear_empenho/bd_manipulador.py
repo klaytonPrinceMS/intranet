@@ -2508,7 +2508,8 @@ def validar_presenca_matriz():
 
 
 # ================= FERRAMENTAS DE PDF (RF-45) =================
-# Saídas em pastas específicas, reutilizando as operações do mod_edit_pdf.
+# Saídas em pastas específicas, reutilizando o motor compartilhado do
+# núcleo (mod_intranet.pdf_operacoes) — nenhum módulo importa outro.
 PASTA_MERGE = os.path.join(MOD_DIR, "datahora_mergePDF")
 PASTA_CORTE = os.path.join(MOD_DIR, "datahora_cortePDF")
 PASTA_REDUCAO = os.path.join(MOD_DIR, "datahora_reducaoPDF")
@@ -2522,7 +2523,7 @@ def _ferramenta_nome(base, sufixo):
 
 
 def ferramenta_cortar(caminho_in, filtro, usuario="sistema"):
-    """Corta um PDF (pares/ímpares/intervalo) usando o motor do mod_edit_pdf.
+    """Corta um PDF (pares/ímpares/intervalo) usando o motor compartilhado.
     Retorna (ok, caminho_ou_msg)."""
     if not caminho_in or not os.path.exists(caminho_in):
         return False, "Arquivo de entrada inexistente"
@@ -2530,7 +2531,7 @@ def ferramenta_cortar(caminho_in, filtro, usuario="sistema"):
     base = os.path.splitext(os.path.basename(caminho_in))[0]
     destino = os.path.join(PASTA_CORTE, _ferramenta_nome(base, "_corte.pdf"))
     try:
-        from mod_edit_pdf.bd_manipulador import op_cortar
+        from mod_intranet.pdf_operacoes import op_cortar
         ok, res = op_cortar(caminho_in, filtro, PASTA_CORTE,
                             os.path.basename(destino)[:-4])
         if ok:
@@ -2552,7 +2553,7 @@ def ferramenta_juntar(caminhos_in, usuario="sistema"):
     os.makedirs(PASTA_MERGE, exist_ok=True)
     destino = os.path.join(PASTA_MERGE, _ferramenta_nome("merge", ".pdf"))
     try:
-        from mod_edit_pdf.bd_manipulador import op_juntar
+        from mod_intranet.pdf_operacoes import op_juntar
         ok, msg = op_juntar(caminhos, destino)
         if ok and os.path.exists(destino):
             audit_log(usuario, "renomear-empenho", "ferramenta_juntar",
@@ -2573,7 +2574,7 @@ def ferramenta_reduzir(caminho_in, usuario="sistema", qualidade=50, modo="leve",
     base = os.path.splitext(os.path.basename(caminho_in))[0]
     destino = os.path.join(PASTA_REDUCAO, _ferramenta_nome(base, "_reducao.pdf"))
     try:
-        from mod_edit_pdf.bd_manipulador import op_reduzir
+        from mod_intranet.pdf_operacoes import op_reduzir
         ok, msg = op_reduzir(caminho_in, destino, qualidade=qualidade, modo=modo, dpi=dpi)
         if ok and os.path.exists(destino):
             audit_log(usuario, "renomear-empenho", "ferramenta_reducao",
@@ -2591,6 +2592,51 @@ def ferramenta_fontes(usuario="sistema"):
     """Lista fontes disponíveis: empenhos processados (caminho_arquivo)."""
     return [(r[0], r[2], r[7]) for r in listar_empenhos(status="ativo", limite=1000)
             if r[7] and os.path.exists(r[7])]
+
+
+def anonimizar_usuario(user_nome):
+    """Anonimiza a autoria dos empenhos do usuário (LGPD).
+
+    Chamado pelo módulo de gestão de usuários na exclusão definitiva:
+    cada módulo limpa o PRÓPRIO banco (isolamento total — sem cross-query
+    entre bancos). Registros públicos são preservados com autoria
+    anonimizada. Retorna o nº de registros anonimizados."""
+    conn = _conn()
+    try:
+        cc = conn.cursor()
+        cc.execute("UPDATE tb_empenhos SET usuario='(usuário excluído)' WHERE usuario=?",
+                   (user_nome,))
+        n = cc.rowcount
+        conn.commit()
+        return n
+    finally:
+        conn.close()
+
+
+def renomear_usuario(nome_atual, novo_nome):
+    """Propaga o renomeio para a coluna de usuário do módulo.
+
+    Chamado pelo módulo de gestão de usuários: cada módulo atualiza o
+    PRÓPRIO banco (isolamento total). Exceção propaga (fail-loud) e o
+    chamador registra o aviso."""
+    conn = _conn()
+    try:
+        cc = conn.cursor()
+        cc.execute("UPDATE tb_empenhos SET usuario=? WHERE usuario=?", (novo_nome, nome_atual))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def contar_quarentena_pendente():
+    """Conta arquivos na quarentena ainda não processados (Resumo do main.py)."""
+    conn = _conn()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM tb_quarentena WHERE processado=0")
+        return cur.fetchone()[0]
+    finally:
+        conn.close()
 
 
 # ================= NAVEGAÇÃO (recursiva, só PDF, protegida) =================
@@ -3158,3 +3204,14 @@ from uuid import uuid4
 
 
 init_db_empenho()
+
+
+try:
+    # Invalida o cache do template quando a chave muda (hook registrado
+    # no núcleo — o núcleo nunca importa este módulo; sem ciclo).
+    from mod_intranet import bd_conexao as _bd_conexao
+    _bd_conexao.registrar_hook_config(
+        template_nome_atual.cache_clear,
+        apenas_chaves="empenhos_template_nome")
+except Exception:
+    pass

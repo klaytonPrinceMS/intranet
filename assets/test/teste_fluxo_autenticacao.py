@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 from mod_intranet.bd_criador import inicializar_bancos  # noqa: E402
 from mod_intranet import autenticacao as auth  # noqa: E402
 from mod_gest_cad_usuario import bd_manipulador as gest  # noqa: E402
-from mod_auditoria.db_manipulador import get_auditoria_connection  # noqa: E402
+from mod_auditoria.bd_manipulador import get_auditoria_connection  # noqa: E402
 
 
 def _conta_auditoria(tabela, acao, usuario):
@@ -36,13 +36,16 @@ def _conta_auditoria(tabela, acao, usuario):
 
 
 def ok(cond, msg):
-    global _OK
+    global _OK, _FALHAS
     _OK += 1
+    if not cond:
+        _FALHAS += 1
     print(f"  {'OK' if cond else 'FALHOU'} [{_OK}] {msg}")
     return bool(cond)
 
 
 _OK = 0
+_FALHAS = 0
 print("INICIANDO TESTES — Fluxo de autenticação (Fase 2.5)")
 inicializar_bancos()
 
@@ -140,4 +143,7 @@ try:
 except Exception:
     pass
 
+if _FALHAS:
+    print(f"\n{_FALHAS} FALHA(S) de {_OK} verificações ❌")
+    sys.exit(1)
 print(f"\nTODOS OS TESTES PASSARAM — {_OK} verificações ✅")
