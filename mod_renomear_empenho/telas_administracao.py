@@ -192,7 +192,7 @@ def mostrar_administracao(
                  "download para usuários comuns.").classes("text-subtitle2 text-grey-7")
         inp_texto = ui.input("Texto do cabeçalho", value=texto_header).props("outlined dense").classes("w-full")
         inp_intervalo = ui.input(
-            "Intervalo do monitor automático (segundos — recomendado 60)",
+            "Intervalo do monitor automático (segundos — recomendado 600 = 10 min)",
             value=str(_rotinas.intervalo_monitor_empenho())
         ).props("outlined dense").classes("w-full")             .tooltip("Varredura automática das pastas monitoradas (RF-40). Aplicado sem reiniciar.")
 
@@ -218,7 +218,7 @@ def mostrar_administracao(
                 set_config("empenhos_autorizar_download", "1" if sw_autorizar.value else "0")
                 set_config("empenhos_renomeacao_automatica", "1" if sw_auto.value else "0")
                 try:
-                    iv = max(1, int((inp_intervalo.value or "60").strip() or 60))
+                    iv = max(1, int((inp_intervalo.value or "600").strip() or 600))
                     set_config("empenhos_monitor_intervalo_seg", str(iv))
                     _rotinas.reagendar_monitor_empenho(iv)
                 except Exception as ex:
@@ -240,15 +240,16 @@ def mostrar_administracao(
 
             Restaura texto do cabeçalho vazio, download desautorizado,
             renomeação automática ligada e
-            intervalo do monitor 60 s (reagendado ao vivo); audita, notifica
-            e recarrega após 1 segundo. Falha registra loguru."""
+            intervalo do monitor 600 s (10 min, reagendado ao vivo);
+            audita, notifica e recarrega após 1 segundo. Falha registra
+            loguru."""
             try:
                 set_config("empenhos_texto_header", "")
                 set_config("empenhos_autorizar_download", "0")
                 set_config("empenhos_renomeacao_automatica", "1")
-                set_config("empenhos_monitor_intervalo_seg", "60")
+                set_config("empenhos_monitor_intervalo_seg", "600")
                 try:
-                    _rotinas.reagendar_monitor_empenho(60)
+                    _rotinas.reagendar_monitor_empenho(600)
                 except Exception as ex:
                     _log.warning(f"intervalo monitor não reagendado: {ex}")
                 try:

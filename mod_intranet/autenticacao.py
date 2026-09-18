@@ -13,10 +13,10 @@ from mod_intranet.repositorio import Repositorio
 SESSION_COOKIE_NAME = "intranet_session"
 
 MODULOS_SISTEMA = [
-    ("blog", "Blog", "article", "/blog"),
     ("editar_pdf", "Editor PDF", "picture_as_pdf", "/edit-pdf"),
     ("empenhos", "Empenhos", "folder_open", "/renomear-empenho"),
     ("solicita_impressao", "Solicitação de Impressão", "print", "/solicita-impressao"),
+    ("blog", "Blog", "article", "/blog"),
     ("usuarios", "Usuários", "manage_accounts", "/users"),
     ("auditoria", "Auditoria", "history", "/auditoria"),
 ]
@@ -82,6 +82,24 @@ def _garantir_tb_modulos():
             for (chave,) in cur.fetchall():
                 cur.execute("UPDATE tb_modulos SET ordem=? WHERE chave=?", (proxima, chave))
                 proxima += 1
+        # Migração 260918 — nova ordem padrão dos nativos: [editar_pdf,
+        # empenhos, solicita_impressao, blog, usuarios, auditoria] (blog/
+        # usuarios/auditoria juntos no fim). Aplica SOMENTE quando as ordens
+        # atuais reproduzem exatamente a sequência antiga 1..6 (instalação
+        # sem personalização e sem módulos extras entre os nativos);
+        # qualquer ordem personalizada NUNCA é tocada. Idempotente por
+        # construção (após migrar, a sequência já não é a antiga).
+        cur.execute("SELECT chave, ordem FROM tb_modulos WHERE nativo=1")
+        ordens = {c: o for c, o in cur.fetchall()}
+        antiga = {"blog": 1, "editar_pdf": 2, "empenhos": 3,
+                  "solicita_impressao": 4, "usuarios": 5, "auditoria": 6}
+        if ordens == antiga:
+            cur.execute("SELECT COUNT(*) FROM tb_modulos WHERE nativo=0 AND ordem BETWEEN 1 AND 6")
+            if cur.fetchone()[0] == 0:
+                nova = {"editar_pdf": 1, "empenhos": 2, "solicita_impressao": 3,
+                        "blog": 4, "usuarios": 5, "auditoria": 6}
+                for chave, ordem in nova.items():
+                    cur.execute("UPDATE tb_modulos SET ordem=? WHERE chave=?", (ordem, chave))
         conn.commit()
         _modulos_ok = True
     except Exception:
@@ -218,7 +236,7 @@ def excluir_modulo(ator, chave):
     return True, f"Módulo '{chave}' removido do cadastro"
 
 
-MODULOS_INDISPENSAVEIS = {"auditoria", "usuarios"}
+MODULOS_INDISPENSAVEIS = {"auditoria", "blog", "usuarios"}
 
 
 def set_modulo_ativo(ator, chave, ativo=True):

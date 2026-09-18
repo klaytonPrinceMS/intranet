@@ -177,7 +177,7 @@ Antes o incremento era inline em `main`; agora a função documentada é a **ún
 
 - `bd_criador.py` **morto** — não confiar; o esquema real está em `bd_manipulador.py`.
 - Monitor automático é **não recursivo** (apenas a raiz das pastas monitoradas); levantamento e navegação/fila manuais são recursivas; levantamento anota recursivamente mas o processamento automático continua só na raiz.
-- O intervalo do monitor (padrão **60 s**) e a lista de pastas são lidos de `tb_config` e aplicados **sem reiniciar**; o switch `empenhos_renomeacao_automatica` também vale sem reiniciar (gate no job).
+- O intervalo do monitor (padrão **600 s = 10 min**) e a lista de pastas são lidos de `tb_config` e aplicados **sem reiniciar**; o switch `empenhos_renomeacao_automatica` também vale sem reiniciar (gate no job).
 - `tb_levantamento_fts` é **VIRTUAL TABLE FTS5 exclusiva do SQLite** — no Postgres o `CREATE VIRTUAL TABLE` é ignorado e `pesquisar_levantamento` usa `LIKE`; comportamento esperado via `banco_conexao`.
 - Auditoria do módulo **não aparece** na admin — consulte o menu **Auditoria**.
 

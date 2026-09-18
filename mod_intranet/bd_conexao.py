@@ -162,7 +162,7 @@ def init_db():
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('cotadisco_global_gb', '10')")
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('backup_interval_hours', '12')")
     for _chave_mod, _ver in (
-        ("usuarios", "1.0.260908"),
+        ("usuarios", "1.0.260918"),
         ("auditoria", "1.0.260908"),
         ("editar_pdf", "1.0.260908"),
         ("empenhos", "1.0.260913"),
@@ -227,6 +227,13 @@ def init_db():
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('versao_modulo:intranet', '1.0.260913') ON CONFLICT DO NOTHING")
         cur.execute("UPDATE tb_config SET valor='1.0.260913' WHERE chave='versao_modulo:intranet'")
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('migracao_versao_intranet_260913', '1') ON CONFLICT DO NOTHING")
+    # Migração 18/09/2026 — bump versão do módulo usuarios (acesso padrão
+    # comum em editar_pdf/empenhos/solicita_impressao, nova ordem dos
+    # módulos, blog indesativável, senha provisória 123456 no cadastro)
+    cur.execute("SELECT COUNT(*) FROM tb_config WHERE chave='migracao_versao_usuarios_260918'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("UPDATE tb_config SET valor='1.0.260918' WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('migracao_versao_usuarios_260918', '1') ON CONFLICT DO NOTHING")
     # Seed do contador de acessos (se ainda não existir) + data inicial da contagem
     try:
         cur.execute("SELECT valor FROM tb_config WHERE chave='contador_acessos_inicio'")

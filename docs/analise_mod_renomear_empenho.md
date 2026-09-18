@@ -117,7 +117,7 @@ Acesso pela chave do módulo `empenhos`; perfil define o que é visível (abas a
 
 - `bd_criador.py` **morto** com esquema FTS5 fantasma — fonte de confusão; não executar.
 - Monitor automático varre **só a raiz** de cada pasta monitorada; navegação/fila manuais são **recursivas** (comportamento intencional) — não equivaler automaticidade a recursividade.
-- Intervalo padrão do monitor é **60 s** (não 10 s); ajustado em `mod_intranet/rotinas.py:36`.
+- Intervalo padrão do monitor é **600 s (10 min)**; ajustado em `mod_intranet/rotinas.py` (`intervalo_monitor_empenho`), alterável pelo usuário na tela do módulo.
 
 ## Status — Fases do PLANO (4b/4c concluídos)
 

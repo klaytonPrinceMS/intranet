@@ -100,7 +100,7 @@
 | Função | Linha | Descrição |
 |:---|:---|:---|
 | `intervalo_backup(chave, default="12")` | `:27` | horas do job de backup (mín. 1) |
-| `intervalo_monitor_empenho(default=60)` | `:36` | segundos do monitor de empenhos (padrão 60 s) |
+| `intervalo_monitor_empenho(default=600)` | | segundos do monitor de empenhos (padrão 600 s = 10 min) |
 | `reagendar_monitor_empenho(segundos)` | `:49` | reaplica o intervalo ao job vivo |
 | `backup_bancos()` / `backup_modulo(chave)` | `:106` / `:124` | cópia para `backup/` com timestamp |
 | `_podar_backups(manter=10)` | `:141` | retém as 10 cópias mais recentes por banco |

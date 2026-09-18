@@ -118,7 +118,7 @@ Oito melhorias na tela de usuários (`mod_gest_cad_usuario/telas.py`), todas na 
 ### Adições recentes (26/08)
 
 - **Aba "Administração"** (exclusiva do admin geral, nas tabs existentes): bloco **Aparência** (prefixo usuarios_* — cor do botão/texto, fundo da página, cor do título, tamanho via ui.color_input; a cor do botão também define a primária da tela) e **config específica**: usuarios_senha_min (política de senha mínima, aplicada em criar_usuario/alterar_senha_admin via senha_minima()). Salvo via set_config, vale sem reiniciar.
-- **Versionamento**: versao_modulo:usuarios = 1.0.260908 (seed em bd_conexao.init_db()), exibido no rodapé em /users (rota → chave usuarios).
+- **Versionamento**: versao_modulo:usuarios = 1.0.260918 (seed em bd_conexao.init_db()), exibido no rodapé em /users (rota → chave usuarios).
 - **Edição do módulo** (`campo_modulo` do helper `mod_intranet/tema_modulo.py`) — **RESTAURADO (06/09)**: após remoção acidental (regressão), o cupê voltou a aparecer na aba Administração — editar **nome de exibição, ícone e status (ativo/inativo)** do módulo (`mod_gest_cad_usuario/telas.py:705`); a edição também permanece no painel central `/configuracoes` (aba Módulo, admin geral).
 
 ### Adições recentes (06/09)

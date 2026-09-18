@@ -107,11 +107,19 @@ try:
     auth.set_chaves_desativadas("master", [])
     check("blog" in auth.chaves_ativas(),
           "com nada desativado, blog está ativo")
+    # blog é indispensável: tentativa de desativar é ignorada
     auth.set_chaves_desativadas("master", ["blog"])
-    check("blog" in auth.chaves_desativadas()
-          and "blog" not in auth.chaves_ativas(),
-          "blog desativado sai de chaves_ativas")
-    check(auth.validar_acesso_modulo(USUARIO, "blog") is False,
+    check("blog" in auth.chaves_ativas()
+          and "blog" not in auth.chaves_desativadas(),
+          "blog indispensável: tentativa de desativar é ignorada")
+    # fluxo de desativação usa módulo desativável (empenhos)
+    ok_rev2, _ = gest.remover_acesso("master", USUARIO, "empenhos")
+    check(ok_rev2, "revogação do acesso padrão em empenhos")
+    auth.set_chaves_desativadas("master", ["empenhos"])
+    check("empenhos" in auth.chaves_desativadas()
+          and "empenhos" not in auth.chaves_ativas(),
+          "empenhos desativado sai de chaves_ativas")
+    check(auth.validar_acesso_modulo(USUARIO, "empenhos") is False,
           "módulo desativado nega acesso mesmo sem papel")
 finally:
     try:

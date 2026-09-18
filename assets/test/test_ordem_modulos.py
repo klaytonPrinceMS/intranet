@@ -2,11 +2,13 @@
 
 EN: Sidebar order — desired default seed and user order surviving reorder
     and reboot (regression: 0-based write wiped customization on boot).
-PT: Ordem dos módulos — padrão (blog, Editor PDF, Empenhos, Solicitação,
-    Usuários, Auditoria) e personalização do usuário preservada após
+PT: Ordem dos módulos — padrão (Editor PDF, Empenhos, Solicitação,
+    Blog, Usuários, Auditoria) e personalização do usuário preservada após
     reordenar (↑/↓ + Aplicar) e reiniciar. Regressão corrigida: o
     `reordenar` 0-based gravava `ordem=0` e o boot reescrevia tudo para
     `MODULOS_SISTEMA`; `_garantir_tb_modulos` agora só numera linhas zeradas.
+    Migração 260918 renumera para o novo padrão SOMENTE se a ordem vigente
+    for exatamente a antiga (sem personalização).
 
 Cobre as validações de sessão (backend + 2 restarts 14/09/2026):
 - `reordenar` grava 1-based (nenhum `ordem=0`);
@@ -44,8 +46,8 @@ print("INICIANDO TESTES — ordem do menu (padrão + persistência)")
 from mod_intranet import autenticacao  # noqa: E402
 from mod_intranet.repositorio import Repositorio  # noqa: E402
 
-DESEJADA = ["blog", "editar_pdf", "empenhos", "solicita_impressao",
-            "usuarios", "auditoria"]
+DESEJADA = ["editar_pdf", "empenhos", "solicita_impressao",
+            "blog", "usuarios", "auditoria"]
 
 conn = autenticacao.get_connection()
 try:

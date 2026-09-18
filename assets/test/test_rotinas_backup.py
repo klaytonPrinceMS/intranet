@@ -69,8 +69,8 @@ try:
                     pass
     check(rotinas.intervalo_backup("blog") == 12,
           "intervalo_backup default 12h sem config")
-    check(rotinas.intervalo_monitor_empenho() == 60,
-          "intervalo_monitor_empenho default 60s sem config")
+    check(rotinas.intervalo_monitor_empenho() == 600,
+          "intervalo_monitor_empenho default 600s (10 min) sem config")
     set_config("backup_horas:blog", "5")
     check(rotinas.intervalo_backup("blog") == 5,
           "intervalo_backup lê tb_config (5h)")

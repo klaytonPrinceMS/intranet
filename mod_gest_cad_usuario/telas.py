@@ -136,8 +136,15 @@ def _acesso_negado():
 
 def _seletores_de_acesso(container, nome_usuario=None):
     """Monta um seletor de papel por módulo dentro de `container`.
-    Itera TODOS os módulos registrados no banco — existentes e futuros."""
+    Itera TODOS os módulos registrados no banco — existentes e futuros.
+    Novo usuário (nome_usuario=None): pré-seleciona o padrão de criação
+    (`ACESSO_PADRAO_NOVO_USUARIO` com papel 'comum'; restritos nascem
+    sem acesso)."""
     atual = {c: "" for c, n, i, r, a in autenticacao.modulos_registrados()}
+    if nome_usuario is None:
+        for c in gest.ACESSO_PADRAO_NOVO_USUARIO:
+            if c in atual:
+                atual[c] = "comum"
     meta = {}
     if nome_usuario:
         for chave, papel, liberado_por, data in gest.listar_acessos(nome_usuario):
@@ -537,7 +544,7 @@ def _dlg_novo(ator, refresh):
     with dialogo_card(largura="w-full max-w-[560px] mx-4", chave_modulo="usuarios") as (dlg, card):
         with ui.card_section().classes("w-full overflow-auto gap-2"):
             ui.label("Novo usuário").classes("text-h6")
-            ui.label("Senha provisória — troca obrigatória no primeiro acesso.").classes(
+            ui.label("Senha provisória — troca obrigatória no primeiro acesso (padrão inicial: 123456).").classes(
                 "text-caption text-grey-7 -mt-2")
 
             nome = ui.input("Nome de usuário (login) *").props("outlined dense").classes("w-full") \
@@ -547,7 +554,8 @@ def _dlg_novo(ator, refresh):
                 .tooltip("Nome para tratamento nas telas. Pode ser o nome social "
                          "(Decreto 8.727/2016). Deve ser diferente do login")
             senha = ui.input(f"Senha provisória * (mín. {gest.senha_minima()})",
-                             password=True, password_toggle_button=True) \
+                             password=True, password_toggle_button=True,
+                             value="123456") \
                 .props("outlined dense").classes("w-full")
             with ui.grid(columns=2).classes("w-full gap-2"):
                 email = ui.input("E-mail").props("outlined dense")
@@ -556,7 +564,7 @@ def _dlg_novo(ator, refresh):
                                with_input=True).props("outlined dense").classes("w-full")
 
             ui.separator()
-            ui.label("Acesso aos módulos (opcional — pode definir depois)").classes(
+            ui.label("Acesso aos módulos (padrão: Comum em Editor PDF, Empenhos e Solicitação de Impressão)").classes(
                 "text-subtitle2 text-grey-8")
             box = ui.column().classes("w-full gap-0")
             selecoes, _meta = _seletores_de_acesso(box)
@@ -814,8 +822,9 @@ def _dlg_duplicar(ator, origem, refresh):
                 .tooltip("Nome para tratamento nas telas. Pode ser o nome social "
                          "(Decreto 8.727/2016). Deve ser diferente do login")
             senha = ui.input(f"Senha provisória * (mín. {gest.senha_minima()})", password=True,
-                             password_toggle_button=True).props("outlined dense").classes("w-full")
-            email = ui.input("E-mail *").props("outlined dense").classes("w-full")
+                             password_toggle_button=True,
+                             value="123456").props("outlined dense").classes("w-full")
+            email = ui.input("E-mail").props("outlined dense").classes("w-full")
             fone = ui.input("Telefone (opcional)").props("outlined dense").classes("w-full")
 
             ui.separator()

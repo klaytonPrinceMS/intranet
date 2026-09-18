@@ -166,11 +166,12 @@ def intervalo_backup(chave, default="12"):
         return int(default)
 
 
-def intervalo_monitor_empenho(default=60):
+def intervalo_monitor_empenho(default=600):
     """Intervalo (segundos) do monitor automático de empenhos (RF-40).
 
-    Recomendado 60 s (avaliando o padrão do sistema que está sendo copiado).
-    Configurável via tb_config 'empenhos_monitor_intervalo_seg' sem restart.
+    Padrão 600 s (10 min) na fase de desenvolvimento; o usuário ajusta na
+    tela do módulo. Configurável via tb_config
+    'empenhos_monitor_intervalo_seg' sem restart.
     """
     from mod_intranet.bd_conexao import get_config
     try:

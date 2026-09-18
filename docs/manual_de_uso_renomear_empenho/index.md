@@ -53,7 +53,7 @@ O módulo atende à função de almoxarifado/gestão de empenhos. Usuários `com
 
 - **Pastas monitoradas** (uma por linha, local ou rede/UNC, ex.: `\\servidor\empenhos` ou `E:\scan`) — aplicado sem reiniciar.
 - **Aparência**: cor dos botões, texto, fundo, título e tamanho.
-- **Configurações específicas**: texto do cabeçalho, **intervalo do monitor automático** (recomendado 60 s) e autorização de download/ZIP/e-mail para comuns.
+- **Configurações específicas**: texto do cabeçalho, **intervalo do monitor automático** (recomendado 600 s = 10 min, alterável sem reiniciar) e autorização de download/ZIP/e-mail para comuns.
 - **Nome final do arquivo**: template configurável com as variáveis `{contador}`, `{empenho}`, `{empenho_cru}`, `{parcela}`, `{ficha}`, `{ano}` e formatação de largura (ex.: `{contador:04d}`). Tipos especiais usam nome próprio (`EC_0024.pdf`).
 - **Campos de busca (regex)**: identificar/cadastrar/editar as regex de cada campo (ficha/empenho/parcela/ano...) sem reiniciar.
 - **Auditoria dos arquivos**: consulta da trilha detectado→renomeado→removido por status.

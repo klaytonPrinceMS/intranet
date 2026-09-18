@@ -76,6 +76,10 @@ ok, _msg = gest.definir_flags("master", "qa_sem_vinculo", "blog",
 check(ok is False, "grant sem vínculo rejeitado")
 
 # ---------- roundtrip com restauração ----------
+# qacomum não tem vínculo com o blog por padrão (módulo restrito): o
+# vínculo é criado aqui como fixture e removido na limpeza.
+ok_v, _ = gest.definir_acesso("master", "qacomum", "blog", "comum")
+check(ok_v, "fixture: vínculo blog criado para o qacomum")
 original = gest.obter_flags(*_ALVO)
 try:
     ok, _msg = gest.definir_flags("master", *_ALVO, {"blog.comentar": True})
@@ -88,6 +92,7 @@ try:
           "revogar ({} vazio) volta a negar")
 finally:
     gest.definir_flags("master", *_ALVO, original)
+    gest.remover_acesso("master", "qacomum", "blog")
 check(gest.obter_flags(*_ALVO) == original, "flags originais restauradas")
 
 # ---------- JSON malformado = {} ----------

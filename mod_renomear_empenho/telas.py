@@ -1456,7 +1456,7 @@ def _tela_config(usuario_logado, eh_admin, t_cor_botao, t_cor_txt_botao, t_cor_f
         ui.separator().classes("my-3")
         ui.label("Configurações específicas").classes("text-subtitle2 text-grey-7")
         inp_texto = ui.input("Texto do cabeçalho", value=texto_header).props("outlined dense").classes("w-full")
-        inp_intervalo = ui.input("Intervalo do monitor automático (segundos — recomendado 60)",
+        inp_intervalo = ui.input("Intervalo do monitor automático (segundos — recomendado 600 = 10 min)",
                                  value=str(_rotinas.intervalo_monitor_empenho())) \
             .props("outlined dense").classes("w-full") \
             .tooltip("Varredura automática das pastas monitoradas (RF-40). Aplicado sem reiniciar.")
@@ -1479,7 +1479,7 @@ def _tela_config(usuario_logado, eh_admin, t_cor_botao, t_cor_txt_botao, t_cor_f
                 set_config("empenhos_texto_header", (inp_texto.value or "").strip())
                 set_config("empenhos_autorizar_download", "1" if sw_autorizar.value else "0")
                 try:
-                    iv = max(1, int((inp_intervalo.value or "60").strip() or 60))
+                    iv = max(1, int((inp_intervalo.value or "600").strip() or 600))
                     set_config("empenhos_monitor_intervalo_seg", str(iv))
                     _rotinas.reagendar_monitor_empenho(iv)
                 except Exception as ex:

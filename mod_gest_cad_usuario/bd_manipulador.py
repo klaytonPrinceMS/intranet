@@ -17,6 +17,10 @@ DB_CAD_PATH = os.path.join(BASE_DIR, "db_mod_gest_cad_usuario.db")
 
 PERFIS_GLOBAIS = ["comum", "administrador_modulo", "administrador_geral"]
 PAPEIS_MODULO = ["comum", "administrador"]
+# Módulos com acesso 'comum' liberado por padrão a todo usuário novo.
+# usuarios/auditoria/blog são restritos (sem vínculo inicial): o acesso a
+# eles é concedido manualmente pelo administrador na tela de usuários.
+ACESSO_PADRAO_NOVO_USUARIO = ("editar_pdf", "empenhos", "solicita_impressao")
 
 
 def get_connection():
@@ -206,7 +210,9 @@ def init_db():
         marcar_trocar_senha("master", True)
         marcar_trocar_credenciais("master", True)
 
-    # Garante usuários de teste de QA (docs) — qacomum (comum) e qamaster (administrador_geral)
+    # Garante usuários de teste de QA (docs) — qacomum (comum) e qamaster (administrador_geral).
+    # qacomum segue o padrão de criação vigente (comum em editar_pdf,
+    # empenhos e solicita_impressao; SEM acesso a blog/usuarios/auditoria).
     from mod_intranet.autenticacao import gerar_hash_senha, marcar_trocar_senha
     conn = get_connection(); cur = conn.cursor()
     if not obter_usuario("qacomum"):
@@ -214,13 +220,24 @@ def init_db():
             "INSERT INTO tb_usuarios (user_nome, user_senha, user_perfil, user_ativo, user_nome_completo) VALUES (?, ?, 'comum', 1, ?)",
             ("qacomum", gerar_hash_senha("123456"), "Usuário de Teste QA Comum"),
         )
-        for chave in ("blog", "editar_pdf", "empenhos"):
+        for chave in ACESSO_PADRAO_NOVO_USUARIO:
             cur.execute(
                 "INSERT OR IGNORE INTO tb_acesso_usuario (user_nome, modulo_chave, papel, liberado_por) VALUES (?, ?, 'comum', 'sistema')",
                 ("qacomum", chave),
             )
         conn.commit()
         marcar_trocar_senha("qacomum", True)
+    else:
+        # Reconcilia o qacomum existente com o padrão vigente (idempotente):
+        # garante os 3 acessos comuns e remove o legado 'blog' concedido
+        # pelo seed ('sistema') — concessões manuais do admin são mantidas.
+        for chave in ACESSO_PADRAO_NOVO_USUARIO:
+            cur.execute(
+                "INSERT OR IGNORE INTO tb_acesso_usuario (user_nome, modulo_chave, papel, liberado_por) VALUES (?, ?, 'comum', 'sistema')",
+                ("qacomum", chave),
+            )
+        cur.execute("DELETE FROM tb_acesso_usuario WHERE user_nome='qacomum' AND modulo_chave='blog' AND liberado_por='sistema'")
+        conn.commit()
     if not obter_usuario("qamaster"):
         cur.execute(
             "INSERT INTO tb_usuarios (user_nome, user_senha, user_perfil, user_ativo, user_nome_completo) VALUES (?, ?, 'administrador_geral', 1, ?)",
@@ -340,11 +357,12 @@ def _validar_nome_completo(nome_completo, user_nome):
 
 
 def criar_usuario(ator, user_nome, senha, email=None, fone=None, perfil="comum",
-                  nome_completo=""):
+                   nome_completo=""):
     """Creates a user with a provisional password (mandatory first-login change).
 
     Valida login, senha mínima (`senha_minima`), perfil global e nome de
-    exibição; grava hash bcrypt, marca `forcar_troca` e audita
+    exibição; grava hash bcrypt, libera o acesso padrão 'comum'
+    (`ACESSO_PADRAO_NOVO_USUARIO`), marca `forcar_troca` e audita
     `criar_usuario`. Retorna `(ok, msg)`."""
     from mod_intranet.autenticacao import gerar_hash_senha, marcar_trocar_senha
     if not user_nome or not user_nome.strip():
@@ -367,6 +385,11 @@ def criar_usuario(ator, user_nome, senha, email=None, fone=None, perfil="comum",
                VALUES (?, ?, ?, ?, ?, 1, ?)""",
             (user_nome.strip(), hash_s, email, fone, perfil, nome_c),
         )
+        for chave in ACESSO_PADRAO_NOVO_USUARIO:
+            cur.execute(
+                "INSERT INTO tb_acesso_usuario (user_nome, modulo_chave, papel, liberado_por) VALUES (?, ?, 'comum', ?)",
+                (user_nome.strip(), chave, ator),
+            )
         conn.commit()
         marcar_trocar_senha(user_nome.strip(), True)
         _audit(ator, "criar_usuario", user_nome.strip(), f"perfil={perfil} | exibição: {nome_c}")

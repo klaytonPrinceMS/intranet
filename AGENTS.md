@@ -236,7 +236,7 @@ Todo subagente do projeto segue este padrão (ver `.opencode/agent/kbp-qa.md` co
 | Usuário | Senha | Perfil | Observações |
 |---|---|---|---|
 | `master` | `master` | `administrador_geral` | Senha padrão; 1º login FORÇA troca de senha/credenciais (`marcar_trocar_senha`) |
-| `qacomum` | `123456` | `comum` | Teste/QA (docs); acesso pré-liberado a `blog`, `editar_pdf`, `empenhos`; troca de senha forçada no 1º login |
+| `qacomum` | `123456` | `comum` | Teste/QA (docs); segue o padrão de criação (comum em `editar_pdf`, `empenhos`, `solicita_impressao`; sem `blog`/`usuarios`/`auditoria`); troca de senha forçada no 1º login |
 | `qamaster` | `123456` | `administrador_geral` | Teste/QA (docs); troca de senha forçada no 1º login |
 
 **Regras:**

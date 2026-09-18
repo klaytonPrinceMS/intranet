@@ -38,8 +38,9 @@ CORES_PRESET = [ui_comum.CORES[k] for k in ("primaria", "info", "sucesso",
                                             "cinza_escuro")]
 
 # Módulos indispensáveis ao funcionamento do sistema: permitem renomear/ícone,
-# mas NUNCA podem ser desativados (relevant para a navegação/segurança).
-MODULOS_INDISPENSAVEIS = {"auditoria", "usuarios"}
+# mas NUNCA podem ser desativados (relevante para a navegação/segurança).
+# Espelha `autenticacao.MODULOS_INDISPENSAVEIS` (manter sincronizado).
+MODULOS_INDISPENSAVEIS = {"auditoria", "blog", "usuarios"}
 
 # Ícones Material comuns oferecidos no seletor visual de ícones de módulos.
 ICONES_COMUNS = [
