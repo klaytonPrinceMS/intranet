@@ -53,6 +53,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -202,12 +223,12 @@
               
                 <h1 id="intranet-modular-technical-documentation">Intranet Modular — Technical Documentation<a class="headerlink" href="#intranet-modular-technical-documentation" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Central index of the Intranet Modular (NiceGUI) engineering documentation for the Prefeitura Municipal de Monte Santo de Minas. This site follows the "Documentos de Engenharia de Software" standard (MkDocs Material): every page carries an English summary followed by the Portuguese (Brazil) summary, and is organized into per-topic folders.</p>
+<p>Central index of the Intranet Modular (NiceGUI) engineering documentation for the rede interna. This site follows the "Documentos de Engenharia de Software" standard (MkDocs <strong>readthedocs</strong>): every page carries an English summary followed by the Portuguese (Brazil) summary, and is organized into per-topic folders.</p>
 </blockquote>
 <hr />
 <h1 id="intranet-modular-documentacao-tecnica">Intranet Modular — Documentação Técnica<a class="headerlink" href="#intranet-modular-documentacao-tecnica" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Índice central da documentação de engenharia da Intranet Modular (NiceGUI) da Prefeitura Municipal de Monte Santo de Minas. Este sítio segue o padrão "Documentos de Engenharia de Software" (MkDocs Material): cada página traz um resumo em inglês seguido do resumo em português (Brasil) e é organizada em pastas por tema.</p>
+<p>Índice central da documentação de engenharia da Intranet Modular (NiceGUI) da rede interna. Este sítio segue o padrão "Documentos de Engenharia de Software" (MkDocs <strong>readthedocs</strong>): cada página traz um resumo em inglês seguido do resumo em português (Brasil) e é organizada em pastas por tema.</p>
 </blockquote>
 <h2 id="documentos-de-engenharia-de-software">Documentos de Engenharia de Software<a class="headerlink" href="#documentos-de-engenharia-de-software" title="Permanent link">&para;</a></h2>
 <ul>
@@ -239,7 +260,23 @@
 <li><a href="analise_mod_edit_pdf/">Edição de PDF</a></li>
 <li><a href="analise_mod_renomear_empenho/">Renomear Empenho</a></li>
 <li><a href="analise_mod_auditoria/">Auditoria</a></li>
-<li><a href="analise_mod_solicita_impressao/">Solicitação de Impressão</a></li>
+<li><a href="analise_mod_solicita_impressao/">Solicitação de Impressão</a> — cotas 1000/200 via <code>ORGANOGRAMA_BASE</code> do organograma</li>
+<li><a href="analise_mod_tecnico/">Técnico</a> — software + backup <code>YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation, <code>webkitdirectory</code></li>
+<li><a href="analise_mod_filas/">Filas (TV, esqueleto)</a> — gestor de chamadas com TV (<code>/filas</code> + <code>/tv</code> pública)</li>
+<li><a href="analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a> — <strong>novo</strong> (19/09/2026) organograma 12 secretarias <code>Secretaria→Setor→Subsetor</code>, contatos alfabéticos, busca sem acentos, <code>tel:</code> no celular</li>
+</ul>
+<h2 id="modulos-resumo">Módulos (resumo)<a class="headerlink" href="#modulos-resumo" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="modulos/intranet/">Intranet (núcleo)</a></li>
+<li><a href="modulos/gest_cad_usuario/">Gestão de Usuários</a></li>
+<li><a href="modulos/blog/">Blog</a> — carrossel padrão com 3 postagens básicas (18/09/2026)</li>
+<li><a href="modulos/edit_pdf/">Editor de PDF</a></li>
+<li><a href="modulos/renomear_empenho/">Renomear Empenho</a></li>
+<li><a href="modulos/auditoria/">Auditoria</a></li>
+<li><a href="modulos/solicitacao_impressao/">Solicitação de Impressão</a> — <strong>atualizado</strong> cotas 1000/200 via <code>ORGANOGRAMA_BASE</code></li>
+<li><a href="modulos/tecnico/">Técnico</a> — <strong>novo</strong> (18/09/2026)</li>
+<li><a href="modulos/filas/">Filas (TV, esqueleto)</a> — <strong>novo</strong> esqueleto (18/09/2026)</li>
+<li><a href="modulos/lista_telefonica/">Lista Telefônica (organograma)</a> — <strong>novo</strong> (19/09/2026) <code>Secretaria→Setor→Subsetor</code>, <code>tel:</code> clicável, admin com excluir ramo/mover/elevar</li>
 </ul>
 <h2 id="documentos-raiz-de-apoio">Documentos-raiz de apoio<a class="headerlink" href="#documentos-raiz-de-apoio" title="Permanent link">&para;</a></h2>
 <ul>
@@ -295,5 +332,5 @@
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2026-09-10 16:34:22.793553+00:00
+Build Date UTC : 2026-09-19 12:58:55.309828+00:00
 -->

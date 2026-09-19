@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -212,10 +233,13 @@
 <h2 id="licoes-registradas-semente">Lições registradas (semente)<a class="headerlink" href="#licoes-registradas-semente" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Integridade de <code>main.py</code>:</strong> edições via PowerShell corromperam caracteres (<code>.</code>→<code>..</code>, <code>.</code>→<code>~</code>, <code>_</code>→<code>-</code>, <code>,</code>→<code>;;</code>). Mitigação: validar todo <code>.py</code> com <code>ast.parse</code> e revisar diffs.</li>
-<li><strong><code>db_criador.py</code> é legado/morto:</strong> aponta para banco central e não reflete o banco por módulo. Usar <code>db_manipulador.py</code> como fonte de verdade.</li>
+<li><strong><code>bd_criador.py</code> é legado/morto:</strong> aponta para banco central e não reflete o banco por módulo. Usar <code>bd_manipulador.py</code> como fonte de verdade.</li>
 <li><strong>Sanitização de Blog:</strong> <code>nh3</code> deve ser aplicado na gravação <strong>e</strong> na renderização para prevenir XSS.</li>
 <li><strong>Rastro de auditoria:</strong> toda escrita relevante (incluindo PDF) deve registrar na trilha de auditoria (<code>audit_log</code> → banco exclusivo <code>db_mod_auditoria.db</code>) com <code>hash_arquivo</code> (SHA-256) para conformidade LGPD.</li>
 <li><strong>Ambiente virtual:</strong> preferir <code>.venv/bin/python</code> (Linux) / <code>Scripts\python.exe</code> (Windows) para evitar conflitos de dependência.</li>
+<li><strong>Encoding UTF-8 + WSL (sessão "Ç não reconhecido no OpenCode via WSL", 14/09/2026):</strong> todo <code>.py</code>/<code>.md</code> do projeto é <strong>UTF-8 sem BOM</strong>; ferramentas que reescrevem encoding por fora (PowerShell, edição via WSL com locale divergente) já corromperam caracteres — validar com <code>ast.parse(open(..., encoding='utf-8').read())</code> após qualquer alteração e revisar o diff antes de seguir (mesma mitigação da integridade do <code>main.py</code> acima).</li>
+<li><strong>Toggles <code>hidden sm:*</code>/<code>md:*</code> não funcionam neste stack (sessão header 14/09/2026):</strong> o <code>tailwindcss.min.js</code> embutido no NiceGUI 3.15 resolve <code>hidden</code> acima de <code>sm:flex</code>/<code>md:block</code> mesmo em 1280 px — usar um único elemento sempre visível com <code>max-width</code> + ellipsis em vez de dois elementos desktop/mobile.</li>
+<li><strong>Scripts auxiliares e CWD (sessão 14/09/2026):</strong> <code>fresh_install_test*.py</code>/<code>diag_db.py</code> criavam <code>.db</code> de 0 bytes na pasta anterior quando rodados com outro CWD — todo script standalone resolve caminhos por <strong>absoluto a partir da raiz</strong> (<code>_RAIZ</code>), nunca por CWD relativo.</li>
 </ul>
 <h2 id="sugestao-de-expansao">Sugestão de expansão<a class="headerlink" href="#sugestao-de-expansao" title="Permanent link">&para;</a></h2>
 <p>Adicionar retrospectivas por fase, decisões de arquitetura (ADR) e melhorias de desempenho (WAL, ProcessPoolExecutor).</p>

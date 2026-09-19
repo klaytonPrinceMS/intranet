@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -213,22 +234,22 @@
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Banco e visualizador da trilha de auditoria LGPD. A <strong>escrita</strong> é feita pelos demais módulos via <code>audit_log</code> (núcleo) → <code>registrar_auditoria</code> (este módulo), que grava na tabela do módulo produtor (<code>tb_auditoria_&lt;modulo&gt;</code>, criada automaticamente). A <strong>leitura</strong> é feita pela tela <code>/auditoria</code> (exclusiva do <code>administrador_geral</code>), com filtros, paginação server-side e exportação CSV. As preferências de coluna e as configurações vão para <code>tb_config</code> central.</p>
 <h2 id="banco-exclusivo-db_mod_auditoriadb-wal">Banco exclusivo (<code>db_mod_auditoria.db</code>, WAL)<a class="headerlink" href="#banco-exclusivo-db_mod_auditoriadb-wal" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db_auditoria()</code> em <code>manipulador_bd.py:25-38</code> (executado no import e pelo bootstrap central).</p>
+<p>Criador vigente: <code>init_db_auditoria()</code> em <code>bd_manipulador.py:25-38</code> (executado no import e pelo bootstrap central).</p>
 <ul>
 <li><strong><code>tb_auditoria_&lt;modulo&gt;</code></strong> — UMA TABELA POR MÓDULO (nome sanitizado: hífen vira <code>_</code>, ex. <code>edit-pdf</code> → <code>tb_auditoria_edit_pdf</code>). Colunas: <code>id</code>, <code>usuario</code>, <code>modulo</code>, <code>acao</code>, <code>descricao</code>, <code>timestamp</code> (horário local — RF-08), <code>hash_arquivo</code>, <code>ip</code>, <code>user_agent</code>, <code>client_hostname</code>; índices por <code>modulo</code>, <code>usuario</code> e <code>timestamp</code>.</li>
 <li><strong><code>tb_auditoria_meta</code></strong> — registro dos módulos produtores (<code>modulo</code> PK, <code>nome</code>, <code>criada_em</code>).</li>
-<li><strong>Migração idempotente</strong> do legado: <code>migrar_dados_existentes()</code> (<code>manipulador_bd.py:273-324</code>) copia a antiga <code>tb_auditoria</code> do banco central para as tabelas por módulo, marca <code>auditoria_migracao_concluida=1</code> na <code>tb_config</code> e <strong>remove a tabela legada</strong> do central.</li>
-<li><strong>Poda LGPD</strong>: <code>podar_registros(dias)</code> (<code>manipulador_bd.py:147-171</code>) remove registros mais antigos que o prazo em TODAS as tabelas — chamada diariamente pelo job <code>poda_auditoria</code> (<code>mod_intranet/rotinas.py:74-103</code>, <code>auditoria_retencao_dias</code>, default 90).</li>
+<li><strong>Migração idempotente</strong> do legado: <code>migrar_dados_existentes()</code> (<code>bd_manipulador.py:273-324</code>) copia a antiga <code>tb_auditoria</code> do banco central para as tabelas por módulo, marca <code>auditoria_migracao_concluida=1</code> na <code>tb_config</code> e <strong>remove a tabela legada</strong> do central.</li>
+<li><strong>Poda LGPD</strong>: <code>podar_registros(dias)</code> (<code>bd_manipulador.py:147-171</code>) remove registros mais antigos que o prazo em TODAS as tabelas — chamada diariamente pelo job <code>poda_auditoria</code> (<code>mod_intranet/rotinas.py:74-103</code>, <code>auditoria_retencao_dias</code>, default 90).</li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Escrita automática por novos módulos</p>
-<p><code>registrar_auditoria</code> (<code>manipulador_bd.py:99-124</code>) cria a tabela do módulo e o registro em <code>tb_auditoria_meta</code> na primeira gravação — um módulo novo passa a auditar <strong>sem nenhuma edição</strong> neste módulo.</p>
+<p><code>registrar_auditoria</code> (<code>bd_manipulador.py:99-124</code>) cria a tabela do módulo e o registro em <code>tb_auditoria_meta</code> na primeira gravação — um módulo novo passa a auditar <strong>sem nenhuma edição</strong> neste módulo.</p>
 </div>
 <h2 id="estrutura-do-pacote">Estrutura do pacote<a class="headerlink" href="#estrutura-do-pacote" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>db_manipulador.py</code> — conexão WAL, criação/garantia de tabelas, <code>registrar_auditoria</code>, <code>contar_registros</code>, <code>podar_registros</code>, <code>buscar_logs</code> (filtros + paginação), descoberta de módulos (<code>get_modulos_com_auditoria</code>/<code>get_tabelas_auditoria</code>) e migração do legado.</li>
+<li><code>bd_manipulador.py</code> — conexão WAL, criação/garantia de tabelas, <code>registrar_auditoria</code>, <code>contar_registros</code>, <code>podar_registros</code>, <code>buscar_logs</code> (filtros + paginação), descoberta de módulos (<code>get_modulos_com_auditoria</code>/<code>get_tabelas_auditoria</code>) e migração do legado.</li>
 <li><code>telas.py</code> — visualizador (<code>mostrar_tela(usuario_logado, perfil)</code>).</li>
-<li><code>db_criador.py</code> — <strong>legado</strong> (cria apenas <code>tb_auditoria_meta</code>; o esquema real é o de <code>db_manipulador.py</code>).</li>
+<li><code>bd_criador.py</code> — <strong>legado</strong> (cria apenas <code>tb_auditoria_meta</code>; o esquema real é o de <code>bd_manipulador.py</code>).</li>
 <li><code>check_auditoria.py</code> — script diagnóstico standalone (lista chaves <code>auditoria%</code> da <code>tb_config</code> central).</li>
 </ul>
 <h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
@@ -245,18 +266,22 @@
 </ul>
 <h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Escrita</strong>: <code>mod_intranet.manipulador_bd.audit_log</code> preenche IP/UA do contexto (<code>mod_intranet.contexto</code>) e chama <code>registrar_auditoria</code> — produtores: todos os módulos + o próprio núcleo (login/logout/falhas/configurações/backups).</li>
+<li><strong>Escrita</strong>: <code>mod_intranet.bd_manipulador.audit_log</code> preenche IP/UA do contexto (<code>mod_intranet.contexto</code>) e chama <code>registrar_auditoria</code> — produtores: todos os módulos + o próprio núcleo (login/logout/falhas/configurações/backups).</li>
 <li><strong>Leitura</strong>: <code>buscar_logs</code> (UNION ALL entre tabelas ou tabela única), <code>get_modulos_com_auditoria</code> (menu dinâmico), <code>contar_registros</code> (resumo do dashboard).</li>
 <li><strong>Config</strong>: <code>get_config</code>/<code>set_config</code> centrais (<code>auditoria_limite</code>, <code>auditoria_retencao_dias</code>, <code>auditoria_texto_header</code>, <code>auditoria_campos:&lt;usuario&gt;</code>, tema <code>auditoria_*</code>).</li>
 <li><strong>Poda</strong>: job diário <code>poda_auditoria</code> do APScheduler central.</li>
-<li><strong>Versionamento</strong>: <code>versao_modulo:auditoria = 1.0.260908</code> (seed em <code>manipulador_bd._semear_versao_modulo</code> e <code>conexao_bd.init_db()</code>), exibido no rodapé de <code>/auditoria</code>.</li>
+<li><strong>Versionamento</strong>: <code>versao_modulo:auditoria = 1.0.260908</code> (seed em <code>bd_manipulador._semear_versao_modulo</code> e <code>conexao_bd.init_db()</code>), exibido no rodapé de <code>/auditoria</code>.</li>
 </ul>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Consulta além de <code>auditoria_limite</code> numa página usa os botões de paginação; a exportação CSV cobre a página corrente (na ordem do auditor).</li>
 <li>Ações desconhecidas/novas podem ser filtradas por texto livre no select de Ação.</li>
 <li>A preferência de colunas é por usuário (<code>auditoria_campos:&lt;usuario&gt;</code>); como o módulo é exclusivo do admin geral, na prática vale para qualquer auditor.</li>
-<li><code>db_criador.py</code> é legado — não executar como fonte de verdade.</li>
+<li><code>bd_criador.py</code> é legado — não executar como fonte de verdade.</li>
+</ul>
+<h3 id="adicoes-recentes-092026-responsividade-global-rnf-ui-01">Adições recentes (09/2026) — responsividade global RNF-UI-01<a class="headerlink" href="#adicoes-recentes-092026-responsividade-global-rnf-ui-01" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Auditado 320/768/1024</strong> (<code>kbp-web-design</code>) com checklist P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code>: tabs/filtros/tabela <code>overflow-x-auto</code>, barra de filtros <code>flex-wrap</code> <code>gap</code> via <code>.style</code>, <code>truncate</code> em colunas longas, dialogs <code>w-full max-w</code>. Proposta por <code>container</code>/<code>row</code>/<code>grid</code> (header <code>flex-wrap</code> <code>min-width:0</code>) registrada na auditoria; ver <a href="../padroes_codificacao/">Padrões</a> §8.1.</li>
 </ul>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
 <table>

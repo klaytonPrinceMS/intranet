@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -336,6 +357,90 @@ gitleaks<span class="w"> </span>detect<span class="w"> </span>--source<span clas
 sslscan<span class="w"> </span>localhost:8080<span class="w">          </span><span class="c1"># TLS/SSL</span>
 sqlmap<span class="w"> </span>-u<span class="w"> </span>&lt;url&gt;<span class="w"> </span>--batch<span class="w">         </span><span class="c1"># SQLi (endpoints próprios)</span>
 </code></pre></div>
+<h2 id="scanner-local-de-portas-e-servicos-1109">Scanner local de portas e serviços (11/09)<a class="headerlink" href="#scanner-local-de-portas-e-servicos-1109" title="Permanent link">&para;</a></h2>
+<p>O projeto inclui um <strong>scanner de portas embutido</strong> — <code>mod_intranet/port_scanner.py</code> —
+usado pelo assistente de ativação e pela CLI (<code>--scan-ports</code>) para diagnóstico de
+<strong>segurança/instalação</strong>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>escanear_portas(host="127.0.0.1", inicio=1, fim=65535, threads=250, timeout=0.05)</code> (<code>port_scanner.py:26</code>)</td>
+<td style="text-align: left;">varre portas LISTEN com <strong>thread pool</strong> (<code>ThreadPoolExecutor</code> <code>:42</code>) e timeout curto por porta</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>portas_com_servico()</code> (<code>:122</code>)</td>
+<td style="text-align: left;"><code>dict {porta: servico}</code> — Linux via <code>ss -ltnp</code> (<code>:58</code>) enriquecido com <code>docker ps</code> (<code>:106</code>, containers rodando como root que o <code>ss</code> sem sudo não mostra), fallback <code>lsof</code> (<code>:75</code>); Windows via <code>netstat -ano</code> + <code>tasklist</code> (<code>:89</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>resumo_portas()</code> (<code>:144</code>)</td>
+<td style="text-align: left;">string PT-BR para o console (<code>Nenhuma porta LISTEN detectada (ou sem permissão).</code> ou <code>Portas em uso no servidor: ...</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Limites de segurança (importante):</strong></p>
+<ul>
+<li><strong>Apenas <code>127.0.0.1</code></strong> — varredura <strong>LOCAL</strong> (a máquina do instalador), com
+  <code>threads=250</code> e <code>timeout=0.05</code>. <strong>Nunca atinge redes externas</strong> — não há varredura
+  de outros hosts, sub-redes ou serviços remotos (fora do escopo de legislação de
+  segurança da informação).</li>
+<li>Processos de <strong>outros usuários sem permissão</strong> aparecem como <code>"desconhecido"</code>
+  (o <code>ss -ltnp</code>/<code>netstat</code> sem sudo não revela o nome do processo).</li>
+<li>Propósito: diagnosticar <strong>portas ocupadas</strong> durante a instalação (ex.: Postgres
+  nativo na 5432, Grafana na 3000) e listar o que escuta no servidor — ver
+  <a href="../../manual_de_uso_instalacao/#21-assistente-de-ativacao-boot-via-config-c">Manual de Instalação</a>.</li>
+<li>Ativado pelo assistente (<code>_msg_porta_em_uso</code>, <code>ativacao.py:190</code>, com cache por
+  processo <code>_portas_em_uso_cached</code> <code>:171</code>) e pela CLI (<code>cli_opcoes(['--scan-ports'])</code>,
+  <code>ativacao.py:885</code> — imprime o resumo e encerra com <strong>exit 0</strong>).</li>
+<li>Coberto por <code>assets/test/test_ativacao.py</code> (90 verificações — inclui
+  <code>_msg_porta_em_uso</code>, reuso de container e <code>--scan-ports</code>).</li>
+</ul>
+<h2 id="saneamento-do-assistente-de-ativacao-1109">Saneamento do assistente de ativação (11/09)<a class="headerlink" href="#saneamento-do-assistente-de-ativacao-1109" title="Permanent link">&para;</a></h2>
+<p>O assistente de boot (<code>mod_intranet/ativacao.py</code>) recebe <strong>entrada do usuário no terminal</strong> (senhas, usuários, portas) e executa comandos de instalação/configuração — por isso aplica saneamento rigoroso (revisado pelo kbp-devSecOps):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Prática</th>
+<th style="text-align: left;">Implementação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Nunca <code>shell=True</code> para entrada do usuário</strong></td>
+<td style="text-align: left;"><code>_cmd</code> (<code>ativacao.py:245</code>) aceita <strong>lista de args</strong> (ou string via <code>shlex.split</code> quando não há operadores de shell); <code>shell=True</code> só para comandos <strong>estáticos</strong> internos (com <code>&amp;&amp;</code>/<code>|</code> etc.), sem nunca interpolar entrada do usuário</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Credenciais por stdin, nunca no argv</strong></td>
+<td style="text-align: left;"><code>entrada=</code> do <code>subprocess.run</code> (<code>:262-264</code>) — ex.: a senha do WSL via <code>chpasswd</code> é enviada por stdin (<code>:510-511</code>), não aparece na linha de comando (evita vazamento em <code>/proc/&lt;pid&gt;/cmdline</code>, logs e histórico)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Mascaramento no print</strong></td>
+<td style="text-align: left;"><code>_mascarar_comando</code> (<code>:232</code>) remove a senha do comando exibido: <code>usuario:senha | chpasswd</code> → <code>usuario:***</code>, <code>-p &lt;senha&gt;</code> → <code>-p ***</code>, <code>password=&lt;senha&gt;</code> → <code>password=***</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Whitelist de distro WSL</strong></td>
+<td style="text-align: left;"><code>configurar_docker_windows</code> (<code>:465</code>) aceita apenas <code>{debian, ubuntu, alpine}</code> (<code>:480-482</code>), com revalidação antes do comando</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Usuário WSL com regex</strong></td>
+<td style="text-align: left;"><code>^[a-z_][a-z0-9_-]{0,31}$</code> (<code>:491</code>) — padrão de nomes de usuário Linux</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Senha sem metacharacters de shell</strong></td>
+<td style="text-align: left;"><code>_validar_senha</code> (<code>:460</code>) rejeita <code>[;|&amp;\n$'"\\ ]</code> — evita injeção via <code>chpasswd</code>/shell</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Portas validadas</strong></td>
+<td style="text-align: left;"><code>perguntar(..., faixa=(1,65535))</code> + <code>_porta_valida</code> (<code>:113</code>) em todas as portas; <code>_porta_livre</code> (<code>:361</code>) retorna <code>False</code> em erro — porta inválida <strong>nunca</strong> é considerada "livre"</td>
+</tr>
+</tbody>
+</table>
+<p>Coberto por <code>test/test_ativacao.py</code> (57 verificações — <code>_mascarar_comando</code>, <code>_validar_senha</code>, <code>_porta_valida</code>/<code>_porta_livre</code>, <code>_compose_cmd</code>, <code>aplicar_portas</code>).</p>
 <h2 id="resultado-da-primeira-varredura-06092026">Resultado da primeira varredura (06/09/2026)<a class="headerlink" href="#resultado-da-primeira-varredura-06092026" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

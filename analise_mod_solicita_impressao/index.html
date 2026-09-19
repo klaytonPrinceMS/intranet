@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
     <ul class="current">
     </ul>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -203,13 +224,13 @@
               
                 <h1 id="solicitacao-de-impressao-mod_solicita_impressao">Solicitação de Impressão — <code>mod_solicita_impressao</code><a class="headerlink" href="#solicitacao-de-impressao-mod_solicita_impressao" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Print request module: route <code>/solicita-impressao</code> (key <code>solicita_impressao</code>) · own database <code>db_mod_solicita_impressao.db</code> · PDF upload, page counting, hierarchical monthly quotas, dual-mode print, central audit.</p>
+<p>Print request module: route <code>/solicita-impressao</code> (key <code>solicita_impressao</code>) · own database <code>db_mod_solicita_impressao.db</code> · PDF upload, page counting, hierarchical monthly quotas (1000/200 via <code>ORGANOGRAMA_BASE</code>), dual-mode print, central audit.</p>
 </blockquote>
 <hr />
 <h1 id="solicitacao-de-impressao-mod_solicita_impressao_1">Solicitação de Impressão — <code>mod_solicita_impressao</code><a class="headerlink" href="#solicitacao-de-impressao-mod_solicita_impressao_1" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo de solicitação de impressão: rota <code>/solicita-impressao</code> (chave <code>solicita_impressao</code>) · banco próprio <code>db_mod_solicita_impressao.db</code> · envio de PDF, contagem de páginas, cotas mensais hierárquicas, impressão dual, auditoria central.</p>
-<p><strong>Versionamento</strong>: <code>versao_modulo:solicita_impressao = 1.0.260908</code> (seed em <code>conexao_bd.init_db()</code> — chave <code>tb_config</code> central, formato <code>1.0.AAMMDD</code>, exibida no rodapé em <code>/solicita-impressao</code> junto à versão global). Duplicada também em <code>tb_configuracoes_modulo</code> (<code>versao_modulo</code>) do banco do módulo. Atualizar a cada alteração do módulo.</p>
+<p>Módulo de solicitação de impressão: rota <code>/solicita-impressao</code> (chave <code>solicita_impressao</code>) · banco próprio <code>db_mod_solicita_impressao.db</code> · envio de PDF, contagem de páginas, cotas mensais hierárquicas (1000/200 via <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code>), impressão dual, auditoria central.</p>
+<p><strong>Versionamento</strong>: <code>versao_modulo:solicita_impressao = 1.0.260913</code> (seed em <code>bd_conexao.init_db()</code> — chave <code>tb_config</code> central, formato <code>1.0.AAMMDD</code>, exibida no rodapé em <code>/solicita-impressao</code> junto à versão global). Duplicada também em <code>tb_configuracoes_modulo</code> (<code>versao_modulo</code>) do banco do módulo. Atualizar a cada alteração do módulo.</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Módulo para solicitação de impressão de arquivos PDF. Usuários <strong>comuns</strong> anexam um ou mais PDFs
@@ -228,7 +249,7 @@ pedido fica <code>pendente</code> e o <strong>admin autoriza e imprime</strong>.
 <strong>uma vez por grupo</strong> e os <strong>arquivos são apagados do servidor imediatamente</strong>.</p>
 </div>
 <h2 id="banco-proprio">Banco próprio<a class="headerlink" href="#banco-proprio" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db()</code> em <code>manipulador_bd.py:113-345</code> (bootstrap central
+<p>Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:113-345</code> (bootstrap central
 <code>mod_intranet_inicializacao_bd.inicializar_bancos</code>).</p>
 <p>Todas as tabelas vivem em <code>db_mod_solicita_impressao.db</code> (WAL). Arquivos PDF enviados são salvos
 em <code>mod_solicita_impressao/solicitacaoImpressao/</code> (pasta própria do módulo — nada é misturado
@@ -239,15 +260,15 @@ com outros módulos).</p>
   caminho_arquivo, hash_arquivo, qtd_copias, tamanho_papel (A4/A3), cor (PB/Color),
   frente_verso (0/1), tipo_borda (curta/longa/NULL), papel_sulfite (0/1),
   <strong>tipo_papel</strong> (sulfite/fotografico/verge — coluna nova, migração idempotente
-  <code>manipulador_bd.py:275-282</code>), observacoes,
+  <code>bd_manipulador.py:275-282</code>), observacoes,
   secretaria_id FK, setor_id FK, qtd_paginas_arquivo, paginas_contabilizadas, status,
   cota_excedida (0/1), requer_autorizacao (0/1), autorizado_por, data_autorizacao,
   motivo_recusa, impresso_por, data_impressao, data_criacao, data_atualizacao,
   <strong>grupo_id</strong> (agrupamento "1 pedido por envio"; criado via ALTER idempotente +
   backfill <code>grupo_id = id</code> para registros sem grupo + índice <code>idx_sol_grupo</code> —
-  <code>manipulador_bd.py:278-287</code>).</li>
-<li><strong><code>tb_secretarias</code></strong>: id, nome, sigla, cota_paginas_mensal, limite_pedidos_abertos, ativo.</li>
-<li><strong><code>tb_setores</code></strong>: id, nome, secretaria_id FK, cota_paginas_mensal, limite_pedidos_abertos, ativo.</li>
+  <code>bd_manipulador.py:278-287</code>).</li>
+<li><strong><code>tb_secretarias</code></strong>: id, nome, sigla, cota_paginas_mensal (<strong>1000 padrão via <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code></strong>), limite_pedidos_abertos (20 padrão), ativo.</li>
+<li><strong><code>tb_setores</code></strong>: id, nome, secretaria_id FK, cota_paginas_mensal (<strong>200 padrão via <code>ORGANOGRAMA_BASE</code> — subsetores achatados como setores</strong>), limite_pedidos_abertos (10 padrão), ativo.</li>
 <li><strong><code>tb_responsaveis_autorizacao</code></strong>: id, user_nome, secretaria_id FK, setor_id FK (opcional), ativo.</li>
 <li><strong><code>tb_cotas_impressao</code></strong>: id, secretaria_id, setor_id (NULL=secretaria), cota_paginas,
   mes_referencia (YYYY-MM, único por vínculo), ativo.</li>
@@ -257,7 +278,7 @@ com outros módulos).</p>
 <li><strong><code>tb_impressoras</code></strong>: id, nome (UNIQUE), tamanho_papel (A4/A3), cor (Color/PB),
   frente_verso (0/1), papel_sulfite (0/1), driver (padrão <code>PCL6</code>), ativo (0/1), criado_em.
   Usada pelo seletor de impressão do botão "Imprimir". Migração idempotente adiciona a coluna
-  <code>driver</code> em instalações existentes (<code>manipulador_bd.py:304-315</code>).</li>
+  <code>driver</code> em instalações existentes (<code>bd_manipulador.py:304-315</code>).</li>
 </ul>
 <h2 id="contabilizacao-de-impressoes-formula">Contabilização de impressões (fórmula)<a class="headerlink" href="#contabilizacao-de-impressoes-formula" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>paginas_contabilizadas = qtd_paginas × qtd_copias × fator_papel × fator_frente_verso
@@ -267,8 +288,8 @@ com outros módulos).</p>
 <p>Exemplos: 10 pág × 3 cóp × A4 frente = 30; A4 frente/verso = 60; A3 frente = 60; A3 frente/verso = 120.</p>
 <h2 id="cotas-mensal-hierarquicas">Cotas (mensal, hierárquicas)<a class="headerlink" href="#cotas-mensal-hierarquicas" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Cada <strong>secretaria</strong> tem cota máxima mensal (total do mês).</li>
-<li>Cada <strong>setor</strong> pode ter cota própria; se não tiver, usa o <strong>pool da secretaria</strong>.</li>
+<li>Cada <strong>secretaria</strong> tem cota máxima mensal (total do mês) — <strong>1000 cópias padrão do <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code></strong> (semeada no <code>init_db</code> + migração <code>UPDATE</code> para bancos existentes — <code>bd_manipulador.py:382-463</code>).</li>
+<li>Cada <strong>setor</strong> pode ter cota própria (<strong>200 cópias padrão</strong> — subsetores achatados como setores); se não tiver, usa o <strong>pool da secretaria</strong>.</li>
 <li>Ao <strong>exceder</strong>: o envio é <strong>permitido</strong>, porém a solicitação fica marcada como
   <code>excedente_cota</code> e a critério do autorizador/admin imprimir ou não.</li>
 <li>Consumo descontado <strong>somente na impressão efetiva</strong> (admin confirma).</li>
@@ -281,33 +302,33 @@ com outros módulos).</p>
 <h2 id="limite-de-pedidos-abertos-elastico">Limite de pedidos abertos (elástico)<a class="headerlink" href="#limite-de-pedidos-abertos-elastico" title="Permanent link">&para;</a></h2>
 <p>Além da cota mensal de páginas, cada <strong>secretaria</strong> e cada <strong>setor</strong> pode ter um
 <strong>limite de pedidos abertos</strong> (<code>limite_pedidos_abertos</code>, coluna nova em
-<code>tb_secretarias</code> e <code>tb_setores</code> — <code>manipulador_bd.py:159,180</code>; migração idempotente
-<code>manipulador_bd.py:160-166,181-187</code>). <strong>0 = sem limite</strong> (padrão).</p>
+<code>tb_secretarias</code> e <code>tb_setores</code> — <code>bd_manipulador.py:159,180</code>; migração idempotente
+<code>bd_manipulador.py:160-166,181-187</code>). <strong>0 = sem limite</strong> (padrão).</p>
 <p>Regra de bloqueio (contagem elástica):</p>
 <ul>
 <li>"Pedido aberto" = status em <code>pendente</code>, <code>aguardando_autorizacao</code>, <code>autorizado</code>
   ou <code>excedente_cota</code> — ou seja, <strong>não</strong> impresso/recusado/cancelado
-  (<code>contar_pedidos_abertos</code>, <code>manipulador_bd.py:1028</code>).</li>
+  (<code>contar_pedidos_abertos</code>, <code>bd_manipulador.py:1028</code>).</li>
 <li>O <strong>setor só pode pedir se a secretaria não atingiu o teto</strong>; cada um tem seu
-  próprio limite (<code>verificar_limite_pedidos</code>, <code>manipulador_bd.py:1057</code>).</li>
-<li>Ao atingir o teto, <code>criar_solicitacao</code> (<code>manipulador_bd.py:1136</code>) e
-  <code>confirmar_rascunho</code> (<code>manipulador_bd.py:1627</code>) <strong>bloqueiam</strong> o envio com
+  próprio limite (<code>verificar_limite_pedidos</code>, <code>bd_manipulador.py:1057</code>).</li>
+<li>Ao atingir o teto, <code>criar_solicitacao</code> (<code>bd_manipulador.py:1136</code>) e
+  <code>confirmar_rascunho</code> (<code>bd_manipulador.py:1627</code>) <strong>bloqueiam</strong> o envio com
   mensagem orientando a imprimir/cancelar pedidos pendentes para liberar vaga.</li>
 <li>A impressão (ou recusa/cancelamento) <strong>libera a vaga</strong> automaticamente —
   por isso "elástico".</li>
 </ul>
 <h2 id="relatorio-de-impressoes-por-periodo">Relatório de impressões por período<a class="headerlink" href="#relatorio-de-impressoes-por-periodo" title="Permanent link">&para;</a></h2>
 <p>Sub-aba <strong>Relatórios</strong> na Administração (<code>_admin_relatorio</code>, <code>telas.py:1553-1647</code> e
-<code>administracao.py:615-713</code> — <strong>cópia duplicada da admin existe nos dois arquivos</strong>): o admin
+<code>telas_administracao.py:615-713</code> — <strong>cópia duplicada da admin existe nos dois arquivos</strong>): o admin
 escolhe um <strong>prazo fixo mensal</strong> (Este mês, Mês anterior, Últimos 6 meses, Ano atual — botões que
 preenchem as datas e geram na hora) ou informa um <strong>período personalizado no calendário</strong>
 (data inicial/final) e clica em <strong>"Gerar relatório"</strong>, que monta as tabelas prontas via
-<code>_tabela_relatorio</code> (<code>telas.py:1538</code>, <code>administracao.py:596</code>). O foco é <strong>cobrança/repasse</strong>:
+<code>_tabela_relatorio</code> (<code>telas.py:1538</code>, <code>telas_administracao.py:596</code>). O foco é <strong>cobrança/repasse</strong>:
 secretaria/setor primeiro, depois quem imprimiu, quem autorizou e o total geral.</p>
-<p>Backend: <code>relatorio_impressao(data_inicio, data_fim)</code> (<code>manipulador_bd.py:2345</code>)
+<p>Backend: <code>relatorio_impressao(data_inicio, data_fim)</code> (<code>bd_manipulador.py:2345</code>)
 agrega as solicitações com <code>status='impresso'</code> no período (por <code>data_impressao</code>),
 com totais de <strong>cópias</strong> e <strong>páginas contabilizadas</strong>, separando <strong>color/PB</strong> pela
-coluna <code>cor</code>. Helper <code>_agregar_impressao</code> (<code>manipulador_bd.py:2301</code>) faz o GROUP BY
+coluna <code>cor</code>. Helper <code>_agregar_impressao</code> (<code>bd_manipulador.py:2301</code>) faz o GROUP BY
 por coluna. Desde a reformulação de 07/09, a contagem de <strong>pedidos</strong> usa
 <code>COUNT(DISTINCT s.grupo_id)</code> (1 pedido por envio) — não mais o nº de linhas de
 <code>tb_solicitacoes</code>. Retorna um dict com:</p>
@@ -327,11 +348,11 @@ por coluna. Desde a reformulação de 07/09, a contagem de <strong>pedidos</stro
   nesse prazo, o arquivo é <strong>removido do servidor automaticamente</strong> (job <code>cleanup_solicita</code>, 1 min).
   Há botão "Remover selecionados" (e remoção individual) para descartar antes. Ao confirmar, os
   arquivos são renomeados para o padrão final <code>dataHora_usuario_cor_copias_paginas_secretaria_setor.pdf</code>
-  e <strong>todos viram UM ÚNICO PEDIDO (grupo)</strong> — <code>confirmar_lote</code> (<code>manipulador_bd.py:1740</code>) converte os
+  e <strong>todos viram UM ÚNICO PEDIDO (grupo)</strong> — <code>confirmar_lote</code> (<code>bd_manipulador.py:1740</code>) converte os
   N rascunhos do envio em um pedido com o mesmo <code>grupo_id</code> e <strong>status único</strong> (máx. 10 PDFs por envio,
   <code>MAX_ARQ</code>).</li>
 <li><strong>Status do pedido (sem auto-autorização)</strong>: ao confirmar o envio, o status do grupo é definido por
-  <code>confirmar_lote</code> (<code>manipulador_bd.py:1773-1782</code>): <code>excedente_cota</code> se exceder a cota; senão
+  <code>confirmar_lote</code> (<code>bd_manipulador.py:1773-1782</code>): <code>excedente_cota</code> se exceder a cota; senão
   <code>aguardando_autorizacao</code> se houver responsável cadastrado para a secretaria/setor; senão
   <strong><code>pendente</code></strong> — sem autorizador, o pedido fica pendente e o <strong>admin autoriza e imprime</strong>.</li>
 <li>Valores <strong>padrão pré-selecionados</strong> (editáveis pelo admin): papel <code>padrao_papel</code> (A4),
@@ -345,7 +366,7 @@ por coluna. Desde a reformulação de 07/09, a contagem de <strong>pedidos</stro
   informando que todos os arquivos marcados viram <strong>um único pedido</strong>.</li>
 <li><strong>Impressão</strong> (admin): ao confirmar a impressão do pedido, a cota é descontada <strong>uma vez por grupo</strong>
   e os <strong>arquivos são apagados do servidor imediatamente</strong> (<code>imprimir_grupo</code>,
-  <code>manipulador_bd.py:2053</code>). Recusar / recuar / cancelar <strong>removem os arquivos do servidor</strong> de todos
+  <code>bd_manipulador.py:2053</code>). Recusar / recuar / cancelar <strong>removem os arquivos do servidor</strong> de todos
   os arquivos do grupo.</li>
 <li><strong>Auditoria</strong> (banco exclusivo <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_solicita_impressao</code>): registra quem <strong>solicitou</strong>
   (cópias, páginas, secretaria, setor, status, excedente), quem <strong>autorizou</strong>, quem <strong>imprimiu</strong>
@@ -359,24 +380,24 @@ por coluna. Desde a reformulação de 07/09, a contagem de <strong>pedidos</stro
   com <strong>campo de busca no topo</strong> (entre o menu de abas e os cards) e seções <strong>"AGUARDANDO
   AUTORIZAÇÃO"</strong> e <strong>"JÁ AUTORIZADOS"</strong> + busca (texto/data); lista os
   pedidos das secretarias/setores do autorizador (<code>listar_pedidos_responsavel</code>,
-  <code>manipulador_bd.py:1923</code>) com Autorizar / Recusar (motivo obrigatório) — ações em <strong>todo o grupo</strong>.</li>
+  <code>bd_manipulador.py:1923</code>) com Autorizar / Recusar (motivo obrigatório) — ações em <strong>todo o grupo</strong>.</li>
 <li><strong>Administração</strong> (admin do módulo): tabela mestra + sub-abas Secretarias, Setores,
   Responsáveis, Cotas, Relatórios, Configurações. Ações: Imprimir (seletor de impressora), Baixar (sempre),
   Recuar (cancelar), Autorizar, Recusar.</li>
 <li><strong>Administração → Secretarias / Setores</strong>: campo <strong>"Limite pedidos abertos (0=ilimitado)"</strong>
-  no criar/editar e exibição do limite na listagem (<code>administracao.py:100,150,190,245</code>).</li>
-<li><strong>Administração → Solicitações</strong> (<code>_admin_solicitacoes</code>, <code>telas.py:700</code>; <code>administracao.py:77</code>
+  no criar/editar e exibição do limite na listagem (<code>telas_administracao.py:100,150,190,245</code>).</li>
+<li><strong>Administração → Solicitações</strong> (<code>_admin_solicitacoes</code>, <code>telas.py:700</code>; <code>telas_administracao.py:77</code>
   delega para <code>telas.py</code> — evita duplicação): abas <strong>Ativos / Impressos / Recusados / Todos</strong> +
   barra de busca com <strong>texto livre</strong> (solicitante, observação, arquivo, nome de secretaria/setor —
   <code>LIKE NOCASE</code>), <strong>secretaria→setor em cascata</strong>, <strong>data inicial/final</strong> e botão <strong>Buscar</strong>
-  (<code>listar_pedidos</code>, <code>manipulador_bd.py:1840</code>). Pedidos agrupados por <strong>secretaria→setor</strong>; ao
+  (<code>listar_pedidos</code>, <code>bd_manipulador.py:1840</code>). Pedidos agrupados por <strong>secretaria→setor</strong>; ao
   imprimir, o pedido sai da gestão ativa do admin.</li>
 <li><strong>Impressão com seletor de impressoras</strong> (<code>_imprimir_grupo</code>, <code>telas.py:883</code>): ao clicar em "Imprimir"
   num pedido <strong>autorizado/pendente/excedente</strong>, abre um <strong>diálogo com as impressoras cadastradas</strong>
   (<code>tb_impressoras</code>), sugerindo a padrão A4/A3 conforme o papel; ao confirmar, dispara
   <code>window.imprimirPdf</code> via JS (diálogo nativo do SO). <strong>Não marca como impresso</strong> — o desconto de
   cota e a remoção dos arquivos ocorrem no botão <strong>"Confirmar impressão"</strong> (<code>_confirmar_impressao_grupo</code>,
-  <code>telas.py:944</code> → <code>imprimir_grupo</code>, <code>manipulador_bd.py:1862</code>).</li>
+  <code>telas.py:944</code> → <code>imprimir_grupo</code>, <code>bd_manipulador.py:1862</code>).</li>
 </ul>
 <h2 id="impressao-dual-mode">Impressão (dual mode)<a class="headerlink" href="#impressao-dual-mode" title="Permanent link">&para;</a></h2>
 <ul>
@@ -388,16 +409,16 @@ por coluna. Desde a reformulação de 07/09, a contagem de <strong>pedidos</stro
 <li><strong>Marca d'água</strong> (opcional, personalizável): texto com placeholders <code>{data}</code>, <code>{usuario}</code>,
   <code>{id}</code>, <code>{secretaria}</code>, <code>{setor}</code>, <code>{solicitante}</code>; posição, opacidade, fonte, cor, rotação —
   tudo configurável em Configurações. Se desativada, PDF sai sem marca.</li>
-<li><strong>Painel de impressoras</strong> (<code>_painel_impressoras</code>, <code>telas.py:1509</code> e <code>administracao.py:545</code>):
+<li><strong>Painel de impressoras</strong> (<code>_painel_impressoras</code>, <code>telas.py:1509</code> e <code>telas_administracao.py:545</code>):
   bloco em <strong>Configurações</strong> para <strong>cadastrar / listar / definir padrão / excluir</strong> impressoras
   (nome, papel, cor, frente/verso, sulfite, driver <strong>PCL6</strong> default). A padrão A4/A3 é marcada via
-  <code>definir_impressora_padrao</code> (<code>manipulador_bd.py:474</code>) e alimenta o seletor do botão "Imprimir".</li>
-<li><strong>Impressão por grupo</strong> (<code>imprimir_grupo</code>, <code>manipulador_bd.py:1862</code>): ao confirmar a impressão de
+  <code>definir_impressora_padrao</code> (<code>bd_manipulador.py:474</code>) e alimenta o seletor do botão "Imprimir".</li>
+<li><strong>Impressão por grupo</strong> (<code>imprimir_grupo</code>, <code>bd_manipulador.py:1862</code>): ao confirmar a impressão de
   um pedido, a cota é descontada <strong>uma vez por grupo</strong> (pelo total de páginas contabilizadas, na
   secretaria e no setor se houver) e os <strong>arquivos são apagados do servidor imediatamente</strong> — o
   pedido impresso sai da gestão ativa do admin.</li>
 <li><strong>Padrões migrados (07/09, sem restart via <code>init_db</code>)</strong>: <code>tempo_expira_rascunho_min</code> 4→<strong>10</strong> e
-  <code>padrao_cor</code> PB→<strong>Color</strong> (<code>manipulador_bd.py:328-331</code>).</li>
+  <code>padrao_cor</code> PB→<strong>Color</strong> (<code>bd_manipulador.py:328-331</code>).</li>
 </ul>
 <h2 id="nomenclatura-do-arquivo">Nomenclatura do arquivo<a class="headerlink" href="#nomenclatura-do-arquivo" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>AAMMDDHHMMSS_secretaria_setor_nomeSolicitante_qtdCopias_cor_tipoPapel_quantidadeFolhas_ordemDoenvioArquivo.pdf
@@ -407,7 +428,7 @@ por coluna. Desde a reformulação de 07/09, a contagem de <strong>pedidos</stro
 papel (<code>colorido</code> para Color, <code>pretoebranco</code> para PB); o <strong>tipo de papel</strong>
 (<code>sulfite</code>/<code>fotografico</code>/<code>verge</code>) e a <strong>ordem de envio do arquivo</strong> (1, 2, 3…) garantem
 unicidade mesmo quando vários arquivos chegam no mesmo segundo com a mesma quantidade de
-páginas — gerada por <code>gerar_nome_arquivo</code> (<code>manipulador_bd.py:1038-1070</code>), que recebe
+páginas — gerada por <code>gerar_nome_arquivo</code> (<code>bd_manipulador.py:1038-1070</code>), que recebe
 <code>cor</code>, <code>tipo_papel</code> e <code>ordem_envio</code>.</p>
 <h2 id="regras-de-negocio">Regras de negócio<a class="headerlink" href="#regras-de-negocio" title="Permanent link">&para;</a></h2>
 <ul>
@@ -421,11 +442,11 @@ páginas — gerada por <code>gerar_nome_arquivo</code> (<code>manipulador_bd.py
 <li><strong>Alertas da nova solicitação</strong> (<code>alertas_nova_solicitacao</code>, config): frases exibidas abaixo do
   card de envio (uma por linha, com ⚠) — <strong>substitui</strong> os antigos <code>aviso_presenca_obrigatoria</code> e
   <code>aviso_paginas_multiplas</code> (removidos). Editável em Administração → Configurações
-  (<code>telas.py:366-369</code>, <code>administracao.py:416-418</code>).</li>
+  (<code>telas.py:366-369</code>, <code>telas_administracao.py:416-418</code>).</li>
 <li><strong>Reenvio de pedido recusado</strong>: o usuário pode <strong>Reenviar</strong> o próprio pedido recusado — o status
   volta para <code>aguardando_autorizacao</code> (se há responsável) ou <code>pendente</code>, limpando motivo e dados de
-  autorização (<code>reenviar_grupo</code>, <code>manipulador_bd.py:2025-2055</code>; botão em <code>telas.py:572-576</code>).
-  <code>cancelar_grupo</code> também aceita o status <code>recusado</code> (<code>manipulador_bd.py:2001-2022</code>).</li>
+  autorização (<code>reenviar_grupo</code>, <code>bd_manipulador.py:2025-2055</code>; botão em <code>telas.py:572-576</code>).
+  <code>cancelar_grupo</code> também aceita o status <code>recusado</code> (<code>bd_manipulador.py:2001-2022</code>).</li>
 <li><strong>Permissões</strong>: <code>comum</code> cria/acompanha próprios pedidos; responsável autoriza sua secretaria/setor;
   <code>administrador</code> do módulo imprime/recua/gerencia. Admin geral vê tudo + auditoria.</li>
 <li><strong>Concessão da permissão de autorizar impressão</strong>: em <em>Administração → Responsáveis</em> o admin
@@ -434,12 +455,12 @@ páginas — gerada por <code>gerar_nome_arquivo</code> (<code>manipulador_bd.py
   <code>comum</code></strong> — ao logar, mesmo sendo <code>comum</code>, o usuário passa a ver a aba <strong>Autorização</strong> e a
   área de autorizar impressões (a checagem usa <code>tb_responsaveis_autorizacao</code>, independente do perfil).</li>
 <li><strong>Sem auto-autorização</strong>: sem responsável cadastrado para a secretaria/setor, o pedido fica
-  <code>pendente</code> e o <strong>admin autoriza e imprime</strong> (<code>confirmar_lote</code>, <code>manipulador_bd.py:1610-1619</code>).</li>
+  <code>pendente</code> e o <strong>admin autoriza e imprime</strong> (<code>confirmar_lote</code>, <code>bd_manipulador.py:1610-1619</code>).</li>
 <li><strong>Auditoria central</strong> (banco exclusivo de auditoria, tabela <code>tb_auditoria_solicita_impressao</code>): <code>criar_solicitacao</code>, <code>autorizar_solicitacao</code>,
   <code>recusar_solicitacao</code>, <code>imprimir_solicitacao</code>, <code>recuar_solicitacao</code>, <code>cancelar_solicitacao</code>,
   <code>criar/editar/excluir_secretaria/setor/responsavel</code>, <code>definir_cota</code>, <code>resetar_consumo</code>. Na
   reformulação de 07/09, a auditoria de <strong><code>criar_grupo</code></strong> (<code>confirmar_lote</code>,
-  <code>manipulador_bd.py:1822-1825</code>) inclui o <strong>SHA256 dos arquivos</strong> do pedido; as ações de grupo
+  <code>bd_manipulador.py:1822-1825</code>) inclui o <strong>SHA256 dos arquivos</strong> do pedido; as ações de grupo
   (<code>autorizar_grupo</code>, <code>recusar_grupo</code>, <code>imprimir_grupo</code>, <code>recuar_grupo</code>, <code>cancelar_grupo</code>) são
   auditadas por <code>grupo_id</code>.</li>
 </ul>
@@ -480,15 +501,15 @@ timeout 2 s, cache de 60 s, lock threading); sem internet (ou com NTP desativado
 local do servidor. Chave de configuração: <code>hora_ntp_ativa</code> (default <code>"1"</code>) em <code>tb_config</code>
 central — ver <a href="../analise_mod_intranet/#hora-do-servidor-ntp">Análise do Núcleo</a>.</p>
 <h2 id="adicoes-recentes-0709-tipo-de-papel-alertas-unificados-reenvio-e-relatorio-de-cobranca">Adições recentes (07/09) — tipo de papel, alertas unificados, reenvio e relatório de cobrança<a class="headerlink" href="#adicoes-recentes-0709-tipo-de-papel-alertas-unificados-reenvio-e-relatorio-de-cobranca" title="Permanent link">&para;</a></h2>
-<h3 id="db_manipuladorpy"><code>db_manipulador.py</code><a class="headerlink" href="#db_manipuladorpy" title="Permanent link">&para;</a></h3>
+<h3 id="bd_manipuladorpy"><code>bd_manipulador.py</code><a class="headerlink" href="#bd_manipuladorpy" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Config <code>alertas_nova_solicitacao</code></strong> (<code>manipulador_bd.py:34-45</code>): frases de alerta da nova
+<li><strong>Config <code>alertas_nova_solicitacao</code></strong> (<code>bd_manipulador.py:34-45</code>): frases de alerta da nova
   solicitação (uma por linha) — <strong>substitui</strong> <code>aviso_presenca_obrigatoria</code> e
   <code>aviso_paginas_multiplas</code> (removidos do <code>CONFIG_PADRAO</code>).</li>
 <li><strong>Coluna <code>tipo_papel</code></strong> em <code>tb_solicitacoes</code> (sulfite/fotografico/verge, default <code>sulfite</code>):
-  no CREATE (<code>manipulador_bd.py:127</code>) + <strong>migração idempotente</strong> via ALTER
-  (<code>manipulador_bd.py:275-282</code>).</li>
-<li><strong><code>gerar_nome_arquivo</code> reescrito</strong> (<code>manipulador_bd.py:1038-1070</code>): novo formato
+  no CREATE (<code>bd_manipulador.py:127</code>) + <strong>migração idempotente</strong> via ALTER
+  (<code>bd_manipulador.py:275-282</code>).</li>
+<li><strong><code>gerar_nome_arquivo</code> reescrito</strong> (<code>bd_manipulador.py:1038-1070</code>): novo formato
   <code>AAMMDDHHMMSS_secretaria_setor_solicitante_copias_cor_tipoPapel_folhas_ordemEnvio.pdf</code> com o
   parâmetro <code>ordem_envio</code> para diferenciar arquivos do mesmo envio no mesmo segundo.</li>
 <li><strong><code>criar_solicitacao</code></strong> (<code>:1073</code>), <strong><code>confirmar_rascunho</code></strong> (<code>:1520</code>) e <strong><code>confirmar_lote</code></strong>
@@ -529,14 +550,26 @@ central — ver <a href="../analise_mod_intranet/#hora-do-servidor-ntp">Análise
   menu de abas e os cards).</li>
 <li><strong><code>_card_grupo</code>/<code>_card_admin_grupo</code></strong> (<code>telas.py:463,764</code>): unpacking com <code>tipo_papel</code>, novo
   layout e <code>permite_selecao</code>.</li>
-<li><strong><code>_admin_relatorio</code> reescrito</strong> (<code>telas.py:1553-1647</code> e <code>administracao.py:615-713</code> — cópia
+<li><strong><code>_admin_relatorio</code> reescrito</strong> (<code>telas.py:1553-1647</code> e <code>telas_administracao.py:615-713</code> — cópia
   duplicada da admin existe nos dois arquivos): <strong>prazos fixos mensais</strong> (Este mês, Mês anterior,
   Últimos 6 meses, Ano atual) + calendário, com foco em <strong>cobrança/repasse</strong> (secretaria/setor
   primeiro, depois quem imprimiu, quem autorizou e total geral).</li>
 <li><strong>Novo wrapper <code>_reenviar_grupo</code></strong> (<code>telas.py:613-619</code>).</li>
 <li><strong>Admin config</strong> (<code>_admin_configuracoes</code>): campo único <strong>"Alertas da nova solicitação (uma
   frase por linha)"</strong> e select <strong>"Tipo de papel padrão"</strong> (sulfite/fotográfico/vergê) —
-  <code>telas.py:1359-1390</code> e <code>administracao.py:416-447</code>.</li>
+  <code>telas.py:1359-1390</code> e <code>telas_administracao.py:416-447</code>.</li>
+</ul>
+<h3 id="adicoes-recentes-092026-responsividade-global-rnf-ui-01">Adições recentes (09/2026) — responsividade global RNF-UI-01<a class="headerlink" href="#adicoes-recentes-092026-responsividade-global-rnf-ui-01" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Auditado 320/768/1024</strong> (<code>kbp-web-design</code>) — proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code>: abas <code>overflow-x-auto</code>, formulário <code>grid-cols-1 sm:grid-cols-2</code>, lista de solicitações <code>overflow-x-auto</code>, dialogs <code>w-full max-w</code>, barra de ações <code>flex-wrap</code> <code>gap</code> via <code>.style</code>. Ver <a href="../padroes_codificacao/">Padrões</a> §8.1.</li>
+</ul>
+<h3 id="integracao-organograma-mod_lista_telefonica-cotas-padrao-1000200">Integração organograma (<code>mod_lista_telefonica</code>) — cotas padrão 1000/200<a class="headerlink" href="#integracao-organograma-mod_lista_telefonica-cotas-padrao-1000200" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Importação do organograma genérico</strong> (<code>bd_manipulador.py:364-464</code>): <code>init_db()</code> importa <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code> (12 secretarias genéricas) via <code>from mod_lista_telefonica.bd_manipulador import ORGANOGRAMA_BASE as _ORG_BASE</code> (fallback genérico de 6 itens se a importação falhar — <code>bd_manipulador.py:365-373</code>).</li>
+<li><strong>Semente automática em banco novo</strong>: <code>_SECRETARIAS_PADRAO = [(nome, sigla, 1000, 20) for sec in _ORG_BASE]</code> — cada secretaria do organograma nasce com <strong>1000 cópias</strong> (<code>cota_paginas_mensal=1000</code>) e <code>limite_pedidos_abertos=20</code>; <code>_SETORES_PADRAO = [(setor, sec_nome, 200, 10) ... for sub in subsetores]</code> — cada setor <strong>e cada subsetor achatado como setor</strong> nasce com <strong>200 cópias</strong> (<code>cota_paginas_mensal=200</code>) e limite 10 (<code>bd_manipulador.py:382-442</code>). Inserção idempotente via <code>SELECT id FROM tb_secretarias WHERE sigla=? OR nome=?</code> / <code>SELECT id FROM tb_setores WHERE nome=? AND secretaria_id=?</code> — só insere quando ainda não existe; sigla gerada por <code>_sigla_sec(nome)</code> (<code>NFKD</code> sem acentos + 4 chars upper <code>SEC_XXXX</code>, <code>bd_manipulador.py:375-380</code>).</li>
+<li><strong>Migração idempotente para bancos já existentes</strong> (<code>bd_manipulador.py:444-463</code>): <code>UPDATE tb_secretarias SET cota_paginas_mensal=1000 WHERE nome=? AND cota !=1000</code> por secretaria do organograma + <code>UPDATE tb_setores SET cota=200 WHERE nome=? AND secretaria_id IN (SELECT id FROM tb_secretarias WHERE nome=?) AND cota !=200</code> por setor do organograma + <code>UPDATE tb_setores SET cota=200 WHERE cota=0</code> para legados zerados (ex.: DTI). Executa <strong>no início do sistema (quando o banco é criado)</strong> e também corrige bancos antigos sem sobrescrever edições intencionais posteriores do admin (só corrige valores diversos de 1000/200).</li>
+<li><strong>Modelo achatado</strong>: <code>ORGANOGRAMA_BASE</code> possui 3 níveis <code>Secretaria→Setor→Subsetor</code> (lista telefônica), mas a impressão mantém <strong>2 níveis</strong> <code>Secretaria→Setor</code> — subsetores viram setores com 200 cópias para compatibilidade com <code>tb_solicitacoes.secretaria_id/setor_id</code> e hierarquia de cota <code>pool da secretaria</code>. A lista telefônica conserva os 3 níveis completos; a impressão consome apenas os dois primeiros (ver <a href="../modulos/lista_telefonica/">Módulo Lista Telefônica</a> e <a href="../analise_mod_lista_telefonica/">Análise Lista Telefônica</a>).</li>
+<li><strong>Comportamento</strong>: secretarias/setores criadas manualmente pelo admin mantêm a cota informada no cadastro (0 quando não informada cai no fallback); as do organograma podem ser editadas após a semente (ex.: ajustar cota/limite) sem serem sobrescritas na próxima reinicialização.</li>
 </ul>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
 <table>
@@ -656,7 +689,7 @@ exclusiva de <code>/configuracoes</code>); as variáveis <code>t_cor_fundo</code
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../analise_mod_auditoria/" class="btn btn-neutral float-left" title="Auditoria"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../modulos/intranet/" class="btn btn-neutral float-right" title="Intranet (núcleo)">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../analise_mod_tecnico/" class="btn btn-neutral float-right" title="Técnico">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -682,7 +715,7 @@ exclusiva de <code>/configuracoes</code>); as variáveis <code>t_cor_fundo</code
       <span><a href="../analise_mod_auditoria/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../modulos/intranet/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../analise_mod_tecnico/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

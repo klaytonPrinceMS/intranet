@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Auditoria do Menu (12/09/2026) - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Auditoria do Menu (12/09/2026)";
+        var mkdocs_page_input_path = "seguranca/auditoria_menu_2026-09-12.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Auditoria do Menu (12/09/2026)</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Segurança</li>
+      <li class="breadcrumb-item active">Auditoria do Menu (12/09/2026)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="hamburger-menu-security-audit-intranet-modular-2026-09-12">Hamburger Menu Security Audit — Intranet Modular (2026-09-12)<a class="headerlink" href="#hamburger-menu-security-audit-intranet-modular-2026-09-12" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Targeted DevSecOps audit of the hamburger menu authorization chain (<code>mod_intranet/telas.py</code>, <code>main.py</code>, <code>mod_intranet/autenticacao.py</code>, <code>rotas_modulos.py</code>). 4 High, 7 Medium and Low findings with file:line evidence, tool output and suggested fixes (documentation only — no code changed).</p>
+</blockquote>
+<hr />
+<h1 id="auditoria-de-seguranca-do-menu-hamburguer-intranet-modular-12092026">Auditoria de Segurança do Menu Hambúrguer — Intranet Modular (12/09/2026)<a class="headerlink" href="#auditoria-de-seguranca-do-menu-hamburguer-intranet-modular-12092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Auditoria DevSecOps direcionada à cadeia de autorização do menu hambúrguer (<code>mod_intranet/telas.py</code>, <code>main.py</code>, <code>mod_intranet/autenticacao.py</code>, <code>rotas_modulos.py</code>). 4 achados Altos, 7 Médios e Baixos com evidência arquivo:linha, saída de ferramentas e correção sugerida (somente documentação — nenhum código foi alterado).</p>
+</blockquote>
+<h2 id="1-escopo-e-metodo">1. Escopo e método<a class="headerlink" href="#1-escopo-e-metodo" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Data:</strong> 12/09/2026</li>
+<li><strong>Escopo:</strong> menu hambúrguer e guard central — <code>mod_intranet/telas.py</code> (<code>pagina_restrita</code>, <code>usuario_logado</code>), <code>main.py</code> (rotas <code>/</code>, <code>/admin/{chave_modulo}</code>, <code>/configuracoes</code>, <code>/documentacao</code>, JS de impressão, <code>storage_secret</code>), <code>mod_intranet/autenticacao.py</code> (papel no módulo, sessão, perfil global), <code>mod_intranet/rotas_modulos.py</code> (slugs customizados), <code>mod_intranet/documentacao.py</code> (montagem <code>/documentacao</code>), <code>mod_gest_cad_usuario/bd_manipulador.py</code> (<code>obter_papel_no_modulo</code>, <code>validar_acesso_modulo</code>).</li>
+<li><strong>Tipo:</strong> revisão manual de autorização + SAST/varredura de segredos/dependências. Nenhum código foi alterado nesta tarefa — só documentação.</li>
+<li><strong>Referências internas:</strong> <a href="../ferramentas_de_seguranca/">Ferramentas de Segurança</a>, <a href="../riscos_ia_ml/">Riscos de IA/ML</a>, <a href="../../testes_relatorios/seguranca_2026-09-06/">Relatório 06/09/2026</a>.</li>
+</ul>
+<h2 id="2-resultado-das-ferramentas-evidencia-de-comando">2. Resultado das ferramentas (evidência de comando)<a class="headerlink" href="#2-resultado-das-ferramentas-evidencia-de-comando" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Ferramenta</th>
+<th style="text-align: left;">Versão</th>
+<th style="text-align: left;">Comando</th>
+<th style="text-align: left;">Resultado no escopo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>bandit</code></td>
+<td style="text-align: left;">1.9.4</td>
+<td style="text-align: left;"><code>bandit -r mod_intranet/telas.py main.py mod_intranet/autenticacao.py mod_intranet/rotas_modulos.py -q</code></td>
+<td style="text-align: left;"><strong>0 High / 0 Medium</strong> no escopo do menu (nada de <code>exec</code>/<code>eval</code>/<code>shell</code> no guard)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>semgrep</code></td>
+<td style="text-align: left;">1.176.1</td>
+<td style="text-align: left;"><code>semgrep scan --config auto --error --timeout=30 -j 4 --quiet main.py mod_intranet/telas.py mod_intranet/autenticacao.py mod_intranet/rotas_modulos.py</code></td>
+<td style="text-align: left;"><strong>0 achados</strong> no escopo (regras auto não cobrem lógica de autorização — achados são de revisão manual abaixo)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pip-audit</code></td>
+<td style="text-align: left;">2.10.1</td>
+<td style="text-align: left;"><code>pip-audit -r requirements.txt</code> e <code>pip-audit -r requirements-dev.txt</code></td>
+<td style="text-align: left;"><strong>13 vulns de ambiente</strong> (dependências, fora do código do menu — atualizar conforme <code>pip-audit</code>/<code>safety</code>; sem <code>fix</code> aplicado aqui)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>safety</code></td>
+<td style="text-align: left;">3.8.1</td>
+<td style="text-align: left;"><code>safety check</code></td>
+<td style="text-align: left;">Complementa o <code>pip-audit</code> acima (mesmas 13 vulns de ambiente)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gitleaks</code></td>
+<td style="text-align: left;">8.24.3</td>
+<td style="text-align: left;"><code>gitleaks detect --source . --redact</code></td>
+<td style="text-align: left;"><strong>1 leak histórico</strong> (credencial padrão <code>master:master</code> em <code>assets/docker/verify-credentials.sh:67</code> e eco em <code>:23</code>, <code>:71</code>, <code>:74</code>, <code>:158</code> — ambiente local de observabilidade, não vazamento de produção)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>k6</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">não executado</td>
+<td style="text-align: left;">Carga só contra <strong>localhost/staging</strong> por política; menu não tem endpoint crítico que justifique carga nesta rodada</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Observação: <code>site/</code> (build do MkDocs) gera falsos positivos de <code>gitleaks</code> (<code>search_index.json</code>). Filtrar ao interpretar — ver relatório de 06/09.</p>
+</blockquote>
+<h2 id="3-achados-altos-corrigir-primeiro">3. Achados Altos (corrigir primeiro)<a class="headerlink" href="#3-achados-altos-corrigir-primeiro" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ID</th>
+<th style="text-align: left;">Título</th>
+<th style="text-align: left;">Onde (arquivo:linha)</th>
+<th style="text-align: left;">Evidência</th>
+<th style="text-align: left;">Correção sugerida (sem aplicar)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>A1</strong></td>
+<td style="text-align: left;"><code>storage_secret</code> com fallback fraco em código</td>
+<td style="text-align: left;"><code>main.py:616-617</code> — <code>storage_secret=os.environ.get("INTRANET_STORAGE_SECRET") or "intranet-secret-2026-mude-isto"</code></td>
+<td style="text-align: left;">Se <code>INTRANET_STORAGE_SECRET</code> não estiver definido, a sessão assinada do NiceGUI usa segredo público e previsível. Quem conhece o default pode forjar/ler <code>app.storage.user</code>.</td>
+<td style="text-align: left;">Exigir a variável em produção: abortar o boot com mensagem se ausente (ex.: <code>if not os.environ.get("INTRANET_STORAGE_SECRET"): raise SystemExit(...)</code>); manter fallback apenas em dev com aviso explícito; documentar a variável em <code>docs/configuracoes.md</code>; rotacionar o segredo em qualquer ambiente que já rodou com o default.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>A2</strong></td>
+<td style="text-align: left;"><code>/configuracoes</code> sem gate de papel no guard</td>
+<td style="text-align: left;"><code>main.py:570-577</code> — <code>page_configuracoes()</code> chama <code>pagina_restrita("Administração")</code> <strong>sem</strong> <code>chave_modulo</code>; <code>mod_intranet/telas.py:33-92</code> — check de módulo só ocorre <code>if chave_modulo</code> (<code>:65</code>, <code>:74</code>)</td>
+<td style="text-align: left;">Qualquer usuário autenticado que acertar a URL abre o painel central (5 abas, Restaurar/Aplicar por card, rebuild MkDocs). O guard valida sessão (<code>:44-63</code>) mas não valida papel.</td>
+<td style="text-align: left;">Passar um <code>chave_modulo</code> dedicado (ex.: <code>"intranet"</code>) ou adicionar gate explícito em <code>page_configuracoes</code> (ex.: só <code>administrador_geral</code> ou <code>eh_admin_do_modulo(nome, "intranet")</code>); registrar <code>acesso_negado</code> no caminho negado como já faz <code>:74-83</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>A3</strong></td>
+<td style="text-align: left;">Perfil de sessão stale (troca de papel não derruba sessão)</td>
+<td style="text-align: left;"><code>mod_intranet/telas.py:28-31</code> (<code>usuario_logado</code> lê <code>app.storage.user</code>), <code>:43-63</code> (revalida existência/ativo + hash de sessão, mas <strong>não</strong> compara <code>perfil</code>/papéis); <code>mod_intranet/autenticacao.py:550-553</code> (<code>perfil_global_de</code>), <code>:538-547</code> (<code>papel_no_modulo</code>)</td>
+<td style="text-align: left;">Rebaixamento (<code>administrador_geral</code> → <code>comum</code>) ou remoção de <code>tb_acesso_usuario</code> não invalida a sessão viva: o dict em storage continua com <code>perfil</code> antigo até logout. Telas que confiam em <code>user.get("perfil")</code> (ex.: <code>main.py:504</code>) decidem com dado stale.</td>
+<td style="text-align: left;">Revalidar <code>perfil</code> global + papéis por módulo a cada <code>pagina_restrita</code> e sobrescrever <code>app.storage.user["usuario"]</code>; ou versionar a sessão (coluna <code>versao_perfil</code>/<code>revogada_em</code>) e derrubar quando divergir; auditar <code>sessao_invalidada_por_mudanca_perfil</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>A4</strong></td>
+<td style="text-align: left;"><code>obter_papel_no_modulo</code> liberando chave inexistente</td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario/bd_manipulador.py:785-798</code> — <code>administrador_geral</code> retorna <code>"administrador"</code> para <strong>qualquer</strong> <code>modulo_chave</code> antes de checar <code>tb_acesso_usuario</code>; <code>mod_intranet/autenticacao.py:546-547</code> (<code>eh_admin_do_modulo</code> confia no retorno)</td>
+<td style="text-align: left;"><code>eh_admin_do_modulo(nome_admin_geral, "chave_inexistente")</code> retorna <code>True</code>. Combinado com M1 (<code>/admin/{chave}</code> sem allowlist), chave arbitrária na URL pode ser tratada como administrável pelo admin geral e cair em ramo inesperado.</td>
+<td style="text-align: left;">Validar a chave contra o catálogo (<code>modulos_registrados</code>/<code>tb_modulos</code>) antes do early-return do admin geral; retornar <code>None</code> para chave desconhecida; adicionar teste <code>obter_papel_no_modulo(admin, "inexistente") is None</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-achados-medios">4. Achados Médios<a class="headerlink" href="#4-achados-medios" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ID</th>
+<th style="text-align: left;">Título</th>
+<th style="text-align: left;">Onde (arquivo:linha)</th>
+<th style="text-align: left;">Evidência</th>
+<th style="text-align: left;">Correção sugerida (sem aplicar)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>M1</strong></td>
+<td style="text-align: left;"><code>/admin/{chave}</code> sem allowlist de chaves</td>
+<td style="text-align: left;"><code>main.py:488-567</code> — <code>page_admin_modulo(chave_modulo)</code> com <code>if/elif</code> por chave conhecida e <code>else: ui.navigate.to("/configuracoes")</code> (<code>:566-567</code>)</td>
+<td style="text-align: left;">Chave arbitrária passa pelo guard (<code>pagina_restrita</code> <code>:500</code>) e só no <code>else</code> é redirecionada — para <code>/configuracoes</code>, que por A2 também é fraca. Enumeração de chaves não é barrada na borda.</td>
+<td style="text-align: left;">Allowlist explícita no topo (<code>if chave_modulo not in {...}: audit acesso_negado + navigate "/" + return</code>); não redirecionar desconhecido para <code>/configuracoes</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>M2</strong></td>
+<td style="text-align: left;">Slugs customizados sem reserva/bloqueio</td>
+<td style="text-align: left;"><code>mod_intranet/rotas_modulos.py:33-58</code> (<code>_normalizar_rota</code>, <code>registrar_modulo</code> sem validação de colisão); <code>mod_intranet/autenticacao.py</code> (<code>modulos_registrados</code>, <code>tb_modulos.rota</code>)</td>
+<td style="text-align: left;">Slug persistido em <code>tb_modulos.rota</code> pode sobrescrever <code>/admin</code>, <code>/configuracoes</code>, <code>/login</code>, <code>/documentacao</code> ou prefixos de API — <code>registrar_modulo</code> só evita duplicidade (<code>_registradas</code>), não reserva.</td>
+<td style="text-align: left;">Lista reservada (<code>{"admin","configuracoes","login","documentacao","api",...}</code>) validada na gravação do slug e em <code>montar_rotas_ativas</code>; teste de colisão.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>M3</strong></td>
+<td style="text-align: left;"><code>/documentacao</code> pública (site inteiro sem login)</td>
+<td style="text-align: left;"><code>mod_intranet/documentacao.py:36-48</code> (<code>montar()</code> via <code>StaticFiles</code> sem auth), <code>:51-89</code> (servidor <code>ThreadingHTTPServer</code> em <code>0.0.0.0</code> sem auth); <code>main.py:596-603</code> (build+serve no boot); <code>mod_intranet/telas.py:308-312</code> (link público)</td>
+<td style="text-align: left;">Todo o <code>site/</code> (incluindo estes relatórios de segurança) fica legível sem sessão, na rota interna e na porta dedicada.</td>
+<td style="text-align: left;">Exigir sessão no mount (middleware/guard) ou servir docs só em localhost/porta dedicada com token; ou separar docs públicas vs. internas; documentar a decisão.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>M4</strong></td>
+<td style="text-align: left;">PDF sem auditoria do acesso negado</td>
+<td style="text-align: left;"><code>mod_edit_pdf</code> (guards de tela) vs. padrão <code>mod_intranet/telas.py:74-83</code> (<code>acesso_negado</code> com <code>audit_log</code>)</td>
+<td style="text-align: left;">Negativas do Editor de PDF não seguem o padrão <code>audit_log(..., "acesso_negado", ...)</code> do guard central — trilha de quem tentou abrir o quê fica incompleta.</td>
+<td style="text-align: left;">Chamar <code>audit_log(nome, chave, "acesso_negado", ...)</code> em todo <code>return None</code> por falta de permissão no PDF; padronizar mensagem com a chave.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>M5</strong></td>
+<td style="text-align: left;">JS de impressão servido sem gate</td>
+<td style="text-align: left;"><code>main.py:480-485</code> (<code>servir_js_impressao</code> lê <code>mod_solicita_impressao/src/impressao.js</code> e retorna <code>Response</code>)</td>
+<td style="text-align: left;">Rota do JS não passa por <code>pagina_restrita</code> — qualquer request não autenticado baixa o asset (baixo impacto direto, mas quebra a invariante "tudo de módulo exige sessão").</td>
+<td style="text-align: left;">Servir o JS por rota que exige sessão ou embutir como static autenticado; se for propositalmente público, registrar a exceção aqui.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>M6</strong></td>
+<td style="text-align: left;">Auditoria sem registro da negação interna</td>
+<td style="text-align: left;"><code>mod_auditoria</code> (telas/guard) vs. <code>mod_intranet/telas.py:74-83</code></td>
+<td style="text-align: left;">Negativas dentro da Auditoria (ex.: não-<code>administrador_geral</code> em <code>main.py:525-530</code>) não geram <code>acesso_negado</code> — justamente o módulo que deveria ter a trilha mais completa.</td>
+<td style="text-align: left;"><code>audit_log</code> em todo caminho negado da Auditoria (RF-35); incluir ator, chave e motivo.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>M7</strong></td>
+<td style="text-align: left;">Seed <code>master:master</code> presente no repo</td>
+<td style="text-align: left;"><code>assets/docker/verify-credentials.sh:23,67,71,74,158</code>, <code>assets/docker/setup-grafana-credentials.sh:5-6,28,76-79,111-114</code>, <code>assets/docker/start.sh:86</code></td>
+<td style="text-align: left;">Credencial padrão versionada (detectada pelo <code>gitleaks</code> como o único leak real). É ambiente local de observabilidade, mas o par aparece em 3 scripts e ecoa no terminal.</td>
+<td style="text-align: left;">Mover para <code>.env</code> não versionado/<code>INTRANET_*</code>/Vault; gerar senha no setup; mascarar e-mails/logs; manter <code>master/master</code> só em exemplo com aviso.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-achados-baixos-hardening">5. Achados Baixos / hardening<a class="headerlink" href="#5-achados-baixos-hardening" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ID</th>
+<th style="text-align: left;">Título</th>
+<th style="text-align: left;">Onde</th>
+<th style="text-align: left;">Correção sugerida (sem aplicar)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>B1</strong></td>
+<td style="text-align: left;">Mensagens de negado genéricas vs. enumeráveis</td>
+<td style="text-align: left;"><code>mod_intranet/telas.py:81-82</code></td>
+<td style="text-align: left;">Manter mensagem genérica ao usuário e detalhar só no <code>audit_log</code> (<code>:77-78</code>) — já é o padrão correto; replicar em todos os módulos.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>B2</strong></td>
+<td style="text-align: left;"><code>user["sessao"]</code> adotado tardiamente</td>
+<td style="text-align: left;"><code>mod_intranet/telas.py:59-63</code> (sessões legadas sem hash ganham hash "agora")</td>
+<td style="text-align: left;">Forçar re-login de sessões sem hash em vez de adotar; expirar sessões antigas por retenção LGPD (<code>Repositorio.podiar_sessoes</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>B3</strong></td>
+<td style="text-align: left;">Docs servidas em <code>0.0.0.0</code></td>
+<td style="text-align: left;"><code>mod_intranet/documentacao.py:76</code> (<code>ThreadingHTTPServer(("0.0.0.0", p), ...)</code>)</td>
+<td style="text-align: left;">Bind em <code>127.0.0.1</code> por padrão; <code>0.0.0.0</code> só com flag explícita.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>B4</strong></td>
+<td style="text-align: left;">Favicon/tema mutável sem versionamento</td>
+<td style="text-align: left;"><code>main.py:615</code>, <code>mod_intranet/tema_modulo.py</code></td>
+<td style="text-align: left;">Versionar uploads (<code>?v=hash</code>) e validar MIME/tamanho no upload do <code>/configuracoes</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="6-acoes-priorizadas-sem-ordem-de-implementacao-em-codigo-decisao-do-mantenedor">6. Ações priorizadas (sem ordem de implementação em código — decisão do mantenedor)<a class="headerlink" href="#6-acoes-priorizadas-sem-ordem-de-implementacao-em-codigo-decisao-do-mantenedor" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Alta:</strong> <code>INTRANET_STORAGE_SECRET</code> obrigatório em produção + rotação (A1); gate de papel em <code>/configuracoes</code> (A2).</li>
+<li><strong>Alta:</strong> revalidação de perfil/papel por request (A3); validação de chave desconhecida em <code>obter_papel_no_modulo</code> (A4).</li>
+<li><strong>Média:</strong> allowlist em <code>/admin/{chave}</code> (M1); reserva de slugs (M2); decisão de acesso à <code>/documentacao</code> (M3).</li>
+<li><strong>Média/Baixa:</strong> <code>acesso_negado</code> no PDF e na Auditoria (M4, M6); gate do JS (M5); remover <code>master:master</code> versionado (M7); bind docs em loopback (B3).</li>
+<li><strong>Ambiente:</strong> tratar as 13 vulns de <code>pip-audit</code>/<code>safety</code> (<code>pip-audit -r requirements.txt -r requirements-dev.txt</code>) e acompanhar <code>gitleaks</code> filtrando <code>site/</code>.</li>
+</ol>
+<h2 id="7-reproducao-somente-leitura-nenhum-fix-aplicado">7. Reprodução (somente leitura — nenhum <code>fix</code> aplicado)<a class="headerlink" href="#7-reproducao-somente-leitura-nenhum-fix-aplicado" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># SAST no escopo do menu</span>
+bandit<span class="w"> </span>-r<span class="w"> </span>mod_intranet/telas.py<span class="w"> </span>main.py<span class="w"> </span>mod_intranet/autenticacao.py<span class="w"> </span>mod_intranet/rotas_modulos.py<span class="w"> </span>-q
+semgrep<span class="w"> </span>scan<span class="w"> </span>--config<span class="w"> </span>auto<span class="w"> </span>--error<span class="w"> </span>--timeout<span class="o">=</span><span class="m">30</span><span class="w"> </span>-j<span class="w"> </span><span class="m">4</span><span class="w"> </span>--quiet<span class="w"> </span>main.py<span class="w"> </span>mod_intranet/telas.py<span class="w"> </span>mod_intranet/autenticacao.py<span class="w"> </span>mod_intranet/rotas_modulos.py
+
+<span class="c1"># Dependências e segredos</span>
+pip-audit<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+pip-audit<span class="w"> </span>-r<span class="w"> </span>requirements-dev.txt
+safety<span class="w"> </span>check
+gitleaks<span class="w"> </span>detect<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--redact
+
+<span class="c1"># Build da documentação (validação desta página)</span>
+.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>mkdocs<span class="w"> </span>build
+</code></pre></div>
+<blockquote>
+<p><code>k6</code> restrito a <strong>localhost/staging</strong> por política do repositório — não executado nesta auditoria.</p>
+</blockquote>
+<h2 id="8-historico">8. Histórico<a class="headerlink" href="#8-historico" title="Permanent link">&para;</a></h2>
+<ul>
+<li>06/09/2026 — <a href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Varredura</a>: 0 High (bandit/semgrep), 1 segredo real (<code>master:master</code>).</li>
+<li>12/09/2026 — esta auditoria (foco menu hambúrguer): 4 Altas + 7 Médias de <strong>lógica de autorização</strong> (invisíveis ao SAST por regras auto).</li>
+</ul>
+<p>Veja também: <a href="../ferramentas_de_seguranca/">Ferramentas de Segurança</a> · <a href="../../analise_de_risco/">Análise de Risco</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../riscos_ia_ml/" class="btn btn-neutral float-left" title="Riscos de IA/ML"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../ferramentas/graphify/" class="btn btn-neutral float-right" title="Graphify (grafo, dev-only)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../riscos_ia_ml/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../ferramentas/graphify/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

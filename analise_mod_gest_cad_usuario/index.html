@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -213,7 +234,7 @@
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Soft CRUD completo de usuários: criar, editar, renomear, bloquear/desbloquear, excluir logicamente (com motivo) e excluir permanentemente (LGPD). Gerencia perfis globais (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) e papéis granulares por módulo, além da visualização e revogação de sessões ativas de todo o sistema. Acesso restrito ao administrador geral ou administrador do módulo <code>usuarios</code>.</p>
 <h2 id="banco-proprio">Banco próprio<a class="headerlink" href="#banco-proprio" title="Permanent link">&para;</a></h2>
-<p>Conexão com WAL + <code>foreign_keys=ON</code>. Criador vigente: <code>init_db()</code> em <code>manipulador_bd.py:61-215</code>, executado no import do módulo e pelo bootstrap central.</p>
+<p>Conexão com WAL + <code>foreign_keys=ON</code>. Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:61-215</code>, executado no import do módulo e pelo bootstrap central.</p>
 <p><strong><code>tb_usuarios</code></strong> (após migrações):</p>
 <table>
 <thead>
@@ -270,7 +291,7 @@
 </tbody>
 </table>
 <p><strong><code>tb_acesso_usuario</code></strong> — vínculo usuário×módulo×papel (<code>UNIQUE(user_nome, modulo_chave)</code>, FK CASCADE para <code>tb_usuarios</code>); <code>modulo_chave</code> é texto livre — origem dos vínculos órfãos.</p>
-<p>⚠️ <code>tb_modulo_perfil</code> existe apenas no <code>db_criador.py</code>, que é <strong>código legado/morto</strong>: usa a conexão do banco <strong>central</strong> (criaria as tabelas em <code>db_mod_intranet.db</code>) e não é importado por ninguém.</p>
+<p>⚠️ <code>tb_modulo_perfil</code> existe apenas no <code>bd_criador.py</code>, que é <strong>código legado/morto</strong>: usa a conexão do banco <strong>central</strong> (criaria as tabelas em <code>db_mod_intranet.db</code>) e não é importado por ninguém.</p>
 <h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Gate duplo: <code>administrador_geral</code> ou <code>eh_admin_do_modulo(user,'usuarios')</code>; caso contrário painel "Acesso restrito".</li>
@@ -284,15 +305,15 @@
 <ul>
 <li><strong>Exclusão em dois estágios</strong>: estágio 1 = soft delete com motivo, encerra sessões, reversível ("Restaurar" limpa o motivo); estágio 2 = DELETE físico, acessível nas linhas de usuários excluídos via busca "excluído" (admin geral revalidado no backend).</li>
 <li><strong>Limpeza cruzada LGPD</strong>: exclui postagens/comentários do Blog, remove arquivos/cota do editorPDF (<code>mod_edit_pdf/editorPDF/</code>) e anonimiza autoria de empenhos como "(usuário excluído)". Auditoria sempre preservada. Nota: implementa cross-query SQLite ad-hoc aos bancos vizinhos (contrariando a convenção geral do projeto).</li>
-<li><strong>Proteções</strong>: vedado agir sobre a própria conta (bloquear/excluir/rebaixar); <code>master</code> não é renomeado nem excluído; último admin geral ativo protegido contra <strong>exclusão definitiva</strong>; RF-26: <code>editar_usuario</code>/<code>bloquear_usuario</code> bloqueiam <strong>rebaixar ou bloquear</strong> o último <code>administrador_geral</code> ativo quando o ator é OUTRO admin (<code>manipulador_bd.py:349-362</code>).</li>
+<li><strong>Proteções</strong>: vedado agir sobre a própria conta (bloquear/excluir/rebaixar); <code>master</code> não é renomeado nem excluído; último admin geral ativo protegido contra <strong>exclusão definitiva</strong>; RF-26: <code>editar_usuario</code>/<code>bloquear_usuario</code> bloqueiam <strong>rebaixar ou bloquear</strong> o último <code>administrador_geral</code> ativo quando o ator é OUTRO admin (<code>bd_manipulador.py:349-362</code>).</li>
 <li><strong>Senha provisória</strong>: criação/redefinição marcam <code>forcar_troca</code>; redefinição derruba todas as sessões. O admin digita a senha manualmente (não é gerada aleatória como diz o PLANO 2.5).</li>
-<li><strong>Auto-cura do master</strong>: enquanto a senha for <code>master</code>, a troca é rearmada a cada boot (<code>manipulador_bd.py:168-194</code>) — corrige o roadmap do README que dizia o contrário.</li>
+<li><strong>Auto-cura do master</strong>: enquanto a senha for <code>master</code>, a troca é rearmada a cada boot (<code>bd_manipulador.py:168-194</code>) — corrige o roadmap do README que dizia o contrário.</li>
 </ul>
 <h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
 <p>Importa <code>autenticacao</code> (hash/verificação de senha, papéis, troca pendente), <code>get_connection</code> central e <code>audit_log</code>. Ações auditadas: <code>criar_usuario</code>, <code>editar_usuario</code>, <code>renomear_usuario</code>, <code>alterar_senha</code>, <code>soft_delete</code>, <code>excluir_definitivo</code>, <code>definir_acesso</code>, <code>remover_acesso</code>, <code>encerrar_sessao</code>, <code>encerrar_todas_sessoes</code>. Escreve/lê diretamente <code>tb_sessoes</code> central. Nenhuma chave <code>tb_config</code> usada.</p>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>db_criador.py</code> é morto e aponta para o banco central — não executar.</li>
+<li><code>bd_criador.py</code> é morto e aponta para o banco central — não executar.</li>
 <li><code>listar_vinculos_orfaos()</code> existe mas não é chamada pela tela (órfãos aparecem apenas como badge INDISPONÍVEL nos seletores).</li>
 <li>Renomear usuário replica o nome nas tabelas dependentes e nas sessões centrais.</li>
 </ul>
@@ -338,7 +359,9 @@ fim — LGPD), sem destruir dados do desenvolvedor:</p>
 - <strong>Senha provisória</strong> é digitada pelo administrador (não gerada aleatória):
   geração aleatória continua <strong>não implementada</strong> — desvio documentado.
 - Controle granular é aplicado via <code>validar_acesso_modulo</code>/<code>listar_modulos_permitidos</code>,
-  usados no menu lateral, cards do dashboard e página <code>/modulo/{slug}</code></p>
+  usados no <strong>menu lateral</strong> (filtro <code>modulos_do_usuario</code>, <code>main.py:251</code>) e na guarda de
+  página <code>/modulo/{slug}</code> (<code>autenticacao.py:421</code>); o <strong>dashboard <code>/</code></strong> exibe o feed do
+  Blog e o <strong>Resumo do sistema</strong> apenas para administradores (geral/de módulo, <code>main.py:254</code>).</p>
 <h3 id="adicoes-recentes-0509">Adições recentes (05/09)<a class="headerlink" href="#adicoes-recentes-0509" title="Permanent link">&para;</a></h3>
 <p>Oito melhorias na tela de usuários (<code>mod_gest_cad_usuario/telas.py</code>), todas na aba <strong>Usuários</strong> e no diálogo de edição:</p>
 <ol>
@@ -370,7 +393,7 @@ fim — LGPD), sem destruir dados do desenvolvedor:</p>
 <h3 id="adicoes-recentes-2608">Adições recentes (26/08)<a class="headerlink" href="#adicoes-recentes-2608" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Aba "Administração"</strong> (exclusiva do admin geral, nas tabs existentes): bloco <strong>Aparência</strong> (prefixo usuarios_<em> — cor do botão/texto, fundo da página, cor do título, tamanho via ui.color_input; a cor do botão também define a primária da tela) e </em><em>config específica</em>*: usuarios_senha_min (política de senha mínima, aplicada em criar_usuario/alterar_senha_admin via senha_minima()). Salvo via set_config, vale sem reiniciar.</li>
-<li><strong>Versionamento</strong>: versao_modulo:usuarios = 1.0.260908 (seed em conexao_bd.init_db()), exibido no rodapé em /users (rota → chave usuarios).</li>
+<li><strong>Versionamento</strong>: versao_modulo:usuarios = 1.0.260918 (seed em bd_conexao.init_db()), exibido no rodapé em /users (rota → chave usuarios).</li>
 <li><strong>Edição do módulo</strong> (<code>campo_modulo</code> do helper <code>mod_intranet/tema_modulo.py</code>) — <strong>RESTAURADO (06/09)</strong>: após remoção acidental (regressão), o cupê voltou a aparecer na aba Administração — editar <strong>nome de exibição, ícone e status (ativo/inativo)</strong> do módulo (<code>mod_gest_cad_usuario/telas.py:705</code>); a edição também permanece no painel central <code>/configuracoes</code> (aba Módulo, admin geral).</li>
 </ul>
 <h3 id="adicoes-recentes-0609">Adições recentes (06/09)<a class="headerlink" href="#adicoes-recentes-0609" title="Permanent link">&para;</a></h3>
@@ -380,6 +403,10 @@ fim — LGPD), sem destruir dados do desenvolvedor:</p>
 <li><strong>Labels de senha dinâmicos</strong> (<code>telas.py:549</code>, <code>telas.py:753</code>, <code>telas.py:892</code>): os diálogos de novo usuário (<code>_dlg_novo</code>), redefinir (<code>_dlg_senha</code>) e duplicar (<code>_dlg_duplicar</code>) exibem "mín. X" com <code>gest.senha_minima()</code> (chave <code>usuarios_senha_min</code>) em vez do "mín. 6" fixo.</li>
 <li><strong>Import atualizado</strong> (<code>telas.py:28-31</code>): <code>btn_style</code> removido; <code>bloco_aparencia</code>, <code>rodape_salvar_restaurar</code> e <code>campo_modulo</code> importados de <code>mod_intranet.tema_modulo</code> (<code>campo_modulo</code> restaurado em 06/09 após remoção acidental).</li>
 <li>Cobertura: <code>test/verifica_ui_comum.py</code> — verificação <strong>"gest_cad: painel adm via cupês padrão (bloco_aparencia + rodapé + campo_modulo)"</strong> (<code>verifica_ui_comum.py:968-969</code>); suíte completa: <strong>179 OK, 0 falhas</strong>. Demais suítes: dashboard 31, config 50, boot 16, autenticação 19, permissões 13.</li>
+</ul>
+<h3 id="adicoes-recentes-092026-responsividade-global-rnf-ui-01">Adições recentes (09/2026) — responsividade global RNF-UI-01<a class="headerlink" href="#adicoes-recentes-092026-responsividade-global-rnf-ui-01" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Barra superior</strong> <code>flex-nowrap</code> → <code>flex-wrap</code>, tabs <code>overflow-x-auto</code>, busca <code>flex-1 min-w</code> (<code>campo_busca</code> <code>grow min-w-[220px]</code>), dialogs <code>w-full max-w</code> — validado 320/768/1024 (<code>kbp-web-design</code>). Tabelas com <code>overflow-x-auto</code> (parcial). Proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code> (header <code>flex-wrap</code> <code>truncate</code>, filtros <code>sm:grid-cols-2</code>) registrada na auditoria.</li>
 </ul>
               
             </div>

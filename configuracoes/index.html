@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -222,7 +243,7 @@
 <li><a href="#sem-variaveis-de-ambiente-env">Sem variáveis de ambiente <code>.env</code></a></li>
 </ol>
 <h2 id="visao-geral">Visão geral<a class="headerlink" href="#visao-geral" title="Permanent link">&para;</a></h2>
-<p>A aplicação não usa arquivo <code>.env</code> nem variáveis de ambiente: a configuração é <strong>persistida no banco central</strong> <code>db_mod_intranet.db</code> (tabela <code>tb_config</code>, chave/valor) e lida via <code>get_config(chave, default)</code> / <code>set_config(chave, valor)</code> (<code>mod_intranet/conexao_bd.py:103-123</code>). As únicas "constantes de execução" estão hardcoded no <code>main.py</code>.</p>
+<p>A aplicação não usa arquivo <code>.env</code> nem variáveis de ambiente: a configuração é <strong>persistida no banco central</strong> <code>db_mod_intranet.db</code> (tabela <code>tb_config</code>, chave/valor) e lida via <code>get_config(chave, default)</code> / <code>set_config(chave, valor)</code> (<code>mod_intranet/bd_conexao.py:103-123</code>). As únicas "constantes de execução" estão hardcoded no <code>main.py</code>.</p>
 <h2 id="storage_secret-curinga-do-nicegui"><code>storage_secret</code> (curinga do NiceGUI)<a class="headerlink" href="#storage_secret-curinga-do-nicegui" title="Permanent link">&para;</a></h2>
 <p>Em <code>main.py:471-478</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="n">ui</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
@@ -288,7 +309,7 @@
 <tr>
 <td style="text-align: left;"><code>db_mod_intranet.db</code></td>
 <td style="text-align: left;">núcleo (auditoria, config, sessões, módulos)</td>
-<td style="text-align: left;"><code>mod_intranet/conexao_bd.py:11</code></td>
+<td style="text-align: left;"><code>mod_intranet/bd_conexao.py:11</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>db_mod_gest_cad_usuario.db</code></td>
@@ -298,22 +319,42 @@
 <tr>
 <td style="text-align: left;"><code>db_mod_blog.db</code></td>
 <td style="text-align: left;">blog</td>
-<td style="text-align: left;"><code>mod_blog/manipulador_bd.py:41-45</code></td>
+<td style="text-align: left;"><code>mod_blog/bd_manipulador.py:41-45</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>db_mod_edit_pdf.db</code></td>
 <td style="text-align: left;">editor de PDF</td>
-<td style="text-align: left;"><code>mod_edit_pdf/manipulador_bd.py:23</code></td>
+<td style="text-align: left;"><code>mod_edit_pdf/bd_manipulador.py:23</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>db_mod_renomear_empenho.db</code></td>
 <td style="text-align: left;">renomear empenho</td>
-<td style="text-align: left;"><code>mod_renomear_empenho/manipulador_bd.py:20</code></td>
+<td style="text-align: left;"><code>mod_renomear_empenho/bd_manipulador.py:20</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>db_mod_solicita_impressao.db</code></td>
 <td style="text-align: left;">solicitação de impressão</td>
-<td style="text-align: left;"><code>mod_solicita_impressao/manipulador_bd.py:25</code></td>
+<td style="text-align: left;"><code>mod_solicita_impressao/bd_manipulador.py:30</code> — <strong>cotAS 1000/200 via <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code> (19/09/2026)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db_mod_tecnico.db</code></td>
+<td style="text-align: left;">técnico — software + backup</td>
+<td style="text-align: left;"><code>mod_tecnico/bd_manipulador.py:26</code> — pastas <code>software/</code> + <code>backup/YYYYMMDD_HHMM_nomePc_ip</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db_mod_filas.db</code></td>
+<td style="text-align: left;">filas (TV) — esqueleto</td>
+<td style="text-align: left;"><code>mod_filas/bd_manipulador.py:12</code> — <code>tb_fila</code>/<code>tb_chamada</code> + <code>/tv</code> pública</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db_mod_lista_telefonica.db</code></td>
+<td style="text-align: left;">lista telefônica (organograma)</td>
+<td style="text-align: left;"><code>mod_lista_telefonica/bd_manipulador.py:18</code> — <code>tb_unidade</code> (<code>secretaria\|setor\|subsetor</code>) + <code>tb_contato</code> (alfabético) + <code>ORGANOGRAMA_BASE</code> 12 secretarias</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db_mod_auditoria.db</code></td>
+<td style="text-align: left;">auditoria (uma tabela por módulo)</td>
+<td style="text-align: left;"><code>mod_auditoria/bd_manipulador.py:25</code> — <code>tb_auditoria_&lt;modulo&gt;</code></td>
 </tr>
 </tbody>
 </table>
@@ -395,7 +436,10 @@
 <li><code>init_users()</code> → <code>db_mod_gest_cad_usuario.db</code> + seed <code>master</code>/<code>master</code>.</li>
 <li><code>init_db_pdf()</code> → <code>db_mod_edit_pdf.db</code>.</li>
 <li><code>init_db_empenho()</code> → <code>db_mod_renomear_empenho.db</code>.</li>
-<li><code>init_solicita()</code> → <code>db_mod_solicita_impressao.db</code>.</li>
+<li><code>init_solicita()</code> → <code>db_mod_solicita_impressao.db</code> — <strong>importa <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code> (19/09/2026)</strong>: <code>tb_secretarias</code> 1000 + <code>tb_setores</code> 200 (subsetores achatados), migração <code>UPDATE</code> idempotente 1000/200.</li>
+<li><code>init_db()</code> técnico (<code>mod_tecnico/bd_manipulador.py:71</code>) → <code>db_mod_tecnico.db</code> + <code>software/</code>/<code>backup/</code> + <code>tb_backup</code>/<code>tb_backup_arquivo</code>.</li>
+<li><code>init_db()</code> filas (<code>mod_filas/bd_manipulador.py:34</code>) → <code>db_mod_filas.db</code> + seed <code>Geral A000</code> + <code>tb_fila</code>/<code>tb_chamada</code>.</li>
+<li><code>init_db()</code> lista telefônica (<code>mod_lista_telefonica/bd_manipulador.py:106</code>) → <code>db_mod_lista_telefonica.db</code> + <code>tb_unidade</code>/<code>tb_contato</code> + semente 12 secretarias <code>ORGANOGRAMA_BASE</code> (idempotente, só quando <code>tb_unidade</code> vazia).</li>
 </ol>
 <p>O processo é <strong>idempotente</strong> (nunca apaga dados) e pode ser rodado novamente para aplicar seeds sem reiniciar nada.</p>
 <h2 id="chaves-de-configuracao-tb_config">Chaves de configuração (<code>tb_config</code>)<a class="headerlink" href="#chaves-de-configuracao-tb_config" title="Permanent link">&para;</a></h2>
@@ -413,7 +457,7 @@
 <tr>
 <td style="text-align: left;">Sistema</td>
 <td style="text-align: left;"><code>versao_sistema</code></td>
-<td style="text-align: left;"><code>1.0.260908</code></td>
+<td style="text-align: left;"><code>1.0.260913</code></td>
 <td style="text-align: left;">versão global exibida no rodapé</td>
 </tr>
 <tr>
@@ -461,7 +505,7 @@
 <tr>
 <td style="text-align: left;">Versão por módulo</td>
 <td style="text-align: left;"><code>versao_modulo:&lt;chave&gt;</code></td>
-<td style="text-align: left;">seeds em <code>conexao_bd.py:70-79</code></td>
+<td style="text-align: left;">seeds em <code>bd_conexao.py:70-79</code></td>
 <td style="text-align: left;">versão individual no rodapé</td>
 </tr>
 <tr>
@@ -484,15 +528,33 @@
 </tr>
 <tr>
 <td style="text-align: left;">Blog</td>
-<td style="text-align: left;"><code>blog_modo_exibicao</code>, <code>blog_largura_imagem</code>, <code>blog_tags_permitidas</code>, <code>blog_texto_header</code> + tema <code>blog_*</code></td>
+<td style="text-align: left;"><code>blog_modo_exibicao</code> (<strong><code>carrossel</code> padrão com 3 básicas 18/09/2026</strong>, <code>historico</code>/<code>unica</code>/<code>carrossel</code>), <code>blog_postagem_unica_id</code>, <code>blog_carrossel_postagens_ids</code> (CSV), <code>blog_carrossel_tempo</code> (10 s), <code>blog_largura_imagem</code>, <code>blog_tags_permitidas</code>, <code>blog_texto_header</code> + tema <code>blog_*</code></td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">comportamento/aparência</td>
+<td style="text-align: left;">comportamento/aparência — <code>init_db</code> garante carrossel 3 básicas via <code>_garantir_carrossel_padrao</code> (<code>bd_manipulador.py:241</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;">Usuários</td>
-<td style="text-align: left;"><code>usuarios_senha_min</code>, tema <code>usuarios_*</code></td>
+<td style="text-align: left;"><code>usuarios_senha_min</code> (6), tema <code>usuarios_*</code></td>
 <td style="text-align: left;"><code>6</code></td>
-<td style="text-align: left;">política de senha mínima</td>
+<td style="text-align: left;">política de senha mínima — senha vazia/None em <code>criar_usuario</code>/<code>duplicar_usuario</code> cai em <code>123456</code> (18/09/2026)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Técnico</td>
+<td style="text-align: left;"><code>tecnico_max_zip_mb</code> (1024), tema <code>tecnico_*</code> + pastas <code>software/</code>/<code>backup/</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">backup T.I. — ver <a href="../modulos/tecnico/">Módulo Técnico</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">Filas</td>
+<td style="text-align: left;"><code>filas_modo_tv</code> (1), <code>filas_senha_prefixo</code> (A), <code>filas_guiche_padrao</code> (01), tema <code>filas_*</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">esqueleto TV — ver <a href="../modulos/filas/">Módulo Filas</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">Lista Telefônica</td>
+<td style="text-align: left;"><code>lista_telefonica_*</code> (tema), 12 secretarias genéricas</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">organograma <code>Secretaria→Setor→Subsetor</code> + contatos alfabéticos + <code>tel:</code> — ver <a href="../modulos/lista_telefonica/">Módulo Lista Telefônica</a></td>
 </tr>
 <tr>
 <td style="text-align: left;">Auditoria</td>
@@ -508,7 +570,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">Impressão</td>
-<td style="text-align: left;">variáveis de tempo e padrões na aba Administração → Configurações do módulo</td>
+<td style="text-align: left;">variáveis de tempo e padrões na aba Administração → Configurações do módulo + <strong>cotas padrão 1000/200 via <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code> (19/09/2026)</strong></td>
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">ver <a href="../modulos/solicitacao_impressao/">Módulo de Solicitação de Impressão</a></td>
 </tr>
@@ -526,9 +588,9 @@
 </tr>
 <tr>
 <td style="text-align: left;">Telemetria OTel</td>
-<td style="text-align: left;"><code>otel_ativo</code> (<code>1</code>), <code>otel_endpoint</code> (<code>localhost:4317</code>, env <code>OTEL_ENDPOINT</code> tem prioridade), <code>otel_auto_start_stack</code> (<code>1</code>)</td>
+<td style="text-align: left;"><code>otel_ativo</code> (<code>1</code>/<code>0</code>), <code>otel_endpoint</code> (<code>localhost:4317</code>, env <code>OTEL_ENDPOINT</code> tem prioridade), <code>otel_auto_start_stack</code> (<code>1</code>)</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">stack local (Docker) ou servidor dedicado; troca exige restart</td>
+<td style="text-align: left;">stack local (Docker) ou servidor dedicado; troca exige restart. Desde 11/09 a escolha <code>0</code>/<code>1</code> também é <strong>persistida pelo assistente de ativação do boot</strong> (<code>set_config("otel_ativo", ...)</code>) — a opção "não" sobrevive ao restart</td>
 </tr>
 <tr>
 <td style="text-align: left;">Grafana</td>
@@ -549,20 +611,26 @@
 <td style="text-align: left;">sincronização NTP.br da hora do servidor (<code>mod_intranet/hora_servidor.py</code>): <code>1</code> = ativa (default), <code>0</code> = usa o relógio local; aplicada sem restart</td>
 </tr>
 <tr>
+<td style="text-align: left;">Contador de visitas (Home)</td>
+<td style="text-align: left;"><code>contador_acessos_total</code> (<code>0</code>), <code>contador_acessos_inicio</code> (<code>YYYY-MM-DD</code>)</td>
+<td style="text-align: left;"><code>PADRAO_CONFIG</code> (<code>bd_conexao.py:70-72</code>) + seed <code>init_db()</code> <code>bd_conexao.py:188-196</code></td>
+<td style="text-align: left;">contador <strong>padronizado de visitas</strong>: incrementado <strong>só em login bem-sucedido</strong> (<code>bd_conexao.incrementar_contador_acessos()</code> <code>bd_conexao.py:200</code> chamada em <code>main.py:tentar_login()</code> <code>main.py:229</code> — nunca em navegação/refresh/troca de aba); <code>contador_acessos_inicio</code> semeado na primeira execução em <code>YYYY-MM-DD</code> (tooltip Dashboard <code>Visitas</code> simplificado para <code>"Visitas"</code>; data início <code>DD/MM/YYYY</code> como referência); exibido como <code>Acessos/Visitas</code> no Resumo Water (<code>main.py:_stat</code> <code>gap-1 px-2 py-1</code>, ícone 36px, 4 dígitos <code>&gt;9999</code> com total real no tooltip único do card)</td>
+</tr>
+<tr>
 <td style="text-align: left;">Banco</td>
 <td style="text-align: left;"><code>banco_tipo</code> (<code>sqlite</code>), <code>postgres_url</code> (<code>postgresql+psycopg2://intranet:intranet@localhost:5432/intranet</code>)</td>
-<td style="text-align: left;"><code>PADRAO_CONFIG</code> (<code>conexao_bd.py:40-41</code>)</td>
-<td style="text-align: left;">seleção do SGBD: <code>sqlite</code> (padrão, zero dependências extras) ou <code>postgres</code> (backend duplo via <code>banco_conexao</code> — conexão DBAPI por módulo, um SCHEMA por módulo no banco <code>intranet</code>); lidos no boot via <code>banco_conexao._ler_config_sqlite</code>; troca exige <strong>reiniciar o servidor</strong> — ver <a href="#card-banco-de-dados-sqlite-ou-postgresql-0809">Card "Banco de dados" (SQLite ou PostgreSQL)</a></td>
+<td style="text-align: left;"><code>PADRAO_CONFIG</code> (<code>bd_conexao.py:40-41</code>)</td>
+<td style="text-align: left;">seleção do SGBD: <code>sqlite</code> (padrão, zero dependências extras) ou <code>postgres</code> (backend duplo via <code>banco_conexao</code> — conexão DBAPI por módulo, <strong>um DATABASE <code>db_mod_&lt;chave&gt;</code> por módulo</strong>, espelhando o arquivo SQLite); lidos no boot via <code>banco_conexao._ler_config_sqlite</code>; troca exige <strong>reiniciar o servidor</strong> — ver <a href="#card-banco-de-dados-sqlite-ou-postgresql-0809">Card "Banco de dados" (SQLite ou PostgreSQL)</a></td>
 </tr>
 </tbody>
 </table>
 <blockquote>
-<p>Os padrões de aparência vivem em <code>PADRAO_CONFIG</code> (<code>mod_intranet/conexao_bd.py:13-24</code>) e são restaurados via tela de configurações (abas com "Restaurar padrão" por cartão).</p>
+<p>Os padrões de aparência vivem em <code>PADRAO_CONFIG</code> (<code>mod_intranet/bd_conexao.py:13-24</code>) e são restaurados via tela de configurações (abas com "Restaurar padrão" por cartão).</p>
 </blockquote>
 <h3 id="menu-administracao-0609">Menu "Administração" (06/09)<a class="headerlink" href="#menu-administracao-0609" title="Permanent link">&para;</a></h3>
-<p>A tela <code>/configuracoes</code> é aberta pelo item <strong>"Administração"</strong> do menu lateral (antes "Configurações"), com ícone unificado <code>admin_panel_settings</code> (<code>layout_tela.py:184-191</code>) e guarda <code>pagina_restrita("Administração")</code> (<code>main.py:442</code>) — exclusivo do <code>administrador_geral</code>. O drawer <strong>não exibe mais labels de seção</strong> ("PÁGINA INICIAL"/"MÓDULOS"/"SISTEMA" foram removidos; restam apenas separadores entre os grupos de itens). No header das páginas de módulo, o tooltip do botão de backup passou a <strong>"Administração do módulo (backup e agendamento)"</strong> (<code>layout_tela.py:145</code>), alinhando a nomenclatura: toda área de gestão — central ou do módulo — chama-se <strong>Administração</strong>.</p>
+<p>A tela <code>/configuracoes</code> é aberta pelo item <strong>"Administração"</strong> do menu lateral (antes "Configurações", fábrica <code>ui_comum.item_menu_drawer</code> com <code>testid="menu-admin"</code>, <code>mod_intranet/telas.py:_montar_layout</code>) e guarda <code>pagina_restrita("Administração")</code> (<code>main.py:442</code>) — exclusivo do <code>administrador_geral</code>. O drawer <strong>não exibe mais labels de seção</strong> ("PÁGINA INICIAL"/"MÓDULOS"/"SISTEMA" foram removidos; restam apenas separadores entre os grupos de itens). No header das páginas de módulo, o tooltip do botão de backup passou a <strong>"Administração do módulo (backup e agendamento)"</strong> (<code>layout_tela.py:145</code>), alinhando a nomenclatura: toda área de gestão — central ou do módulo — chama-se <strong>Administração</strong>.</p>
 <h3 id="card-banco-de-dados-sqlite-ou-postgresql-0809">Card "Banco de dados" (SQLite ou PostgreSQL) (08/09)<a class="headerlink" href="#card-banco-de-dados-sqlite-ou-postgresql-0809" title="Permanent link">&para;</a></h3>
-<p>O padrão permanece <strong>SQLite</strong> (atende servidores simples, zero dependências extras — todos os módulos operam via <code>CrudBase</code>/<code>sqlite3</code>). Para demandas maiores, o <strong>PostgreSQL é opcional e configurável pelo admin</strong> em <code>/configuracoes</code> → aba <strong>Documentação</strong> → card <strong>"Banco de dados — SQLite ou PostgreSQL"</strong> (ícone <code>storage</code>, <code>tela_configuracoes.py:1226-1259</code>), sem tocar em código:</p>
+<p>O padrão permanece <strong>SQLite</strong> (atende servidores simples, zero dependências extras — todos os módulos operam via <code>CrudBase</code>/<code>sqlite3</code>). Para demandas maiores, o <strong>PostgreSQL é opcional e configurável pelo admin</strong> em <code>/configuracoes</code> → aba <strong>Config</strong> (ao final, após o card "Ícones") → card <strong>"Banco de dados — SQLite ou PostgreSQL"</strong> (ícone <code>storage</code>, <code>tela_configuracoes.py:1033-1075</code>, <code>data-testid="config-aplicar-banco"</code>), sem tocar em código:</p>
 <table>
 <thead>
 <tr>
@@ -573,7 +641,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Card</td>
-<td style="text-align: left;"><code>ui_comum.card_admin("Banco de dados — SQLite ou PostgreSQL", icone="storage")</code> (<code>tela_configuracoes.py:1227</code>)</td>
+<td style="text-align: left;"><code>ui_comum.card_admin("Banco de dados — SQLite ou PostgreSQL", icone="storage")</code> (<code>tela_configuracoes.py:1034</code>, aba Config, após o card "Ícones")</td>
 </tr>
 <tr>
 <td style="text-align: left;">Select <code>banco_tipo</code></td>
@@ -593,7 +661,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">Auditoria</td>
-<td style="text-align: left;"><code>aplicar_banco</code> audita <code>config_banco</code> via <code>_aplicar_card("Banco de dados", ...)</code> (<code>tela_configuracoes.py:1259</code>)</td>
+<td style="text-align: left;"><code>aplicar_banco</code> audita <code>config_banco</code> via <code>_aplicar_card_sem_reload("Banco de dados", ...)</code> (<code>tela_configuracoes.py:1070-1075</code>, <code>data-testid="config-aplicar-banco"</code>) — <strong>sem reload</strong>, exige restart</td>
 </tr>
 </tbody>
 </table>
@@ -601,7 +669,7 @@
 <ul>
 <li><code>banco_tipo</code> em <code>tb_config</code> central (<code>'sqlite'</code> padrão | <code>'postgres'</code>): lido <strong>DIRETO do arquivo SQLite central</strong> (<code>_ler_config_sqlite</code>, <code>banco_conexao.py:57</code>) — seletor de backend autoritativo no boot, sem recursão.</li>
 <li><code>postgres_url</code> (DSN) também no arquivo SQLite central; credenciais da URL usadas como estão (container <code>intranet/intranet</code>).</li>
-<li>Postgres: <strong>um SCHEMA por módulo</strong> dentro do banco <code>intranet</code> (<code>SCHEMAS</code>, <code>banco_conexao.py:248</code>) — <code>intranet</code>, <code>blog</code>, <code>usuarios</code>, <code>auditoria</code>, <code>editar_pdf</code>, <code>empenhos</code>, <code>solicita_impressao</code> — <code>search_path</code> setado por conexão (schema criado via <code>CREATE SCHEMA IF NOT EXISTS</code> no connect, com commit para sobreviver ao rollback do pool). Isso preserva o isolamento "um banco por módulo" e evita colisões de nome de tabela (ex.: <code>tb_solicitacoes</code>).</li>
+<li>Postgres: <strong>um DATABASE <code>db_mod_&lt;chave&gt;</code> por módulo</strong> (espelha o arquivo SQLite <code>db_mod_&lt;chave&gt;.db</code>) — <code>banco_modulo(chave)</code> (<code>banco_conexao.py:263</code>) resolve o nome e <code>_garantir_bd_postgres(banco)</code> (<code>:281</code>) cria o banco ausente via <code>CREATE DATABASE</code> no banco de manutenção <code>postgres</code> (autocommit, idempotente por processo); <code>garantir_bancos_postgres()</code> (<code>:317</code>) garante TODOS os bancos de módulo no boot. Isso preserva o isolamento "um banco por módulo" e evita colisões de nome de tabela (ex.: <code>tb_solicitacoes</code>).</li>
 <li><code>conexao(chave)</code> devolve uma conexão DBAPI para o backend ativo: sqlite (arquivo do módulo, WAL) ou postgres (proxy psycopg2 com tradução <code>?</code>→<code>%s</code>, DDL SQLite→Postgres, <code>INSERT OR IGNORE</code>→<code>ON CONFLICT DO NOTHING</code>, <code>PRAGMA</code>/FTS5 ignorados, <code>lastrowid</code> via <code>RETURNING id</code> com SAVEPOINT, SAVEPOINT por statement). Detalhes em <a href="../arquitetura/#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura — Backend duplo</a>.</li>
 <li><code>repositorio.engine(chave)</code>/<code>sessaodb(chave)</code> roteiam para o Postgres quando <code>banco_tipo='postgres'</code> (senão mantêm SQLite por arquivo).</li>
 <li>Fail-soft: sem <code>sqlalchemy</code>/driver instalado, registra exception no loguru e a aplicação <strong>segue de pé em SQLite</strong>.</li>
@@ -647,8 +715,106 @@
 </tbody>
 </table>
 <blockquote>
-<p><strong>Nota (08/09):</strong> o suporte ao PostgreSQL está <strong>ativo</strong> — não é mais fase futura. Os módulos migrados para a camada única (<code>banco_conexao.conexao(chave)</code>) operam no backend selecionado: <code>mod_intranet/bd_conexao.get_connection</code>, <code>mod_auditoria</code>, <code>mod_edit_pdf</code>, <code>mod_gest_cad_usuario</code>, <code>mod_renomear_empenho</code>, <code>mod_solicita_impressao</code>; <code>CrudBase._conectar</code> também roteia pelo backend ativo (módulo em <code>SCHEMAS</code>). A <strong>migração de dados</strong> SQLite→PostgreSQL permanece manual — os bancos SQLite existentes não são movidos automaticamente (o Postgres inicia com os schemas vazios, recriados pelos <code>init_db</code> dos módulos).</p>
+<p><strong>Nota (08/09):</strong> o suporte ao PostgreSQL está <strong>ativo</strong> — não é mais fase futura. Os módulos migrados para a camada única (<code>banco_conexao.conexao(chave)</code>) operam no backend selecionado: <code>mod_intranet/bd_conexao.get_connection</code>, <code>mod_auditoria</code>, <code>mod_edit_pdf</code>, <code>mod_gest_cad_usuario</code>, <code>mod_renomear_empenho</code>, <code>mod_solicita_impressao</code>; <code>CrudBase._conectar</code> também roteia pelo backend ativo (módulo em <code>MODULOS_BD</code>). A <strong>migração de dados</strong> SQLite→PostgreSQL permanece manual — os bancos SQLite existentes não são movidos automaticamente (o Postgres inicia com os bancos de módulo vazios, recriados pelos <code>init_db</code> dos módulos).</p>
 </blockquote>
+<h3 id="assistente-de-ativacao-no-boot-opcao-c-092026">Assistente de ativação no boot — Opção C (09/2026)<a class="headerlink" href="#assistente-de-ativacao-no-boot-opcao-c-092026" title="Permanent link">&para;</a></h3>
+<p>O boot do <code>main.py</code> <strong>sem argumentos</strong> não exibe mais o assistente — carrega <code>config_persistida()</code> (<code>ativacao.py:1284</code>) direto de <code>tb_config</code> e sobe. O <strong>assistente interativo</strong> só abre com <code>--config</code>/<code>-c</code> (<code>main.py:43-45</code> → <code>ativacao.iniciar(cli_cfg=None)</code>):</p>
+<ul>
+<li><strong><code>python main.py</code></strong> (sem args) → <code>config_persistida()</code> (<code>ativacao.py:1284</code>): lê <code>banco_tipo</code>, <code>postgres_url</code> (+ porta extraída via regex <code>r":(\d+)/"</code>), <code>otel_ativo</code> e <code>porta_*</code> de <code>tb_config</code> com fallback em <code>_config_padrao()</code> (<code>ativacao.py:468</code> — <code>otel_ativo: False</code>, <code>porta_site: 8080</code>, <code>porta_documentacao: 8000</code>); primeira execução (chaves ausentes) usa o padrão puro. Depois <code>aplicar_banco(cfg)</code> persiste o seletor via <code>banco_conexao</code>.</li>
+<li><strong><code>python main.py --config</code> / <code>-c</code></strong> → <strong>ENTER / não-TTY → modo BÁSICO</strong>: <strong>apenas SQLite</strong>, <strong>sem Postgres e sem OpenTelemetry</strong> — boot rápido (<code>_config_padrao()</code> com <code>otel_ativo: False</code>). <strong><code>1</code> → modo de ativação</strong> (<code>iniciar()</code>, <code>ativacao.py:1442</code>): o usuário opta por subir PostgreSQL e/ou OpenTelemetry (portas só para serviços ativados, faixa 1–65535). <strong>Todas as perguntas binárias aceitam apenas <code>1</code> (ativar/configurar) ou ENTER/<code>0</code> (não/básico)</strong> — via <code>_escolha_1_enter</code> (<code>:1237</code>, banco) e <code>_sim_nao</code> (<code>:1260</code>, serviços e fallback <code>_confirmar_fallback_sqlite</code> <code>:1270</code>); <code>sim</code>/<code>nao</code>/<code>s</code>/<code>x</code> ou textos (<code>sqlite</code>/<code>postgres</code>) são recusadas com <code>"Opção inválida — digite 1 para ..."</code> e a pergunta <strong>repete</strong> até <code>1</code>/ENTER/<code>0</code>; <code>EOFError</code>/<code>Ctrl+C</code> caem no padrão. O prompt inicial <strong>repete até resposta válida</strong> (só ENTER ou <code>1</code> — <code>iniciar():1458-1472</code>); <code>perguntar()</code> (<code>:106</code>) repete qualquer pergunta até resposta válida. Porta padrão (5432/3000) ocupada → avisa <code>_msg_porta_em_uso</code> (<code>:191</code>) e <strong>sugere portas livres</strong> (<code>_portas_livres</code>, <code>:148</code>) → pede outra porta → reescreve compose (<code>aplicar_portas</code>, <code>:540</code>) → <code>down</code> + <code>up -d</code> → aguarda online (retry 5 tentativas em <code>_executar_e_persistir():1557</code>; fallback SQLite confirmado via <code>_confirmar_fallback_sqlite</code>). DSN validado por <code>_verificar_postgres</code> (<code>:715</code>, remove <code>+psycopg2</code>); SDK OTel instalado via pip quando ativado (<code>_garantir_sdk_otel</code>, <code>:1131</code>).</li>
+<li><strong>Persistência</strong>: <code>otel_ativo</code> gravado em <code>tb_config</code> (<code>set_config("otel_ativo", "1"/"0")</code>, <code>_executar_e_persistir():1609</code>) — o "não" sobrevive ao restart (<code>main.py:74</code> consulta <code>get_config("otel_ativo")</code>). O <code>banco_tipo</code>/<code>postgres_url</code> também persistidos via <code>ativacao.aplicar_banco(cfg)</code> (<code>:507</code> → <code>_garantir_tb_config</code> + <code>banco_conexao.definir_*</code>).</li>
+</ul>
+<p>Detalhes de uso: <a href="../manual_de_uso_instalacao/#21-assistente-de-ativacao-boot-via-config-c">Manual de Instalação</a>.</p>
+<h3 id="inicializacao-por-argumentos-de-linha-de-comando-opcao-c-092026">Inicialização por argumentos de linha de comando — Opção C (09/2026)<a class="headerlink" href="#inicializacao-por-argumentos-de-linha-de-comando-opcao-c-092026" title="Permanent link">&para;</a></h3>
+<p>Além do assistente, o boot aceita <strong>argumentos Typer</strong> com prefixos semânticos <strong>Opção C</strong> — <code>python main.py --help</code> explica cada chamada <strong>em PT-BR</strong> com <em>"Sem argumentos, sobe direto com a configuração persistida"</em> (<code>ativacao._cli_app()</code> <code>ativacao.py:1338</code>) e encerra; <strong>sem argumentos, não abre assistente</strong> — sobe com <code>config_persistida()</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Grupo</th>
+<th style="text-align: left;">Flag (Opção C)</th>
+<th style="text-align: left;">Alias</th>
+<th style="text-align: center;">Curta</th>
+<th style="text-align: center;">Default</th>
+<th>Efeito</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Ativação</strong></td>
+<td style="text-align: left;"><code>--ativ-otel</code></td>
+<td style="text-align: left;"><code>--otel</code></td>
+<td style="text-align: center;"><code>-o</code></td>
+<td style="text-align: center;">desligado</td>
+<td>ativa OpenTelemetry (Grafana+Loki+Tempo+Mimir)</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--ativ-postgres</code></td>
+<td style="text-align: left;"><code>--ativ-postgress</code> (typo), <code>--postgres</code></td>
+<td style="text-align: center;"><code>-p</code></td>
+<td style="text-align: center;">desligado</td>
+<td>usa PostgreSQL (sobe container) em vez do SQLite</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Portas</strong></td>
+<td style="text-align: left;"><code>--porta-db</code></td>
+<td style="text-align: left;"><code>--portapostgres</code></td>
+<td style="text-align: center;"><code>-k</code></td>
+<td style="text-align: center;"><code>5432</code></td>
+<td>porta do PostgreSQL (5432 ocupada → use 5444)</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-docs</code></td>
+<td style="text-align: left;"><code>--portadocumentacao</code></td>
+<td style="text-align: center;"><code>-d</code></td>
+<td style="text-align: center;"><code>8000</code></td>
+<td>porta da documentação mkdocs (separada do site)</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-grafana</code></td>
+<td style="text-align: left;"><code>--portatelemetria</code></td>
+<td style="text-align: center;"><code>-t</code></td>
+<td style="text-align: center;"><code>3000</code></td>
+<td>porta do painel Grafana/telemetria</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-site</code></td>
+<td style="text-align: left;"><code>--portasite</code></td>
+<td style="text-align: center;"><code>-s</code></td>
+<td style="text-align: center;"><code>8080</code></td>
+<td>porta do site/aplicação</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Config</strong></td>
+<td style="text-align: left;"><code>--config</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: center;"><code>-c</code></td>
+<td style="text-align: center;">desligado</td>
+<td>abre o assistente interativo (ENTER=básico; 1=configurar)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Utilitário</strong></td>
+<td style="text-align: left;"><code>--scan-ports</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: center;"><code>-S</code></td>
+<td style="text-align: center;">desligado</td>
+<td>lista portas em uso + serviço (localhost) e encerra exit 0</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Agrupamento e ordem (Opção C):</strong> flags agrupadas por tipo — <code>config</code> → <code>ativação</code> (<code>--ativ-*</code>, alfabética: otel, postgres) → <code>portas</code> (<code>--porta-*</code>, alfabética: docs, db, grafana, site) → <code>utilitários</code> (<code>--scan-ports</code>), com contrações curtas <code>-c/-o/-p/-d/-k/-s/-t/-S</code> (<code>ativacao._cli_app()</code> <code>ativacao.py:1346</code>).</p>
+</blockquote>
+<ul>
+<li><code>cli_opcoes(args=None)</code> (<code>ativacao.py:1387</code>) parseia via Typer (<code>get_command().make_context()</code>; <code>click.exceptions.Exit</code> → <code>SystemExit</code>); <code>config_do_cli(...)</code> (<code>:1420</code>) monta o <code>cfg</code> e <code>iniciar(cli_cfg=...)</code> (<code>:1442</code>) sobe <strong>direto, sem assistente</strong>, reaproveitando <code>_executar_e_persistir(cfg)</code> (<code>:1531</code>). Validação de portas via <code>_porta_valida</code> (<code>:140</code>).</li>
+<li><code>main.py:38-56</code> decide: sem args → <code>config_persistida()</code>; <code>--config</code>/<code>-c</code> → wizard; flags <code>-</code> → <code>cli_opcoes</code> → <code>config_do_cli</code> → <code>iniciar(cli_cfg)</code>; senão → <code>config_persistida()</code>. <code>--config</code> tem prioridade sobre demais flags.</li>
+<li><code>--scan-ports</code>/<code>-S</code> processado em <code>cli_opcoes()</code> (<code>:1404</code>): imprime <code>port_scanner.resumo_portas()</code> e sai exit 0 — apenas <code>127.0.0.1</code>.</li>
+<li>Help atualizado (<code>_cli_app</code> <code>ativacao.py:1338</code>): <em>"Intranet Modular — inicialização do sistema. Sem argumentos, sobe direto com a configuração persistida (modo padrão). Use --config para abrir o assistente interativo (ENTER = básico SQLite; 1 + ENTER = configurar) ou passe --postgres/--otel/--porta</em> para configurar direto."*</li>
+<li><strong>Dependências</strong>: <code>requirements.txt:12-15</code> (bloco "CLI do assistente de ativação") — <code>typer&gt;=0.12</code> e <code>rich&gt;=13.0</code>. O <code>rich</code> também gera as <strong>cores do terminal</strong> do assistente (<code>_MAPA_RICH</code> <code>:37</code>, <code>_abre_fecha</code> <code>:46</code>, <code>c()</code> <code>:63</code>, <code>banner()</code> <code>:76</code>, <code>barra()</code> <code>:85</code>) — sem códigos ANSI manuais; saída não-TTY fica <strong>sem cor</strong>.</li>
+</ul>
 <h3 id="card-cores-ordem-interna-e-previa-ao-vivo-0609">Card "Cores" — ordem interna e prévia ao vivo (06/09)<a class="headerlink" href="#card-cores-ordem-interna-e-previa-ao-vivo-0609" title="Permanent link">&para;</a></h3>
 <p>O primeiro card da aba <strong>Config</strong> (<code>tela_configuracoes.py:433-582</code>) concentra as chaves de aparência global da tabela acima (<code>cor_principal</code>, <code>cor_fundo</code> e as <code>intranet_*</code> de botões/cards). Ordem de renderização:</p>
 <table>
@@ -744,8 +910,8 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>aplicar_banco</code></td>
-<td style="text-align: left;">Banco de dados (SQLite ou PostgreSQL) — aba Documentação</td>
-<td style="text-align: left;"><code>tela_configuracoes.py:1246-1257</code></td>
+<td style="text-align: left;">Banco de dados (SQLite ou PostgreSQL) — aba Config, após o card "Ícones" (sem reload, exige restart)</td>
+<td style="text-align: left;"><code>tela_configuracoes.py:1058-1075</code></td>
 </tr>
 </tbody>
 </table>
@@ -753,9 +919,54 @@
 <ul>
 <li><strong><code>_v(chave_estado, chave_config, padrao)</code></strong> (<code>:263-275</code>): valor do campo que <strong>nunca zera</strong> — campo fora do estado mantém o valor vigente no banco (limpeza intencional continua possível).</li>
 <li><strong><code>_reload_apos()</code></strong> (<code>:277-282</code>): recarrega a página após <strong>1 segundo</strong> — padrão do botão "Aplicar" de cada card.</li>
-<li><strong><code>_aplicar_card(rotulo, audit_desc, salvar_fn, msg, extra_msg)</code></strong> (<code>:284-308</code>): grava EXCLUSIVAMENTE os campos do card (<code>salvar_fn</code>), audita <code>config_alterada</code>, notifica e recarrega após 1 s; falha registra loguru (<code>observabilidade.get_logger("intranet")</code>) e notifica negativo <strong>sem recarregar</strong>.</li>
+<li><strong><code>_aplicar_card(rotulo, audit_desc, salvar_fn, msg, extra_msg)</code></strong> (<code>:284-308</code>): grava EXCLUSIVAMENTE os campos do card (<code>salvar_fn</code>), audita <code>config_alterada</code>, notifica e recarrega após 1 s; falha registra loguru (<code>observabilidade.get_logger("intranet")</code>) e notifica negativo <strong>sem recarregar</strong>. Mantido como legado síncrono para compatibilidade dos testes estáticos.</li>
 <li><strong><code>_aplicar_paginas()</code></strong> (<code>:454-473</code>): wrapper do card "Páginas do sistema" — chama <code>aplicar_paginas()</code>, notifica com avisos de URL não alterada e recarrega.</li>
 </ul>
+<h3 id="anti-disconnect-no-aplicar-handlers-async-12092026-agentsmd-51">Anti-disconnect no Aplicar — handlers async (12/09/2026, AGENTS.md §5.1)<a class="headerlink" href="#anti-disconnect-no-aplicar-handlers-async-12092026-agentsmd-51" title="Permanent link">&para;</a></h3>
+<p>Handlers de clique <strong>nunca bloqueiam o event-loop</strong> (era a causa do disconnect no Aplicar):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Regra</th>
+<th style="text-align: left;">Padrão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>on_click</code> rápido (<code>set_config</code>, <code>UPDATE</code> curto)</td>
+<td style="text-align: left;">pode ser <code>sync</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">I/O pesado (<code>subprocess</code> mkdocs, SMTP, <code>shutil.copy2</code>, <code>observabilidade.configurar()</code>, <code>rodar_monitor</code>)</td>
+<td style="text-align: left;"><strong>DEVE</strong> rodar em <code>await run.io_bound(fn)</code> dentro de handler <code>async</code>, com spinner (<code>ui.spinner</code> + <code>aria-label</code>), botão desabilitado e trava de reentrância (<code>ocupado</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Reload</td>
+<td style="text-align: left;"><code>ui.timer(1.0, ui.navigate.reload())</code> <strong>único</strong>, só após conclusão + <code>notificar()</code> visível</td>
+</tr>
+<tr>
+<td style="text-align: left;">Card Banco</td>
+<td style="text-align: left;"><strong>nunca recarrega</strong> — exige restart do servidor (<code>_aplicar_card_sem_reload</code>: notifica warning "REINICIE o servidor")</td>
+</tr>
+<tr>
+<td style="text-align: left;">Docs/SMTP/Backup</td>
+<td style="text-align: left;"><strong>SEMPRE async</strong> (<code>documentacao.reconstruir()</code>, <code>email_util.testar_conexao()</code>, <code>rotinas.backup_modulo()</code>/<code>rodar_agora</code>/<code>salvar_intervalo</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Backup seguro</td>
+<td style="text-align: left;"><code>PRAGMA wal_checkpoint(TRUNCATE)</code> antes do <code>copy2</code> + <code>except OSError → None</code> (falha de backup nunca derruba o handler)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Rodapé padrão</td>
+<td style="text-align: left;"><code>ui_comum.rodape_salvar_restaurar()</code> retorna <code>(btn_restaurar, btn_aplicar)</code>; todo Aplicar tem <code>data-testid</code> (<code>config-aplicar-&lt;card&gt;</code>, <code>config-reconstruir-docs</code>); avisos via <code>tema_modulo.notificar()</code> (respeita <code>notificacao_timeout</code>), nunca <code>ui.notify</code> cru</td>
+</tr>
+<tr>
+<td style="text-align: left;">Testes headless</td>
+<td style="text-align: left;"><code>clicar()</code> do teste aguarda handlers <code>async</code> (<code>inspect.isawaitable → await</code>) — ver <code>assets/test/teste_aba_config_intranet.py</code></td>
+</tr>
+</tbody>
+</table>
+<p>Implementação em <code>mod_intranet/tela_configuracoes.py</code>: <code>_aplicar_card_async(...)</code> (spinner + <code>run.io_bound(salvar_fn)</code> + trava <code>ocupado</code> + reload único opcional <code>recarregar=True</code>), <code>_aplicar_paginas_async()</code> (mesmo padrão para páginas) e gate <code>_pode_escrever()</code> (só <code>administrador_geral</code> aplica — dupla camada com a guarda da rota). Cobertura: <code>assets/test/test_seg_aplicar.py</code> (DoS de event-loop, path traversal, injeção, SMTP timeout), <code>assets/test/test_rodape_testid.py</code> (rodapé + <code>data-testid</code> + Banco sem reload) e <code>assets/test/test_tema_cache_trava.py</code> (cache + trava <code>ocupado</code>).</p>
 <p>Cada card é <code>card_admin</code> recolhível (<code>aberto=False</code>) com o rodapé padrão de 2 botões — <strong>"Restaurar padrão" + "Aplicar"</strong> — exclusivos do card (<code>rodape_salvar_restaurar</code>, <code>ui_comum.py:338</code>; rótulo padrão do salvar agora é <strong>"Aplicar"</strong>). O card "Cores" foi renomeado para <strong>"Configurações de cores"</strong> (<code>tela_configuracoes.py:492</code>) e o card de Observabilidade foi dividido em <strong>"Observabilidade e logs (loguru)"</strong> (<code>:988</code>) + <strong>"Telemetria OTel — stack local ou servidor dedicado"</strong> (<code>:1110</code>).</p>
 <h3 id="fallback-de-entrada-numerica-nos-gerais-0609">Fallback de entrada numérica nos Gerais (06/09)<a class="headerlink" href="#fallback-de-entrada-numerica-nos-gerais-0609" title="Permanent link">&para;</a></h3>
 <p>Os três campos numéricos do card <strong>"Configurações gerais do sistema"</strong> (aba Config) são saneados em <code>aplicar_gerais()</code> (<code>tela_configuracoes.py:351-368</code>) com <code>try/except (TypeError, ValueError)</code>:</p>
@@ -805,7 +1016,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Seed em <code>PADRAO_CONFIG</code></td>
-<td style="text-align: left;"><code>mod_intranet/conexao_bd.py:67</code></td>
+<td style="text-align: left;"><code>mod_intranet/bd_conexao.py:67</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">Helper <code>notificacao_timeout()</code> — default/fallback 10, clamp 1–30</td>
@@ -888,7 +1099,7 @@
 </div>
 <div class="admonition note">
 <p class="admonition-title">Rótulo renomeado: 'Cor geral do módulo' (06/09)</p>
-<p>A chave <code>&lt;prefixo&gt;_cor_botao</code> agora é chamada de <strong>"Cor geral do módulo"</strong> (antes "Cor dos botões") e <code>cor_texto_botao</code> de <strong>"Cor do texto do módulo"</strong> (antes "Cor do texto dos botões") — rótulos renomeados em TODOS os painéis: cupê "Aparência" (<code>tema_modulo.bloco_aparencia</code> — <code>tema_modulo.py:318-323</code>), aba Cores do sistema (<code>tela_configuracoes.py:517-526</code>), admins de blog (<code>mod_blog/administracao.py:56</code>), auditoria (<code>mod_auditoria/administracao.py:111</code>) e empenhos (<code>mod_renomear_empenho/administracao.py:99</code> + <code>telas.py:699</code>). O nome reflete o novo escopo: a cor define os <strong>botões E os menus/abas/destaques</strong> da tela do módulo — <code>ui.colors(primary=cor_botao)</code> (menus/Quasar) + <code>cabecalho(chave_modulo=...)</code> (borda de destaque) + <code>ui_comum.botao(chave_modulo=...)</code> (botões). <code>ui.colors(primary=...)</code> passou a ser aplicado em TODAS as telas (antes só blog e gest_cad): auditoria (<code>mod_auditoria/telas.py:126</code>), edit_pdf (<code>mod_edit_pdf/telas.py:89</code>), empenhos (<code>mod_renomear_empenho/telas.py:65</code>) e solicita_impressao (<code>mod_solicita_impressao/telas.py:53</code>). Nas rotas de admin (<code>main.py:484-523</code>) os hexes fixos viraram <code>ler_tema(&lt;modulo&gt;, cor_botao=&lt;default&gt;)["cor_botao"]</code>; empenhos usa <code>empenhos_cor_botao</code> com default alinhado a <code>#000000</code> (antes <code>#6D4C41</code>). <code>ui.color_input</code>/<code>ui.select</code> crus do admin de auditoria e empenhos migraram para as fábricas <code>campo_cor</code>/<code>campo_selecao</code>. Coberto por <code>test/teste_aba_config_intranet.py</code> (164 verificações — novos rótulos).</p>
+<p>A chave <code>&lt;prefixo&gt;_cor_botao</code> agora é chamada de <strong>"Cor geral do módulo"</strong> (antes "Cor dos botões") e <code>cor_texto_botao</code> de <strong>"Cor do texto do módulo"</strong> (antes "Cor do texto dos botões") — rótulos renomeados em TODOS os painéis: cupê "Aparência" (<code>tema_modulo.bloco_aparencia</code> — <code>tema_modulo.py:318-323</code>), aba Cores do sistema (<code>tela_configuracoes.py:517-526</code>), admins de blog (<code>mod_blog/telas_administracao.py:56</code>), auditoria (<code>mod_auditoria/telas_administracao.py:111</code>) e empenhos (<code>mod_renomear_empenho/telas_administracao.py:99</code> + <code>telas.py:699</code>). O nome reflete o novo escopo: a cor define os <strong>botões E os menus/abas/destaques</strong> da tela do módulo — <code>ui.colors(primary=cor_botao)</code> (menus/Quasar) + <code>cabecalho(chave_modulo=...)</code> (borda de destaque) + <code>ui_comum.botao(chave_modulo=...)</code> (botões). <code>ui.colors(primary=...)</code> passou a ser aplicado em TODAS as telas (antes só blog e gest_cad): auditoria (<code>mod_auditoria/telas.py:126</code>), edit_pdf (<code>mod_edit_pdf/telas.py:89</code>), empenhos (<code>mod_renomear_empenho/telas.py:65</code>) e solicita_impressao (<code>mod_solicita_impressao/telas.py:53</code>). Nas rotas de admin (<code>main.py:484-523</code>) os hexes fixos viraram <code>ler_tema(&lt;modulo&gt;, cor_botao=&lt;default&gt;)["cor_botao"]</code>; empenhos usa <code>empenhos_cor_botao</code> com default alinhado a <code>#000000</code> (antes <code>#6D4C41</code>). <code>ui.color_input</code>/<code>ui.select</code> crus do admin de auditoria e empenhos migraram para as fábricas <code>campo_cor</code>/<code>campo_selecao</code>. Coberto por <code>test/teste_aba_config_intranet.py</code> (164 verificações — novos rótulos).</p>
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Botões 100% na fábrica + 'Restaurar padrão' com aparência única (06/09)</p>
@@ -906,6 +1117,26 @@
 <li><strong>Grid responsivo (05/09)</strong> — <code>COLUNAS_MODULOS</code> (<code>tela_configuracoes.py:44-47</code>) deixou de usar <code>columns=</code> inline e agora é <strong>responsiva</strong>: <code>grid-cols-1 sm:grid-cols-2 lg:grid-cols-[56px_minmax(12ch,1fr)_minmax(22ch,1fr)_minmax(22ch,1fr)_minmax(20ch,1fr)_150px]</code> — 6 colunas em desktop (setas, chave, nome, URL, ícone, situação), empilhando em telas pequenas. O cabeçalho é oculto em sm/md (<code>hidden lg:grid</code>, <code>tela_configuracoes.py:619</code>), o <code>overflow-x-auto</code> foi removido e os inputs usam <code>w-full max-w-[30ch]</code>.</li>
 <li>O grid ganhou cabeçalho com <strong>tooltips</strong> explicando cada coluna e colunas <code>56px minmax(30ch, 1fr) minmax(30ch, 1fr) minmax(30ch, 1fr) 150px</code> (<code>tela_configuracoes.py:581-593</code>).</li>
 </ul>
+<h3 id="ordem-padrao-do-menu-persistencia-apos-reorder-restart-14092026">Ordem padrão do menu + persistência após reorder + restart (14/09/2026)<a class="headerlink" href="#ordem-padrao-do-menu-persistencia-apos-reorder-restart-14092026" title="Permanent link">&para;</a></h3>
+<p>Ordem padrão vigente (instalações novas e "Restaurar padrão") — <code>mod_intranet/autenticacao.py:15-22</code> (<code>MODULOS_SISTEMA</code>):</p>
+<p><code>blog → editar_pdf → empenhos → solicita_impressao → usuarios → auditoria</code></p>
+<p>Comportamento garantido: no primeiro boot a <strong>persistência</strong> <code>tb_modulos.ordem</code> abre nessa sequência; após o usuário reordenar via ↑/↓ (persistência imediata por <code>reordenar_modulos</code>), a ordem <strong>permanece como ele deixou, inclusive após reinícios</strong> (validado após 2 restarts, incl. ciclo reordenar-via-API + restart com assert; <code>/login</code> 200).</p>
+<p>Causa raiz corrigida: <code>Repositorio.reordenar_modulos</code> (<code>mod_intranet/repositorio.py:675</code>) gravava o primeiro item com <code>ordem=0</code> (<code>enumerate</code> 0-based); no boot seguinte <code>_garantir_tb_modulos</code> (<code>mod_intranet/autenticacao.py:29-80</code>) via <code>COUNT(*) WHERE ordem=0 &gt; 0</code> reescrevia TODOS os nativos para <code>MODULOS_SISTEMA</code>, apagando a personalização a cada reinício. Correção em 3 pontos: <code>repositorio.py:675</code> <code>enumerate(..., start=1)</code> (1-based); <code>_garantir_tb_modulos</code> endurecido — numera SOMENTE linhas com <code>ordem=0</code> (nativas zeradas seguem <code>MODULOS_SISTEMA</code>, demais após as numeradas por nome) e nunca reescreve linhas já numeradas; <code>MODULOS_SISTEMA</code> reordenado para a sequência acima. Detalhes em <a href="../registro_de_mudancas/">Registro de Mudanças</a>.</p>
+<h3 id="ordenacao-do-menu-hamburguer-apresentacao-19092026-mod_intranettelaspy_montar_layout-283367">Ordenação do menu hambúrguer — apresentação (19/09/2026, <code>mod_intranet/telas.py:_montar_layout</code> ~283–367)<a class="headerlink" href="#ordenacao-do-menu-hamburguer-apresentacao-19092026-mod_intranettelaspy_montar_layout-283367" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Apresentação ≠ persistência:</strong> <code>tb_modulos.ordem</code> (esta aba, ↑/↓) persiste a ordem desejada no banco, mas o <strong>drawer reordena em memória na renderização</strong> — sem <code>UPDATE</code> em <code>tb_modulos</code> ao abrir o menu. A filtragem continua via <code>autenticacao.modulos_do_usuario</code> / <code>validar_acesso_modulo</code> e módulos indisponíveis viram card laranja <code>menu-&lt;chave&gt;-indisponivel</code>.</p>
+</blockquote>
+<p><strong>Regra de agrupamento do drawer (implementada via <code>_CHAVES_POS_ADMIN</code>, <code>_ORDEM_POS_ADMIN</code>, <code>_outros.sort</code>, <code>_render_lista_modulos</code>):</strong></p>
+<ol>
+<li><strong>Home isolado no topo</strong> — <code>Home</code> (<code>menu-home</code>) + separador.</li>
+<li><strong>Demais módulos em ordem alfabética por nome</strong> — <code>_outros.sort(key=lambda t: t[1].lower())</code> sobre <code>modulos_do_usuario</code> exceto trio.</li>
+<li><strong>Administração</strong> — só <code>administrador_geral</code>, após os demais e com separador acima; rótulo contextual (<code>/admin/{chave_modulo}</code> vs <code>/configuracoes</code>).</li>
+<li><strong>Trio fixo <code>Blog → Usuários → Auditoria</code></strong> — <code>_ORDEM_POS_ADMIN = ["blog","usuarios","auditoria"]</code>, sempre após Administração e antes de Documentação/Sair (se não-admin, separador antes do trio).</li>
+<li><strong>Documentação</strong> — só <code>administrador_geral</code> (<code>/documentacao</code> nova aba), após o trio.</li>
+<li><strong>Sair sempre último</strong> — <code>menu-sair</code> após separador final.</li>
+</ol>
+<p><strong>Exemplo <code>master</code>:</strong> <code>Home | Editor PDF, Empenhos, Filas, Lista Telefônica, Solicitação de Impressão, Técnico | Administração | Blog, Usuários, Auditoria | Documentação | Sair</code>.</p>
+<p>Ver também: <a href="../arquitetura/#guarda-de-pagina-e-layout">Arquitetura — Guarda de página e layout</a> e <a href="../analise_mod_intranet/#guarda-de-pagina-layout_telapagina_restrita">Análise do Núcleo</a>.</p>
 <h2 id="sem-variaveis-de-ambiente-env">Sem variáveis de ambiente <code>.env</code><a class="headerlink" href="#sem-variaveis-de-ambiente-env" title="Permanent link">&para;</a></h2>
 <p>Diferente de muitos projetos NiceGUI, a Intranet <strong>não lê <code>.env</code> nem variáveis de ambiente</strong>. Toda configuração operacional é:</p>
 <ol>

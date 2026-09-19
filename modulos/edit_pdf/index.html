@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -157,6 +166,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul class="current">
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -213,12 +234,12 @@
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Editor de PDFs multiusuário com espaço temporário por usuário em <code>mod_edit_pdf/editorPDF/</code>. O usuário envia PDFs em lote e aplica operações sobre uma seleção ordenada (reduzir, juntar, cortar, dividir, verificar, ZIP, excluir). Arquivos expiram automaticamente. Aba de Administração exclusiva do <code>administrador_geral</code> para cotas, limites e expiração — configurável sem restart.</p>
 <h2 id="banco-de-dados">Banco de dados<a class="headerlink" href="#banco-de-dados" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db_pdf()</code> em <code>manipulador_bd.py:92-123</code>.</p>
+<p>Criador vigente: <code>init_db_pdf()</code> em <code>bd_manipulador.py:92-123</code>.</p>
 <ul>
 <li><strong><code>tb_arquivos</code></strong>: <code>id</code>, <code>nome_arquivo</code>, <code>usuario</code>, <code>tamanho_bytes</code>, <code>operacao</code> (upload/saida/zip), <code>data_operacao</code>, <code>ativo</code>.</li>
 <li><strong><code>tb_cota_disco</code></strong>: <code>usuario</code> PK, <code>total_usado_bytes</code>, <code>atualizado_em</code>.</li>
 </ul>
-<p>⚠️ O <code>db_criador.py</code> do módulo é <strong>legado/morto</strong> com esquema divergente — não executar (criaria tabelas erradas no banco central).</p>
+<p>⚠️ O <code>bd_criador.py</code> do módulo é <strong>legado/morto</strong> com esquema divergente — não executar (criaria tabelas erradas no banco central).</p>
 <h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Abas</strong>: Editor (sempre) | Administração (só admin geral). Cabeçalho mostra uso da cota do usuário (global só p/ admin).</li>
@@ -228,8 +249,9 @@
 <li><strong>Reduzir tamanho</strong>: modo Leve (recompressão; biblioteca auto <code>pymupdf→pikepdf→pypdf</code>) ou Agressivo (rasteriza como JPEG, DPI 50–400, qualidade 10–100%).</li>
 <li><strong>Cortar</strong> (pares/ímpares/lista "2-5,8") e <strong>Dividir</strong> (página-a-página, par/ímpar, cortes ou intervalos).</li>
 <li><strong>Administração</strong> (padrão de cards dos módulos, 06/09): card <strong>"Configurações de cores"</strong> (prévia ao vivo), card <strong>"Configurações específicas"</strong> (cota global GB default 10, máx. arquivos/lote, MB/lote, cota por usuário GB, minutos de expiração e textos da tela) e card <strong>"Manutenção"</strong> ("Expirar agora") — todos recolhíveis (<code>card_admin</code>) com o rodapé padrão de 2 botões ("Restaurar padrão" + "Aplicar") exclusivos do card, recarregando após 1s; ao final, card padrão de backup do banco (<code>painel_backup</code>).</li>
-<li><strong>Aparência</strong> (Administração): tema do módulo via card padrão <strong>"Configurações de cores"</strong> (<code>tema_modulo.bloco_aparencia</code> — <code>mod_edit_pdf/administracao.py:175</code>, <code>com_card=True</code> — prévia ao vivo e rodapé 2 botões) — campos <strong>"Cor geral do módulo"</strong> (<code>editpdf_cor_botao</code>), "Cor do texto do módulo", fundo, título, tamanho (<code>editpdf_*</code>) montados pelas fábricas <code>campo_cor</code>/<code>campo_selecao</code>. Este módulo é o <strong>módulo exemplo</strong> do padrão de exibição: área cheia (<code>w-full</code>) e card "Configurações de cores" com as 6 chaves (<code>cor_botao</code>, <code>cor_texto_botao</code>, <code>cor_fundo</code>, <code>cor_titulo</code>, <code>btn_tamanho</code>, <code>texto_header</code>), replicado aos demais módulos. Com as chaves de botão <code>editpdf_*</code> <strong>vazias</strong> (padrão atual), os botões usam o <strong>padrão do módulo</strong> (<code>PADROES_TEMA</code> — todos os módulos em <code>#000000</code>, a cor do intranet — sem herança do tema do sistema); o override por módulo continua possível no card.</li>
+<li><strong>Aparência</strong> (Administração): tema do módulo via card padrão <strong>"Configurações de cores"</strong> (<code>tema_modulo.bloco_aparencia</code> — <code>mod_edit_pdf/telas_administracao.py:175</code>, <code>com_card=True</code> — prévia ao vivo e rodapé 2 botões) — campos <strong>"Cor geral do módulo"</strong> (<code>editpdf_cor_botao</code>), "Cor do texto do módulo", fundo, título, tamanho (<code>editpdf_*</code>) montados pelas fábricas <code>campo_cor</code>/<code>campo_selecao</code>. Este módulo é o <strong>módulo exemplo</strong> do padrão de exibição: área cheia (<code>w-full</code>) e card "Configurações de cores" com as 6 chaves (<code>cor_botao</code>, <code>cor_texto_botao</code>, <code>cor_fundo</code>, <code>cor_titulo</code>, <code>btn_tamanho</code>, <code>texto_header</code>), replicado aos demais módulos. Com as chaves de botão <code>editpdf_*</code> <strong>vazias</strong> (padrão atual), os botões usam o <strong>padrão do módulo</strong> (<code>PADROES_TEMA</code> — todos os módulos em <code>#000000</code>, a cor do intranet — sem herança do tema do sistema); o override por módulo continua possível no card.</li>
 <li><strong>Padrões centrais de UI (06/09)</strong>: TODOS os botões de ação usam o MESMO padrão <code>ui_comum.botao(..., variante="primario", chave_modulo="editar_pdf")</code> — sem <code>compacto</code>/<code>no_caps</code> — inclusive "Excluir selecionados" (deixou <code>variante="perigo"</code>), "Enviar agora" (deixou <code>variante="solido"</code>) e o botão "Atualizar" (deixou de ser <code>botao_icone</code>); 32 avisos via <code>notificar</code> (tempo configurável em <code>notificacao_timeout</code>); tema único via <code>ler_tema("editar_pdf", ...)</code> (helpers locais <code>cls_btn</code>/<code>estilo_btn</code> removidos de <code>telas.py</code>); borda do cabeçalho = <code>tema["cor_botao"]</code> (antes <code>CORES["perigo"]</code> fixo) e título colorido por <code>_app_tema</code> via <code>lbl_header_titulo</code>; <code>PADROES_CFG</code> corrigido para o prefixo real <code>editpdf_*</code> (antes <code>editar_pdf_cor_*</code>, nunca lidas). Detalhes em <a href="../../analise_mod_edit_pdf/">Análise do Módulo</a>.</li>
+<li><strong>Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 <code>kbp-web-design</code>)</strong>: botões centralizados <code>w-full justify-center flex-wrap</code> <code>gap</code> via <code>.style</code> <code>min-width:0</code>, toggle <code>spread</code>, grids responsivos <code>grid-cols-1 sm:grid-cols-2 md:grid-cols-3</code>; <code>overflow-x-auto</code> em tabelas, <code>scroll_area</code> altura explícita; proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code> já aplicada.</li>
 <li><strong>Versionamento</strong>: <code>versao_modulo:editar_pdf = 1.0.260908</code>.</li>
 </ul>
 <h2 id="regras-de-negocio">Regras de negócio<a class="headerlink" href="#regras-de-negocio" title="Permanent link">&para;</a></h2>
@@ -276,7 +298,7 @@
 </code></pre></div>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>_cfg</code> depende de <code>get_config</code> importado no topo de <code>db_manipulador.py</code> (bug real já corrigido: defaults eram usados).</li>
+<li><code>_cfg</code> depende de <code>get_config</code> importado no topo de <code>bd_manipulador.py</code> (bug real já corrigido: defaults eram usados).</li>
 <li>Redução Agressivo transforma texto em imagem (perde seleção/busca no PDF).</li>
 </ul>
 <p>Ver <a href="../../analise_mod_edit_pdf/">Análise do Módulo</a>.</p>

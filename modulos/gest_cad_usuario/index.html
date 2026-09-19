@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -157,6 +166,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul class="current">
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -213,22 +234,23 @@
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Soft CRUD completo de usuários: criar, editar, renomear, bloquear/desbloquear, excluir logicamente (com motivo) e excluir permanentemente (LGPD). Gerencia perfis globais (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) e papéis granulares por módulo, além de visualizar/revogar sessões ativas de todo o sistema. Acesso restrito ao administrador geral ou administrador do módulo <code>usuarios</code>.</p>
 <h2 id="banco-de-dados">Banco de dados<a class="headerlink" href="#banco-de-dados" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db()</code> em <code>manipulador_bd.py:61-215</code> (executado no import e pelo bootstrap central).</p>
+<p>Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:61-215</code> (executado no import e pelo bootstrap central).</p>
 <ul>
 <li><strong><code>tb_usuarios</code></strong>: <code>id</code> PK AUTOINCREMENT, <code>user_nome</code> UNIQUE, <code>user_senha</code> (bcrypt), <code>user_email</code>, <code>user_fone</code>, <code>user_perfil</code>, <code>user_ativo</code>, <code>data_cadastro</code>, <code>user_deletado</code>, <code>user_nome_completo</code> (nome social, Decreto 8.727/2016), <code>user_motivo_exclusao</code>.</li>
 <li><strong><code>tb_acesso_usuario</code></strong>: vínculo <code>usuário × módulo × papel</code> (<code>UNIQUE(user_nome, modulo_chave)</code>, FK CASCADE).</li>
 </ul>
-<p>⚠️ <code>tb_modulo_perfil</code> existe apenas no <code>db_criador.py</code> — <strong>legado/morto</strong> (aponta para o banco central); não confiar.</p>
+<p>⚠️ <code>tb_modulo_perfil</code> existe apenas no <code>bd_criador.py</code> — <strong>legado/morto</strong> (aponta para o banco central); não confiar.</p>
 <h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>CRUD soft</strong>: criar (senha provisória mín. 6 + <code>forcar_troca</code>), editar (aplica só diferenças; login travado para <code>master</code>), renomear (replica em dependentes), bloquear/desbloquear, excluir em 2 estágios (soft com motivo ≥ 3 chars → DELETE físico, liberado nas linhas de excluídos via busca "excluído").</li>
-<li><strong>Busca instantânea</strong> (debounce 150 ms) insensível a acentos, com filtros situação/perfil e paginação 10/20/50/100. Busca em <strong>todos os campos</strong> (ID, login, perfil, e-mail, telefone, módulos:papel, nome completo) + palavras-chave de estado ("provisório", "bloqueado", "sessão", "excluído"). Buscar "excluído" revela soft-deleted na lista — <strong>a aba Excluídos foi removida</strong> (redundante). Ordenação A→Z (nome/tratamento) ou numérica (ID) via seletor.</li>
+<li><strong>CRUD soft</strong>: criar (senha vazia/None → <code>123456</code> padrão inicial 18/09/2026 + mín. 6 + <code>forcar_troca</code>), editar (aplica só diferenças; login travado para <code>master</code>), renomear (replica em dependentes), bloquear/desbloquear, excluir em 2 estágios (soft com motivo ≥ 3 chars → DELETE físico, liberado nas linhas de excluídos via busca "excluído" <strong>ou filtro Situação = Excluídos</strong>).</li>
+<li><strong>Busca instantânea</strong> (debounce 150 ms) insensível a acentos, com filtros situação/perfil e paginação 10/20/50/100. <strong>Barra superior inline sem quebra 18/09/2026</strong> (<code>telas.py:98-115</code> <code>flex-nowrap gap-4</code>, tabs <code>shrink overflow-x-auto</code>, busca <code>width:min(46%,620px) flex-nowrap shrink-0</code>). Busca em <strong>todos os campos</strong> (ID, login, perfil, e-mail, telefone, módulos:papel, nome completo) + palavras-chave de estado ("provisório", "bloqueado", "sessão", "excluído"). Filtro <strong>Situação</strong> (<code>SIT_OPCOES</code>) agora com 4 opções: <code>Todas</code>, <code>Ativos</code>, <code>Bloqueados</code>, <strong><code>Excluídos</code></strong> (<code>data-testid=usuarios-filtro-situacao</code>, <code>min-w-[170px]</code>, <code>tooltip</code> "Filtra por situação: Ativos, Bloqueados ou Excluídos (soft-delete)" — <code>telas.py:293</code>); lógica: <code>sit==excluidos</code> → só <code>user_deletado=1</code>; senão excluídos só entram quando <code>termo</code> contém <code>exclu</code> e <code>sit==""</code> (18/09/2026 <code>18690cb</code>). <strong>A aba Excluídos foi removida</strong> (redundante — substituída pelo filtro). Ordenação A→Z (nome/tratamento) ou numérica (ID) via seletor. <strong>Senha padrão ao criar/duplicar</strong> vazia caiu em <code>123456</code> (<code>bd_manipulador.py:366</code> + <code>telas.py:585/850</code>).</li>
 <li><strong>Papéis por módulo</strong>: seletores de acesso com módulos inativos marcados INDISPONÍVEL (vínculos órfãos). Tooltip no nome de tratamento expõe todos os campos (login, perfil, situação, contato, cadastro, acessos com nomes de exibição + badge de papel) — exibição compacta 4 colunas (ID | Tratamento | Senha provisória | Ações).</li>
 <li><strong>Sessões Ativas</strong>: todas as vivas do sistema (IP, dispositivo, MAC em tooltip), encerramento individual/em massa e histórico das 10 últimas por usuário.</li>
 <li><strong>Limpeza cruzada LGPD</strong>: exclui postagens/comentários do Blog, remove arquivos/cota do Editor PDF e anonimiza empenhos como "(usuário excluído)"; auditoria sempre preservada.</li>
 <li><strong>Proteções</strong>: vedado agir sobre a própria conta; <code>master</code> não é renomeado/excluído; último <code>administrador_geral</code> ativo protegido contra rebaixamento/bloqueio por outro admin (RF-26).</li>
 <li><strong>Aba Administração</strong> (admin geral): card padrão <strong>"Configurações de cores"</strong> (<code>usuarios_*</code> — <code>cor_botao</code>, <code>cor_texto_botao</code>, <code>cor_fundo</code>, <code>cor_titulo</code>, <code>btn_tamanho</code>, <code>texto_header</code>) + card "Configurações específicas" com a política <code>usuarios_senha_min</code>; card "Configurações de cores" padronizado via <code>tema_modulo.bloco_aparencia</code> (prévia ao vivo, rodapé 2 botões) e tela em área cheia (<code>w-full</code>). <strong>Padrão próprio do tema de botões (06/09)</strong>: os campos de botão exibem o rótulo "vazio = padrão do módulo" (<code>tema_modulo.bloco_aparencia</code> — <code>tema_modulo.py:319-322</code>) — com <code>usuarios_cor_botao</code>/<code>usuarios_cor_texto_botao</code>/<code>usuarios_btn_tamanho</code> vazios (padrão atual do banco), os botões usam o padrão do PRÓPRIO módulo (<code>PADROES_TEMA["usuarios"]</code> = <code>#000000</code> — sem herança do tema do sistema); os inputs mostram o valor resolvido e o "Restaurar padrão" grava <code>""</code> para voltar ao padrão do próprio módulo. O cabeçalho usa <code>chave_modulo="usuarios"</code> (<code>telas.py:97</code>): a borda de destaque é a <strong>mesma cor dos botões do módulo</strong> (<code>usuarios_cor_botao</code>, vazia = padrão do próprio módulo), título/fundo seguem o tema — sem hex hardcoded. <strong>Cupê "Edição do módulo" restaurado (06/09)</strong>: <code>campo_modulo(ator, "usuarios")</code> (<code>telas.py:705</code>) volta a permitir ao admin renomear o módulo, trocar o ícone e ativar/desativar (havia sido removido acidentalmente; a edição também permanece em <code>/configuracoes</code>).</li>
-<li><strong>Versionamento</strong>: <code>versao_modulo:usuarios = 1.0.260908</code> no rodapé de <code>/users</code>.</li>
+<li><strong>Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 <code>kbp-web-design</code>)</strong>: barra superior <code>flex-nowrap</code> → <code>flex-wrap</code>, tabs <code>overflow-x-auto</code>, busca <code>flex-1 min-w</code> (<code>campo_busca</code> <code>grow min-w-[220px]</code>), dialogs <code>w-full max-w</code>; tabelas parcialmente com <code>overflow-x-auto</code>; proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code> (header <code>flex-wrap</code> <code>truncate</code>, filtros <code>sm:grid-cols-2</code>).</li>
+<li><strong>Versionamento</strong>: <code>versao_modulo:usuarios = 1.0.260918</code> no rodapé de <code>/users</code>.</li>
 </ul>
 <h2 id="permissoes">Permissões<a class="headerlink" href="#permissoes" title="Permanent link">&para;</a></h2>
 <table>
@@ -277,17 +299,20 @@
 <ul>
 <li>Rota: <code>/users</code> (chave <code>usuarios</code>) — gate duplo: <code>administrador_geral</code> ou <code>eh_admin_do_modulo(user, 'usuarios')</code>.</li>
 <li>Importa <code>autenticacao</code> (hash/papéis), <code>get_connection</code> central e <code>audit_log</code>; escreve/lê <code>tb_sessoes</code> central.</li>
-<li>Seed <code>master</code>/<code>master</code> com <strong>auto-cura da troca obrigatória</strong> a cada boot (<code>manipulador_bd.py:168-194</code>).</li>
+<li>Seed <code>master</code>/<code>master</code> com <strong>auto-cura da troca obrigatória</strong> a cada boot (<code>bd_manipulador.py:168-194</code>).</li>
 </ul>
 <h2 id="testes">Testes<a class="headerlink" href="#testes" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>test/test_fase1_login.py
-.venv/bin/python<span class="w"> </span>test/test_fresh_install.py
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/teste_boot.py<span class="w">            </span><span class="c1"># 16 verificações</span>
+.venv/bin/python<span class="w"> </span>assets/test/teste_fluxo_autenticacao.py<span class="w">  </span><span class="c1"># login, troca obrigatória, sessão/auditoria (19 OK)</span>
+.venv/bin/python<span class="w"> </span>assets/test/teste_fluxo_permissoes.py<span class="w">    </span><span class="c1"># perfis/papéis por módulo (13 OK)</span>
+.venv/bin/python<span class="w"> </span>assets/test/test_fase1_login.py
+.venv/bin/python<span class="w"> </span>assets/test/test_fresh_install.py
 </code></pre></div>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Tabela real é <code>tb_usuarios</code> (não <code>tb_usuario</code>); rota real é <code>/users</code> (não <code>/gestao-usuarios</code>).</li>
-<li><code>db_criador.py</code> é morto — não executar.</li>
-<li>Testes <code>testes/teste_fluxo_autenticacao.py</code>/<code>teste_fluxo_permissoes.py</code> citados no PLANO não existem (há <code>test/test_fase1_login.py</code>).</li>
+<li><code>bd_criador.py</code> é morto — não executar.</li>
+<li>Todos os testes de fluxo existem em <code>assets/test/</code> (local canónico; <code>test/</code> e <code>testes/</code> não existem na raiz): <code>teste_boot.py</code>, <code>teste_fluxo_autenticacao.py</code>, <code>teste_fluxo_permissoes.py</code> (Fase 2.5).</li>
 </ul>
 <p>Ver <a href="../../analise_mod_gest_cad_usuario/">Análise do Módulo</a>.</p>
               

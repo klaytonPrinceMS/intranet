@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Guia Rápido - Grafana OTel LGTM - INTRANET Modular — Documentação Técnica</title>
+    <title>Guia Rápido OTel - INTRANET Modular — Documentação Técnica</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Guia R\u00e1pido - Grafana OTel LGTM";
+        var mkdocs_page_name = "Guia R\u00e1pido OTel";
         var mkdocs_page_input_path = "inicio_rapido_otel.md";
         var mkdocs_page_url = null;
       </script>
@@ -44,12 +44,48 @@
                 </li>
               </ul>
               <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
-              <ul>
+              <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Guia Rápido OTel</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#o-que-e">O que é?</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#credenciais-mastermaster">Credenciais (master/master)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#como-ativar">Como Ativar?</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#opcao-1-automatica-recomendado">Opção 1: Automática (Recomendado)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#opcao-2-manual">Opção 2: Manual</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#pre-requisitos">Pré-requisitos</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#verificar-se-o-docker-esta-disponivel">Verificar se o Docker está disponível</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#instalar-docker-se-necessario">Instalar Docker (se necessário)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#acessar-os-servicos">Acessar os Serviços</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#comandos-uteis">Comandos Úteis</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#estrutura">Estrutura</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fluxo-automatico">Fluxo Automático</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#solucao-de-problemas">Solução de Problemas</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#documentacao-completa">Documentação Completa</a>
+    </li>
+    </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
@@ -127,6 +163,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -157,6 +200,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -174,6 +223,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
       </div>
     </div>
@@ -189,7 +244,8 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Guia Rápido - Grafana OTel LGTM</li>
+          <li class="breadcrumb-item">Documentação Técnica</li>
+      <li class="breadcrumb-item active">Guia Rápido OTel</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -397,10 +453,14 @@ Verifica: Docker disponível?
 </table>
 <hr />
 <h2 id="documentacao-completa">Documentação Completa<a class="headerlink" href="#documentacao-completa" title="Permanent link">&para;</a></h2>
-<p>Consulte o <a href="docker/README.md">README completo</a> para mais detalhes.</p>
+<p>Consulte o <code>assets/docker/README.md</code> no repositório para mais detalhes.</p>
               
             </div>
           </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../inicio_rapido/" class="btn btn-neutral float-left" title="Guia de Início Rápido"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../requisitos/" class="btn btn-neutral float-right" title="Requisitos do Sistema">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
 
   <hr/>
 
@@ -422,6 +482,10 @@ Verifica: Docker disponível?
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
+      <span><a href="../inicio_rapido/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../requisitos/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

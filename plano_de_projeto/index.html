@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -216,15 +237,15 @@
 <li><strong>Fase 2 — mod_gest_cad_usuario:</strong> soft CRUD, perfis por módulo, senha provisória, auditoria.</li>
 <li><strong>Fase 2.5 — Testes de fluxo:</strong> boot, autenticação (19/19), permissões (13/13).</li>
 <li><strong>Fase 3 — mod_blog:</strong> CRUD, sanitização <code>nh3</code>, auditoria (33/33).</li>
-<li><strong>Fase 4 — mod_renomear_empenho:</strong> monitor/extração/FTS5, quarentena, renomeação, organizador, edição (31/31, 16/16, 18/18).</li>
-<li><strong>Fase 5 — mod_edit_pdf:</strong> cotas, expiração 10 min, operações, auditoria SHA-256.</li>
-<li><strong>Fase 6 — mod_auditoria:</strong> leitura/filtro <code>tb_auditoria</code>, acesso geral.</li>
+<li><strong>Fase 4 — mod_renomear_empenho:</strong> ✅ CONCLUÍDO — monitor multi-pasta, extração 48 campos (40+), FTS 59 cols, quarentena individual+em lote sem reiniciar (<code>promover_quarentena</code>/<code>reprocessar_fila</code>, botão "Reprocessar fila", separação de múltiplos documentos), organizador físico com <code>capa.pdf/txt</code> + <code>matrizDeDocumentos.pdf/.txt</code> (31/31, 16/16, 18/18 + 46 Blog).</li>
+<li><strong>Fase 5 — mod_edit_pdf:</strong> ✅ CONCLUÍDO — cotas, expiração 10 min, operações, auditoria SHA-256.</li>
+<li><strong>Fase 6 — mod_auditoria:</strong> ✅ CONCLUÍDO — leitura/filtro <code>tb_auditoria</code>, acesso geral.</li>
 <li><strong>Fase 7 — mod_solicita_impressao:</strong> ✅ CONCLUÍDO (upload/rascunho, fórmula, cotas, autorização, marca d'água, auditoria; <code>1.0.260908</code>).</li>
 <li><strong>Fase 8 — Observabilidade (loguru):</strong> ✅ CONCLUÍDO.</li>
-<li><strong>Fase 9 — Backlog (<code>analise.md</code>):</strong> 45 realizados · 12 parcial · 3 pendentes.</li>
+<li><strong>Fase 9 — Backlog (<code>analise.md</code>):</strong> ✅ CONCLUÍDO — todos os itens realizados e documentados, removidos de <code>analise.md</code> (roadmap histórico).</li>
 </ul>
 <h2 id="status-da-documentacao">Status da Documentação<a class="headerlink" href="#status-da-documentacao" title="Permanent link">&para;</a></h2>
-<p>Todos os 7 módulos possuem análise em <code>docs/</code>; <code>analise_mod_solicita_impressao.md</code> reflete o novo fluxo. Observabilidade em andamento.</p>
+<p>Todos os 7 módulos possuem análise em <code>docs/</code>; <code>analise_mod_renomear_empenho.md</code> (4b/4c com <code>capa.pdf</code> + <code>reprocessar_fila</code> em lote) e <code>plano_de_projeto</code> refletem o plano concluído.</p>
 <p>Veja <a href="../registro_de_mudancas/">Registro de Mudanças</a> e <a href="../versionamento/">Versionamento</a>.</p>
               
             </div>

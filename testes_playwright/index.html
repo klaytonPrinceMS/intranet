@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul class="current">
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -244,7 +265,7 @@
 <li><strong><code>test/e2e/01_login.spec.js</code></strong> — login com <code>qacomum</code> (comum) e <code>qamaster</code> (admin); verifica que o dashboard abre sem erros fatais e que usuário comum é <strong>barrado</strong> em <code>/configuracoes</code> e em <code>/admin/auditoria</code>.</li>
 <li><strong><code>test/e2e/02_varredura.spec.js</code></strong> — como <code>qamaster</code>, visita as principais rotas (páginas, módulos e painéis <code>/admin/*</code>) e <strong>coleta erros</strong> de console, <code>pageerror</code>, requisições falhas e respostas HTTP ≥ 400, listando-os no terminal e falhando apenas se houver erros fatais.</li>
 </ul>
-<p>Os testes capturam e reportam erros para facilitar a identificação de problemas:</p>
+<p>Os testes capturam e reportam erros para facilitar a identificação de problemas (seletores estáveis via <code>data-testid</code>: hambúrguer <code>menu-hamburguer</code>, itens <code>menu-home</code>/<code>menu-&lt;chave&gt;</code>/<code>menu-admin</code>/<code>menu-docs</code>/<code>menu-sair</code> — fábrica <code>ui_comum.item_menu_drawer</code>, 12/09/2026; em testes headless Python, <code>clicar()</code> deve aguardar handlers <code>async</code> via <code>inspect.isawaitable</code> — padrão <code>teste_aba_config_intranet.py</code>/AGENTS.md §5.1):</p>
 <div class="highlight"><pre><span></span><code>=== ERROS COLETADOS (N) ===
  [http] 404 http://localhost:8080/algum/asset.jpg
  [pageerror] ReferenceError: x is not defined

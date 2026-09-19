@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -91,6 +93,12 @@
     <li class="toctree-l2"><a class="reference internal" href="#1-ambiente-virtual">1. Ambiente virtual</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#2-subir-a-aplicacao">2. Subir a aplicação</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#21-assistente-de-ativacao-boot-via-config-c">2.1 Assistente de ativação (boot) — via --config / -c</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#22-inicializacao-por-linha-de-comando-typer-opcao-c">2.2 Inicialização por linha de comando (Typer) — Opção C</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#3-primeiro-acesso-seed">3. Primeiro acesso (seed)</a>
     </li>
@@ -143,6 +151,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -173,6 +188,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -189,6 +210,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -229,12 +256,156 @@
 </code></pre></div>
 No Windows use <code>Scripts\python.exe</code>.</p>
 <h2 id="2-subir-a-aplicacao">2. Subir a aplicação<a class="headerlink" href="#2-subir-a-aplicacao" title="Permanent link">&para;</a></h2>
-<p><div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>main.py
+<p><div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>main.py<span class="w">                 </span><span class="c1"># sem argumentos → sobe direto com a configuração persistida (config_persistida())</span>
+.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span>--help<span class="w">          </span><span class="c1"># ajuda em PT-BR (Typer) — "Sem argumentos, sobe direto com a configuração persistida"</span>
+.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span>--config<span class="w">        </span><span class="c1"># abre o assistente interativo (alias -c)</span>
+.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span>--ativ-postgres<span class="w"> </span>--ativ-otel<span class="w"> </span>--porta-site<span class="w"> </span><span class="m">8080</span><span class="w">   </span><span class="c1"># configuração direta via CLI</span>
 </code></pre></div>
-Porta <code>8080</code>, <code>reload=False</code>, <code>show=False</code>. No boot, <code>inicializar_bancos()</code> cria os <code>db_mod_*</code> em WAL. Acesse <strong>http://localhost:8080</strong>.</p>
+Porta padrão <code>8080</code> (<code>porta_site</code>), <code>reload=False</code>, <code>show=False</code>. No boot, <code>inicializar_bancos()</code> cria os <code>db_mod_*</code> em WAL. Acesse <strong>http://localhost:8080</strong> (site) e <strong>http://localhost:8000</strong> (documentação mkdocs, <code>porta_documentacao</code>).</p>
+<blockquote>
+<p><strong>Comportamento desde Opção C (ativacao.py):</strong> <code>python main.py</code> <strong>sem argumentos</strong> não exibe mais o assistente — carrega <code>config_persistida()</code> (<code>ativacao.py:1284</code>) direto de <code>tb_config</code> (banco_tipo, postgres_url, otel_ativo e portas com fallback em <code>_config_padrao()</code>) e sobe. O assistente interativo só abre com <code>--config</code>/<code>-c</code> (<code>main.py:43-45</code> → <code>ativacao.iniciar(cli_cfg=None)</code>). Demais flags (<code>--ativ-*</code>, <code>--porta-*</code>) são processadas pelo <strong>Typer</strong> (<code>ativacao.cli_opcoes</code> → <code>config_do_cli</code> → <code>iniciar(cli_cfg=...)</code>, <code>main.py:47-54</code>).</p>
+</blockquote>
+<h3 id="21-assistente-de-ativacao-boot-via-config-c">2.1 Assistente de ativação (boot) — via <code>--config</code> / <code>-c</code><a class="headerlink" href="#21-assistente-de-ativacao-boot-via-config-c" title="Permanent link">&para;</a></h3>
+<p>O <strong>assistente de ativação</strong> (<code>mod_intranet/ativacao.py</code>, <code>iniciar()</code>) só é exibido quando iniciado com <code>--config</code>/<code>-c</code>. Sem a flag, <code>main.py</code> sobe direto com <code>config_persistida()</code>. Quando aberto, oferece dois caminhos:</p>
+<ul>
+<li><strong>Pressione ENTER</strong> (ou rode em terminal não interativo / CI) → <strong>modo BÁSICO</strong>: sobe <strong>apenas SQLite</strong>, <strong>sem PostgreSQL e sem OpenTelemetry</strong> — boot rápido e autossuficiente (<code>_config_padrao()</code>, <code>ativacao.py:468</code> — <code>otel_ativo: False</code>).</li>
+<li><strong>Pressione <code>1</code> + ENTER</strong> → <strong>modo de ativação/configuração</strong> (<code>iniciar()</code>, <code>ativacao.py:1442</code>): o assistente pergunta, em sequência:</li>
+<li><strong>Banco de dados</strong> — <strong>ENTER/<code>0</code> = SQLite (básico)</strong> | <strong><code>1</code> = PostgreSQL</strong> (<code>_escolha_1_enter</code>, <code>ativacao.py:673</code> — <code>iniciar():845</code>). No caminho SQLite os serviços ficam <strong>desativados</strong> (sem perguntas de porta); no PostgreSQL os serviços vêm <strong>ativos por padrão</strong>;</li>
+<li><strong>Subir/ativar o PostgreSQL (container)? [1 = ativar | ENTER/0 = não]</strong> (<code>_sim_nao</code>, <code>ativacao.py:696</code> — <code>iniciar():850</code>) — se ativar, pergunta a <strong>porta</strong> (padrão 5432) e monta o DSN <code>postgresql+psycopg2://intranet:intranet@localhost:&lt;porta&gt;/intranet</code>;</li>
+<li><strong>Subir/ativar o OpenTelemetry (Grafana+Loki+Tempo+Mimir)? [1 = ativar | ENTER/0 = não]</strong> (<code>iniciar():866</code>) — se ativar, pergunta a <strong>porta do Grafana</strong> (padrão 3000) e instala o SDK OTel via pip quando ausente (<code>_garantir_sdk_otel</code>, <code>:623</code>);</li>
+<li><strong>Porta do SITE</strong> (aplicação — padrão 8080);</li>
+<li><strong>Porta da DOCUMENTAÇÃO</strong> (mkdocs — padrão 8000), <strong>separada da porta do site</strong> desde 11/09.</li>
+</ul>
+<p><strong>Todas as perguntas binárias aceitam apenas <code>1</code> (ativar/configurar) ou ENTER/<code>0</code> (não/básico)</strong> — respostas <code>sim</code>/<code>nao</code>/<code>s</code>/<code>n</code> e textos (<code>sqlite</code>/<code>postgres</code>) <strong>não são mais aceitos</strong>. O prompt inicial <strong>repete até uma resposta válida</strong> (apenas ENTER ou <code>1</code>; qualquer outra resposta re-pergunta — <code>iniciar():821-834</code>). As perguntas binárias usam os helpers estritos <code>_escolha_1_enter</code> (<code>ativacao.py:673</code>) e <code>_sim_nao</code> (<code>:696</code>): qualquer tecla diferente de <code>1</code>/ENTER/<code>0</code> (ex.: <code>s</code>, <code>sim</code>, <code>nao</code>, <code>x</code>) exibe o aviso <code>Opção inválida — digite 1 para &lt;rotulo_1&gt; ou apenas ENTER para &lt;rotulo_padrao&gt;.</code> e <strong>repete a pergunta</strong> até uma entrada válida; <code>EOFError</code>/<code>Ctrl+C</code> caem no padrão (sem loop infinito). As demais perguntas (portas) também <strong>repetem até resposta válida</strong> — ENTER usa o padrão, valor inválido re-pergunta (<code>perguntar()</code>, <code>:104</code>); portas são validadas na faixa 1–65535 (<code>_porta_valida</code>, <code>:138</code>). A escolha do OTel é persistida na <code>tb_config</code> (<code>set_config("otel_ativo", ...)</code>) — a opção "não" sobrevive ao restart.</p>
+<p><strong>Exemplo — porta em uso (Postgres nativo na 5432) — via <code>--config</code>:</strong></p>
+<div class="highlight"><pre><span></span><code>$ .venv/bin/python main.py --config
+  (banner) ...
+  Pressione ENTER para entrar no modo BÁSICO — Banco SQLite, sem Grafana
+  Pressione 1 + ENTER para configurar estes itens
+&gt; 1
+
+===== MODO DE ATIVAÇÃO / CONFIGURAÇÃO =====
+Banco de dados [1 = PostgreSQL | ENTER/0 = SQLite (básico)]: 1
+
+Ativação dos serviços (independentes entre si):
+  Subir/ativar o PostgreSQL (container)? [1 = ativar | ENTER/0 = não]: s
+  Opção inválida — digite 1 para ativar ou apenas ENTER para não ativar.
+  Subir/ativar o PostgreSQL (container)? [1 = ativar | ENTER/0 = não]: 1
+  A porta padrão 5432 está em uso. Portas em uso no servidor:
+    5432: postgres
+    3000: grafana
+  Portas livres (exemplos): 5433, 5434, 5435
+  Porta do PostgreSQL (padrão 5432): 5444
+  Subir/ativar o OpenTelemetry (Grafana+Loki+Tempo+Mimir)? [1 = ativar | ENTER/0 = não]: 0
+  Porta do SITE (aplicação) (padrão 8080): 
+  Porta da DOCUMENTAÇÃO (mkdocs) (padrão 8000): 
+</code></pre></div>
+<p><strong>Detecção de porta em uso (11/09):</strong> quando a porta padrão do serviço (5432/3000) está ocupada, o assistente mostra o aviso completo de <strong><code>_msg_porta_em_uso(porta)</code></strong> (<code>ativacao.py:190</code>): <strong>TODAS as portas em uso no servidor com o serviço de cada uma</strong> (scanner local de <code>mod_intranet/port_scanner.py</code> — <code>ss -ltnp</code>/<code>lsof</code> no Linux, <code>netstat -ano</code> no Windows, enriquecido com <code>docker ps</code>; processos sem permissão aparecem como <code>desconhecido</code>) + <strong>exemplos de portas livres</strong> (<code>_portas_livres</code>, <code>ativacao.py:148</code>) antes de aceitar a porta digitada (<code>iniciar():988-1008</code>). O mesmo aviso completo é usado no retry de <code>_executar_e_persistir</code> (<code>:1039-1044</code>). Ao subir, se a porta continua ocupada, o assistente pede OUTRA porta, reescreve o compose (<code>aplicar_portas</code>, <code>:315</code> — regex sobre <code>"&lt;orig&gt;:5432"</code>/<code>"3000:..."</code>), roda <code>docker-compose down</code> + <code>up -d</code> e aguarda o serviço online com <strong>até 5 tentativas</strong> (<code>_executar_e_persistir():1054</code>); se não subir de verdade, cai em <strong>fallback SQLite</strong> confirmado explicitamente por <code>_confirmar_fallback_sqlite</code> (<code>:825</code>). A conexão é confirmada por <code>_verificar_postgres(dsn)</code> (<code>:490</code>), que remove o sufixo SQLAlchemy <code>+psycopg2</code> (psycopg2 só entende <code>postgresql://</code>).</p>
+<p><strong>Reuso de containers Docker (11/09):</strong> se o container <code>intranet_postgres</code> (ou a stack OTel <code>intranet-grafana/loki/tempo/mimir/otel-collector</code>) <strong>já está rodando</strong>, o assistente <strong>apenas CONECTA</strong> — ajusta a porta/DSN e valida a acessibilidade — <strong>sem baixar imagens nem subir container de novo</strong> (<code>_postgres_docker_ativo</code>, <code>ativacao.py:204</code>; <code>_otel_docker_ativo</code>, <code>:224</code>; <code>iniciar_postgres</code>, <code>:668</code>; <code>iniciar_stack_otel</code>, <code>:741</code>). Quando é preciso subir, <code>iniciar_postgres</code>/<code>iniciar_stack_otel</code> abrem <strong>um terminal próprio para cada docker</strong> que executa <code>cd &lt;dir&gt; &amp;&amp; docker compose pull &amp;&amp; docker compose up -d &amp;&amp; docker logs -f &lt;container&gt;</code> — o usuário vê o pull e depois os logs ao vivo (<code>:700-705</code>, <code>:766-771</code>); sem terminal disponível, o pull + <code>up -d</code> rodam no console principal (<code>_pre_pull</code>, <code>:656</code>).</p>
+<h3 id="22-inicializacao-por-linha-de-comando-typer-opcao-c">2.2 Inicialização por linha de comando (Typer) — Opção C<a class="headerlink" href="#22-inicializacao-por-linha-de-comando-typer-opcao-c" title="Permanent link">&para;</a></h3>
+<p>Sem assistente, é possível configurar e subir direto por argumentos (<strong>Typer</strong>, agrupados por tipo e em ordem alfabética dentro do grupo, com contrações curtas):</p>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span>--help
+<span class="c1"># Ativação (prefixo --ativ-; em ordem alfabética dentro do grupo)</span>
+.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span>--ativ-otel<span class="w"> </span>--ativ-postgres<span class="w"> </span>--porta-db<span class="w"> </span><span class="m">5444</span><span class="w"> </span>--porta-grafana<span class="w"> </span><span class="m">3000</span><span class="w"> </span>--porta-site<span class="w"> </span><span class="m">8080</span><span class="w"> </span>--porta-docs<span class="w"> </span><span class="m">8001</span>
+<span class="c1"># Aliases legados e curtos continuam válidos (compatibilidade):</span>
+.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span>--postgres<span class="w"> </span>--portapostgres<span class="w"> </span><span class="m">5444</span><span class="w"> </span>--otel<span class="w"> </span>--portatelemetria<span class="w"> </span><span class="m">3000</span><span class="w"> </span>--portasite<span class="w"> </span><span class="m">8080</span><span class="w"> </span>--portadocumentacao<span class="w"> </span><span class="m">8001</span>
+.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span>-p<span class="w"> </span>-o<span class="w"> </span>-k<span class="w"> </span><span class="m">5444</span><span class="w"> </span>-t<span class="w"> </span><span class="m">3000</span><span class="w"> </span>-s<span class="w"> </span><span class="m">8080</span><span class="w"> </span>-d<span class="w"> </span><span class="m">8001</span><span class="w">   </span><span class="c1"># contrações curtas</span>
+.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span>--scan-ports<span class="w">   </span><span class="c1"># lista portas/serviços locais e encerra (exit 0)</span>
+.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span>-S<span class="w">            </span><span class="c1"># alias curto de --scan-ports</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Grupo</th>
+<th style="text-align: left;">Flag (Opção C)</th>
+<th style="text-align: left;">Alias</th>
+<th style="text-align: center;">Curta</th>
+<th style="text-align: center;">Padrão</th>
+<th>Efeito</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Ativação</strong></td>
+<td style="text-align: left;"><code>--ativ-otel</code></td>
+<td style="text-align: left;"><code>--otel</code></td>
+<td style="text-align: center;"><code>-o</code></td>
+<td style="text-align: center;">desligado</td>
+<td>ativa o OpenTelemetry (Grafana+Loki+Tempo+Mimir)</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--ativ-postgres</code></td>
+<td style="text-align: left;"><code>--ativ-postgress</code> (typo), <code>--postgres</code></td>
+<td style="text-align: center;"><code>-p</code></td>
+<td style="text-align: center;">desligado</td>
+<td>usa PostgreSQL (sobe o container) em vez do SQLite</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Portas</strong></td>
+<td style="text-align: left;"><code>--porta-db</code></td>
+<td style="text-align: left;"><code>--portapostgres</code></td>
+<td style="text-align: center;"><code>-k</code></td>
+<td style="text-align: center;"><code>5432</code></td>
+<td>porta do PostgreSQL (a 5432 costuma estar ocupada por nativo — use 5444)</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-docs</code></td>
+<td style="text-align: left;"><code>--portadocumentacao</code></td>
+<td style="text-align: center;"><code>-d</code></td>
+<td style="text-align: center;"><code>8000</code></td>
+<td>porta da <strong>documentação (mkdocs)</strong>, separada do site</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-grafana</code></td>
+<td style="text-align: left;"><code>--portatelemetria</code></td>
+<td style="text-align: center;"><code>-t</code></td>
+<td style="text-align: center;"><code>3000</code></td>
+<td>porta do painel Grafana/telemetria</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-site</code></td>
+<td style="text-align: left;"><code>--portasite</code></td>
+<td style="text-align: center;"><code>-s</code></td>
+<td style="text-align: center;"><code>8080</code></td>
+<td>porta do <strong>site/aplicação</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Config</strong></td>
+<td style="text-align: left;"><code>--config</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: center;"><code>-c</code></td>
+<td style="text-align: center;">desligado</td>
+<td>abre o assistente interativo (ver 2.1)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Utilitário</strong></td>
+<td style="text-align: left;"><code>--scan-ports</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: center;"><code>-S</code></td>
+<td style="text-align: center;">desligado</td>
+<td>lista <strong>portas em uso + serviço</strong> (localhost) e <strong>encerra exit 0</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Agrupamento e ordem (Opção C, <code>ativacao._cli_app()</code> <code>ativacao.py:1331</code>):</strong> flags agrupadas por tipo — <code>config</code> → <code>ativação</code> (<code>--ativ-*</code>, alfabética: otel, postgres) → <code>portas</code> (<code>--porta-*</code>, alfabética: db, docs, grafana, site) → <code>utilitários</code> (<code>--scan-ports</code>). Help atualizado: <em>"Sem argumentos, sobe direto com a configuração persistida"</em> (antes mostrava assistente).</p>
+</blockquote>
+<ul>
+<li><code>--help</code> explica cada chamada <strong>em PT-BR</strong> e encerra.</li>
+<li><strong>Sem argumentos</strong>, sobe direto com <code>config_persistida()</code> (ver 2. — não abre assistente).</li>
+<li>Com flags, <code>main.py:40-54</code> detecta <code>-</code> e monta <code>ativacao.config_do_cli(**ativacao.cli_opcoes(_args))</code> → <code>iniciar(cli_cfg=...)</code> (<code>ativacao.py:1450</code>), reaproveitando <code>_executar_e_persistir(cfg)</code> (<code>:1531</code>) do assistente.</li>
+<li><code>--config</code>/<code>-c</code> tem prioridade: se presente, abre o wizard mesmo com outras flags (<code>main.py:43-45</code>).</li>
+<li><code>--scan-ports</code>/<code>-S</code> é processado em <code>cli_opcoes()</code> (<code>ativacao.py:1404</code>): imprime <code>port_scanner.resumo_portas()</code> (<code>port_scanner.py:144</code>) e sai <strong>exit 0</strong> — apenas <code>127.0.0.1</code>, nunca redes externas.</li>
+<li>Valores de porta fora da faixa 1–65535 caem no padrão (<code>_porta_valida</code>, <code>ativacao.py:140</code>).</li>
+<li><strong>Persistência:</strong> <code>config_persistida()</code> (<code>ativacao.py:1284</code>, novo helper) carrega <code>tb_config</code> (<code>banco_tipo</code>, <code>postgres_url</code>, <code>otel_ativo</code>, <code>porta_*</code>) e completa com <code>_config_padrao()</code> quando a chave ainda não existe (primeira execução).</li>
+</ul>
 <h2 id="3-primeiro-acesso-seed">3. Primeiro acesso (seed)<a class="headerlink" href="#3-primeiro-acesso-seed" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>master</code> / <code>master</code> — troca obrigatória de senha aplicada automaticamente no 1º logon (<code>mod_gest_cad_usuario/manipulador_bd.py:136-156</code>). Recomenda-se alterar manualmente.</li>
+<li><code>master</code> / <code>master</code> — troca obrigatória de senha aplicada automaticamente no 1º logon (<code>mod_gest_cad_usuario/bd_manipulador.py:136-156</code>). Recomenda-se alterar manualmente.</li>
 </ul>
 <h2 id="4-usuarios-de-teste">4. Usuários de teste<a class="headerlink" href="#4-usuarios-de-teste" title="Permanent link">&para;</a></h2>
 <table>
@@ -262,7 +433,7 @@ Porta <code>8080</code>, <code>reload=False</code>, <code>show=False</code>. No 
 </tbody>
 </table>
 <blockquote>
-<p><strong>Perfis do sistema</strong> — existem exatamente três (constante <code>PERFIS_GLOBAIS</code> em <code>mod_gest_cad_usuario/manipulador_bd.py:15</code>): <code>comum</code>, <code>administrador_modulo</code> e <code>administrador_geral</code>. Não há perfis "administrador", "almoxarife" ou "operador". O acesso por módulo é controlado por papel (<code>comum</code>/<code>administrador</code>) em <code>tb_acesso_usuario</code>; <code>administrador_geral</code> obtém papel <code>administrador</code> em todos os módulos e acesso exclusivo a <code>/auditoria</code>.</p>
+<p><strong>Perfis do sistema</strong> — existem exatamente três (constante <code>PERFIS_GLOBAIS</code> em <code>mod_gest_cad_usuario/bd_manipulador.py:15</code>): <code>comum</code>, <code>administrador_modulo</code> e <code>administrador_geral</code>. Não há perfis "administrador", "almoxarife" ou "operador". O acesso por módulo é controlado por papel (<code>comum</code>/<code>administrador</code>) em <code>tb_acesso_usuario</code>; <code>administrador_geral</code> obtém papel <code>administrador</code> em todos os módulos e acesso exclusivo a <code>/auditoria</code>.</p>
 </blockquote>
 <h2 id="5-smoke-test">5. Smoke test<a class="headerlink" href="#5-smoke-test" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>test/test_server.py

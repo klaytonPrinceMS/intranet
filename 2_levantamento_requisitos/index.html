@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -226,9 +247,15 @@
 <li>SQLite em modo <strong>WAL</strong> obrigatório em toda conexão.</li>
 <li>Rastreabilidade LGPD: IP (<code>X-Forwarded-For</code>), User-Agent, rótulo de dispositivo, MAC best-effort.</li>
 <li>Backup automático a cada 12 h (retenção de 10 cópias).</li>
+<li><strong>RNF-UI-01 — Padronização visual global de botões + Responsividade global mobile-first (REALIZADO 06/09; responsividade 09/2026):</strong> todos os botões de ação do sistema seguem <strong>um único padrão</strong> — fábrica central <code>mod_intranet/ui_comum.botao(chave_modulo=...)</code> (<code>BotaoFabrica</code>, 06/09, ~120 <code>ui.button</code> crus migrados em 12 arquivos), <strong>centralizados</strong> em linhas <code>w-full justify-center flex-wrap</code> com <code>.style('gap: 0.75rem')</code> e <code>.style('min-width: 0')</code>, <strong>mesmo formato</strong> <code>size=md</code> <code>min-w-[180px]</code> <code>no-caps</code> <code>shadow-sm</code> (ou <code>outline</code> para <code>contorno</code>/<code>restaurar</code>/<code>perigo</code> com mesma largura) e <strong>cor única por módulo</strong> via tema (<code>&lt;prefixo&gt;_cor_botao</code>/<code>cor_texto_botao</code>, <code>ui.colors(primary=cor)</code> + <code>cabecalho</code> borda + <code>botao</code> fundo, todos em <code>#000000</code> quando vazios via <code>PADROES_TEMA</code>). Referência de tamanho: botão <code>Aplicar configurações</code> / <code>Aplicar</code> do card <code>card_admin</code>/<code>bloco_aparencia</code>. <strong>Responsividade (RNF-UI-01 extensão):</strong> layout <strong>mobile-first</strong> validado em <strong>320 / 768 / 1024 px</strong> (auditoria <code>kbp-web-design</code> cobrindo <code>main.py</code>, <code>mod_intranet</code>, <code>mod_gest_cad_usuario</code>, <code>mod_auditoria</code>, <code>mod_renomear_empenho</code>, <code>mod_solicita_impressao</code>, <code>mod_edit_pdf</code>, <code>mod_blog</code>, <code>tela_configuracoes</code>, <code>ui_comum</code>); padrão global: containers <code>w-full p-4 sm:p-6</code> com <code>min-width:0</code>, <code>flex-wrap</code> + <code>gap</code> via <code>.style()</code> (nunca <code>gap-*</code> Tailwind em <code>ui.row</code>/<code>ui.column</code>), <code>truncate</code>/<code>max-w</code> em badges/títulos, <code>overflow-x-auto</code> em tabs/tabelas, <code>w-full max-w-[420px] mx-4</code> em dialogs/cards de login, <code>grid-cols-1 sm:grid-cols-2 md:grid-cols-3</code> e <code>scroll_area</code> com altura explícita. Corrigido: <code>main.py</code> login (<code>w-[420px] p-10</code> → <code>w-full max-w-[420px] mx-4 p-6 sm:p-10</code>, <code>p-4 min-width:0</code>, header <code>flex-wrap</code> <code>truncate</code> <code>max-w</code> <code>gap</code> via <code>.style</code>) e <code>mod_gest_cad_usuario</code> barra superior (<code>flex-nowrap</code> → <code>flex-wrap</code>, tabs <code>overflow-x-auto</code>, busca <code>flex-1 min-w</code>, dialogs <code>w-full max-w</code>); <code>mod_edit_pdf</code> já com botões <code>justify-center</code>, toggle <code>spread</code>, grids responsivos; <code>mod_blog</code> já com filtros justificados, exibição centralizada, seleção em lote. Checklist P0/P1/P2 e proposta de classes Tailwind por <code>container</code>/<code>row</code>/<code>grid</code> disponível por módulo na auditoria <code>kbp-web-design</code>. Validado por <code>assets/test/verifica_ui_comum.py</code> (190 verificações) + <code>mkdocs build</code> (tema <code>readthedocs</code>). Ver <a href="../padroes_codificacao/">Padrões de Codificação</a> §8 e <a href="../convencoes_codigo/">Convenções</a> checklist.</li>
 </ul>
 <h2 id="backlog-pendenteparcial">Backlog (pendente/parcial)<a class="headerlink" href="#backlog-pendenteparcial" title="Permanent link">&para;</a></h2>
 <p>Ver <a href="../registro_de_mudancas/">Registro de Mudanças</a> — todos os itens da Fase 9 concluídos (RF-04/16, RF-08, RF-09, RF-26, RF-32, RF-35, RF-36, <strong>RF-41</strong>, <strong>RF-45</strong>, <strong>RF-40</strong>, <strong>RF-44</strong>, <strong>RF-39</strong>, <strong>RF-58</strong>, <strong>RF-57</strong>), conforme <code>PLANO.md</code>.</p>
+<p><strong>Pendências abertas da sessão de 14/09/2026 (Blog, NÃO implementadas):</strong></p>
+<ul>
+<li>Espaçamento acima das seções "Como usar / Dicas / Limites" das postagens-guia.</li>
+<li>Checagem de subtítulos das postagens-guia.</li>
+</ul>
 <p>Veja também <a href="../visao_de_produto/">Visão de Produto</a> e <a href="../arquitetura_de_software_das/">Arquitetura</a>.</p>
               
             </div>

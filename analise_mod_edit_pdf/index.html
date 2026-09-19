@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -213,12 +234,12 @@
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Editor de PDFs multiusuário com espaço temporário por usuário. O usuário envia PDFs em lote e aplica operações sobre uma seleção ordenada (reduzir, juntar, cortar, dividir, verificar, ZIP, excluir); arquivos expiram automaticamente. Aba de Administração exclusiva do <code>administrador_geral</code> para cotas/limites/expiração — tudo configurável sem restart.</p>
 <h2 id="banco-proprio">Banco próprio<a class="headerlink" href="#banco-proprio" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db_pdf()</code> em <code>manipulador_bd.py:92-123</code> (executado no import e no bootstrap central).</p>
+<p>Criador vigente: <code>init_db_pdf()</code> em <code>bd_manipulador.py:92-123</code> (executado no import e no bootstrap central).</p>
 <ul>
 <li><strong><code>tb_arquivos</code></strong>: id, nome_arquivo, usuario, tamanho_bytes, <code>operacao</code> (upload/saida/zip), data_operacao, ativo.</li>
 <li><strong><code>tb_cota_disco</code></strong>: usuario PK, total_usado_bytes, atualizado_em.</li>
 </ul>
-<p>⚠️ O <code>db_criador.py</code> deste módulo é <strong>legado/morto</strong> com esquema divergente (<code>caminho_arquivo</code>, <code>hash_sha256 NOT NULL</code>, FTS inexistente) e conecta no banco <strong>central</strong> — se executado criaria tabelas erradas em <code>db_mod_intranet.db</code>. É dele a semeadura da versão do sistema citada na convenção de versionamento.</p>
+<p>⚠️ O <code>bd_criador.py</code> deste módulo é <strong>legado/morto</strong> com esquema divergente (<code>caminho_arquivo</code>, <code>hash_sha256 NOT NULL</code>, FTS inexistente) e conecta no banco <strong>central</strong> — se executado criaria tabelas erradas em <code>db_mod_intranet.db</code>. É dele a semeadura da versão do sistema citada na convenção de versionamento.</p>
 <h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Abas</strong>: Editor (sempre) | Administração (só <code>administrador_geral</code>). Cabeçalho mostra uso da cota do usuário; uso global só ao admin geral.</li>
@@ -272,7 +293,7 @@
 <tr>
 <td style="text-align: left;">Cupês de Administração</td>
 <td style="text-align: left;">montagem própria</td>
-<td style="text-align: left;"><code>bloco_aparencia</code> reusando o tema único (<code>administracao.py:175-176</code>, <code>com_card=True</code> — card padrão "Configurações de cores") — o <code>campo_modulo</code> foi <strong>removido (06/09)</strong></td>
+<td style="text-align: left;"><code>bloco_aparencia</code> reusando o tema único (<code>telas_administracao.py:175-176</code>, <code>com_card=True</code> — card padrão "Configurações de cores") — o <code>campo_modulo</code> foi <strong>removido (06/09)</strong></td>
 </tr>
 </tbody>
 </table>
@@ -294,17 +315,17 @@
 </ul>
 <h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
 <p>Usa <code>get_connection</code>/<code>get_config</code>/<code>set_config</code> centrais e <code>audit_log</code>. Chaves de configuração: <code>cotadisco_global_gb</code>, <code>editpdf_lote_arquivos</code>, <code>editpdf_lote_mb</code>, <code>editpdf_usuario_gb</code>, <code>editpdf_expiracao_min</code>; tema: <code>editpdf_cor_botao</code>, <code>editpdf_cor_texto_botao</code>, <code>editpdf_cor_fundo</code>, <code>editpdf_cor_titulo</code>, <code>editpdf_btn_tamanho</code>. O scheduler central chama <code>expirar_antigos()</code> diretamente.</p>
-<p><strong>Versão individual do módulo</strong>: <code>versao_modulo:editar_pdf = 1.0.260908</code> (em <code>tb_config</code> central — seed principal idempotente em <code>conexao_bd.init_db()</code>; o <code>manipulador_bd.py::_semear_versao_modulo</code> é duplicado inofensivo). Exibida no rodapé ao lado da versão global quando o usuário navega em <code>/edit-pdf</code>. Atualizar manualmente a cada alteração do <code>mod_edit_pdf</code> — não mexer na versão global nem na dos demais módulos.</p>
+<p><strong>Versão individual do módulo</strong>: <code>versao_modulo:editar_pdf = 1.0.260908</code> (em <code>tb_config</code> central — seed principal idempotente em <code>bd_conexao.init_db()</code>; o <code>bd_manipulador.py::_semear_versao_modulo</code> é duplicado inofensivo). Exibida no rodapé ao lado da versão global quando o usuário navega em <code>/edit-pdf</code>. Atualizar manualmente a cada alteração do <code>mod_edit_pdf</code> — não mexer na versão global nem na dos demais módulos.</p>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>db_criador.py</code> morto/divergente — não executar.</li>
-<li><strong><code>_cfg</code> depende de <code>get_config</code> importado</strong> no topo de <code>db_manipulador.py</code>. Se faltar <code>get_config</code> no <code>from mod_intranet.conexao_bd import …</code>, cada leitura cai em <code>NameError</code>→<code>except</code>→ retorna <strong>sempre o default</strong> (bug real: MB configurado em 200 e o sistema usava 1024; arquivos configurados em 100 e usava 10). Conferir o import ao mexer no topo do arquivo.</li>
+<li><code>bd_criador.py</code> morto/divergente — não executar.</li>
+<li><strong><code>_cfg</code> depende de <code>get_config</code> importado</strong> no topo de <code>bd_manipulador.py</code>. Se faltar <code>get_config</code> no <code>from mod_intranet.bd_conexao import …</code>, cada leitura cai em <code>NameError</code>→<code>except</code>→ retorna <strong>sempre o default</strong> (bug real: MB configurado em 200 e o sistema usava 1024; arquivos configurados em 100 e usava 10). Conferir o import ao mexer no topo do arquivo.</li>
 <li>Limite de "estoque de uploads" reaproveita o valor do limite de lote (não é configurável separadamente).</li>
 <li>Redução Agressivo transforma texto em imagem (perde seleção/busca no PDF).</li>
-<li><code>cfg_tema</code> em <code>manipulador_bd.py:74</code> ficou <strong>sem uso</strong> após a migração da tela para <code>ler_tema</code> (06/09) — código morto candidato a remoção.</li>
+<li><code>cfg_tema</code> em <code>bd_manipulador.py:74</code> ficou <strong>sem uso</strong> após a migração da tela para <code>ler_tema</code> (06/09) — código morto candidato a remoção.</li>
 </ul>
 <h2 id="status-fase-5-do-planomd">Status — Fase 5 do PLANO.md<a class="headerlink" href="#status-fase-5-do-planomd" title="Permanent link">&para;</a></h2>
-<p>Fase essencialmente <strong>concluída</strong>: banco + cotas + limites de lote; expiração automática agendada; prefixo padronizado; todas as operações (reduzir/juntar/cortar/dividir/verificar/ZIP/excluir); auditoria com SHA-256 origem/destino; estoque de uploads; <strong>tema padronizado</strong> (boas práticas: botões/tamanho/cores via <code>ui.color_input</code>); testes ponta a ponta em <code>test/test_editor_pdf.py</code> (32 verificações passando — o README diz "20", número defasado). Única pendência conceitual é o legado <code>db_criador.py</code>.</p>
+<p>Fase essencialmente <strong>concluída</strong>: banco + cotas + limites de lote; expiração automática agendada; prefixo padronizado; todas as operações (reduzir/juntar/cortar/dividir/verificar/ZIP/excluir); auditoria com SHA-256 origem/destino; estoque de uploads; <strong>tema padronizado</strong> (boas práticas: botões/tamanho/cores via <code>ui.color_input</code>); testes ponta a ponta em <code>test/test_editor_pdf.py</code> (32 verificações passando — o README diz "20", número defasado). Única pendência conceitual é o legado <code>bd_criador.py</code>.</p>
 <h3 id="correcao-registrada-limite-de-mb-ignorado">Correção registrada — limite de MB ignorado<a class="headerlink" href="#correcao-registrada-limite-de-mb-ignorado" title="Permanent link">&para;</a></h3>
 <p>Bug real: limites configurados não eram aplicados porque faltava o import de <code>get_config</code> em <code>../mod_edit_pdf/bd_manipulador.py</code> — <code>_cfg</code> sempre retornava o default (<code>editpdf_lote_mb</code>=1024 em vez de 200). Corrigido restaurando o import e reforçado com a pré-checagem do lote inteiro em <code>_receber_lote</code> (<code>telas.py</code>).</p>
 <h3 id="cupe-de-aparencia-padronizado-helper-central">Cupê de Aparência padronizado (helper central)<a class="headerlink" href="#cupe-de-aparencia-padronizado-helper-central" title="Permanent link">&para;</a></h3>
@@ -317,6 +338,10 @@ campos de cor do cupê ficavam <strong>sem botão salvar dedicado</strong> (o sa
 módulo ficou exclusiva do painel central <code>/configuracoes</code>.</p>
 <p>Regra de uniformidade e mapeamento de prefixos cobertos por <code>test/test_tema.py</code> (18 verificações
 standalone).</p>
+<h3 id="adicoes-recentes-092026-responsividade-global-rnf-ui-01">Adições recentes (09/2026) — responsividade global RNF-UI-01<a class="headerlink" href="#adicoes-recentes-092026-responsividade-global-rnf-ui-01" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Já responsivo</strong> — botões centralizados <code>w-full justify-center flex-wrap</code> <code>gap</code> via <code>.style</code> <code>min-width:0</code>, toggle <code>spread</code>, grids responsivos <code>grid-cols-1 sm:grid-cols-2 md:grid-cols-3</code>; <code>overflow-x-auto</code> em tabelas, <code>scroll_area</code> altura explícita. Auditado 320/768/1024 (<code>kbp-web-design</code>) com checklist P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code> (sem pendências P0).</li>
+</ul>
               
             </div>
           </div><footer>

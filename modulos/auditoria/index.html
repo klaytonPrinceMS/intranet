@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -157,6 +166,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul class="current">
@@ -175,6 +190,12 @@
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -213,7 +234,7 @@
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Banco e visualizador da trilha de auditoria LGPD. A <strong>escrita</strong> é feita pelos demais módulos via <code>audit_log</code> (núcleo) → <code>registrar_auditoria</code> (este módulo), que grava na tabela do módulo produtor — criada automaticamente. A <strong>leitura</strong> é feita pela tela <code>/auditoria</code> (exclusiva do <code>administrador_geral</code>).</p>
 <h2 id="banco-de-dados">Banco de dados<a class="headerlink" href="#banco-de-dados" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db_auditoria()</code> em <code>manipulador_bd.py:25-38</code> (executado no import e pelo bootstrap central).</p>
+<p>Criador vigente: <code>init_db_auditoria()</code> em <code>bd_manipulador.py:25-38</code> (executado no import e pelo bootstrap central).</p>
 <table>
 <thead>
 <tr>
@@ -247,6 +268,7 @@
 <li><strong>Colunas padrão</strong>: Data/Hora, Usuário, Módulo, Ação (cores por tipo — <code>CORES_ACAO</code>), Descrição (100 chars), Hash, IP, dispositivo.</li>
 <li><strong>Aba Observabilidade</strong> (quando a stack OTel está no ar): atalhos para os dashboards Grafana (Visão Geral, Traces, Logs) + aviso LGPD sobre a senha do Grafana.</li>
 <li><strong>Painel Administração</strong>: <code>auditoria_limite</code>, <code>auditoria_retencao_dias</code>, <code>auditoria_texto_header</code> + card padrão <strong>"Configurações de cores"</strong> (<code>auditoria_*</code> — vazios usam o padrão do PRÓPRIO módulo via <code>PADROES_TEMA["auditoria"]</code> = <code>#000000</code>, sem herança do tema do sistema); salvar audita a si mesmo. O cabeçalho usa <code>chave_modulo="auditoria"</code> (<code>telas.py:345</code>): a borda de destaque é a <strong>mesma cor dos botões do módulo</strong>.</li>
+<li><strong>Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 <code>kbp-web-design</code>)</strong>: <code>overflow-x-auto</code> em tabs/filtros/tabela, barra de filtros <code>flex-wrap</code> <code>gap</code> via <code>.style</code>, <code>truncate</code> em colunas longas, dialogs <code>w-full max-w</code>; proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code> (header <code>flex-wrap</code> <code>min-width:0</code>).</li>
 <li><strong>Versionamento</strong>: <code>versao_modulo:auditoria = 1.0.260908</code>.</li>
 </ul>
 <h2 id="permissoes">Permissões<a class="headerlink" href="#permissoes" title="Permanent link">&para;</a></h2>
@@ -288,7 +310,7 @@
 <ul>
 <li>Exportação cobre a <strong>página corrente</strong> (não a consulta inteira).</li>
 <li>Ações novas/desconhecidas podem ser filtradas por texto livre no select de Ação.</li>
-<li><code>db_criador.py</code> é legado — o esquema real vive em <code>db_manipulador.py</code>.</li>
+<li><code>bd_criador.py</code> é legado — o esquema real vive em <code>bd_manipulador.py</code>.</li>
 </ul>
 <p>Ver <a href="../../analise_mod_auditoria/">Análise do Módulo</a>.</p>
               

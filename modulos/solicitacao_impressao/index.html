@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -157,6 +166,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul class="current">
@@ -175,6 +190,12 @@
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Solicitação de Impressão</a>
     <ul class="current">
     </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -203,18 +224,19 @@
               
                 <h1 id="print-request-module-mod_solicita_impressao">Print Request Module — <code>mod_solicita_impressao</code><a class="headerlink" href="#print-request-module-mod_solicita_impressao" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Print request module: route <code>/solicita-impressao</code> (key <code>solicita_impressao</code>) · own database <code>db_mod_solicita_impressao.db</code> · PDF upload, page counting, hierarchical monthly quotas, dual-mode print, central audit.</p>
+<p>Print request module: route <code>/solicita-impressao</code> (key <code>solicita_impressao</code>) · own database <code>db_mod_solicita_impressao.db</code> · PDF upload, page counting, hierarchical monthly quotas, dual-mode print, central audit · <strong>integrated organogram (<code>ORGANOGRAMA_BASE</code> from <code>mod_lista_telefonica</code>) with default quotas 1000/200</strong>.</p>
 </blockquote>
 <hr />
 <h1 id="modulo-solicitacao-de-impressao-mod_solicita_impressao">Módulo Solicitação de Impressão — <code>mod_solicita_impressao</code><a class="headerlink" href="#modulo-solicitacao-de-impressao-mod_solicita_impressao" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo de solicitação de impressão: rota <code>/solicita-impressao</code> (chave <code>solicita_impressao</code>) · banco próprio <code>db_mod_solicita_impressao.db</code> · envio de PDF, contagem de páginas, cotas mensais hierárquicas, impressão dual, auditoria central.</p>
+<p>Módulo de solicitação de impressão: rota <code>/solicita-impressao</code> (chave <code>solicita_impressao</code>) · banco próprio <code>db_mod_solicita_impressao.db</code> · envio de PDF, contagem de páginas, cotas mensais hierárquicas, impressão dual, auditoria central · <strong>organograma integrado (<code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code>) com cotas padrão 1000/200</strong>.</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Módulo para solicitação de impressão de PDFs. Usuários <strong>comuns</strong> anexam um PDF por solicitação (upload automático), informam cópias, papel (A4/A3), cor (PB/Color), frente/verso, sulfite, observações e a secretaria/setor de crédito. O sistema conta as páginas, renomeia o arquivo no padrão definido, aplica regras de cota mensal hierárquica e fluxo de autorização quando exigido. Apenas administradores do módulo imprimem; responsáveis cadastrados autorizam.</p>
-<p><strong>Versionamento</strong>: <code>versao_modulo:solicita_impressao = 1.0.260908</code>.</p>
+<p><strong>Versionamento</strong>: <code>versao_modulo:solicita_impressao = 1.0.260913</code>.</p>
+<p><strong>Integração organograma (novo)</strong>: no primeiro boot o <code>init_db()</code> importa <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code> (12 secretarias genéricas) e <strong>popula automaticamente</strong> <code>tb_secretarias</code> com <strong>1000 cópias</strong> e <code>tb_setores</code> com <strong>200 cópias</strong> (subsetores achatados como setores). Em bancos já existentes, a mesma integração <strong>migra</strong> via <code>UPDATE</code> idempotente para garantir as cotas padrão (1000/200) — exceto edições intencionais do admin posteriormente alteráveis. Ver <a href="#banco-de-dados">Banco de dados</a> e <a href="#cotas-padrao-do-organograma-1000200">Cotas padrão do organograma</a>.</p>
 <h2 id="banco-de-dados">Banco de dados<a class="headerlink" href="#banco-de-dados" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db()</code> em <code>manipulador_bd.py:92</code> (bootstrap central). Arquivos PDF em <code>mod_solicita_impressao/solicitacaoImpressao/</code> (pasta própria).</p>
+<p>Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:121-472</code> (bootstrap central). Arquivos PDF em <code>mod_solicita_impressao/solicitacaoImpressao/</code> (pasta própria).</p>
 <table>
 <thead>
 <tr>
@@ -229,11 +251,11 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_secretarias</code></td>
-<td style="text-align: left;">nome, sigla, cota mensal, limite de pedidos abertos</td>
+<td style="text-align: left;">nome, sigla, cota mensal (<strong>1000 padrão do organograma</strong>), limite de pedidos abertos (20 padrão)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_setores</code></td>
-<td style="text-align: left;">nome, secretaria FK, cota mensal, limite de pedidos abertos</td>
+<td style="text-align: left;">nome, secretaria FK, cota mensal (<strong>200 padrão do organograma</strong>, subsetores achatados), limite de pedidos abertos (10 padrão)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_responsaveis_autorizacao</code></td>
@@ -257,12 +279,15 @@
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p><strong>Cotas padrão do organograma</strong>: <code>tb_secretarias.cota_paginas_mensal = 1000</code> e <code>tb_setores.cota_paginas_mensal = 200</code> vêm do <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code> (genérico de 12 secretarias). Subsetores viram setores com 200 cópias. Legados com 0 recebem <code>UPDATE ... SET 200</code>.</p>
+</blockquote>
 <h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Upload automático ao selecionar o PDF</strong> + renomeação (nome original descartado); rascunho <code>YYYYMMDD_HHMMSS_usuario_rascunho.pdf</code> com expiração (<code>tempo_expira_rascunho_min</code>, default 10 min) e botão "Remover arquivo".</li>
 <li><strong>Envio múltiplo</strong> (até 10 PDFs): lista com checkbox, "Remover selecionados", todos os arquivos viram <strong>um único pedido (grupo)</strong> com status único; uuid evita colisão de rascunho no mesmo segundo.</li>
 <li><strong>Contabilização</strong>: <code>paginas = qtd × copias × fator_papel × fator_frente_verso</code> (A4=1/A3=2; frente=1/verso=2).</li>
-<li><strong>Cotas hierárquicas mensais</strong>: secretaria e setor (setor sem cota usa o pool da secretaria); excedente <strong>permitido</strong> e marcado; consumo descontado só na impressão; visual <strong>sem numeral</strong> — verde &lt;50% / amarelo 50–80% / laranja 80–100% / vermelho &gt;100%; reset no dia 1º.</li>
+<li><strong>Cotas hierárquicas mensais</strong>: secretaria <strong>1000 cópias padrão</strong> e setor <strong>200 cópias padrão</strong> (semeadas do <code>ORGANOGRAMA_BASE</code>); setor sem cota usa o pool da secretaria; excedente <strong>permitido</strong> e marcado; consumo descontado só na impressão; visual <strong>sem numeral</strong> — verde &lt;50% / amarelo 50–80% / laranja 80–100% / vermelho &gt;100%; reset no dia 1º.</li>
 <li><strong>Tipo de papel</strong> (sulfite/fotográfico/vergê): selecionável no formulário, <strong>ativo apenas em A4</strong> (A3 = sulfite obrigatório); não sulfite avisa "traga o próprio papel"; padrão configurável (<code>padrao_tipo_papel</code>).</li>
 <li><strong>Alertas da nova solicitação</strong> (<code>alertas_nova_solicitacao</code>): frases configuráveis (uma por linha) exibidas abaixo do card de envio — substitui os antigos avisos fixos de presença/páginas múltiplas.</li>
 <li><strong>Autorização por responsável cadastrado</strong> (pode ser usuário <code>comum</code> — a checagem usa <code>tb_responsaveis_autorizacao</code>, independente do perfil); sem responsável → pedido fica <code>pendente</code> e o <strong>admin autoriza e imprime</strong>.</li>
@@ -273,8 +298,21 @@
 <li><strong>Datas do servidor</strong>: todas as datas (criação, autorização, impressão, expiração) usam <code>hora_servidor()</code>/<code>datetime('now','localtime')</code> — fonte da verdade é o servidor (NTP.br opcional via <code>hora_ntp_ativa</code>).</li>
 <li><strong>Aparência</strong> (card padrão "Configurações de cores" — <code>bloco_aparencia</code> com <code>com_card=False</code>, card próprio do módulo, prévia ao vivo e rodapé 2 botões): <code>solicita_impressao_cor_botao</code>, <code>solicita_impressao_cor_texto_botao</code>, <code>solicita_impressao_cor_fundo</code>, <code>solicita_impressao_cor_titulo</code>, <code>solicita_impressao_btn_tamanho</code>, <code>solicita_impressao_texto_header</code> em <code>tb_config</code> central, na sub-aba Configurações da Administração; tela em área cheia (<code>w-full</code>). O cabeçalho usa <code>chave_modulo="solicita_impressao"</code> (<code>telas.py:49</code>): a borda de destaque é a <strong>mesma cor dos botões do módulo</strong> (<code>solicita_impressao_cor_botao</code>, vazia = padrão via <code>PADROES_TEMA</code> — todos os módulos em <code>#000000</code>, a cor do intranet), título/fundo seguem o tema — sem hex hardcoded.</li>
 <li><strong>Auditoria central</strong> (<code>solicita_impressao</code>): quem solicitou/autorizou/imprimiu/recusou (quantidades, motivo, hash).</li>
+<li><strong>Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 <code>kbp-web-design</code>)</strong>: proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code> — abas <code>overflow-x-auto</code>, formulário <code>grid-cols-1 sm:grid-cols-2</code>, lista de solicitações <code>overflow-x-auto</code>, dialogs <code>w-full max-w</code>, barra de ações <code>flex-wrap</code> <code>gap</code> via <code>.style</code>.</li>
 <li><strong>Job <code>cleanup_solicita</code></strong> (1 min) remove rascunhos não confirmados e impressos vencidos.</li>
 </ul>
+<h3 id="cotas-padrao-do-organograma-1000200">Cotas padrão do organograma (1000/200)<a class="headerlink" href="#cotas-padrao-do-organograma-1000200" title="Permanent link">&para;</a></h3>
+<p>No <code>init_db()</code> (<code>bd_manipulador.py:360-464</code>):</p>
+<ul>
+<li><code>from mod_lista_telefonica.bd_manipulador import ORGANOGRAMA_BASE as _ORG_BASE</code> (fallback genérico 6 itens se import falhar).</li>
+<li><code>_sigla_sec(nome)</code>: <code>NFKD</code> sem acentos + 4 chars upper <code>SEC_XXXX</code>.</li>
+<li><code>_SECRETARIAS_PADRAO = [(nome, sigla, 1000, 20) for sec in _ORG_BASE]</code> — cada secretaria nasce com <strong>1000 cópias</strong> e limite 20 pedidos abertos.</li>
+<li>Loop <code>SELECT id FROM tb_secretarias WHERE sigla=? OR nome=?</code> → <code>INSERT tb_secretarias (nome, sigla, cota=1000, limite=20)</code> idempotente.</li>
+<li><code>_SETORES_PADRAO = [(setor, sec_nome, 200, 10) for sec/setor in _ORG_BASE for sub in subsetores]</code> — cada setor <strong>e</strong> cada subsetor achatado como setor com <strong>200 cópias</strong> e limite 10.</li>
+<li>Loop por setor: resolve <code>secretaria_id</code> via <code>_mapa_nome_id/_mapa_sigla_id/SELECT</code>, <code>SELECT id FROM tb_setores WHERE nome=? AND secretaria_id=?</code> → <code>INSERT tb_setores (nome, secretaria_id, cota=200, limite=10)</code>.</li>
+<li><strong>Migração para bancos existentes</strong> (<code>bd_manipulador.py:444-463</code>): <code>UPDATE tb_secretarias SET cota=1000 WHERE nome=? AND cota !=1000</code> por secretaria do organograma + <code>UPDATE tb_setores SET cota=200 WHERE nome=? AND secretaria_id IN (SELECT...) AND cota !=200</code> por setor do organograma + <code>UPDATE tb_setores SET cota=200 WHERE cota=0</code> para legados zerados (ex.: DTI).</li>
+</ul>
+<p>Secretarias/setores criadas manualmente pelo admin mantêm a cota informada no cadastro (0 quando não informada usa fallback; ver cotas hierárquicas acima).</p>
 <h2 id="nomenclatura-do-arquivo">Nomenclatura do arquivo<a class="headerlink" href="#nomenclatura-do-arquivo" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>AAMMDDHHMMSS_secretaria_setor_solicitante_copias_cor_tipoPapel_folhas_ordemEnvio.pdf
 </code></pre></div>
@@ -309,18 +347,23 @@ espaços→<code>_</code>; <code>ordemEnvio</code> diferencia arquivos do mesmo 
 </table>
 <h2 id="rota-e-integracoes">Rota e integrações<a class="headerlink" href="#rota-e-integracoes" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Rota: <code>/solicita-impressao</code> (<code>main.py:285</code>) + downloads <code>/solicita-impressao/pdf/{id}</code> (<code>main.py:238</code>) e JS <code>/solicita-impressao/src/impressao.js</code> (<code>main.py:297</code>).</li>
+<li>Rota: <code>/solicita-impressao</code> (<code>main.py:701</code>) + downloads <code>/solicita-impressao/pdf/{id}</code> (<code>main.py:654</code>) e JS <code>/solicita-impressao/src/impressao.js</code> (<code>main.py:766</code>).</li>
 <li>Módulo nativo em <code>tb_modulos</code> (chave <code>solicita_impressao</code>, ícone <code>print</code>).</li>
 <li>Auditoria via <code>audit_log(usuario, 'solicita_impressao', ...)</code>.</li>
+<li><strong>Organograma</strong>: importa <code>ORGANOGRAMA_BASE</code> de <code>mod_lista_telefonica</code> para as cotas padrão 1000/200 — ver <a href="#cotas-padrao-do-organograma-1000200">Cotas padrão do organograma</a> e <a href="../../analise_mod_lista_telefonica/">Integração Lista Telefônica</a>.</li>
 </ul>
 <h2 id="testes">Testes<a class="headerlink" href="#testes" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>test/test_solicita_impressao.py
+<span class="c1"># Smoke cotas padrão</span>
+.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from mod_solicita_impressao.bd_manipulador import init_db, listar_secretarias, listar_setores; init_db(); print([(s[1],s[3]) for s in listar_secretarias()[:3]]); print([(s[1],s[3]) for s in listar_setores()[:5]])"</span>
 </code></pre></div>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Lista real de impressoras depende de API experimental do navegador (<code>navigator.getPrinters</code>); fallback é o diálogo nativo do SO.</li>
 <li>Contagem de páginas usa PyMuPDF; PDFs corrompidos/imagem podem retornar 0 (bloqueia envio).</li>
 <li>Cotas são mensais; reset manual ou automático (dia 1); sem e-mail (SMTP não usado aqui).</li>
+<li><strong>Organograma achatado</strong>: <code>ORGANOGRAMA_BASE</code> tem 3 níveis (Secretaria→Setor→Subsetor), mas a impressão mantém <strong>2 níveis</strong> (Secretaria→Setor) — subsetores viram setores com 200 cópias para compatibilidade com o modelo hierárquico da impressão.</li>
+<li><strong>Migração idempotente</strong>: <code>UPDATE ... WHERE cota != 1000/200</code> não sobrescreve edições intencionais do admin após a migração inicial (só corrige zerados ou valores antigos diversos do padrão).</li>
 </ul>
 <p>Ver <a href="../../analise_mod_solicita_impressao/">Análise do Módulo</a>.</p>
               
@@ -328,6 +371,7 @@ espaços→<code>_</code>; <code>ordemEnvio</code> diferencia arquivos do mesmo 
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../auditoria/" class="btn btn-neutral float-left" title="Auditoria"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../tecnico/" class="btn btn-neutral float-right" title="Técnico">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -352,6 +396,8 @@ espaços→<code>_</code>; <code>ordemEnvio</code> diferencia arquivos do mesmo 
     
       <span><a href="../auditoria/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
+    
+      <span><a href="../tecnico/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

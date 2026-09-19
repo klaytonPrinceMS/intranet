@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul class="current">
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -244,12 +265,12 @@
 <td style="text-align: left;">Login (fase 1)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>test_fresh_install.py</code> / <code>fresh_install_test2.py</code></td>
-<td style="text-align: left;">Boot/seed (move os <code>.db</code> reais temporariamente — não interromper)</td>
+<td style="text-align: left;"><code>test_fresh_install.py</code> / <code>fresh_install_test*.py</code></td>
+<td style="text-align: left;">Boot/seed (move os <code>.db</code> reais temporariamente — não interromper; desde 14/09/2026 com caminho absoluto a partir da raiz — roda de qualquer CWD sem criar <code>.db</code> de 0 bytes fora do lugar)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>diag_db.py</code> / <code>diag_config.py</code></td>
-<td style="text-align: left;">Diagnóstico de banco/config</td>
+<td style="text-align: left;">Diagnóstico de banco/config (<code>diag_db.py</code> desde 14/09/2026 com caminho absoluto — idem acima)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>step_boot.py</code> / <code>debug_boot.py</code> / <code>wtest.py</code></td>
@@ -257,18 +278,522 @@
 </tr>
 </tbody>
 </table>
+<h2 id="catalogo-data-testid-drawer-menu-hamburguer">Catálogo <code>data-testid</code> — drawer / menu hambúrguer<a class="headerlink" href="#catalogo-data-testid-drawer-menu-hamburguer" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — Drawer <code>data-testid</code> catalog (all set via <code>.props('data-testid=...')</code> in <code>mod_intranet/ui_comum.py:852-937</code> factory <code>ItemMenuDrawer</code>/<code>item_menu_drawer</code> and <code>mod_intranet/telas.py:218-332</code>): use these selectors in Playwright/pytest-playwright (<code>page.get_by_test_id(...)</code>), never CSS/XPath.</p>
+<p>PT — Catálogo de <code>data-testid</code> do drawer (todos aplicados via <code>.props('data-testid=...')</code> na fábrica <code>ItemMenuDrawer</code>/<code>item_menu_drawer</code> em <code>mod_intranet/ui_comum.py:852-937</code> e no drawer em <code>mod_intranet/telas.py:218-332</code>): use estes seletores no Playwright/pytest-playwright (<code>page.get_by_test_id(...)</code>), nunca CSS/XPath.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><code>data-testid</code></th>
+<th style="text-align: left;">Onde</th>
+<th style="text-align: left;">Quem vê</th>
+<th style="text-align: left;">Ação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>menu-hamburguer</code></td>
+<td style="text-align: left;">Header (<code>telas.py:216-220</code>, <code>botao_icone "menu"</code>) — <code>aria-label="Abrir menu de navegação"</code></td>
+<td style="text-align: left;">todos os perfis logados</td>
+<td style="text-align: left;">alterna (<code>toggle</code>) o <code>ui.left_drawer</code> (inicia fechado, <code>value=False</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>menu-home</code></td>
+<td style="text-align: left;">Drawer (<code>telas.py:255-261</code>), fábrica com <code>ativo=(not chave_modulo)</code></td>
+<td style="text-align: left;">todos</td>
+<td style="text-align: left;">navega para <code>/</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>menu-&lt;chave&gt;</code></td>
+<td style="text-align: left;">Drawer (<code>telas.py:266-272</code>), um por módulo ATIVO de <code>autenticacao.modulos_do_usuario()</code> (ex. <code>menu-blog</code>, <code>menu-usuarios</code>) — <code>aria-current="page"</code> quando <code>ativo</code></td>
+<td style="text-align: left;">só quem tem vínculo válido (<code>validar_acesso_modulo</code>)</td>
+<td style="text-align: left;">navega para a rota do módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>menu-&lt;chave&gt;-indisponivel</code></td>
+<td style="text-align: left;">Drawer (<code>telas.py:274-287</code>), módulo com vínculo remanescente mas DESATIVADO — <code>aria-label="&lt;nome&gt; — módulo indisponível"</code>, visual laranja <code>bg-orange-2 border-orange-6</code></td>
+<td style="text-align: left;">só quem mantém o vínculo</td>
+<td style="text-align: left;">só <code>notificar()</code> warning — NÃO navega</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>menu-admin</code></td>
+<td style="text-align: left;">Drawer (<code>telas.py:299-306</code>), rótulo <code>Administração</code> (ou <code>Administração (sistema)</code> na Home)</td>
+<td style="text-align: left;">só <code>administrador_geral</code> (<code>perfil_global_de() == "administrador_geral"</code>) — <code>comum</code> e <code>administrador_modulo</code> NÃO veem</td>
+<td style="text-align: left;">navega para <code>/admin/&lt;chave&gt;</code> (ou <code>/configuracoes</code> na Home)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>menu-docs</code></td>
+<td style="text-align: left;">Drawer (<code>telas.py:309-316</code>), rótulo <code>Documentação</code></td>
+<td style="text-align: left;">só <code>administrador_geral</code></td>
+<td style="text-align: left;">abre <code>/documentacao</code> em nova aba</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>menu-sair</code></td>
+<td style="text-align: left;">Drawer (<code>telas.py:319-324</code>), rótulo <code>Sair</code></td>
+<td style="text-align: left;">todos</td>
+<td style="text-align: left;"><code>_logout</code> (encerra sessão)</td>
+</tr>
+</tbody>
+</table>
+<p>Notas de acessibilidade da fábrica (<code>ui_comum.py:883-918</code>): <code>ui.item</code> <code>w-full rounded-lg my-0.5</code> + <code>.style('min-width: 0')</code>, seção avatar com ícone <code>text-primary shrink-0</code> + <code>aria-hidden="true"</code>, rótulo <code>truncate max-w-full grow</code>, tooltip PT-BR, anel <code>focus-visible:ring-2</code>, estado ativo <code>bg-blue-100 font-bold</code> + <code>aria-current="page"</code>; item só-ícone (rótulo vazio) recebe <code>aria-label</code>. Falha de montagem = fail-soft (<code>None</code> + log exception).</p>
+<h2 id="catalogo-data-testid-header-do-usuario-correcao-final-14092026-botao-temp-dos-empenhos">Catálogo <code>data-testid</code> — header do usuário (correção final 14/09/2026) + botão TEMP dos empenhos<a class="headerlink" href="#catalogo-data-testid-header-do-usuario-correcao-final-14092026-botao-temp-dos-empenhos" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — Header username button (<code>mod_intranet/telas.py:225-260</code>) and temporary empenho mass-generation button (<code>mod_renomear_empenho/telas.py:153-183</code>): use <code>page.get_by_test_id(...)</code>, never CSS/XPath.</p>
+<p>PT — Botão de nome do usuário no header (<code>mod_intranet/telas.py:225-260</code>) e botão TEMPORÁRIO de massa dos empenhos (<code>mod_renomear_empenho/telas.py:153-183</code>): use <code>page.get_by_test_id(...)</code>, nunca CSS/XPath.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><code>data-testid</code></th>
+<th style="text-align: left;">Onde</th>
+<th style="text-align: left;">Quem vê</th>
+<th style="text-align: left;">Esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>header-nome-usuario</code></td>
+<td style="text-align: left;">Header direita, <strong>sempre visível</strong> (<code>max-width: min(28ch, 55vw)</code> + ellipsis à direita, <code>tooltip</code> = nome completo, CSS escopado <code>[data-testid="header-nome-usuario"] .q-btn__content</code> ancora à esquerda) — origem <code>autenticacao.nome_de_tratamento</code> (nome social, fallback login)</td>
+<td style="text-align: left;">todos os perfis logados</td>
+<td style="text-align: left;">rótulo = nome de tratamento completo; nomes longos preservam o início com ellipsis à direita; clique abre "Meu Perfil" (<code>_dialogo_meu_perfil</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>empenhos-gerar-25-temp</code></td>
+<td style="text-align: left;"><code>/renomear-empenho</code>, totalmente à direita do <code>menu_mod</code> — <strong>TEMPORÁRIO QA</strong> (<code>TEMPORARIO-25-ARQUIVOS-REMOVER-EM-PRODUCAO</code>, <code>telas.py:153-183</code>)</td>
+<td style="text-align: left;">quem acessa empenhos (QA)</td>
+<td style="text-align: left;">cada clique = +25 PDFs fictícios via <code>criar_lote_principal(..., quantidade=25)</code> + <code>audit_log(...,"gerar_massa_temp",...)</code>; <strong>REMOVER antes de produção</strong></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">REGRA DE PROJETO — nunca usar <code>hidden sm:*</code> / <code>hidden md:*</code> neste stack</p>
+<p>O <code>tailwindcss.min.js</code> embutido no NiceGUI 3.15 resolve <code>hidden</code> acima de <code>sm:flex</code>/<code>md:block</code> mesmo a 1280 px (probe com div pura confirmou <code>display:none</code>). <code>header-nome-curto</code> foi <strong>REMOVIDO</strong> por esse motivo — os seletores de teste usam só <code>header-nome-usuario</code>, nunca CSS/XPath.</p>
+</div>
+<p>Roteiro manual: desktop 1280 — <code>header-nome-usuario</code> visível com nome completo + tooltip, clique abre "Meu Perfil"; mobile 360 — mesmo botão visível com início preservado + ellipsis à direita (ex. "Usuário de Teste QA C…") + tooltip completo, clique abre "Meu Perfil"; badge de perfil sempre visível. Botão TEMP: clicar 1x → <code>notificar</code> positiva <code>"&lt;N&gt; arquivos criados na pasta doc."</code> e +25 PDFs na pasta <code>doc</code>.</p>
+<h2 id="catalogo-data-testid-rodape-do-sistema-14092026">Catálogo <code>data-testid</code> — rodapé do sistema (14/09/2026)<a class="headerlink" href="#catalogo-data-testid-rodape-do-sistema-14092026" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — System footer (<code>mod_intranet/telas.py:346-359</code>, part 4 of the layout): hidden by default, reveals on hover/focus. Use <code>page.get_by_test_id(...)</code>, never CSS/XPath.</p>
+<p>PT — Rodapé do sistema (<code>mod_intranet/telas.py:346-359</code>, parte 4 do layout): escondido por padrão, revela no hover/foco. Use <code>page.get_by_test_id(...)</code>, nunca CSS/XPath.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><code>data-testid</code></th>
+<th style="text-align: left;">Onde</th>
+<th style="text-align: left;">Quem vê</th>
+<th style="text-align: left;">Esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>rodape-sistema</code></td>
+<td style="text-align: left;"><code>ui.footer</code> (<code>bg-grey-8 w-full</code>, <code>telas.py:359</code>), CSS escopado <code>[data-testid="rodape-sistema"]</code> via <code>ui.add_head_html</code></td>
+<td style="text-align: left;">todos os perfis logados</td>
+<td style="text-align: left;">escondido por padrão (<code>opacity:0 + translateY(calc(100% - 5px))</code>, faixa de 5px como pista); <code>:hover</code>/<code>:focus-within</code> → <code>opacity:1 + transform:none</code>; conteúdo inalterado (<code>"INTRANET Básica — uso interno"</code>, <code>v1.0.260913</code>); sem JS, sem <code>hidden</code></td>
+</tr>
+</tbody>
+</table>
+<p>Roteiro manual: rodapé quase invisível no carregamento (só a faixa de 5px); passar o mouse (ou focar por teclado) sobre a faixa → rodapé aparece com texto e versão; tirar o mouse → esconde de novo. No touch, tocar na faixa revela (rodapé só informativo, sem focáveis); se o CSS falhar, degrada para sempre visível.</p>
+<h2 id="catalogo-data-testid-editor-do-blog-14092026">Catálogo <code>data-testid</code> — editor do Blog (14/09/2026)<a class="headerlink" href="#catalogo-data-testid-editor-do-blog-14092026" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — Blog editor (<code>mod_blog/telas.py:506-562</code>, card "Nova publicação", admin only): use <code>page.get_by_test_id(...)</code>, never CSS/XPath.</p>
+<p>PT — Editor do Blog (<code>mod_blog/telas.py:506-562</code>, card "Nova publicação", só admin): use <code>page.get_by_test_id(...)</code>, nunca CSS/XPath.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><code>data-testid</code></th>
+<th style="text-align: left;">Onde</th>
+<th style="text-align: left;">Quem vê</th>
+<th style="text-align: left;">Esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>blog-titulo</code></td>
+<td style="text-align: left;">Card "Nova publicação" (<code>ui.input "Título*"</code>)</td>
+<td style="text-align: left;">só quem <code>pode_publicar</code> (admin geral / admin do módulo <code>blog</code>)</td>
+<td style="text-align: left;">recebe o título; vazio + Publicar → aviso "Preencha título e conteúdo"</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>blog-conteudo</code></td>
+<td style="text-align: left;">Card "Nova publicação" (<code>ui.editor</code> WYSIWYG, placeholder <code>Olá, &lt;nome&gt;! ...</code>)</td>
+<td style="text-align: left;">só quem <code>pode_publicar</code></td>
+<td style="text-align: left;">recebe HTML/texto; imagens entram como <code>&lt;img src="/img_postagens/&lt;nome&gt;" style="max-width:100%;height:auto;"&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>blog-imagem-selecionar</code></td>
+<td style="text-align: left;">Linha de upload (<code>ui.upload</code>, <code>accept=.jpg,.jpeg,.png</code>, <code>auto_upload=False</code>, máx 5 MB)</td>
+<td style="text-align: left;">só quem <code>pode_publicar</code></td>
+<td style="text-align: left;">abre o seletor de arquivo (só JPG/PNG)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>blog-imagem-enviar</code></td>
+<td style="text-align: left;">Botão Enviar (<code>run_method("upload")</code>)</td>
+<td style="text-align: left;">só quem <code>pode_publicar</code></td>
+<td style="text-align: left;">dispara o upload → tag inserida no editor + <code>notify</code> positiva; arquivo inválido → <code>notify</code> negativa</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>blog-img-esq</code></td>
+<td style="text-align: left;">Linha "Imagem:" (<code>telas.py:629</code>, botão <code>format_align_left</code>, <code>botao_icone</code>)</td>
+<td style="text-align: left;">só quem <code>pode_publicar</code></td>
+<td style="text-align: left;">alinha a ÚLTIMA <code>&lt;img&gt;</code> à esquerda (<code>float:left</code>); sem imagem → <code>notify</code> warning</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>blog-img-centro</code></td>
+<td style="text-align: left;">Linha "Imagem:" (botão <code>format_align_center</code>)</td>
+<td style="text-align: left;">só quem <code>pode_publicar</code></td>
+<td style="text-align: left;">centraliza a ÚLTIMA <code>&lt;img&gt;</code> (<code>display:block;margin:auto</code>); sem imagem → <code>notify</code> warning</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>blog-img-dir</code></td>
+<td style="text-align: left;">Linha "Imagem:" (botão <code>format_align_right</code>)</td>
+<td style="text-align: left;">só quem <code>pode_publicar</code></td>
+<td style="text-align: left;">alinha a ÚLTIMA <code>&lt;img&gt;</code> à direita (<code>float:right</code>); sem imagem → <code>notify</code> warning</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>blog-img-largura</code></td>
+<td style="text-align: left;">Linha "Imagem:" (<code>ui.select</code>, <code>telas.py:643</code> — 25%/50%/75%/100%/Original, default <code>100%</code>)</td>
+<td style="text-align: left;">só quem <code>pode_publicar</code></td>
+<td style="text-align: left;">aplica <code>max-width</code> à ÚLTIMA <code>&lt;img&gt;</code> (<code>Original</code> = remove e volta ao padrão 200–400px); preserva o alinhamento atual</td>
+</tr>
+</tbody>
+</table>
+<h2 id="roteiro-manual-markdown-no-wysiwyg-controles-da-imagem-14092026">Roteiro manual — Markdown no WYSIWYG + controles da imagem (14/09/2026)<a class="headerlink" href="#roteiro-manual-markdown-no-wysiwyg-controles-da-imagem-14092026" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — Manual Blog Markdown-in-WYSIWYG + image controls checklist (admin profile, real browser): <code>#</code>/<code>-</code>/<code>**</code> typed in the editor convert on preview/publish (first line loose + other lines in <code>&lt;div&gt;</code>, normalized to <code>&lt;p&gt;</code>); <code>#</code> requires a trailing space (<code>#text</code> stays literal, CommonMark as on GitHub); image buttons + width select apply to the last <code>&lt;img&gt;</code>; author style wins over defaults in the feed.</p>
+<p>PT — Roteiro manual do Markdown no WYSIWYG + controles da imagem (perfil admin, navegador real): <code>#</code>/<code>-</code>/<code>**</code> digitados no editor convertem na pré-visualização/publicação (1ª linha solta + demais em <code>&lt;div&gt;</code>, normalizadas para <code>&lt;p&gt;</code>); <code>#</code> exige espaço (<code>#texto</code> fica literal, CommonMark como no GitHub); botões de imagem + seletor de largura aplicam-se à última <code>&lt;img&gt;</code>; o estilo do autor vence o padrão no feed.</p>
+</blockquote>
+<p>Pré-condição: sistema reiniciado, <code>/login</code> 200, logado como admin (geral ou do módulo <code>blog</code>); suíte <code>assets/test/teste_fluxo_blog.py</code> 46/46; posts de QA excluídos (soft) ao final.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Passo</th>
+<th style="text-align: left;">Esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">M1</td>
+<td style="text-align: left;">No editor, digitar <code># Título</code>, <code>## Seção</code>, <code>### Sub</code> (cada um em uma linha, usando Enter — o QEditor gera a 1ª solta e as demais em <code>&lt;div&gt;</code>) + abrir <strong>Pré-visualização</strong></td>
+<td style="text-align: left;">pré-visualização mostra <code>&lt;h1&gt;</code>/<code>&lt;h2&gt;</code>/<code>&lt;h3&gt;</code> centralizados — nenhuma linha colada nem literal</td>
+</tr>
+<tr>
+<td style="text-align: left;">M1b</td>
+<td style="text-align: left;">Digitar <code>#sem-espaço</code> no início da linha → pré-visualizar</td>
+<td style="text-align: left;">fica literal <code>#sem-espaço</code> (regra CommonMark: <code>#</code> exige espaço, como no GitHub)</td>
+</tr>
+<tr>
+<td style="text-align: left;">M2</td>
+<td style="text-align: left;">Digitar <code>- item</code> (2 linhas) e <code>**negrito**</code> → pré-visualizar</td>
+<td style="text-align: left;">lista <code>&lt;ul&gt;&lt;li&gt;</code> e negrito — nada literal</td>
+</tr>
+<tr>
+<td style="text-align: left;">M2b</td>
+<td style="text-align: left;">Digitar <code>#hashtag</code> no meio de uma frase + bloco de código com <code># não-título</code> → pré-visualizar</td>
+<td style="text-align: left;"><code>#hashtag</code> continua texto; código intacto (sem conversão)</td>
+</tr>
+<tr>
+<td style="text-align: left;">M2c</td>
+<td style="text-align: left;">Digitar 3 linhas de texto puro com Enter (sem Markdown) → pré-visualizar</td>
+<td style="text-align: left;">3 parágrafos separados (as <code>&lt;div&gt;</code> do editor preservadas, não coladas em uma linha só)</td>
+</tr>
+<tr>
+<td style="text-align: left;">M3</td>
+<td style="text-align: left;">Enviar imagem, clicar <code>blog-img-esq</code> → pré-visualizar</td>
+<td style="text-align: left;">imagem à esquerda no preview</td>
+</tr>
+<tr>
+<td style="text-align: left;">M4</td>
+<td style="text-align: left;">Clicar <code>blog-img-centro</code> + escolher <code>50%</code> em <code>blog-img-largura</code> → <strong>Publicar</strong></td>
+<td style="text-align: left;">feed rende <code>display:block;margin:auto</code> + <code>max-width:50%</code>, sem <code>float:left</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">M5</td>
+<td style="text-align: left;">Novo post: enviar imagem, clicar <code>blog-img-dir</code> → <strong>Publicar</strong></td>
+<td style="text-align: left;">feed rende <code>float:right</code> + <code>max-width</code> escolhido, sem <code>float:left</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">M6</td>
+<td style="text-align: left;">Clicar <code>blog-img-esq</code> com o editor sem nenhuma <code>&lt;img&gt;</code></td>
+<td style="text-align: left;"><code>notify</code> warning "Nenhuma imagem no texto — envie uma primeiro", nada muda</td>
+</tr>
+<tr>
+<td style="text-align: left;">M7</td>
+<td style="text-align: left;">Excluir os posts de QA</td>
+<td style="text-align: left;">soft delete (<code>ativo=0</code>, somem do feed, vão para "Despublicadas")</td>
+</tr>
+</tbody>
+</table>
+<h2 id="roteiro-manual-editor-do-blog-com-imagens-14092026">Roteiro manual — editor do Blog com imagens (14/09/2026)<a class="headerlink" href="#roteiro-manual-editor-do-blog-com-imagens-14092026" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — Manual Blog editor checklist (admin profile, real browser): greeting placeholder, image upload, sanitized publish, static serving, orphan expiry, soft delete.</p>
+<p>PT — Roteiro manual do editor do Blog (perfil admin, navegador real): placeholder de boas-vindas, upload de imagem, publicação sanitizada, serviço estático, expiração de órfãs, soft delete.</p>
+</blockquote>
+<p>Pré-condição: sistema reiniciado, <code>/login</code> 200, logado como admin (geral ou do módulo <code>blog</code>); <code>comum</code> NÃO vê o card "Nova publicação".</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Passo</th>
+<th style="text-align: left;">Esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">B1</td>
+<td style="text-align: left;">Abrir <code>/blog</code> como admin</td>
+<td style="text-align: left;">card "Nova publicação" visível; editor com placeholder <code>Olá, &lt;nome&gt;! ...</code> (nome de tratamento)</td>
+</tr>
+<tr>
+<td style="text-align: left;">B2</td>
+<td style="text-align: left;">Selecionar JPG/PNG (≤5 MB) em <code>blog-imagem-selecionar</code> + clicar <code>blog-imagem-enviar</code></td>
+<td style="text-align: left;"><code>notify</code> positiva <code>Imagem enviada: &lt;nome&gt;</code>; tag <code>&lt;img src="/img_postagens/&lt;nome&gt;"&gt;</code> inserida no editor (ex. <code>2609141308_qamaster.png</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">B3</td>
+<td style="text-align: left;">Tentar enviar <code>.gif</code>/<code>.txt</code> ou &gt;5 MB</td>
+<td style="text-align: left;"><code>notify</code> negativa, nada inserido no editor</td>
+</tr>
+<tr>
+<td style="text-align: left;">B4</td>
+<td style="text-align: left;">Pré-visualizar → Publicar</td>
+<td style="text-align: left;">pré-visualização mostra a imagem; post publicado <strong>mantém <code>src</code>/<code>style</code>/<code>class</code></strong> (nh3) e renderiza no feed</td>
+</tr>
+<tr>
+<td style="text-align: left;">B5</td>
+<td style="text-align: left;"><code>GET /img_postagens/&lt;nome&gt;</code> direto</td>
+<td style="text-align: left;"><strong>200 <code>image/png</code></strong> (ou <code>image/jpeg</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">B6</td>
+<td style="text-align: left;">Upload sem publicar, aguardar &gt;5 min (ou retroagir <code>mtime</code>) + ciclo do job (1 min)</td>
+<td style="text-align: left;">órfã <strong>removida</strong> de <code>mod_blog/img_postagens/</code>; imagem referenciada em postagem <strong>preservada</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">B7</td>
+<td style="text-align: left;">Excluir o post de teste</td>
+<td style="text-align: left;">soft delete (<code>ativo=0</code>, some do feed, vai para "Despublicadas")</td>
+</tr>
+<tr>
+<td style="text-align: left;">B8</td>
+<td style="text-align: left;">Abrir <code>/blog</code> como <code>comum</code></td>
+<td style="text-align: left;"><strong>sem</strong> card "Nova publicação", sem <code>blog-*</code>; imagens dos posts visíveis inline</td>
+</tr>
+</tbody>
+</table>
+<h2 id="roteiro-manual-drawer-perfis-larguras">Roteiro manual — drawer × perfis × larguras<a class="headerlink" href="#roteiro-manual-drawer-perfis-larguras" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — Manual drawer checklist: 3 profiles × 3 widths (320/768/1024). Drawer starts closed, opens/closes via <code>menu-hamburguer</code>, is full-width without overflow, every visible item is keyboard-focusable with a visible ring, and ARIA states hold.</p>
+<p>PT — Roteiro manual do drawer: 3 perfis × 3 larguras (320/768/1024). Drawer inicia fechado, abre/fecha via <code>menu-hamburguer</code>, ocupa 100% da largura sem overflow, todo item visível recebe foco por teclado com anel visível, e os estados ARIA se mantêm.</p>
+</blockquote>
+<p>Pré-condição: logar com cada perfil (<code>comum</code> = usuário sem admin; <code>administrador_modulo</code> = <code>administrador</code> em ≥1 módulo via gestão de usuários, sem ser geral; <code>administrador_geral</code> = <code>master</code>). Repetir cada passo em 320 px (mobile), 768 px (tablet) e 1024 px (desktop) — DevTools responsivo.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Passo</th>
+<th style="text-align: left;">Esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">M1</td>
+<td style="text-align: left;">Drawer inicia FECHADO ao abrir qualquer tela</td>
+<td style="text-align: left;">nenhum item <code>menu-*</code> visível até clicar em <code>menu-hamburguer</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">M2</td>
+<td style="text-align: left;">Clicar <code>menu-hamburguer</code> → clicar de novo</td>
+<td style="text-align: left;">abre na 1ª, fecha na 2ª; foco permanece operável por teclado</td>
+</tr>
+<tr>
+<td style="text-align: left;">M3</td>
+<td style="text-align: left;">Largura 100% (RNF-UI-01) em 320/768/1024</td>
+<td style="text-align: left;">drawer e itens sem overflow horizontal, sem colapso flex (<code>w-full</code> + <code>min-width: 0</code>, sem <code>gap-*</code> em <code>ui.row()</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">M4</td>
+<td style="text-align: left;">Teclado: <code>Tab</code> até o drawer</td>
+<td style="text-align: left;">todos os itens visíveis recebem foco na ordem, anel <code>focus-visible</code> visível em cada um</td>
+</tr>
+<tr>
+<td style="text-align: left;">M5</td>
+<td style="text-align: left;">ARIA: item da tela atual</td>
+<td style="text-align: left;">tem <code>aria-current="page"</code>; ícones têm <code>aria-hidden="true"</code>; hambúrguer tem <code>aria-label="Abrir menu de navegação"</code>; só-ícone/indisponível têm <code>aria-label</code> próprio</td>
+</tr>
+<tr>
+<td style="text-align: left;">M6</td>
+<td style="text-align: left;"><code>comum</code>: só <code>menu-home</code> + <code>menu-&lt;chave&gt;</code> dos módulos liberados + <code>menu-sair</code></td>
+<td style="text-align: left;">SEM <code>menu-admin</code>, SEM <code>menu-docs</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">M7</td>
+<td style="text-align: left;"><code>administrador_modulo</code>: idem M6 (módulos do vínculo + <code>menu-sair</code>)</td>
+<td style="text-align: left;">SEM <code>menu-admin</code>, SEM <code>menu-docs</code> (admin de módulo NÃO abre menu de sistema)</td>
+</tr>
+<tr>
+<td style="text-align: left;">M8</td>
+<td style="text-align: left;"><code>administrador_geral</code>: M6 + <code>menu-admin</code> + <code>menu-docs</code></td>
+<td style="text-align: left;"><code>menu-admin</code> → <code>/admin/&lt;chave&gt;</code> (ou <code>/configuracoes</code> na Home); <code>menu-docs</code> → <code>/documentacao</code> nova aba</td>
+</tr>
+<tr>
+<td style="text-align: left;">M9</td>
+<td style="text-align: left;"><code>menu-&lt;chave&gt;-indisponivel</code> (se houver módulo desativado com vínculo)</td>
+<td style="text-align: left;">clica → <code>notify</code> warning laranja, permanece na tela (não navega)</td>
+</tr>
+</tbody>
+</table>
+<p>Automação correspondente (pirâmide): base unitária em <code>assets/test/verifica_ui_comum.py</code> (fábrica byte-a-byte, 190/190) → topo manual/E2E com este roteiro via <code>page.get_by_test_id(...)</code>.</p>
+<h2 id="validacoes-das-sessoes-de-14092026-scripts-standalone-specs-e2e">Validações das sessões de 14/09/2026 — scripts standalone + specs E2E<a class="headerlink" href="#validacoes-das-sessoes-de-14092026-scripts-standalone-specs-e2e" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — Validations from the 14/09/2026 sessions materialized as executable files in <code>assets/test/</code> (catalog in <code>assets/test/README.md</code>): 8 new standalone scripts, all green (73 checks), plus 3 new E2E specs (require <code>npm run test:e2e</code> + server on :8080 — not executed here, no Node available). Every new test follows the README conventions (standalone, exit-code verdict, bilingual docstring, no destruction, <code>data-testid</code> selectors, browser evidence as spec).</p>
+<p>PT — Validações das sessões de 14/09/2026 materializadas como arquivos executáveis em <code>assets/test/</code> (catálogo em <code>assets/test/README.md</code>): 8 scripts standalone novos, todos verdes (73 checks), + 3 specs E2E novos (requerem <code>npm run test:e2e</code> + servidor :8080 — não executados aqui por falta de Node). Todo teste novo segue as convenções do README (standalone, veredito por exit code, docstring bilíngue, sem destruição, seletores por <code>data-testid</code>, evidência de navegador como spec).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Arquivo</th>
+<th style="text-align: left;">O que cobre</th>
+<th style="text-align: left;">Origem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>assets/test/test_header_nome.py</code> (9)</td>
+<td style="text-align: left;">Nome no header: tratamento <code>qacomum</code>/<code>qamaster</code>, botão único <code>header-nome-usuario</code>, sem <code>hidden sm:*</code>, CSS escopado, tooltip</td>
+<td style="text-align: left;">Sessão: nome truncado <code>io de Teste QA C</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/e2e/04_header_nome.spec.js</code></td>
+<td style="text-align: left;">Render real: visível desktop/mobile, clique abre Meu Perfil</td>
+<td style="text-align: left;">idem (evidência Playwright)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/test_rodape_hover.py</code> (7)</td>
+<td style="text-align: left;">Rodapé: testid, CSS <code>opacity:0</code>→hover, faixa 5px, textos preservados</td>
+<td style="text-align: left;">Sessão: rodapé auto-hide</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/e2e/05_rodape_hover.spec.js</code></td>
+<td style="text-align: left;">opacity 0 → 1 no hover</td>
+<td style="text-align: left;">idem</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/test_blog_editor_imagens.py</code> (17)</td>
+<td style="text-align: left;">Upload JPG/PNG (aceite/recusa 5MB/assinatura), nome <code>dataHora_usuario</code>, tag nh3, rota <code>/img_postagens</code>, job, expiração órfãs</td>
+<td style="text-align: left;">Sessão: editor WYSIWYG + imagens</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/test_blog_markdown_editor.py</code> (8)</td>
+<td style="text-align: left;">Markdown em <code>&lt;p&gt;</code>/<code>&lt;div&gt;</code>/1ª solta, listas, negrito, <code>code/pre</code>, <code>#hashtag</code>, <code>div/br</code></td>
+<td style="text-align: left;">Sessões: Markdown não rendia</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/test_blog_imagem_controles.py</code> (12)</td>
+<td style="text-align: left;"><code>ajustar_imagem_html</code> (eixos, CSS autor, última img, sem-img) + feed respeita autor/padrão</td>
+<td style="text-align: left;">Sessão: redimensionar/alinhar</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/test_blog_mermaid_fim.py</code> (7)</td>
+<td style="text-align: left;">Mermaid ao fim (<code>mover_mermaid_para_fim</code>: meio→fim com ordem, sem fence/incompleto intacto, idempotente, seeds conformes) + render centralizado (<code>justify-center</code>, <code>max-width:680px</code>)</td>
+<td style="text-align: left;">Sessão: padronização das postagens-guia 14/09/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/test_empenho_anotar.py</code> (7)</td>
+<td style="text-align: left;"><code>anotar_arquivos</code>: levantamento, override <code>tb_empenhos</code>, fallbacks de nome</td>
+<td style="text-align: left;">Sessão: Empenho/Parcela/Usuário</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/test_ordem_modulos.py</code> (6)</td>
+<td style="text-align: left;">Ordem padrão + <code>reordenar</code> 1-based + boot simulado preserva</td>
+<td style="text-align: left;">Sessão: ordem resetava no restart</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/e2e/06_blog_editor.spec.js</code></td>
+<td style="text-align: left;">Controles visíveis, preview Markdown, upload→centro+50%→publicar sem <code>float:left</code></td>
+<td style="text-align: left;">idem</td>
+</tr>
+</tbody>
+</table>
+<p>Convenções aplicadas (de <code>assets/test/README.md</code>): standalone (<code>.venv/bin/python &lt;arquivo&gt;.py</code>, sem servidor/argumentos); veredito por exit code (<code>check(cond, msg)</code>); docstring bilíngue EN no topo / PT-BR abaixo + linha <code>Execute:</code>; sem destruição (só dados <code>qa_*</code> ou snapshot/restore com limpeza em <code>finally</code>); seletores E2E por <code>data-testid</code>; evidência de navegador como spec em <code>e2e/0N_*.spec.js</code>. Refatoração associada: ajuste de imagem extraído para <code>bd_manipulador.ajustar_imagem_html()</code> pura (a tela delega); <code>anotar_arquivos</code> não normaliza zeros (só a exibição).</p>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/test_header_nome.py
+.venv/bin/python<span class="w"> </span>assets/test/test_rodape_hover.py
+.venv/bin/python<span class="w"> </span>assets/test/test_blog_editor_imagens.py
+.venv/bin/python<span class="w"> </span>assets/test/test_blog_markdown_editor.py
+.venv/bin/python<span class="w"> </span>assets/test/test_blog_imagem_controles.py
+.venv/bin/python<span class="w"> </span>assets/test/test_blog_mermaid_fim.py
+.venv/bin/python<span class="w"> </span>assets/test/test_empenho_anotar.py
+.venv/bin/python<span class="w"> </span>assets/test/test_ordem_modulos.py
+</code></pre></div>
+<h2 id="roteiro-manual-postagens-guia-padronizadas-mermaid-ao-fim-e-centralizado-14092026">Roteiro manual — postagens-guia padronizadas + Mermaid ao fim e centralizado (14/09/2026)<a class="headerlink" href="#roteiro-manual-postagens-guia-padronizadas-mermaid-ao-fim-e-centralizado-14092026" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — Manual Blog guide-posts checklist (real browser, restarted system): the 3 seeds share one pattern (<code># **Title**</code>, <code>### subtitle</code>, bold sections with lists, mermaid last, unaltered flows); diagrams render narrow and centered; saving moves ```mermaid fences to the end in order.</p>
+<p>PT — Roteiro manual das postagens-guia padronizadas (navegador real, sistema reiniciado): as 3 postagens seguem o padrão único (<code># **Título**</code>, <code>### subtítulo</code>, seções em negrito com listas, mermaid ao fim, fluxos inalterados); diagramas rendem estreitos e centralizados; ao salvar, os fences ```mermaid vão para o fim na ordem.</p>
+</blockquote>
+<p>Pré-condição: sistema reiniciado, <code>/login</code> 200, logado como admin (geral ou do módulo <code>blog</code>); suíte <code>assets/test/teste_fluxo_blog.py</code> 46/46; <code>assets/test/test_blog_mermaid_fim.py</code> 7/7. Nota: a suíte completa deixa posts de teste ("Carrossel A/B/C" etc.) na base real — higiene preexistente dos testes de carrossel, fora do escopo desta adequação.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Passo</th>
+<th style="text-align: left;">Esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">P1</td>
+<td style="text-align: left;">Abrir <code>/blog</code> e comparar as 3 postagens-guia (Editor de PDF, Solicitação de Impressão, Empenhos)</td>
+<td style="text-align: left;">mesmo padrão visual: título gigante centralizado, subtítulo, intro, seções em negrito com listas, diagrama por último — com os rótulos reais: Editor de PDF (10 arquivos/1024 MB, 10 min, cota 1 GB/10 GB); Solicitação (Pedido único, Pendente, "(trazer)", borda/observações); Empenhos (busca no Navegar, Fila/Organizador/Quarentena)</td>
+</tr>
+<tr>
+<td style="text-align: left;">P2</td>
+<td style="text-align: left;">Observar cada diagrama Mermaid</td>
+<td style="text-align: left;">estreito e centralizado (coluna ~680px, não largura cheia), sem estouro horizontal</td>
+</tr>
+<tr>
+<td style="text-align: left;">P3</td>
+<td style="text-align: left;">Criar postagem com ```mermaid no meio do texto → Publicar → reabrir</td>
+<td style="text-align: left;">blocos movidos para o fim na ordem original; sem fence completo o texto segue intacto</td>
+</tr>
+<tr>
+<td style="text-align: left;">P4</td>
+<td style="text-align: left;">Editar postagem existente inserindo ```mermaid no início → Salvar</td>
+<td style="text-align: left;">idem P3 (vale para criar e editar)</td>
+</tr>
+<tr>
+<td style="text-align: left;">P5</td>
+<td style="text-align: left;"><code>.venv/bin/python assets/test/test_blog_mermaid_fim.py</code> + suíte blog</td>
+<td style="text-align: left;"><strong>7/7 OK</strong> (move/ordem/idempotência/seeds/render) + <code>teste_fluxo_blog.py</code> <strong>46/46</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="falhas-preexistentes-conhecidas-nao-causadas-pela-sessao-de-14092026">Falhas preexistentes conhecidas (não causadas pela sessão de 14/09/2026)<a class="headerlink" href="#falhas-preexistentes-conhecidas-nao-causadas-pela-sessao-de-14092026" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — Known pre-existing failures (verified 14/09/2026, documented in <code>assets/test/README.md</code>): the checks reference code prior to the session — not regressions.</p>
+<p>PT — Falhas preexistentes conhecidas (verificadas em 14/09/2026, documentadas em <code>assets/test/README.md</code>): os checks referenciam código anterior à sessão — não são regressões.</p>
+</blockquote>
+<ul>
+<li><code>assets/test/test_dashboard.py</code> (7 checks): espera o layout antigo do Resumo (<code>"Atualizado ✓"</code>, <code>ui.timer(2.0)</code>, microinterações <code>transition</code>/<code>hover</code> nos cards). O dashboard foi redesenhado (toast 2s via <code>notificar</code>, timer 0.1) sem atualizar o teste. Nenhum trecho tocado pela sessão.</li>
+<li><code>assets/test/verifica_ui_comum.py</code> (1 check em 190): exige <code>ui.tabs()</code> ausente em <code>mod_renomear_empenho/telas.py</code>, mas a barra do menu usa <code>ui.tabs()</code> desde antes da sessão (<code>telas.py:153</code>, só reordenada com o botão TEMP).</li>
+</ul>
+<p>Suíte completa no fechamento da sessão: 37 scripts OK; 2 falhas preexistentes acima.</p>
 <h2 id="como-executar">Como executar<a class="headerlink" href="#como-executar" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>test/test_server.py
 .venv/bin/python<span class="w"> </span>test/test_auditoria.py
 .venv/bin/python<span class="w"> </span>test/test_editor_pdf.py
 .venv/bin/python<span class="w"> </span>test/teste_aba_config_intranet.py
+.venv/bin/python<span class="w"> </span>assets/test/verifica_ui_comum.py
 </code></pre></div>
 <p>Veja <a href="../testes_plano/">Testes — Plano</a> e <a href="../testes_relatorios/">Testes — Relatórios</a>.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../seguranca/riscos_ia_ml/" class="btn btn-neutral float-left" title="Riscos de IA/ML"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../ferramentas/graphify/" class="btn btn-neutral float-left" title="Graphify (grafo, dev-only)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../testes_plano/" class="btn btn-neutral float-right" title="Plano">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -292,7 +817,7 @@
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../seguranca/riscos_ia_ml/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../ferramentas/graphify/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../testes_plano/" style="color: #fcfcfc">Next &raquo;</a></span>

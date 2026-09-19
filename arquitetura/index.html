@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -203,12 +224,12 @@
               
                 <h1 id="intranet-modular-architecture">Intranet Modular — Architecture<a class="headerlink" href="#intranet-modular-architecture" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Technical architecture of the Intranet Modular: single entry point (<code>main.py</code>), modular packages (<code>mod_*</code>), the <code>db_criador.py</code> / <code>db_manipulador.py</code> / <code>telas.py</code> pattern, one SQLite (WAL) database per module, centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor and audit pruning).</p>
+<p>Technical architecture of the Intranet Modular: single entry point (<code>main.py</code>), modular packages (<code>mod_*</code>), the <code>bd_manipulador.py</code> / <code>telas.py</code> / <code>telas_administracao.py</code> pattern (with <code>models/</code> SQLAlchemy as the pattern to propagate and <code>bd_criador.py</code> kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor and audit pruning).</p>
 </blockquote>
 <hr />
 <h1 id="intranet-modular-arquitetura">Intranet Modular — Arquitetura<a class="headerlink" href="#intranet-modular-arquitetura" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Arquitetura técnica da Intranet Modular: entry point único (<code>main.py</code>), pacotes modulares (<code>mod_*</code>), padrão <code>db_criador.py</code> / <code>db_manipulador.py</code> / <code>telas.py</code>, banco SQLite (WAL) por módulo, auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta e poda da auditoria).</p>
+<p>Arquitetura técnica da Intranet Modular: entry point único (<code>main.py</code>), pacotes modulares (<code>mod_*</code>), padrão <code>bd_manipulador.py</code> / <code>telas.py</code> / <code>telas_administracao.py</code> (com <code>models/</code> SQLAlchemy como padrão a propagar e <code>bd_criador.py</code> mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta e poda da auditoria).</p>
 </blockquote>
 <h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
 <ol>
@@ -229,19 +250,21 @@
 <div class="highlight"><pre><span></span><code>┌────────────────────────────── main.py (único entry point) ──────────────────────────────┐
 │  inicializar_bancos()  →  verifica telas.py  →  iniciar_agendador()  →  ui.run(8080)     │
 └───────────────┬──────────────────────────────────────────────┬──────────────────────────┘
-                │                                              │
-   ┌────────────▼───────────┐                     ┌────────────▼───────────┐
-   │ mod_intranet (núcleo)  │                     │ Módulos de negócio      │
-   │ autenticacao · layout  │◄── importa ────────►│ mod_blog, mod_gest_*,   │
-   │ conexao_bd · rotinas   │                     │ mod_edit_pdf,           │
-   │ observabilidade · etc. │                     │ mod_renomear_*,         │
-   └────────────┬───────────┘                     │ mod_auditoria,          │
-                │                                 │ mod_solicita_impressao  │
-   db_mod_intranet.db (WAL)                       └─────────┬───────────────┘
-   tb_config · tb_sessoes · tb_modulos                      │ cada um com seu
-                                                            ▼ db_mod_*.db (WAL)
-   db_mod_auditoria.db (WAL) — trilha LGPD, UMA TABELA POR MÓDULO
-   (tb_auditoria_&lt;modulo&gt;), gravada via audit_log → registrar_auditoria
+                 │                                              │
+    ┌────────────▼───────────┐                     ┌────────────▼───────────┐
+    │ mod_intranet (núcleo)  │                     │ Módulos de negócio      │
+    │ autenticacao · layout  │◄── importa ────────►│ mod_blog, mod_gest_*,   │ (9: 6 + tecnico + filas 18/09/2026 + lista_telefonica 19/09/2026)
+    │ bd_conexao · rotinas   │                     │ mod_edit_pdf,           │
+    │ observabilidade · etc. │                     │ mod_renomear_*,         │
+    └────────────┬───────────┘                     │ mod_auditoria,          │
+                 │                                 │ mod_solicita_impressao, │
+    db_mod_intranet.db (WAL)                       │ mod_tecnico, mod_filas, │
+    tb_config · tb_sessoes · tb_modulos            │ mod_lista_telefonica    │
+                                                   └─────────┬───────────────┘
+                                                             │ cada um com seu
+                                                             ▼ db_mod_*.db (WAL)
+    db_mod_auditoria.db (WAL) — trilha LGPD, UMA TABELA POR MÓDULO
+    (tb_auditoria_&lt;modulo&gt;), gravada via audit_log → registrar_auditoria
 </code></pre></div>
 <pre class="mermaid"><code>flowchart LR
     subgraph Entry["main.py — entry point único"]
@@ -249,16 +272,17 @@
     end
     subgraph Nucleo["mod_intranet — núcleo"]
         AUTH[autenticacao] --- LAY[layout_tela&lt;br/&gt;pagina_restrita]
-        CONN[conexao_bd&lt;br/&gt;get_config/set_config]
+        CONN[bd_conexao&lt;br/&gt;get_config/set_config]
         CONN --&gt; REPO[repositorio.py&lt;br/&gt;Repositorio + engine]
         REPO --&gt; MODELS[models/&lt;br/&gt;Configuracao&lt;br/&gt;Sessao&lt;br/&gt;Modulo]
         MODELS --&gt; SA[sqlalchemy.orm&lt;br/&gt;Session + Table]
         CONN --- OBS[observabilidade&lt;br/&gt;loguru]
         ROT[rotinas&lt;br/&gt;APScheduler] --- DIA[dialogo_backup]
     end
-    subgraph Negocio["módulos de negócio"]
+    subgraph Negocio["módulos de negócio — 9 (6 + 2 novos 18/09/2026 + 1 novo 19/09/2026)"]
         B[mod_blog] ; U[mod_gest_cad_usuario] ; P[mod_edit_pdf]
         E[mod_renomear_empenho] ; A[mod_auditoria] ; S[mod_solicita_impressao]
+        T[mod_tecnico] ; F[mod_filas] ; L[mod_lista_telefonica]
     end
     subgraph Bancos["SQLite WAL — um por módulo"]
         DBC[(db_mod_intranet.db&lt;br/&gt;tb_config · tb_sessoes · tb_modulos)]
@@ -311,7 +335,7 @@
 <td style="text-align: left;"><code>mod_blog/</code></td>
 <td style="text-align: left;"><code>db_mod_blog.db</code></td>
 <td style="text-align: center;">✓</td>
-<td style="text-align: left;">postagens/comentários</td>
+<td style="text-align: left;">postagens/comentários — <strong>padrão <code>carrossel</code> 3 básicas (18/09/2026)</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>mod_edit_pdf/</code></td>
@@ -335,7 +359,25 @@
 <td style="text-align: left;"><code>mod_solicita_impressao/</code></td>
 <td style="text-align: left;"><code>db_mod_solicita_impressao.db</code></td>
 <td style="text-align: center;">✓</td>
-<td style="text-align: left;">solicitação de impressão</td>
+<td style="text-align: left;">solicitação de impressão — <strong>cotAS 1000/200 via <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code> (19/09/2026)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_tecnico/</code></td>
+<td style="text-align: left;"><code>db_mod_tecnico.db</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: left;"><strong>novo</strong> (18/09/2026) — software + backup <code>YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation, <code>webkitdirectory</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_filas/</code></td>
+<td style="text-align: left;"><code>db_mod_filas.db</code></td>
+<td style="text-align: center;">✓ (<code>telas.py</code> + <code>mostrar_tv</code>)</td>
+<td style="text-align: left;"><strong>novo esqueleto</strong> (18/09/2026) — gestor de chamadas com TV (<code>/filas</code> + <code>/tv</code> pública)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_lista_telefonica/</code></td>
+<td style="text-align: left;"><code>db_mod_lista_telefonica.db</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: left;"><strong>novo</strong> (19/09/2026) — organograma <code>Secretaria→Setor→Subsetor</code> genérico 12 secretarias, contatos alfabéticos, <code>tel:</code> no celular</td>
 </tr>
 </tbody>
 </table>
@@ -357,11 +399,12 @@
 </ul>
 <h2 id="padrao-interno-de-um-modulo">Padrão interno de um módulo<a class="headerlink" href="#padrao-interno-de-um-modulo" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>mod_&lt;nome&gt;/
-  __init__.py
-  telas.py            # OBRIGATÓRIO: expõe mostrar_tela(usuario_logado, perfil)
-  manipulador_bd.py   # acesso ao db_mod_&lt;nome&gt;.db (WAL) — criador vigente das tabelas
-  criador_bd.py       # LEGADO/MORTO: aponta para o banco central — NÃO confiar nem executar
-  (outros: monitor, organizador, src/...)
+  __init__.py              # encapsulamento, exposição pública e bootstrap do módulo
+  models/__init__.py       # (padrão a propagar) Table + dataclass + map_imperatively() — hoje só mod_intranet
+  bd_criador.py            # LEGADO/MORTO — criador antigo do banco; NÃO confiar nem executar
+  bd_manipulador.py        # ÚNICO ponto de acesso ao DB (init_db*, queries, regras)
+  telas.py                 # mostrar_tela(nome, perfil)
+  telas_administracao.py   # mostrar_administracao — painel standalone na rota /admin/{chave_modulo}
 </code></pre></div>
 <table>
 <thead>
@@ -372,30 +415,43 @@
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;"><code>__init__.py</code></td>
+<td style="text-align: left;">encapsulamento, exposição pública e bootstrap do módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>models/__init__.py</code></td>
+<td style="text-align: left;"><strong>(padrão a propagar)</strong> mapeamento SQLAlchemy imperativo: <code>Table</code> + <code>dataclass</code> + <code>map_imperatively()</code> — hoje só <code>mod_intranet</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bd_manipulador.py</code></td>
+<td style="text-align: left;"><strong>único</strong> ponto de acesso ao DB do módulo: schema (<code>init_db*</code>), queries e regras de negócio; conexão via <code>mod_intranet/banco_conexao.conexao(chave)</code> (backend duplo SQLite/PostgreSQL); auditoria via <code>audit_log</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bd_criador.py</code></td>
+<td style="text-align: left;"><strong>legado/morto</strong> em todos os módulos de negócio — usa a conexão do banco central e esquemas divergentes; nunca executar (o schema real é criado por <code>init_db*</code> do <code>bd_manipulador</code>)</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>telas.py</code></td>
-<td style="text-align: left;">UI NiceGUI; <code>mostrar_tela(usuario_logado, perfil)</code>; revalida papel antes de qualquer escrita</td>
+<td style="text-align: left;">UI NiceGUI; <code>mostrar_tela(nome, perfil)</code>; revalida papel antes de qualquer escrita</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>db_manipulador.py</code></td>
-<td style="text-align: left;">schema (<code>init_db*</code>), queries e regras de negócio; conexão WAL; auditoria via <code>audit_log</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>db_criador.py</code></td>
-<td style="text-align: left;"><strong>legado/morto</strong> em todos os módulos — usa a conexão do banco central e esquemas divergentes; nunca executar (o padrão real é <code>manipulador_bd.init_db*</code>)</td>
+<td style="text-align: left;"><code>telas_administracao.py</code></td>
+<td style="text-align: left;">painel admin standalone; <code>mostrar_administracao(...)</code> — rota <code>/admin/{chave_modulo}</code></td>
 </tr>
 </tbody>
 </table>
 <blockquote>
-<p><code>mod_auditoria</code> <strong>tem</strong> <code>db_manipulador.py</code> (banco exclusivo <code>db_mod_auditoria.db</code>, uma tabela por módulo) — o visualizador em <code>telas.py</code> lê esse banco via <code>buscar_logs()</code>; a escrita é feita indiretamente pelos demais módulos via <code>audit_log</code> → <code>registrar_auditoria</code>.</p>
+<p><strong><code>mod_auditoria</code></strong> segue o padrão como os demais (<code>bd_manipulador.py</code>/<code>bd_criador.py</code>) e mantém banco exclusivo <code>db_mod_auditoria.db</code> (uma tabela por módulo); o visualizador em <code>telas.py</code> lê esse banco via <code>buscar_logs()</code> e a escrita é feita indiretamente pelos demais módulos via <code>audit_log</code> → <code>registrar_auditoria</code>.</p>
+<p><strong>Conexão e configuração:</strong> módulos de negócio <strong>não</strong> têm <code>bd_conexao.py</code> próprio — usam o central <code>mod_intranet/bd_conexao.py</code> (<code>get_config</code>/<code>set_config</code> via <code>Repositorio</code>) e <code>mod_intranet/banco_conexao.conexao(chave)</code> para obter a conexão do backend ativo (SQLite WAL ou PostgreSQL, com <strong>um banco <code>db_mod_&lt;chave&gt;</code> por módulo</strong> no Postgres).</p>
 </blockquote>
 <h2 id="bancos-de-dados-um-por-modulo-wal">Bancos de dados (um por módulo, WAL)<a class="headerlink" href="#bancos-de-dados-um-por-modulo-wal" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Cada banco é um <strong>arquivo SQLite separado</strong> na raiz (<code>db_mod_*.db</code>).</li>
 <li>Toda conexão aplica <code>PRAGMA journal_mode=WAL</code> (+ <code>synchronous=NORMAL</code> no central e na auditoria).</li>
-<li><strong>Convenção:</strong> consultar um banco somente pelo <code>manipulador_bd</code> do seu próprio módulo (evitar cross-query). Exceções conhecidas e documentadas: a limpeza cruzada LGPD da exclusão de usuário (<code>mod_gest_cad_usuario</code> varre bancos vizinhos para anonimizar/excluir dados — ver <a href="../modulos/gest_cad_usuario/">Módulo de Gestão de Usuários</a>) e a escrita de auditoria (<code>audit_log</code> no núcleo grava no banco exclusivo de auditoria via <code>registrar_auditoria</code>).</li>
+<li><strong>Convenção:</strong> consultar um banco somente pelo <code>bd_manipulador</code> do seu próprio módulo (evitar cross-query). Exceções conhecidas e documentadas: a limpeza cruzada LGPD da exclusão de usuário (<code>mod_gest_cad_usuario</code> varre bancos vizinhos para anonimizar/excluir dados — ver <a href="../modulos/gest_cad_usuario/">Módulo de Gestão de Usuários</a>) e a escrita de auditoria (<code>audit_log</code> no núcleo grava no banco exclusivo de auditoria via <code>registrar_auditoria</code>).</li>
 <li>O banco <strong>central</strong> (<code>db_mod_intranet.db</code>) guarda <code>tb_config</code>, <code>tb_sessoes</code> e <code>tb_modulos</code> (a antiga <code>tb_auditoria</code> central foi migrada e removida — ver <a href="#auditoria-lgpd-banco-exclusivo">Auditoria</a>).</li>
-<li><strong>SQLAlchemy em TODOS os bancos (06/09):</strong> o mapa <code>MODULOS_BD</code> (<code>repositorio.py:57-65</code>) registra os 7 bancos (<code>intranet</code>, <code>blog</code>, <code>editar_pdf</code>, <code>usuarios</code>, <code>empenhos</code>, <code>auditoria</code>, <code>solicita_impressao</code>); <code>engine(chave)</code>/<code>sessaodb(chave)</code>/<code>Repositorio(chave_db=...)</code> operam em qualquer um deles — ver <a href="#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura de acesso a dados do núcleo</a>.</li>
-<li><strong>Backend duplo controlado pelo sistema (08/09):</strong> além do SQLite, o sistema agora suporta <strong>PostgreSQL opcional</strong> — a chave <code>banco_tipo</code> em <code>tb_config</code> central (<code>'sqlite'</code> padrão | <code>'postgres'</code>) seleciona o backend. No Postgres, <strong>um SCHEMA por módulo</strong> dentro do banco <code>intranet</code> preserva o isolamento "um banco por módulo" e evita colisão de nomes de tabela (ex.: <code>tb_solicitacoes</code>). SQLite continua o padrão. Ver <a href="#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Backend duplo (08/09)</a> abaixo.</li>
+<li><strong>SQLAlchemy em TODOS os bancos (06/09):</strong> o mapa <code>MODULOS_BD</code> (<code>repositorio.py:57-67</code>) registra os 10 bancos (<code>intranet</code>, <code>blog</code>, <code>editar_pdf</code>, <code>usuarios</code>, <code>empenhos</code>, <code>auditoria</code>, <code>solicita_impressao</code>, <code>tecnico</code>, <code>filas</code>, <code>lista_telefonica</code>); <code>engine(chave)</code>/<code>sessaodb(chave)</code>/<code>Repositorio(chave_db=...)</code> operam em qualquer um deles — ver <a href="#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura de acesso a dados do núcleo</a>.</li>
+<li><strong>Backend duplo controlado pelo sistema (08/09):</strong> além do SQLite, o sistema agora suporta <strong>PostgreSQL opcional</strong> — a chave <code>banco_tipo</code> em <code>tb_config</code> central (<code>'sqlite'</code> padrão | <code>'postgres'</code>) seleciona o backend. No Postgres, <strong>um DATABASE <code>db_mod_&lt;chave&gt;</code> por módulo</strong> preserva o isolamento "um banco por módulo" e evita colisão de nomes de tabela (ex.: <code>tb_solicitacoes</code>). SQLite continua o padrão. Ver <a href="#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Backend duplo (08/09)</a> abaixo.</li>
 </ul>
 <h3 id="arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura de acesso a dados do núcleo — backend duplo (08/09)<a class="headerlink" href="#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809" title="Permanent link">&para;</a></h3>
 <p>O <code>mod_intranet</code> utiliza <strong>SQLAlchemy 2.0 ORM + Dataclasses</strong> como arquitetura piloto, propagável aos demais módulos. Desde 08/09 o acesso a dados é <strong>duplo e controlado pelo sistema</strong>: <strong>SQLite</strong> (padrão) ou <strong>PostgreSQL</strong> (opcional), selecionado por <code>banco_tipo</code> na <code>tb_config</code> central.</p>
@@ -408,12 +464,12 @@
                          engine()/sessaodb(chave) roteiam para o Postgres
                          quando banco_tipo='postgres'
   banco_conexao.py     ← backend duplo: conexao(chave), config_backend(),
-                         salvar_backend(), SCHEMAS (um schema por módulo),
-                         sgbd_ativo(), obter_engine_modulo(chave)
-  conexao_bd.py        ← delega get_config/set_config para Repositorio
+                         salvar_backend(), banco_modulo()/_garantir_bd_postgres()
+                         (um banco por módulo), sgbd_ativo(), obter_engine_modulo(chave)
+  bd_conexao.py        ← delega get_config/set_config para Repositorio
                          fallback sqlite3 raw em caso de falha
   autenticacao.py      ← todas as operações de sessão e módulo via Repositorio
-  manipulador_bd.py    ← garante_rastreabilidade via Repositorio
+  bd_manipulador.py    ← garante_rastreabilidade via Repositorio
 </code></pre></div>
 <p><strong>Camadas:</strong></p>
 <table>
@@ -469,8 +525,8 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>MODULOS_BD</code></td>
-<td style="text-align: left;"><code>repositorio.py:57-65</code></td>
-<td style="text-align: left;">mapa chave→arquivo dos 7 bancos: <code>intranet</code>→<code>db_mod_intranet.db</code>, <code>blog</code>→<code>db_mod_blog.db</code>, <code>editar_pdf</code>→<code>db_mod_edit_pdf.db</code>, <code>usuarios</code>→<code>db_mod_gest_cad_usuario.db</code>, <code>empenhos</code>→<code>db_mod_renomear_empenho.db</code>, <code>auditoria</code>→<code>db_mod_auditoria.db</code>, <code>solicita_impressao</code>→<code>db_mod_solicita_impressao.db</code></td>
+<td style="text-align: left;"><code>repositorio.py:57-67</code></td>
+<td style="text-align: left;">mapa chave→arquivo dos 10 bancos: <code>intranet</code>→<code>db_mod_intranet.db</code>, <code>blog</code>→<code>db_mod_blog.db</code>, <code>editar_pdf</code>→<code>db_mod_edit_pdf.db</code>, <code>usuarios</code>→<code>db_mod_gest_cad_usuario.db</code>, <code>empenhos</code>→<code>db_mod_renomear_empenho.db</code>, <code>auditoria</code>→<code>db_mod_auditoria.db</code>, <code>solicita_impressao</code>→<code>db_mod_solicita_impressao.db</code>, <code>tecnico</code>→<code>db_mod_tecnico.db</code>, <code>filas</code>→<code>db_mod_filas.db</code>, <code>lista_telefonica</code>→<code>db_mod_lista_telefonica.db</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>caminho_db(chave)</code></td>
@@ -480,7 +536,7 @@
 <tr>
 <td style="text-align: left;"><code>engine(chave="intranet")</code></td>
 <td style="text-align: left;"><code>repositorio.py:98</code></td>
-<td style="text-align: left;"><strong>roteia para o backend ativo:</strong> com <code>banco_tipo='postgres'</code> delega a <code>banco_conexao.obter_engine_modulo(chave)</code> (schema do módulo no banco <code>intranet</code>); senão SQLite — criação condicional: banco existente → nada é criado nem logado; banco central novo → <code>metadata.create_all</code> uma vez; banco de módulo novo → arquivo criado na primeira conexão (schema via <code>init_db</code> do módulo)</td>
+<td style="text-align: left;"><strong>roteia para o backend ativo:</strong> com <code>banco_tipo='postgres'</code> delega a <code>banco_conexao.obter_engine_modulo(chave)</code> (banco do módulo <code>db_mod_&lt;chave&gt;</code>); senão SQLite — criação condicional: banco existente → nada é criado nem logado; banco central novo → <code>metadata.create_all</code> uma vez; banco de módulo novo → arquivo criado na primeira conexão (schema via <code>init_db</code> do módulo)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>sessaodb(chave="intranet")</code></td>
@@ -490,7 +546,7 @@
 <tr>
 <td style="text-align: left;"><code>garantir_bancos()</code></td>
 <td style="text-align: left;"><code>repositorio.py:177</code></td>
-<td style="text-align: left;">percorre <code>MODULOS_BD</code>, cria engine de cada banco e força a primeira conexão quando o arquivo está ausente; retorna <code>{chave: criado}</code></td>
+<td style="text-align: left;">percorre <code>MODULOS_BD</code> e garante os bancos no backend ativo: no Postgres chama <code>banco_conexao.garantir_bancos_postgres()</code> e materializa cada DATABASE com uma conexão (<code>:186-209</code>); no SQLite cria o engine de cada banco e força a primeira conexão quando o arquivo está ausente; retorna <code>{chave: criado}</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>inicializar_bancos()</code></td>
@@ -500,7 +556,7 @@
 </tbody>
 </table>
 <p><strong>Backend duplo (08/09):</strong></p>
-<p>O PostgreSQL é ativado pelo admin em <code>/configuracoes</code> → card <strong>"Banco de dados — SQLite ou PostgreSQL"</strong> (ícone <code>storage</code>): select <code>banco_tipo</code> + campo DSN <code>postgres_url</code>, salvos via <code>banco_conexao.salvar_backend</code>. O <code>banco_tipo</code> é lido <strong>DIRETO do arquivo SQLite central</strong> (<code>_ler_config_sqlite</code> — <code>banco_conexao.py:57</code>) — seletor de backend autoritativo no boot, sem recursão. Alteração exige <strong>reiniciar o servidor</strong>.</p>
+<p>O PostgreSQL é ativado pelo admin em <code>/configuracoes</code> → aba <strong>Config</strong> (ao final, após o card "Ícones") → card <strong>"Banco de dados — SQLite ou PostgreSQL"</strong> (ícone <code>storage</code>, <code>data-testid="config-aplicar-banco"</code>, sem reload): select <code>banco_tipo</code> + campo DSN <code>postgres_url</code>, salvos via <code>banco_conexao.salvar_backend</code> (<code>config_backend()</code>/<code>salvar_backend</code>). O <code>banco_tipo</code> é lido <strong>DIRETO do arquivo SQLite central</strong> (<code>_ler_config_sqlite</code> — <code>banco_conexao.py:60</code>) — seletor de backend autoritativo no boot, sem recursão. Alteração exige <strong>reiniciar o servidor</strong>.</p>
 <table>
 <thead>
 <tr>
@@ -511,60 +567,67 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>SCHEMAS</code></td>
-<td style="text-align: left;"><code>banco_conexao.py:248</code></td>
-<td style="text-align: left;">mapa chave→schema no Postgres: <code>intranet</code>→<code>intranet</code>, <code>blog</code>→<code>blog</code>, <code>usuarios</code>→<code>usuarios</code>, <code>auditoria</code>→<code>auditoria</code>, <code>editar_pdf</code>→<code>editar_pdf</code>, <code>empenhos</code>→<code>empenhos</code>, <code>solicita_impressao</code>→<code>solicita_impressao</code> — <strong>um schema por módulo</strong> dentro do banco <code>intranet</code></td>
+<td style="text-align: left;"><code>banco_modulo(chave)</code></td>
+<td style="text-align: left;"><code>banco_conexao.py:263</code></td>
+<td style="text-align: left;">nome do DATABASE do módulo no Postgres — espelha o arquivo SQLite (<code>db_mod_&lt;chave&gt;.db</code> → <code>db_mod_&lt;chave&gt;</code>); fallback: central</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>schema_modulo(chave)</code></td>
-<td style="text-align: left;"><code>banco_conexao.py:262</code></td>
-<td style="text-align: left;">schema do módulo (fallback: <code>intranet</code>)</td>
+<td style="text-align: left;"><code>_garantir_bd_postgres(banco)</code></td>
+<td style="text-align: left;"><code>banco_conexao.py:281</code></td>
+<td style="text-align: left;">cria o banco ausente via <code>CREATE DATABASE</code> no banco de manutenção <code>postgres</code> (autocommit — não roda em transação; idempotente por processo <code>_bancos_criados</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>garantir_bancos_postgres()</code></td>
+<td style="text-align: left;"><code>banco_conexao.py:317</code></td>
+<td style="text-align: left;">percorre <code>MODULOS_BD</code> e garante TODOS os bancos de módulo (<code>CREATE DATABASE</code>); usado no boot por <code>garantir_bancos()</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>obter_engine_modulo(chave)</code></td>
-<td style="text-align: left;"><code>banco_conexao.py:267</code></td>
-<td style="text-align: left;">engine Postgres para o banco <code>intranet</code> com <code>search_path</code> = schema do módulo; <code>CREATE SCHEMA IF NOT EXISTS</code> + <code>SET search_path</code> no connect, com commit para sobreviver ao rollback do pool</td>
+<td style="text-align: left;"><code>banco_conexao.py:330</code></td>
+<td style="text-align: left;">engine SQLAlchemy para o BANCO do módulo (<code>db_mod_&lt;chave&gt;</code>, criado se necessário) — cache por chave; <code>None</code> em SQLite (o <code>repositorio.engine</code> cuida dos arquivos)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>conexao(chave)</code></td>
-<td style="text-align: left;"><code>banco_conexao.py:488</code></td>
+<td style="text-align: left;"><code>banco_conexao.py:570</code></td>
 <td style="text-align: left;">devolve uma conexão DBAPI para o backend ativo: sqlite (arquivo do módulo, WAL) ou postgres (proxy psycopg2 com tradução — ver abaixo)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>conexao_central()</code></td>
-<td style="text-align: left;"><code>banco_conexao.py:518</code></td>
+<td style="text-align: left;"><code>banco_conexao.py:601</code></td>
 <td style="text-align: left;">conexão do banco central seguindo o backend ativo</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>sgbd_ativo()</code></td>
-<td style="text-align: left;"><code>banco_conexao.py:138</code></td>
+<td style="text-align: left;"><code>banco_conexao.py:141</code></td>
 <td style="text-align: left;"><code>'sqlite'</code>|<code>'postgres'</code> (fail-soft: valor inválido cai em <code>sqlite</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>config_backend()</code></td>
-<td style="text-align: left;"><code>banco_conexao.py:115</code></td>
+<td style="text-align: left;"><code>banco_conexao.py:118</code></td>
 <td style="text-align: left;">dict <code>{banco_tipo, postgres_url}</code> lido do SQLite central</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>salvar_backend(banco_tipo, postgres_url)</code></td>
-<td style="text-align: left;"><code>banco_conexao.py:128</code></td>
+<td style="text-align: left;"><code>banco_conexao.py:131</code></td>
 <td style="text-align: left;">grava <code>banco_tipo</code>/<code>postgres_url</code> no arquivo SQLite central (exige restart para aplicar)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>definir_banco_tipo(valor)</code> / <code>definir_postgres_url(url)</code></td>
-<td style="text-align: left;"><code>banco_conexao.py:100/110</code></td>
+<td style="text-align: left;"><code>banco_conexao.py:103/113</code></td>
 <td style="text-align: left;">gravam as chaves no SQLite central</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Tradução SQLite→Postgres no proxy psycopg2</strong> (<code>_PrepararCursor</code>, <code>banco_conexao.py:340</code>):</p>
+<p><strong>Tradução SQLite→Postgres no proxy psycopg2</strong> (<code>_CursorPostgres</code>, <code>banco_conexao.py:390</code>):</p>
 <ul>
 <li><code>?</code> → <code>%s</code>; <code>datetime('now','localtime')</code> → <code>LOCALTIMESTAMP</code> (com cast <code>::text</code> em <code>DEFAULT</code> de coluna TEXT).</li>
-<li>DDL SQLite→Postgres (<code>_ddl_postgres</code>, <code>banco_conexao.py:307</code>): <code>AUTOINCREMENT</code> removido, <code>INTEGER PRIMARY KEY</code> → <code>SERIAL PRIMARY KEY</code>, <code>BLOB</code> → <code>BYTEA</code>, <code>DATETIME</code> → <code>TIMESTAMP</code>, remoção de <code>FOREIGN KEY ... REFERENCES ...</code>.</li>
+<li>DDL SQLite→Postgres (<code>_ddl_postgres</code>, <code>banco_conexao.py:358</code>): <code>AUTOINCREMENT</code> removido, <code>INTEGER PRIMARY KEY</code> → <code>SERIAL PRIMARY KEY</code>, <code>BLOB</code> → <code>BYTEA</code>, <code>DATETIME</code> → <code>TIMESTAMP</code>, remoção de <code>FOREIGN KEY ... REFERENCES ...</code>.</li>
+<li><strong><code>GROUP_CONCAT(</code> → <code>STRING_AGG(</code></strong> (<code>_preparar</code>, <code>banco_conexao.py:401</code>) — <code>GROUP_CONCAT</code> é SQLite-only; corrige <code>UndefinedFunction</code> na tela de usuários e em qualquer query agregada (11/09).</li>
 <li><code>INSERT OR IGNORE</code> → <code>ON CONFLICT DO NOTHING</code>; <code>INSERT OR REPLACE</code> → <code>ON CONFLICT</code>.</li>
 <li><code>PRAGMA</code>/<code>sqlite_master</code>/FTS5 (<code>CREATE VIRTUAL TABLE</code>/<code>CREATE TRIGGER</code>) ignorados (sem efeito/resultado no Postgres).</li>
 <li><code>PRAGMA table_info</code> → <code>information_schema.columns</code>.</li>
 <li><code>lastrowid</code> via <code>RETURNING id</code> com SAVEPOINT (não aborta transação em tabela sem coluna <code>id</code>); SAVEPOINT por statement para falha isolada não desfazer a transação.</li>
+<li><strong>Datas normalizadas para string</strong> (<code>_normalizar_valor</code>, <code>banco_conexao.py:516</code>): <code>fetchone</code>/<code>fetchall</code>/<code>fetchmany</code> convertem <code>datetime</code>→<code>%Y-%m-%d %H:%M:%S</code> e <code>date</code>→<code>isoformat()</code> — o app trata datas como string (padrão SQLite); corrige <code>TypeError: 'datetime.datetime' object is not subscriptable</code> em TODAS as telas que fazem <code>(data or '')[:16]</code> (blog, empenho, impressão, pdf, usuários) (11/09).</li>
 </ul>
 <p><strong>Modelo de credenciais PostgreSQL:</strong></p>
 <table>
@@ -597,7 +660,7 @@
 <p>Chaves em <code>tb_config</code>: <code>banco_tipo</code>, <code>postgres_url</code> (principais — ver <a href="../configuracoes/#card-banco-de-dados-sqlite-ou-postgresql-0809">Configurações</a>).</p>
 <p><strong>Fail-soft:</strong> se SQLAlchemy não estiver instalado, <code>engine()</code> retorna <code>None</code> e <code>Repositorio</code> opera em modo degradado (retorna <code>padrao</code>/<code>False</code>/<code>[]</code>). <code>bd_conexao.py</code> aplica fallback sqlite3 raw em qualquer exceção.</p>
 <blockquote>
-<p><strong>Propagação:</strong> ao criar <code>db_manipulador.py</code> de um novo módulo, espelhe o padrão — <code>models/</code> com dataclasses + <code>Table</code> + <code>map_imperatively()</code>, <code>repositorio.py</code> com <code>Repositorio</code> local e <code>autenticacao.py</code>/<code>db_manipulador.py</code> migrados para usar <code>Repositorio</code>. Ver <a href="../padroes_codificacao/">Padrões de Codificação</a>.</p>
+<p><strong>Propagação:</strong> ao criar <code>bd_manipulador.py</code> de um novo módulo, espelhe o padrão — <code>models/</code> com dataclasses + <code>Table</code> + <code>map_imperatively()</code>, <code>repositorio.py</code> com <code>Repositorio</code> local e <code>autenticacao.py</code>/<code>bd_manipulador.py</code> migrados para usar <code>Repositorio</code>. Ver <a href="../padroes_codificacao/">Padrões de Codificação</a>.</p>
 </blockquote>
 <h2 id="autenticacao-e-sessoes">Autenticação e sessões<a class="headerlink" href="#autenticacao-e-sessoes" title="Permanent link">&para;</a></h2>
 <ul>
@@ -613,9 +676,26 @@
 <li>Revalida existência/situação ativa do usuário no banco.</li>
 <li>Revalida <code>sessao_ativa</code> (sessões antigas sem hash são adotadas).</li>
 <li>Valida <code>validar_acesso_modulo(nome, chave)</code> — sem permissão: audita <code>acesso_negado</code>, notifica e redireciona <code>/</code>.</li>
-<li>Monta o <strong>layout de 4 partes</strong>: header (hambúrguer, backup, "Meu Perfil", badge de perfil, logout), drawer lateral (módulos liberados), rodapé com versões, área principal.</li>
+<li>Monta o <strong>layout de 4 partes</strong>: header (hambúrguer com <code>data-testid=menu-hamburguer</code>, "Meu Perfil", badge de perfil, logout), drawer lateral (fábrica <code>ui_comum.item_menu_drawer</code> com <code>data-testid</code> <code>menu-*</code>, módulos liberados), rodapé com versões, área principal — ver ordenação do drawer abaixo.</li>
 <li>Se <code>precisa_trocar_senha</code>, abre o diálogo persistente de troca obrigatória.</li>
 </ol>
+<h3 id="drawer-ordenacao-do-menu-hamburguer-2026-09-19-mod_intranettelaspy_montar_layout-283367">Drawer — ordenação do menu hambúrguer (2026-09-19, <code>mod_intranet/telas.py:_montar_layout</code> ~283–367)<a class="headerlink" href="#drawer-ordenacao-do-menu-hamburguer-2026-09-19-mod_intranettelaspy_montar_layout-283367" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Apresentação ≠ persistência:</strong> a coluna <code>tb_modulos.ordem</code> continua existindo e é editada em <code>/configuracoes</code> → aba Módulo (↑/↓ + <code>reordenar_modulos</code>), mas o <strong>drawer não usa <code>ordem</code> diretamente</strong> — aplica uma <strong>ordenação de apresentação</strong> em memória, sem <code>UPDATE</code> no banco.</p>
+</blockquote>
+<p><strong>Regra de agrupamento (implementada via <code>_CHAVES_POS_ADMIN</code>, <code>_ORDEM_POS_ADMIN</code>, <code>_outros.sort</code> e <code>_render_lista_modulos</code>):</strong></p>
+<ol>
+<li><strong>Home isolado no topo</strong> — item fixo <code>"Home"</code> (<code>menu-home</code>, <code>ativo</code> quando <code>chave_modulo is None</code>), seguido de <code>ui.separator</code>.</li>
+<li><strong>Demais módulos em ordem alfabética por nome</strong> (<code>_outros.sort(key=lambda t: t[1].lower())</code>) — todos os módulos de <code>autenticacao.modulos_do_usuario(nome)</code> <strong>exceto</strong> o trio <code>_CHAVES_POS_ADMIN = {"blog","usuarios","auditoria"}</code>; filtrados por permissão e com tratamento de módulo indisponível (card laranja <code>menu-&lt;chave&gt;-indisponivel</code>).</li>
+<li><strong>Administração</strong> — só <code>administrador_geral</code> (<code>perfil_global_de == "administrador_geral"</code>), após os demais módulos e com separador acima; rótulo contextual (<code>/admin/{chave_modulo}</code> vs <code>/configuracoes</code>).</li>
+<li><strong>Trio fixo Blog → Usuários → Auditoria</strong> — <code>_ORDEM_POS_ADMIN = ["blog","usuarios","auditoria"]</code>, sempre <strong>após Administração</strong> (se houver) e <strong>antes de Documentação/Sair</strong>; se o usuário não é admin geral, há separador antes do trio; cada item respeita <code>modulos_do_usuario</code> (só aparece se liberado).</li>
+<li><strong>Documentação</strong> — só <code>administrador_geral</code> (<code>/documentacao</code> em nova aba, <code>menu-docs</code>), após o trio.</li>
+<li><strong>Sair sempre último</strong> — <code>menu-sair</code>, após separador final.</li>
+</ol>
+<p><strong>Exemplo <code>master</code> (<code>administrador_geral</code>):</strong> <code>Home | Editor PDF, Empenhos, Filas, Lista Telefônica, Solicitação de Impressão, Técnico | Administração | Blog, Usuários, Auditoria | Documentação | Sair</code> — os 6 do meio em ordem alfabética por nome de exibição (case-insensitive).</p>
+<p><strong>Invariantes:</strong> filtragem continua via <code>autenticacao.modulos_do_usuario</code> / <code>validar_acesso_modulo</code> (choke point em <code>pagina_restrita</code>); módulo desativado/inativo vira item laranja de alerta, sem <code>ui.colors</code> hardcode; <code>tb_modulos.ordem</code> não é alterado pelo drawer.</p>
+<h3 id="dashboard-home-redesenhada-092026-padronizada-18092026">Dashboard <code>/</code> — Home redesenhada (09/2026, padronizada 18/09/2026)<a class="headerlink" href="#dashboard-home-redesenhada-092026-padronizada-18092026" title="Permanent link">&para;</a></h3>
+<p><code>page_dashboard()</code> (<code>main.py:492</code> fixa <code>modelo="water"</code>) → <code>_construir_dashboard()</code> (<code>main.py:368</code> <code>home_visual.aplicar_modelo("water")</code>) com <code>_orquestrar_resumo_dados()</code> (<code>main.py:250</code>, 9 contadores a cada acesso, sem botão Atualizar) e <code>_stat()</code> (<code>main.py:325</code>, altura <code>gap-1 px-2 py-1</code> ícone 36px <code>text-h6</code>, 4 dígitos <code>&gt;9999</code> tooltip único no card). Visual <strong>Water escopado só no card</strong> (<code>home_visual.injetar_water_card()</code> <code>home_visual.py:176</code> <code>.home-resumo-water/.home-stat-water</code> <code>#dfe8f0</code>/<code>#fafcfd</code> — <strong>18/09/2026</strong> <code>border-left-color</code> agora = <strong>cor do módulo <code>intranet</code></strong> via <code>ler_tema("intranet")["cor_botao"]</code> (<code>main.py:406-441</code>) + <code>box-shadow:6px 0 16px</code> lateral direita + <code>shadow-md</code> em <code>classes_card_resumo</code> (<code>home_visual.py:237</code>); antes <code>#000000</code>/<code>#EF6C00</code> fixos). Feed do Blog usa <code>renderizar_postagens</code> no <strong>mesmo padrão do módulo</strong> (<code>main.py:443-454</code>) com header só <code>label "Publicações recentes"</code> — <strong>botão "Abrir Blog completo" removido 18/09/2026</strong> (<code>main.py</code> diff 7f5c031). <strong>Geral</strong> (8 métricas, só <code>administrador_geral</code>/<code>administrador_modulo</code>): <code>[Usuarios,Sessões,Visitas,Postagens,Quarentena,PDFs,Logs,Logs 24h]</code> + <strong>Impressão</strong> (Fila geral + Para autorizar, só autorizador <code>tb_responsaveis_autorizacao</code> ou <code>administrador_geral</code> via <code>_eh_autorizador_impressao()</code>/<code>_contar_fila_para_autorizar()</code> <code>main.py:446/460</code>); contador <code>contador_acessos_total</code> só em login (<code>bd_conexao.incrementar_contador_acessos()</code> <code>main.py:229</code>); comparativo <code>/home-*</code> revertido e hambúrguer sem seção comparativa. Serviço <code>http://localhost:8080</code>.</p>
 <h2 id="agendadores-apscheduler">Agendadores (APScheduler)<a class="headerlink" href="#agendadores-apscheduler" title="Permanent link">&para;</a></h2>
 <p><code>rotinas.iniciar_agendador()</code> (<code>mod_intranet/rotinas.py:177-233</code>) — <code>BackgroundScheduler(daemon=True)</code>:</p>
 <table>
@@ -655,15 +735,15 @@
 </tbody>
 </table>
 <blockquote>
-<p><strong>Ajuste fino:</strong> o <code>MAPA_BACKUPS</code> (<code>rotinas.py:16-22</code>) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, auditoria, empenhos, solicita — expandido em 06/09 com auditoria e solicita_impressao).</p>
+<p><strong>Ajuste fino:</strong> o <code>MAPA_BACKUPS</code> (<code>rotinas.py:16-22</code>) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, auditoria, empenhos, solicita — expandido em 06/09 com auditoria e solicita_impressao — <strong>18/09/2026</strong> <code>+ tecnico: db_mod_tecnico.db</code> + <code>filas: db_mod_filas.db</code> — <strong>19/09/2026</strong> <code>+ lista_telefonica: db_mod_lista_telefonica.db</code>).</p>
 </blockquote>
 <h2 id="auditoria-lgpd-banco-exclusivo">Auditoria LGPD (banco exclusivo)<a class="headerlink" href="#auditoria-lgpd-banco-exclusivo" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong><code>audit_log(usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent)</code></strong> (<code>mod_intranet/manipulador_bd.py:58-83</code>) é a função única de escrita — ela preenche IP/UA do contexto HTTP e delega a <code>registrar_auditoria</code> (<code>mod_auditoria/manipulador_bd.py:99-124</code>).</li>
+<li><strong><code>audit_log(usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent)</code></strong> (<code>mod_intranet/bd_manipulador.py:58-83</code>) é a função única de escrita — ela preenche IP/UA do contexto HTTP e delega a <code>registrar_auditoria</code> (<code>mod_auditoria/bd_manipulador.py:99-124</code>).</li>
 <li><strong>Banco exclusivo</strong> <code>db_mod_auditoria.db</code> (WAL): cada módulo produtor tem a SUA tabela <code>tb_auditoria_&lt;modulo&gt;</code> (criada automaticamente e registrada em <code>tb_auditoria_meta</code>) — novos módulos passam a auditar sem editar o módulo de auditoria.</li>
 <li>Colunas de rastreabilidade LGPD: <code>usuario</code>, <code>modulo</code>, <code>acao</code>, <code>descricao</code>, <code>timestamp</code> (horário local, RF-08), <code>hash_arquivo</code>, <code>ip</code>, <code>user_agent</code>, <code>client_hostname</code>; índices por <code>modulo</code>, <code>usuario</code> e <code>timestamp</code>.</li>
 <li>Todos os módulos auditam suas ações relevantes: criação/edição/exclusão, autenticação (login/logout/falha), configurações, permissões (inclusive <code>acesso_negado</code>), operações com arquivos (com <strong>hash SHA-256</strong>).</li>
-<li><strong>Migração idempotente</strong> do legado central: <code>migrar_dados_existentes()</code> (<code>mod_auditoria/manipulador_bd.py:273-324</code>) copia a antiga <code>tb_auditoria</code> do banco central para as tabelas por módulo, marca <code>auditoria_migracao_concluida</code> e remove a tabela legada.</li>
+<li><strong>Migração idempotente</strong> do legado central: <code>migrar_dados_existentes()</code> (<code>mod_auditoria/bd_manipulador.py:273-324</code>) copia a antiga <code>tb_auditoria</code> do banco central para as tabelas por módulo, marca <code>auditoria_migracao_concluida</code> e remove a tabela legada.</li>
 <li><strong>Poda automática</strong>: job diário <code>poda_auditoria</code> (<code>rotinas.py:74-103</code>) chama <code>podar_registros(dias)</code> em todas as tabelas (<code>auditoria_retencao_dias</code>, default 90).</li>
 <li>Visualização: módulo <code>mod_auditoria</code> (só <code>administrador_geral</code>) — ver <a href="../modulos/auditoria/">Módulo de Auditoria</a>.</li>
 </ul>
@@ -678,8 +758,9 @@
 <h2 id="documentacao-embutida-documentacao">Documentação embutida (<code>/documentacao</code>)<a class="headerlink" href="#documentacao-embutida-documentacao" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>mod_intranet/documentacao.py</code> executa <code>python -m mkdocs build</code> (docs/ → site/) e monta <code>site/</code> como rota estática FastAPI (<code>app.mount("/documentacao", StaticFiles(...))</code>).</li>
-<li>O build roda no boot (<code>main.py:330-331</code>) e <strong>falhas nunca derrubam o servidor</strong> (apenas avisam nos logs).</li>
+<li>O build roda no boot (<code>main.py:578-585</code>) e <strong>falhas nunca derrubam o servidor</strong> (apenas avisam nos logs).</li>
 <li>Timeout do <code>subprocess.run</code>: <strong>120s</strong> (aumentado de 60s em 06/09 para instalações com grande volume de documentação).</li>
+<li><strong>Portas separadas (11/09):</strong> o <strong>site/aplicação</strong> roda na porta <code>8080</code> (<code>porta_site</code>) e a <strong>documentação</strong> é servida na <strong>porta do mkdocs</strong> (<code>porta_documentacao</code>, padrão <strong>8000</strong>) — via <code>iniciar_servidor(porta)</code> (<code>documentacao.py:51</code>, <code>ThreadingHTTPServer</code> em thread daemon servindo <code>site/</code>) e <code>porta_documentacao()</code> (<code>:85</code>). As duas portas são configuráveis no wizard do assistente e na CLI (<code>--portasite</code>/<code>--portadocumentacao</code> — <code>ativacao.py:867-873</code>; defaults em <code>_config_padrao()</code>, <code>:256,259</code>); <code>main.py:578-585</code> inicia o servidor da documentação na porta configurada.</li>
 <li>Tema do MkDocs: <strong><code>readthedocs</code></strong> (definido em <code>mkdocs.yml</code> — não alterar para <code>material</code>).</li>
 </ul>
 <h2 id="estrutura-de-diretorios-fase-0">Estrutura de diretórios (Fase 0)<a class="headerlink" href="#estrutura-de-diretorios-fase-0" title="Permanent link">&para;</a></h2>
@@ -718,7 +799,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>mod_renomear_empenho/doc/</code></td>
-<td style="text-align: left;">pasta monitorada de empenhos (<code>_PASTA_MONITORADA_PADRAO</code> — <code>mod_renomear_empenho/manipulador_bd.py:25</code>)</td>
+<td style="text-align: left;">pasta monitorada de empenhos (<code>_PASTA_MONITORADA_PADRAO</code> — <code>mod_renomear_empenho/bd_manipulador.py:25</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>mod_renomear_empenho/organizadorPasta/</code></td>
@@ -733,8 +814,16 @@
 <td style="text-align: left;">arquivos temporários do Editor de PDF (expiração automática, default 10 min — <code>PASTA_EDITOR</code>/<code>PASTA_EDITOR_PDF</code>)</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>mod_tecnico/software/</code></td>
+<td style="text-align: left;">executáveis/portáteis para download (versionável, <code>.gitkeep</code> — <code>mod_tecnico/bd_manipulador.py:24</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_tecnico/backup/YYYYMMDD_HHMM_nomePc_ip/</code></td>
+<td style="text-align: left;">backups por PC/técnico (owner-isolated, uma pasta por dono — <code>mod_tecnico/bd_manipulador.py:25</code>, <code>nome_pasta_backup</code>)</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>main.py</code>, <code>requirements.txt</code>, <code>mkdocs.yml</code>, <code>db_mod_*.db</code></td>
-<td style="text-align: left;">entry point único, dependências, build da doc e bancos SQLite (WAL) por módulo (incl. <code>db_mod_auditoria.db</code> — trilha LGPD)</td>
+<td style="text-align: left;">entry point único, dependências, build da doc e bancos SQLite (WAL) por módulo (incl. <code>db_mod_auditoria.db</code> — trilha LGPD; <strong>novos</strong> <code>db_mod_tecnico.db</code>, <code>db_mod_filas.db</code>, <code>db_mod_lista_telefonica.db</code> <strong>(19/09/2026)</strong>)</td>
 </tr>
 </tbody>
 </table>
@@ -743,7 +832,7 @@
 <code>organizadorPasta/</code>, <code>quarentena/</code>) existem com <code>.gitkeep</code> no repositório e também são
 garantidas em runtime pelas rotinas (<code>os.makedirs(..., exist_ok=True)</code>);
 <code>backup/</code> e <code>logs/</code> continuam <strong>na raiz</strong> — <code>logs/</code> e <code>site/</code> são criados/geridos em runtime pelo aplicativo.</p>
-<p>Pendências conceituais conhecidas: <code>db_criador.py</code> legado em todos os módulos (não confiar); <code>db_manipulador.py</code> do núcleo foi reconstruído de <code>*.pyc</code> quando ausente como fonte (ver <a href="../analise_mod_intranet/">Análise do Núcleo</a>).</p>
+<p>Pendências conceituais conhecidas: <code>bd_criador.py</code> legado em todos os módulos de negócio (não confiar); <code>bd_manipulador.py</code> do núcleo foi reconstruído de <code>*.pyc</code> quando ausente como fonte (ver <a href="../analise_mod_intranet/">Análise do Núcleo</a>).</p>
 </blockquote>
               
             </div>

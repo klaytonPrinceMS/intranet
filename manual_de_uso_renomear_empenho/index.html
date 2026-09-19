@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -92,30 +94,6 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Renomeador de Empenho</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#contexto">Contexto</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#as-abas">As abas</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#1-navegar">1. Navegar</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#2-fila-renomeacao">2. Fila Renomeação</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#3-pesquisar">3. Pesquisar</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#4-organizador-admin">4. Organizador (admin)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#5-solicitacao-todos-admin-gerencia">5. Solicitação (todos; admin gerencia)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#6-configuracoes-admin">6. Configurações (admin)</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#fluxos-principais">Fluxos principais</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#permissoes">Permissões</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#auditoria-e-seguranca">Auditoria e segurança</a>
-    </li>
     </ul>
                   </li>
               </ul>
@@ -153,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -183,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -199,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -225,9 +222,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="manual-de-uso-renomeador-de-empenho-intranet-modular">Manual de Uso — Renomeador de Empenho — Intranet Modular<a class="headerlink" href="#manual-de-uso-renomeador-de-empenho-intranet-modular" title="Permanent link">&para;</a></h1>
+                <h1 id="empenho-renamer-user-manual-intranet-modular">Empenho Renamer — User Manual — Intranet Modular<a class="headerlink" href="#empenho-renamer-user-manual-intranet-modular" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Guia operacional do módulo Renomeador de Empenho (<code>/renomear-empenho</code>), que monitora pastas, extrai, renomeia, indexa e organiza documentos de empenho, e atende ao fluxo de solicitação de cópia (comum → administrador). A tela é dividida em <strong>6 abas</strong>: Navegar, Fila Renomeação, Pesquisar, Organizador (admin), Solicitação e Configurações (admin).</p>
+<p>Operational guide for the Empenho Renamer module (<code>/renomear-empenho</code>): folder monitoring (local/UNC), text extraction with dynamic regex, sequential renaming, quarantine with batch reprocessing without restart, physical organizer with <code>capa.pdf/txt</code> and <code>matrizDeDocumentos.pdf/.txt</code>, and common→admin copy request flow. Screen split into 6 tabs: Browse, Rename Queue, Search, Organizer (admin), Request and Settings (admin).</p>
+</blockquote>
+<hr />
+<h1 id="manual-de-uso-renomeador-de-empenho-intranet-modular">Manual de Uso — Renomeador de Empenho — Intranet Modular<a class="headerlink" href="#manual-de-uso-renomeador-de-empenho-intranet-modular" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Guia operacional do módulo Renomeador de Empenho (<code>/renomear-empenho</code>), que monitora pastas, extrai, renomeia, indexa e organiza documentos de empenho, e atende ao fluxo de solicitação de cópia (comum → administrador). A tela é dividida em <strong>6 abas</strong>: Navegar, Fila Renomeação, Pesquisar, Organizador (admin), Solicitação e Configurações (admin). Quarentena com reprocessamento <strong>individual e em lote sem reiniciar</strong> (botão "Reprocessar fila") + separação de múltiplos documentos; organizador físico com <strong>capas <code>capa.txt</code>/<code>capa.pdf</code> por caixa</strong> e <code>matrizDeDocumentos.txt/.pdf</code>.</p>
 </blockquote>
 <h2 id="contexto">Contexto<a class="headerlink" href="#contexto" title="Permanent link">&para;</a></h2>
 <p>O módulo atende à função de almoxarifado/gestão de empenhos. Usuários <code>comum</code> navegam, pesquisam e (quando autorizados pelo administrador) baixam/solicitam cópias; o <strong>Organizador</strong> e as <strong>Configurações</strong> são exclusivos do administrador do módulo (ou <code>administrador_geral</code>).</p>
@@ -235,24 +237,31 @@
 <h3 id="1-navegar">1. Navegar<a class="headerlink" href="#1-navegar" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Navegação <strong>recursiva</strong> pelas pastas monitoradas e pelo organizador, mostrando apenas PDFs (com breadcrumb e botão de "pasta anterior").</li>
-<li>Cada PDF mostra o status (<code>processado</code> / <code>pendente</code>). Para pendentes: <strong>baixar</strong>, <strong>revisar/renomear</strong> (normaliza o nome conforme o conteúdo e o tipo — DOC, EC, EE, EG, AE) e <strong>solicitar envio</strong>.</li>
+<li>Cada linha exibe as colunas <strong>Arquivo, Empenho, Parcela, Usuário, Data, Status</strong> (+ Pasta/Ações) — os valores vêm da <strong>leitura feita no reconhecimento</strong> (<code>tb_levantamento</code>) e, quando o arquivo já foi processado, da leitura do processamento (<code>tb_empenhos</code>); <strong>zeros à esquerda são normalizados só na exibição</strong>. Para pendentes: <strong>baixar</strong>, <strong>revisar/renomear</strong> (normaliza o nome conforme o conteúdo e o tipo — DOC, EC, EE, EG, AE) e <strong>solicitar envio</strong>. O campo de pesquisa da aba usa o mesmo conjunto de colunas nos resultados.</li>
 <li>Botões: <strong>Processar pasta agora</strong> (varre a raiz de todas as pastas monitoradas, com resumo ok/total) e <strong>Atualizar</strong>.</li>
 </ul>
+<div class="admonition warning">
+<p class="admonition-title">Botão TEMPORÁRIO só para QA — REMOVER antes de produção</p>
+<p>O botão <strong>"Gerar 25 (TEMP)"</strong> (ícone <code>science</code>, totalmente à direita do menu de abas) <strong>não faz parte da operação normal</strong>: cada clique cria <strong>+25 PDFs fictícios</strong> na pasta <code>doc</code> do módulo para massa de teste (via <code>assets/test/fabrica_documentos.py:criar_lote_principal</code>). <strong>Será removido antes de produção</strong> (marcador <code>TEMPORARIO-25-ARQUIVOS-REMOVER-EM-PRODUCAO</code> em <code>mod_renomear_empenho/telas.py:153-183</code>).</p>
+</div>
 <h3 id="2-fila-renomeacao">2. Fila Renomeação<a class="headerlink" href="#2-fila-renomeacao" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Lista recursiva de PDFs ainda <strong>pendentes</strong> de renomeação.</li>
+<li>Lista recursiva de PDFs ainda <strong>pendentes</strong> de renomeação, com as colunas <strong>Arquivo, Empenho, Parcela, Usuário, Data, Status</strong> — mesma leitura do reconhecimento/processamento do Navegar (zeros à esquerda normalizados só na exibição).</li>
 <li><strong>Processar</strong> individualmente ou <strong>Processar todos</strong>. Pastas inacessíveis (ex.: rede fora do ar) são puladas.</li>
 </ul>
 <h3 id="3-pesquisar">3. Pesquisar<a class="headerlink" href="#3-pesquisar" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Busca textual</strong> via índice FTS5 (nome final, empenho, parcela, usuário e campos do cabeçalho indexado), com fallback <code>LIKE</code>.</li>
-<li>Tabela "Empenhos renomeados" com nome final, empenho, parcela, tipo, usuário e data.</li>
+<li>Tabela "Empenhos renomeados" com nome final, empenho, parcela, tipo, usuário e data (a coluna <strong>Usuário</strong> já existia e foi mantida).</li>
 </ul>
-<h3 id="4-organizador-admin">4. Organizador <em>(admin)</em><a class="headerlink" href="#4-organizador-admin" title="Permanent link">&para;</a></h3>
+<h3 id="4-organizador-admin-plano-4c">4. Organizador <em>(admin — PLANO 4c)</em><a class="headerlink" href="#4-organizador-admin-plano-4c" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Organizar caixas</strong>: distribui os renomeados em <code>mod_renomear_empenho/organizadorPasta/caixa_NN/sub_X</code> (~200 páginas/pasta, 4 pastas/caixa).</li>
-<li><strong>Gerar capas/matriz</strong> e <strong>Validar matriz</strong> (<code>matrizDeDocumentos</code>).</li>
-<li><strong>Inventário</strong> de caixas e subpastas.</li>
+<li><strong>Organizar caixas</strong>: distribui os renomeados em <code>mod_renomear_empenho/organizadorPasta/caixa_NN/sub_X</code> com <strong>~200 páginas por subpasta e 4 subpastas por caixa</strong> (padrões configuráveis em <code>tb_config</code> <code>empenhos_organizador_paginas_pasta</code>/<code>empenhos_organizador_pastas_caixa</code>; <code>bd_manipulador.py:1988</code>). O botão já encadeia a geração de capas/matriz e notifica <code>"&lt;N&gt; organizado(s). Matriz gerada (TOTAL documentos)."</code>.</li>
+<li><strong>Capas por caixa</strong>: cada <code>caixa_NN</code> recebe <strong><code>capa.txt</code> e <code>capa.pdf</code></strong> (listagem de subpastas e documentos — <code>gerar_matriz_organizador</code>, <code>bd_manipulador.py:2090</code>; PDF gerado via pymupdf <code>_gerar_pdf_texto</code>). Local: <code>mod_renomear_empenho/organizadorPasta/caixa_NN/capa.txt</code> e <code>capa.pdf</code>.</li>
+<li><strong>Matriz geral</strong>: <code>mod_renomear_empenho/organizadorPasta/matrizDeDocumentos.txt</code> <strong>e</strong> <code>matrizDeDocumentos.pdf</code> com cabeçalho, inventário por caixa/subpasta e <code>TOTAL DE DOCUMENTOS</code>.</li>
+<li><strong>Validar matriz</strong> (<code>validar_presenca_matriz</code>, <code>bd_manipulador.py:2121</code>): verifica que <strong>todo <code>.pdf</code> listado na matriz existe em disco</strong> (<code>organizadorPasta/</code>); se <code>matrizDeDocumentos.txt</code> ausente, retorna <code>["matrizDeDocumentos.txt ausente - gere a matriz primeiro"]</code>.</li>
+<li><strong>Gerar capas/matriz</strong>: botão independente para regenerar sem reorganizar.</li>
+<li><strong>Inventário</strong> de caixas e subpastas (expansão com contagem por <code>sub_X</code>).</li>
 <li><strong>Ferramentas de PDF</strong> (corte, mescla, redução) sobre empenhos processados ou PDFs enviados; saídas em <code>mod_renomear_empenho/datahora_cortePDF/</code>, <code>mod_renomear_empenho/datahora_mergePDF/</code>, <code>mod_renomear_empenho/datahora_reducaoPDF/</code>.</li>
 </ul>
 <h3 id="5-solicitacao-todos-admin-gerencia">5. Solicitação <em>(todos; admin gerencia)</em><a class="headerlink" href="#5-solicitacao-todos-admin-gerencia" title="Permanent link">&para;</a></h3>
@@ -261,26 +270,27 @@
 <li><strong>Administrador</strong>: para cada solicitação (agrupada por lote) pode <strong>Enviar por e-mail</strong> (via SMTP central), <strong>Gerar ZIP</strong> (pega para envio manual e baixa o arquivo) ou <strong>Recusar</strong> (com motivo). ZIP gerado pode ser <strong>Confirmar envio manual</strong> ou <strong>Cancelar ZIP</strong> (volta a pendente).</li>
 <li>Expansão <strong>Histórico completo</strong>: todas as solicitações, com status e método de envio.</li>
 </ul>
-<h3 id="6-configuracoes-admin">6. Configurações <em>(admin)</em><a class="headerlink" href="#6-configuracoes-admin" title="Permanent link">&para;</a></h3>
+<h3 id="6-configuracoes-admin-inclui-plano-4b">6. Configurações <em>(admin — inclui PLANO 4b)</em><a class="headerlink" href="#6-configuracoes-admin-inclui-plano-4b" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Pastas monitoradas</strong> (uma por linha, local ou rede/UNC, ex.: <code>\\servidor\empenhos</code> ou <code>E:\scan</code>) — aplicado sem reiniciar.</li>
 <li><strong>Aparência</strong>: cor dos botões, texto, fundo, título e tamanho.</li>
-<li><strong>Configurações específicas</strong>: texto do cabeçalho, <strong>intervalo do monitor automático</strong> (recomendado 60 s) e autorização de download/ZIP/e-mail para comuns.</li>
+<li><strong>Configurações específicas</strong>: texto do cabeçalho, <strong>intervalo do monitor automático</strong> (recomendado 600 s = 10 min, alterável sem reiniciar) e autorização de download/ZIP/e-mail para comuns.</li>
 <li><strong>Nome final do arquivo</strong>: template configurável com as variáveis <code>{contador}</code>, <code>{empenho}</code>, <code>{empenho_cru}</code>, <code>{parcela}</code>, <code>{ficha}</code>, <code>{ano}</code> e formatação de largura (ex.: <code>{contador:04d}</code>). Tipos especiais usam nome próprio (<code>EC_0024.pdf</code>).</li>
 <li><strong>Campos de busca (regex)</strong>: identificar/cadastrar/editar as regex de cada campo (ficha/empenho/parcela/ano...) sem reiniciar.</li>
 <li><strong>Auditoria dos arquivos</strong>: consulta da trilha detectado→renomeado→removido por status.</li>
-<li><strong>Quarentena</strong>: itens com erro de leitura/regex; clique para <strong>Reprocessar com nova regex</strong>.</li>
-<li><strong>Regras de extração</strong>: regex dinâmicas, com ativação/inativação e campo FTS de destino.</li>
+<li><strong>Quarentena (4b)</strong>: itens com erro de leitura/regex ou <strong>múltiplos documentos</strong> vão para <code>mod_renomear_empenho/quarentena/&lt;timestamp&gt;_&lt;nome&gt;</code> (<code>mover_quarentena</code>/<code>promover_quarentena</code>, <code>bd_manipulador.py:1530</code>) com motivo até 300 chars. Na lista (pendentes <code>processado=0</code>): <strong>clique na linha para reprocessar individualmente</strong> — diálogo "Reprocessar com nova regex" (regex alternativa opcional → <code>reprocesse_quarentena(qid, novo_padrao)</code>) ou, quando o motivo contém "Múltiplos documentos detectados", botão <strong>"Separar documentos"</strong> (<code>separar_documentos_quarentena</code> → <code>detectar_documentos_no_pdf</code>/<code>separar_pdf_por_documentos</code> → <code>*_parteNN_pA-B.pdf</code> na pasta monitorada e reprocesso). <strong>Botão "Reprocessar fila" (lote)</strong> acima da tabela: <code>reprocessar_fila(usuario)</code> itera toda a fila pendente com as <strong>regex ativas</strong> (cadastro em "Regras de extração" vale <strong>sem reiniciar</strong>), marca <code>processado=1</code> nos sucessos e notifica <code>"Fila reprocessada: X/Y com sucesso"</code> — aliases PLANO <code>promover_quarentena</code>/<code>reprocessar_fila</code> mapeados no código. <code>data-testid="empenhos-reprocessar-fila"</code> para QA (Playwright).</li>
+<li><strong>Regras de extração</strong>: regex dinâmicas (<code>tb_regex_regras</code>: <code>nome_regra UNIQUE</code>, <code>padrao_regra</code> validado por <code>re.compile</code>, <code>ativo</code>, <code>campo_destino</code> → coluna FTS), com ativação/inativação e campo FTS de destino; salvas por <code>salvar_regra</code> e aplicadas <strong>sem reiniciar</strong> (lidas a cada <code>processar_pdf</code>).</li>
 </ul>
 <h2 id="fluxos-principais">Fluxos principais<a class="headerlink" href="#fluxos-principais" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Monitor de pastas:</strong> varre a raiz de cada pasta monitorada (local/UNC), processando PDFs novos e registrando os removidos; em rede, pastas inacessíveis são puladas.</li>
-<li><strong>Extração:</strong> fallback <code>pytesseract</code> → <code>pdfplumber</code> → <code>pikepdf</code> → <code>pymupdf</code> (trata OCR e encoding).</li>
+<li><strong>Monitor de pastas:</strong> varre a raiz de cada pasta monitorada (local/UNC), processando PDFs novos e registrando os removidos; em rede, pastas inacessíveis são puladas. O <strong>levantamento (<code>levantar_arquivos</code>) grava todos os campos + usuário</strong> no reconhecimento — cada PDF inventariado anota nº/parcela/ficha/ano/tipo/conteúdo e o ator; na revisita, o usuário logado é adotado sem que o agendador <code>"sistema"</code> sobrescreva nome real.</li>
+<li><strong>Extração:</strong> fallback <code>pymupdf</code> → <code>pdfplumber</code> → OCR <code>pytesseract</code> → <code>pikepdf</code> (trata OCR e encoding <code>cp1252</code>/<code>Latin-1</code>, mojibake <code>?</code> tolerante).</li>
 <li><strong>Tipos especiais:</strong> EC (complementação), EE (estimativo), EG (global) e AE (anulação) são detectados pelo conteúdo e renomeados com nome próprio.</li>
 <li><strong>Indexação FTS5:</strong> busca por pagador, CPF, valor, órgão etc. (<code>tb_indexador_pesquisa_fts5</code>).</li>
-<li><strong>Quarentena:</strong> PDFs com erro de leitura/regex vão para a fila; o admin reprocessa individualmente (regex alternativa na hora).</li>
+<li><strong>Quarentena (4b):</strong> PDFs com erro de leitura/regex ou múltiplos documentos vão para <code>mod_renomear_empenho/quarentena/</code> com motivo; admin reprocessa <strong>individualmente</strong> (regex alternativa na hora via <code>reprocesse_quarentena</code>) <strong>ou em lote sem reiniciar</strong> (botão "Reprocessar fila" → <code>reprocessar_fila</code> com regras ativas); múltiplos documentos detectados por <code>_inicio_documento</code>/<code>detectar_documentos_no_pdf</code> trazem botão <strong>"Separar documentos"</strong> (<code>separar_documentos_quarentena</code> → <code>*_parteNN_pA-B.pdf</code>).</li>
+<li><strong>Identificação manual &amp; Regex dinâmico (4b):</strong> "Revisar/renomear" (<code>renomear_manual</code> com gate) normaliza nome sem reiniciar; cadastro de regex em <code>tb_regex_regras</code>/<code>tb_campos_busca</code> (<code>salvar_regra</code> valida <code>re.compile</code>, <code>campo_destino</code> opcional) vale imediatamente para o próximo <code>processar_pdf</code>.</li>
 <li><strong>Renomeação:</strong> automática (monitor/botão) ou manual (filas/revisão), com <strong>gate de validação</strong> — só renomeia com nº identificado; anti-colisão (<code>_v2</code>) evita sobrescrever.</li>
-<li><strong>Organizador físico:</strong> subpastas ~200 páginas, 4 pastas/caixa, capas e <code>matrizDeDocumentos</code>.</li>
+<li><strong>Organizador físico (4c):</strong> subpastas <strong>~200 páginas</strong>, <strong>4 pastas/caixa</strong> (configuráveis), <strong>capas <code>capa.txt</code> + <code>capa.pdf</code> por <code>caixa_NN</code></strong> e <strong>matriz <code>matrizDeDocumentos.txt/.pdf</code></strong> geral em <code>mod_renomear_empenho/organizadorPasta/</code>; <code>validar_presenca_matriz</code> garante que todo PDF da matriz existe.</li>
 <li><strong>Solicitações:</strong> comum pede cópia; admin envia por e-mail ou ZIP; tudo fica no histórico.</li>
 </ul>
 <h2 id="permissoes">Permissões<a class="headerlink" href="#permissoes" title="Permanent link">&para;</a></h2>

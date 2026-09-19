@@ -53,6 +53,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -203,12 +224,12 @@
               
                 <h1 id="intranet-modular-introduction">Intranet Modular — Introduction<a class="headerlink" href="#intranet-modular-introduction" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>The Intranet Modular is a corporate intranet built with Python 3.12 + NiceGUI 3.15 for the Prefeitura Municipal de Monte Santo de Minas. It runs only on the internal network (no CDN), uses one SQLite (WAL) database per module, has an LGPD audit trail (exclusive audit database, one table per module) and modular packages (<code>mod_*</code>). This page describes what the system is, its context and target audience.</p>
+<p>The Intranet Modular is a corporate intranet built with Python 3.12 + NiceGUI 3.15 for the rede interna. It runs only on the internal network (no CDN), uses one SQLite (WAL) database per module, has an LGPD audit trail (exclusive audit database, one table per module) and modular packages (<code>mod_*</code>). This page describes what the system is, its context and target audience.</p>
 </blockquote>
 <hr />
 <h1 id="intranet-modular-introducao">Intranet Modular — Introdução<a class="headerlink" href="#intranet-modular-introducao" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>A Intranet Modular é uma intranet corporativa desenvolvida em Python 3.12 + NiceGUI 3.15 para a Prefeitura Municipal de Monte Santo de Minas. Roda apenas na rede interna (sem CDN), usa um banco SQLite (WAL) por módulo, possui trilha de auditoria LGPD (banco exclusivo de auditoria, uma tabela por módulo) e pacotes modulares (<code>mod_*</code>). Esta página descreve o que é o sistema, seu contexto e o público-alvo.</p>
+<p>A Intranet Modular é uma intranet corporativa desenvolvida em Python 3.12 + NiceGUI 3.15 para a rede interna. Roda apenas na rede interna (sem CDN), usa um banco SQLite (WAL) por módulo, possui trilha de auditoria LGPD (banco exclusivo de auditoria, uma tabela por módulo) e pacotes modulares (<code>mod_*</code>). Esta página descreve o que é o sistema, seu contexto e o público-alvo.</p>
 </blockquote>
 <h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
 <ol>
@@ -218,7 +239,7 @@
 <li><a href="#organizacao-da-documentacao">Organização da documentação</a></li>
 </ol>
 <h2 id="o-que-e-o-sistema">O que é o sistema<a class="headerlink" href="#o-que-e-o-sistema" title="Permanent link">&para;</a></h2>
-<p>A <strong>Intranet Modular</strong> é um software de servidor para <strong>rede interna</strong> (intranet) da Prefeitura Municipal de Monte Santo de Minas. Foi desenvolvida pelo Analista de Sistemas <strong>PRINCE, K.B.</strong> e versionada no padrão <code>1.0.AAMMDD</code> (atual: <code>1.0.260908</code> — seed <code>versao_sistema</code> em <code>tb_config</code>).</p>
+<p>A <strong>Intranet Modular</strong> é um software de servidor para <strong>rede interna</strong> (intranet) da rede interna. Foi desenvolvida pelo Analista de Sistemas <strong>PRINCE, K.B.</strong> e versionada no padrão <code>1.0.AAMMDD</code> (atual: <code>1.0.260908</code> — seed <code>versao_sistema</code> em <code>tb_config</code>).</p>
 <p>Características centrais:</p>
 <table>
 <thead>
@@ -266,10 +287,13 @@
 <li><strong>Gestão de acesso</strong> — cadastro de usuários com perfis e papéis granulares por módulo.</li>
 <li><strong>Arquivo físico/digital</strong> — renomeação automática de empenhos (PDFs) e organização em caixas/subpastas.</li>
 <li><strong>Ofimática</strong> — edição de PDFs (reduzir, juntar, cortar, dividir) em espaço temporário por usuário.</li>
-<li><strong>Serviços administrativos</strong> — solicitação de impressão com cotas mensais hierárquicas e autorização.</li>
-<li><strong>Governança</strong> — auditoria central de todas as ações relevantes (LGPD) e observabilidade (loguru).</li>
+<li><strong>Serviços administrativos</strong> — solicitação de impressão com cotas mensais hierárquicas (1000/200 via <code>ORGANOGRAMA_BASE</code>) e autorização.</li>
+<li><strong>Apoio de T.I.</strong> — software portátil + backup owner-isolated <code>YYYYMMDD_HHMM_nomePc_ip</code> com <code>webkitdirectory</code> (Técnico).</li>
+<li><strong>Atendimento</strong> — gestor de filas/TV (<code>/filas</code> + <code>/tv</code> pública, esqueleto 3s+beep).</li>
+<li><strong>Organograma</strong> — lista telefônica expansível <code>Secretaria→Setor→Subsetor</code> com busca e <code>tel:</code> no celular (Lista Telefônica).</li>
+<li><strong>Governança</strong> — auditoria central de todas as ações relevantes (LGPD, uma tabela por módulo) e observabilidade (loguru).</li>
 </ul>
-<p>Tudo roda <strong>em uma única aplicação</strong> (entry point <code>main.py</code>, porta <code>8080</code>), sem necessidade de infraestrutura externa além do servidor local.</p>
+<p>Tudo roda <strong>em uma única aplicação</strong> (entry point <code>main.py</code>, porta <code>8080</code> + documentação <code>8000</code>), com <strong>10 módulos</strong> (1 núcleo + 9 de negócio), sem necessidade de infraestrutura externa além do servidor local.</p>
 <h2 id="publico-alvo">Público-alvo<a class="headerlink" href="#publico-alvo" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

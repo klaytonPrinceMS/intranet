@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -215,6 +236,7 @@
 <tr>
 <th style="text-align: left;">Rota</th>
 <th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Chave <code>tb_modulos</code></th>
 <th style="text-align: left;">Acesso</th>
 </tr>
 </thead>
@@ -222,50 +244,110 @@
 <tr>
 <td style="text-align: left;"><code>/login</code></td>
 <td style="text-align: left;"><code>mod_intranet</code></td>
+<td style="text-align: left;">—</td>
 <td style="text-align: left;">público</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/</code></td>
 <td style="text-align: left;"><code>mod_intranet</code></td>
-<td style="text-align: left;">usuários ativos</td>
+<td style="text-align: left;">— (Home + Resumo Water + feed Blog)</td>
+<td style="text-align: left;">usuários ativos (<code>pagina_restrita("Início")</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/configuracoes</code></td>
 <td style="text-align: left;"><code>mod_intranet</code></td>
-<td style="text-align: left;"><code>administrador_geral</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;"><code>administrador_geral</code> (<code>pagina_restrita("Administração")</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/documentacao</code></td>
+<td style="text-align: left;"><code>mod_intranet</code> (MkDocs <code>site/</code>)</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;"><code>administrador_geral</code> via drawer; serviça <code>site/</code> em <code>:8000</code> (<code>porta_documentacao</code>, separada de <code>:8080</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/admin/{chave_modulo}</code></td>
+<td style="text-align: left;">todos com <code>telas_administracao.py</code></td>
+<td style="text-align: left;"><code>blog</code>/<code>usuarios</code>/<code>auditoria</code>/<code>editar_pdf</code>/<code>empenhos</code>/<code>solicita_impressao</code>/<code>tecnico</code>/<code>filas</code>/<code>lista_telefonica</code></td>
+<td style="text-align: left;"><code>administrador_geral</code> ou <code>administrador_modulo</code> (<code>ler_tema</code> + <code>mostrar_administracao</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/users</code></td>
 <td style="text-align: left;"><code>mod_gest_cad_usuario</code></td>
+<td style="text-align: left;"><code>usuarios</code></td>
 <td style="text-align: left;">admin de módulo / geral</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/blog</code></td>
 <td style="text-align: left;"><code>mod_blog</code></td>
+<td style="text-align: left;"><code>blog</code></td>
 <td style="text-align: left;">comum (leitura) / admin (escrita)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/edit-pdf</code></td>
 <td style="text-align: left;"><code>mod_edit_pdf</code></td>
+<td style="text-align: left;"><code>editar_pdf</code></td>
 <td style="text-align: left;">liberados (aba Admin: geral)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>/renomear-empenho</code></td>
+<td style="text-align: left;"><code>/renomear-empenho</code> + 12 variantes <code>*-pic/spectre/chota/.../primer</code></td>
 <td style="text-align: left;"><code>mod_renomear_empenho</code></td>
+<td style="text-align: left;"><code>empenhos</code></td>
 <td style="text-align: left;">liberados</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/auditoria</code></td>
 <td style="text-align: left;"><code>mod_auditoria</code></td>
+<td style="text-align: left;"><code>auditoria</code></td>
 <td style="text-align: left;"><code>administrador_geral</code></td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>/solicita-impressao</code></td>
+<td style="text-align: left;"><code>/solicita-impressao</code> + <code>/solicita-impressao/pdf/{id}</code> + <code>/solicita-impressao/src/impressao.js</code></td>
 <td style="text-align: left;"><code>mod_solicita_impressao</code></td>
-<td style="text-align: left;">liberados</td>
+<td style="text-align: left;"><code>solicita_impressao</code></td>
+<td style="text-align: left;">liberados (pdf exige ser solicitante/responsável/admin)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/tecnico</code></td>
+<td style="text-align: left;"><code>mod_tecnico</code></td>
+<td style="text-align: left;"><code>tecnico</code></td>
+<td style="text-align: left;">liberados (software + backup owner-isolated)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/filas</code></td>
+<td style="text-align: left;"><code>mod_filas</code></td>
+<td style="text-align: left;"><code>filas</code></td>
+<td style="text-align: left;">liberados (<code>Chamar próximo</code> + preview)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/tv</code></td>
+<td style="text-align: left;"><code>mod_filas</code> (<code>mostrar_tv</code>)</td>
+<td style="text-align: left;">— (pública)</td>
+<td style="text-align: left;"><strong>pública sem login</strong> (TV full-screen, auto-refresh 3s + beep)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/lista-telefonica</code></td>
+<td style="text-align: left;"><code>mod_lista_telefonica</code></td>
+<td style="text-align: left;"><code>lista_telefonica</code></td>
+<td style="text-align: left;">liberados (organograma <code>Secretaria→Setor→Subsetor</code>, busca, <code>tel:</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/css/frameworks/*</code></td>
+<td style="text-align: left;"><code>mod_intranet/tema_css</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">público (Bulma/DaisyUI/Pico/Picnic etc. locais, sem CDN)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/img_postagens/*</code></td>
+<td style="text-align: left;"><code>mod_blog</code></td>
+<td style="text-align: left;"><code>blog</code></td>
+<td style="text-align: left;">público (imagens do WYSIWYG, <code>mod_blog/img_postagens/</code>)</td>
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p>Drawer 19/09/2026 (<code>mod_intranet/telas.py:_montar_layout</code> ~283–367): <strong>Home isolado</strong> no topo → <strong>demais módulos em ordem alfabética por nome</strong> (exceto trio) → <strong>Administração</strong> (só <code>administrador_geral</code>) → <strong>trio fixo <code>Blog → Usuários → Auditoria</code></strong> (<code>_CHAVES_POS_ADMIN</code>/<code>_ORDEM_POS_ADMIN</code>/<code>_outros.sort</code>/<code>_render_lista_modulos</code>) → <strong>Documentação</strong> (só <code>administrador_geral</code>) → <strong>Sair</strong>. Sem <code>UPDATE</code> em <code>tb_modulos.ordem</code>; filtragem via <code>modulos_do_usuario</code>/<code>validar_acesso_modulo</code>. Exemplo <code>master</code>: <code>Home | Editor PDF, Empenhos, Filas, Lista Telefônica, Solicitação, Técnico | Administração | Blog, Usuários, Auditoria | Documentação | Sair</code>.</p>
+</blockquote>
 <h2 id="funcoes-chave">Funções-chave<a class="headerlink" href="#funcoes-chave" title="Permanent link">&para;</a></h2>
 <h3 id="autenticacao-mod_intranetautenticacaopy">Autenticação (<code>mod_intranet/autenticacao.py</code>)<a class="headerlink" href="#autenticacao-mod_intranetautenticacaopy" title="Permanent link">&para;</a></h3>
 <ul>
@@ -278,22 +360,24 @@
 </ul>
 <h3 id="bootstrap">Bootstrap<a class="headerlink" href="#bootstrap" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>inicializar_bancos()</code> (<code>../../mod_intranet/bd_criador.py</code>) — cria o central antes de importar <code>mod_gest_cad_usuario</code>.</li>
+<li><code>inicializar_bancos()</code> (<code>mod_intranet/mod_intranet_inicializacao_bd.py:13</code>) — ordem: <code>init_central</code> (tb_config/tb_sessoes/tb_modulos) → <code>garantir_rastreabilidade</code> → <code>init_db_auditoria</code> + <code>migrar_dados_existentes</code> → <code>init_blog</code> → <code>init_users</code> (seed <code>master</code>/<code>qacomum</code>/<code>qamaster</code>, senha <code>123456</code> QA, troca forçada) → <code>init_db_pdf</code> → <code>init_db_empenho</code> → <code>init_solicita</code> (ORGANOGRAMA_BASE 1000/200) → <code>init_db</code> técnico → <code>init_db</code> filas → <code>init_db</code> lista telefônica. Cria o central <strong>antes</strong> de importar qualquer módulo; <code>mod_intranet/bd_criador.py</code> e <code>bd_criador.py</code> dos módulos são legado/morto.</li>
 </ul>
-<h3 id="gestao-de-usuarios-mod_gest_cad_usuariobd_manipuladorpy">Gestão de usuários (<code>../../mod_gest_cad_usuario/bd_manipulador.py</code>)<a class="headerlink" href="#gestao-de-usuarios-mod_gest_cad_usuariobd_manipuladorpy" title="Permanent link">&para;</a></h3>
+<h3 id="gestao-de-usuarios-mod_gest_cad_usuariobd_manipuladorpy">Gestão de usuários (<code>mod_gest_cad_usuario/bd_manipulador.py</code>)<a class="headerlink" href="#gestao-de-usuarios-mod_gest_cad_usuariobd_manipuladorpy" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Seed <code>master</code> com auto-cura de troca obrigatória — <code>:136-156</code></li>
+<li>Seed <code>master</code>/<code>qacomum</code>/<code>qamaster</code> com auto-cura de troca obrigatória (<code>marcar_trocar_senha</code>/<code>marcar_trocar_credenciais</code>) — <code>:136-156</code>, <code>init_db</code> em <code>bd_manipulador.py:185-224</code></li>
 </ul>
 <h2 id="tabelas-por-modulo">Tabelas por módulo<a class="headerlink" href="#tabelas-por-modulo" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Central</strong> <code>db_mod_intranet.db</code>: <code>tb_config</code>, <code>tb_sessoes</code>, <code>tb_modulos</code>.</li>
-<li><strong>Auditoria</strong> <code>db_mod_auditoria.db</code>: <code>tb_auditoria_&lt;modulo&gt;</code> (uma tabela por módulo produtor) + <code>tb_auditoria_meta</code>.</li>
-<li><code>db_mod_gest_cad_usuario.db</code>: <code>tb_usuarios</code>.</li>
-<li><code>db_mod_blog.db</code>: postagens/comentários (sanitizados por <code>nh3</code>).</li>
-<li><code>db_mod_edit_pdf.db</code>: registros de arquivos (<code>hash_arquivo</code> SHA-256).</li>
-<li><code>db_mod_renomear_empenho.db</code>: <code>tb_indexador_pesquisa_fts5</code>.</li>
-<li><code>db_mod_solicita_impressao.db</code>: solicitações de impressão.</li>
-<li><code>mod_auditoria</code>: sem banco próprio (lê o central).</li>
+<li><strong>Central</strong> <code>db_mod_intranet.db</code>: <code>tb_config</code> (incl. <code>versao_sistema</code>/<code>versao_modulo:*</code>/<code>banco_tipo</code>/<code>postgres_url</code>/temas), <code>tb_sessoes</code> (com <code>ip</code>/<code>user_agent</code>/<code>dispositivo</code>/<code>mac</code> + <code>cookie_hash</code>), <code>tb_modulos</code> (<code>chave</code> UNIQUE, <code>nome</code>, <code>icone</code>, <code>rota</code>, <code>ativo</code>, <code>nativo</code>, <code>ordem</code> — seed <code>MODULOS_SISTEMA</code> 9 + núcleo).</li>
+<li><strong>Auditoria</strong> <code>db_mod_auditoria.db</code>: <code>tb_auditoria_&lt;modulo&gt;</code> (uma tabela por módulo produtor — <code>intranet</code>, <code>usuarios</code>, <code>blog</code>, <code>editar_pdf</code>, <code>empenhos</code>, <code>auditoria</code>, <code>solicita_impressao</code>, <code>tecnico</code>, <code>filas</code>, <code>lista_telefonica</code>) + <code>tb_auditoria_meta</code>.</li>
+<li><code>db_mod_gest_cad_usuario.db</code>: <code>tb_usuarios</code> (<code>user_nome</code> UNIQUE, <code>user_perfil</code> <code>comum|administrador_modulo|administrador_geral</code>, <code>user_ativo</code>, <code>user_deletado</code>, <code>user_nome_completo</code>) + <code>tb_acesso_usuario</code> (papel por módulo).</li>
+<li><code>db_mod_blog.db</code>: <code>tb_postagens</code>/<code>tb_comentarios</code> (sanitizados por <code>nh3</code>, <code>blog_modo_exibicao</code> <code>carrossel</code> com 3 básicas), <code>img_postagens/</code> (JPG/PNG ≤5 MB, assinatura <code>FFD8</code>/<code>89504E47</code>).</li>
+<li><code>db_mod_edit_pdf.db</code>: <code>tb_arquivos</code>/<code>tb_cota_disco</code> + <code>editorPDF/</code> temporários (expiração <code>cfg_expiracao_min</code> default 10 min).</li>
+<li><code>db_mod_renomear_empenho.db</code>: <code>tb_empenhos</code> + <code>tb_indexador_pesquisa_fts5</code> (32 colunas, FTS5) + <code>tb_quarentena</code> + <code>tb_regex_regras</code>/<code>tb_campos_busca</code> + <code>doc/</code>/<code>organizadorPasta/</code>/<code>quarentena/</code>.</li>
+<li><code>db_mod_solicita_impressao.db</code>: <code>tb_solicitacoes</code> (com <code>grupo_id</code>, <code>tipo_papel</code> <code>sulfite|fotografico|verge</code>, <code>cota_excedida</code>/<code>requer_autorizacao</code>/<code>grupo_id</code>), <code>tb_secretarias</code> (<strong>1000 padrão via <code>ORGANOGRAMA_BASE</code></strong>), <code>tb_setores</code> (<strong>200 padrão</strong>, subsetores achatados), <code>tb_responsaveis_autorizacao</code>, <code>tb_cotas_impressao</code>/<code>tb_consumo_cota</code>/<code>tb_impressoras</code> + <code>solicitacaoImpressao/</code> (rascunhos 10 min, <code>MAX_ARQ=10</code>).</li>
+<li><code>db_mod_tecnico.db</code>: <code>tb_backup</code> (<code>pasta_nome</code> UNIQUE <code>YYYYMMDD_HHMM_nomePc_ip</code>, <code>owner</code>, <code>ip</code>/<code>hostname</code>) + <code>tb_backup_arquivo</code> (<code>caminho_relativo</code>, <code>hash_sha256</code>) + pastas <code>software/</code> (download zip multi-seleção, limite <code>tecnico_max_zip_mb</code> 1024) + <code>backup/</code>.</li>
+<li><code>db_mod_filas.db</code>: <code>tb_fila</code> (<code>Geral</code> seed <code>A000</code>/<code>ativa</code>/<code>01</code>) + <code>tb_chamada</code> (<code>fila_id</code> FK CASCADE, <code>senha</code>, <code>guiche</code> snapshot) + <code>tb_config_filas</code> (<code>filas_modo_tv</code>, <code>filas_senha_prefixo</code>, <code>filas_guiche_padrao</code>).</li>
+<li><code>db_mod_lista_telefonica.db</code>: <code>tb_unidade</code> (<code>secretaria|setor|subsetor</code>, <code>parent_id</code> FK CASCADE, <code>ordem</code>, <code>telefone</code>) + <code>tb_contato</code> (<code>unidade_id</code> FK CASCADE, <code>nome</code>/<code>telefone</code>, <code>user_nome</code> opcional, <code>tipo</code> <code>vinculado|externo</code>, <code>COLLATE NOCASE</code>) + semente <code>ORGANOGRAMA_BASE</code> 12 secretarias (exportada para <code>solicita_impressao</code> 1000/200).</li>
 </ul>
 <p>Veja <a href="../padroes_codificacao/">Padrões de Codificação</a> para o modelo de módulo.</p>
               

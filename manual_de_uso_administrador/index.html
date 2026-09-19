@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -92,7 +94,11 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#acesso">Acesso</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dashboard-home-redesenhada-092026-water-escopado-so-no-card">Dashboard / — Home redesenhada (09/2026, Water escopado só no card)</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#configuracoes-configuracoes-apenas-geral">Configurações (/configuracoes, apenas geral)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#blog-publicar-com-o-editor-wysiwyg-admin-14092026">Blog — publicar com o editor WYSIWYG (admin, 14/09/2026)</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#gestao-de-usuarios-users-admin-de-modulogeral">Gestão de Usuários (/users, admin de módulo/geral)</a>
     </li>
@@ -143,6 +149,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -173,6 +186,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -189,6 +208,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -220,7 +245,7 @@
 <p>Guia operacional para <code>administrador_geral</code> e <code>administrador do módulo</code>: configurações, gestão de usuários, auditoria e observabilidade.</p>
 </blockquote>
 <h2 id="perfis-do-sistema">Perfis do sistema<a class="headerlink" href="#perfis-do-sistema" title="Permanent link">&para;</a></h2>
-<p>O sistema possui exatamente <strong>três perfis globais</strong> (campo <code>user_perfil</code> em <code>tb_usuarios</code>, constante <code>PERFIS_GLOBAIS</code> em <code>mod_gest_cad_usuario/manipulador_bd.py:15</code>):</p>
+<p>O sistema possui exatamente <strong>três perfis globais</strong> (campo <code>user_perfil</code> em <code>tb_usuarios</code>, constante <code>PERFIS_GLOBAIS</code> em <code>mod_gest_cad_usuario/bd_manipulador.py:15</code>):</p>
 <table>
 <thead>
 <tr>
@@ -255,12 +280,29 @@
 <li><code>administrador_geral</code>: vê todos os módulos, incluindo <code>/configuracoes</code>, <code>/users</code> e <code>/auditoria</code>.</li>
 <li><code>administrador_modulo</code> (administrador do módulo): alteração/restrição limitada aos módulos vinculados.</li>
 </ul>
+<h2 id="dashboard-home-redesenhada-092026-water-escopado-so-no-card">Dashboard <code>/</code> — Home redesenhada (09/2026, Water escopado só no card)<a class="headerlink" href="#dashboard-home-redesenhada-092026-water-escopado-so-no-card" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Sem botão Atualizar</strong> — o Resumo é recalculado <strong>a cada acesso</strong> (<code>_orquestrar_resumo_dados()</code> <code>main.py:250</code>): sem <code>lbl_fb_resumo/atualizar_resumo</code>, altura <code>gap-1 px-2 py-1</code> ícone 36px (<code>home_visual.injetar_water_card()</code> <code>home_visual.py:176</code> <code>.home-resumo-water/.home-stat-water</code> border <code>#dfe8f0</code> bg <code>#fafcfd</code>, <code>page_dashboard</code> fixa <code>modelo="water"</code> <code>main.py:502</code>), tooltip único no card (<code>Usuarios/Sessões/Noticias/Logs/Visitas/Fila geral/Para autorizar/Quarentena/PDFs/Auditoria 24h</code> + <code>Logs&gt;9999</code> alerta backup <code>db_mod_auditoria.db</code>).</li>
+<li><strong>"Resumo do sistema"</strong> (8 métricas, <strong>só <code>administrador_geral</code>/<code>administrador_modulo</code></strong>): Usuários, Sessões, <strong>Visitas</strong> (<code>contador_acessos_total</code> — só logins, <code>bd_conexao.incrementar_contador_acessos()</code> <code>main.py:229</code>, <code>contador_acessos_inicio</code> <code>YYYY-MM-DD</code> tooltip simplificado <code>"Visitas"</code>), Postagens, Quarentena pendente (<code>tb_quarentena processado=0</code>), PDFs ativos (<code>tb_arquivos ativo=1</code>), Logs, Auditoria 24h (<code>SUM WHERE timestamp &gt;= -1 day</code>).</li>
+<li><strong>"Resumo do sistema — Impressão"</strong> (2 métricas, <strong>só autorizador</strong> <code>tb_responsaveis_autorizacao ativo=1</code> via <code>_eh_autorizador_impressao()</code> <code>main.py:446</code> <strong>ou <code>administrador_geral</code></strong>): Fila geral e Para autorizar (por secretaria/setor, <code>main.py:460</code> <code>_contar_fila_para_autorizar()</code>; admin geral = fila geral). Serviço <code>http://localhost:8080</code> water OK; comparativo <code>/home-*</code> revertido e hambúrguer sem seção comparativa.</li>
+</ul>
 <h2 id="configuracoes-configuracoes-apenas-geral">Configurações (<code>/configuracoes</code>, apenas geral)<a class="headerlink" href="#configuracoes-configuracoes-apenas-geral" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Personalização: cor primária, título, ícones, botões do sistema (cor/texto/tamanho), pasta raiz.</li>
+<li><strong>Páginas do sistema — ordem do menu (aba Módulo, 14/09/2026)</strong>: a lista é ÚNICA e reordenável com ↑/↓ (salva de imediato). Ordem padrão: <code>Blog → Editor PDF → Empenhos → Solicitação de Impressão → Usuários → Auditoria</code> (vale para instalações novas e "Restaurar padrão"). Após reordenar, a ordem <strong>permanece após reinícios</strong> — personalização nunca é sobrescrita no boot.</li>
+<li>Banco de dados (aba <strong>Config</strong>, ao final, após "Ícones"): card <strong>"Banco de dados — SQLite ou PostgreSQL"</strong> — SQLite é o padrão; PostgreSQL é opcional. A troca <strong>exige reiniciar o servidor</strong> (sem reload ao aplicar).</li>
 <li>Observabilidade (loguru + OTel): nível, rotação, retenção, compressão, console (auto/sempre/nunca), envio ao Loki; endpoint OTLP local ou remoto, stack local (Docker) ou dedicada, URL do Grafana; "Limpar TODOS os logs". Troca de endpoint/OTel exige restart.</li>
 <li>Backup: chave <code>backup_horas:&lt;modulo&gt;</code> (padrão 12 h); <code>backup_interval_horas</code> e <code>sessao_retencao</code> (roadmap).</li>
 <li><strong>Blog — diagramas Mermaid</strong>: no admin do módulo (<code>/admin/blog</code> → "Configurações específicas") o switch **"Permitir diagramas Mermaid (<code>mermaid) nas postagens"** liga/desliga a renderização de blocos</code>mermaid ... <code>`` nas postagens (habilitado por padrão, chave local</code>blog_habilitar_mermaid`).</li>
+</ul>
+<h2 id="blog-publicar-com-o-editor-wysiwyg-admin-14092026">Blog — publicar com o editor WYSIWYG (admin, 14/09/2026)<a class="headerlink" href="#blog-publicar-com-o-editor-wysiwyg-admin-14092026" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Só o administrador geral e o administrador do módulo <code>blog</code> veem o card <strong>"Nova publicação"</strong> em <code>/blog</code> (o <code>comum</code> tem somente leitura — controles ocultos e bloqueados no backend).</li>
+<li><strong>Escrever</strong>: preencha <strong>Título*</strong> e o <strong>editor</strong> (recebe com <code>Olá, &lt;seu nome&gt;! ...</code>). Use a barra de ferramentas para negrito/itálico/listas/links, ou digite HTML simples/Markdown leve e blocos <code>``mermaid. **Markdown funciona dentro do editor**: linhas como</code># Título<code>,</code>## Seção<code>,</code>- item<code>e</code><strong>negrito</strong><code>são convertidas ao publicar/pré-visualizar (o editor gera a 1ª linha solta e as demais em</code><div><code>, preservadas na sanitização); blocos de código (</code>code<code>/</code>pre<code>) não são convertidos e</code>#hashtag<code>no meio do texto não vira título. **Atenção —</code>#<code>exige espaço**:</code># Título<code>vira título, mas</code>#texto` (sem espaço) fica literal — padrão CommonMark, como no GitHub.</li>
+<li><strong>Anexar imagem</strong>: clique em <strong>"Selecionar imagem (JPG/PNG, até 5 MB)"</strong>, escolha o arquivo e clique em <strong>Enviar</strong> — a imagem entra no texto na posição do cursor (redimensionada para a largura do card). Só <code>.jpg</code>/<code>.jpeg</code>/<code>.png</code> de até 5 MB; outro formato ou arquivo inválido mostra aviso e não entra no texto.</li>
+<li><strong>Ajustar a imagem (alinhar/redimensionar)</strong>: na linha <strong>"Imagem:"</strong> abaixo do upload, use os botões <strong>esquerda/centro/direita</strong> para alinhar e o seletor <strong>"Largura da imagem"</strong> (25%, 50%, 75%, 100% ou Original 200–400px) para redimensionar — sempre aplicados à <strong>última imagem</strong> do texto (envie primeiro, ajuste depois; repita a cada imagem). O restante da formatação que você aplicou é preservado. Sem imagem no texto, os botões avisam "Nenhuma imagem no texto — envie uma primeiro".</li>
+<li><strong>Pré-visualizar / publicar</strong>: confira em <strong>Pré-visualização</strong> (o que aparece é o que o leitor vê, já sanitizado), depois <strong>Publicar</strong> (ou <strong>Salvar</strong> ao editar, <strong>Cancelar</strong> para limpar). Para editar, use o ícone de lápis no rodapé do card; para retirar do ar, <strong>despublicar</strong> (a postagem vai para a aba <strong>Despublicadas</strong>, de onde pode ser republicada); <strong>excluir</strong> é lógico (<code>ativo=0</code>).</li>
+<li>Imagens enviadas e <strong>não usadas</strong> em nenhuma postagem são apagadas sozinhas após <strong>5 min</strong> (limpeza automática a cada 1 min) — publique em seguida ou reenvie.</li>
 </ul>
 <h2 id="gestao-de-usuarios-users-admin-de-modulogeral">Gestão de Usuários (<code>/users</code>, admin de módulo/geral)<a class="headerlink" href="#gestao-de-usuarios-users-admin-de-modulogeral" title="Permanent link">&para;</a></h2>
 <ul>

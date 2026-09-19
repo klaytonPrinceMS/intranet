@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Filas (TV, esqueleto) - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Filas (TV, esqueleto)";
+        var mkdocs_page_input_path = "modulos/filas.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Filas (TV, esqueleto)</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Módulos (resumo)</li>
+      <li class="breadcrumb-item active">Filas (TV, esqueleto)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="queue-module-mod_filas-skeleton">Queue Module — <code>mod_filas</code> (Skeleton)<a class="headerlink" href="#queue-module-mod_filas-skeleton" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Queue/call manager module (skeleton, TV): routes <code>/filas</code> (key <code>filas</code>) + <code>/tv</code> (public) · own database <code>db_mod_filas.db</code> (WAL) · tables <code>tb_fila</code>/<code>tb_chamada</code>/<code>tb_config_filas</code> · next password <code>A000→A001</code> · TV auto-refresh 3s + beep · central LGPD audit.</p>
+</blockquote>
+<hr />
+<h1 id="modulo-filas-mod_filas-esqueleto-tv">Módulo Filas — <code>mod_filas</code> (Esqueleto TV)<a class="headerlink" href="#modulo-filas-mod_filas-esqueleto-tv" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Módulo gestor de filas/chamadas (esqueleto, TV): rotas <code>/filas</code> (chave <code>filas</code>) + <code>/tv</code> (pública) · banco próprio <code>db_mod_filas.db</code> (WAL) · tabelas <code>tb_fila</code>/<code>tb_chamada</code>/<code>tb_config_filas</code> · próxima senha <code>A000→A001</code> · TV auto-refresh 3s + beep · auditoria central LGPD.</p>
+</blockquote>
+<h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
+<p>Esqueleto <strong>a título de conhecimento</strong> do futuro gestor de chamadas para atendimento com TV na rede interna — rota <code>/filas</code> (painel de filas) + <code>/tv</code> (painel full-screen para TV). Já operacional com fluxo mínimo: uma fila "Geral" semeada, incremento de senha e display da última chamada. Regras completas (múltiplas filas, prioridade, guichês, som, integração) serão detalhadas em iteração futura.</p>
+<blockquote>
+<p>Status: <code>SKELETON = True</code> (<code>mod_filas/__init__.py:7</code>). Estrutura pronta (DB + telas + admin + rotas), sem impacto no core.</p>
+</blockquote>
+<h2 id="banco-de-dados">Banco de dados<a class="headerlink" href="#banco-de-dados" title="Permanent link">&para;</a></h2>
+<p>Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:34-68</code> (bootstrap central + <code>init_db()</code> no import).</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Tabela</th>
+<th style="text-align: left;">Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>tb_fila</code></td>
+<td style="text-align: left;"><code>id</code> PK, <code>nome</code> UNIQUE (<code>Geral</code> semeada), <code>senha_atual</code> (<code>A000</code> default), <code>status</code> (<code>ativa</code>), <code>guiche</code> (<code>01</code> default), <code>data_criacao</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_chamada</code></td>
+<td style="text-align: left;"><code>id</code> PK, <code>fila_id</code> FK CASCADE → <code>tb_fila</code>, <code>senha</code> (ex.: <code>A001</code>), <code>guiche</code> (snapshot do <code>tb_fila.guiche</code>), <code>chamado_em</code> (timestamp), <code>chamado_por</code> (login ator)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_config_filas</code></td>
+<td style="text-align: left;">chave-valor local (<code>filas_modo_tv</code>=<code>1</code>, <code>filas_senha_prefixo</code>=<code>A</code>, <code>filas_guiche_padrao</code>=<code>01</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Seed: <code>INSERT OR IGNORE INTO tb_fila (nome, senha_atual, status, guiche) VALUES ('Geral','A000','ativa','01')</code> (<code>bd_manipulador.py:66</code>). Conexão via <code>mod_intranet/banco_conexao.conexao("filas")</code> (WAL + <code>foreign_keys=ON</code>, backend duplo SQLite/PostgreSQL). Auditoria via <code>audit_log</code> → <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_filas</code> (<code>gerar_senha</code>).</p>
+<p>⚠️ O <code>bd_criador.py</code> do módulo é <strong>legado/morto</strong> — não executar (o schema real está em <code>bd_manipulador.py</code>).</p>
+<p>Modelos tipados (<code>models/__init__.py</code> — dataclasses <code>Fila</code>/<code>Chamada</code>, sem <code>map_imperatively</code> ainda): <code>Fila(id, nome, senha_atual, status, guiche)</code>, <code>Chamada(id, fila_id, senha, guiche, chamado_em, chamado_por)</code>.</p>
+<h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
+<h3 id="painel-filas-gestor-de-chamadas-skeleton">Painel <code>/filas</code> — gestor de chamadas (skeleton)<a class="headerlink" href="#painel-filas-gestor-de-chamadas-skeleton" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Gate</strong> (<code>_pode_acessar</code> — <code>telas.py:16-22</code>): <code>administrador_geral</code> sempre; senão <code>validar_acesso_modulo(user, "filas")</code> — sem acesso → "Acesso restrito".</li>
+<li><strong>Cabeçalho temático</strong> (<code>telas.py:31-36</code>): <code>ler_tema("filas", cor_botao="#000000", texto_header="Gestor de chamadas para atendimento (TV). Esqueleto a título de conhecimento.")</code> + <code>ui.colors(primary=tema["cor_botao"])</code> + <code>cabecalho("Filas — Chamadas", ..., chave_modulo="filas")</code> (borda = <code>cor_botao</code> via <code>PADROES_TEMA["filas"]</code> → <code>#000000</code>).</li>
+<li><strong>Card Filas (esqueleto)</strong> (<code>telas.py:37-58</code>): <code>listar_filas()</code> (<code>SELECT id,nome,senha_atual,status,guiche</code>); por fila renderiza <code>nome</code> + <code>Senha atual: X • Guichê: Y • status</code> + botão <code>Chamar próximo</code> (<code>campaign</code>, <code>primario</code>, <code>chave_modulo="filas"</code>) que chama <code>gerar_senha(fid, ator=user)</code> + <code>ui.notify</code> + <code>render()</code>; botão <code>Abrir TV</code> (<code>tv</code>, <code>contorno</code>, <code>data-testid=filas-abrir-tv</code>, <code>ui.navigate.to("/tv")</code>).</li>
+<li><strong>Card Última chamada (preview TV)</strong> (<code>telas.py:58-70</code>): <code>ultima_chamada()</code> (<code>SELECT senha,guiche,chamado_em ORDER BY id DESC LIMIT 1</code>); exibe <code>Senha: A001</code> (<code>text-h4 font-extrabold text-primary</code>) + <code>Guichê: 01 • data</code>; histórico 5 últimas (<code>listar_chamadas(5)</code> — <code>senha — guichê — por — data</code>). Sem chamada → "Nenhuma chamada ainda.".</li>
+</ul>
+<h4 id="gerar_senha-incremento-simples-bd_manipuladorpy79-107"><code>gerar_senha</code> — incremento simples (<code>bd_manipulador.py:79-107</code>)<a class="headerlink" href="#gerar_senha-incremento-simples-bd_manipuladorpy79-107" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="n">atual</span> <span class="o">=</span> <span class="n">SELECT</span> <span class="n">senha_atual</span> <span class="n">FROM</span> <span class="n">tb_fila</span> <span class="n">WHERE</span> <span class="nb">id</span><span class="o">=</span><span class="err">?</span>
+<span class="c1"># regex r"([A-Za-z]*)(\d+)" → pref + num+1 com :03d</span>
+<span class="n">nova</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pref</span><span class="si">}{</span><span class="n">num</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">"</span>  <span class="c1"># A000→A001, sem letra → A001</span>
+<span class="n">UPDATE</span> <span class="n">tb_fila</span> <span class="n">SET</span> <span class="n">senha_atual</span><span class="o">=</span><span class="n">nova</span>
+<span class="n">INSERT</span> <span class="n">INTO</span> <span class="n">tb_chamada</span> <span class="p">(</span><span class="n">fila_id</span><span class="p">,</span> <span class="n">senha</span><span class="p">,</span> <span class="n">guiche</span><span class="p">,</span> <span class="n">chamado_por</span><span class="p">)</span>
+  <span class="n">VALUES</span> <span class="p">(</span><span class="err">?</span><span class="p">,</span> <span class="n">nova</span><span class="p">,</span> <span class="p">(</span><span class="n">SELECT</span> <span class="n">guiche</span> <span class="n">FROM</span> <span class="n">tb_fila</span> <span class="n">WHERE</span> <span class="nb">id</span><span class="o">=</span><span class="err">?</span><span class="p">),</span> <span class="n">ator</span><span class="p">)</span>
+<span class="n">_audit</span><span class="p">(</span><span class="n">ator</span><span class="p">,</span> <span class="s2">"gerar_senha"</span><span class="p">,</span> <span class="n">nova</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"fila=</span><span class="si">{</span><span class="n">fila_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+<p>Fail-soft: <code>try/except</code> + log <code>filas</code> + <code>(False, str(e))</code>.</p>
+<h3 id="painel-tv-display-full-screen-publico">Painel <code>/tv</code> — display full-screen (público)<a class="headerlink" href="#painel-tv-display-full-screen-publico" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Rota</strong> <code>/tv</code> (<code>main.py:745-749</code>): <strong>sem <code>pagina_restrita</code></strong> — acesso livre na rede (TV na recepção); <code>from mod_filas.telas import mostrar_tv; mostrar_tv()</code>.</li>
+<li><strong>Layout</strong> (<code>mostrar_tv</code> — <code>telas.py:72-93</code>): <code>ui.column</code> <code>w-full h-screen items-center justify-center bg-black text-white gap-6 p-8</code> + <code>lbl_senha</code> (<code>text-[10vw] font-extrabold</code>), <code>lbl_guiche</code> (<code>text-[4vw] font-bold</code>), <code>lbl_topo</code> <code>"FILA — AGUARDE CHAMADA"</code> (<code>text-[2vw] tracking-widest</code>); <code>tema = ler_tema("filas")</code> + <code>ui.colors(primary=...)</code>.</li>
+<li><strong>Auto-refresh 3s</strong>: <code>ui.timer(3.0, refresh)</code> + <code>refresh()</code> imediato — <code>ultima_chamada()</code> → atualiza <code>lbl_senha</code>/<code>lbl_guiche</code> + beep via <code>ui.run_javascript("new AudioContext().createOscillator()...")</code> (fail-soft). Sem chamada mantém "—".</li>
+</ul>
+<h3 id="administracao-adminfilas">Administração (<code>/admin/filas</code>)<a class="headerlink" href="#administracao-adminfilas" title="Permanent link">&para;</a></h3>
+<p><code>telas_administracao.py:13-30</code> — <code>bloco_aparencia</code> (cupê "Aparência" <code>filas_*</code>, <code>com_texto_header=True</code>, defaults <code>cor_botao=""</code> → <code>PADROES_TEMA["filas"]</code> <code>#000000</code>) + <code>card_admin("Fila — Esqueleto", icone="queue", chave_modulo="filas", grade=False)</code>: notas "Esqueleto a título de conhecimento…" + "Tabela tb_fila (Geral) já semeada…" + <code>painel_backup(usuario, "filas")</code> (backup do banco <code>db_mod_filas.db</code>, job <code>backup:filas</code> 12h).</p>
+<ul>
+<li><strong>Versionamento</strong>: <code>versao_modulo:filas</code> no rodapé de <code>/filas</code>.</li>
+</ul>
+<h2 id="permissoes">Permissões<a class="headerlink" href="#permissoes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Ação</th>
+<th style="text-align: center;"><code>comum</code> com <code>filas</code></th>
+<th style="text-align: center;"><code>administrador_modulo</code>/<code>administrador_geral</code></th>
+<th style="text-align: center;">Sem acesso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Ver <code>/filas</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✗ ("Acesso restrito")</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>Chamar próximo</code> (gera senha)</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>Abrir TV</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">Ver <code>/tv</code></td>
+<td style="text-align: center;">✓ (público, sem login)</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td style="text-align: left;">Ver <code>/admin/filas</code></td>
+<td style="text-align: center;">✗</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✗</td>
+</tr>
+</tbody>
+</table>
+<p>Gate <code>/filas</code>: <code>_pode_acessar</code> (admin geral ou <code>validar_acesso_modulo(user,"filas")</code>). <code>/tv</code> sem gate.</p>
+<p>LGPD: <code>remover_vinculos_usuario</code> (esqueleto, retorna 0 — sem vínculo por usuário ainda), <code>renomear_usuario</code> propaga <code>UPDATE tb_chamada SET chamado_por</code>.</p>
+<h2 id="rota-e-integracoes">Rota e integrações<a class="headerlink" href="#rota-e-integracoes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Rotas: <code>/filas</code> (chave <code>filas</code>, ícone <code>queue</code>) — <code>main.py:731-743</code> (<code>pagina_restrita("Filas", chave_modulo="filas")</code> + <code>REGISTRO_MODULOS["filas"] = page_filas</code>); <code>/tv</code> — <code>main.py:745-749</code> (sem guarda). Slugs customizáveis via <code>/configuracoes</code> → aba Módulo (<code>rotas_modulos.montar_rotas_ativas()</code>).</li>
+<li>Auditoria: <code>audit_log</code> (núcleo) → <code>mod_auditoria</code> banco exclusivo <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_filas</code> (<code>gerar_senha</code> com <code>fila=id</code>).</li>
+<li>Backup do banco: job <code>backup:filas</code> (<code>backup_horas:filas</code> default 12h, <code>MAPA_BACKUPS</code> inclui <code>filas: db_mod_filas.db</code>).</li>
+<li>Cadastro central: <code>MODULOS_SISTEMA</code> (<code>autenticacao.py:22</code> → <code>("filas","Filas","queue","/filas")</code>), <code>MODULOS_BD</code> (<code>repositorio.py:66</code> → <code>filas: db_mod_filas.db</code>), <code>PADROES_TEMA["filas"]</code> (<code>tema_modulo.py:76</code> → <code>#000000</code>).</li>
+</ul>
+<h2 id="testes">Testes<a class="headerlink" href="#testes" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Smoke do módulo (import + init_db + CRUD mínimo)</span>
+.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from mod_filas.bd_manipulador import init_db, listar_filas, gerar_senha; init_db(); print(listar_filas()); print(gerar_senha(1,'master'))"</span>
+<span class="c1"># Playwright (quando coberto)</span>
+.venv/bin/pytest<span class="w"> </span>assets/test/teste_filas.py<span class="w"> </span>-k<span class="w"> </span>filas
+</code></pre></div>
+<p>Ver <a href="../../analise_mod_filas/">Análise do Módulo</a> e <a href="../../arquitetura/">Arquitetura</a>.</p>
+<h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Esqueleto</strong>: fluxo mínimo validado (Geral + A000→A001 + TV); múltiplas filas/prioridade/guichês/som serão acrescidos sem quebrar o contrato <code>gerar_senha(fila_id, ator) → (bool,str)</code> nem a tabela <code>tb_fila</code> (já com <code>status</code>/<code>guiche</code>).</li>
+<li><code>/tv</code> é <strong>pública</strong> (sem login) propositalmente — TV na recepção não tem sessão; se expor fora da rede interna, adicionar gate ou rede/ACL.</li>
+<li><code>tb_chamada.guiche</code> é snapshot do <code>tb_fila.guiche</code> no momento do <code>INSERT ... SELECT guiche FROM tb_fila</code> — mudança posterior de guichê não retroage chamadas.</li>
+<li><code>bd_criador.py</code> morto — nunca executar; schema real é <code>init_db()</code> do <code>bd_manipulador</code>.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../tecnico/" class="btn btn-neutral float-left" title="Técnico"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../lista_telefonica/" class="btn btn-neutral float-right" title="Lista Telefônica (organograma)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../tecnico/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../lista_telefonica/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

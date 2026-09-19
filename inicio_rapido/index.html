@@ -58,18 +58,28 @@
     <li class="toctree-l2"><a class="reference internal" href="#passo-1-preparar-o-ambiente-virtual">Passo 1 — Preparar o ambiente virtual</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#passo-2-subir-o-servidor">Passo 2 — Subir o servidor</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#lancadores-iniciarbat-iniciarsh">Lançadores iniciar.bat / iniciar.sh</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#passo-3-primeiro-acesso">Passo 3 — Primeiro acesso</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#passo-4-usuarios-de-teste">Passo 4 — Usuários de teste</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#smoke-test">Smoke test</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#suite-completa-de-testes-pytest">Suíte completa de testes — pytest</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#solucao-de-problemas">Solução de problemas</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#usar-postgresql-opcional-desde-0809">Usar PostgreSQL (opcional, desde 08/09)</a>
     </li>
     </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
@@ -147,6 +157,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -177,6 +194,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -193,6 +216,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -247,17 +276,33 @@
 </code></pre></div>
 <p>O <code>requirements.txt</code> instala todas as dependências (NiceGUI, APScheduler, nh3, libs de PDF, bcrypt, loguru e mkdocs).</p>
 <h2 id="passo-2-subir-o-servidor">Passo 2 — Subir o servidor<a class="headerlink" href="#passo-2-subir-o-servidor" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>main.py
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>main.py<span class="w">                 </span><span class="c1"># sem argumentos → sobe direto com a configuração persistida (tb_config)</span>
+.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span>--help<span class="w">          </span><span class="c1"># ajuda em PT-BR — "Sem argumentos, sobe direto com a configuração persistida"</span>
+.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span>--config<span class="w">        </span><span class="c1"># abre o assistente interativo (alias -c)</span>
 </code></pre></div>
 <ul>
-<li>O servidor sobe na porta <strong>8080</strong> (<code>reload=False</code>, <code>show=False</code>, <code>tailwind=True</code> — Tailwind local sem CDN).</li>
+<li>O servidor sobe na porta <strong>8080</strong> (<code>porta_site</code>, <code>reload=False</code>, <code>show=False</code>, <code>tailwind=True</code> — Tailwind local sem CDN); a documentação mkdocs sobe na porta <strong>8000</strong> (<code>porta_documentacao</code>).</li>
+<li><strong>Sem argumentos</strong>, o boot carrega <code>config_persistida()</code> (<code>mod_intranet/ativacao.py:1284</code>) — lê <code>tb_config</code> (banco_tipo, postgres_url, otel_ativo, portas) com fallback em <code>_config_padrao()</code> — e sobe direto. O assistente só abre com <code>--config</code>/<code>-c</code>.</li>
 <li>No boot, <code>inicializar_bancos()</code> cria os bancos <code>db_mod_*</code> (SQLite WAL) caso não existam e o usuário seed <code>master</code>/<code>master</code>.</li>
 <li>Pastas operacionais são criadas automaticamente em runtime pelo boot/rotinas (<code>os.makedirs(..., exist_ok=True)</code>): na raiz, <code>backup/</code> e <code>logs/</code>; dentro dos módulos, <code>mod_edit_pdf/editorPDF/</code>, <code>mod_renomear_empenho/doc/</code>, <code>mod_renomear_empenho/organizadorPasta/</code>, <code>mod_renomear_empenho/quarentena/</code> (regra de ouro do AGENTS.md: artefatos de módulo vivem dentro de <code>mod_*</code>).</li>
-<li>A documentação é compilada (MkDocs) e servida em <code>http://localhost:8080/documentacao</code>.</li>
+<li>A documentação é compilada (MkDocs) e servida em <strong>http://localhost:8000</strong> (porta mkdocs, separada do site).</li>
 </ul>
-<p>Acesse no navegador:</p>
-<div class="highlight"><pre><span></span><code>http://localhost:8080
+<h3 id="lancadores-iniciarbat-iniciarsh">Lançadores iniciar.bat / iniciar.sh<a class="headerlink" href="#lancadores-iniciarbat-iniciarsh" title="Permanent link">&para;</a></h3>
+<p>Para quem não vai usar o executável único (futuro, via auto-py-to-exe), há dois lançadores na raiz em modo padrão — SQLite + sem OTel, sem depender de Docker/Postgres/Grafana:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">REM Windows</span>
+iniciar.bat
 </code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># Linux</span>
+./iniciar.sh
+</code></pre></div>
+<p>Eles exportam <code>INTRANET_FORCE_SQLITE=1</code> + <code>INTRANET_SEM_OTEL=1</code> e chamam o Python do <code>.venv</code> (com fallback para o <code>python</code> do sistema).</p>
+<p>Acesse no navegador:</p>
+<div class="highlight"><pre><span></span><code>http://localhost:8080          # site
+http://localhost:8000          # documentação (mkdocs)
+</code></pre></div>
+<blockquote>
+<p><strong>CLI Opção C (ativacao.py):</strong> ativação com prefixo <code>--ativ-</code> (<code>--ativ-postgres</code> com aliases <code>--ativ-postgress</code> typo + <code>--postgres</code>, <code>-p</code>; <code>--ativ-otel</code> alias <code>--otel</code>, <code>-o</code>) e portas com prefixo <code>--porta-</code> (<code>--porta-docs</code> alias <code>--portadocumentacao</code>, <code>-d</code>; <code>--porta-db</code> alias <code>--portapostgres</code>, <code>-k</code>; <code>--porta-site</code> alias <code>--portasite</code>, <code>-s</code>; <code>--porta-grafana</code> alias <code>--portatelemetria</code>, <code>-t</code>), agrupadas por tipo e em ordem alfabética dentro do grupo, com contrações curtas <code>-c/-o/-p/-d/-k/-s/-t/-S</code> — ver <a href="../manual_de_uso_instalacao/#22-inicializacao-por-linha-de-comando-typer-opcao-c">Manual de Instalação</a> e <a href="../configuracoes/#inicializacao-por-argumentos-de-linha-de-comando-opcao-c-092026">Configurações</a>.</p>
+</blockquote>
 <h2 id="passo-3-primeiro-acesso">Passo 3 — Primeiro acesso<a class="headerlink" href="#passo-3-primeiro-acesso" title="Permanent link">&para;</a></h2>
 <ol>
 <li>Abra <code>http://localhost:8080</code> (será redirecionado para <code>/login</code>).</li>
@@ -280,7 +325,7 @@
 </tbody>
 </table>
 <ol>
-<li><strong>A troca de senha é obrigatória no 1º logon</strong> — o sistema exibe o diálogo de troca e não permite prosseguir no fluxo normal (auto-cura idempotente: enquanto a senha for <code>master</code>, a troca é rearmada a cada boot — <code>mod_gest_cad_usuario/manipulador_bd.py:168-194</code>).</li>
+<li><strong>A troca de senha é obrigatória no 1º logon</strong> — o sistema exibe o diálogo de troca e não permite prosseguir no fluxo normal (auto-cura idempotente: enquanto a senha for <code>master</code>, a troca é rearmada a cada boot — <code>mod_gest_cad_usuario/bd_manipulador.py:168-194</code>).</li>
 </ol>
 <blockquote>
 <p>⚠️ <strong>Segurança:</strong> troque a senha do <code>master</code> imediatamente e não use a senha padrão em produção.</p>
@@ -317,9 +362,17 @@
 </ul>
 <h2 id="smoke-test">Smoke test<a class="headerlink" href="#smoke-test" title="Permanent link">&para;</a></h2>
 <p>Teste mínimo de bootstrap do servidor (sobe NiceGUI sem módulos):</p>
-<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>test/test_server.py
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/test_server.py
 </code></pre></div>
-<p>Testes existentes na pasta <code>test/</code>:</p>
+<blockquote>
+<p>O <code>test_server.py</code> acima é um <strong>helper</strong> (sobe a app na 8080 e bloqueia) — fica de <strong>fora</strong> da suíte automatizada (ver abaixo).</p>
+</blockquote>
+<h3 id="suite-completa-de-testes-pytest">Suíte completa de testes — pytest<a class="headerlink" href="#suite-completa-de-testes-pytest" title="Permanent link">&para;</a></h3>
+<p>O comando oficial de validação é <code>.venv/bin/pytest</code>: o <code>pytest.ini</code> (raiz) aponta o pytest apenas para o runner <code>assets/test/test_suite.py</code> (<code>testpaths = assets/test/test_suite.py</code>), que executa <strong>TODOS</strong> os scripts standalone de <code>assets/test/*.py</code> em subprocessos e falha se algum retornar código ≠ 0 (duração ≈3–5 min). Para rodar um único teste isolado:</p>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/&lt;arquivo&gt;.py
+</code></pre></div>
+<p>Exemplo: <code>.venv/bin/python assets/test/teste_fluxo_blog.py</code>. Detalhes e lista de exclusões do runner: <a href="../testes_plano/">Testes — Plano</a>.</p>
+<p>Testes existentes na pasta <code>assets/test/</code>:</p>
 <table>
 <thead>
 <tr>
@@ -329,47 +382,47 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>test/test_server.py</code></td>
+<td style="text-align: left;"><code>assets/test/test_server.py</code></td>
 <td style="text-align: left;">bootstrap mínimo (smoke test)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>test/test_editor_pdf.py</code></td>
+<td style="text-align: left;"><code>assets/test/test_editor_pdf.py</code></td>
 <td style="text-align: left;">editor PDF (32 verificações)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>test/test_auditoria.py</code></td>
+<td style="text-align: left;"><code>assets/test/test_auditoria.py</code></td>
 <td style="text-align: left;">filtros/exportação da auditoria</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>test/test_fase1_login.py</code></td>
+<td style="text-align: left;"><code>assets/test/test_fase1_login.py</code></td>
 <td style="text-align: left;">fase 1: login/autenticação</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>test/test_fresh_install.py</code></td>
+<td style="text-align: left;"><code>assets/test/test_fresh_install.py</code></td>
 <td style="text-align: left;">instalação limpa</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>test/test_solicita_impressao.py</code></td>
+<td style="text-align: left;"><code>assets/test/test_solicita_impressao.py</code></td>
 <td style="text-align: left;">módulo de solicitação de impressão</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>test/teste_fluxo_blog.py</code></td>
+<td style="text-align: left;"><code>assets/test/teste_fluxo_blog.py</code></td>
 <td style="text-align: left;">fluxo do Blog (33/33 OK)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>test/teste_fluxo_autenticacao.py</code></td>
+<td style="text-align: left;"><code>assets/test/teste_fluxo_autenticacao.py</code></td>
 <td style="text-align: left;">login → troca de senha → sessões → soft delete (19/19)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>test/teste_fluxo_permissoes.py</code></td>
+<td style="text-align: left;"><code>assets/test/teste_fluxo_permissoes.py</code></td>
 <td style="text-align: left;">perfis/papéis por módulo (13/13)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>test/teste_fluxo_renameador.py</code></td>
+<td style="text-align: left;"><code>assets/test/teste_fluxo_renameador.py</code></td>
 <td style="text-align: left;">renomeador de empenhos (DOC + tipos especiais)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>test/verifica_ui_comum.py</code></td>
+<td style="text-align: left;"><code>assets/test/verifica_ui_comum.py</code></td>
 <td style="text-align: left;">equivalência visual dos componentes de UI (150 verificações)</td>
 </tr>
 </tbody>
@@ -413,22 +466,22 @@
 <p>Em dúvida sobre configurações (<code>storage_secret</code>, portas, chaves de <code>tb_config</code>), veja <a href="../configuracoes/">Configurações e Variáveis de Ambiente</a>.</p>
 </blockquote>
 <h2 id="usar-postgresql-opcional-desde-0809">Usar PostgreSQL (opcional, desde 08/09)<a class="headerlink" href="#usar-postgresql-opcional-desde-0809" title="Permanent link">&para;</a></h2>
-<p>O padrão é <strong>SQLite</strong> (um arquivo por módulo, zero dependências). Para usar <strong>PostgreSQL</strong> (backend duplo, um SCHEMA por módulo no banco <code>intranet</code>):</p>
+<p>O padrão é <strong>SQLite</strong> (um arquivo por módulo, zero dependências). Para usar <strong>PostgreSQL</strong> (backend duplo, <strong>um DATABASE <code>db_mod_&lt;chave&gt;</code> por módulo</strong>, espelhando o arquivo SQLite):</p>
 <ol>
 <li>Suba o container:
    <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>assets/docker/postgres<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div></li>
-<li>Acesse <code>/configuracoes</code> → aba <strong>Documentação</strong> → card <strong>"Banco de dados — SQLite ou PostgreSQL"</strong> (ícone <code>storage</code>).</li>
+<li>Acesse <code>/configuracoes</code> → aba <strong>Config</strong> (ao final, após o card "Ícones") → card <strong>"Banco de dados — SQLite ou PostgreSQL"</strong> (ícone <code>storage</code>).</li>
 <li>Selecione <strong>PostgreSQL</strong> e confira o DSN (<code>postgresql+psycopg2://intranet:intranet@localhost:5432/intranet</code>).</li>
 <li>Clique <strong>Aplicar</strong> e <strong>REINICIE o servidor</strong> (<code>fuser -k 8080/tcp; .venv/bin/python main.py</code>).</li>
 </ol>
-<p>No boot, os módulos recriam os schemas/tabelas no Postgres (28 tabelas em 7 schemas). A migração de dados SQLite→PostgreSQL é manual. Para voltar ao SQLite, repita o passo 3 selecionando "SQLite" e reinicie.</p>
+<p>No boot, os módulos recriam os bancos/tabelas no Postgres (<code>garantir_bancos_postgres</code> cria os DATABASE <code>db_mod_&lt;chave&gt;</code> ausentes; o schema entra pelos <code>init_db</code>). A migração de dados SQLite→PostgreSQL é manual. Para voltar ao SQLite, repita o passo 3 selecionando "SQLite" e reinicie.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../visao_geral/" class="btn btn-neutral float-left" title="Visão Geral"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../requisitos/" class="btn btn-neutral float-right" title="Requisitos do Sistema">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../inicio_rapido_otel/" class="btn btn-neutral float-right" title="Guia Rápido OTel">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -454,7 +507,7 @@
       <span><a href="../visao_geral/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../requisitos/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../inicio_rapido_otel/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

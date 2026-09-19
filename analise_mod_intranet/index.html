@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -213,9 +234,9 @@
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Pacote núcleo que centraliza tudo o que os módulos compartilham: banco central (auditoria unificada LGPD, configurações, sessões e cadastro de módulos), autenticação com sessões revogáveis, layout padrão de 4 partes com guarda de página, rotinas agendadas (backup por módulo + expiração do editorPDF) e a tela de personalização <code>/configuracoes</code>. Não possui <code>telas.py</code> próprio — suas telas (<code>layout_tela</code>, <code>tela_configuracoes</code>, <code>dialogo_backup</code>) são montadas pelas rotas de <code>main.py</code>.</p>
 <h2 id="banco-central-db_mod_intranetdb">Banco central <code>db_mod_intranet.db</code><a class="headerlink" href="#banco-central-db_mod_intranetdb" title="Permanent link">&para;</a></h2>
-<p>Toda conexão executa <code>PRAGMA journal_mode=WAL</code> + <code>synchronous=NORMAL</code> (<code>conexao_bd.py:29-30</code>). Tabelas criadas por <code>init_db()</code> (<code>conexao_bd.py:34-77</code>), chamada pelo bootstrap <code>inicializar_bancos()</code> <strong>antes</strong> da importação de qualquer módulo:</p>
+<p>Toda conexão executa <code>PRAGMA journal_mode=WAL</code> + <code>synchronous=NORMAL</code> (<code>bd_conexao.py:29-30</code>). Tabelas criadas por <code>init_db()</code> (<code>bd_conexao.py:34-77</code>), chamada pelo bootstrap <code>inicializar_bancos()</code> <strong>antes</strong> da importação de qualquer módulo:</p>
 <blockquote>
-<p>⚠️ <strong>Reconstrução do núcleo</strong>: <code>bd_conexao.py</code>, <code>db_manipulador.py</code> e <code>dialogo_backup.py</code> estavam <strong>ausentes como fonte</strong> (restavam só <code>*.pyc</code> em <code>__pycache__</code>) e foram reconstruídos fielmente a partir do bytecode. Em caso de divergência de comportamento esperada, comparar com o <code>*.pyc</code> correspondente (ou <code>gh-pages</code>). <code>db_manipulador.py</code> central expõe <code>get_intranet_conn</code>, <code>garantir_rastreabilidade</code>, <code>audit_log</code>, <code>hash_arquivo</code>; <code>bd_conexao.py</code> expõe <code>get_connection</code>, <code>get_config</code>, <code>set_config</code>, <code>init_db</code>, <code>favicon_versao</code>, <code>DB_PATH</code>, <code>PADRAO_CONFIG</code>.</p>
+<p>⚠️ <strong>Reconstrução do núcleo</strong>: <code>bd_conexao.py</code>, <code>bd_manipulador.py</code> e <code>dialogo_backup.py</code> estavam <strong>ausentes como fonte</strong> (restavam só <code>*.pyc</code> em <code>__pycache__</code>) e foram reconstruídos fielmente a partir do bytecode. Em caso de divergência de comportamento esperada, comparar com o <code>*.pyc</code> correspondente (ou <code>gh-pages</code>). <code>bd_manipulador.py</code> central expõe <code>get_intranet_conn</code>, <code>garantir_rastreabilidade</code>, <code>audit_log</code>, <code>hash_arquivo</code>; <code>bd_conexao.py</code> expõe <code>get_connection</code>, <code>get_config</code>, <code>set_config</code>, <code>init_db</code>, <code>favicon_versao</code>, <code>DB_PATH</code>, <code>PADRAO_CONFIG</code>.</p>
 </blockquote>
 <table>
 <thead>
@@ -227,19 +248,19 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>tb_auditoria</code></td>
-<td style="text-align: left;">id, usuario, modulo, acao, descricao, timestamp, hash_arquivo + colunas <code>ip</code>/<code>user_agent</code> (migração <code>garantir_rastreabilidade</code>)</td>
-<td style="text-align: left;"><code>conexao_bd.py:38-47</code></td>
+<td style="text-align: left;"><code>tb_auditoria_*</code></td>
+<td style="text-align: left;">auditoria LGPD em <strong>banco separado</strong> <code>db_mod_auditoria.db</code> — uma tabela por módulo (<code>tb_auditoria_&lt;modulo&gt;</code>: id, usuario, modulo, acao, descricao, timestamp, hash_arquivo + <code>ip</code>/<code>user_agent</code>)</td>
+<td style="text-align: left;"><code>mod_auditoria/bd_manipulador.py</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_config</code></td>
-<td style="text-align: left;">chave PK / valor — seeds: <code>versao_sistema=1.0.260908</code>, <code>cotadisco_global_gb=10</code>, <code>backup_interval_hours=12</code> (legada) e padrões de aparência</td>
-<td style="text-align: left;"><code>conexao_bd.py:49-74</code></td>
+<td style="text-align: left;">chave PK / valor — seeds: <code>versao_sistema=1.0.260913</code>, <code>versao_modulo:intranet=1.0.260913</code>, <code>cotadisco_global_gb=10</code>, <code>backup_interval_hours=12</code> (legada) e padrões de aparência</td>
+<td style="text-align: left;"><code>bd_conexao.py:49-74</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_sessoes</code></td>
 <td style="text-align: left;">id, usuario, modulo, login/logout_timestamp, cookie_hash + <code>ip</code>, <code>user_agent</code>, <code>dispositivo</code>, <code>mac</code></td>
-<td style="text-align: left;"><code>conexao_bd.py:55-63</code></td>
+<td style="text-align: left;"><code>bd_conexao.py:55-63</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_modulos</code></td>
@@ -263,9 +284,24 @@
 <li>Sem usuário → redireciona <code>/login</code>.</li>
 <li>Revalida existência/situação ativa contra o BD → aviso "Sua sessão foi encerrada pelo administrador."</li>
 <li>Valida <code>sessao_ativa()</code>; sessões antigas sem hash são adotadas automaticamente.</li>
-<li>Monta o layout de 4 partes: header (hambúrguer, botão de backup do módulo quando autorizado, "Meu Perfil", badge de perfil, logout), drawer lateral (módulos liberados; vínculo a módulo inativo vira item laranja de alerta; Configurações só ao administrador geral), rodapé com <code>versao_sistema</code>, área principal.</li>
+<li>Monta o layout de 4 partes: header (hambúrguer, botão de backup do módulo quando autorizado, "Meu Perfil" em botão único sempre visível <code>header-nome-usuario</code> com nome completo + tooltip completo — sem toggles <code>hidden sm:*</code>, badge de perfil sempre visível, logout), drawer lateral (módulos liberados; vínculo a módulo inativo vira item laranja de alerta; Configurações só ao administrador geral), rodapé escondido com reveal no hover/focus (<code>rodape-sistema</code>, <code>mod_intranet/telas.py:346-359</code> — <code>opacity:0 + translateY(calc(100% - 5px))</code>, faixa de 5px como pista, <code>:hover</code>/<code>:focus-within</code> → <code>opacity:1 + transform:none</code>; conteúdo/cores <code>bg-grey-8</code> inalterados), área principal. Detalhe em <a href="../modulos/intranet/">Módulos (resumo)</a> ("Header — botão único sempre visível", correção final 14/09/2026, <code>mod_intranet/telas.py:225-260</code>).</li>
 <li>Se <code>precisa_trocar_senha()</code>, abre diálogo persistent de troca obrigatória.</li>
 </ol>
+<h3 id="drawer-ordenacao-do-menu-hamburguer-2026-09-19-mod_intranettelaspy_montar_layout-283367">Drawer — ordenação do menu hambúrguer (2026-09-19, <code>mod_intranet/telas.py:_montar_layout</code> ~283–367)<a class="headerlink" href="#drawer-ordenacao-do-menu-hamburguer-2026-09-19-mod_intranettelaspy_montar_layout-283367" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Apresentação ≠ persistência:</strong> <code>tb_modulos.ordem</code> (editável em <code>/configuracoes</code> → aba Módulo via ↑/↓ e <code>reordenar_modulos</code>) <strong>não é alterado pelo drawer</strong> — o drawer aplica ordenação de apresentação em memória.</p>
+</blockquote>
+<p><strong>Regra de agrupamento (<code>_CHAVES_POS_ADMIN</code>, <code>_ORDEM_POS_ADMIN</code>, <code>_outros.sort</code>, <code>_render_lista_modulos</code>):</strong></p>
+<ol>
+<li><strong>Home isolado no topo</strong> — <code>Home</code> (<code>menu-home</code>, <code>ativo</code> quando <code>chave_modulo is None</code>) + separador.</li>
+<li><strong>Demais módulos em ordem alfabética por nome</strong> — <code>_outros = [t for t in _todos if t[0] not in _CHAVES_POS_ADMIN]</code> + <code>_outros.sort(key=lambda t: t[1].lower())</code>; só módulos de <code>modulos_do_usuario(nome)</code> e com card laranja <code>menu-&lt;chave&gt;-indisponivel</code> quando <code>ativa == False</code>.</li>
+<li><strong>Administração</strong> — só <code>administrador_geral</code>, após os demais e com separador; rótulo contextual (<code>/admin/{chave_modulo}</code> vs <code>/configuracoes</code>).</li>
+<li><strong>Trio fixo <code>Blog → Usuários → Auditoria</code></strong> — <code>_ORDEM_POS_ADMIN = ["blog","usuarios","auditoria"]</code>, sempre <strong>após Administração</strong> (ou separador quando não-admin) e <strong>antes de Documentação/Sair</strong>; só aparece se liberado em <code>modulos_do_usuario</code>.</li>
+<li><strong>Documentação</strong> — só <code>administrador_geral</code> (<code>/documentacao</code> nova aba, <code>menu-docs</code>), após o trio.</li>
+<li><strong>Sair sempre último</strong> — <code>menu-sair</code> após separador final.</li>
+</ol>
+<p><strong>Exemplo <code>master</code>:</strong> <code>Home | Editor PDF, Empenhos, Filas, Lista Telefônica, Solicitação de Impressão, Técnico | Administração | Blog, Usuários, Auditoria | Documentação | Sair</code>.</p>
+<p><strong>Helper:</strong> <code>_render_lista_modulos(lista)</code> renderiza cada entrada como <code>item_menu_drawer</code> (ativo) ou item laranja indisponível (warning + <code>notificar</code>).</p>
 <h2 id="rastreabilidade-contextopy">Rastreabilidade — <code>contexto.py</code><a class="headerlink" href="#rastreabilidade-contextopy" title="Permanent link">&para;</a></h2>
 <p>ContextVar do NiceGUI disponibiliza IP/UA tanto na renderização quanto nos callbacks. IP prioriza <code>X-Forwarded-For</code> (proxy reverso); <code>rotulo_dispositivo()</code> produz ex.: "Chrome 126 · Windows 10/11"; <code>mac_best_effort()</code> só consulta IPs <code>192.168.*</code> via <code>ping -c1 -W1</code> + <code>ip neigh show</code> — sintaxe Linux: neste host Windows retorna <code>None</code> silenciosamente.</p>
 <h2 id="rotinas-agendadas-rotinasiniciar_agendador">Rotinas agendadas — <code>rotinas.iniciar_agendador()</code><a class="headerlink" href="#rotinas-agendadas-rotinasiniciar_agendador" title="Permanent link">&para;</a></h2>
@@ -287,7 +323,7 @@
 <tr>
 <td style="text-align: left;">Config</td>
 <td style="text-align: left;"><code>tune</code></td>
-<td style="text-align: left;">Cores e ícone (color_input, ícone Material, nome do sistema, favicon <code>.ico</code> ≤1 MB) + Textos fixos (login, home, rodapé) + Configurações gerais (backup horas, retenção de sessão, pasta raiz)</td>
+<td style="text-align: left;">Cores e ícone (color_input, ícone Material, nome do sistema, favicon <code>.ico</code> ≤1 MB) + Textos fixos (login, home, rodapé) + Configurações gerais (backup horas, retenção de sessão, pasta raiz) + Banco de dados — SQLite ou PostgreSQL (ao final, após "Ícones"; <code>config_backend</code>/<code>salvar_backend</code>, sem reload, exige restart)</td>
 </tr>
 <tr>
 <td style="text-align: left;">E-mail</td>
@@ -307,15 +343,15 @@
 <tr>
 <td style="text-align: left;">Documentação</td>
 <td style="text-align: left;"><code>menu_book</code></td>
-<td style="text-align: left;">Rebuild MkDocs para <code>/documentacao</code> + abrir em nova aba</td>
+<td style="text-align: left;">Só "Reconstruir documentação" (<code>config-reconstruir-docs</code>) + abrir <code>/documentacao</code> em nova aba (o card Banco saiu daqui para o final da aba Config)</td>
 </tr>
 </tbody>
 </table>
 <p>Não há mais um botão único "APLICAR" geral: cada card é recolhível (<code>card_admin</code>, <code>aberto=False</code>) e tem o rodapé padrão de 2 botões — "Restaurar padrão" e "Aplicar" — exclusivos do card (<code>_aplicar_card</code>, <code>tela_configuracoes.py:284-308</code>): grava só os campos daquele card, aguarda 1 segundo e recarrega. A persistência grava em <code>tb_config</code> (<code>cor_principal</code>, <code>texto_*</code>, <code>smtp_*</code>, <code>log_*</code>, <code>backup_interval_hours</code>, <code>sessao_retencao</code>) e em <code>tb_modulos</code> (nome/ícone/ativo).</p>
 <p><code>dialogo_backup.abrir_dialogo()</code> (botão no header do módulo, para quem pode gerenciar): intervalo em horas salvo + reagendado ao vivo, "Fazer backup agora" e grade das cópias retidas.</p>
 <h2 id="versionamento-no-rodape-layout_tela_montar_layout">Versionamento no rodapé — <code>layout_tela._montar_layout</code><a class="headerlink" href="#versionamento-no-rodape-layout_tela_montar_layout" title="Permanent link">&para;</a></h2>
-<p>O rodapé mostra as versões <strong>da esquerda para a direita</strong>: 1ª a versão global do sistema (<code>v{versao_sistema}</code>), e quando o usuário está dentro de um módulo (<code>chave_modulo</code>), 2ª a versão <strong>individual do módulo atual</strong> (<code>v{versao_modulo:&lt;chave&gt;}</code>). Sem módulo específico (Dashboard/Configurações) aparece só a global. A versão individual é lida de <code>tb_config</code> (chave <code>versao_modulo:&lt;chave&gt;</code>, mesmo estilo <code>1.0.AAMMDD</code>) com fallback <code>1.0</code> quando o módulo ainda não versionou. Ex.: <code>/edit-pdf</code> mostra <code>v1.0.260908</code> (sistema) + <code>v1.0.260908</code> (mod_edit_pdf).</p>
-<p><strong>Seed centralizado</strong>: <code>versao_modulo:&lt;chave&gt;</code> é semeada para os 5 módulos (<code>usuarios</code>, <code>auditoria</code>, <code>editar_pdf</code>, <code>empenhos</code>, <code>blog</code>) em <code>conexao_bd.init_db()</code> com <code>INSERT OR IGNORE</code> — idempotente, não sobrescreve edição manual. Para refletir numa base existente, chame <code>init_db()</code> novamente.</p>
+<p>O rodapé mostra as versões <strong>da esquerda para a direita</strong>: 1ª a versão global do sistema (<code>v{versao_sistema}</code>), e quando o usuário está dentro de um módulo (<code>chave_modulo</code>), 2ª a versão <strong>individual do módulo atual</strong> (<code>v{versao_modulo:&lt;chave&gt;}</code>). Sem módulo específico (Dashboard/Configurações) aparece só a global. A versão individual é lida de <code>tb_config</code> (chave <code>versao_modulo:&lt;chave&gt;</code>, mesmo estilo <code>1.0.AAMMDD</code>) com fallback <code>1.0</code> quando o módulo ainda não versionou. Ex.: <code>/edit-pdf</code> mostra <code>v1.0.260913</code> (sistema — bump 13/09/2026) + <code>v1.0.260913</code> (mod intranet/empenhos/solicita — ver <code>bd_conexao.py:130-201</code>).</p>
+<p><strong>Seed centralizado</strong>: <code>versao_modulo:&lt;chave&gt;</code> é semeada para os 5 módulos (<code>usuarios</code>, <code>auditoria</code>, <code>editar_pdf</code>, <code>empenhos</code>, <code>blog</code>) em <code>bd_conexao.init_db()</code> com <code>INSERT OR IGNORE</code> — idempotente, não sobrescreve edição manual. Para refletir numa base existente, chame <code>init_db()</code> novamente.</p>
 <p><strong>Painel "Administração" por módulo</strong>: cada módulo ganhou uma aba/expansão exclusiva do admin geral (ou admin do módulo) com o bloco <strong>Aparência</strong> (tema dos botões via <code>ui.color_input</code>, prefixo <code>&lt;chave&gt;_</code>) e <strong>config específica de comportamento</strong> salva via <code>set_config</code> do núcleo. Padrões: <code>usuarios_senha_min</code>, <code>auditoria_limite</code>/<code>auditoria_retencao_dias</code>/<code>auditoria_texto_header</code>, <code>empenhos_pasta_monitorada</code>/<code>empenhos_texto_header</code>, <code>blog_tags_permitidas</code>/<code>blog_texto_header</code>, além do <code>editpdf_*</code> já existente.</p>
 <h2 id="integracoes-o-que-os-modulos-importam-do-nucleo">Integrações — o que os módulos importam do núcleo<a class="headerlink" href="#integracoes-o-que-os-modulos-importam-do-nucleo" title="Permanent link">&para;</a></h2>
 <table>
@@ -417,10 +453,81 @@ sistema</strong>: a data atual e de gravação devem vir SEMPRE do servidor (nun
 <li><strong>Robustez</strong>: todas as funções com <code>try/except</code> + loguru (<code>_log()</code> →
   <code>observabilidade.get_logger("intranet")</code>), fail-soft (nunca derruba a hora).</li>
 </ul>
+<h2 id="ativacao-e-cli-opcao-c-092026">Ativação e CLI — Opção C (09/2026)<a class="headerlink" href="#ativacao-e-cli-opcao-c-092026" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Boot sem argumentos → config persistida; <code>--config</code> → wizard; demais flags via Typer com prefixos semânticos.</strong></p>
+</blockquote>
+<ul>
+<li><strong><code>python main.py</code> (sem args)</strong> sobe direto com <code>config_persistida()</code> (<code>mod_intranet/ativacao.py:1284</code>) — lê <code>tb_config</code> (banco_tipo, postgres_url + porta via regex <code>r":(\d+)/"</code>, otel_ativo, porta_site/porta_documentacao/porta_postgres/porta_grafana) e completa com <code>_config_padrao()</code> (<code>ativacao.py:468</code>) quando a chave ainda não existe (primeira execução → SQLite + sem OTel). Depois <code>aplicar_banco(cfg)</code> (<code>ativacao.py:507</code> → <code>_garantir_tb_config</code> + <code>banco_conexao.definir_*</code>) persiste o seletor via arquivo SQLite central.</li>
+<li><strong><code>python main.py --config</code> / <code>-c</code></strong> abre o <strong>wizard interativo</strong> (<code>ativacao.iniciar(cli_cfg=None)</code> <code>main.py:43-45</code> → <code>ativacao.py:1442</code>): ENTER = básico SQLite, <code>1</code>+ENTER = configurar (banco → serviços → portas). Todas as perguntas binárias via <code>_escolha_1_enter</code> (<code>:1237</code>) e <code>_sim_nao</code> (<code>:1260</code>); <code>perguntar()</code> (<code>:106</code>) repete até resposta válida; <code>_porta_valida</code> (<code>:140</code>) valida 1–65535.</li>
+<li><strong>CLI Typer — Opção C</strong> (<code>ativacao._cli_app()</code> <code>ativacao.py:1331</code>, help PT-BR: <em>"Sem argumentos, sobe direto com a configuração persistida"</em>): flags agrupadas por tipo e em ordem alfabética dentro do grupo, com contrações curtas:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Grupo</th>
+<th style="text-align: left;">Flag (Opção C)</th>
+<th style="text-align: left;">Alias</th>
+<th style="text-align: center;">Curta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Ativação</td>
+<td style="text-align: left;"><code>--ativ-otel</code></td>
+<td style="text-align: left;"><code>--otel</code></td>
+<td style="text-align: center;"><code>-o</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--ativ-postgres</code></td>
+<td style="text-align: left;"><code>--ativ-postgress</code> (typo) + <code>--postgres</code></td>
+<td style="text-align: center;"><code>-p</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Portas</td>
+<td style="text-align: left;"><code>--porta-db</code></td>
+<td style="text-align: left;"><code>--portapostgres</code></td>
+<td style="text-align: center;"><code>-k</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-docs</code></td>
+<td style="text-align: left;"><code>--portadocumentacao</code></td>
+<td style="text-align: center;"><code>-d</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-grafana</code></td>
+<td style="text-align: left;"><code>--portatelemetria</code></td>
+<td style="text-align: center;"><code>-t</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-site</code></td>
+<td style="text-align: left;"><code>--portasite</code></td>
+<td style="text-align: center;"><code>-s</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Config</td>
+<td style="text-align: left;"><code>--config</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: center;"><code>-c</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Utilitário</td>
+<td style="text-align: left;"><code>--scan-ports</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: center;"><code>-S</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>main.py:38-56</code> decide: sem args → <code>config_persistida()</code>; <code>--config</code>/<code>-c</code> → wizard (prioridade); flags <code>-</code> → <code>cli_opcoes(args)</code> (<code>:1387</code>, Typer <code>get_command().make_context()</code>) → <code>config_do_cli(...)</code> (<code>:1420</code>, monta <code>cfg</code> com <code>_porta_valida</code>) → <code>iniciar(cli_cfg)</code> (<code>:1442</code>, reaproveita <code>_executar_e_persistir</code> <code>:1531</code>). <code>--scan-ports</code>/<code>-S</code> imprime <code>port_scanner.resumo_portas()</code> e encerra exit 0.</p>
+<p>Documentação de uso: <a href="../manual_de_uso_instalacao/#22-inicializacao-por-linha-de-comando-typer-opcao-c">Manual de Instalação — Inicialização por linha de comando (Typer) — Opção C</a> e <a href="../configuracoes/#inicializacao-por-argumentos-de-linha-de-comando-opcao-c-092026">Configurações — Opção C</a>.</p>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Bootstrap: <code>inicializar_bancos()</code> roda antes de qualquer import de módulo (<code>main.py:15-16</code>) — ordem crítica.</li>
-<li>O PLANO cita <code>mod_intranet_criador_bd.py</code> e <code>mod_intranet_auditoria.py</code>: esses arquivos <strong>não existem</strong> — quem cria as tabelas é <code>conexao_bd.init_db()</code> e quem audita é <code>manipulador_bd.audit_log()</code>.</li>
+<li>O PLANO cita <code>mod_intranet_bd_criador.py</code> e <code>mod_intranet_auditoria.py</code>: esses arquivos <strong>não existem</strong> — quem cria as tabelas é <code>bd_conexao.init_db()</code> e quem audita é <code>bd_manipulador.audit_log()</code>.</li>
 <li><code>storage_secret</code> do <code>ui.run</code> é placeholder hardcoded ("...mude-isto") — trocar antes de produção.</li>
 <li><code>backup_interval_hours</code> é semente legada; os jobs usam apenas <code>backup_horas:&lt;modulo&gt;</code>. <code>sessao_retencao</code> não tem campo na UI.</li>
 <li>MAC via ARP não funciona neste host Windows (comandos Linux) — coluna fica nula.</li>
@@ -428,21 +535,21 @@ sistema</strong>: a data atual e de gravação devem vir SEMPRE do servidor (nun
 <h2 id="status-fase-1-do-planomd">Status — Fase 1 do PLANO.md<a class="headerlink" href="#status-fase-1-do-planomd" title="Permanent link">&para;</a></h2>
 <p><strong>Implementado:</strong></p>
 <ul>
-<li>Banco central <code>db_mod_intranet.db</code> em modo <strong>WAL</strong> + <code>tb_auditoria</code> unificada (rastreabilidade IP/UA/dispositivo/MAC via <code>garantir_rastreabilidade</code>).</li>
-<li>Auditoria centralizada: <code>manipulador_bd.audit_log</code> registra config/auth/permissões/acessos de todos os módulos.</li>
+<li>Banco central <code>db_mod_intranet.db</code> em modo <strong>WAL</strong> (<code>tb_config</code>/<code>tb_sessoes</code>/<code>tb_modulos</code>); auditoria LGPD em banco separado <code>db_mod_auditoria.db</code> (<code>tb_auditoria_&lt;modulo&gt;</code> por módulo, rastreabilidade IP/UA/dispositivo/MAC via <code>garantir_rastreabilidade</code>).</li>
+<li>Auditoria centralizada: <code>bd_manipulador.audit_log</code> registra config/auth/permissões/acessos de todos os módulos.</li>
 <li>Visibilidade de módulos por permissão (drawer lateral com alerta de módulo inativo/removido).</li>
 <li>Login com sessão registrada em banco (<code>registrar_login</code>) + <strong>sessões revogáveis</strong>: <code>cookie_hash</code> via <code>secrets</code>, revalidação a cada request (<code>sessao_ativa</code>), logout próprio preserva as demais sessões do usuário.</li>
 <li>Gestão de Sessões (ativas + histórico + encerrar) no módulo de usuários; <strong>retenção</strong> do histórico implementada no mecanismo (poda por <code>sessao_retencao</code>, default 50/usuário).</li>
 <li>Layout de 4 partes (<code>layout_tela.pagina_restrita</code>) com versão no rodapé; área principal carrega o <strong>Blog por padrão</strong> (feed de publicações recentes) — RF-09 <strong>REALIZADO</strong>; a navegação por módulos permanece no drawer lateral.</li>
 <li>Personalização de cor primária/fundo, ícone, título, textos e favicon via <code>/configuracoes</code> (gravação única, vale sem restart).</li>
-<li>Edição de Perfil ("Meu Perfil") e troca obrigatória de senha do <code>master</code> no 1º login (auto-cura idempotente em boot — <code>mod_gest_cad_usuario/manipulador_bd.py:136-156</code>).</li>
+<li>Edição de Perfil ("Meu Perfil") e troca obrigatória de senha do <code>master</code> no 1º login (auto-cura idempotente em boot — <code>mod_gest_cad_usuario/bd_manipulador.py:136-156</code>).</li>
 <li>Backup automático configurável por módulo (12 h default, sem restart) + expiração do editorPDF agendada.</li>
 <li><strong>Observabilidade centralizada (loguru)</strong> — ver seção "Observabilidade / Logs".</li>
 <li>Carimbos de auditoria (<code>tb_auditoria.timestamp</code>) gravados em <code>localtime</code> (RF-08) — <strong>REALIZADO</strong>.</li>
 <li>Cookie de sessão <strong>HttpOnly</strong> (RF-04/16) — <strong>REALIZADO</strong> no nível de framework: o NiceGUI/Starlette define <code>HttpOnly=True</code> no cookie <code>app.storage.user</code>.</li>
 <li>Tela de Configurações (RF-57) — <strong>REALIZADO</strong>: cartão "Configurações gerais" com <code>sessao_retencao</code>, <code>backup_interval_hours</code> (reagenda todos os backups sem restart) e exibição da pasta raiz.</li>
 <li>Servidor SMTP (RF-58) — <strong>REALIZADO</strong>: <code>mod_intranet/email_util.py</code> + cartão "E-mail / SMTP" (credenciais <code>smtp_*</code> em <code>tb_config</code> + teste de conexão).</li>
-<li>Dashboard mobile-first (Fase 1) — <strong>REALIZADO</strong>: <code>main.py:page_dashboard</code> (<code>main.py:147-234</code>) renderiza banner de boas-vindas, card "Resumo do sistema" (apenas para <code>administrador_geral</code> ou <code>administrador_modulo</code> — <code>main.py:155</code>) com métricas em <code>ui.row()</code> responsivo (<code>w-full gap-2 flex-wrap</code>) e feed do Blog em largura total (<code>ui.column</code> <code>w-full gap-4</code>). Microinterações Tailwind (<code>transition-transform hover:-translate-y-0.5 hover:shadow-lg</code>) e feedback de 2s: toast de boas-vindas (<code>ui.notify(... timeout=2)</code>) + botão "Atualizar resumo" que exibe "Atualizado ✓" e reverte em 2s (<code>ui.timer(2.0, once=True)</code>).</li>
+<li>Dashboard mobile-first (Fase 1) — <strong>REALIZADO</strong> (redesign Home 09/2026): <code>main.py:page_dashboard</code> (<code>main.py:492</code> fixa <code>modelo="water"</code>) → <code>_construir_dashboard()</code> (<code>main.py:368</code> com <code>home_visual.aplicar_modelo("water")</code>) renderiza banner de boas-vindas + <strong>2 cards de Resumo sem botão Atualizar</strong> + feed do Blog em largura total. Dados via <code>_orquestrar_resumo_dados()</code> (<code>main.py:250</code>) — 9 contadores (5 base + fila impressão/quarentena/PDFs/auditoria 24h) calculados a cada acesso (usuários <code>filtro_ativo=None</code>, sessões <code>WHERE logout IS NULL</code>, acessos <code>tb_config contador_acessos_total</code>, fila <code>tb_solicitacoes NOT IN impresso/recusado/cancelado</code>, quarentena <code>tb_quarentena processado=0</code>, PDFs <code>tb_arquivos ativo=1</code>, auditoria 24h <code>SUM COUNT WHERE timestamp &gt;= -1 day</code>). Estilo <strong>Water escopado só no card</strong> (<code>home_visual.injetar_water_card()</code> <code>home_visual.py:176</code> — <code>.home-resumo-water/.home-stat-water</code> border <code>#dfe8f0</code> bg <code>#fafcfd</code>), altura -50%+25% (<code>gap-1 px-2 py-1</code> ícone 36px <code>text-2xl</code> <code>text-h6</code> + <code>&gt;9999</code> com tooltip único no card), comparativo <code>/home-*</code> revertido e hambúrguer sem seção comparativa. Ordem geral <code>[Usuarios,Sessões,Visitas,Noticias,Quarentena,PDFs,Logs,Logs 24h]</code> + impressão <code>[Fila geral,Para autorizar]</code> com visibilidade por papel (ver "Dashboard — Resumo dinâmico 09/2026" abaixo). Microinteração Water + toast 2s (<code>notificar(...,timeout=2)</code> <code>main.py:385</code>). Serviço <code>http://localhost:8080</code> water OK.</li>
 <li>CSS frameworks embarcados (Bootstrap, Bulma, DaisyUI, Pico, Picnic) servidos localmente em <code>/css/frameworks/*</code> via <code>tema_css.py</code> — <strong>REALIZADO</strong>: injeção por página, sem CDN, com fallback silencioso no boot.</li>
 </ul>
 <h3 id="adicoes-recentes-0509">Adições recentes (05/09)<a class="headerlink" href="#adicoes-recentes-0509" title="Permanent link">&para;</a></h3>
@@ -454,18 +561,18 @@ sistema</strong>: a data atual e de gravação devem vir SEMPRE do servidor (nun
 <li><strong><code>main.py:196-198</code></strong>: Os três cards <code>_stat</code> são <strong>sempre renderizados</strong> dentro do bloco de admin: "Usuários ativos" (<code>people</code>), "Postagens" (<code>article</code>) e "Registros de auditoria" (<code>history</code>). Antes, o de auditoria era condicionado a <code>if eh_admin</code> — redundante agora que o bloco inteiro já é <code>if eh_admin</code>.</li>
 <li><strong><code>main.py:213-234</code></strong>: O <strong>Feed do Blog</strong> agora ocupa largura total (<code>ui.column</code> <code>w-full gap-4</code>, sem <code>col-span-*</code>). Cabeçalho "Publicações recentes" + botão "Abrir Blog completo" inalterados; cards de postagens via <code>_card_postagem</code> e <code>pode_publicar_blog</code> permanecem iguais.</li>
 </ul>
-<h4 id="menu-lateral-item-home-no-topo-do-drawer">Menu lateral — item "Home" no topo do drawer<a class="headerlink" href="#menu-lateral-item-home-no-topo-do-drawer" title="Permanent link">&para;</a></h4>
+<h4 id="menu-lateral-fabrica-item_menu_drawer-refatorado-12092026">Menu lateral — fábrica <code>item_menu_drawer</code> (refatorado 12/09/2026)<a class="headerlink" href="#menu-lateral-fabrica-item_menu_drawer-refatorado-12092026" title="Permanent link">&para;</a></h4>
 <ul>
-<li><strong><code>layout_tela.py:135-144</code></strong>: Adicionado no <strong>TOPO do drawer</strong> (antes da seção "MÓDULOS") um item "Home" sob o rótulo de seção "PÁGINA INICIAL". O item usa ícone <code>home</code> e <code>ui.item_label("Home")</code>, navegando para <code>/</code> via <code>ui.navigate.to("/")</code>. Seguido de <code>ui.separator()</code> antes de "MÓDULOS" (<code>layout_tela.py:144</code>). Antes, o drawer começava direto com "MÓDULOS" — agora há um atalho explícito para a página inicial visível em todas as rotas.</li>
+<li><strong><code>mod_intranet/ui_comum.py:850</code> + <code>mod_intranet/telas.py:_montar_layout</code></strong>: o drawer (abre <strong>fechado</strong> <code>value=False</code>, <code>p-2</code>, coluna <code>w-full</code> com <code>gap</code> via <code>.style</code>) monta TODOS os itens pela fábrica <strong><code>item_menu_drawer()</code> / classe <code>ItemMenuDrawer</code></strong> — <code>ui.item</code> acessível <code>w-full rounded-lg my-0.5</code> com <code>.style('min-width: 0')</code>, avatar com ícone <code>text-primary shrink-0 aria-hidden</code>, rótulo <code>truncate max-w-full grow</code>, tooltip PT-BR, anel <code>focus-visible</code>, estado ativo (<code>bg-blue-100</code> + <code>aria-current="page"</code>) e <code>data-testid</code> via <code>.props()</code> (<code>menu-home</code>, <code>menu-&lt;chave&gt;</code>, <code>menu-admin</code>, <code>menu-docs</code>, <code>menu-sair</code>; indisponível: <code>menu-&lt;chave&gt;-indisponivel</code> com <code>aria-label</code>); itens só-ícone recebem <code>aria-label</code>; falha retorna <code>None</code> (fail-soft). Ordem: <strong>Home</strong> (topo, <code>ativo</code> quando <code>chave_modulo=None</code>) → separador → módulos de <code>autenticacao.modulos_do_usuario</code> (inativo vira item laranja de alerta) → Administração contextual + Documentação (só <code>administrador_geral</code>) → separador → <strong>Sair</strong>. <strong>Sem labels de seção</strong> desde 06/09 (apenas separadores). <strong>Bootstrap local avaliado e dispensado</strong>: <code>assets/css/frameworks/bootstrap@5.3.8.min.css</code> (servido em <code>/css/frameworks/*</code> via <code>tema_css.montar_rotas_static()</code>) NÃO é injetado — o reset global quebraria o Quasar; o visual list-group é replicado com Tailwind + Quasar (justificativa no código). Header com hambúrguer (<code>data-testid=menu-hamburguer</code>, <code>aria-label</code>). RNF-UI-01 320/768/1024: <code>w-full</code> + <code>min-width: 0</code>, sem <code>gap-*</code>.</li>
 <li><strong>Padrão de exibição</strong> — <strong>REALIZADO</strong>: todos os módulos seguem o padrão do <strong>módulo exemplo <code>mod_edit_pdf</code></strong> — área cheia (<code>w-full</code>, sem <code>max-w-*</code> centralizador) e cupê <strong>"Aparência"</strong> padronizado na aba/expansão Administração com as <strong>6 chaves</strong> <code>cor_botao</code>, <code>cor_texto_botao</code>, <code>cor_fundo</code>, <code>cor_titulo</code>, <code>btn_tamanho</code>, <code>texto_header</code> em <code>tb_config</code> (prefixos <code>blog_*</code>, <code>usuarios_*</code>, <code>auditoria_*</code>, <code>empenhos_*</code>, <code>solicita_impressao_*</code>; o <code>editar_pdf</code> usa <code>editpdf_*</code>). <code>aba_modulo.cabecalho()</code> passou a aceitar <code>cor_titulo</code>/<code>cor_fundo</code>, aplicando o tema sem restart. Áreas que já eram <code>w-full</code> (auditoria, empenhos) mantidas; blog/usuários/solicita tiveram o <code>max-w-* mx-auto</code> centralizador removido.</li>
 </ul>
 <h4 id="tela-de-configuracoes-reorganizada-no-padrao-menu_mod-abas">Tela de Configurações — reorganizada no padrão menu_mod (abas)<a class="headerlink" href="#tela-de-configuracoes-reorganizada-no-padrao-menu_mod-abas" title="Permanent link">&para;</a></h4>
 <ul>
 <li><strong><code>tela_configuracoes.py:189-198</code></strong>: a tela <code>/configuracoes</code> deixou de ser um empilhamento de 8 cartões sequenciais com um único "SALVAR TUDO" no topo e passou a usar <code>ui.tabs</code> + <code>ui.tab_panels</code> (padrão menu_mod, como a Gestão de Usuários): barra com <strong>5 abas</strong> à esquerda e botão <strong>"APLICAR"</strong> à direita.</li>
 <li><strong><code>tela_configuracoes.py:190-194</code></strong>: as 5 abas são <code>Config</code> (<code>tune</code>), <code>E-mail</code> (<code>mail</code>), <code>Módulo</code> (<code>extension</code>), <code>Observabilidade</code> (<code>query_stats</code>) e <code>Documentação</code> (<code>menu_book</code>).</li>
-<li><strong>Botão único "APLICAR"</strong>: grava todas as abas via <code>salvar_tudo</code> e recarrega (<code>ui.navigate.reload</code>) para aplicar cores/botões/cards imediatamente.</li>
+<li><strong>Botão único "APLICAR" por card</strong>: cada card grava só os próprios campos via <code>_aplicar_card_async</code> (handler <code>async</code> + <code>run.io_bound</code>, spinner, trava <code>ocupado</code>, reload único — anti-disconnect AGENTS.md §5.1, 12/09/2026); o card Banco <strong>nunca recarrega</strong> (exige restart). Ver <a href="../configuracoes/#anti-disconnect-no-aplicar-handlers-async-12092026-agentsmd-51">Configurações — Anti-disconnect</a>.</li>
 <li><strong><code>tela_configuracoes.py:98-175</code></strong>: <code>salvar_tudo</code> mantido, agora comentado <strong>por aba</strong> (Config → cores/ícone/textos/gerais; E-mail → <code>smtp_*</code>; Módulo → <code>tb_modulos</code>; Observabilidade → <code>log_*</code>/<code>otel_*</code>/<code>grafana_url</code> + <code>observabilidade.configurar()</code> (endpoint/OTel exigem restart).</li>
-<li><strong>Conteúdo por aba</strong>: Config reúne, nesta ordem: <strong>Ícones</strong> (grid único responsivo com 3 itens — ícone do sistema, "Restaurar padrão" e upload do favicon <code>.ico</code>), <strong>Cores</strong> (8 seletores em grade 4+4 + prévia única ao vivo), <strong>Textos fixos</strong> (+ nome do sistema, rótulo dentro do input) e <strong>Gerais RF-57</strong> (padrão responsivo da aba Módulo: 1 col celular, 2 médio, linha cheia desktop) (<code>tela_configuracoes.py:316-355</code>) e Configurações gerais RF-57 (<code>tela_configuracoes.py:357-400</code>); E-mail/SMTP RF-58 (<code>tela_configuracoes.py:402-453</code>, com "Testar conexão SMTP" em <code>tela_configuracoes.py:438-447</code>); Observabilidade (<code>tela_configuracoes.py:656-850</code>, com "Limpar TODOS os logs" em <code>tela_configuracoes.py:844</code>); Documentação (<code>tela_configuracoes.py:506-528</code>, rebuild MkDocs + abrir <code>/documentacao</code> em nova aba); Módulo (<code>tela_configuracoes.py:578-865</code>, páginas do sistema + registro de módulos e vínculos órfãos).</li>
+<li><strong>Conteúdo por aba</strong>: Config reúne, nesta ordem: <strong>Ícones</strong> (grid único responsivo com 3 itens — ícone do sistema, "Restaurar padrão" e upload do favicon <code>.ico</code>), <strong>Cores</strong> (8 seletores em grade 4+4 + prévia única ao vivo), <strong>Textos fixos</strong> (+ nome do sistema, rótulo dentro do input), <strong>Gerais RF-57</strong> (padrão responsivo da aba Módulo: 1 col celular, 2 médio, linha cheia desktop) (<code>tela_configuracoes.py:316-355</code>), Configurações gerais RF-57 (<code>tela_configuracoes.py:357-400</code>) e, ao final, <strong>Banco de dados — SQLite ou PostgreSQL</strong> (<code>config_backend</code>/<code>salvar_backend</code>, <code>data-testid="config-aplicar-banco"</code>, sem reload — exige restart); E-mail/SMTP RF-58 (<code>tela_configuracoes.py:402-453</code>, com "Testar conexão SMTP" em <code>tela_configuracoes.py:438-447</code>); Observabilidade (<code>tela_configuracoes.py:656-850</code>, com "Limpar TODOS os logs" em <code>tela_configuracoes.py:844</code>); Documentação (só "Reconstruir documentação" + abrir <code>/documentacao</code> em nova aba — o card Banco saiu daqui para o final da aba Config); Módulo (<code>tela_configuracoes.py:578-865</code>, páginas do sistema + registro de módulos e vínculos órfãos).</li>
 <li><strong>Não mudou</strong>: chaves em <code>tb_config</code> (<code>cor_principal</code>, <code>texto_*</code>, <code>smtp_*</code>, <code>log_*</code>, <code>backup_interval_hours</code>, <code>sessao_retencao</code>), restrição a <code>administrador_geral</code> (<code>tela_configuracoes.py:59-63</code>), autenticação e a rota <code>/configuracoes</code> em <code>main.py</code>.</li>
 </ul>
 <h4 id="abas-renomeadas-e-reordenadas-0509-config-e-mail-modulo-observabilidade-documentacao">Abas renomeadas e reordenadas (05/09) — Config, E-mail, Módulo, Observabilidade, Documentação<a class="headerlink" href="#abas-renomeadas-e-reordenadas-0509-config-e-mail-modulo-observabilidade-documentacao" title="Permanent link">&para;</a></h4>
@@ -483,14 +590,14 @@ sistema</strong>: a data atual e de gravação devem vir SEMPRE do servidor (nun
 <li><strong><code>tela_configuracoes.py:519-546</code></strong>: nova função <code>_campo_icone(valor_inicial)</code> — input livre do nome do Material Icon + <strong>pré-visualização viva</strong> (<code>prev.set_text</code> ligado ao <code>on_value_change</code>, com fallback <code>extension</code>) + <strong>seletor visual</strong> (<code>ui.menu</code> com grid de 6 colunas sobre <code>ICONES_COMUNS</code>, cada botão aplica o ícone e fecha o menu) + botão <code>grid_view</code> para abrir o seletor. Retorna o <code>ui.input</code> criado. Reutilizada no campo "Ícone Material" do registro de novo módulo (<code>tela_configuracoes.py:762</code>).</li>
 <li><strong><code>tela_configuracoes.py:45</code></strong>: constante <code>COLUNAS_MODULOS = "56px minmax(30ch, 1fr) minmax(30ch, 1fr) minmax(30ch, 1fr) 150px"</code> <strong>compartilhada entre cabeçalho e linhas</strong> — mesmo <code>columns</code>/<code>gap</code> (0.75rem via <code>.style</code>) e mesmo padding (<code>px-3 py-2</code>). Antes o cabeçalho não tinha gap → desalinhamento com as linhas; a 1ª coluna (56px) hoje exibe posição + setas ↑/↓ (ver "Reordenação de módulos" abaixo).</li>
 <li><strong><code>tela_configuracoes.py:566-636</code></strong>: a lista de módulos é <strong>ÚNICA</strong> (os grupos separados "Indispensáveis"/"Demais" foram substituídos pela lista reordenável — ver "Reordenação de módulos" abaixo); container <code>ui.column</code> <code>w-full overflow-x-auto</code> (responsividade) envolvendo o cabeçalho do grid com <strong>tooltips</strong> por coluna ("#", "Página (chave)", "Nome exibido (menu e título)", "Ícone (Material Icons)", "Situação").</li>
-<li><strong><code>tela_configuracoes.py:595-630</code></strong>: módulos <strong>indispensáveis</strong> (auditoria, usuarios) destacados na lista única com fundo âmbar (<code>bg-amber-50/40 border-amber-200</code>) + ícone <code>lock</code> com tooltip "Sempre ativo — não pode ser desativado"; o switch fica <strong>oculto</strong> (<code>hidden</code>), desabilitado e com valor fixo <code>True</code>. Os demais módulos têm switch "Ativo" (<code>color=primary</code>).</li>
+<li><strong><code>tela_configuracoes.py:595-630</code></strong>: módulos <strong>indispensáveis</strong> (auditoria, blog, usuarios) destacados na lista única com fundo âmbar (<code>bg-amber-50/40 border-amber-200</code>) + ícone <code>lock</code> com tooltip "Sempre ativo — não pode ser desativado"; o switch fica <strong>oculto</strong> (<code>hidden</code>), desabilitado e com valor fixo <code>True</code>. Os demais módulos têm switch "Ativo" (<code>color=primary</code>).</li>
 <li><strong><code>tela_configuracoes.py:123</code></strong>: <code>salvar_tudo</code> <strong>força <code>ativo=1</code></strong> para chaves em <code>MODULOS_INDISPENSAVEIS</code> independente do switch, garantindo que nunca sejam desativados mesmo via salvamento em lote.</li>
 <li><strong>Compatibilidade mantida</strong>: <code>estado_campos["paginas"]</code> continua com a tupla <code>(inp_nome, inp_icone, switch)</code> por chave (<code>tela_configuracoes.py:630</code>), lida por <code>salvar_tudo()</code>; a proteção de indispensáveis permanece no backend (<code>MODULOS_INDISPENSAVEIS</code> em <code>autenticacao.py:216</code>); a variável <code>registrados</code> não utilizada foi <strong>removida</strong> de <code>refresh_orfaos</code> (<code>tela_configuracoes.py:744</code>).</li>
-<li><strong><code>tela_configuracoes.py:30</code></strong>: <code>MODULOS_INDISPENSAVEIS = {"auditoria", "usuarios"}</code> (junto de <code>CORES_PRESET</code>) — módulos essenciais que <strong>não podem ser desativados</strong>.</li>
+<li><strong><code>tela_configuracoes.py:30</code></strong>: <code>MODULOS_INDISPENSAVEIS = {"auditoria", "blog", "usuarios"}</code> (junto de <code>CORES_PRESET</code>) — módulos essenciais que <strong>não podem ser desativados</strong>.</li>
 </ul>
 <h4 id="backend-protecao-de-modulos-indispensaveis-em-autenticacaopy">Backend — proteção de módulos indispensáveis em <code>autenticacao.py</code><a class="headerlink" href="#backend-protecao-de-modulos-indispensaveis-em-autenticacaopy" title="Permanent link">&para;</a></h4>
 <ul>
-<li><strong><code>autenticacao.py:216</code></strong>: nova constante <code>MODULOS_INDISPENSAVEIS = {"auditoria", "usuarios"}</code>.</li>
+<li><strong><code>autenticacao.py:216</code></strong>: nova constante <code>MODULOS_INDISPENSAVEIS = {"auditoria", "blog", "usuarios"}</code>.</li>
 <li><strong><code>autenticacao.py:227-229</code></strong>: <code>set_modulo_ativo</code> agora <strong>retorna <code>(False, msg)</code></strong> e registra auditoria <code>modulo_desativado_bloqueado</code> caso alguém tente desativar um módulo indispensável; a guarda de tempo/banco <strong>não é executada</strong> nesse caso. Em sucesso retorna <code>(True, "ok")</code> (contrato mudou de <code>None</code> para <code>(bool, str)</code>).</li>
 <li><strong><code>autenticacao.py:481</code></strong>: <code>set_chaves_desativadas</code> filtra <code>set(chaves) - MODULOS_INDISPENSAVEIS</code> para que módulos indispensáveis <strong>nunca</strong> sejam desativados por essa via.</li>
 </ul>
@@ -503,10 +610,11 @@ sistema</strong>: a data atual e de gravação devem vir SEMPRE do servidor (nun
 <li><strong><code>autenticacao.py:141-148</code></strong>: <code>registrar_modulo()</code> grava <code>ordem = max(ordem)+1</code> — módulos novos nascem no fim da lista.</li>
 <li><strong><code>autenticacao.py:162-192</code></strong>: nova função <strong><code>reordenar_modulos(ator, chaves_ordenadas)</code></strong> — recebe a lista COMPLETA de chaves na nova ordem, grava a posição 1-based de cada chave em <code>tb_modulos.ordem</code>, audita <code>modulos_reordenados</code> com a sequência final e retorna <code>(ok, msg)</code>. Defensivo: chaves ausentes da lista vão para o fim (ordem alfabética). <code>try/except</code> + loguru (<code>observabilidade.get_logger("intranet")</code>).</li>
 <li><strong><code>tela_configuracoes.py:45</code></strong>: <code>COLUNAS_MODULOS</code> agora é <code>"56px minmax(30ch, 1fr) minmax(30ch, 1fr) minmax(30ch, 1fr) 150px"</code> — a 1ª coluna (56px) exibe a posição e os botões ↑/↓ de reordenação.</li>
-<li><strong><code>tela_configuracoes.py:566-636</code></strong>: <code>refresh_modulos()</code> remonta a <strong>lista ÚNICA de módulos</strong> na ordem vigente de <code>tb_modulos.ordem</code> (substituiu os grupos separados "Indispensáveis"/"Demais") — todos reordenáveis; indispensáveis (auditoria, usuarios) destacados com fundo âmbar + cadeado, reordenáveis porém nunca desativáveis. Mantém <code>estado_campos["paginas"][chave] = (inp_nome, inp_icone, switch)</code> (contrato do <code>salvar_tudo</code>).</li>
+<li><strong><code>tela_configuracoes.py:566-636</code></strong>: <code>refresh_modulos()</code> remonta a <strong>lista ÚNICA de módulos</strong> na ordem vigente de <code>tb_modulos.ordem</code> (substituiu os grupos separados "Indispensáveis"/"Demais") — todos reordenáveis; indispensáveis (auditoria, blog, usuarios) destacados com fundo âmbar + cadeado, reordenáveis porém nunca desativáveis. Mantém <code>estado_campos["paginas"][chave] = (inp_nome, inp_icone, switch)</code> (contrato do <code>salvar_tudo</code>).</li>
 <li><strong><code>tela_configuracoes.py:638-669</code></strong>: <code>_mover(idx, direcao)</code> troca o módulo com o vizinho (-1 sobe, +1 desce), <strong>persiste de imediato</strong> via <code>autenticacao.reordenar_modulos</code>, notifica e remonta a lista — edições pendentes (nome/ícone/ativo) são preservadas entre remontagens.</li>
 <li><strong><code>tela_configuracoes.py:673-720</code></strong>: <code>restaurar_paginas_padrao()</code> agora também <strong>restaura a ordem nativa</strong> (nativos voltam à sequência de <code>MODULOS_SISTEMA</code>) e <strong>renumera os não-nativos</strong> após os nativos em ordem alfabética.</li>
-<li><strong><code>layout_tela.py:147</code></strong>: sem mudança de código — o menu lateral já usa <code>modulos_do_usuario</code>, que herda a nova ordem via <code>modulos_registrados()</code>.</li>
+<li><strong><code>mod_intranet/telas.py:_montar_layout</code></strong>: sem mudança de código na ordenação — o menu lateral já usa <code>modulos_do_usuario</code>, que herda a nova ordem via <code>modulos_registrados()</code>.</li>
+<li><strong>Ordem padrão + persistência após restart (14/09/2026)</strong>: ordem padrão vigente (<code>autenticacao.py:15-22</code> <code>MODULOS_SISTEMA</code>) = <code>blog → editar_pdf → empenhos → solicita_impressao → usuarios → auditoria</code> (instalações novas e "Restaurar padrão"). <strong>Causa raiz</strong>: <code>Repositorio.reordenar_modulos</code> (<code>repositorio.py:675</code>) usava <code>enumerate</code> 0-based — primeiro item gravava <code>ordem=0</code> — e o boot via <code>COUNT(*) WHERE ordem=0 &gt; 0</code> em <code>_garantir_tb_modulos</code> reescrevia TODOS os nativos, apagando a personalização a cada reinício. <strong>Correção em 3 pontos</strong>: <code>repositorio.py:675</code> <code>enumerate(..., start=1)</code> (1-based, igual à docstring); <code>autenticacao.py:29-80</code> <code>_garantir_tb_modulos</code> endurecido — numera SOMENTE linhas com <code>ordem=0</code> (nativos zerados seguem <code>MODULOS_SISTEMA</code>, demais após os numerados por nome), linhas numeradas nunca reescritas; <code>autenticacao.py:15-22</code> <code>MODULOS_SISTEMA</code> reordenado. Garantia: primeiro boot = ordem acima; após ↑/↓ + Aplicar, a ordem permanece após reinícios (validado após 2 restarts, incl. ciclo reordenar-via-API + restart com assert; <code>/login</code> 200). Ver <a href="../registro_de_mudancas/">Registro de Mudanças</a>.</li>
 </ul>
 <h4 id="urlslug-editavel-dos-modulos-rotas_modulospy-alterar_rota_modulo">URL/slug editável dos módulos — <code>rotas_modulos.py</code> + <code>alterar_rota_modulo</code><a class="headerlink" href="#urlslug-editavel-dos-modulos-rotas_modulospy-alterar_rota_modulo" title="Permanent link">&para;</a></h4>
 <ul>
@@ -882,7 +990,7 @@ sistema</strong>: a data atual e de gravação devem vir SEMPRE do servidor (nun
 <li><strong>Boot com gate</strong> (<code>main.py</code>): <code>otel_ativo=0</code> desliga a telemetria; <code>otel_auto_start_stack=0</code> usa stack remota (sem gerenciar Docker local); o sync de credenciais Grafana via <code>docker exec</code> só roda com stack local (remota usa token/API — Fase 3).</li>
 <li><strong>Grafana configurável</strong> (<code>grafana_sync.py</code>): <code>obter_grafana_url()</code> com prioridade env <code>GRAFANA_URL</code> &gt; <code>tb_config</code> (<code>grafana_url</code>, padrão <code>http://localhost:3000</code>); health-check, API e status usam a URL resolvida.</li>
 <li><strong>Bridge loguru→Loki com filtro</strong>: <code>log_otel_envio=0</code> mantém o log só local; <code>log_otel_nivel</code> define o nível mínimo enviado ao Loki.</li>
-<li><strong>Seed</strong>: todas as chaves novas estão em <code>conexao_bd.PADRAO_CONFIG</code> (propagadas via <code>INSERT OR IGNORE</code>, cobrindo bancos existentes).</li>
+<li><strong>Seed</strong>: todas as chaves novas estão em <code>bd_conexao.PADRAO_CONFIG</code> (propagadas via <code>INSERT OR IGNORE</code>, cobrindo bancos existentes).</li>
 <li><strong>Aviso</strong>: troca de endpoint/<code>otel_ativo</code> exige REINICIAR o sistema (endpoint lido no boot); a aba avisa isso na tela.</li>
 </ul>
 <h4 id="textos-fixos-fundo-e-padrao-de-edicao-0509-exibir-vigente-salvar-sem-zerar-aplicar">Textos fixos, fundo e padrão de edição (05/09) — exibir vigente, salvar sem zerar, aplicar<a class="headerlink" href="#textos-fixos-fundo-e-padrao-de-edicao-0509-exibir-vigente-salvar-sem-zerar-aplicar" title="Permanent link">&para;</a></h4>
@@ -895,7 +1003,7 @@ sistema</strong>: a data atual e de gravação devem vir SEMPRE do servidor (nun
 <h4 id="aparencia-unificada-aplicar-e-cards-0509">Aparência unificada, APLICAR e cards (05/09)<a class="headerlink" href="#aparencia-unificada-aplicar-e-cards-0509" title="Permanent link">&para;</a></h4>
 <ul>
 <li><strong>Card único "Cores"</strong> com todos os seletores juntos (principal, fundo, botões, texto, tamanho, títulos, fundo/texto dos cards) + <strong>prévia única ao vivo</strong> (<code>previa()</code> <code>@ui.refreshable</code> lendo do estado: cabeçalho, card e botões refletem os campos antes de salvar, independente da ordem dos cards).</li>
-<li><strong>"SALVAR TUDO" → "APLICAR"</strong>: grava e recarrega (<code>ui.navigate.reload</code>) — cores, tamanhos e botões valem na hora, sem F5 manual.</li>
+<li><strong>"SALVAR TUDO" → "APLICAR" por card</strong>: cada card grava só os próprios campos e recarrega (<code>ui.timer(1.0, ui.navigate.reload())</code> único após <code>notificar()</code>); desde 12/09/2026 os handlers são <code>async</code> com <code>run.io_bound</code> (anti-disconnect, AGENTS.md §5.1) e o card Banco <strong>nunca recarrega</strong> (exige restart) — cores, tamanhos e botões valem na hora, sem F5 manual.</li>
 <li><strong>Cards padronizados</strong>: chaves <code>intranet_cor_fundo_card</code>/<code>intranet_cor_texto_card</code> (+ <code>intranet_cor_titulo</code> consumida) e helpers <code>tema_modulo.estilo_cartao()</code>/<code>titulo_cartao()</code>/<code>ler_cartao()</code> aplicados aos cards do login, painel, configurações e diálogos.</li>
 </ul>
 <h4 id="padrao-proprio-do-tema-de-botoes-vazio-padrao-do-modulo-0609">Padrão próprio do tema de botões — vazio = padrão do módulo (06/09)<a class="headerlink" href="#padrao-proprio-do-tema-de-botoes-vazio-padrao-do-modulo-0609" title="Permanent link">&para;</a></h4>
@@ -1029,6 +1137,35 @@ monkeypatch sem tocar no banco, equivalência byte-a-byte das variantes/delegaç
 helpers e checagens de fonte dos pilotos). Regra nova: <strong>TODO código de teste fica
 em <code>test/</code></strong> — nunca em <code>/tmp</code> (arquivos em <code>/tmp</code> se perdem ao reiniciar a máquina).</p>
 </div>
+<h4 id="responsividade-global-rnf-ui-01-092026">Responsividade global — RNF-UI-01 (09/2026)<a class="headerlink" href="#responsividade-global-rnf-ui-01-092026" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>main.py</code> login</strong> <code>w-[420px] p-10</code> → <code>w-full max-w-[420px] mx-4 p-6 sm:p-10</code>, wrapper <code>p-4 min-width:0</code>; <strong>header</strong> <code>flex-wrap</code>, títulos <code>truncate</code>, badges <code>max-w</code>, <code>gap</code> via <code>.style</code> (nunca <code>gap-*</code> em <code>ui.row</code>). Validado 320/768/1024 (<code>kbp-web-design</code>).</li>
+<li><strong>Padrão global</strong> para todo <code>mod_*</code>: containers <code>w-full p-4 sm:p-6</code> <code>min-width:0</code>, <code>flex-wrap</code> + <code>gap</code> via <code>.style()</code>, <code>truncate</code>/<code>max-w</code>, <code>overflow-x-auto</code> tabs/tabelas, dialogs <code>w-full max-w</code>, grids <code>grid-cols-1 sm:grid-cols-2 md:grid-cols-3</code>, <code>scroll_area</code> altura explícita. Checklist P0/P1/P2 e proposta por <code>container</code>/<code>row</code>/<code>grid</code> por módulo (<code>intranet</code>, <code>gest</code>, <code>auditoria</code>, <code>renomear</code>, <code>solicita</code>, <code>edit</code>, <code>blog</code>, <code>tela_configuracoes</code>, <code>ui_comum</code>) na auditoria <code>kbp-web-design</code>.</li>
+</ul>
+<h4 id="dashboard-resumo-dinamico-water-escopado-metricas-092026-home-redesign">Dashboard — Resumo dinâmico Water escopado + métricas 09/2026 (Home redesign)<a class="headerlink" href="#dashboard-resumo-dinamico-water-escopado-metricas-092026-home-redesign" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Sem botão Atualizar</strong> — <code>main.py:_orquestrar_resumo_dados()</code> (<code>main.py:250</code>) conta <strong>a cada acesso</strong> (sem <code>lbl_fb_resumo/atualizar_resumo</code>): <code>n_users</code> via <code>gest.listar_usuarios(filtro_ativo=None)</code> (fallback <code>True</code>), <code>n_posts</code> via <code>blog.contar_postagens(ativo=True)</code>, <code>n_logs</code> via <code>auditoria.contar_registros()</code>, <code>n_sessoes</code> <code>SELECT COUNT(*) FROM tb_sessoes WHERE logout IS NULL</code> (<code>mod_intranet/bd_conexao.get_connection</code>), <code>n_acessos</code> via <code>tb_config contador_acessos_total</code> (seed <code>bd_conexao.init_db()</code> <code>bd_conexao.py:70-72/188-196</code> + <code>incrementar_contador_acessos()</code> <code>bd_conexao.py:200</code> só em <code>tentar_login()</code> <code>main.py:229</code> em login bem-sucedido, <code>contador_acessos_inicio</code> <code>YYYY-MM-DD</code>), <code>n_fila</code> pendente (<code>tb_solicitacoes WHERE status NOT IN impresso/recusado/cancelado</code>), <code>n_quar</code> (<code>tb_quarentena processado=0</code>), <code>n_pdf</code> (<code>tb_arquivos ativo=1</code>), <code>n_24h</code> (<code>SUM COUNT WHERE timestamp &gt;= datetime('now','localtime','-1 day')</code> por <code>tb_auditoria_*</code> via <code>get_tabelas_auditoria()</code>).</li>
+<li><strong>Estilo Water só no card</strong> — <code>mod_intranet/home_visual.py:176</code> <code>injetar_water_card()</code> escopado <code>.home-resumo-water/.home-stat-water</code> (border <code>#dfe8f0</code>, bg <code>#fafcfd</code>, ícone 36px <code>bg:#e8f1f8</code>, <code>text-primary:#0b6a9a</code>) via <code>aplicar_modelo("water")</code> em <code>_construir_dashboard()</code> (<code>main.py:371</code>); <code>page_dashboard</code> fixa <code>modelo="water"</code> (<code>main.py:502</code>); comparativo <code>/home-*</code> revertido e menu hambúrguer sem seção comparativa.</li>
+<li><strong>Altura reduzida ~50%+25%</strong> — <code>_stat()</code> (<code>main.py:325</code>) <code>gap-1 px-2 py-1</code>, ícone <code>36px text-2xl</code>, número <code>text-h6</code> 4 dígitos (<code>&gt;9999</code> com tooltip do total real; removido tooltip duplicado do label — tooltip único no card), layout horizontal ícone esq + número.</li>
+<li><strong>Tooltip simples</strong> — <code>_desc_base</code> (<code>main.py:331</code>): <code>Usuarios/Sessões/Noticias/Logs/Visitas/Fila geral/Para autorizar/Quarentena/PDFs/Auditoria 24h</code>; <code>Logs&gt;9999</code> mantém <code>⚠️ Alerta: volume elevado — realize backup do banco de auditoria (db_mod_auditoria.db) e avalie retenção/poda</code>; <code>Visitas</code> tooltip simplificado para <code>"Visitas"</code> (data início <code>contador_acessos_inicio</code> <code>DD/MM/YYYY</code> mantida como referência de padronização).</li>
+<li><strong>Ordem e visibilidade</strong> — <strong>Geral</strong> (8 métricas, só <code>administrador_geral</code>/<code>administrador_modulo</code> — <code>eh_admin</code> <code>main.py:500</code>): <code>[Usuarios, Sessões, Visitas, Noticias, Quarentena, PDFs, Logs, Logs 24h]</code> (<code>main.py:407-415</code>); <strong>Impressão</strong> (novo card, só autorizador <code>tb_responsaveis_autorizacao ativo=1</code> ou <code>administrador_geral</code> — <code>main.py:417</code> <code>_eh_autorizador_impressao()</code> <code>:446</code> + <code>_contar_fila_para_autorizar()</code> <code>:460</code>): <code>[Fila geral, Para autorizar]</code> (<code>main.py:424-427</code>). <code>page_dashboard</code> separa <code>eh_admin</code> da checagem de impressão (<code>main.py:501</code>).</li>
+<li><strong>Serviço</strong> <code>http://localhost:8080</code> (PID 41111) water OK.</li>
+</ul>
+<h4 id="header-botao-unico-sempre-visivel-correcao-final-14092026">Header — botão único sempre visível (correção final 14/09/2026)<a class="headerlink" href="#header-botao-unico-sempre-visivel-correcao-final-14092026" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>mod_intranet/telas.py:225-260</code></strong>: a row direita do header tem <strong>UM único botão</strong> de "Meu Perfil" (<code>_dialogo_meu_perfil</code>) em vez de dois botões responsivos (o padrão <code>hidden sm:flex</code> / <code>sm:hidden</code> NÃO funciona neste stack — o <code>tailwindcss.min.js</code> embutido no NiceGUI 3.15 resolve <code>hidden</code> acima de <code>sm:flex</code> mesmo a 1280 px; probe com div pura confirmou <code>display:none</code> e os dois botões sumiam; o mesmo padrão quebrava o badge <code>hidden md:block</code>, também invisível). Botão: <code>data-testid=header-nome-usuario</code> sempre visível (rótulo = nome de tratamento completo, <code>tooltip</code> = completo, <code>max-width: min(28ch, 55vw)</code> com ellipsis sempre à direita). <code>header-nome-curto</code> <strong>REMOVIDO</strong>. Badge de perfil sempre visível (<code>max-w-[12ch] truncate shrink-0</code>, sem <code>hidden md:block</code>); separador vertical sempre visível (sem <code>hidden sm:block</code>). Detalhe Quasar: o <code>.q-btn__content</code> interno é <code>justify-content:center</code>, então CSS escopado via <code>ui.add_head_html</code> (padrão <code>home_visual.injetar_water_card</code>) ancora o texto à esquerda com ellipsis à direita, seletor <code>[data-testid="header-nome-usuario"]</code>, sem vazamento global. Origem: <code>autenticacao.nome_de_tratamento</code> → <code>user_nome_completo</code> (nome social), fallback login (<code>mod_gest_cad_usuario/bd_manipulador.py:296</code>). Segurança: só <code>ui.button</code> (escapa), sem <code>ui.html</code>/JS, sem mudança em sessão/DB. Validação Playwright real (<code>/login</code> 200, screenshots desktop 1280 e mobile 360): desktop nome completo visível + clique abre "Meu Perfil"; mobile 360 mostra o início preservado com ellipsis à direita (ex. "Usuário de Teste QA C…") + clique abre "Meu Perfil".</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">REGRA DE PROJETO — nunca usar <code>hidden sm:*</code> / <code>hidden md:*</code> neste stack</p>
+<p>Causa raiz (evidência Playwright): <code>hidden</code> vence <code>sm:flex</code>/<code>md:block</code> no Tailwind embutido — o elemento some em qualquer largura. Usar um único elemento sempre visível com <code>max-width</code> + <code>truncate</code>/ellipsis e <code>tooltip</code> completo.</p>
+</div>
+<h4 id="rodape-escondido-com-reveal-no-hoverfocus-14092026">Rodapé — escondido com reveal no hover/focus (14/09/2026)<a class="headerlink" href="#rodape-escondido-com-reveal-no-hoverfocus-14092026" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>mod_intranet/telas.py:346-359</code></strong> (bloco FOOTER, parte 4 do layout): rodapé escondido com reveal no hover — CSS escopado via <code>ui.add_head_html</code> (padrão <code>home_visual.injetar_water_card</code>), seletor <code>[data-testid="rodape-sistema"]</code> (novo <code>testid</code> no <code>ui.footer</code>, <code>bg-grey-8 w-full</code>), sem vazamento global. Oculto por padrão com <code>opacity:0 + translateY(calc(100% - 5px))</code> e transição <code>.25s</code> (faixa de 5px como pista visual); reveal em <code>:hover</code>/<code>:focus-within</code> → <code>opacity:1 + transform:none</code>.</li>
+<li><strong>Conteúdo, tamanho, labels e cores inalterados</strong> (<code>"{titulo} Básica — {texto_rodape}"</code> + rótulo único de versão global/módulo com tooltip detalhado — ver "Versionamento no rodapé" acima); sem JS, sem <code>hidden</code>.</li>
+<li><strong>Validação Playwright real</strong> (sistema reiniciado, <code>/login</code> 200): opacity inicial <code>0</code>, após hover <code>1</code> + transform <code>none</code>, screenshots desktop; texto preservado (<code>"INTRANET Básica — uso interno"</code>, <code>"v1.0.260913"</code>).</li>
+<li><strong>Ressalvas:</strong> no touch o reveal ocorre no toque na faixa (rodapé só informativo, sem focáveis); se o CSS falhar, degrada para sempre visível (fail-soft visual).</li>
+</ul>
               
             </div>
           </div><footer>

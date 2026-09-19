@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -241,14 +262,14 @@
 <td style="text-align: left;"><code>/login</code></td>
 <td style="text-align: left;"><code>@ui.page</code></td>
 <td style="text-align: left;"><code>mod_intranet</code></td>
-<td style="text-align: left;">público</td>
+<td style="text-align: left;">público (incrementa <code>contador_acessos_total</code> só em login ok — <code>bd_conexao.incrementar_contador_acessos()</code> <code>main.py:229</code>)</td>
 <td style="text-align: left;"><code>main.py:115</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/</code></td>
 <td style="text-align: left;"><code>@ui.page</code></td>
 <td style="text-align: left;"><code>mod_intranet</code></td>
-<td style="text-align: left;">usuários ativos</td>
+<td style="text-align: left;">usuários ativos — dashboard Water escopado (<code>home_visual.aplicar_modelo("water")</code>, sem botão Atualizar, <code>_orquestrar_resumo_dados()</code> a cada acesso; Geral só admin, Impressão só autorizador — <code>main.py:492/368/250</code>)</td>
 <td style="text-align: left;"><code>main.py:189</code></td>
 </tr>
 <tr>
@@ -351,32 +372,32 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>get_connection()</code></td>
-<td style="text-align: left;"><code>conexao_bd.py:54</code></td>
+<td style="text-align: left;"><code>bd_conexao.py:54</code></td>
 <td style="text-align: left;">conexão WAL (<code>synchronous=NORMAL</code>) no banco central</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>init_db()</code></td>
-<td style="text-align: left;"><code>conexao_bd.py:61</code></td>
+<td style="text-align: left;"><code>bd_conexao.py:61</code></td>
 <td style="text-align: left;">cria <code>tb_config</code>, <code>tb_sessoes</code>, <code>tb_modulos</code> (via <code>autenticacao</code>) + seeds (versão, cotas, <code>versao_modulo:*</code>, <code>PADRAO_CONFIG</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>get_config(chave, default)</code></td>
-<td style="text-align: left;"><code>conexao_bd.py:103</code></td>
+<td style="text-align: left;"><code>bd_conexao.py:103</code></td>
 <td style="text-align: left;">leitura de configuração (<code>tb_config</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>set_config(chave, valor)</code></td>
-<td style="text-align: left;"><code>conexao_bd.py:115</code></td>
+<td style="text-align: left;"><code>bd_conexao.py:115</code></td>
 <td style="text-align: left;">gravação de configuração</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>favicon_versao()</code></td>
-<td style="text-align: left;"><code>conexao_bd.py:126</code></td>
+<td style="text-align: left;"><code>bd_conexao.py:126</code></td>
 <td style="text-align: left;">mtime do favicon (cache-busting <code>?v=</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>DB_PATH</code> / <code>PADRAO_CONFIG</code></td>
-<td style="text-align: left;"><code>conexao_bd.py:11</code> / <code>:13</code></td>
+<td style="text-align: left;"><code>bd_conexao.py:11</code> / <code>:13</code></td>
 <td style="text-align: left;">caminho do banco central / padrões de aparência</td>
 </tr>
 </tbody>
@@ -553,9 +574,9 @@
 <td style="text-align: left;">horas do job de backup (mín. 1)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>intervalo_monitor_empenho(default=60)</code></td>
-<td style="text-align: left;"><code>:36</code></td>
-<td style="text-align: left;">segundos do monitor de empenhos (padrão 60 s)</td>
+<td style="text-align: left;"><code>intervalo_monitor_empenho(default=600)</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">segundos do monitor de empenhos (padrão 600 s = 10 min)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>reagendar_monitor_empenho(segundos)</code></td>
@@ -633,6 +654,36 @@
 <td style="text-align: left;"><code>registrar_modulo(chave, rota)</code> / <code>montar_rotas_ativas()</code></td>
 <td style="text-align: left;"><code>rotas_modulos.py:44</code> / <code>:56</code></td>
 <td style="text-align: left;">re-registro ao vivo de slugs customizados</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_orquestrar_resumo_dados()</code></td>
+<td style="text-align: left;"><code>main.py:250</code></td>
+<td style="text-align: left;">9 contadores do Resumo (usuários <code>filtro_ativo=None</code>, sessões <code>logout IS NULL</code>, visitas <code>contador_acessos_total</code>, fila <code>tb_solicitacoes NOT IN impresso/recusado/cancelado</code>, quarentena <code>processado=0</code>, PDFs <code>ativo=1</code>, auditoria 24h <code>SUM COUNT ... -1 day</code>) — sem botão Atualizar, a cada acesso</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_stat(rotulo, valor, icone, modelo)</code></td>
+<td style="text-align: left;"><code>main.py:325</code></td>
+<td style="text-align: left;">card de métrica altura <code>gap-1 px-2 py-1</code> ícone 36px <code>text-2xl</code> <code>text-h6</code>, 4 dígitos <code>&gt;9999</code> tooltip único no card (<code>_desc_base</code> Usuarios/Sessões/Noticias/Logs/Visitas/... + alerta <code>&gt;9999</code> auditoria)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_construir_dashboard(nome, perfil, eh_admin, modelo)</code></td>
+<td style="text-align: left;"><code>main.py:368</code></td>
+<td style="text-align: left;">Home Water escopado (<code>home_visual.aplicar_modelo("water")</code>, Geral 8 métricas só admin + Impressão Fila geral/Para autorizar só autorizador)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_eh_autorizador_impressao(nome)</code> / <code>_contar_fila_para_autorizar(nome, eh_admin_geral)</code></td>
+<td style="text-align: left;"><code>main.py:446</code> / <code>:460</code></td>
+<td style="text-align: left;">visibilidade Impressão (<code>tb_responsaveis_autorizacao ativo=1</code> por secretaria/setor; admin geral = fila geral)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>injetar_water_card()</code> / <code>aplicar_modelo(modelo)</code> / <code>classes_stat</code> / <code>classes_card_resumo</code></td>
+<td style="text-align: left;"><code>home_visual.py:176</code> / <code>:155</code> / <code>:246</code> / <code>:237</code></td>
+<td style="text-align: left;">visual Home — Water só no card (<code>.home-resumo-water/.home-stat-water</code> <code>#dfe8f0</code>/<code>#fafcfd</code>), <code>pic</code> suave, helpers de classes</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>incrementar_contador_acessos()</code> / <code>contador_acessos_total</code> / <code>contador_acessos_inicio</code></td>
+<td style="text-align: left;"><code>bd_conexao.py:200</code> / <code>:70</code></td>
+<td style="text-align: left;">contador Visitas — só logins (nunca navegação), seed <code>YYYY-MM-DD</code>, <code>contador_acessos_inicio</code> <code>DD/MM/YYYY</code> no tooltip (agora simplificado <code>"Visitas"</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -975,64 +1026,79 @@
 <td style="text-align: left;">extração + renomeação + FTS5 + auditoria</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>mover_quarentena(usuario, caminho, motivo)</code></td>
-<td style="text-align: left;"><code>:987</code></td>
-<td style="text-align: left;">fila de quarentena</td>
+<td style="text-align: left;"><code>mover_quarentena(usuario, caminho, motivo)</code> / <code>promover_quarentena</code> (alias PLANO 4b)</td>
+<td style="text-align: left;"><code>:1530</code></td>
+<td style="text-align: left;">fila de quarentena (move para <code>quarentena/&lt;ts&gt;_&lt;nome&gt;</code>, motivo 300 chars)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>listar_empenhos(status, limite=200)</code></td>
-<td style="text-align: left;"><code>:1025</code></td>
+<td style="text-align: left;"><code>:1568</code></td>
 <td style="text-align: left;">últimos registros</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>extrair_campos_regex(texto)</code></td>
-<td style="text-align: left;"><code>:1056</code></td>
+<td style="text-align: left;"><code>:1601</code></td>
 <td style="text-align: left;">campos customizados de <code>tb_regex_regras</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>reindexar_empenho(eid)</code> / <code>rebuild_fts()</code></td>
-<td style="text-align: left;"><code>:1082</code> / <code>:1121</code></td>
+<td style="text-align: left;"><code>:1627</code> / <code>:1692</code></td>
 <td style="text-align: left;">manutenção FTS5</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>pesquisar(termo, limite=50)</code></td>
-<td style="text-align: left;"><code>:1135</code></td>
+<td style="text-align: left;"><code>:1706</code></td>
 <td style="text-align: left;">busca <strong>FTS5 MATCH</strong> (fallback <code>LIKE</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>listar_quarentena(limite=100)</code></td>
-<td style="text-align: left;"><code>:1177</code></td>
-<td style="text-align: left;">pendências</td>
+<td style="text-align: left;"><code>:1752</code></td>
+<td style="text-align: left;">pendências (<code>processado</code> flag)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>reprocesse_quarentena(qid, novo_padrao)</code></td>
-<td style="text-align: left;"><code>:1192</code></td>
-<td style="text-align: left;">reprocessa com regex aplicada na hora</td>
+<td style="text-align: left;"><code>:1767</code></td>
+<td style="text-align: left;">reprocessa <strong>individual</strong> com regex aplicada na hora</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>reprocessar_fila(usuario, novo_padrao)</code></td>
+<td style="text-align: left;"><code>:1792</code></td>
+<td style="text-align: left;"><strong>lote</strong> — reprocessa toda fila <code>processado=0</code> sem reiniciar (botão "Reprocessar fila")</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>detectar_documentos_no_pdf(caminho)</code> / <code>eh_multiplo_documento</code></td>
+<td style="text-align: left;"><code>:815</code></td>
+<td style="text-align: left;">detecta 2+ empenhos (expansão por <code>_inicio_documento</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>separar_pdf_por_documentos</code> / <code>separar_documentos_quarentena(qid)</code></td>
+<td style="text-align: left;"><code>:897</code> / <code>:948</code></td>
+<td style="text-align: left;">separa <code>*_parteNN_pA-B.pdf</code> e reprocessa</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>salvar_regra(nome, padrao, ativo, campo_destino)</code></td>
-<td style="text-align: left;"><code>:1220</code></td>
-<td style="text-align: left;">regex dinâmica (vale sem restart)</td>
+<td style="text-align: left;"><code>:1793</code></td>
+<td style="text-align: left;">regex dinâmica (vale sem restart, <code>re.compile</code> check)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>rodar_monitor(usuario="sistema")</code></td>
-<td style="text-align: left;"><code>:1354</code></td>
+<td style="text-align: left;"><code>:1949</code></td>
 <td style="text-align: left;">job do APScheduler (RF-40)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>organizar_pastas()</code></td>
-<td style="text-align: left;"><code>:1392</code></td>
-<td style="text-align: left;">caixas/subpastas físicas</td>
+<td style="text-align: left;"><code>:1987</code></td>
+<td style="text-align: left;">caixas/subpastas físicas (~200 págs, 4/cx, gera capas+matriz)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>gerar_matriz_organizador()</code></td>
-<td style="text-align: left;"><code>:1495</code></td>
-<td style="text-align: left;">capas <code>capa.txt</code> + <code>matrizDeDocumentos.txt</code>/<code>.pdf</code></td>
+<td style="text-align: left;"><code>:2090</code></td>
+<td style="text-align: left;">capas <strong><code>capa.txt</code> + <code>capa.pdf</code> por caixa</strong> + <code>matrizDeDocumentos.txt/.pdf</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>validar_presenca_matriz()</code></td>
-<td style="text-align: left;"><code>:1526</code></td>
-<td style="text-align: left;">validação da matriz</td>
+<td style="text-align: left;"><code>:2121</code></td>
+<td style="text-align: left;">validação da matriz (todo PDF listado existe)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>ferramenta_cortar</code> / <code>ferramenta_juntar</code> / <code>ferramenta_reduzir</code></td>
@@ -1068,7 +1134,7 @@
 </table>
 <p>Tela: <code>mostrar_tela(usuario_logado, perfil)</code> — <code>telas.py:44</code>.</p>
 <h2 id="funcoes-chave-auditoria">Funções-chave — Auditoria<a class="headerlink" href="#funcoes-chave-auditoria" title="Permanent link">&para;</a></h2>
-<p><code>../mod_auditoria/db_manipulador.py</code> (banco exclusivo <code>db_mod_auditoria.db</code>):</p>
+<p><code>../mod_auditoria/bd_manipulador.py</code> (banco exclusivo <code>db_mod_auditoria.db</code>):</p>
 <table>
 <thead>
 <tr>
@@ -1303,7 +1369,7 @@
 </tbody>
 </table>
 <blockquote>
-<p>⚠️ <strong><code>db_criador.py</code> é legado/morto</strong> em todos os módulos (aponta para o banco central com esquemas divergentes). As tabelas reais são criadas por <code>init_db*()</code> dos respectivos <code>db_manipulador.py</code> — ver <a href="../arquitetura/#padrao-interno-de-um-modulo">Arquitetura</a>.</p>
+<p>⚠️ <strong><code>bd_criador.py</code> é legado/morto</strong> em todos os módulos (aponta para o banco central com esquemas divergentes). As tabelas reais são criadas por <code>init_db*()</code> dos respectivos <code>bd_manipulador.py</code> — ver <a href="../arquitetura/#padrao-interno-de-um-modulo">Arquitetura</a>.</p>
 </blockquote>
               
             </div>

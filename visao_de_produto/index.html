@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -210,10 +231,10 @@
 <p>O que é o sistema, seu contexto, público-alvo e os módulos em operação. Complementar ao <a href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>.</p>
 </blockquote>
 <h2 id="o-que-e">O que é<a class="headerlink" href="#o-que-e" title="Permanent link">&para;</a></h2>
-<p>Sistema intranet modularizado (NiceGUI/FastAPI) da Prefeitura Municipal de Monte Santo de Minas, que centraliza o acesso a módulos Python interoperáveis em um único hub autenticado, restrito à rede local, com auditoria centralizada (LGPD).</p>
+<p>Sistema intranet modularizado (NiceGUI/FastAPI) da rede interna, que centraliza o acesso a módulos Python interoperáveis em um único hub autenticado, restrito à rede local, com auditoria centralizada (LGPD).</p>
 <h2 id="contexto">Contexto<a class="headerlink" href="#contexto" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Órgão:</strong> Prefeitura Municipal de Monte Santo de Minas — DTI.</li>
+<li><strong>Órgão:</strong> DTI — Tecnologia da Informação.</li>
 <li><strong>Base legal:</strong> Lei Municipal n.º 1.570/2007; conformidade LGPD.</li>
 <li><strong>Autor:</strong> PRINCE, K.B.</li>
 </ul>
@@ -224,9 +245,10 @@
 <li>Equipes de auditoria e conformidade.</li>
 </ul>
 <h2 id="modulos-em-operacao">Módulos em operação<a class="headerlink" href="#modulos-em-operacao" title="Permanent link">&para;</a></h2>
-<p><code>mod_intranet</code> (núcleo), <code>mod_gest_cad_usuario</code>, <code>mod_blog</code>, <code>mod_edit_pdf</code>, <code>mod_renomear_empenho</code>, <code>mod_auditoria</code>, <code>mod_solicita_impressao</code>.</p>
+<p><code>mod_intranet</code> (núcleo) + 9 de negócio: <code>mod_gest_cad_usuario</code>, <code>mod_blog</code>, <code>mod_edit_pdf</code>, <code>mod_renomear_empenho</code>, <code>mod_auditoria</code>, <code>mod_solicita_impressao</code> (cotas 1000/200 via <code>ORGANOGRAMA_BASE</code>), <code>mod_tecnico</code> (<strong>novo</strong> 18/09/2026 — <code>software/</code> + <code>backup/YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation, <code>webkitdirectory</code>), <code>mod_filas</code> (<strong>novo esqueleto</strong> 18/09/2026 — <code>/filas</code> + <code>/tv</code> pública 3s+beep) e <code>mod_lista_telefonica</code> (<strong>novo</strong> 19/09/2026 — organograma 12 secretarias <code>Secretaria→Setor→Subsetor</code>, contatos alfabéticos, busca sem acentos, <code>tel:</code> no celular).</p>
+<p>Total <strong>10 módulos</strong> (1 núcleo + 9 de negócio), semeados por <code>MODULOS_SISTEMA</code> em <code>mod_intranet/autenticacao.py:15-25</code> e <code>MODULOS_BD</code> em <code>mod_intranet/repositorio.py:57-68</code>.</p>
 <h2 id="proposito-de-negocio">Propósito de negócio<a class="headerlink" href="#proposito-de-negocio" title="Permanent link">&para;</a></h2>
-<p>Hub centralizador de acesso, gestão de identidade (soft CRUD, LGPD), comunicação (Blog), manipulação de PDF, gestão de empenhos e solicitação de impressão — tudo com trilha de auditoria unificada.</p>
+<p>Hub centralizador de acesso, gestão de identidade (soft CRUD, LGPD), comunicação (Blog), manipulação de PDF, gestão de empenhos e solicitação de impressão (cotas 1000/200), apoio de T.I. (software + backup owner-isolated), gestor de filas/TV e lista telefônica/organograma — tudo com trilha de auditoria unificada (banco exclusivo <code>db_mod_auditoria.db</code>, uma tabela por módulo).</p>
 <p>Veja <a href="../arquitetura_de_software_das/">Arquitetura</a> e <a href="../manual_de_uso_instalacao/">Manual de Instalação</a>.</p>
               
             </div>

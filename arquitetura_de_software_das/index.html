@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -211,25 +232,27 @@
 </blockquote>
 <h2 id="entry-point">Entry point<a class="headerlink" href="#entry-point" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong><code>main.py</code></strong> é o único ponto de entrada. Sobe o servidor NiceGUI na porta <code>8080</code> (<code>reload=False</code>, <code>show=False</code>).</li>
-<li>No boot chama <code>inicializar_bancos()</code> (<code>../../mod_intranet/bd_criador.py</code>), que cria o banco central <strong>antes</strong> de importar <code>mod_gest_cad_usuario</code>.</li>
+<li><strong><code>main.py</code></strong> é o único ponto de entrada. Sobe o servidor NiceGUI na porta <code>8080</code> (<code>reload=False</code>, <code>show=False</code>) e a documentação na porta <code>8000</code> (<code>porta_documentacao</code>, separada — <code>documentacao.iniciar_servidor</code>).</li>
+<li>No boot chama <code>inicializar_bancos()</code> (<code>mod_intranet/mod_intranet_inicializacao_bd.py:13</code> — ordem <code>init_central</code> → <code>garantir_rastreabilidade</code> → <code>init_db_auditoria</code> + <code>migrar_dados_existentes</code> → <code>init_blog</code> → <code>init_users</code> → <code>init_db_pdf</code> → <code>init_db_empenho</code> → <code>init_solicita</code> (importa <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code> para cotas 1000/200) → <code>init_db</code> técnico → <code>init_db</code> filas → <code>init_db</code> lista telefônica), que cria o banco central <strong>antes</strong> de importar qualquer módulo. <code>mod_intranet/bd_criador.py</code> e <code>bd_criador.py</code> dos módulos são <strong>LEGADO/MORTO</strong> — não executar (schema real via <code>bd_manipulador.init_db*</code> + <code>banco_conexao.conexao(chave)</code>).</li>
 </ul>
 <h2 id="layout-de-pacotes">Layout de pacotes<a class="headerlink" href="#layout-de-pacotes" title="Permanent link">&para;</a></h2>
-<p>Cada módulo é um pacote <code>mod_&lt;nome&gt;/</code> com <code>telas.py</code> (obrigatório: <code>mostrar_tela(nome, perfil)</code>), <code>db_manipulador.py</code> e <code>db_criador.py</code> (legado/morto). Acesso a dados concentra-se em <code>db_manipulador.py</code>.</p>
+<p>Cada módulo é um pacote <code>mod_&lt;nome&gt;/</code> com <code>telas.py</code> (obrigatório: <code>mostrar_tela(nome, perfil)</code>), <code>telas_administracao.py</code> (painel admin), <code>bd_manipulador.py</code> (único acesso ao DB) e <code>bd_criador.py</code> (legado/morto — o schema real é criado por <code>init_db*</code> no <code>bd_manipulador</code>). Acesso a dados concentra-se em <code>bd_manipulador.py</code>.</p>
 <h2 id="banco-de-dados">Banco de dados<a class="headerlink" href="#banco-de-dados" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Central</strong> <code>db_mod_intranet.db</code>: <code>tb_config</code>, <code>tb_sessoes</code>, <code>tb_modulos</code>.</li>
-<li><strong>Auditoria</strong> <code>db_mod_auditoria.db</code>: <code>tb_auditoria_&lt;modulo&gt;</code> (uma tabela por módulo produtor) + <code>tb_auditoria_meta</code>.</li>
-<li>Cada módulo tem seu <code>.db</code> na raiz em modo <strong>WAL</strong> (<code>*.db-wal</code>, <code>*.db-shm</code>).</li>
-<li><strong>Não cross-query</strong>: consultar via o <code>manipulador_bd</code> do próprio módulo.</li>
-<li>Auditoria LGPD via <code>audit_log</code> → banco exclusivo <code>db_mod_auditoria.db</code> (tabela por módulo) para toda escrita; operações de PDF registram hash SHA-256 (<code>hash_arquivo</code>).</li>
+<li><strong>Central</strong> <code>db_mod_intranet.db</code>: <code>tb_config</code>, <code>tb_sessoes</code>, <code>tb_modulos</code> (seed <code>MODULOS_SISTEMA</code> com <strong>9 de negócio + núcleo = 10</strong> — 6 históricos + <code>tecnico</code> + <code>filas</code> 18/09/2026 + <code>lista_telefonica</code> 19/09/2026; 9 chaves: <code>editar_pdf</code>, <code>empenhos</code>, <code>solicita_impressao</code>, <code>blog</code>, <code>usuarios</code>, <code>auditoria</code>, <code>tecnico</code>, <code>filas</code>, <code>lista_telefonica</code>).</li>
+<li><strong>Auditoria</strong> <code>db_mod_auditoria.db</code>: <code>tb_auditoria_&lt;modulo&gt;</code> (uma tabela por módulo produtor, inclui <code>tecnico</code>/<code>filas</code>/<code>lista_telefonica</code>) + <code>tb_auditoria_meta</code> (criada via <code>mod_auditoria/bd_manipulador.py</code>).</li>
+<li>Cada módulo tem seu <code>.db</code> na raiz em modo <strong>WAL</strong> (<code>*.db-wal</code>, <code>*.db-shm</code>) — <strong>novos</strong> <code>db_mod_tecnico.db</code> (<code>tb_backup</code>/<code>tb_backup_arquivo</code> + pastas <code>software/</code>+<code>backup/YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation) e <code>db_mod_filas.db</code> (<code>tb_fila</code>/<code>tb_chamada</code>) e <code>db_mod_lista_telefonica.db</code> (<code>tb_unidade</code> <code>secretaria|setor|subsetor</code> + <code>tb_contato</code> alfabético + <code>ORGANOGRAMA_BASE</code> 12 secretarias, <code>tel:</code> no celular). Backend duplo SQLite/PostgreSQL via <code>mod_intranet/banco_conexao.conexao(chave)</code> (um <code>DATABASE db_mod_&lt;chave&gt;</code> por módulo no Postgres, espelhando o arquivo SQLite).</li>
+<li><strong>Não cross-query</strong>: consultar via o <code>bd_manipulador</code> do próprio módulo (via <code>banco_conexao.conexao(chave)</code>, nunca <code>sqlite3.connect</code> cru em banco alheio); isolamento "um banco por módulo" válido nos dois backends.</li>
+<li>Auditoria LGPD via <code>audit_log</code> → banco exclusivo <code>db_mod_auditoria.db</code> (tabela por módulo) para toda escrita; operações de PDF e backup registram hash SHA-256 (<code>hash_arquivo</code>).</li>
 </ul>
 <h2 id="agendadores-apscheduler">Agendadores (APScheduler)<a class="headerlink" href="#agendadores-apscheduler" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Backups:</strong> a cada 12 h por módulo (chave <code>backup_horas:&lt;modulo&gt;</code>), retenção de 10 cópias em <code>backup/</code>.</li>
-<li><strong>Expiração do editor PDF:</strong> varredura a cada 1 min, independente de usuários.</li>
-<li><strong>Limpeza de solicitação de impressão:</strong> <code>cleanup_solicita</code> a cada 1 min (<code>mod_intranet/rotinas.py</code>).</li>
-<li><strong>Observabilidade:</strong> <code>loguru</code> com rotação/retenção/compressão, por módulo (<code>mod_intranet/observabilidade.py</code>).</li>
+<li><strong>Backups:</strong> a cada 12 h por módulo (chave <code>backup_horas:&lt;modulo&gt;</code>), retenção de 10 cópias em <code>backup/</code> — <code>MAPA_BACKUPS</code> inclui <code>tecnico</code> + <code>filas</code> 18/09/2026 + <code>lista_telefonica</code> 19/09/2026 (<code>rotinas.py:16-22</code>).</li>
+<li><strong>Expiração do editor PDF:</strong> varredura a cada 1 min (<code>cleanup_pdf</code> → <code>expirar_antigos(cfg_expiracao_min())</code>, default 10 min; fallback <code>limpar_editor_pdf</code>).</li>
+<li><strong>Limpeza de solicitação de impressão:</strong> <code>cleanup_solicita</code> a cada 1 min (<code>mod_intranet/rotinas.py</code> — remove rascunhos não confirmados e impressos vencidos).</li>
+<li><strong>Monitor de empenhos:</strong> <code>monitor_empenho</code> a cada <code>empenhos_monitor_intervalo_seg</code> (60 s) — ver <a href="../modulos/renomear_empenho/">Renomear Empenhos</a>.</li>
+<li><strong>Poda da auditoria:</strong> <code>poda_auditoria</code> a cada 24 h (LGPD, <code>auditoria_retencao_dias</code> default 90 — varre <code>tb_auditoria_&lt;modulo&gt;</code>).</li>
+<li><strong>Observabilidade:</strong> <code>loguru</code> com rotação/retenção/compressão, por módulo (<code>mod_intranet/observabilidade.py</code>); console <code>auto/sempre/nunca</code>, bridge OTel→Loki.</li>
 </ul>
 <h2 id="autenticacao-e-sessoes">Autenticação e sessões<a class="headerlink" href="#autenticacao-e-sessoes" title="Permanent link">&para;</a></h2>
 <ul>

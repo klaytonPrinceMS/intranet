@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Graphify (grafo, dev-only) - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Graphify (grafo, dev-only)";
+        var mkdocs_page_input_path = "ferramentas/graphify.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Graphify (grafo, dev-only)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-o-que-e-e-por-que-usamos">1. O que é e por que usamos</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-instalacao-passo-a-passo">2. Instalação passo a passo</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-comandos-essenciais-cole-e-use">3. Comandos essenciais (cole e use)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#4-regra-query-first-o-habito-que-economiza-horas">4. Regra query-first (o hábito que economiza horas)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-como-ver-o-grafo">5. Como ver o grafo</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#6-exemplos-praticos-reais-deste-projeto">6. Exemplos práticos reais deste projeto</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#61-login-e-sessao-query">6.1 Login e sessão — query</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#62-onde-mora-autenticar-query-por-simbolo-exato">6.2 Onde mora autenticar — query por símbolo exato</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#63-ligando-autenticacao-a-sessao-path-com-undirected">6.3 Ligando autenticação à sessão — path (com --undirected)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#64-o-que-e-crudbase-explain">6.4 O que é CrudBase — explain</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#65-god-nodes-e-ciclos-de-import-lendo-o-relatorio">6.5 God nodes e ciclos de import (lendo o relatório)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#7-workflow-com-git-grafo-sempre-fresco">7. Workflow com git (grafo sempre fresco)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#8-troubleshooting">8. Troubleshooting</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#9-referencias">9. Referências</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Ferramentas (dev)</li>
+      <li class="breadcrumb-item active">Graphify (grafo, dev-only)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="graphify-guia-de-bordo-para-programadores-novos-dev-only">Graphify — guia de bordo para programadores novos (dev-only)<a class="headerlink" href="#graphify-guia-de-bordo-para-programadores-novos-dev-only" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>EN: Knowledge-graph handbook for new developers (dev-only tooling).
+PT-BR: Guia de bordo do grafo de conhecimento para quem chega agora no
+projeto sem conhecimento prévio de Graphify.</p>
+<p>Ferramenta da equipe de desenvolvimento (com internet). O runtime da intranet
+segue offline/local. Graphify <strong>nunca</strong> entra em <code>requirements.txt</code>, nunca é
+importado por <code>main.py</code>/<code>mod_*/</code> e nunca vai no bundle PyInstaller.
+Fonte das dependências dev: <code>requirements-dev.txt</code>.
+Ver também a seção dev-only em <code>requisitos.md</code>.</p>
+</blockquote>
+<h2 id="1-o-que-e-e-por-que-usamos">1. O que é e por que usamos<a class="headerlink" href="#1-o-que-e-e-por-que-usamos" title="Permanent link">&para;</a></h2>
+<p><code>Graphify-Labs/graphify</code> (pacote PyPI <code>graphifyy</code>, comando <code>graphify</code>) transforma
+o repositório em um <strong>grafo de conhecimento consultável</strong>: cada função, classe,
+arquivo e conceito vira um nó; cada chamada, importação ou menção vira uma
+aresta com procedência honesta — <code>EXTRACTED</code> (lida no código),
+<code>INFERRED</code> (inferida, com confiança) ou <code>AMBIGUOUS</code> (ambígua, verificar).</p>
+<p>Neste projeto usamos o Graphify como <strong>mapa de navegação do código</strong>:</p>
+<ul>
+<li>Antes de abrir dez arquivos com leitura bruta, pergunte ao grafo
+  (<code>query</code>/<code>path</code>/<code>explain</code>) — a resposta vem como subgrafo pequeno, com
+  <code>source_location</code> (arquivo + linha) para cada fato.</li>
+<li>O grafo <strong>code-only já está gerado</strong> em <code>graphify-out/</code>: <strong>2841 nós,
+  6925 arestas, 132 comunidades</strong> (extração 95% <code>EXTRACTED</code>, 5% <code>INFERRED</code>,
+  custo zero de LLM — só AST local). Arquivos commitáveis: <code>graph.json</code>,
+  <code>GRAPH_REPORT.md</code>, <code>manifest.json</code>. Arquivos locais (não commitar):
+  <code>cost.json</code>, <code>cache/</code>, <code>.graphify_*.json</code>, <code>.graphify_python</code>.</li>
+<li>A regra de ouro está no <code>AGENTS.md</code> (<code>## graphify</code>): <strong>query-first</strong> —
+  se <code>graphify-out/graph.json</code> existe e a pergunta é sobre o código,
+  rode <code>graphify query</code> primeiro; leia <code>GRAPH_REPORT.md</code> só para visão ampla
+  de arquitetura.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Dev-only, runtime offline</p>
+<p>O Graphify roda nas máquinas da equipe (com internet para instalar o
+pacote e para a passada semântica opcional de <code>docs/</code>). O servidor da
+intranet opera sem internet. Nunca adicione <code>graphifyy</code> ao
+<code>requirements.txt</code> (só <code>requirements-dev.txt</code>, <code>&gt;=0.9.0</code> com extras
+<code>[sql,postgres,pdf]</code>) e nunca importe <code>graphify</code> dentro de <code>mod_*/</code>.</p>
+</div>
+<h2 id="2-instalacao-passo-a-passo">2. Instalação passo a passo<a class="headerlink" href="#2-instalacao-passo-a-passo" title="Permanent link">&para;</a></h2>
+<p>Pré-requisito: <code>.venv</code> do projeto criado (ver <code>inicio_rapido.md</code>).</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Instalar o pacote (dev-only, com extras de SQL/Postgres/PDF)</span>
+.venv/bin/pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"graphifyy[sql,postgres,pdf]"</span>
+
+<span class="c1"># 2. Registrar a skill no projeto (modo --project, versionado)</span>
+.venv/bin/graphify<span class="w"> </span>install<span class="w"> </span>--platform<span class="w"> </span>opencode<span class="w"> </span>--project
+
+<span class="c1"># 3. Instalar o plugin OpenCode no projeto</span>
+.venv/bin/graphify<span class="w"> </span>opencode<span class="w"> </span>install
+</code></pre></div>
+<p>Isso grava (tudo versionado — <code>.opencode/</code> é 100% commitado, decisão 2026-09-17):</p>
+<ul>
+<li><code>.opencode/skills/graphify/SKILL.md</code> + <code>references/</code> (a skill <code>/graphify</code>)</li>
+<li><code>.opencode/plugins/graphify.js</code> + <code>.opencode/opencode.json</code> (plugin)</li>
+<li>seção <code>## graphify</code> no <code>AGENTS.md</code> (gatilho <code>/graphify</code> + regra query-first)</li>
+<li>wrapper interno <code>.opencode/agent/kbp-graphify.md</code> (padrão <code>kbp-*</code>, <code>AGENTS.md</code> §8.1)</li>
+</ul>
+<p>Para sair e recarregar agentes após mexer em <code>.opencode/</code>, <strong>saia e reinicie o
+OpenCode</strong> (o boot carrega os agentes).</p>
+<p>Usuários de teste/QA citados neste guia: <code>master</code> (<code>administrador_geral</code>),
+<code>qacomum</code> (<code>comum</code>), <code>qamaster</code> (<code>administrador_geral</code>) — <strong>senhas nunca
+aparecem em docs públicas</strong> (<code>AGENTS.md</code> §8.2). A fonte das senhas de seed é
+<code>mod_gest_cad_usuario/bd_manipulador.py</code> (<code>init_db</code>).</p>
+<h2 id="3-comandos-essenciais-cole-e-use">3. Comandos essenciais (cole e use)<a class="headerlink" href="#3-comandos-essenciais-cole-e-use" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Extração inicial code-only (offline, só AST, sem LLM, sem custo)</span>
+.venv/bin/graphify<span class="w"> </span>extract<span class="w"> </span>.<span class="w"> </span>--code-only
+
+<span class="c1"># Via skill (código + docs; usa Gemini se GEMINI_API_KEY existir,</span>
+<span class="c1"># senão o agente host assume a passada semântica)</span>
+/graphify<span class="w"> </span>.
+
+<span class="c1"># Re-extrai só o que mudou (incremental, rápido)</span>
+/graphify<span class="w"> </span>--update
+
+<span class="c1"># Perguntas sobre o código (BFS amplo; --dfs rastreia um caminho; --budget limita tokens)</span>
+.venv/bin/graphify<span class="w"> </span>query<span class="w"> </span><span class="s2">"como funciona o login e a sessão do usuário?"</span>
+.venv/bin/graphify<span class="w"> </span>query<span class="w"> </span><span class="s2">"onde fica a função autenticar?"</span>
+
+<span class="c1"># Caminho mais curto entre dois conceitos (neste repo, prefira --undirected;</span>
+<span class="c1"># ver §6 exemplo real autenticar → registrar_login)</span>
+.venv/bin/graphify<span class="w"> </span>path<span class="w"> </span><span class="s2">"autenticar"</span><span class="w"> </span><span class="s2">"registrar_login"</span><span class="w"> </span>--undirected
+
+<span class="c1"># Explicação em linguagem simples de um nó</span>
+.venv/bin/graphify<span class="w"> </span>explain<span class="w"> </span><span class="s2">"CrudBase"</span>
+
+<span class="c1"># Após editar código ou após git pull (AST-only, sem custo)</span>
+.venv/bin/graphify<span class="w"> </span>update<span class="w"> </span>.
+</code></pre></div>
+<p>Detalhe de cada verbo da skill (sintaxe completa em
+<code>.opencode/skills/graphify/SKILL.md</code>): <code>/graphify &lt;caminho&gt;</code>,
+<code>/graphify &lt;caminho&gt; --mode deep</code>, <code>/graphify &lt;caminho&gt; --update</code>,
+<code>/graphify query "&lt;pergunta&gt;"</code>, <code>/graphify path "&lt;A&gt;" "&lt;B&gt;"</code>,
+<code>/graphify explain "&lt;conceito&gt;"</code>, além de <code>--watch</code>, <code>--wiki</code>, <code>--obsidian</code>,
+<code>--svg</code>, <code>--graphml</code>, <code>--neo4j</code>/<code>--falkordb</code>, <code>--mcp</code> e
+<code>graphify hook install</code> / <code>graphify add &lt;url&gt;</code>.</p>
+<h2 id="4-regra-query-first-o-habito-que-economiza-horas">4. Regra query-first (o hábito que economiza horas)<a class="headerlink" href="#4-regra-query-first-o-habito-que-economiza-horas" title="Permanent link">&para;</a></h2>
+<p>Quando <code>graphify-out/graph.json</code> existe:</p>
+<ol>
+<li><strong>Pergunta sobre código → <code>query</code> primeiro.</strong> Não abra <code>mod_*/</code> no escuro.</li>
+<li><strong>Relação entre dois pontos → <code>path</code>.</strong> Ex.: quem liga autenticação a sessão.</li>
+<li><strong>Conceito isolado → <code>explain</code>.</strong> Ex.: o que é <code>CrudBase</code>, onde mora.</li>
+<li><strong><code>GRAPH_REPORT.md</code> só para visão ampla</strong> (revisão de arquitetura, god nodes,
+   ciclos de import) ou quando <code>query</code>/<code>path</code>/<code>explain</code> não derem contexto.</li>
+<li><strong>Cite <code>source_location</code>.</strong> Toda afirmação sobre código deve vir com
+   arquivo + linha vindos do grafo.</li>
+</ol>
+<p>Por quê: o subgrafo de resposta costuma ter dezenas de nós contra milhares do
+grafo cheio — muito menor que varrer tudo com busca textual.</p>
+<h2 id="5-como-ver-o-grafo">5. Como ver o grafo<a class="headerlink" href="#5-como-ver-o-grafo" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Artefato</th>
+<th>Onde</th>
+<th>Como abrir</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Grafo interativo</td>
+<td><code>graphify-out/graph.html</code> (~3 MB)</td>
+<td>abra no navegador (<code>xdg-open graphify-out/graph.html</code>)</td>
+</tr>
+<tr>
+<td>Relatório em linguagem simples</td>
+<td><code>graphify-out/GRAPH_REPORT.md</code></td>
+<td>leia no editor; seções God Nodes, Surprising Connections, Suggested Questions</td>
+</tr>
+<tr>
+<td>Grafo bruto (GraphRAG)</td>
+<td><code>graphify-out/graph.json</code> (~3,8 MB)</td>
+<td>via <code>query</code>/<code>path</code>/<code>explain</code>; não abra na mão</td>
+</tr>
+<tr>
+<td>Controle incremental</td>
+<td><code>graphify-out/manifest.json</code></td>
+<td>hashes AST/semânticos por arquivo (o <code>--update</code> usa isto)</td>
+</tr>
+</tbody>
+</table>
+<p>O <code>graph.html</code> é gerado por padrão (<code>graphify export html</code>). Para pular a
+visualização: <code>--no-viz</code>. Formatos extras: <code>--svg</code>, <code>--graphml</code>,
+<code>--neo4j</code>/<code>--falkordb</code> (gera <code>cypher.txt</code>), <code>--wiki</code> (wiki navegável por
+comunidade), <code>--obsidian</code> (vault).</p>
+<h2 id="6-exemplos-praticos-reais-deste-projeto">6. Exemplos práticos reais deste projeto<a class="headerlink" href="#6-exemplos-praticos-reais-deste-projeto" title="Permanent link">&para;</a></h2>
+<p>Todos os comandos abaixo foram executados contra o grafo real
+(<code>2841 nós · 6925 arestas · 132 comunidades</code>, gerado em 2026-09-17).</p>
+<h3 id="61-login-e-sessao-query">6.1 Login e sessão — <code>query</code><a class="headerlink" href="#61-login-e-sessao-query" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>.venv/bin/graphify<span class="w"> </span>query<span class="w"> </span><span class="s2">"como funciona o login e a sessão do usuário?"</span>
+</code></pre></div>
+<p>Resposta (resumo): travessia BFS profundidade 2 a partir de
+<code>Sessao</code>, <code>login()</code>, <code>usuario_logado()</code> — <strong>334 nós encontrados</strong>, 63 exibidos
+no orçamento padrão. Nós-âncora reais:</p>
+<ul>
+<li><code>Sessao</code> em <code>mod_intranet/models/__init__.py:98</code> (comunidade <code>repositorio.py</code>)</li>
+<li><code>usuario_logado()</code> em <code>mod_intranet/telas.py:28</code></li>
+<li><code>pagina_restrita()</code> em <code>mod_intranet/telas.py:33</code> (o guarda de página)</li>
+<li><code>.obter_sessao_ativa()</code> em <code>mod_intranet/repositorio.py:448</code></li>
+</ul>
+<p>Lição de novato: o fluxo canônico é
+<code>autenticar</code> → <code>registrar_login</code> → <code>pagina_restrita</code> revalida a cada request →
+<code>tb_sessoes</code>. Se a resposta vier truncada (<code>TRUNCATED</code>), estreite com
+<code>--budget</code> maior ou <code>query "..." --dfs</code>, ou pergunte por um símbolo exato
+(§6.2).</p>
+<h3 id="62-onde-mora-autenticar-query-por-simbolo-exato">6.2 Onde mora <code>autenticar</code> — <code>query</code> por símbolo exato<a class="headerlink" href="#62-onde-mora-autenticar-query-por-simbolo-exato" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>.venv/bin/graphify<span class="w"> </span>query<span class="w"> </span><span class="s2">"onde fica a função autenticar?"</span>
+</code></pre></div>
+<p>Resposta (resumo): <strong>36 nós, 70 arestas</strong> — âncora
+<code>autenticar()</code> em <code>mod_intranet/autenticacao.py:274</code>
+(comunidade <code>autenticacao.py</code>), vizinhos:</p>
+<ul>
+<li><code>usuario_existe()</code> (<code>autenticacao.py:265</code>), <code>verificar_senha()</code> (<code>:252</code>),
+  <code>_gest()</code> (<code>:260</code>), <code>perfil_global_de()</code> (<code>:557</code>)</li>
+<li><code>registrar_login()</code> (<code>autenticacao.py:309</code>, comunidade <code>registrar_login</code>)</li>
+<li><code>get_connection()</code> (<code>mod_intranet/bd_conexao.py:75</code>)</li>
+<li><code>pagina_restrita()</code> (<code>mod_intranet/telas.py:33</code>)</li>
+<li><code>init_db()</code> (<code>mod_gest_cad_usuario/bd_manipulador.py:70</code>)</li>
+<li>teste <code>test_login_e_sessao_em_banco()</code> (<code>assets/test/test_fase1_login.py:13</code>)</li>
+</ul>
+<p>Ou seja: autenticação vive em <code>mod_intranet/autenticacao.py</code>, persiste sessão
+via <code>Repositorio</code>/conexão central e é consumida pelo guarda <code>pagina_restrita</code>.</p>
+<h3 id="63-ligando-autenticacao-a-sessao-path-com-undirected">6.3 Ligando autenticação à sessão — <code>path</code> (com <code>--undirected</code>)<a class="headerlink" href="#63-ligando-autenticacao-a-sessao-path-com-undirected" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>.venv/bin/graphify<span class="w"> </span>path<span class="w"> </span><span class="s2">"autenticar"</span><span class="w"> </span><span class="s2">"registrar_login"</span><span class="w"> </span>--undirected
+</code></pre></div>
+<p>Resposta real:</p>
+<div class="highlight"><pre><span></span><code>Shortest path (2 hops):
+  autenticar() &lt;--calls [EXTRACTED]-- test_login_e_sessao_em_banco() --calls [EXTRACTED]--&gt; registrar_login()
+</code></pre></div>
+<p>Sem <code>--undirected</code>, o grafo direcionado responde <code>No directed path found</code>.
+Lição: <strong>neste repo prefira <code>--undirected</code> para perguntas de relação</strong> — as
+arestas AST têm direção e o caminho útil quase sempre cruza um teste ou um
+chamador comum. No código-fonte, a ligação direta está em
+<code>mod_intranet/autenticacao.py</code> (<code>autenticar</code> em <code>:274</code>,
+<code>registrar_login</code> em <code>:309</code>, mesmo módulo).</p>
+<h3 id="64-o-que-e-crudbase-explain">6.4 O que é <code>CrudBase</code> — <code>explain</code><a class="headerlink" href="#64-o-que-e-crudbase-explain" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>.venv/bin/graphify<span class="w"> </span>explain<span class="w"> </span><span class="s2">"CrudBase"</span>
+</code></pre></div>
+<p>Resposta real (resumo):</p>
+<div class="highlight"><pre><span></span><code>Node: CrudBase
+  ID:        mod_intranet_crud_base_crudbase
+  Source:    mod_intranet/crud_base.py L60
+  Type:      code
+  Community: CrudBase
+  Degree:    19
+</code></pre></div>
+<p>Conexões (19, todas <code>EXTRACTED</code>): importa quem usa
+(<code>mod_intranet/bd_manipulador.py:13</code>, <code>assets/test/teste_classes_crud.py:135</code>,
+<code>teste_fluxo_blog.py:18</code>, <code>test_cobertura_total.py:218</code>) e métodos
+(<code>_executar</code>, <code>_log</code>, <code>_conectar</code>, <code>transacao</code>, <code>atualizar</code>,
+<code>executar_muitas</code>, <code>listar</code>, <code>obter</code>, <code>criar</code>, <code>excluir</code>, <code>criar_tabela</code>,
+<code>__init__</code>). Lição: <code>CrudBase</code> é o <strong>único ponto de acesso ao banco</strong>
+(<code>AGENTS.md</code> §4) — nunca <code>sqlite3</code> cru; toda conexão aplica
+<code>PRAGMA journal_mode=WAL</code>.</p>
+<h3 id="65-god-nodes-e-ciclos-de-import-lendo-o-relatorio">6.5 God nodes e ciclos de import (lendo o relatório)<a class="headerlink" href="#65-god-nodes-e-ciclos-de-import-lendo-o-relatorio" title="Permanent link">&para;</a></h3>
+<p>Top 5 nós mais conectados (<code>GRAPH_REPORT.md</code>, seção God Nodes):</p>
+<ol>
+<li><code>audit_log()</code> — 111 arestas</li>
+<li><code>notificar()</code> — 97 arestas</li>
+<li><code>get_config()</code> — 92 arestas</li>
+<li><code>botao()</code> — 90 arestas</li>
+<li><code>usuario_logado()</code> — 83 arestas</li>
+</ol>
+<p>Tradução para novatos: quase todo fluxo toca auditoria, notificação toast,
+configuração (<code>tb_config</code>), fábrica de botões e sessão. Ao depurar um caminho
+estranho, procure primeiro por esses cinco.</p>
+<p>Ciclos de import reais (seção Import Cycles do relatório):</p>
+<div class="highlight"><pre><span></span><code>mod_intranet/autenticacao.py -&gt; mod_intranet/bd_conexao.py
+  -&gt; mod_intranet/tema_modulo.py -&gt; mod_intranet/autenticacao.py
+mod_intranet/autenticacao.py -&gt; mod_intranet/bd_manipulador.py
+  -&gt; mod_intranet/bd_conexao.py -&gt; mod_intranet/tema_modulo.py
+  -&gt; mod_intranet/autenticacao.py
+</code></pre></div>
+<p>Não quebre esses ciclos com import novo sem <code>query</code> antes — use o grafo para
+achar o ponto de corte (ex.: mover helper para <code>ui_comum</code>/<code>tema_modulo</code>).</p>
+<p>Comunidades úteis como ponto de partida (seção Communities):</p>
+<ul>
+<li><code>Community 22 "autenticacao.py"</code> (36 nós: <code>autenticar</code>, <code>registrar_login</code>,
+  <code>sessao_ativa</code>, <code>validar_acesso_modulo</code>…)</li>
+<li><code>Community 40 "CrudBase"</code> (13 nós: <code>listar</code>, <code>obter</code>, <code>criar</code>, <code>atualizar</code>,
+  <code>excluir</code>, <code>transacao</code>…)</li>
+<li><code>Community 29 "main.py"</code> (28 nós: <code>page_*</code>, rotas, agendador)</li>
+<li><code>Community 0/1/2</code> (um <code>bd_manipulador.py</code> por módulo — isolamento total,
+  <code>AGENTS.md</code> §2)</li>
+</ul>
+<h2 id="7-workflow-com-git-grafo-sempre-fresco">7. Workflow com git (grafo sempre fresco)<a class="headerlink" href="#7-workflow-com-git-grafo-sempre-fresco" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Instala o hook: rebuild AST após commit/checkout (background)</span>
+.venv/bin/graphify<span class="w"> </span>hook<span class="w"> </span>install
+
+<span class="c1"># Rotina diária</span>
+git<span class="w"> </span>pull
+.venv/bin/graphify<span class="w"> </span>update<span class="w"> </span>.<span class="w">        </span><span class="c1"># re-extrai só o que mudou (manifest.json)</span>
+
+<span class="c1"># Após editar código, antes de perguntar ao grafo</span>
+.venv/bin/graphify<span class="w"> </span>update<span class="w"> </span>.<span class="w">        </span><span class="c1"># AST-only, sem custo de API</span>
+
+<span class="c1"># Após mudar docs/ (AST sozinho NÃO atualiza docs — precisa passada semântica)</span>
+/graphify<span class="w"> </span>.<span class="w"> </span>--update<span class="w">                </span><span class="c1"># via skill (subagents)</span>
+</code></pre></div>
+<blockquote>
+<p><strong>Nada é automático:</strong> o plugin <code>tool.execute.before</code> só injeta lembrete e
+<code>hook install</code> exige repo git (com lag de background). O dono da atualização é
+o subagente <code>.opencode/agent/kbp-graphify.md</code> — os demais <code>kbp-*</code> devem
+acioná-lo após qualquer mudança (código → <code>update .</code>; docs → <code>/graphify . --update</code>).</p>
+</blockquote>
+<p>Regras:</p>
+<ul>
+<li><code>.gitignore</code> é respeitado automaticamente; <code>.graphifyignore</code> só exclui mais.</li>
+<li>Arquivos sujos em <code>graphify-out/</code> após hooks/updates incrementais são
+  <strong>esperados</strong> — não é motivo para ignorar o grafo (<code>AGENTS.md</code> <code>## graphify</code>).</li>
+<li>Commite <code>graph.json</code> + <code>GRAPH_REPORT.md</code> + <code>manifest.json</code>. <strong>Nunca</strong>
+  commite <code>cost.json</code>, <code>cache/</code>, <code>.graphify_*.json</code>, <code>.graphify_python</code>.</li>
+<li>Pule o grafo só se a tarefa for sobre saída obsoleta/incorreta do próprio
+  grafo, ou se o usuário disser explicitamente para não usar.</li>
+</ul>
+<h2 id="8-troubleshooting">8. Troubleshooting<a class="headerlink" href="#8-troubleshooting" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Sintoma</th>
+<th>Causa provável</th>
+<th>Correção</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/graphify</code> não dispara a skill</td>
+<td>gatilho ausente no <code>AGENTS.md</code></td>
+<td>conferir seção <code>## graphify</code> no <code>AGENTS.md</code> (bug <code>#827</code>, fix <code>v0.7.16+</code>)</td>
+</tr>
+<tr>
+<td>Plugin não carrega</td>
+<td>entrada ausente no projeto</td>
+<td>conferir <code>.opencode/plugins/graphify.js</code> + entrada em <code>.opencode/opencode.json</code> <strong>do projeto</strong> (bug <code>#1412</code> era no modo global <code>~/.opencode</code> vs <code>~/.config/opencode</code>; modo <code>--project</code> não é afetado)</td>
+</tr>
+<tr>
+<td><code>path</code> responde <code>No directed path found</code></td>
+<td>arestas direcionadas</td>
+<td>repetir com <code>--undirected</code> (ex. §6.3)</td>
+</tr>
+<tr>
+<td><code>query</code> responde <code>TRUNCATED</code></td>
+<td>orçamento de tokens</td>
+<td>aumentar <code>--budget N</code>, usar <code>--dfs</code>, filtrar <code>context_filter=['call']</code> ou <code>get_node</code> no símbolo exato</td>
+</tr>
+<tr>
+<td>Passada semântica de <code>docs/</code> fraca</td>
+<td>sem <code>GEMINI_API_KEY</code></td>
+<td>exportar <code>GEMINI_API_KEY</code> (ou <code>GOOGLE_API_KEY</code>); sem ela, o agente host assume (<code>pip install 'graphifyy[gemini]'</code> para o backend Gemini)</td>
+</tr>
+<tr>
+<td><code>graph.json</code> encolheu após rebuild</td>
+<td>guarda anti-shrink <code>#479</code></td>
+<td><code>to_json</code> recusa sobrescrever; se a remoção foi intencional, refaça com <code>--force</code></td>
+</tr>
+<tr>
+<td>Hook reinstalando tudo do zero</td>
+<td><code>manifest.json</code> apagado</td>
+<td>não apague <code>manifest.json</code>; sem ele o <code>--update</code> vira full rebuild</td>
+</tr>
+</tbody>
+</table>
+<h2 id="9-referencias">9. Referências<a class="headerlink" href="#9-referencias" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Skill: <code>.opencode/skills/graphify/SKILL.md</code> (sintaxe completa + <code>references/:
+  extraction-spec.md</code>, <code>query.md</code>, <code>update.md</code>, <code>hooks.md</code>, <code>exports.md</code>,
+  <code>add-watch.md</code>, <code>github-and-merge.md</code>, <code>transcribe.md</code>)</li>
+<li>Wrapper interno: <code>.opencode/agent/kbp-graphify.md</code></li>
+<li>Regra query-first: <code>AGENTS.md</code> (<code>## graphify</code>)</li>
+<li>Dependência dev: <code>requirements-dev.txt</code> (<code>graphifyy[sql,postgres,pdf]&gt;=0.9.0</code>)</li>
+<li>Detalhe dev-only: <code>requisitos.md</code> (tabela de dependências de desenvolvimento)</li>
+<li>Saída versionada: <code>graphify-out/graph.json</code>, <code>graphify-out/GRAPH_REPORT.md</code>,
+  <code>graphify-out/manifest.json</code></li>
+<li>Upstream: <code>Graphify-Labs/graphify</code> (issues <code>#827</code> trigger, <code>#1412</code> path)</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../seguranca/auditoria_menu_2026-09-12/" class="btn btn-neutral float-left" title="Auditoria do Menu (12/09/2026)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../testes_casos/" class="btn btn-neutral float-right" title="Casos">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../../seguranca/auditoria_menu_2026-09-12/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../testes_casos/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

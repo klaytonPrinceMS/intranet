@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Requisitos do Sistema</a>
     <ul class="current">
     </ul>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -343,19 +364,46 @@
 </tr>
 </tbody>
 </table>
+<h3 id="dependencias-de-desenvolvimento-dev-only-equipe-com-internet">Dependências de desenvolvimento (dev-only, equipe com internet)<a class="headerlink" href="#dependencias-de-desenvolvimento-dev-only-equipe-com-internet" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p>Não vão para produção. O runtime intranet opera sem internet; estas
+ferramentas rodam só nas máquinas dev. Fonte: <code>requirements-dev.txt</code>.
+Detalhe em <code>ferramentas/graphify.md</code>.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Ferramenta</th>
+<th style="text-align: left;">Uso</th>
+<th style="text-align: center;">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>graphifyy[sql,postgres,pdf]</code> (<code>&gt;=0.9.0</code>)</td>
+<td style="text-align: left;">grafo de conhecimento (<code>query/path/explain</code>), skill <code>/graphify</code> + plugin OpenCode</td>
+<td style="text-align: center;">✅ Instalado (dev)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>GEMINI_API_KEY</code> (opcional)</td>
+<td style="text-align: left;">passada semântica de <code>docs/</code>; sem ela, o agente host assume</td>
+<td style="text-align: center;">⚠️ Opcional</td>
+</tr>
+</tbody>
+</table>
 <h3 id="armazenamento">Armazenamento<a class="headerlink" href="#armazenamento" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>SQLite</strong> (módulo <code>sqlite3</code> da stdlib) — sem servidor externo de banco.</li>
-<li><strong>Modo WAL obrigatório</strong>: cada conexão executa <code>PRAGMA journal_mode=WAL</code> (+ <code>synchronous=NORMAL</code> no central/auditoria).</li>
-<li><strong>Um banco por módulo</strong> na raiz do projeto: <code>db_mod_intranet.db</code>, <code>db_mod_gest_cad_usuario.db</code>, <code>db_mod_blog.db</code>, <code>db_mod_edit_pdf.db</code>, <code>db_mod_renomear_empenho.db</code>, <code>db_mod_auditoria.db</code>, <code>db_mod_solicita_impressao.db</code>.</li>
-<li>Pastas de arquivos: na raiz — <code>assets/</code> (+ <code>assets/css/frameworks/</code>), <code>backup/</code>, <code>logs/</code> (loguru), <code>site/</code> (docs compiladas); <strong>dentro dos módulos</strong> — <code>mod_edit_pdf/editorPDF/</code>, <code>mod_renomear_empenho/doc/</code> (empenhos), <code>mod_renomear_empenho/quarentena/</code>, <code>mod_renomear_empenho/organizadorPasta/</code>, <code>mod_renomear_empenho/downloads/</code>, <code>mod_renomear_empenho/datahora_*PDF/</code>, <code>mod_renomear_empenho/tmp_ferramentas_pdf/</code>, <code>mod_solicita_impressao/solicitacaoImpressao/</code>.</li>
+<li><strong>SQLite (padrão) ou PostgreSQL opcional</strong> — backend duplo controlado por <code>banco_tipo</code> em <code>tb_config</code> central (<code>sqlite</code> padrão | <code>postgres</code>, <code>postgres_url</code> DSN) via <code>mod_intranet/banco_conexao.conexao(chave)</code>; no Postgres <strong>um DATABASE <code>db_mod_&lt;chave&gt;</code> por módulo</strong> (espelha <code>db_mod_&lt;chave&gt;.db</code>), preservando isolamento "um banco por módulo" (ver <a href="../configuracoes/#card-banco-de-dados-sqlite-ou-postgresql-0809">Configurações</a> e <a href="../arquitetura/#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura</a>).</li>
+<li><strong>Modo WAL obrigatório</strong> (SQLite): cada conexão executa <code>PRAGMA journal_mode=WAL</code> (+ <code>synchronous=NORMAL</code> no central/auditoria); no Postgres o proxy traduz DDL (<code>AUTOINCREMENT</code>→<code>SERIAL</code>, <code>?</code>→<code>%s</code>, <code>INSERT OR IGNORE</code>→<code>ON CONFLICT DO NOTHING</code>, <code>GROUP_CONCAT</code>→<code>STRING_AGG</code>, datas normalizadas).</li>
+<li><strong>Um banco por módulo</strong> na raiz (SQLite): <code>db_mod_intranet.db</code>, <code>db_mod_gest_cad_usuario.db</code>, <code>db_mod_blog.db</code>, <code>db_mod_edit_pdf.db</code>, <code>db_mod_renomear_empenho.db</code>, <code>db_mod_auditoria.db</code>, <code>db_mod_solicita_impressao.db</code>, <code>db_mod_tecnico.db</code>, <code>db_mod_filas.db</code>, <code>db_mod_lista_telefonica.db</code> — 10 bancos (<code>MODULOS_BD</code> em <code>repositorio.py:57-68</code>; cada módulo com <code>CrudBase</code>/<code>banco_conexao.conexao(chave)</code>, nunca <code>sqlite3</code> cru cross-banco).</li>
+<li>Pastas de arquivos: na raiz — <code>assets/</code> (+ <code>assets/css/frameworks/</code> 18 frameworks), <code>backup/</code> (retenção 10 por módulo), <code>logs/</code> (loguru), <code>site/</code> (docs compiladas); <strong>dentro dos módulos</strong> — <code>mod_edit_pdf/editorPDF/</code>, <code>mod_renomear_empenho/doc/</code> (empenhos), <code>mod_renomear_empenho/quarentena/</code>, <code>mod_renomear_empenho/organizadorPasta/</code>, <code>mod_tecnico/software/</code> + <code>mod_tecnico/backup/YYYYMMDD_HHMM_nomePc_ip/</code> (owner-isolated), <code>mod_solicita_impressao/solicitacaoImpressao/</code>, <code>mod_blog/img_postagens/</code>.</li>
 </ul>
 <h3 id="rede-e-interface">Rede e interface<a class="headerlink" href="#rede-e-interface" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Tailwind CSS local</strong>: o NiceGUI embute/serve o <code>tailwindcss.min.js</code> localmente — exigência para rede interna.</li>
-<li><strong>Frameworks CSS embarcados</strong>: Bulma, DaisyUI, Pico e Picnic em <code>assets/css/frameworks/</code>, servidos localmente em <code>/css/frameworks/*</code> (sem CDN) via <code>tema_css.montar_rotas_static()</code> (<code>main.py:81-85</code>); injeção <strong>por página</strong> via <code>tema_css.injetar_framework()</code> — nunca global.</li>
-<li><strong>Porta</strong>: <code>8080</code> (<code>main.py:476</code>).</li>
-<li><strong>Documentação</strong>: servida na mesma porta em <code>/documentacao</code> (build MkDocs <code>docs/</code> → <code>site/</code>, montado pela própria aplicação — <code>mod_intranet/documentacao.py</code>).</li>
+<li><strong>Frameworks CSS embarcados</strong>: 18 frameworks em <code>assets/css/frameworks/</code> (Bootstrap, Bulma, DaisyUI, Pico, Picnic, Water etc.), servidos localmente em <code>/css/frameworks/*</code> (sem CDN) via <code>tema_css.montar_rotas_static()</code> (<code>main.py:81-85</code>); injeção <strong>por página</strong> via <code>tema_css.injetar_framework()</code> — nunca global; drawer 19/09 validado com Tailwind+Quasar.</li>
+<li><strong>Portas</strong>: <strong>site/aplicação <code>8080</code></strong> (<code>porta_site</code>, <code>main.py:476</code>) e <strong>documentação <code>8000</code></strong> (<code>porta_documentacao</code>, separada — <code>documentacao.iniciar_servidor</code> <code>ThreadingHTTPServer</code> em thread daemon servindo <code>site/</code>; <code>ativacao.config_persistida()</code> persiste ambas; CLI <code>--portasite</code>/<code>--portadocumentacao</code>).</li>
+<li><strong>Documentação</strong>: MkDocs <code>readthedocs</code> (<code>mkdocs.yml</code>) build <code>docs/</code> → <code>site/</code> no boot (<code>documentacao.construir_e_montar_documentacao</code>), servida em <code>/documentacao</code> via mount FastAPI na <code>:8080</code> e também no servidor dedicado <code>:8000</code> (<code>mod_intranet/documentacao.py</code>).</li>
 </ul>
 <h2 id="requisitos-funcionais-por-modulo-status-real">Requisitos funcionais por módulo (status real)<a class="headerlink" href="#requisitos-funcionais-por-modulo-status-real" title="Permanent link">&para;</a></h2>
 <blockquote>
@@ -756,6 +804,115 @@
 <td style="text-align: left;">Notificação por e-mail de eventos de cota</td>
 <td style="text-align: center;">❌ Não implementado (por design — sem SMTP neste fluxo)</td>
 </tr>
+<tr>
+<td style="text-align: left;">Cotas padrão do organograma 1000/200 (12 secretarias genéricas <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code>) + migração <code>UPDATE</code> idempotente</td>
+<td style="text-align: center;">✅ Implementado (19/09/2026)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tecnico-mod_tecnico-novo-18092026">Técnico (<code>mod_tecnico</code>) — novo 18/09/2026<a class="headerlink" href="#tecnico-mod_tecnico-novo-18092026" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Banco <code>db_mod_tecnico.db</code> (<code>tb_backup</code>/<code>tb_backup_arquivo</code>) + pastas <code>software/</code> (download) + <code>backup/YYYYMMDD_HHMM_nomePc_ip</code> (owner-isolation)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Software multi-seleção + zip recursivo (limite <code>tecnico_max_zip_mb</code> 1024) com <code>webkitdirectory</code> preservado</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Backup 1-clique <code>webkitdirectory</code> (cria <code>YYYYMMDD_HHMM_nomePc_ip</code>, sanitiza <code>[^a-zA-Z0-9_-]</code> → <code>_</code>, owner-isolation, admin geral vê todos)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">LGPD <code>remover_vinculos_usuario</code>/<code>renomear_usuario</code> + auditoria <code>tb_auditoria_tecnico</code></td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Administração <code>/admin/tecnico</code> (aparência + <code>tecnico_max_zip_mb</code> + painel backup)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="filas-tv-mod_filas-esqueleto-18092026">Filas — TV (<code>mod_filas</code>) — esqueleto 18/09/2026<a class="headerlink" href="#filas-tv-mod_filas-esqueleto-18092026" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Banco <code>db_mod_filas.db</code> (<code>tb_fila</code>/<code>tb_chamada</code>) + seed <code>Geral A000</code></td>
+<td style="text-align: center;">✅ Implementado (esqueleto)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gerar_senha(fila_id, ator)</code> incremento <code>A000→A001</code> (<code>[A-Za-z]*\d+</code> → <code>:03d</code>) + <code>ultima_chamada()</code>/<code>listar_chamadas</code></td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Painel <code>/filas</code> + preview + <code>Abrir TV</code> + <code>/tv</code> pública (full-screen <code>h-screen bg-black</code>, auto-refresh 3s + beep <code>AudioContext</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">LGPD <code>remover</code>/<code>renomear</code> + auditoria <code>tb_auditoria_filas</code></td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Administração <code>/admin/filas</code> (aparência + backup)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Regras avançadas (múltiplas filas, prioridade, guichês dinâmicos)</td>
+<td style="text-align: center;">⏳ Pendente (esqueleto a título de conhecimento)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="lista-telefonica-mod_lista_telefonica-novo-19092026">Lista Telefônica (<code>mod_lista_telefonica</code>) — novo 19/09/2026<a class="headerlink" href="#lista-telefonica-mod_lista_telefonica-novo-19092026" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Banco <code>db_mod_lista_telefonica.db</code> (<code>tb_unidade</code> <code>secretaria\|setor\|subsetor</code> + <code>tb_contato</code> alfabético <code>COLLATE NOCASE</code>) + <code>ORGANOGRAMA_BASE</code> 12 secretarias genéricas</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Organograma expansível <code>Secretaria→Setor→Subsetor</code> (selects cascata <code>clearable</code>, <code>disabled</code> até pai) + contatos alfabéticos</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Busca global normalizada sem acentos (<code>_norm</code> NFKD + <code>re.findall</code>) sobre unidades e contatos</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Telefone clicável <code>tel:</code> (<code>re.sub(r"[^0-9+]", "")</code>) + <code>ui.link(target="tel:...")</code> + diálogo "Ligar agora" (<code>window.location.href</code>) no celular</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Admin: criar/mover/elevar/rebaixar/reordenar/comutar/excluir ramo (cascata <code>_coletar_ramo_ids</code> + FK CASCADE) + incluir via usuários (busca <code>on_value_change</code> por login/nome/e-mail)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">LGPD <code>remover_vinculos_usuario</code>/<code>renomear_usuario</code> + auditoria <code>tb_auditoria_lista_telefonica</code></td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Administração <code>/admin/lista_telefonica</code> (aparência + 2 cards + painel backup) + export <code>ORGANOGRAMA_BASE</code> para <code>solicita_impressao</code> 1000/200</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
 </tbody>
 </table>
 <h2 id="requisitos-nao-funcionais-status-real">Requisitos não funcionais (status real)<a class="headerlink" href="#requisitos-nao-funcionais-status-real" title="Permanent link">&para;</a></h2>
@@ -804,9 +961,9 @@
 <td style="text-align: center;">✅</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Postgres</strong></td>
-<td style="text-align: left;">Não há suporte — SQLite apenas (decisão de arquitetura do projeto)</td>
-<td style="text-align: center;">❌ Não aplicável</td>
+<td style="text-align: left;"><strong>Postgres (backend duplo opcional, 08/09)</strong></td>
+<td style="text-align: left;"><code>mod_intranet/banco_conexao.conexao(chave)</code> roteia por <code>banco_tipo</code> (<code>sqlite</code> padrão | <code>postgres</code>, <code>postgres_url</code> em <code>tb_config</code>; <code>_ler_config_sqlite</code>/<code>salvar_backend</code>); no Postgres um <code>DATABASE db_mod_&lt;chave&gt;</code> por módulo (espelha <code>.db</code>), proxy traduz <code>?</code>→<code>%s</code>, DDL SQLite→Postgres, <code>INSERT OR IGNORE</code>→<code>ON CONFLICT</code>, <code>GROUP_CONCAT</code>→<code>STRING_AGG</code>, <code>PRAGMA</code>/FTS5 ignorados, <code>lastrowid</code> via <code>RETURNING id</code> + SAVEPOINT; <code>repositorio.engine/sessaodb</code> roteiam; card admin "Banco de dados — SQLite ou PostgreSQL" (<code>config-aplicar-banco</code>, sem reload, exige restart); container <code>assets/docker/postgres/docker-compose.yml</code> (<code>postgres:16-alpine</code>, <code>intranet/intranet</code>, <code>:5432</code>, healthcheck)</td>
+<td style="text-align: center;">✅ Opcional (SQLite padrão)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Frameworks CSS locais</strong></td>
@@ -873,19 +1030,23 @@
     C --&gt;|falha| B
     C --&gt;|ok| D[registrar_login&lt;br/&gt;tb_sessoes + cookie_hash]
     D --&gt; E[Dashboard /&lt;br/&gt;boas-vindas + resumo admin + feed do Blog]
-    E --&gt; F{Menu lateral&lt;br/&gt;módulos liberados}
+    E --&gt; F{Menu lateral&lt;br/&gt;Home isolado + alfabética&lt;br/&gt;+ Administração + trio Blog→Usuários→Auditoria → Docs/Sair&lt;br/&gt;19/09/2026}
     F --&gt; G[/blog]
     F --&gt; H[/users]
     F --&gt; I[/edit-pdf]
     F --&gt; J[/renomear-empenho]
-    F --&gt; K[/solicita-impressao]
-    F --&gt; L[/auditoria&lt;br/&gt;só admin geral]
-    G &amp; H &amp; I &amp; J &amp; K &amp; L --&gt; M[pagina_restrita&lt;br/&gt;revalida usuário + sessão + permissão]
-    M --&gt;|sem permissão| N[acesso_negado + volta ao /]
-    M --&gt;|ok| O[Ações do módulo&lt;br/&gt;CRUD · operações · configurações]
-    O --&gt; P[audit_log&lt;br/&gt;db_mod_auditoria.db&lt;br/&gt;tb_auditoria_&amp;lt;modulo&amp;gt;]
-    O --&gt; Q[notificar&lt;br/&gt;toast com notificacao_timeout]
-    E --&gt;|logout| R[registrar_logout + /login]</code></pre>
+    F --&gt; K[/solicita-impressao&lt;br/&gt;cotas 1000/200]
+    F --&gt; L[/tecnico]
+    F --&gt; M[/filas]
+    F --&gt; N[/lista-telefonica&lt;br/&gt;organograma + tel:]
+    F --&gt; O[/auditoria&lt;br/&gt;só admin geral]
+    F --&gt; P[/tv pública&lt;br/&gt;sem guarda]
+    G &amp; H &amp; I &amp; J &amp; K &amp; L &amp; M &amp; N &amp; O &amp; P --&gt; Q[pagina_restrita&lt;br/&gt;revalida usuário + sessão + permissão&lt;br/&gt;/tv sem guarda]
+    Q --&gt;|sem permissão| R[acesso_negado + volta ao /]
+    Q --&gt;|ok| S[Ações do módulo&lt;br/&gt;CRUD · operações · configurações]
+    S --&gt; T[audit_log&lt;br/&gt;db_mod_auditoria.db&lt;br/&gt;tb_auditoria_&amp;lt;modulo&amp;gt;]
+    S --&gt; U[notificar&lt;br/&gt;toast com notificacao_timeout]
+    E --&gt;|logout| V[registrar_logout + /login]</code></pre>
 <h3 id="modelo-de-dados">Modelo de dados<a class="headerlink" href="#modelo-de-dados" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>erDiagram
     tb_config {
@@ -1129,10 +1290,10 @@
     }
     class ModuloNegocio["mod_&lt;nome&gt; (padrão de pacote)"] {
         +telas.py : mostrar_tela(usuario_logado, perfil)
-        +manipulador_bd.py : init_db*() / queries / regras
-        +criador_bd.py : LEGADO (não usar)
+        +bd_manipulador.py : init_db*() / queries / regras
+        +bd_criador.py : LEGADO (não usar)
     }
-    class ManipuladorBD["db_manipulador.py"] {
+    class ManipuladorBD["bd_manipulador.py"] {
         +get_connection() Connection
         +init_db*() void
         +listar*/criar*/editar*/excluir*()
@@ -1166,10 +1327,10 @@
         +validar_acesso_modulo(user, chave)
         +modulos_do_usuario(user)
     }
-    class AuditLog["mod_intranet.manipulador_bd.audit_log"] {
+    class AuditLog["mod_intranet.bd_manipulador.audit_log"] {
         +audit_log(usuario, modulo, acao, descricao, hash_arquivo)
     }
-    class RegistrarAuditoria["mod_auditoria.manipulador_bd.registrar_auditoria"] {
+    class RegistrarAuditoria["mod_auditoria.bd_manipulador.registrar_auditoria"] {
         +registrar_auditoria(usuario, modulo, acao, ...)
     }
 
@@ -1183,13 +1344,13 @@
     AuditLog ..&gt; RegistrarAuditoria : grava em db_mod_auditoria.db
     main_py ..&gt; Autenticacao : login/guarda/permissões</code></pre>
 <blockquote>
-<p><code>db_criador.py</code> é legado/morto em todos os módulos (aponta para o banco central com esquemas divergentes) — o padrão real é <code>manipulador_bd.init_db*()</code>. Detalhes em <a href="../arquitetura/#padrao-interno-de-um-modulo">Arquitetura</a>.</p>
+<p><code>bd_criador.py</code> é legado/morto em todos os módulos (aponta para o banco central com esquemas divergentes) — o padrão real é <code>bd_manipulador.init_db*()</code>. Detalhes em <a href="../arquitetura/#padrao-interno-de-um-modulo">Arquitetura</a>.</p>
 </blockquote>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../inicio_rapido/" class="btn btn-neutral float-left" title="Guia de Início Rápido"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../inicio_rapido_otel/" class="btn btn-neutral float-left" title="Guia Rápido OTel"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../configuracoes/" class="btn btn-neutral float-right" title="Configurações e Variáveis de Ambiente">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -1213,7 +1374,7 @@
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../inicio_rapido/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../inicio_rapido_otel/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../configuracoes/" style="color: #fcfcfc">Next &raquo;</a></span>

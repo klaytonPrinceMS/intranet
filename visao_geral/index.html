@@ -53,6 +53,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -203,12 +224,12 @@
               
                 <h1 id="intranet-modular-system-overview">Intranet Modular — System Overview<a class="headerlink" href="#intranet-modular-system-overview" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>High-level view of the Intranet Modular: the 7 modules, the main usage flow (login → dashboard → modules) and the 3 user profiles (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) with per-module roles and access validation.</p>
+<p>High-level view of the Intranet Modular: the 10 modules (core + 9 business including the new Phone Directory organogram <code>Secretaria→Setor→Subsetor</code>), the main usage flow (login → dashboard → modules) and the 3 user profiles (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) with per-module roles, access validation and quota integration (1000/200 via <code>ORGANOGRAMA_BASE</code>).</p>
 </blockquote>
 <hr />
 <h1 id="intranet-modular-visao-geral">Intranet Modular — Visão Geral<a class="headerlink" href="#intranet-modular-visao-geral" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Visão de alto nível da Intranet Modular: os 7 módulos, o fluxo principal de uso (login → dashboard → módulos) e os 3 perfis de usuário (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) com papéis por módulo e validação de acesso.</p>
+<p>Visão de alto nível da Intranet Modular: os 10 módulos (núcleo + 9 de negócio incluindo a nova Lista Telefônica <code>Secretaria→Setor→Subsetor</code>), o fluxo principal de uso (login → dashboard → módulos) e os 3 perfis de usuário (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) com papéis por módulo, validação de acesso e integração de cotas (1000/200 via <code>ORGANOGRAMA_BASE</code>).</p>
 </blockquote>
 <h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
 <ol>
@@ -220,13 +241,14 @@
 </ol>
 <h2 id="objetivos">Objetivos<a class="headerlink" href="#objetivos" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Centralizar serviços internos da prefeitura em <strong>uma única aplicação</strong> acessível pela rede interna.</li>
+<li>Centralizar serviços internos da rede em <strong>uma única aplicação</strong> acessível pela rede interna.</li>
 <li>Garantir <strong>rastreabilidade</strong> (auditoria central LGPD) de todas as ações relevantes.</li>
 <li>Permitir <strong>evolução incremental</strong>: cada funcionalidade é um módulo independente com banco próprio.</li>
 <li>Operar <strong>sem internet</strong>: interface com Tailwind local, bibliotecas empacotadas e documentação embutida.</li>
+<li>Manter <strong>organograma único</strong> compartilhado entre módulos (Lista Telefônica como fonte do organograma genérico e Solicitação de Impressão como consumidora das cotas 1000/200).</li>
 </ul>
 <h2 id="modulos-do-sistema">Módulos do sistema<a class="headerlink" href="#modulos-do-sistema" title="Permanent link">&para;</a></h2>
-<p>O sistema é composto por um <strong>núcleo</strong> (<code>mod_intranet</code>) e <strong>6 módulos de negócio</strong>:</p>
+<p>O sistema é composto por um <strong>núcleo</strong> (<code>mod_intranet</code>) e <strong>9 módulos de negócio</strong> (6 históricos + 2 em 18/09/2026 + 1 em 19/09/2026):</p>
 <table>
 <thead>
 <tr>
@@ -257,7 +279,7 @@
 <td style="text-align: left;"><code>blog</code></td>
 <td style="text-align: left;"><code>/blog</code></td>
 <td style="text-align: left;"><code>db_mod_blog.db</code></td>
-<td style="text-align: left;">postagens/comentários HTML sanitizados (<code>nh3</code>)</td>
+<td style="text-align: left;">postagens/comentários HTML sanitizados (<code>nh3</code>) — <strong>padrão <code>carrossel</code> com 3 básicas (18/09/2026)</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Editor de PDF</strong></td>
@@ -285,7 +307,28 @@
 <td style="text-align: left;"><code>solicita_impressao</code></td>
 <td style="text-align: left;"><code>/solicita-impressao</code></td>
 <td style="text-align: left;"><code>db_mod_solicita_impressao.db</code></td>
-<td style="text-align: left;">envio de PDF, contagem de páginas, cotas mensais, autorização, impressão</td>
+<td style="text-align: left;">envio de PDF, contagem de páginas, cotas mensais (1000/200 via <code>ORGANOGRAMA_BASE</code>), autorização, impressão</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Técnico</strong></td>
+<td style="text-align: left;"><code>tecnico</code></td>
+<td style="text-align: left;"><code>/tecnico</code></td>
+<td style="text-align: left;"><code>db_mod_tecnico.db</code></td>
+<td style="text-align: left;"><strong>novo</strong> (18/09/2026) — software (download zip multi-seleção) + backup <code>YYYYMMDD_HHMM_nomePc_ip</code> owner-isolated, <code>webkitdirectory</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Filas (TV)</strong></td>
+<td style="text-align: left;"><code>filas</code></td>
+<td style="text-align: left;"><code>/filas</code> + <code>/tv</code> (pública)</td>
+<td style="text-align: left;"><code>db_mod_filas.db</code></td>
+<td style="text-align: left;"><strong>novo esqueleto</strong> (18/09/2026) — gestor de chamadas com TV (fila Geral <code>A000→A001</code>, auto-refresh 3s + beep)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Lista Telefônica</strong></td>
+<td style="text-align: left;"><code>lista_telefonica</code></td>
+<td style="text-align: left;"><code>/lista-telefonica</code> + <code>/admin/lista_telefonica</code></td>
+<td style="text-align: left;"><code>db_mod_lista_telefonica.db</code></td>
+<td style="text-align: left;"><strong>novo</strong> (19/09/2026) — organograma 12 secretarias <code>Secretaria→Setor→Subsetor</code> genérico, contatos alfabéticos, busca sem acentos, <code>tel:</code> clicável no celular, admin com excluir ramo/mover/elevar/ordenar/transferir</td>
 </tr>
 </tbody>
 </table>
@@ -295,23 +338,39 @@
 <h2 id="fluxo-de-alto-nivel">Fluxo de alto nível<a class="headerlink" href="#fluxo-de-alto-nivel" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart TD
     U[Usuário] --&gt;|/login| L[Autenticação bcrypt]
-    L --&gt;|ok| S[Sessão revogável&lt;br/&gt;tb_sessoes + cookie_hash]
-    S --&gt; D[Dashboard /&lt;br/&gt;boas-vindas + resumo admin + feed do Blog]
+    L --&gt;|ok| S[Sessão revogável&lt;br/&gt;tb_sessoes + cookie_hash&lt;br/&gt;+ Visitas ++contador_acessos_total]
+    S --&gt; D[Dashboard /&lt;br/&gt;boas-vindas + Resumo dinâmico Water + feed do Blog&lt;br/&gt;sem botão Abrir Blog (18/09/2026)]
     D --&gt; M[Drawer lateral&lt;br/&gt;módulos liberados]
-    M --&gt; R1[/blog] &amp; R2[/users] &amp; R3[/edit-pdf] &amp; R4[/renomear-empenho] &amp; R5[/solicita-impressao] &amp; R6[/auditoria]
-    R1 &amp; R2 &amp; R3 &amp; R4 &amp; R5 &amp; R6 --&gt; G[pagina_restrita&lt;br/&gt;autenticação + permissão + layout]
+    M --&gt; R1[/blog] &amp; R2[/users] &amp; R3[/edit-pdf] &amp; R4[/renomear-empenho] &amp; R5[/solicita-impressao] &amp; R6[/auditoria] &amp; R7[/tecnico] &amp; R8[/filas] &amp; R9[/lista-telefonica]
+    R1 &amp; R2 &amp; R3 &amp; R4 &amp; R5 &amp; R6 &amp; R7 &amp; R8 &amp; R9 --&gt; G[pagina_restrita&lt;br/&gt;autenticação + permissão + layout&lt;br/&gt;/tv sem guarda]
     G --&gt; AC[audit_log&lt;br/&gt;db_mod_auditoria.db&lt;br/&gt;tb_auditoria_&amp;lt;modulo&amp;gt;]
     D --&gt;|logout| LO[registrar_logout + /login]
-    BG[APScheduler&lt;br/&gt;backups · cleanups · monitor · poda] -.-&gt;|2º plano| AC</code></pre>
+    BG[APScheduler&lt;br/&gt;backups · cleanups · monitor · poda] -.-&gt;|2º plano| AC
+    LT[(Lista Telefônica&lt;br/&gt;ORGANOGRAMA_BASE&lt;br/&gt;12 secretarias)] -.-&gt;|importa cotas 1000/200| R5</code></pre>
 <ol>
 <li>O usuário acessa <code>/login</code> e informa usuário/senha (<code>autenticar</code> → bcrypt).</li>
-<li>Login bem-sucedido cria uma <strong>sessão revogável</strong> (<code>registrar_login</code>) amarrada a um cookie HTTP-Only (<code>cookie_hash</code>).</li>
-<li>O usuário é levado ao <strong>Dashboard</strong> <code>/</code> (saudação + feed do Blog + estatísticas para admins).</li>
+<li>Login bem-sucedido cria uma <strong>sessão revogável</strong> (<code>registrar_login</code>) amarrada a um cookie HTTP-Only (<code>cookie_hash</code>) e incrementa <strong>uma única vez</strong> o contador <code>tb_config contador_acessos_total</code> (<code>bd_conexao.incrementar_contador_acessos()</code> só em <code>main.py:tentar_login()</code> — nunca em navegação/refresh; <code>contador_acessos_inicio</code> em <code>YYYY-MM-DD</code> semeado em <code>bd_conexao.init_db()</code>).</li>
+<li>O usuário é levado ao <strong>Dashboard</strong> <code>/</code> (saudação + <strong>Resumo dinâmico sem botão Atualizar</strong> + feed do Blog) — ver detalhe abaixo.</li>
 <li>A navegação por módulos ocorre pelo <strong>menu lateral</strong> (drawer), que só mostra módulos liberados ao usuário.</li>
 <li>Toda rota de módulo passa pela guarda <code>pagina_restrita</code> (autenticação + permissão + layout de 4 partes).</li>
 <li>Ações relevantes gravam a <strong>trilha de auditoria</strong> (<code>audit_log</code> → banco exclusivo <code>db_mod_auditoria.db</code>, tabela por módulo) com IP/user-agent/hash quando aplicável.</li>
 <li>Em segundo plano, <strong>APScheduler</strong> executa backups por módulo, limpezas e monitor de pasta.</li>
 </ol>
+<h3 id="dashboard-resumo-dinamico-redesign-092026-padronizado-18092026">Dashboard <code>/</code> — Resumo dinâmico (redesign 09/2026, padronizado 18/09/2026)<a class="headerlink" href="#dashboard-resumo-dinamico-redesign-092026-padronizado-18092026" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p>Home visual <strong>Water escopado só no card</strong> (<code>home_visual.injetar_water_card()</code> → <code>.home-resumo-water/.home-stat-water</code> border <code>#dfe8f0</code> bg <code>#fafcfd</code>, ícone 36px, <code>modelo="water"</code> fixo em <code>page_dashboard</code> — <strong>18/09/2026</strong>: sombra lateral direita <code>box-shadow:6px 0 16px rgba(0,0,0,.07)</code> + <code>border-left-color</code> = <strong>cor do módulo <code>intranet</code></strong> via <code>ler_tema("intranet")["cor_botao"]</code> (antes <code>#000000</code>/<code>#EF6C00</code> fixos) + <code>classes_card_resumo</code> com <code>shadow-md</code>).</p>
+</blockquote>
+<ul>
+<li><strong>Sem botão Atualizar</strong>: <code>_orquestrar_resumo_dados()</code> (<code>main.py:250</code>) recalcula <strong>a cada acesso</strong> (9 contadores: usuários <code>filtro_ativo=None</code>, sessões <code>WHERE logout IS NULL</code>, visitas <code>contador_acessos_total</code>, postagens, quarentena <code>processado=0</code>, PDFs <code>ativo=1</code>, auditoria 24h <code>SUM WHERE timestamp &gt;= -1 day</code>, fila impressão pendente, logs totais).</li>
+<li><strong>Sem botão "Abrir Blog completo" (removido 18/09/2026)</strong>: o header do feed em <code>main.py:448-453</code> é agora só <code>row items-center</code> com <code>label "Publicações recentes"</code> — o acesso ao Blog permanece pelo drawer (<code>/blog</code>); a Home usa <code>renderizar_postagens</code> (mesmo padrão do módulo) sem navegação dedicada.</li>
+<li><strong>2 cards, altura -50%+25% com sombra lateral direita e cor do módulo</strong>: <code>gap-1 px-2 py-1</code>, ícone 36px <code>text-2xl</code>, número <code>text-h6</code> 4 dígitos (<code>&gt;9999</code> com total real no tooltip único do card; <code>Logs&gt;9999</code> com alerta <code>⚠️ realize backup do banco de auditoria (db_mod_auditoria.db)</code>), layout horizontal ícone esq + número, tooltip simples (<code>Usuarios/Sessões/Noticias/Logs/Visitas/Fila geral/Para autorizar/Quarentena/PDFs/Auditoria 24h</code>). Estilo: <code>.home-resumo-water</code> + <code>.home-resumo-pic</code> com <code>border-left-width:4px</code> + <code>box-shadow:6px 0 16px</code> + <code>shadow-md</code> em <code>classes_card_resumo</code>.</li>
+<li><strong>Visibilidade por papel</strong>:<ul>
+<li><strong>"Resumo do sistema"</strong> (8 métricas: Usuários, Sessões, Visitas, Postagens, Quarentena, PDFs, Logs, Logs 24h) — <strong>só <code>administrador_geral</code>/<code>administrador_modulo</code></strong> (<code>eh_admin</code> <code>main.py:500</code>, <code>main.py:406-426</code> com <code>_cor_modulo_home</code> via <code>ler_tema("intranet")</code>).</li>
+<li><strong>"Resumo do sistema — Impressão"</strong> (Fila geral + Para autorizar) — <strong>só autorizador</strong> (<code>tb_responsaveis_autorizacao ativo=1</code> via <code>_eh_autorizador_impressao()</code> <code>main.py:446</code>) <strong>ou <code>administrador_geral</code></strong> (<code>_contar_fila_para_autorizar()</code> <code>main.py:460</code>; admin geral = fila geral; <code>main.py:427-441</code> com <code>_cor_modulo_home2</code> idem, antes <code>#EF6C00</code> fixo).</li>
+</ul>
+</li>
+<li>Comparativo <code>/home-*</code> revertido e hambúrguer sem seção comparativa; serviço <code>http://localhost:8080</code> water OK.</li>
+</ul>
 <h2 id="perfis-de-usuario">Perfis de usuário<a class="headerlink" href="#perfis-de-usuario" title="Permanent link">&para;</a></h2>
 <p>Existem <strong>3 perfis globais</strong> (coluna <code>user_perfil</code> de <code>tb_usuarios</code>):</p>
 <table>
@@ -392,6 +451,24 @@
 <td style="text-align: left;">Solicitação de Impressão</td>
 <td style="text-align: center;">solicitar/acompanhar</td>
 <td style="text-align: center;">imprimir/gerenciar</td>
+<td style="text-align: center;">tudo</td>
+</tr>
+<tr>
+<td style="text-align: left;">Técnico</td>
+<td style="text-align: center;">software/backup do próprio PC</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">tudo + ver todos os backups em <code>/admin/tecnico</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Filas (TV)</td>
+<td style="text-align: center;">chamar próxima / ver TV</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">tudo</td>
+</tr>
+<tr>
+<td style="text-align: left;">Lista Telefônica</td>
+<td style="text-align: center;">ver organograma + busca + ligar</td>
+<td style="text-align: center;">gerenciar ramos/contatos/ordem</td>
 <td style="text-align: center;">tudo</td>
 </tr>
 </tbody>

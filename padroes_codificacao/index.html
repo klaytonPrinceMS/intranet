@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -129,6 +131,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -209,6 +230,9 @@
 <blockquote>
 <p>Padrões obrigatórios de codificação, extraídos do código real (funcional, <code>snake_case</code>, pacotes <code>mod_*</code>). Em dúvida, espelhe um módulo existente.</p>
 </blockquote>
+<h2 id="fundamento-domain-driven-design-ddd-e-a-lingua-ubiqua">Fundamento — Domain-Driven Design (DDD) e a Língua Ubíqua<a class="headerlink" href="#fundamento-domain-driven-design-ddd-e-a-lingua-ubiqua" title="Permanent link">&para;</a></h2>
+<p>O padrão de criar funções, tabelas e documentação <strong>em Português BR</strong> não é arbitrário: deriva do <strong>Domain-Driven Design (DDD)</strong> e da sua <strong>Língua Ubíqua</strong> — o vocabulário exatamente como os especialistas do domínio (servidores da prefeitura, almoxarifado, secretarias) falam no dia a dia. Exemplos reais no projeto: <code>solicitacao_impressao</code>, <code>empenho</code>, <code>quarentena</code>, <code>autorizar_grupo</code>, <code>cota_paginas_mensal</code>, <code>secretaria</code>, <code>setor</code> — termos do negócio, não abstrações técnicas.</p>
+<p>Regra resultante: <strong>toda função, variável, tabela, coluna e documentação deve usar o vocabulário do domínio</strong>, nunca traduções técnicas ou abreviações que os especialistas não reconheceriam. Em conflito entre um nome "técnico" e o termo do negócio, vence o termo do negócio.</p>
 <h2 id="1-nomenclatura">1. Nomenclatura<a class="headerlink" href="#1-nomenclatura" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong><code>snake_case</code></strong> para funções, variáveis e nomes de arquivo Python. Ex.: <code>autenticar</code> (<code>:179</code>), <code>gerar_hash_senha</code> (<code>:161</code>), <code>bd_criador.py</code>.</li>
@@ -226,15 +250,18 @@
 </ul>
 <h2 id="3-modelo-de-novo-modulo">3. Modelo de novo módulo<a class="headerlink" href="#3-modelo-de-novo-modulo" title="Permanent link">&para;</a></h2>
 <p><div class="highlight"><pre><span></span><code>mod_exemplo/
-  __init__.py
-  telas.py            # mostrar_tela(nome, perfil)  — abas de negócio
-  administracao.py    # mostrar_administracao(...)  — painel admin standalone
-  manipulador_bd.py   # acesso ao db_mod_exemplo.db (WAL)
-  criador_bd.py       # legado/morto — não confiar
+  __init__.py               # encapsulamento, exposição pública e bootstrap do módulo
+  models/__init__.py        # (padrão a propagar) Table + dataclass + map_imperatively() — hoje só mod_intranet
+  bd_criador.py             # LEGADO/MORTO — não confiar; schema real via init_db* do bd_manipulador
+  bd_manipulador.py         # ÚNICO ponto de acesso ao db_mod_exemplo.db (WAL)
+  telas.py                  # mostrar_tela(nome, perfil)  — abas de negócio
+  telas_administracao.py    # mostrar_administracao(...)  — painel admin standalone
 </code></pre></div>
 - Banco próprio criado por <code>inicializar_bancos()</code>; toda escrita relevante registra na trilha de auditoria via <code>audit_log</code> (banco exclusivo <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_&lt;modulo&gt;</code>).
+- O schema real do módulo é criado por <code>init_db*</code> no <code>bd_manipulador.py</code>; <code>bd_criador.py</code> é <strong>legado/morto</strong> (não confiar nem executar).
+- Módulos de negócio <strong>não</strong> têm <code>bd_conexao.py</code> próprio — usam o central <code>mod_intranet/bd_conexao.py</code> (<code>get_config</code>/<code>set_config</code> via <code>Repositorio</code>) e <code>mod_intranet/banco_conexao.conexao(chave)</code> para a conexão do backend ativo.
 - Registre o módulo em <code>tb_modulos</code> (<code>autenticacao.registrar_modulo</code>).
-- <strong>Painel admin em arquivo dedicado (<code>telas_administracao.py</code>)</strong> — desde 06/09, cada módulo expõe <code>mostrar_administracao(...)</code> em <code>mod_&lt;nome&gt;/administracao.py</code>, isolado do <code>telas.py</code> e sem tabs de navegação. A rota <code>main.py:439</code> (<code>@ui.page("/admin/{chave_modulo}")</code>) faz o dispatch e chama o <code>mostrar_administracao</code> correspondente. Isso permite: (1) admin abrir direto pela URL <code>/admin/blog</code> etc., (2) o admin do módulo ser <strong>standalone</strong> (não depende do estado das telas de negócio) e (3) o cupê "Administração" do drawer ser contextual por módulo. O arquivo recebe como parâmetro o ator/flags de permissão e o que precisar de tema/BD; toda a lógica de configuração (aparência, cotas, textos, regex, pastas monitoradas, Quarentena, etc.) vive nele.</p>
+- <strong>Painel admin em arquivo dedicado (<code>telas_administracao.py</code>)</strong> — desde 06/09, cada módulo expõe <code>mostrar_administracao(...)</code> em <code>mod_&lt;nome&gt;/telas_administracao.py</code>, isolado do <code>telas.py</code> e sem tabs de navegação. A rota <code>main.py:439</code> (<code>@ui.page("/admin/{chave_modulo}")</code>) faz o dispatch e chama o <code>mostrar_administracao</code> correspondente. Isso permite: (1) admin abrir direto pela URL <code>/admin/blog</code> etc., (2) o admin do módulo ser <strong>standalone</strong> (não depende do estado das telas de negócio) e (3) o cupê "Administração" do drawer ser contextual por módulo. O arquivo recebe como parâmetro o ator/flags de permissão e o que precisar de tema/BD; toda a lógica de configuração (aparência, cotas, textos, regex, pastas monitoradas, Quarentena, etc.) vive nele.</p>
 <h2 id="4-tela-nicegui">4. Tela (NiceGUI)<a class="headerlink" href="#4-tela-nicegui" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Funções que recebem <code>(nome, perfil)</code>; sem JavaScript direto.</li>
@@ -243,7 +270,7 @@
 </ul>
 <h2 id="5-banco">5. Banco<a class="headerlink" href="#5-banco" title="Permanent link">&para;</a></h2>
 <h3 id="51-crudbase-camada-de-acesso-legado">5.1 <code>CrudBase</code> — camada de acesso legado<a class="headerlink" href="#51-crudbase-camada-de-acesso-legado" title="Permanent link">&para;</a></h3>
-<p><code>db_manipulador.py</code> concentra acesso; <strong>nunca cross-query</strong> entre bancos.
+<p><code>bd_manipulador.py</code> concentra acesso; <strong>nunca cross-query</strong> entre bancos.
 Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
 <strong>Use <code>CrudBase</code> (<code>mod_intranet/crud_base.py</code>) — nunca <code>sqlite3</code> cru</strong> (06/09): conexão WAL/synchronous/foreign_keys padronizada, atalhos <code>listar</code>/<code>obter</code>/<code>criar</code>/<code>atualizar</code>/<code>excluir</code>/<code>executar_muitas</code>/<code>criar_tabela</code> e transação atômica <code>crud.transacao()</code> (commit/rollback); auditoria das escritas via <code>audit_reg</code> (wrapper fail-soft de <code>audit_log</code>). Piloto: <code>../../mod_blog/bd_manipulador.py</code> 100% migrado.</p>
 <h3 id="52-sqlalchemy-orm-dataclasses-padrao-novo-piloto-mod_intranet-0709">5.2 SQLAlchemy ORM + Dataclasses — padrão novo (piloto: <code>mod_intranet</code>, 07/09)<a class="headerlink" href="#52-sqlalchemy-orm-dataclasses-padrao-novo-piloto-mod_intranet-0709" title="Permanent link">&para;</a></h3>
@@ -252,7 +279,7 @@ Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
   models/
     __init__.py   # Table metadata + dataclass + map_imperatively()
   repositorio.py  # Classe Repositorio (CRUD tipado via Session ORM)
-  conexao_bd.py  # get_config/set_config delegam para Repositorio
+  bd_conexao.py  # get_config/set_config delegam para Repositorio
 </code></pre></div>
 <p><strong>Criando models de um novo módulo:</strong></p>
 <ol>
@@ -295,13 +322,13 @@ Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessoes</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Postagem</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">ativo</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
 </code></pre></div>
 <ol>
-<li><code>db_manipulador.py</code> — use <code>RepositorioBlog</code> em vez de <code>CrudBase</code>:</li>
+<li><code>bd_manipulador.py</code> — use <code>RepositorioBlog</code> em vez de <code>CrudBase</code>:</li>
 </ol>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">.repositorio</span><span class="w"> </span><span class="kn">import</span> <span class="n">RepositorioBlog</span>
 <span class="n">_repo</span> <span class="o">=</span> <span class="n">RepositorioBlog</span><span class="p">()</span>
 </code></pre></div>
 <ol>
-<li><code>autenticacao.py</code>/<code>db_manipulador.py</code> — use <code>Repositorio</code>:</li>
+<li><code>autenticacao.py</code>/<code>bd_manipulador.py</code> — use <code>Repositorio</code>:</li>
 </ol>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">mod_intranet.repositorio</span><span class="w"> </span><span class="kn">import</span> <span class="n">Repositorio</span>
 <span class="k">with</span> <span class="n">Repositorio</span><span class="p">()</span> <span class="k">as</span> <span class="n">repo</span><span class="p">:</span>
@@ -327,8 +354,8 @@ Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
 <p>O módulo Renomeador de Empenho é referência concreta das convenções abaixo.</p>
 </blockquote>
 <ul>
-<li><strong>Duas camadas por módulo</strong> (<code>db_manipulador.py</code> + <code>telas.py</code>), com <code>mostrar_tela(usuario_logado, perfil)</code> obrigatório (<code>telas.py:45</code>).</li>
-<li><strong>Banco WAL próprio</strong> (<code>db_mod_&lt;nome&gt;.db</code>) com <code>CREATOR</code> idempotente (<code>CREATE TABLE IF NOT EXISTS</code> + seeds condicionais) e <strong>migração de coluna</strong> para bancos antigos (<code>_migrar_coluna</code>, <code>manipulador_bd.py:278</code>).</li>
+<li><strong>Duas camadas por módulo</strong> (<code>bd_manipulador.py</code> + <code>telas.py</code>), com <code>mostrar_tela(usuario_logado, perfil)</code> obrigatório (<code>telas.py:45</code>).</li>
+<li><strong>Banco WAL próprio</strong> (<code>db_mod_&lt;nome&gt;.db</code>) com <code>CREATOR</code> idempotente (<code>CREATE TABLE IF NOT EXISTS</code> + seeds condicionais) e <strong>migração de coluna</strong> para bancos antigos (<code>_migrar_coluna</code>, <code>bd_manipulador.py:278</code>).</li>
 <li><strong>Tabelas <code>tb_&lt;nome&gt;</code></strong>, colunas <code>snake_case</code> com prefixo semântico (<code>nome_arquivo_final</code>, <code>tipo_especial</code>, <code>motivo_recusa</code>).</li>
 <li><strong>Trilha de auditoria por arquivo</strong> (hash SHA-256) no próprio banco do módulo + <code>audit_log</code> central com hash — ver <code>tb_arquivos_auditoria</code>/<code>tb_eventos_arquivos</code>.</li>
 <li><strong>Perfil por aba</strong>: calcula <code>eh_admin = perfil == "administrador_geral" or eh_admin_do_modulo(usuario, "&lt;chave&gt;")</code> e restringe abas/funções a admin; valida o papel antes de qualquer escrita.</li>
@@ -349,20 +376,136 @@ Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
 <li><strong>Fonte única de botões, diálogos e rodapés</strong>: importe de <code>mod_intranet.ui_comum</code> — <code>botao()</code> (variantes <code>primario</code>/<code>secundario</code> (aliases <code>solido</code>/<code>contorno</code>)/<code>texto</code>/<code>neutro</code>/<code>restaurar</code>/<code>restaurar_fill</code>/<code>perigo</code>/<code>icone</code>), <code>botao_icone()</code>, <code>dialogo_card()</code>, <code>rodape_dialogo()</code>, <code>rodape_salvar_restaurar()</code>, paleta <code>CORES</code> e <code>notificar</code> (reexportado de <code>tema_modulo</code>).</li>
 <li><strong>Nada de <code>ui.button</code> cru nem hex solto</strong> (<code>#C62828</code>, <code>#EF6C00</code>, <code>#2E7D32</code>…): use <code>botao(variante=...)</code> e <code>CORES[...]</code>. <code>tema_modulo.botao()</code> e <code>_botao_padrao</code> (<code>tela_configuracoes.py</code>) apenas delegam à fábrica central.</li>
 <li><strong>Migração de botões CONCLUÍDA nos módulos (06/09)</strong>: ~120 botões crus (<code>ui.button</code>) migrados para <code>ui_comum.botao/botao_icone(chave_modulo=...)</code> em 12 arquivos — <code>mod_auditoria</code> (telas+admin), <code>mod_edit_pdf</code> (telas), <code>mod_gest_cad_usuario</code> (telas), <code>mod_renomear_empenho</code> (telas+admin), <code>mod_solicita_impressao</code> (telas+admin). Efeito: ao alterar cor/tamanho dos botões do módulo na administração (<code>&lt;prefixo&gt;_cor_botao</code>/<code>cor_texto_botao</code>/<code>btn_tamanho</code>), a cor aplica em TODOS os botões do módulo (a fábrica lê o tema a cada render). Mapeamento de variantes: <code>unelevated</code>→<code>"solido"</code>; <code>flat</code>→<code>"texto"</code>; <code>outline</code>→<code>"contorno"</code>; ícone <code>round/dense</code>→<code>botao_icone</code>; ações destrutivas→<code>"perigo"</code> ou <code>cor="negative"</code>; "Restaurar padrão"→<code>"restaurar"</code>; verde→<code>texto</code> com <code>cor="green-8"</code>; laranja→<code>cor="orange-9"</code>; Resetar cota (solicita_impressao)→<code>"restaurar_fill"</code> (família restaurar).</li>
+<li><strong>RNF-UI-01 — Padrão global de botões: centralizados, mesmo formato, cor única (REALIZADO 06/09, referência: <code>Aplicar configurações</code>):</strong> todos os botões de ação do sistema (todos os <code>mod_*</code> + <code>mod_intranet</code>) usam <strong>fábrica central</strong> <code>ui_comum.botao(chave_modulo=...)</code>, <strong>centralizados</strong> em linhas <code>w-full justify-center flex-wrap</code> com <code>.style('gap: 0.75rem')</code> e <code>.style('min-width: 0')</code>, <strong>mesmo formato</strong> <code>size=md</code> <code>min-w-[180px]</code> <code>no-caps</code> <code>shadow-sm</code> ( <code>contorno</code>/<code>texto</code>/<code>restaurar</code>/<code>perigo</code> mantêm mesma largura/altura, só borda/cor muda) e <strong>cor única por módulo</strong> via tema (<code>&lt;prefixo&gt;_cor_botao</code>/<code>cor_texto_botao</code>, <code>ui.colors(primary=cor)</code> + <code>cabecalho</code> borda + <code>botao</code> fundo, <code>#000000</code> quando vazio via <code>PADROES_TEMA</code>). Referência de tamanho/cor: botão <strong>Aplicar configurações</strong> / <strong>Aplicar</strong> do <code>card_admin</code>/<code>bloco_aparencia</code>. Validado por <code>assets/test/verifica_ui_comum.py</code> (190 verificações) — ver <a href="../2_levantamento_requisitos/">Requisitos — RNF-UI-01</a>.</li>
 <li><strong>Exceções INTENCIONAIS de <code>ui.button</code> cru</strong> (documentadas como tais): <code>ui_comum.py:163</code> (a própria fábrica), <code>ui_comum.py:326</code> (Cancelar de <code>rodape_dialogo</code> — padrão de diálogo) e <code>tela_configuracoes.py:493,497</code> (preview AO VIVO da aba Cores — usa valores não salvos dos campos).</li>
-<li><strong><code>rodape_salvar_restaurar</code> na fábrica (06/09)</strong> (<code>ui_comum.py:338</code>): "Restaurar padrão" usa a variante <code>restaurar</code> (antes <code>flat</code> cinza) e o botão de salvar usa <code>solido</code> do tema do módulo — ambos via <code>botao(chave_modulo=...)</code>. "Restaurar padrão" tem aparência ÚNICA no projeto (contorno âmbar), inclusive nos sites que usavam contorno/primário em empenhos e edit_pdf. Contraste WCAG: a variante <code>restaurar</code> usa <code>text-color=amber-10</code> (escurecida de <code>amber-9</code>, ~3,8:1 em card branco — melhora o AA do anterior ~2,2:1). <strong>Padrão de 2 botões por card (06/09)</strong>: o rótulo padrão do salvar é <strong>"Aplicar"</strong> (antes "Salvar") — grava EXCLUSIVAMENTE o card em questão; novo parâmetro <code>acoes_extra</code> aceita tuplas <code>(rotulo, icone, on_click[, tooltip[, variante]])</code> (variante default <code>solido</code>) renderizadas antes do "Restaurar padrão"; a row usa <code>flex-wrap</code> (responsividade mobile).</li>
+<li><strong><code>rodape_salvar_restaurar</code> na fábrica (06/09)</strong> (<code>ui_comum.py:338</code>): "Restaurar padrão" usa a variante <code>restaurar</code> (antes <code>flat</code> cinza) e o botão de salvar usa <code>solido</code> do tema do módulo — ambos via <code>botao(chave_modulo=...)</code>. "Restaurar padrão" tem aparência ÚNICA no projeto (contorno âmbar), inclusive nos sites que usavam contorno/primário em empenhos e edit_pdf. Contraste WCAG: a variante <code>restaurar</code> usa <code>text-color=amber-10</code> (escurecida de <code>amber-9</code>, ~3,8:1 em card branco — melhora o AA do anterior ~2,2:1). <strong>Padrão de 2 botões por card (06/09)</strong>: o rótulo padrão do salvar é <strong>"Aplicar"</strong> (antes "Salvar") — grava EXCLUSIVAMENTE o card em questão; novo parâmetro <code>acoes_extra</code> aceita tuplas <code>(rotulo, icone, on_click[, tooltip[, variante]])</code> (variante default <code>solido</code>) renderizadas antes do "Restaurar padrão"; a row usa <code>flex-wrap</code> (responsividade mobile) e <strong>centralização <code>justify-center</code> com <code>.style('min-width: 0')</code> conforme RNF-UI-01</strong>.</li>
 <li><strong>Painéis de administração no padrão <code>card_admin</code> (06/09)</strong> (<code>ui_comum.py:781</code>): <code>ui.card</code> w-full com borda esquerda temática (cor_botao do módulo, fallback <code>#607D8B</code>) + fundo <code>estilo_cartao</code>; dentro, <code>ui.expansion</code> como cabeçalho retrátil — <strong>o título do card é colorido com a cor de título do módulo</strong> (<code>&lt;prefixo&gt;_cor_titulo</code> via <code>ler_tema</code>, fail-soft → <code>#212121</code>) via <code>header-style</code>; <code>grade=True</code> (padrão) cria a grade responsiva do projeto (1 campo/linha em tela pequena, 2 em média <code>sm:</code>, 3 em grande <code>md:</code>) e o <code>with</code> do chamador entra na grade; <code>grade=False</code> para conteúdo livre (tabelas/textareas). Aplicado em: blog (2 seções), auditoria, empenhos (8 seções, <code>grade=False</code>), <code>tema_modulo.bloco_aparencia</code> (card_admin próprio; <code>com_card=False</code> para callers que já têm card: gest_cad_usuario, edit_pdf, solicita_impressao admin + telas).</li>
 <li><strong>Fail-soft obrigatório</strong>: falha de tema/BD cai nos padrões com registro loguru (<code>observabilidade.get_logger("intranet")</code>); variante inválida levanta <code>ValueError</code> (erro de programação — falha rápida).</li>
 <li><strong>Helpers de tela em <code>mod_intranet/aba_modulo.py</code></strong>: <code>cabecalho(titulo, subtitulo, ..., chave_modulo=None)</code> (card de cabeçalho com cores resolvidas pelo tema do módulo — <strong>a borda de destaque é a MESMA cor dos botões do módulo</strong>, <code>&lt;prefixo&gt;_cor_botao</code>; parâmetros explícitos vencem; sem chave → defaults <code>ui_comum.CORES</code>), <code>menu_modulo(itens, valor=None)</code> (abas de menu com ícone em cima/nome embaixo), <code>campo_busca(placeholder, on_change, valor_inicial, tooltip)</code> (<code>outlined dense clearable debounce='150'</code>) e <code>barra_acoes(busca, acoes)</code> (barra branca com busca à esquerda e botões <code>ui_comum.botao</code> primários à direita; itens malformados ignorados com loguru). Não recrie <code>ui.tabs</code>/<code>ui.input</code> crus.</li>
 <li><strong>Classes do núcleo em telas novas (06/09)</strong>: em vez de <code>ui.grid</code>/<code>ui.input</code>/<code>ui.button</code> crus, use os componentes padronizados — <code>GradeTabela</code> (<code>ui_painel.py:30</code>, grid com cabeçalho caption + células + coluna de ações), <code>PainelLista</code> (<code>ui_painel.py:93</code>, busca + filtro + paginação client-side + <code>atualizar()</code>) e <code>FormularioBuilder</code> (<code>ui_form.py:32</code>, construtor fluente com <code>build()</code>/<code>valores()</code>). <code>ui_comum.py</code> é orientado a classes internamente (<code>BotaoFabrica</code>/<code>Dialogo</code>/<code>Cartao</code>/<code>CampoBase</code>) — as funções <code>botao</code>/<code>dialogo_card</code>/<code>campo_*</code> permanecem como wrappers finos; ambos os estilos são aceitos, comportamento idêntico.</li>
 <li><strong>Equivalência comprovada</strong>: <code>test/verifica_ui_comum.py</code> (<strong>188 verificações</strong> byte-a-byte, stub de nicegui, tema fixado via monkeypatch sem tocar no banco — inclui checks de migração dos botões dos módulos: perigo/solido/botao_icone, rodapé e variante restaurar) e <code>test/teste_classes_crud.py</code> (<strong>68 verificações</strong> — CrudBase em SQLite real, gancho de auditoria, <code>banco_conexao</code>, equivalência wrapper↔classe, GradeTabela/PainelLista/FormularioBuilder) — TODO código de teste fica em <code>test/</code>, nunca em <code>/tmp</code>.</li>
 </ul>
+<h3 id="81-responsividade-global-rnf-ui-01-extensao-mobile-first-092026">8.1 Responsividade global — RNF-UI-01 extensão mobile-first (09/2026)<a class="headerlink" href="#81-responsividade-global-rnf-ui-01-extensao-mobile-first-092026" title="Permanent link">&para;</a></h3>
+<p>Padrão obrigatório para <strong>toda tela nova ou retrabalhada</strong> (auditado <code>kbp-web-design</code> em 320 / 768 / 1024 px). O layout é <strong>mobile-first</strong> e validado no tema <code>readthedocs</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Regra</th>
+<th style="text-align: left;">Padrão</th>
+<th style="text-align: left;">Onde aplicar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>gap</code> via <code>.style()</code></td>
+<td style="text-align: left;"><code>.style('gap: 0.5rem')</code> / <code>gap: 0.75rem</code> / <code>gap: 1rem</code></td>
+<td style="text-align: left;"><code>ui.row</code>/<code>ui.column</code> — <strong>nunca</strong> <code>gap-*</code> Tailwind em <code>row</code>/<code>column</code> (bug #2171)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>min-width:0</code></td>
+<td style="text-align: left;"><code>.style('min-width: 0')</code> em cells/containers flex</td>
+<td style="text-align: left;">toda <code>row</code>/<code>column</code> com filho <code>truncate</code>/<code>w-full</code> para evitar estouro flex</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>flex-wrap</code></td>
+<td style="text-align: left;"><code>.classes('flex-wrap')</code> ou <code>flex-wrap</code> em row</td>
+<td style="text-align: left;">header, barra de ações, linha de botões, filtros</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>truncate</code> + <code>max-w</code></td>
+<td style="text-align: left;"><code>.classes('truncate max-w-[18ch]')</code></td>
+<td style="text-align: left;">badges, títulos, breadcrumbs, chips</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>overflow-x-auto</code></td>
+<td style="text-align: left;"><code>.classes('overflow-x-auto')</code></td>
+<td style="text-align: left;"><code>ui.tabs</code>, tabelas, grades, breadcrumbs longos</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>scroll_area</code> altura explícita</td>
+<td style="text-align: left;">pai com <code>h-[320px]</code>/<code>max-h-[60vh]</code></td>
+<td style="text-align: left;"><code>ui.scroll_area</code> precisa de pai com altura fixa</td>
+</tr>
+<tr>
+<td style="text-align: left;">Dialogs/cards</td>
+<td style="text-align: left;"><code>w-full max-w-[420px] mx-4</code> / <code>max-w-[560px]</code></td>
+<td style="text-align: left;"><code>ui.dialog</code> + <code>ui.card</code> — login usa <code>w-full max-w-[420px] mx-4 p-6 sm:p-10</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Grids mobile-first</td>
+<td style="text-align: left;"><code>grid-cols-1 sm:grid-cols-2 md:grid-cols-3</code></td>
+<td style="text-align: left;"><code>ui.grid</code> / <code>card_admin</code> (<code>grade=True</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Containers</td>
+<td style="text-align: left;"><code>w-full p-4 sm:p-6</code> com <code>min-width:0</code></td>
+<td style="text-align: left;">wrapper da página (<code>q-page</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Exemplos já corrigidos (referência):</strong></p>
+<ul>
+<li><code>main.py</code> — login: <code>w-[420px] p-10</code> → <code>w-full max-w-[420px] mx-4 p-6 sm:p-10</code>, <code>p-4 min-width:0</code>; header: <code>flex-wrap</code>, <code>truncate</code>, badge <code>max-w</code>, <code>gap</code> via <code>.style</code>.</li>
+<li><code>mod_gest_cad_usuario</code> — barra superior: <code>flex-nowrap</code> → <code>flex-wrap</code>, tabs <code>overflow-x-auto</code>, busca <code>flex-1 min-w-[220px]</code>, dialogs <code>w-full max-w</code>.</li>
+<li><code>mod_edit_pdf</code> — já com botões <code>w-full justify-center</code>, toggle <code>spread</code>, grids responsivos.</li>
+</ul>
+<h3 id="82-decoradores-transversais-mod_intranetdecoradorespy-092026">8.2 Decoradores transversais — <code>mod_intranet/decoradores.py</code> (09/2026)<a class="headerlink" href="#82-decoradores-transversais-mod_intranetdecoradorespy-092026" title="Permanent link">&para;</a></h3>
+<p>Padrão obrigatório para concerns transversais (DDD PT-BR, docstring bilíngue EN/PT-BR):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Decorador (PT-BR / EN alias)</th>
+<th style="text-align: left;">Uso</th>
+<th style="text-align: left;"><code>arquivo:linha</code> piloto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>requer_pode_publicar(arg_usuario="autor")</code> / <code>require_permission</code></td>
+<td style="text-align: left;">permissão de publicação do Blog antes de <code>criar/atualizar/excluir</code></td>
+<td style="text-align: left;"><code>mod_blog/bd_manipulador.py:424,448,458,472,501,521,534</code> (7 funcs)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>auditado(modulo="blog", acao="criar_postagem")</code> / <code>audited</code></td>
+<td style="text-align: left;">auditoria LGPD fail-soft via <code>audit_reg</code> após sucesso</td>
+<td style="text-align: left;">mesmo piloto</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>falha_suave(default=None)</code> / <code>fail_soft</code></td>
+<td style="text-align: left;"><code>try/except + _log</code> + <code>return default</code></td>
+<td style="text-align: left;">piloto <code>mod_blog</code> + <code>mod_intranet/hora_servidor.py:54</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>com_conexao(commit=True)</code> / <code>with_connection</code></td>
+<td style="text-align: left;">injeta <code>cur</code> de <code>_conn()</code> com <code>commit/rollback/close</code></td>
+<td style="text-align: left;">a propagar para <code>mod_gest_cad_usuario</code> (30 funcs), <code>mod_renomear_empenho</code> (40 funcs)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>valida_regex(arg="padrao", max_len=200)</code> / <code>validate_regex</code></td>
+<td style="text-align: left;"><code>re.compile</code> + <code>len&gt;max</code> antes de <code>salvar_regra</code></td>
+<td style="text-align: left;"><code>mod_renomear_empenho/bd_manipulador.py:1863</code> (<code>salvar_regra</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>invalida_cache(*funcs)</code> / <code>invalidate_cache</code></td>
+<td style="text-align: left;"><code>cache_clear()</code> após <code>set_config</code>/<code>salvar_tema</code></td>
+<td style="text-align: left;"><code>mod_intranet/bd_conexao.py:209</code>, <code>mod_intranet/tema_modulo.py:132</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttl_cache(ttl=60, maxsize=32)</code></td>
+<td style="text-align: left;">cache TTL para <code>offset_ntp</code>/<code>tags_permitidas</code></td>
+<td style="text-align: left;"><code>mod_intranet/hora_servidor.py:97</code></td>
+</tr>
+</tbody>
+</table>
+<p>Ordem recomendada (externo → interno): <code>@falha_suave</code> → <code>@requer_pode_publicar</code> → <code>@auditado</code> → <code>def func</code>. Validado por <code>assets/test/teste_fluxo_blog.py:1</code> (46 checks).
+- <code>mod_blog</code> — já com filtros justificados, exibição centralizada, seleção em lote.</p>
+<p><strong>Proposta por <code>container</code>/<code>row</code>/<code>grid</code></strong> (checklist P0/P1/P2 da auditoria <code>kbp-web-design</code> por módulo — <code>intranet</code>, <code>gest</code>, <code>auditoria</code>, <code>renomear</code>, <code>solicita</code>, <code>edit</code>, <code>blog</code>, <code>tela_configuracoes</code>, <code>ui_comum</code>) deve ser seguida em novas telas; ver <a href="../2_levantamento_requisitos/">Requisitos — RNF-UI-01</a> e <a href="../convencoes_codigo/">Convenções</a> checklist.</p>
 <h2 id="9-configurabilidade-regra-de-projeto">9. Configurabilidade (regra de projeto)<a class="headerlink" href="#9-configurabilidade-regra-de-projeto" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Toda e qualquer configuração passível de alteração</strong> (cores, padrões, tamanhos, tempos, pastas, textos…) deve ser <strong>configurável pelo usuário</strong> na área de configuração do módulo: chaves em <code>tb_config</code> (prefixo <code>&lt;modulo&gt;_*</code>) + cupê "Administração" do módulo / painel central <code>/configuracoes</code>, aplicando <strong>sem restart</strong> sempre que possível. Não fixe em código valores que o administrador possa querer ajustar.</li>
 <li><strong>Tema de botões por módulo — vazio = padrão do módulo (06/09)</strong>: chave de botão do módulo <strong>VAZIA</strong> (<code>&lt;prefixo&gt;_cor_botao</code>/<code>cor_texto_botao</code>/<code>btn_tamanho</code>) = <strong>padrão do módulo</strong> — precedência em <code>tema_modulo.ler_tema</code> (<code>tema_modulo.py:94-126</code>): (1) chave do módulo não vazia → (2) default do parâmetro → (3) <code>PADROES_TEMA</code> (mapa único com <strong>TODOS os módulos em <code>#000000</code></strong> — blog, usuarios, auditoria, editar_pdf, empenhos, solicita_impressao, intranet; a cor do intranet). O tema do sistema (<code>intranet_*</code>, card "Botões do sistema" em <code>/configuracoes</code>) <strong>NÃO é herdado</strong> por outros módulos; <code>cor_fundo</code>/<code>cor_titulo</code>/<code>texto_header</code> seguem a mesma regra. Para voltar ao padrão, "Restaurar padrão" grava <code>""</code> (detalhes em <a href="../configuracoes/">Configurações</a>).</li>
 <li><strong>Card padrão "Configurações de cores" — <code>bloco_aparencia</code> (06/09)</strong> (<code>tema_modulo.py:297-483</code>): todo módulo deve expor o card PADRÃO <strong>"Configurações de cores"</strong> via <code>tema_modulo.bloco_aparencia(usuario_logado, chave_modulo, tema, ...)</code> — card recolhível <code>card_admin</code> (<code>aberto=False</code>) com <strong>PRÉVIA AO VIVO</strong> (exemplo de cabeçalho/card/botões que atualiza a cada troca de cor) e os campos no padrão do intranet ("Cor geral do módulo", "Cor do texto do módulo", "Cor de fundo da página", "Cor dos títulos", "Cor de fundo dos cards", "Cor do texto dos cards", "Tamanho dos botões" + opcional "Texto do cabeçalho" via <code>com_texto_header</code>). Rodapé padrão de 2 botões (Restaurar padrão + Aplicar) recarregando após 1 s; <code>salvar_tema</code> grava também <code>cor_fundo_card</code>/<code>cor_texto_card</code> (<code>tema_modulo.py:129-153</code>). <code>com_card=False</code> para chamadores que já fornecem o card (evita card dentro de card — ex.: solicita_impressao admin).</li>
-<li><strong>"Cor geral do módulo" — padrão ÚNICO de tema (06/09)</strong>: a chave <code>&lt;prefixo&gt;_cor_botao</code> é chamada de <strong>"Cor geral do módulo"</strong> (rótulo renomeado de "Cor dos botões" em TODOS os painéis — <code>tema_modulo.bloco_aparencia</code> <code>tema_modulo.py:318-323</code>, aba Cores do sistema <code>tela_configuracoes.py:517-526</code>, admins de blog <code>mod_blog/administracao.py:56</code>, auditoria <code>mod_auditoria/administracao.py:111</code> e empenhos <code>mod_renomear_empenho/administracao.py:99</code> + <code>telas.py:699</code>) e define a cor dos <strong>botões E dos menus/abas/destaques</strong> da tela do módulo: <code>ui.colors(primary=cor_botao)</code> (tinge tabs/menus/Quasar) + <code>cabecalho(chave_modulo=...)</code> (borda de destaque) + <code>ui_comum.botao(chave_modulo=...)</code> (botões). A cor é aplicada às telas de TODOS os módulos — antes só blog e gest_cad tinham <code>ui.colors(primary=...)</code>; agora auditoria (<code>mod_auditoria/telas.py:126</code>), edit_pdf (<code>mod_edit_pdf/telas.py:89</code>), empenhos (<code>mod_renomear_empenho/telas.py:65</code>) e solicita_impressao (<code>mod_solicita_impressao/telas.py:53</code>) também aplicam. Nas rotas de admin (<code>main.py:484-523</code>) os hexes fixos foram substituídos por <code>ler_tema(&lt;modulo&gt;, cor_botao=&lt;default&gt;)["cor_botao"]</code> (auditoria/editar_pdf/solicita_impressao); empenhos usa <code>empenhos_cor_botao</code> com default alinhado a <code>#000000</code> (antes <code>#6D4C41</code>). <code>ui.color_input</code>/<code>ui.select</code> crus do admin de auditoria e empenhos (admin + telas) migraram para as fábricas <code>campo_cor</code>/<code>campo_selecao</code> com os novos rótulos. Coberto por <code>test/teste_aba_config_intranet.py</code> (164 verificações — rótulos "Cor geral do módulo"/"Cor do texto do módulo").</li>
+<li><strong>"Cor geral do módulo" — padrão ÚNICO de tema (06/09)</strong>: a chave <code>&lt;prefixo&gt;_cor_botao</code> é chamada de <strong>"Cor geral do módulo"</strong> (rótulo renomeado de "Cor dos botões" em TODOS os painéis — <code>tema_modulo.bloco_aparencia</code> <code>tema_modulo.py:318-323</code>, aba Cores do sistema <code>tela_configuracoes.py:517-526</code>, admins de blog <code>mod_blog/telas_administracao.py:56</code>, auditoria <code>mod_auditoria/telas_administracao.py:111</code> e empenhos <code>mod_renomear_empenho/telas_administracao.py:99</code> + <code>telas.py:699</code>) e define a cor dos <strong>botões E dos menus/abas/destaques</strong> da tela do módulo: <code>ui.colors(primary=cor_botao)</code> (tinge tabs/menus/Quasar) + <code>cabecalho(chave_modulo=...)</code> (borda de destaque) + <code>ui_comum.botao(chave_modulo=...)</code> (botões). A cor é aplicada às telas de TODOS os módulos — antes só blog e gest_cad tinham <code>ui.colors(primary=...)</code>; agora auditoria (<code>mod_auditoria/telas.py:126</code>), edit_pdf (<code>mod_edit_pdf/telas.py:89</code>), empenhos (<code>mod_renomear_empenho/telas.py:65</code>) e solicita_impressao (<code>mod_solicita_impressao/telas.py:53</code>) também aplicam. Nas rotas de admin (<code>main.py:484-523</code>) os hexes fixos foram substituídos por <code>ler_tema(&lt;modulo&gt;, cor_botao=&lt;default&gt;)["cor_botao"]</code> (auditoria/editar_pdf/solicita_impressao); empenhos usa <code>empenhos_cor_botao</code> com default alinhado a <code>#000000</code> (antes <code>#6D4C41</code>). <code>ui.color_input</code>/<code>ui.select</code> crus do admin de auditoria e empenhos (admin + telas) migraram para as fábricas <code>campo_cor</code>/<code>campo_selecao</code> com os novos rótulos. Coberto por <code>test/teste_aba_config_intranet.py</code> (164 verificações — rótulos "Cor geral do módulo"/"Cor do texto do módulo").</li>
 <li>Exemplo vivo: o botão "Novo usuário" da Gestão de Usuários obedece ao tema do módulo (<code>usuarios_cor_botao</code> via <code>ui_comum.botao(chave_modulo="usuarios")</code> — <code>mod_gest_cad_usuario/telas.py:110</code>), ajustável na aba Administração; com a chave vazia (padrão), usa o padrão do PRÓPRIO módulo (<code>PADROES_TEMA["usuarios"]</code> = <code>#000000</code>).</li>
 <li>Detalhes e checklist: <a href="../convencoes_codigo/">Convenções de Código</a> → seção "Configurabilidade (regra de projeto)".</li>
 <li>Guia de migração passo a passo ("como migrar um módulo"): <a href="../convencoes_codigo/">Convenções de Código</a> → seção "Componentes de UI padronizados".</li>
@@ -370,17 +513,17 @@ Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
 <h2 id="10-postgresql-opcional-0809-backend-duplo-ativo">10. PostgreSQL opcional (08/09) — backend duplo ATIVO<a class="headerlink" href="#10-postgresql-opcional-0809-backend-duplo-ativo" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>SQLite segue o padrão universal</strong> (<code>banco_tipo = 'sqlite'</code>) — servidores simples não instalam nada extra; todos os módulos operam na camada única <code>banco_conexao.conexao(chave)</code>.</li>
-<li><strong>Backend duplo controlado pelo sistema</strong>: <code>banco_tipo</code> = <code>sqlite</code>|<code>postgres</code> e <code>postgres_url</code> (DSN) na <code>tb_config</code> central, lidos <strong>DIRETO do arquivo SQLite central</strong> (<code>_ler_config_sqlite</code> — seletor de boot). No Postgres, <strong>um SCHEMA por módulo</strong> no banco <code>intranet</code> preserva o isolamento.</li>
+<li><strong>Backend duplo controlado pelo sistema</strong>: <code>banco_tipo</code> = <code>sqlite</code>|<code>postgres</code> e <code>postgres_url</code> (DSN) na <code>tb_config</code> central, lidos <strong>DIRETO do arquivo SQLite central</strong> (<code>_ler_config_sqlite</code> — seletor de boot). No Postgres, <strong>um DATABASE <code>db_mod_&lt;chave&gt;</code> por módulo</strong> preserva o isolamento (espelha o arquivo SQLite — <code>banco_modulo</code>/<code>_garantir_bd_postgres</code>/<code>garantir_bancos_postgres</code> em <code>banco_conexao.py:263/281/317</code>).</li>
 <li><strong>Ativação pelo admin, sem código</strong>: <code>/configuracoes</code> → card <strong>"Banco de dados — SQLite ou PostgreSQL"</strong> → <code>salvar_backend()</code>; <strong>reiniciar o servidor</strong> para aplicar.</li>
-<li><strong>Camada única</strong>: <code>conexao(chave)</code> (<code>banco_conexao.py:488</code>) devolve conexão DBAPI do backend ativo — sqlite (arquivo, WAL) ou postgres (proxy psycopg2 com tradução <code>?</code>→<code>%s</code>, DDL, <code>ON CONFLICT</code>, <code>PRAGMA</code>/<code>sqlite_master</code>/FTS5 degradados, <code>lastrowid</code> via <code>RETURNING</code>, SAVEPOINT por statement). <code>repositorio.engine/sessaodb</code> roteiam para o Postgres quando ativo; <code>CrudBase._conectar</code> também roteia (módulo em <code>SCHEMAS</code>).</li>
+<li><strong>Camada única</strong>: <code>conexao(chave)</code> (<code>banco_conexao.py:570</code>) devolve conexão DBAPI do backend ativo — sqlite (arquivo, WAL) ou postgres (proxy psycopg2 com tradução <code>?</code>→<code>%s</code>, DDL, <code>ON CONFLICT</code>, <code>PRAGMA</code>/<code>sqlite_master</code>/FTS5 degradados, <code>lastrowid</code> via <code>RETURNING</code>, SAVEPOINT por statement). <code>repositorio.engine/sessaodb</code> roteiam para o Postgres quando ativo; <code>CrudBase._conectar</code> também roteia (módulo em <code>MODULOS_BD</code>).</li>
 <li><strong>Fail-soft</strong>: sem driver instalado, o sistema segue de pé em SQLite (exception registrada no loguru); DSN nunca logado com credenciais (<code>_dsn_publico</code>).</li>
 <li><strong>Container pronto</strong>: <code>assets/docker/postgres/docker-compose.yml</code> (postgres:16-alpine, base <code>intranet</code>, porta 5432, volume persistente, healthcheck).</li>
 <li><strong>Dependências</strong>: <code>requirements.txt</code> — <code>sqlalchemy&gt;=2.0</code> e <code>psycopg2-binary&gt;=2.9</code> habilitadas (instalar para usar <code>banco_tipo='postgres'</code>).</li>
-<li><strong>Migração de dados SQLite→PostgreSQL permanece manual</strong> — o Postgres inicia com os schemas vazios (recriados pelos <code>init_db</code>); detalhes em <a href="../configuracoes/">Configurações</a>.</li>
+<li><strong>Migração de dados SQLite→PostgreSQL permanece manual</strong> — o Postgres inicia com os bancos de módulo vazios (recriados pelos <code>init_db</code>); detalhes em <a href="../configuracoes/">Configurações</a>.</li>
 </ul>
 <h2 id="11-administracao-do-modulo-em-arquivo-dedicado-telas_administracaopy-0609">11. Administração do módulo em arquivo dedicado — <code>telas_administracao.py</code> (06/09)<a class="headerlink" href="#11-administracao-do-modulo-em-arquivo-dedicado-telas_administracaopy-0609" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Padrão</strong>: cada módulo expõe <code>mostrar_administracao(...)</code> em <code>mod_&lt;nome&gt;/administracao.py</code> — <strong>arquivo separado</strong> do <code>telas.py</code>, isolado do estado das telas de negócio, sem tabs de navegação. A rota <code>@ui.page("/admin/{chave_modulo}")</code> em <code>main.py:439</code> faz o dispatch por <code>chave_modulo</code> e chama o <code>mostrar_administracao</code> correspondente.</li>
+<li><strong>Padrão</strong>: cada módulo expõe <code>mostrar_administracao(...)</code> em <code>mod_&lt;nome&gt;/telas_administracao.py</code> — <strong>arquivo separado</strong> do <code>telas.py</code>, isolado do estado das telas de negócio, sem tabs de navegação. A rota <code>@ui.page("/admin/{chave_modulo}")</code> em <code>main.py:439</code> faz o dispatch por <code>chave_modulo</code> e chama o <code>mostrar_administracao</code> correspondente.</li>
 <li><strong>Assinatura canônica</strong> (varia por módulo conforme o que precisa renderizar):</li>
 <li><code>../../mod_blog/telas_administracao.py</code> — <code>mostrar_administracao(usuario_logado, pode_publicar)</code> (aparência, tags HTML, largura imagem, gestão de inativos, <code>campo_modulo</code>).</li>
 <li><code>../../mod_gest_cad_usuario/telas_administracao.py</code> — <code>mostrar_administracao(ator)</code> (aparência, tamanho mínimo senha, <code>campo_modulo</code>).</li>
@@ -388,13 +531,21 @@ Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
 <li><code>../../mod_edit_pdf/telas_administracao.py</code> — <code>mostrar_administracao(usuario_logado, eh_admin)</code> (cotas GB/usuário, lotes, textos, aparência, manutenção).</li>
 <li><code>../../mod_renomear_empenho/telas_administracao.py</code> — <code>mostrar_administracao(...)</code> (pastas, aparência, template, regex, auditoria, Quarentena, regras) — recebe também <code>t_cor_botao</code>/<code>t_cor_texto_botao</code>/<code>t_cor_fundo</code>/<code>t_cor_titulo</code>/<code>t_tamanho</code>/<code>texto_header</code> já resolvidos e os callables <code>_btn_cls</code>/<code>_btn_style</code> + <code>get_config</code>/<code>set_config</code>.</li>
 <li><code>../../mod_solicita_impressao/telas_administracao.py</code> — <code>mostrar_administracao(usuario_logado, eh_admin)</code> com <strong>6 sub-abas</strong> (Solicitações, Secretarias, Setores, Responsáveis, Cotas, Config).</li>
-<li><strong>Botão "Administração" do drawer é contextual</strong> (<code>layout_tela.py:184-200</code>): dentro de um módulo, navega para <code>/admin/{chave_modulo}</code>; no Home, navega para <code>/configuracoes</code>. Tooltip muda conforme o contexto ("Configurações de {nome_modulo}" vs "Configurações gerais do sistema").</li>
+<li><strong>Botão "Administração" do drawer é contextual</strong> (<code>mod_intranet/telas.py:_montar_layout</code>, via fábrica <code>ui_comum.item_menu_drawer</code>, <code>testid="menu-admin"</code>): dentro de um módulo, navega para <code>/admin/{chave_modulo}</code>; no Home, navega para <code>/configuracoes</code>. Tooltip muda conforme o contexto ("Configurações de {nome_modulo}" vs "Configurações gerais do sistema").</li>
 <li><strong>Por que arquivo separado</strong>:</li>
 <li>O admin do módulo fica <strong>standalone</strong> — não depende do estado das abas de negócio (cota, filtros, login refresh, etc.).</li>
 <li>Permite URL direta (<code>/admin/blog</code>, <code>/admin/auditoria</code> etc.) e acesso contextual pelo drawer.</li>
 <li><code>telas.py</code> continua focado em fluxo de negócio; <code>telas_administracao.py</code> concentra TODA a configuração do módulo.</li>
 <li><strong>Fail-soft + loguru obrigatórios</strong> (regra geral do projeto): todo <code>mostrar_administracao</code> envolve leituras/gravações em <code>try/except</code>, registrando via <code>observabilidade.get_logger("&lt;modulo&gt;")</code> — <code>_FMT</code> do <code>observabilidade.py</code> já garante <code>{module}:{function}:{line}</code> no log.</li>
-<li><strong>Migração de admin embutido no <code>telas.py</code></strong>: ao criar um novo módulo, <strong>não</strong> coloque o painel de administração como aba dentro de <code>mostrar_tela</code> — extraia para <code>mod_&lt;nome&gt;/administracao.py</code> e adicione a entrada correspondente no <code>dispatch</code> de <code>main.py:439-524</code>. Módulos já migrados (06/09): <code>blog</code>, <code>usuarios</code>, <code>auditoria</code>, <code>editar_pdf</code>, <code>empenhos</code>, <code>solicita_impressao</code>.</li>
+<li><strong>Migração de admin embutido no <code>telas.py</code></strong>: ao criar um novo módulo, <strong>não</strong> coloque o painel de administração como aba dentro de <code>mostrar_tela</code> — extraia para <code>mod_&lt;nome&gt;/telas_administracao.py</code> e adicione a entrada correspondente no <code>dispatch</code> de <code>main.py:439-524</code>. Módulos já migrados (06/09): <code>blog</code>, <code>usuarios</code>, <code>auditoria</code>, <code>editar_pdf</code>, <code>empenhos</code>, <code>solicita_impressao</code>.</li>
+</ul>
+<h3 id="111-menu-hamburguer-fabrica-item_menu_drawer-anti-disconnect-12092026">11.1 Menu hambúrguer — fábrica <code>item_menu_drawer</code> + anti-disconnect (12/09/2026)<a class="headerlink" href="#111-menu-hamburguer-fabrica-item_menu_drawer-anti-disconnect-12092026" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p>Padrão obrigatório para navegação e handlers (AGENTS.md §5.1).</p>
+</blockquote>
+<ul>
+<li><strong>Itens do drawer via fábrica</strong> <code>ui_comum.item_menu_drawer()</code> / <code>ItemMenuDrawer</code> (<code>mod_intranet/ui_comum.py:850</code>) — nunca <code>ui.item</code> cru: <code>w-full rounded-lg my-0.5</code> + <code>.style('min-width: 0')</code>, avatar <code>text-primary shrink-0 aria-hidden</code>, rótulo <code>truncate max-w-full grow</code>, tooltip PT-BR, <code>focus-visible</code> ring, ativo (<code>bg-blue-100</code> + <code>aria-current="page"</code>), <code>data-testid</code> via <code>.props()</code> (<code>menu-home</code>, <code>menu-&lt;chave&gt;</code>, <code>menu-admin</code>, <code>menu-docs</code>, <code>menu-sair</code>), <code>aria-label</code> em item só-ícone, fail-soft (<code>None</code>). Drawer abre <strong>fechado</strong>; header com hambúrguer <code>data-testid=menu-hamburguer</code>. <strong>Bootstrap local dispensado</strong> (reset global quebraria o Quasar — visual replicado com Tailwind + Quasar; justificativa no código).</li>
+<li><strong>Handlers nunca bloqueiam o event-loop</strong>: <code>on_click</code> rápido pode ser <code>sync</code>; I/O pesado (<code>subprocess</code> mkdocs, SMTP, <code>copy2</code>, <code>observabilidade.configurar()</code>, <code>rodar_monitor</code>) <strong>DEVE</strong> usar <code>await run.io_bound(fn)</code> em handler <code>async</code> com spinner, botão desabilitado e trava <code>ocupado</code>. Reload <strong>único</strong> (<code>ui.timer(1.0, ui.navigate.reload())</code>) após <code>notificar()</code>; card Banco <strong>nunca recarrega</strong>. Rodapé via <code>ui_comum.rodape_salvar_restaurar()</code> com <code>data-testid</code> (<code>config-aplicar-&lt;card&gt;</code>); avisos via <code>tema_modulo.notificar()</code>. Detalhes: <a href="../configuracoes/#anti-disconnect-no-aplicar-handlers-async-12092026-agentsmd-51">Configurações — Anti-disconnect</a>. Testes headless: <code>clicar()</code> aguarda <code>awaitable</code>.</li>
 </ul>
 <h2 id="12-sqlalchemy-orm-dataclasses-0709-padrao-a-propagar">12. SQLAlchemy ORM + Dataclasses (07/09) — padrão a propagar<a class="headerlink" href="#12-sqlalchemy-orm-dataclasses-0709-padrao-a-propagar" title="Permanent link">&para;</a></h2>
 <p>O <code>mod_intranet</code> é o <strong>módulo piloto</strong> da arquitetura de acesso a dados com SQLAlchemy 2.0 ORM + Dataclasses. Os demais módulos devem migrar seguindo este padrão.</p>
@@ -403,7 +554,7 @@ Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
   models/
     __init__.py    # Table definitions + dataclasses + registry.map_imperatively()
   repositorio.py   # Repositorio local com CRUD tipado via Session
-  manipulador_bd.py  # usa Repositorio para todas as operações de BD
+  bd_manipulador.py  # usa Repositorio para todas as operações de BD
   telas.py         # usa Repositorio / CrudBase para acesso a dados
 </code></pre></div>
 <h3 id="camadas-de-baixo-para-cima">Camadas (de baixo para cima)<a class="headerlink" href="#camadas-de-baixo-para-cima" title="Permanent link">&para;</a></h3>
@@ -558,7 +709,7 @@ Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
         <span class="bp">self</span><span class="o">.</span><span class="n">fechar</span><span class="p">()</span>
 </code></pre></div>
 <ol>
-<li><strong><code>db_manipulador.py</code></strong> — usa <code>Repositorio</code> para todo acesso:
+<li><strong><code>bd_manipulador.py</code></strong> — usa <code>Repositorio</code> para todo acesso:
    <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">mod_</span><span class="o">&lt;</span><span class="n">nome</span><span class="o">&gt;.</span><span class="n">repositorio</span> <span class="kn">import</span><span class="w"> </span><span class="nn">Repositorio</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">obter_exemplo</span><span class="p">(</span><span class="n">id_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Exemplo</span><span class="p">]:</span>
@@ -623,14 +774,14 @@ Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
 - <code>repositorio.py</code> — <code>MODULOS_BD</code> (7 bancos) + <code>caminho_db()</code> + <code>engine(chave)</code> por banco (criação condicional) + <code>sessaodb(chave)</code> + <code>garantir_bancos()</code> + <code>Repositorio(chave_db=...)</code> com helpers genéricos <code>consultar</code>/<code>executar</code>/<code>ultimo_id</code>
 - <code>bd_conexao.py</code> — <code>get_config</code>/<code>set_config</code> delegam para <code>Repositorio</code> (fallback sqlite3)
 - <code>autenticacao.py</code> — todas as operações de sessão e módulo via <code>Repositorio</code>
-- <code>db_manipulador.py</code> — <code>garantir_rastreabilidade</code> usa <code>Repositorio</code>
+- <code>bd_manipulador.py</code> — <code>garantir_rastreabilidade</code> usa <code>Repositorio</code>
 - <code>bd_criador.py</code> — <code>inicializar_bancos()</code> chama <code>garantir_bancos()</code> no passo 0 do boot (antes dos <code>init_db</code>)</p>
 <h3 id="propagacao-para-modulos-existentes">Propagação para módulos existentes<a class="headerlink" href="#propagacao-para-modulos-existentes" title="Permanent link">&para;</a></h3>
 <p>Ao migrar um módulo <code>mod_*</code> existente:</p>
 <ol>
 <li>Criar <code>mod_&lt;nome&gt;/models/__init__.py</code> com as tabelas e dataclasses.</li>
 <li>Registrar o banco do módulo em <code>MODULOS_BD</code> (<code>mod_intranet/repositorio.py:57-65</code>) e usar <code>engine(chave)</code>/<code>sessaodb(chave)</code>/<code>Repositorio(chave_db=...)</code> — não criar engine próprio.</li>
-<li>Refatorar <code>db_manipulador.py</code> para usar <code>Repositorio</code> (métodos tipados ou helpers genéricos <code>consultar</code>/<code>executar</code>/<code>ultimo_id</code>) em vez de sqlite3 direto.</li>
+<li>Refatorar <code>bd_manipulador.py</code> para usar <code>Repositorio</code> (métodos tipados ou helpers genéricos <code>consultar</code>/<code>executar</code>/<code>ultimo_id</code>) em vez de sqlite3 direto.</li>
 <li>Manter <code>CrudBase</code> para operações que não se beneficiam do ORM (ex.: FTS5, DDL complexo).</li>
 <li>Atualizar docstrings para EN+PT-BR.</li>
 <li>Garantir que todos os <code>except</code> usem loguru.</li>
@@ -638,6 +789,79 @@ Toda conexão aplica <code>PRAGMA journal_mode=WAL</code>.
 <blockquote>
 <p>Ver detalhes em <a href="../arquitetura/#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura — Arquitetura de acesso a dados do núcleo</a> e <a href="../modulos/intranet/#repositorio-mod_intranetrepositoriopy-0709-multi-banco-0609">Módulo Núcleo — Repositório</a>.</p>
 </blockquote>
+<h2 id="13-padrao-de-cli-typer-com-prefixos-semanticos-opcao-c-092026">13. Padrão de CLI — Typer com prefixos semânticos (Opção C, 09/2026)<a class="headerlink" href="#13-padrao-de-cli-typer-com-prefixos-semanticos-opcao-c-092026" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>PT-BR obrigatório no help; EN no topo da docstring via rich/typer.</strong></p>
+</blockquote>
+<p>O único ponto de CLI do projeto é <code>main.py</code> + <code>mod_intranet/ativacao.py</code> — não crie <code>argparse</code> ad-hoc:</p>
+<ul>
+<li><strong>Sem argumentos → <code>config_persistida()</code></strong> (<code>ativacao.py:1284</code>): carrega <code>tb_config</code> com fallback em <code>_config_padrao()</code>; help: <em>"Sem argumentos, sobe direto com a configuração persistida"</em> (<code>ativacao._cli_app()</code> <code>:1338</code>).</li>
+<li><strong><code>--config</code>/<code>-c</code> → wizard</strong> (<code>main.py:43-45</code>): ENTER=básico, <code>1</code>=configurar; tem prioridade.</li>
+<li><strong>Flags Opção C</strong> (<code>ativacao._cli_app()</code> <code>:1331</code>): prefixo <code>--ativ-</code> (otel, postgres) + <code>--porta-</code> (db, docs, grafana, site) + <code>--scan-ports</code>, agrupadas por tipo e em ordem alfabética dentro do grupo, com contrações <code>-c/-o/-p/-d/-k/-s/-t/-S</code> e aliases legados (<code>--postgres</code>/<code>--otel</code>/<code>--portapostgres</code> etc. + typo <code>--ativ-postgress</code>).</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Grupo</th>
+<th style="text-align: left;">Flag</th>
+<th style="text-align: left;">Alias</th>
+<th style="text-align: center;">Curta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Ativação</td>
+<td style="text-align: left;"><code>--ativ-otel</code></td>
+<td style="text-align: left;"><code>--otel</code></td>
+<td style="text-align: center;"><code>-o</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--ativ-postgres</code></td>
+<td style="text-align: left;"><code>--ativ-postgress</code>, <code>--postgres</code></td>
+<td style="text-align: center;"><code>-p</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Portas</td>
+<td style="text-align: left;"><code>--porta-db</code></td>
+<td style="text-align: left;"><code>--portapostgres</code></td>
+<td style="text-align: center;"><code>-k</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-docs</code></td>
+<td style="text-align: left;"><code>--portadocumentacao</code></td>
+<td style="text-align: center;"><code>-d</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-grafana</code></td>
+<td style="text-align: left;"><code>--portatelemetria</code></td>
+<td style="text-align: center;"><code>-t</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>--porta-site</code></td>
+<td style="text-align: left;"><code>--portasite</code></td>
+<td style="text-align: center;"><code>-s</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Config</td>
+<td style="text-align: left;"><code>--config</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: center;"><code>-c</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Utilitário</td>
+<td style="text-align: left;"><code>--scan-ports</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: center;"><code>-S</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><code>cli_opcoes()</code> (<code>:1387</code>) via <code>Typer.get_command().make_context</code>, <code>config_do_cli()</code> (<code>:1420</code>) com <code>_porta_valida</code>, <code>iniciar(cli_cfg)</code> reaproveita <code>_executar_e_persistir</code>. <code>main.py:38-56</code> decide o fluxo. Ver <a href="../manual_de_uso_instalacao/#22-inicializacao-por-linha-de-comando-typer-opcao-c">Manual de Instalação — Typer Opção C</a> e <a href="../configuracoes/#inicializacao-por-argumentos-de-linha-de-comando-opcao-c-092026">Configurações — Opção C</a>.</li>
+</ul>
               
             </div>
           </div><footer>

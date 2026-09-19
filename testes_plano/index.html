@@ -51,6 +51,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
@@ -127,6 +129,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul class="current">
@@ -159,6 +168,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -175,6 +190,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
               </ul>
       </div>
@@ -203,12 +224,12 @@
               
                 <h1 id="test-plan-intranet-modular">Test Plan — Intranet Modular<a class="headerlink" href="#test-plan-intranet-modular" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Test plan by flow, derived from <code>PLANO.md</code> (Fases 2.5 a 5). No automated framework; manual scripts in <code>test/</code>.</p>
+<p>Test plan by flow, derived from <code>PLANO.md</code> (Fases 2.5 a 5). Standalone scripts in <code>assets/test/*.py</code>; run the whole suite with <code>.venv/bin/pytest</code> (runner <code>assets/test/test_suite.py</code>) — see <a href="#execucao-dos-testes">Execution</a>.</p>
 </blockquote>
 <hr />
 <h1 id="testes-plano-intranet-modular">Testes — Plano — Intranet Modular<a class="headerlink" href="#testes-plano-intranet-modular" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Plano de testes por fluxo, de <code>PLANO.md</code> (Fases 2.5 a 5). Sem framework automatizado; scripts manuais em <code>test/</code>.</p>
+<p>Plano de testes por fluxo, de <code>PLANO.md</code> (Fases 2.5 a 5). Scripts standalone em <code>assets/test/*.py</code>; a suíte completa roda com <code>.venv/bin/pytest</code> (runner <code>assets/test/test_suite.py</code>) — veja <a href="#execucao-dos-testes">Execução dos testes</a>.</p>
 </blockquote>
 <h2 id="fluxos-cobertos">Fluxos cobertos<a class="headerlink" href="#fluxos-cobertos" title="Permanent link">&para;</a></h2>
 <ul>
@@ -219,12 +240,84 @@
 <li><strong>Renomeador</strong> (<code>teste_fluxo_renameador.py</code>): documento-modelo <code>DOC_0201.pdf</code> ponta a ponta (31/31 OK); organizador (16/16); edição embutida (18/18).</li>
 <li><strong>Editor de PDF</strong> (<code>test/test_editor_pdf.py</code>): 20 verificações.</li>
 <li><strong>Auditoria</strong> (<code>test/test_auditoria.py</code>): índices, rastreabilidade IP/UA, poda por retenção, acesso exclusivo do admin geral e preferência de campos/ordem por usuário (12 verificações).</li>
+<li><strong>Ativação</strong> (<code>test_ativacao.py</code>, 11/09): assistente de boot — regra padrão SQLite <strong>ignorando a <code>tb_config</code></strong>, <code>_garantir_sdk_otel</code>, persistência <code>otel_ativo</code>, portas/DSN/faixa, <code>_compose_cmd</code>, <code>_mascarar_comando</code>, <code>_validar_senha</code>, <code>aplicar_portas</code> (57 verificações).</li>
+<li><strong>Blog na Home</strong> (<code>teste_home_blog.py</code>, 11/09): feed da página inicial nos modos carrossel/única/histórico via <code>renderizar_postagens</code> (3 verificações, headless).</li>
+<li><strong>Anti-disconnect + segurança do Aplicar</strong> (<code>test_seg_aplicar.py</code>, 12/09/2026, delta a1b1650): handlers pesados <code>async</code> com <code>run.io_bound</code> + trava <code>ocupado</code>; path traversal (backup); injeção de rota/DSN mascarado; SMTP <code>timeout=15</code> + <code>io_bound</code>; <code>db_mod_*.db</code> no <code>.gitignore</code>.</li>
+<li><strong>Rodapé + <code>data-testid</code></strong> (<code>test_rodape_testid.py</code>, 12/09/2026, delta a1b1650): <code>rodape_salvar_restaurar</code> retorna <code>(restaurar, aplicar)</code>, Aplicar com <code>data-testid</code>, Banco sem reload, docs/SMTP via <code>io_bound</code> (UI real headless; <code>clicar()</code> aguarda <code>awaitable</code>).</li>
+<li><strong>Tema + trava</strong> (<code>test_tema_cache_trava.py</code>, 12/09/2026, delta a1b1650): cache <code>ler_tema</code> com invalidação em <code>salvar_tema</code>, clamp <code>notificacao_timeout</code>, <code>notificar</code>, <code>paleta_escura</code>, trava <code>ocupado</code>.</li>
+<li><strong>E-mail/docs/observabilidade</strong> (<code>test_email_docs_obs.py</code>, 12/09/2026): <code>enviar_email</code>/<code>testar_conexao</code> com mock SMTP, <code>documentacao.reconstruir</code> com mocks (sem mkdocs real), <code>observabilidade.configurar</code> em <code>LOG_DIR</code> isolado.</li>
+<li><strong>Backup/rotinas</strong> (<code>test_rotinas_backup.py</code>, 12/09/2026, delta a1b1650): checkpoint WAL + <code>OSError→None</code> em <code>backup_modulo</code>, handlers async, <code>_podar_backups</code>/<code>listar_backups</code>/<code>limpar_editor_pdf</code> (pastas em <code>/tmp</code>, sem tocar <code>backup/</code>).</li>
+<li><strong>Papéis do ator</strong> (<code>test_autenticacao_papeis.py</code>, 12/09/2026): hash/senha, <code>papel_no_modulo</code>/<code>validar_acesso_modulo</code>, ciclo conceder→revogar com usuário temporário (LGPD).</li>
+<li><strong>Paridade SQLite↔PostgreSQL</strong> (<code>test_banco_conexao.py</code>, 12/09/2026, AGENTS.md §4): <code>sgbd_ativo</code>, <code>_CursorPostgres._preparar</code> (traduções), <code>_ddl_postgres</code>, <code>conexao('intranet')</code> com PRAGMA WAL (só leitura).</li>
+<li><strong>Cobertura total</strong> (<code>test_cobertura_total.py</code>, 12/09/2026): smoke de import + contrato de TODAS as funções/classes dos 64 arquivos <code>mod_*/</code> (puras com asserts + guardas anti-disconnect).</li>
+<li><strong>Drawer / menu hambúrguer</strong> (<code>verifica_ui_comum.py</code>, 12/09 + roteiro manual): fábrica <code>ItemMenuDrawer</code>/<code>item_menu_drawer</code> (<code>ui_comum.py:852-937</code>) e drawer (<code>telas.py:218-332</code>) — testids <code>menu-hamburguer/menu-home/menu-&lt;chave&gt;/menu-&lt;chave&gt;-indisponivel/menu-admin/menu-docs/menu-sair</code> (190/190 OK); matriz manual 3 perfis × 3 larguras em <a href="../testes_casos/">Testes — Casos</a> (seção "Roteiro manual — drawer × perfis × larguras").</li>
+<li><strong>Sessões de 14/09/2026 — validações materializadas em <code>assets/test/</code></strong> (catálogo em <code>assets/test/README.md</code>; 8 scripts novos, todos verdes, 73 checks; 3 specs E2E novos — requerem <code>npm run test:e2e</code> + servidor :8080, não executados aqui por falta de Node):</li>
+<li><strong>Header — nome</strong> (<code>test_header_nome.py</code>, 9): tratamento <code>qacomum</code>/<code>qamaster</code>, botão único <code>header-nome-usuario</code>, sem <code>hidden sm:*</code>, CSS escopado, tooltip (sessão: nome truncado <code>io de Teste QA C</code>).</li>
+<li><strong>Rodapé auto-hide</strong> (<code>test_rodape_hover.py</code>, 7): testid, CSS <code>opacity:0</code>→hover, faixa 5px, textos preservados.</li>
+<li><strong>Blog — editor + imagens</strong> (<code>test_blog_editor_imagens.py</code>, 17): upload JPG/PNG (aceite/recusa 5MB/assinatura), nome <code>dataHora_usuario</code>, tag nh3, rota <code>/img_postagens</code>, job, expiração de órfãs.</li>
+<li><strong>Blog — Markdown no editor</strong> (<code>test_blog_markdown_editor.py</code>, 8): Markdown em <code>&lt;p&gt;</code>/<code>&lt;div&gt;</code>/1ª solta, listas, negrito, <code>code/pre</code>, <code>#hashtag</code>, <code>div/br</code>.</li>
+<li><strong>Blog — controles da imagem</strong> (<code>test_blog_imagem_controles.py</code>, 12): <code>bd_manipulador.ajustar_imagem_html()</code> pura (eixos, CSS do autor, última img, sem-img) + feed respeita autor/padrão (refatoração: lógica extraída do <code>telas.py</code>, a tela delega).</li>
+<li><strong>Blog — Mermaid ao fim</strong> (<code>test_blog_mermaid_fim.py</code>, 7): <code>mover_mermaid_para_fim</code> (meio→fim com ordem, sem fence/incompleto intacto, idempotente, seeds conformes) + render centralizado (<code>justify-center</code>, <code>max-width:680px</code>).</li>
+<li><strong>Empenhos — anotação</strong> (<code>test_empenho_anotar.py</code>, 7): <code>anotar_arquivos</code> (levantamento, override <code>tb_empenhos</code>, fallbacks de nome; sem normalizar zeros — só a exibição).</li>
+<li><strong>Ordem dos módulos</strong> (<code>test_ordem_modulos.py</code>, 6): ordem padrão + <code>reordenar</code> 1-based + boot simulado preserva (sessão: ordem resetava no restart).</li>
+<li>Convenções do README aplicadas a todos: standalone, veredito por exit code, docstring bilíngue EN/PT-BR + <code>Execute:</code>, sem destruição (<code>qa_*</code> ou snapshot/restore em <code>finally</code>), seletores por <code>data-testid</code>.</li>
+<li>Suíte no fechamento: 37 scripts OK; 2 falhas PREEXISTENTES documentadas no README e em <a href="../testes_casos/">Testes — Casos</a> (seção "Falhas preexistentes conhecidas"): <code>test_dashboard.py</code> (7 checks de layout antigo) e <code>verifica_ui_comum.py</code> (1 check <code>ui.tabs()</code> anterior à sessão).</li>
+</ul>
+<h2 id="drawer-menu-hamburguer-estrategia-piramide">Drawer / menu hambúrguer — estratégia (pirâmide)<a class="headerlink" href="#drawer-menu-hamburguer-estrategia-piramide" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — Drawer test strategy: unit base (<code>verifica_ui_comum.py</code>, byte-identical factory props/classes/ARIA, 190/190) + manual/E2E top (profile × width matrix in Test Cases). Selectors always via <code>get_by_test_id</code>.</p>
+<p>PT — Estratégia do drawer: base unitária (<code>verifica_ui_comum.py</code>, fábrica byte-idêntica em props/classes/ARIA, 190/190) + topo manual/E2E (matriz perfis × larguras nos Casos de Teste). Seletores sempre via <code>get_by_test_id</code>.</p>
+</blockquote>
+<ul>
+<li><strong>Base (unitário, automático):</strong> <code>verifica_ui_comum.py</code> prova props/classes/estilo/tooltip/ARIA da fábrica idênticos à construção crua de referência (stub NiceGUI, sem servidor).</li>
+<li><strong>Topo (manual/E2E, poucos):</strong> roteiro <a href="../testes_casos/">manual do drawer</a> (seção "Roteiro manual — drawer × perfis × larguras") — perfis <code>comum</code>/<code>administrador_modulo</code>/<code>administrador_geral</code> × larguras 320/768/1024: drawer abre/fecha via <code>menu-hamburguer</code>, 100% largura sem overflow (RNF-UI-01), foco por teclado com anel <code>focus-visible</code>, ARIA (<code>aria-current</code> no ativo, <code>aria-hidden</code> nos ícones, <code>aria-label</code> no hambúrguer/indisponível). Regra de visibilidade: <code>menu-admin</code>/<code>menu-docs</code> só para <code>administrador_geral</code>.</li>
 </ul>
 <h2 id="criterios-de-entradasaida">Critérios de entrada/saída<a class="headerlink" href="#criterios-de-entradasaida" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Bancos <code>db_mod_*</code> devem ser (re)criados do zero se ausentes; seed <code>master</code>/<code>master</code> com <code>administrador_geral</code>.</li>
 <li>Nenhuma falha em silêncio: recusas de upload/quota listadas nominalmente.</li>
 </ul>
+<h2 id="execucao-dos-testes">Execução dos testes<a class="headerlink" href="#execucao-dos-testes" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN — How to run the automated suite: the project's tests are <strong>standalone scripts</strong> in <code>assets/test/*.py</code> with their own checks/asserts; the mandatory command is <code>.venv/bin/pytest</code>, configured by <code>pytest.ini</code> (root) to collect <strong>only</strong> the runner <code>assets/test/test_suite.py</code>, which executes the whole suite in subprocesses (≈3–5 min) and fails if any script exits non-zero. Run a single script with <code>.venv/bin/python assets/test/&lt;arquivo&gt;.py</code>. Playwright E2E: <code>cd assets/test &amp;&amp; npm install &amp;&amp; npm run test:e2e</code>.</p>
+<p>PT — Como executar a suíte automatizada: os testes do projeto são <strong>scripts standalone</strong> em <code>assets/test/*.py</code> com checagens/asserts próprios; o comando obrigatório é <code>.venv/bin/pytest</code>, configurado pelo <code>pytest.ini</code> (raiz) para coletar <strong>apenas</strong> o runner <code>assets/test/test_suite.py</code>, que executa toda a suíte em subprocessos (≈3–5 min) e falha se algum script terminar com código ≠ 0. Para um script isolado: <code>.venv/bin/python assets/test/&lt;arquivo&gt;.py</code>. E2E Playwright: <code>cd assets/test &amp;&amp; npm install &amp;&amp; npm run test:e2e</code>.</p>
+</blockquote>
+<h3 id="suite-completa-venvbinpytest">Suíte completa — <code>.venv/bin/pytest</code><a class="headerlink" href="#suite-completa-venvbinpytest" title="Permanent link">&para;</a></h3>
+<p>O comando oficial de testes do projeto (AGENTS.md) é <code>.venv/bin/pytest</code>. Sem configuração, o pytest tentava <strong>coletar os scripts standalone</strong> de <code>assets/test/*.py</code> e quebrava com <code>INTERNALERROR</code> (o <code>sys.exit</code> no import de <code>test_dashboard.py</code> derruba o coletor). O <code>pytest.ini</code> na raiz resolve:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[pytest]</span>
+<span class="na">testpaths</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">assets/test/test_suite.py</span>
+<span class="na">addopts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-p no:cacheprovider</span>
+</code></pre></div>
+<ul>
+<li><code>testpaths = assets/test/test_suite.py</code> (<code>pytest.ini:2</code>) — o pytest coleta <strong>apenas</strong> o runner <code>assets/test/test_suite.py</code>, que roda TODA a suíte standalone em subprocessos e falha se algum script retornar código ≠ 0. Duração: ≈3–5 min.</li>
+<li><code>addopts = -p no:cacheprovider</code> (<code>pytest.ini:3</code>) — desativa o cache do pytest (não cria <code>.pytest_cache/</code>).</li>
+</ul>
+<h3 id="script-isolado">Script isolado<a class="headerlink" href="#script-isolado" title="Permanent link">&para;</a></h3>
+<p>Para depurar um fluxo sem rodar a suíte inteira, execute o script diretamente:</p>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/&lt;arquivo&gt;.py
+</code></pre></div>
+<p>Exemplo: <code>.venv/bin/python assets/test/teste_fluxo_blog.py</code>.</p>
+<h3 id="e2e-playwright">E2E Playwright<a class="headerlink" href="#e2e-playwright" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>assets/test<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>test:e2e
+</code></pre></div>
+<ul>
+<li>Config em <code>assets/test/playwright.config.js</code> (<code>testDir: './e2e'</code>, <code>playwright.config.js:24</code>); o <code>webServer</code> inicia/reutiliza o servidor na porta 8080 (<code>playwright.config.js:44-49</code>).</li>
+<li>Specs em <code>assets/test/e2e/*.spec.js</code> (<code>01_login</code>, <code>02_varredura</code>, <code>03_exclusao_blog</code>, <code>04_header_nome</code>, <code>05_rodape_hover</code>, <code>06_blog_editor</code> — os 3 últimos da sessão de 14/09/2026, não executados aqui por falta de Node; exigem <code>npm run test:e2e</code> + servidor :8080).</li>
+<li>Credenciais QA garantidas pelo global setup (<code>e2e/_global_setup.js</code> → <code>_garantir_credenciais.py</code>): <code>qacomum</code>/<code>qamaster</code> = <code>123456</code>.</li>
+<li>Detalhes: <a href="../testes_playwright/">Testes E2E com Playwright</a>.</li>
+</ul>
+<h3 id="o-que-o-runner-executa-e-exclui">O que o runner executa e exclui<a class="headerlink" href="#o-que-o-runner-executa-e-exclui" title="Permanent link">&para;</a></h3>
+<p><code>assets/test/test_suite.py</code>:</p>
+<ul>
+<li><code>test_suite_standalone()</code> (<code>test_suite.py:50</code>) — percorre <code>assets/test/*.py</code> (<code>_scripts()</code>, <code>test_suite.py:44-47</code>), executa cada script em subprocesso com timeout de 240 s (<code>subprocess.run([sys.executable, str(p)], ..., timeout=240, env=_env_limpo())</code>) e falha se <code>returncode != 0</code>. Execução direta com progresso: <code>.venv/bin/python assets/test/test_suite.py</code> (bloco <code>__main__</code> + <code>_rodar_suite(progresso=True)</code> — imprime <code>[N] script ... OK em Xs</code>, 12/09/2026).</li>
+<li><code>_env_limpo()</code> (<code>test_suite.py:34-41</code>) — remove as variáveis <code>PYTEST_*</code> do ambiente do subprocesso; sem isso, o NiceGUI ativa o modo de teste e exige <code>NICEGUI_SCREEN_TEST_PORT</code>.</li>
+<li><strong>Excluídos</strong> (<code>EXCLUIR</code>, <code>test_suite.py:23-31</code>) — não entram na suíte automatizada:</li>
+<li><strong>Helpers</strong>: <code>debug_boot.py</code>, <code>step_boot.py</code>, <code>diag_config.py</code>, <code>wtest.py</code>, <code>criar_postagens_blog.py</code> e <code>test_server.py</code> (sobe a app na 8080 e bloqueia).</li>
+<li><strong>Destrutivos de banco</strong>: <code>test_fresh_install.py</code>, <code>fresh_install_test.py</code>, <code>fresh_install_test2.py</code>.</li>
+<li><strong>Dependentes de instalação limpa</strong> (assumem <code>master</code>/<code>master</code> ainda válidos): <code>test_fase1_login.py</code>, <code>validar_fase1_login.py</code>.</li>
+<li><strong>OTel</strong>: <code>test_otel.py</code> (depende da stack Docker/porta).</li>
+</ul>
+<p>Motivo: são auxiliares (não são testes de regressão), alteram/destroem o estado dos bancos ou dependem de ambiente específico — incluí-los quebraria a suíte ou geraria falsos negativos.</p>
 <h2 id="varredura-de-seguranca-devsecops">Varredura de segurança (DevSecOps)<a class="headerlink" href="#varredura-de-seguranca-devsecops" title="Permanent link">&para;</a></h2>
 <p>Toda alteração de código deve passar pela varredura de segurança (subagente
 <code>qa_seguranca</code>):</p>
