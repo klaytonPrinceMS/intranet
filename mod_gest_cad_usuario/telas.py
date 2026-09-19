@@ -98,12 +98,12 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                    t_texto_header,
                    chave_modulo="usuarios", cor_titulo=t_cor_titulo, cor_fundo=t_cor_fundo_cab)
 
-        # ===== BARRA SUPERIOR (linha única): abas à esquerda | busca larga + botão à direita =====
-        with ui.row().classes("w-full items-center justify-between flex-wrap bg-white rounded-lg shadow-sm px-3 py-2").style("gap: 0.75rem; min-width: 0"):
-            with ui.tabs().props("dense inline-label").classes("min-w-0 max-w-full overflow-x-auto flex-1") as tabs:
+        # ===== BARRA SUPERIOR (linha única, inline sem quebra): abas à esquerda | busca + botão à direita =====
+        with ui.row().classes("w-full items-center justify-between gap-4 flex-nowrap bg-white rounded-lg shadow-sm px-3 py-1").style("min-width: 0"):
+            with ui.tabs().props("dense inline-label").classes("min-w-0 overflow-x-auto shrink") as tabs:
                 tab_users = ui.tab("Usuários", icon="people")
                 tab_sessoes = ui.tab("Sessões Ativas", icon="wifi")
-            with ui.row().classes("items-center flex-wrap justify-end flex-1").style("gap: 0.5rem; min-width: 0; width: min(100%, 620px)"):
+            with ui.row().classes("items-center gap-2 flex-nowrap shrink-0").style("width:min(46%, 620px)"):
                 campo_busca(
                     "🔍  Buscar… nome, e-mail, telefone, perfil, id ou estado "
                     "(provisório, bloqueado, sessão, excluído)", ao_digitar,
@@ -195,7 +195,7 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
     local = {"pagina": 1, "por_pagina": 20, "situacao": "", "perfil": "", "ordem": "nome"}
     container = ui.column().classes("w-full gap-2")
 
-    SIT_OPCOES = {"": "Todas", "ativos": "Ativos", "bloqueados": "Bloqueados"}
+    SIT_OPCOES = {"": "Todas", "ativos": "Ativos", "bloqueados": "Bloqueados", "excluidos": "Excluídos"}
     PERFIL_OPCOES = {"": "Todos"} | {p: p.replace("_", " ") for p in gest.PERFIS_GLOBAIS}
     ORDEM_OPCOES = {"nome": "A→Z (nome)", "id": "Numérica (ID)"}
 
@@ -209,11 +209,18 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
 
     def _filtrar():
         termo = _norm(estado.get("valor"))
-        tem_excluido = "exclu" in termo if termo else False
         todos = gest.listar_usuarios()
-        # Excluídos (soft) só entram na lista quando a busca pede "excluído";
-        # sem busca eles não aparecem na aba Usuários.
-        linhas = todos if tem_excluido else [l for l in todos if not l[8]]
+        sit_filtro = local["situacao"]
+        # Filtro dedicado "Excluídos" devolve acesso ao soft-delete; fora dele,
+        # excluídos só entram quando a busca contém "exclu" e o filtro é "Todas".
+        if sit_filtro == "excluidos":
+            linhas = [l for l in todos if l[8]]
+        else:
+            tem_excluido = "exclu" in termo if termo else False
+            if tem_excluido and sit_filtro == "":
+                linhas = todos
+            else:
+                linhas = [l for l in todos if not l[8]]
         if termo:
             # tokens de estado pesquisáveis por palavra-chave digitada
             tem_provisorio = "provisor" in termo
@@ -250,9 +257,12 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
             )]
         sit = local["situacao"]
         if sit == "ativos":
-            linhas = [l for l in linhas if l[3]]
+            linhas = [l for l in linhas if l[3] and not l[8]]
         elif sit == "bloqueados":
-            linhas = [l for l in linhas if not l[3]]
+            linhas = [l for l in linhas if not l[3] and not l[8]]
+        elif sit == "excluidos":
+            # já filtrado acima; mantém apenas excluídos (não re-aplica ativos/bloqueados)
+            linhas = [l for l in linhas if l[8]]
         if local["perfil"]:
             linhas = [l for l in linhas if l[2] == local["perfil"]]
         linhas.sort(key=_chave_ordenacao)
@@ -280,7 +290,9 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
                     ui.icon("filter_alt").classes("text-grey-6 text-caption")
                     ui.select(SIT_OPCOES, value=local["situacao"], label="Situação",
                               on_change=lambda e: (local.update(situacao=e.value, pagina=1), render())) \
-                        .props("outlined dense label").classes("min-w-[150px]")
+                        .props("outlined dense label").classes("min-w-[170px]") \
+                        .props('data-testid=usuarios-filtro-situacao') \
+                        .tooltip("Filtra por situação: Ativos, Bloqueados ou Excluídos (soft-delete)")
                     ui.select(PERFIL_OPCOES, value=local["perfil"], label="Perfil global",
                               on_change=lambda e: (local.update(perfil=e.value, pagina=1), render())) \
                         .props("outlined dense label").classes("min-w-[170px]")
@@ -570,7 +582,8 @@ def _dlg_novo(ator, refresh):
             selecoes, _meta = _seletores_de_acesso(box)
 
             def salvar():
-                ok, msg = gest.criar_usuario(ator, nome.value or "", senha.value or "",
+                senha_padrao = (senha.value or "").strip() or "123456"
+                ok, msg = gest.criar_usuario(ator, nome.value or "", senha_padrao,
                                              email=email.value.strip() or None,
                                              fone=fone.value.strip() or None,
                                              perfil=perfil.value,
@@ -834,8 +847,9 @@ def _dlg_duplicar(ator, origem, refresh):
             selecoes, _meta = _seletores_de_acesso(box, origem)
 
             def salvar():
+                senha_padrao = (senha.value or "").strip() or "123456"
                 ok, msg = gest.duplicar_usuario(ator, origem, nome.value or "",
-                                                senha.value or "",
+                                                senha_padrao,
                                                 email=email.value.strip() or None,
                                                 fone=fone.value.strip() or None,
                                                 nome_completo=completo.value)

@@ -363,8 +363,10 @@ def criar_usuario(ator, user_nome, senha, email=None, fone=None, perfil="comum",
     Valida login, senha mínima (`senha_minima`), perfil global e nome de
     exibição; grava hash bcrypt, libera o acesso padrão 'comum'
     (`ACESSO_PADRAO_NOVO_USUARIO`), marca `forcar_troca` e audita
-    `criar_usuario`. Retorna `(ok, msg)`."""
+    `criar_usuario`. Senha vazia/None cai no padrão inicial ``123456``.
+    Retorna `(ok, msg)`."""
     from mod_intranet.autenticacao import gerar_hash_senha, marcar_trocar_senha
+    senha = (senha or "").strip() or "123456"
     if not user_nome or not user_nome.strip():
         return False, "Nome de usuário é obrigatório"
     if len(senha or "") < senha_minima():
@@ -693,7 +695,9 @@ def duplicar_usuario(ator, usuario_origem, novo_nome, senha, email=None,
     Copia o perfil global e o papel do usuário origem em cada módulo
     (tb_acesso_usuario). O novo usuário é criado exigindo apenas os dados
     essenciais (login, nome, senha e email) — as permissões vêm da origem.
+    Senha vazia/None cai no padrão inicial ``123456``.
     """
+    senha = (senha or "").strip() or "123456"
     origem = obter_usuario(usuario_origem)
     if not origem:
         return False, "Usuário origem não encontrado"
