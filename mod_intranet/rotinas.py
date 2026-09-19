@@ -23,6 +23,10 @@ MAPA_BACKUPS = {
     "editar_pdf": ("db_mod_edit_pdf.db", "Editor PDF"),
     "empenhos": ("db_mod_renomear_empenho.db", "Empenhos"),
     "solicita_impressao": ("db_mod_solicita_impressao.db", "Solicitacao de Impressao"),
+    "tecnico": ("db_mod_tecnico.db", "Técnico"),
+    "filas": ("db_mod_filas.db", "Filas"),
+    "lista_telefonica": ("db_mod_lista_telefonica.db", "Lista Telefônica"),
+    "agregador_noticias": ("db_mod_agregador_noticias.db", "Agregador de Notícias"),
 }
 
 _agendador = None  # referência global para reagendamento em tempo de execução
@@ -221,6 +225,57 @@ def _job_monitor_empenho():
             pass
 
 
+def _job_agregador_coleta():
+    """Coleta do Agregador de Notícias (scrapy-like) — intervalo 10min–6h."""
+    try:
+        from mod_agregador_noticias.bd_manipulador import coletar_todas, habilitado
+        if not habilitado():
+            return
+        coletar_todas(ator="sistema")
+    except Exception as ex:
+        try:
+            from mod_intranet import observabilidade
+            observabilidade.get_logger("agregador_noticias").warning(f"coleta agregador falhou: {ex}")
+        except Exception:
+            pass
+
+
+def _job_agregador_limpeza():
+    """Limpeza 24h do Agregador (reiniciado 24/24h)."""
+    try:
+        from mod_agregador_noticias.bd_manipulador import limpar_antigas
+        limpar_antigas(24)
+    except Exception as ex:
+        try:
+            from mod_intranet import observabilidade
+            observabilidade.get_logger("agregador_noticias").warning(f"limpeza agregador falhou: {ex}")
+        except Exception:
+            pass
+
+
+def reconfigurar_agregador_noticias():
+    """Reaplica intervalo do agregador sem restart."""
+    if _agendador is None:
+        return False
+    try:
+        from mod_agregador_noticias.bd_manipulador import intervalo_min, habilitado
+        if not habilitado():
+            try:
+                _agendador.pause_job("agregador_coleta")
+            except Exception:
+                pass
+            return True
+        try:
+            _agendador.resume_job("agregador_coleta")
+        except Exception:
+            pass
+        mins = intervalo_min()
+        _agendador.reschedule_job("agregador_coleta", trigger="interval", minutes=mins)
+        return True
+    except Exception:
+        return False
+
+
 def _job_poda_auditoria():
     """Poda diária do banco exclusivo de auditoria (db_mod_auditoria.db).
 
@@ -405,6 +460,14 @@ def iniciar_agendador():
     sched.add_job(_job_poda_auditoria, "interval", hours=24, id="poda_auditoria")
     sched.add_job(_job_monitor_empenho, "interval", seconds=intervalo_monitor_empenho(),
                   id="monitor_empenho")
+    # Agregador de Notícias — coleta com intervalo 10min–6h e limpeza 24h
+    try:
+        from mod_agregador_noticias.bd_manipulador import intervalo_min, habilitado
+        _int_ag = intervalo_min() if habilitado() else 60
+    except Exception:
+        _int_ag = 60
+    sched.add_job(_job_agregador_coleta, "interval", minutes=_int_ag, id="agregador_coleta")
+    sched.add_job(_job_agregador_limpeza, "interval", hours=24, id="agregador_limpeza")
     sched.start()
     _agendador = sched
     return sched

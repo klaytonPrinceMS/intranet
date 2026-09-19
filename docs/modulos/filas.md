@@ -1,12 +1,12 @@
-# Queue Module — `mod_filas` (Skeleton)
+# Queue Module — `mod_filas` (Skeleton + News Carousel)
 
-> Queue/call manager module (skeleton, TV): routes `/filas` (key `filas`) + `/tv` (public) · own database `db_mod_filas.db` (WAL) · tables `tb_fila`/`tb_chamada`/`tb_config_filas` · next password `A000→A001` · TV auto-refresh 3s + beep · central LGPD audit.
+> Queue/call manager module (skeleton, TV): routes `/filas` (key `filas`) + `/tv` (public) · own database `db_mod_filas.db` (WAL) · tables `tb_fila`/`tb_chamada`/`tb_config_filas` · next password `A000→A001` · TV auto-refresh 3s + beep + **news carousel** from `mod_agregador_noticias` (`listar_para_tv` 7s rotate / 120s reload) · central LGPD audit.
 
 ---
 
-# Módulo Filas — `mod_filas` (Esqueleto TV)
+# Módulo Filas — `mod_filas` (Esqueleto TV + Carrossel Notícias)
 
-> Módulo gestor de filas/chamadas (esqueleto, TV): rotas `/filas` (chave `filas`) + `/tv` (pública) · banco próprio `db_mod_filas.db` (WAL) · tabelas `tb_fila`/`tb_chamada`/`tb_config_filas` · próxima senha `A000→A001` · TV auto-refresh 3s + beep · auditoria central LGPD.
+> Módulo gestor de filas/chamadas (esqueleto, TV): rotas `/filas` (chave `filas`) + `/tv` (pública) · banco próprio `db_mod_filas.db` (WAL) · tabelas `tb_fila`/`tb_chamada`/`tb_config_filas` · próxima senha `A000→A001` · TV auto-refresh 3s + beep + **carrossel de notícias** do `mod_agregador_noticias` (`listar_para_tv` 7s/120s) · auditoria central LGPD.
 
 ## Propósito
 
@@ -53,11 +53,12 @@ _audit(ator, "gerar_senha", nova, f"fila={fila_id}")
 
 Fail-soft: `try/except` + log `filas` + `(False, str(e))`.
 
-### Painel `/tv` — display full-screen (público)
+### Painel `/tv` — display full-screen (público) + carrossel de notícias
 
 - **Rota** `/tv` (`main.py:745-749`): **sem `pagina_restrita`** — acesso livre na rede (TV na recepção); `from mod_filas.telas import mostrar_tv; mostrar_tv()`.
-- **Layout** (`mostrar_tv` — `telas.py:72-93`): `ui.column` `w-full h-screen items-center justify-center bg-black text-white gap-6 p-8` + `lbl_senha` (`text-[10vw] font-extrabold`), `lbl_guiche` (`text-[4vw] font-bold`), `lbl_topo` `"FILA — AGUARDE CHAMADA"` (`text-[2vw] tracking-widest`); `tema = ler_tema("filas")` + `ui.colors(primary=...)`.
-- **Auto-refresh 3s**: `ui.timer(3.0, refresh)` + `refresh()` imediato — `ultima_chamada()` → atualiza `lbl_senha`/`lbl_guiche` + beep via `ui.run_javascript("new AudioContext().createOscillator()...")` (fail-soft). Sem chamada mantém "—".
+- **Layout** (`mostrar_tv` — `telas.py:72-137`): `ui.column` `w-full h-screen bg-black text-white gap-4 p-4` + topo `lbl_topo` `"FILA — AGUARDE CHAMADA"` (`text-[2vw] tracking-widest text-grey-4`) + `lbl_senha` (`text-[10vw] font-extrabold`) + `lbl_guiche` (`text-[4vw] font-bold`) (`flex-1` centralizado); **rodapé notícias** `card bg-grey-900 text-white p-4 gap-2 min-height:18vh` com `lbl_n_titulo` (`text-[1.6vw] font-bold`), `lbl_n_desc` (`text-[1vw] text-grey-3`), `lbl_n_fonte` (`text-caption text-grey-5`) + label `"Notícias — agregador"` (`text-caption tracking-widest text-grey-4`); `tema = ler_tema("filas")` + `ui.colors(primary=...)`.
+- **Auto-refresh 3s** (chamada): `ui.timer(3.0, refresh_chamada)` + `refresh_chamada()` imediato — `ultima_chamada()` → `lbl_senha`/`lbl_guiche` + beep via `ui.run_javascript("new AudioContext().createOscillator()...")` (fail-soft). Sem chamada mantém "—".
+- **Carrossel de notícias 7s + reload 120s** (`telas.py:84-136`): `noticias_tv={"lista":[], "idx":0}` + `carregar_noticias()` (`telas.py:103-119`) → `from mod_agregador_noticias.bd_manipulador import listar_para_tv, habilitado` → se `not habilitado()` → `"Agregador desabilitado — ative em /admin/agregador_noticias"`; senão `listar_para_tv(limite=10)` (`SELECT titulo,descricao,url,imagem_url,fonte,tema ORDER BY data_coleta DESC LIMIT ?` → `[{"titulo","descricao":desc or titulo,"url","imagem","fonte","tema"}]`) → `noticias_tv["lista"]=lst` + `_mostrar_noticia()`; se vazio → `"Nenhuma notícia ainda — aguarde coleta"`; `ui.timer(7.0, _mostrar_noticia)` rotaciona `idx % len` com `lbl_n_titulo[:120]` + `lbl_n_desc[:180]` + `fonte • tema`; `ui.timer(120.0, carregar_noticias)` recarrega lista a cada 2 min (fail-soft `try/except`); inicial `carregar_noticias()` imediata.
 
 ### Administração (`/admin/filas`)
 
@@ -81,9 +82,10 @@ LGPD: `remover_vinculos_usuario` (esqueleto, retorna 0 — sem vínculo por usu�
 
 ## Rota e integrações
 
-- Rotas: `/filas` (chave `filas`, ícone `queue`) — `main.py:731-743` (`pagina_restrita("Filas", chave_modulo="filas")` + `REGISTRO_MODULOS["filas"] = page_filas`); `/tv` — `main.py:745-749` (sem guarda). Slugs customizáveis via `/configuracoes` → aba Módulo (`rotas_modulos.montar_rotas_ativas()`).
+- Rotas: `/filas` (chave `filas`, ícone `queue`) — `main.py:731-743` (`pagina_restrita("Filas", chave_modulo="filas")` + `REGISTRO_MODULOS["filas"] = page_filas`); `/tv` — `main.py:745-749` (sem guarda, **com carrossel do Agregador**). Slugs customizáveis via `/configuracoes` → aba Módulo (`rotas_modulos.montar_rotas_ativas()`).
 - Auditoria: `audit_log` (núcleo) → `mod_auditoria` banco exclusivo `db_mod_auditoria.db`, tabela `tb_auditoria_filas` (`gerar_senha` com `fila=id`).
 - Backup do banco: job `backup:filas` (`backup_horas:filas` default 12h, `MAPA_BACKUPS` inclui `filas: db_mod_filas.db`).
+- **Integração Agregador de Notícias — TV** (`mod_filas/telas.py:103-136` + `mod_agregador_noticias/bd_manipulador.py:232-242`): a TV consome `listar_para_tv(limite=10)` do Agregador e exibe carrossel `título+descrição` no rodapé (`bg-grey-900`, `7s` rotação, `120s` reload); `habilitado()==False` → placeholder desabilitado; sem notícias → placeholder aguarde. Ver [Módulo Agregador](agregador_noticias.md).
 - Cadastro central: `MODULOS_SISTEMA` (`autenticacao.py:22` → `("filas","Filas","queue","/filas")`), `MODULOS_BD` (`repositorio.py:66` → `filas: db_mod_filas.db`), `PADROES_TEMA["filas"]` (`tema_modulo.py:76` → `#000000`).
 
 ## Testes

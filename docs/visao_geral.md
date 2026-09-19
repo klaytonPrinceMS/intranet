@@ -1,12 +1,12 @@
 # Intranet Modular — System Overview
 
-> High-level view of the Intranet Modular: the 10 modules (core + 9 business including the new Phone Directory organogram `Secretaria→Setor→Subsetor`), the main usage flow (login → dashboard → modules) and the 3 user profiles (`comum`, `administrador_modulo`, `administrador_geral`) with per-module roles, access validation and quota integration (1000/200 via `ORGANOGRAMA_BASE`).
+> High-level view of the Intranet Modular: the 11 modules (core + 10 business including the new News Aggregator `httpx+parsel` multi-source `Google/BBC/JFP/RSS` 3-column masonry + TV carousel and the Phone Directory organogram `Secretaria→Setor→Subsetor`), the main usage flow (login → dashboard → modules) and the 3 user profiles (`comum`, `administrador_modulo`, `administrador_geral`) with per-module roles, access validation and quota integration (1000/200 via `ORGANOGRAMA_BASE`).
 
 ---
 
 # Intranet Modular — Visão Geral
 
-> Visão de alto nível da Intranet Modular: os 10 módulos (núcleo + 9 de negócio incluindo a nova Lista Telefônica `Secretaria→Setor→Subsetor`), o fluxo principal de uso (login → dashboard → módulos) e os 3 perfis de usuário (`comum`, `administrador_modulo`, `administrador_geral`) com papéis por módulo, validação de acesso e integração de cotas (1000/200 via `ORGANOGRAMA_BASE`).
+> Visão de alto nível da Intranet Modular: os 11 módulos (núcleo + 10 de negócio incluindo o novo Agregador de Notícias `httpx+parsel` multi-fonte `Google/BBC/JFP/RSS` 3 colunas masonry + carrossel TV e a nova Lista Telefônica `Secretaria→Setor→Subsetor`), o fluxo principal de uso (login → dashboard → módulos) e os 3 perfis de usuário (`comum`, `administrador_modulo`, `administrador_geral`) com papéis por módulo, validação de acesso e integração de cotas (1000/200 via `ORGANOGRAMA_BASE`).
 
 ## Sumário
 
@@ -26,7 +26,7 @@
 
 ## Módulos do sistema
 
-O sistema é composto por um **núcleo** (`mod_intranet`) e **9 módulos de negócio** (6 históricos + 2 em 18/09/2026 + 1 em 19/09/2026):
+O sistema é composto por um **núcleo** (`mod_intranet`) e **10 módulos de negócio** (6 históricos + 2 em 18/09/2026 + 2 em 19/09/2026):
 
 | Módulo | Chave | Rota | Banco | Função |
 |:---|:---|:---|:---|:---|
@@ -38,10 +38,11 @@ O sistema é composto por um **núcleo** (`mod_intranet`) e **9 módulos de neg�
 | **Auditoria** | `auditoria` | `/auditoria` | `db_mod_auditoria.db` (uma tabela por módulo) | trilha LGPD + visualização/filtro/exportação |
 | **Solicitação de Impressão** | `solicita_impressao` | `/solicita-impressao` | `db_mod_solicita_impressao.db` | envio de PDF, contagem de páginas, cotas mensais (1000/200 via `ORGANOGRAMA_BASE`), autorização, impressão |
 | **Técnico** | `tecnico` | `/tecnico` | `db_mod_tecnico.db` | **novo** (18/09/2026) — software (download zip multi-seleção) + backup `YYYYMMDD_HHMM_nomePc_ip` owner-isolated, `webkitdirectory` |
-| **Filas (TV)** | `filas` | `/filas` + `/tv` (pública) | `db_mod_filas.db` | **novo esqueleto** (18/09/2026) — gestor de chamadas com TV (fila Geral `A000→A001`, auto-refresh 3s + beep) |
+| **Filas (TV)** | `filas` | `/filas` + `/tv` (pública) | `db_mod_filas.db` | **novo esqueleto** (18/09/2026) — gestor de chamadas com TV (fila Geral `A000→A001`, auto-refresh 3s + beep + **carrossel de notícias do Agregador 19/09/2026**) |
 | **Lista Telefônica** | `lista_telefonica` | `/lista-telefonica` + `/admin/lista_telefonica` | `db_mod_lista_telefonica.db` | **novo** (19/09/2026) — organograma 12 secretarias `Secretaria→Setor→Subsetor` genérico, contatos alfabéticos, busca sem acentos, `tel:` clicável no celular, admin com excluir ramo/mover/elevar/ordenar/transferir |
+| **Agregador de Notícias** | `agregador_noticias` | `/agregador-noticias` + `/admin/agregador_noticias` | `db_mod_agregador_noticias.db` | **novo** (19/09/2026) — multi-fonte `httpx+parsel` (Google/BBC/JFP/RSS) espelhando `klaytonPrinceMS/Noticia`, termo livre + fontes configuráveis pelo admin, investigação 10–360 min, 3 colunas masonry `window.open`, 24h retenção `limpar_antigas`, TV `listar_para_tv` |
 
-> O cadastro real de módulos vive em `tb_modulos` (banco central), semeado por `MODULOS_SISTEMA` em `mod_intranet/autenticacao.py:15-22`.
+> O cadastro real de módulos vive em `tb_modulos` (banco central), semeado por `MODULOS_SISTEMA` em `mod_intranet/autenticacao.py:15-26`.
 
 ## Fluxo de alto nível
 
@@ -51,12 +52,13 @@ flowchart TD
     L -->|ok| S[Sessão revogável<br/>tb_sessoes + cookie_hash<br/>+ Visitas ++contador_acessos_total]
     S --> D[Dashboard /<br/>boas-vindas + Resumo dinâmico Water + feed do Blog<br/>sem botão Abrir Blog (18/09/2026)]
     D --> M[Drawer lateral<br/>módulos liberados]
-    M --> R1[/blog] & R2[/users] & R3[/edit-pdf] & R4[/renomear-empenho] & R5[/solicita-impressao] & R6[/auditoria] & R7[/tecnico] & R8[/filas] & R9[/lista-telefonica]
-    R1 & R2 & R3 & R4 & R5 & R6 & R7 & R8 & R9 --> G[pagina_restrita<br/>autenticação + permissão + layout<br/>/tv sem guarda]
+    M --> R1[/blog] & R2[/users] & R3[/edit-pdf] & R4[/renomear-empenho] & R5[/solicita-impressao] & R6[/auditoria] & R7[/tecnico] & R8[/filas] & R9[/lista-telefonica] & R10[/agregador-noticias]
+    R1 & R2 & R3 & R4 & R5 & R6 & R7 & R8 & R9 & R10 --> G[pagina_restrita<br/>autenticação + permissão + layout<br/>/tv sem guarda]
     G --> AC[audit_log<br/>db_mod_auditoria.db<br/>tb_auditoria_&lt;modulo&gt;]
     D -->|logout| LO[registrar_logout + /login]
-    BG[APScheduler<br/>backups · cleanups · monitor · poda] -.->|2º plano| AC
+    BG[APScheduler<br/>backups · cleanups · monitor · poda<br/>+ agregador_coleta/limpeza] -.->|2º plano| AC
     LT[(Lista Telefônica<br/>ORGANOGRAMA_BASE<br/>12 secretarias)] -.->|importa cotas 1000/200| R5
+    AG[(Agregador<br/>tb_noticia 24h<br/>httpx+parsel)] -.->|listar_para_tv<br/>carrossel 7s/120s| R8
 ```
 
 1. O usuário acessa `/login` e informa usuário/senha (`autenticar` → bcrypt).
@@ -103,8 +105,9 @@ Além do perfil global, existe o **papel por módulo** (`tb_acesso_usuario`): v�
 | Gestão de Usuários | ✗ | admin do módulo `usuarios` | tudo |
 | Solicitação de Impressão | solicitar/acompanhar | imprimir/gerenciar | tudo |
 | Técnico | software/backup do próprio PC | — | tudo + ver todos os backups em `/admin/tecnico` |
-| Filas (TV) | chamar próxima / ver TV | — | tudo |
+| Filas (TV) | chamar próxima / ver TV + notícias carrossel | — | tudo |
 | Lista Telefônica | ver organograma + busca + ligar | gerenciar ramos/contatos/ordem | tudo |
+| Agregador de Notícias | ver 3 colunas + filtro tema + abrir link externo | configurar habilitado/intervalo/termo/fontes/temas | tudo + `Coletar agora` |
 
 ## Autorização por módulo
 

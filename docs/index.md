@@ -40,8 +40,9 @@
 - [Auditoria](analise_mod_auditoria.md)
 - [Solicitação de Impressão](analise_mod_solicita_impressao.md) — cotas 1000/200 via `ORGANOGRAMA_BASE` do organograma
 - [Técnico](analise_mod_tecnico.md) — software + backup `YYYYMMDD_HHMM_nomePc_ip`, owner-isolation, `webkitdirectory`
-- [Filas (TV, esqueleto)](analise_mod_filas.md) — gestor de chamadas com TV (`/filas` + `/tv` pública)
+- [Filas (TV, esqueleto)](analise_mod_filas.md) — gestor de chamadas com TV (`/filas` + `/tv` pública) + **carrossel de notícias** do Agregador
 - [Lista Telefônica (organograma)](analise_mod_lista_telefonica.md) — **novo** (19/09/2026) organograma 12 secretarias `Secretaria→Setor→Subsetor`, contatos alfabéticos, busca sem acentos, `tel:` no celular
+- [Agregador de Notícias](analise_mod_agregador_noticias.md) — **novo** (19/09/2026) `httpx+parsel` scrapy-like (Google/BBC/JFP/RSS), 3 colunas masonry, 24h retenção, integração TV `listar_para_tv`
 
 ## Módulos (resumo)
 
@@ -53,8 +54,9 @@
 - [Auditoria](modulos/auditoria.md)
 - [Solicitação de Impressão](modulos/solicitacao_impressao.md) — **atualizado** cotas 1000/200 via `ORGANOGRAMA_BASE`
 - [Técnico](modulos/tecnico.md) — **novo** (18/09/2026)
-- [Filas (TV, esqueleto)](modulos/filas.md) — **novo** esqueleto (18/09/2026)
+- [Filas (TV, esqueleto)](modulos/filas.md) — **novo** esqueleto (18/09/2026) + **carrossel Agregador** (19/09/2026)
 - [Lista Telefônica (organograma)](modulos/lista_telefonica.md) — **novo** (19/09/2026) `Secretaria→Setor→Subsetor`, `tel:` clicável, admin com excluir ramo/mover/elevar
+- [Agregador de Notícias](modulos/agregador_noticias.md) — **novo** (19/09/2026) `httpx+parsel` multi-fonte (Google/BBC/JFP/RSS), 3 colunas masonry `window.open`, TV `listar_para_tv` 7s/120s
 
 ## Documentos-raiz de apoio
 

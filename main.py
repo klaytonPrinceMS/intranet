@@ -763,6 +763,20 @@ if rotas_modulos is not None:
     rotas_modulos.REGISTRO_MODULOS["lista_telefonica"] = page_lista_telefonica
 
 
+@ui.page("/agregador-noticias")
+def page_agregador_noticias():
+    from mod_intranet.telas import pagina_restrita
+    user = pagina_restrita("Agregador de Notícias", chave_modulo="agregador_noticias")
+    if not user:
+        return
+    from mod_agregador_noticias.telas import mostrar_tela
+    mostrar_tela(user["nome"], user.get("perfil", ""))
+
+
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["agregador_noticias"] = page_agregador_noticias
+
+
 @app.get("/solicita-impressao/src/impressao.js")
 def servir_js_impressao():
     caminho = os.path.join(
@@ -876,6 +890,18 @@ def page_admin_modulo(chave_modulo: str):
         if not eh_admin:
             ui.notify("Acesso restrito a administradores", type="negative")
             ui.navigate.to("/lista-telefonica")
+        else:
+            mostrar_administracao(nome)
+
+    elif chave_modulo == "agregador_noticias":
+        eh_admin = (perfil == "administrador_geral"
+                    or autenticacao.eh_admin_do_modulo(nome, "agregador_noticias"))
+        from mod_agregador_noticias.telas_administracao import mostrar_administracao
+        from mod_intranet.tema_modulo import ler_tema
+        ui.colors(primary=ler_tema("agregador_noticias", cor_botao="#000000")["cor_botao"])
+        if not eh_admin:
+            ui.notify("Acesso restrito a administradores", type="negative")
+            ui.navigate.to("/agregador-noticias")
         else:
             mostrar_administracao(nome)
 

@@ -63,8 +63,9 @@ Os bancos são criados na **raiz do projeto** (mesma pasta do `main.py`):
 | `db_mod_renomear_empenho.db` | renomear empenho | `mod_renomear_empenho/bd_manipulador.py:20` |
 | `db_mod_solicita_impressao.db` | solicitação de impressão | `mod_solicita_impressao/bd_manipulador.py:30` — **cotAS 1000/200 via `ORGANOGRAMA_BASE` do `mod_lista_telefonica` (19/09/2026)** |
 | `db_mod_tecnico.db` | técnico — software + backup | `mod_tecnico/bd_manipulador.py:26` — pastas `software/` + `backup/YYYYMMDD_HHMM_nomePc_ip` |
-| `db_mod_filas.db` | filas (TV) — esqueleto | `mod_filas/bd_manipulador.py:12` — `tb_fila`/`tb_chamada` + `/tv` pública |
+| `db_mod_filas.db` | filas (TV) — esqueleto + notícias | `mod_filas/bd_manipulador.py:12` — `tb_fila`/`tb_chamada` + `/tv` pública + carrossel Agregador `listar_para_tv` 7s/120s |
 | `db_mod_lista_telefonica.db` | lista telefônica (organograma) | `mod_lista_telefonica/bd_manipulador.py:18` — `tb_unidade` (`secretaria\|setor\|subsetor`) + `tb_contato` (alfabético) + `ORGANOGRAMA_BASE` 12 secretarias |
+| `db_mod_agregador_noticias.db` | agregador de notícias | `mod_agregador_noticias/bd_manipulador.py:21` — `tb_noticia` (titulo/fonte/tema/url/imagem_url/descricao/data_publicacao/data_coleta) + `TEMAS_PADRAO` 9 + `FONTES_PADRAO` 3 (Google/BBC), coleta `httpx+parsel`, 24h `limpar_antigas` |
 | `db_mod_auditoria.db` | auditoria (uma tabela por módulo) | `mod_auditoria/bd_manipulador.py:25` — `tb_auditoria_<modulo>` |
 
 Todos operam em **modo WAL** (`PRAGMA journal_mode=WAL`), gerando arquivos `*.db-wal` e `*.db-shm` ao lado do `.db`.
@@ -98,8 +99,9 @@ Definida em `mod_intranet/mod_intranet_inicializacao_bd.py:13-46`. Ordem **crít
 7. `init_db_empenho()` → `db_mod_renomear_empenho.db`.
 8. `init_solicita()` → `db_mod_solicita_impressao.db` — **importa `ORGANOGRAMA_BASE` do `mod_lista_telefonica` (19/09/2026)**: `tb_secretarias` 1000 + `tb_setores` 200 (subsetores achatados), migração `UPDATE` idempotente 1000/200.
 9. `init_db()` técnico (`mod_tecnico/bd_manipulador.py:71`) → `db_mod_tecnico.db` + `software/`/`backup/` + `tb_backup`/`tb_backup_arquivo`.
-10. `init_db()` filas (`mod_filas/bd_manipulador.py:34`) → `db_mod_filas.db` + seed `Geral A000` + `tb_fila`/`tb_chamada`.
+10. `init_db()` filas (`mod_filas/bd_manipulador.py:34`) → `db_mod_filas.db` + seed `Geral A000` + `tb_fila`/`tb_chamada` + TV `listar_para_tv` carrossel.
 11. `init_db()` lista telefônica (`mod_lista_telefonica/bd_manipulador.py:106`) → `db_mod_lista_telefonica.db` + `tb_unidade`/`tb_contato` + semente 12 secretarias `ORGANOGRAMA_BASE` (idempotente, só quando `tb_unidade` vazia).
+12. `init_db()` agregador de notícias (`mod_agregador_noticias/bd_manipulador.py:162`) → `db_mod_agregador_noticias.db` + `tb_noticia` + `TEMAS_PADRAO` 9 + `FONTES_PADRAO` 3 (idempotente, seeds `tb_config` `habilitado=0`/`intervalo=60`/`termo=""`).
 
 O processo é **idempotente** (nunca apaga dados) e pode ser rodado novamente para aplicar seeds sem reiniciar nada.
 
@@ -124,8 +126,9 @@ As principais chaves, agrupadas por dono:
 | Blog | `blog_modo_exibicao` (**`carrossel` padrão com 3 básicas 18/09/2026**, `historico`/`unica`/`carrossel`), `blog_postagem_unica_id`, `blog_carrossel_postagens_ids` (CSV), `blog_carrossel_tempo` (10 s), `blog_largura_imagem`, `blog_tags_permitidas`, `blog_texto_header` + tema `blog_*` | — | comportamento/aparência — `init_db` garante carrossel 3 básicas via `_garantir_carrossel_padrao` (`bd_manipulador.py:241`) |
 | Usuários | `usuarios_senha_min` (6), tema `usuarios_*` | `6` | política de senha mínima — senha vazia/None em `criar_usuario`/`duplicar_usuario` cai em `123456` (18/09/2026) |
 | Técnico | `tecnico_max_zip_mb` (1024), tema `tecnico_*` + pastas `software/`/`backup/` | — | backup T.I. — ver [Módulo Técnico](modulos/tecnico.md) |
-| Filas | `filas_modo_tv` (1), `filas_senha_prefixo` (A), `filas_guiche_padrao` (01), tema `filas_*` | — | esqueleto TV — ver [Módulo Filas](modulos/filas.md) |
+| Filas | `filas_modo_tv` (1), `filas_senha_prefixo` (A), `filas_guiche_padrao` (01), tema `filas_*` + TV carrossel `listar_para_tv` | — | esqueleto TV + carrossel Agregador — ver [Módulo Filas](modulos/filas.md) |
 | Lista Telefônica | `lista_telefonica_*` (tema), 12 secretarias genéricas | — | organograma `Secretaria→Setor→Subsetor` + contatos alfabéticos + `tel:` — ver [Módulo Lista Telefônica](modulos/lista_telefonica.md) |
+| Agregador de Notícias | `agregador_noticias_habilitado` (`0`), `agregador_noticias_intervalo_min` (`60` clamp 10–360), `agregador_noticias_termo_pesquisa` (`""`), `agregador_noticias_temas_json` (`TEMAS_PADRAO` 9), `agregador_noticias_fontes_json` (`FONTES_PADRAO` 3), tema `agregador_noticias_*` | — | multi-fonte `httpx+parsel` (Google/BBC/JFP/RSS) + 3 colunas masonry + TV `listar_para_tv` — ver [Módulo Agregador](modulos/agregador_noticias.md) |
 | Auditoria | `auditoria_limite` (1000), `auditoria_retencao_dias` (90), `auditoria_texto_header`, `auditoria_campos:<usuario>` (JSON) | — | paginação/retirada/campos |
 | Empenhos | `empenhos_pastas_monitoradas` (multi-pasta, uma por linha — local/UNC), `empenhos_pasta_monitorada` (legado, fallback de 1 pasta), `empenhos_monitor_intervalo_seg` (60), `empenhos_template_nome`, `empenhos_organizador_paginas_pasta` (200), `empenhos_organizador_pastas_caixa` (4), `renomear_autorizar_download` (0), `empenhos_texto_header`, tema `empenhos_*` | — | monitor/aparência/organizador |
 | Impressão | variáveis de tempo e padrões na aba Administração → Configurações do módulo + **cotas padrão 1000/200 via `ORGANOGRAMA_BASE` do `mod_lista_telefonica` (19/09/2026)** | — | ver [Módulo de Solicitação de Impressão](modulos/solicitacao_impressao.md) |

@@ -1,12 +1,12 @@
 # Intranet Modular — Architecture
 
-> Technical architecture of the Intranet Modular: single entry point (`main.py`), modular packages (`mod_*`), the `bd_manipulador.py` / `telas.py` / `telas_administracao.py` pattern (with `models/` SQLAlchemy as the pattern to propagate and `bd_criador.py` kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor and audit pruning).
+> Technical architecture of the Intranet Modular: single entry point (`main.py`), modular packages (`mod_*`), the `bd_manipulador.py` / `telas.py` / `telas_administracao.py` pattern (with `models/` SQLAlchemy as the pattern to propagate and `bd_criador.py` kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor, audit pruning, aggregator coleta 10–360 min + limpeza 24h).
 
 ---
 
 # Intranet Modular — Arquitetura
 
-> Arquitetura técnica da Intranet Modular: entry point único (`main.py`), pacotes modulares (`mod_*`), padrão `bd_manipulador.py` / `telas.py` / `telas_administracao.py` (com `models/` SQLAlchemy como padrão a propagar e `bd_criador.py` mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta e poda da auditoria).
+> Arquitetura técnica da Intranet Modular: entry point único (`main.py`), pacotes modulares (`mod_*`), padrão `bd_manipulador.py` / `telas.py` / `telas_administracao.py` (com `models/` SQLAlchemy como padrão a propagar e `bd_criador.py` mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta, poda da auditoria, coleta do agregador 10–360 min + limpeza 24h).
 
 ## Sumário
 
@@ -32,13 +32,14 @@
                  │                                              │
     ┌────────────▼───────────┐                     ┌────────────▼───────────┐
     │ mod_intranet (núcleo)  │                     │ Módulos de negócio      │
-    │ autenticacao · layout  │◄── importa ────────►│ mod_blog, mod_gest_*,   │ (9: 6 + tecnico + filas 18/09/2026 + lista_telefonica 19/09/2026)
+    │ autenticacao · layout  │◄── importa ────────►│ mod_blog, mod_gest_*,   │ (10: 6 + tecnico + filas 18/09/2026 + lista_telefonica + agregador_noticias 19/09/2026)
     │ bd_conexao · rotinas   │                     │ mod_edit_pdf,           │
     │ observabilidade · etc. │                     │ mod_renomear_*,         │
     └────────────┬───────────┘                     │ mod_auditoria,          │
                  │                                 │ mod_solicita_impressao, │
     db_mod_intranet.db (WAL)                       │ mod_tecnico, mod_filas, │
-    tb_config · tb_sessoes · tb_modulos            │ mod_lista_telefonica    │
+    tb_config · tb_sessoes · tb_modulos            │ mod_lista_telefonica,   │
+                                                   │ mod_agregador_noticias  │
                                                    └─────────┬───────────────┘
                                                              │ cada um com seu
                                                              ▼ db_mod_*.db (WAL)
@@ -60,10 +61,10 @@ flowchart LR
         CONN --- OBS[observabilidade<br/>loguru]
         ROT[rotinas<br/>APScheduler] --- DIA[dialogo_backup]
     end
-    subgraph Negocio["módulos de negócio — 9 (6 + 2 novos 18/09/2026 + 1 novo 19/09/2026)"]
+    subgraph Negocio["módulos de negócio — 10 (6 + 2 novos 18/09/2026 + 2 novos 19/09/2026)"]
         B[mod_blog] ; U[mod_gest_cad_usuario] ; P[mod_edit_pdf]
         E[mod_renomear_empenho] ; A[mod_auditoria] ; S[mod_solicita_impressao]
-        T[mod_tecnico] ; F[mod_filas] ; L[mod_lista_telefonica]
+        T[mod_tecnico] ; F[mod_filas] ; L[mod_lista_telefonica] ; N[mod_agregador_noticias]
     end
     subgraph Bancos["SQLite WAL — um por módulo"]
         DBC[(db_mod_intranet.db<br/>tb_config · tb_sessoes · tb_modulos)]
@@ -105,8 +106,9 @@ Cada funcionalidade é um **pacote próprio** na raiz:
 | `mod_auditoria/` | `db_mod_auditoria.db` (uma tabela por módulo) | ✓ | trilha LGPD + visualizador |
 | `mod_solicita_impressao/` | `db_mod_solicita_impressao.db` | ✓ | solicitação de impressão — **cotAS 1000/200 via `ORGANOGRAMA_BASE` do `mod_lista_telefonica` (19/09/2026)** |
 | `mod_tecnico/` | `db_mod_tecnico.db` | ✓ | **novo** (18/09/2026) — software + backup `YYYYMMDD_HHMM_nomePc_ip`, owner-isolation, `webkitdirectory` |
-| `mod_filas/` | `db_mod_filas.db` | ✓ (`telas.py` + `mostrar_tv`) | **novo esqueleto** (18/09/2026) — gestor de chamadas com TV (`/filas` + `/tv` pública) |
+| `mod_filas/` | `db_mod_filas.db` | ✓ (`telas.py` + `mostrar_tv`) | **novo esqueleto** (18/09/2026) — gestor de chamadas com TV (`/filas` + `/tv` pública, **+ carrossel do Agregador 19/09/2026**) |
 | `mod_lista_telefonica/` | `db_mod_lista_telefonica.db` | ✓ | **novo** (19/09/2026) — organograma `Secretaria→Setor→Subsetor` genérico 12 secretarias, contatos alfabéticos, `tel:` no celular |
+| `mod_agregador_noticias/` | `db_mod_agregador_noticias.db` | ✓ | **novo** (19/09/2026) — multi-fonte `httpx+parsel` (Google/BBC/JFP/RSS) 3 colunas masonry `window.open`, 24h `tb_noticia`, termo+fontes configuráveis, TV `listar_para_tv` |
 
 Subpacotes/fluxos relevantes do núcleo:
 
@@ -155,7 +157,7 @@ mod_<nome>/
 - Toda conexão aplica `PRAGMA journal_mode=WAL` (+ `synchronous=NORMAL` no central e na auditoria).
 - **Convenção:** consultar um banco somente pelo `bd_manipulador` do seu próprio módulo (evitar cross-query). Exceções conhecidas e documentadas: a limpeza cruzada LGPD da exclusão de usuário (`mod_gest_cad_usuario` varre bancos vizinhos para anonimizar/excluir dados — ver [Módulo de Gestão de Usuários](modulos/gest_cad_usuario.md)) e a escrita de auditoria (`audit_log` no núcleo grava no banco exclusivo de auditoria via `registrar_auditoria`).
 - O banco **central** (`db_mod_intranet.db`) guarda `tb_config`, `tb_sessoes` e `tb_modulos` (a antiga `tb_auditoria` central foi migrada e removida — ver [Auditoria](#auditoria-lgpd-banco-exclusivo)).
-- **SQLAlchemy em TODOS os bancos (06/09):** o mapa `MODULOS_BD` (`repositorio.py:57-67`) registra os 10 bancos (`intranet`, `blog`, `editar_pdf`, `usuarios`, `empenhos`, `auditoria`, `solicita_impressao`, `tecnico`, `filas`, `lista_telefonica`); `engine(chave)`/`sessaodb(chave)`/`Repositorio(chave_db=...)` operam em qualquer um deles — ver [Arquitetura de acesso a dados do núcleo](#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809).
+- **SQLAlchemy em TODOS os bancos (06/09):** o mapa `MODULOS_BD` (`repositorio.py:57-68`) registra os 11 bancos (`intranet`, `blog`, `editar_pdf`, `usuarios`, `empenhos`, `auditoria`, `solicita_impressao`, `tecnico`, `filas`, `lista_telefonica`, `agregador_noticias`); `engine(chave)`/`sessaodb(chave)`/`Repositorio(chave_db=...)` operam em qualquer um deles — ver [Arquitetura de acesso a dados do núcleo](#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809).
 - **Backend duplo controlado pelo sistema (08/09):** além do SQLite, o sistema agora suporta **PostgreSQL opcional** — a chave `banco_tipo` em `tb_config` central (`'sqlite'` padrão | `'postgres'`) seleciona o backend. No Postgres, **um DATABASE `db_mod_<chave>` por módulo** preserva o isolamento "um banco por módulo" e evita colisão de nomes de tabela (ex.: `tb_solicitacoes`). SQLite continua o padrão. Ver [Backend duplo (08/09)](#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809) abaixo.
 
 ### Arquitetura de acesso a dados do núcleo — backend duplo (08/09)
@@ -195,7 +197,7 @@ mod_intranet/
 
 | Função | Local | Comportamento |
 |:---|:---|:---|
-| `MODULOS_BD` | `repositorio.py:57-67` | mapa chave→arquivo dos 10 bancos: `intranet`→`db_mod_intranet.db`, `blog`→`db_mod_blog.db`, `editar_pdf`→`db_mod_edit_pdf.db`, `usuarios`→`db_mod_gest_cad_usuario.db`, `empenhos`→`db_mod_renomear_empenho.db`, `auditoria`→`db_mod_auditoria.db`, `solicita_impressao`→`db_mod_solicita_impressao.db`, `tecnico`→`db_mod_tecnico.db`, `filas`→`db_mod_filas.db`, `lista_telefonica`→`db_mod_lista_telefonica.db` |
+| `MODULOS_BD` | `repositorio.py:57-68` | mapa chave→arquivo dos 11 bancos: `intranet`→`db_mod_intranet.db`, `blog`→`db_mod_blog.db`, `editar_pdf`→`db_mod_edit_pdf.db`, `usuarios`→`db_mod_gest_cad_usuario.db`, `empenhos`→`db_mod_renomear_empenho.db`, `auditoria`→`db_mod_auditoria.db`, `solicita_impressao`→`db_mod_solicita_impressao.db`, `tecnico`→`db_mod_tecnico.db`, `filas`→`db_mod_filas.db`, `lista_telefonica`→`db_mod_lista_telefonica.db`, `agregador_noticias`→`db_mod_agregador_noticias.db` |
 | `caminho_db(chave)` | `repositorio.py:80` | caminho do banco; chave desconhecida → central (fail-soft) |
 | `engine(chave="intranet")` | `repositorio.py:98` | **roteia para o backend ativo:** com `banco_tipo='postgres'` delega a `banco_conexao.obter_engine_modulo(chave)` (banco do módulo `db_mod_<chave>`); senão SQLite — criação condicional: banco existente → nada é criado nem logado; banco central novo → `metadata.create_all` uma vez; banco de módulo novo → arquivo criado na primeira conexão (schema via `init_db` do módulo) |
 | `sessaodb(chave="intranet")` | `repositorio.py:158` | Session por banco (factory cacheada); roteia para o Postgres quando o backend é `postgres` |
@@ -295,8 +297,10 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 | `cleanup_solicita` | **1 min** | remove rascunhos de impressão não confirmados e impressos vencidos do servidor |
 | `poda_auditoria` | **24 h** | remove registros das tabelas por módulo de `db_mod_auditoria.db` mais antigos que `auditoria_retencao_dias` (default 90) |
 | `monitor_empenho` | `empenhos_monitor_intervalo_seg` (default **60 s**) | varredura automática das pastas monitoradas de empenhos (`rodar_monitor("sistema")`) |
+| `agregador_coleta` | `agregador_noticias_intervalo_min` (**10–360 min**, default **60 min**, `habilitado` flag) | coleta scrapy-like `httpx+parsel` (Google/BBC/JFP/RSS + pesquisa termo) via `coletar_todas()` — `reconfigurar_agregador_noticias()` sem restart |
+| `agregador_limpeza` | **24 h** | `limpar_antigas(24)` — `DELETE WHERE data_coleta < datetime('now','-24 hours')` (banco reiniciado 24/24h) |
 
-> **Ajuste fino:** o `MAPA_BACKUPS` (`rotinas.py:16-22`) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, auditoria, empenhos, solicita — expandido em 06/09 com auditoria e solicita_impressao — **18/09/2026** `+ tecnico: db_mod_tecnico.db` + `filas: db_mod_filas.db` — **19/09/2026** `+ lista_telefonica: db_mod_lista_telefonica.db`).
+> **Ajuste fino:** o `MAPA_BACKUPS` (`rotinas.py:16-30`) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, auditoria, empenhos, solicita — expandido em 06/09 com auditoria e solicita_impressao — **18/09/2026** `+ tecnico: db_mod_tecnico.db` + `filas: db_mod_filas.db` — **19/09/2026** `+ lista_telefonica: db_mod_lista_telefonica.db` + `agregador_noticias: db_mod_agregador_noticias.db`).
 
 ## Auditoria LGPD (banco exclusivo)
 
@@ -342,7 +346,8 @@ Raiz do projeto (scaffold base — Fase 0 do `PLANO.md`):
 | `mod_edit_pdf/editorPDF/` | arquivos temporários do Editor de PDF (expiração automática, default 10 min — `PASTA_EDITOR`/`PASTA_EDITOR_PDF`) |
 | `mod_tecnico/software/` | executáveis/portáteis para download (versionável, `.gitkeep` — `mod_tecnico/bd_manipulador.py:24`) |
 | `mod_tecnico/backup/YYYYMMDD_HHMM_nomePc_ip/` | backups por PC/técnico (owner-isolated, uma pasta por dono — `mod_tecnico/bd_manipulador.py:25`, `nome_pasta_backup`) |
-| `main.py`, `requirements.txt`, `mkdocs.yml`, `db_mod_*.db` | entry point único, dependências, build da doc e bancos SQLite (WAL) por módulo (incl. `db_mod_auditoria.db` — trilha LGPD; **novos** `db_mod_tecnico.db`, `db_mod_filas.db`, `db_mod_lista_telefonica.db` **(19/09/2026)**) |
+| `mod_agregador_noticias/` | sem pastas operacionais — banco `tb_noticia` + coleta `httpx+parsel` + `listar_para_tv` (sem arquivos em disco além do `.db`) |
+| `main.py`, `requirements.txt`, `mkdocs.yml`, `db_mod_*.db` | entry point único, dependências, build da doc e bancos SQLite (WAL) por módulo (incl. `db_mod_auditoria.db` — trilha LGPD; **novos** `db_mod_tecnico.db`, `db_mod_filas.db`, `db_mod_lista_telefonica.db` **(19/09/2026)**, `db_mod_agregador_noticias.db` **(19/09/2026 — Notícias)**) |
 
 > Pastas operacionais **dentro dos módulos** (`mod_edit_pdf/editorPDF/`, `mod_renomear_empenho/doc/`,
 > `organizadorPasta/`, `quarentena/`) existem com `.gitkeep` no repositório e também são

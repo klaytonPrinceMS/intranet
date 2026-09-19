@@ -49,6 +49,7 @@ PREFIXO_POR_CHAVE = {
     "tecnico": "tecnico",
     "filas": "filas",
     "lista_telefonica": "lista_telefonica",
+    "agregador_noticias": "agregador_noticias",
 }
 
 
@@ -78,6 +79,8 @@ PADROES_TEMA = {
               "cor_titulo": "#212121", "btn_tamanho": "medium"},
     "lista_telefonica": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
                          "cor_titulo": "#212121", "btn_tamanho": "medium"},
+    "agregador_noticias": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
+                           "cor_titulo": "#212121", "btn_tamanho": "medium"},
 }
 
 

@@ -70,24 +70,68 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     ui.label(f"{senha} — guichê {guiche} — {por} — {data[:16] if data else ''}").classes("text-caption")
 
 def mostrar_tv():
-    """Tela da TV — full-screen, auto-refresh a cada 3s."""
+    """Tela da TV — full-screen, auto-refresh a cada 3s + carrossel de notícias."""
     from mod_intranet.tema_modulo import ler_tema as _ler
     tema = _ler("filas")
     ui.colors(primary=tema.get("cor_botao", "#000000"))
-    with ui.column().classes("w-full h-screen items-center justify-center bg-black text-white gap-6 p-8"):
-        lbl_senha = ui.label("—").classes("text-[10vw] font-extrabold leading-none")
-        lbl_guiche = ui.label("").classes("text-[4vw] font-bold")
-        lbl_topo = ui.label("FILA — AGUARDE CHAMADA").classes("text-[2vw] tracking-widest")
-        def refresh():
+    with ui.column().classes("w-full h-screen bg-black text-white gap-4 p-4").style("min-height: 100vh"):
+        # Topo: chamada
+        with ui.column().classes("w-full items-center justify-center gap-4 flex-1"):
+            lbl_topo = ui.label("FILA — AGUARDE CHAMADA").classes("text-[2vw] tracking-widest text-grey-4")
+            lbl_senha = ui.label("—").classes("text-[10vw] font-extrabold leading-none")
+            lbl_guiche = ui.label("").classes("text-[4vw] font-bold")
+        # Rodapé: carrossel de notícias (título + descrição) do agregador
+        with ui.card().classes("w-full bg-grey-900 text-white p-4 gap-2").style("min-height: 18vh"):
+            ui.label("Notícias — agregador").classes("text-caption tracking-widest text-grey-4")
+            lbl_n_titulo = ui.label("Aguardando notícias...").classes("text-[1.6vw] font-bold leading-tight")
+            lbl_n_desc = ui.label("").classes("text-[1vw] text-grey-3 leading-tight")
+            lbl_n_fonte = ui.label("").classes("text-caption text-grey-5")
+
+        noticias_tv = {"lista": [], "idx": 0}
+
+        def refresh_chamada():
             ult = filas.ultima_chamada()
             if ult:
                 senha, guiche, data = ult
                 lbl_senha.text = str(senha)
                 lbl_guiche.text = f"Guichê {guiche}"
-            # beep opcional via JS (fail-soft)
             try:
                 ui.run_javascript("try{const a=new AudioContext();const o=a.createOscillator();o.connect(a.destination);o.start();o.stop(a.currentTime+0.2);}catch(e){}")
             except Exception:
                 pass
-        ui.timer(3.0, refresh)
-        refresh()
+
+        def carregar_noticias():
+            try:
+                from mod_agregador_noticias.bd_manipulador import listar_para_tv, habilitado
+                if not habilitado():
+                    lbl_n_titulo.text = "Agregador desabilitado — ative em /admin/agregador_noticias"
+                    lbl_n_desc.text = ""
+                    lbl_n_fonte.text = ""
+                    return
+                lst = listar_para_tv(limite=10)
+                if lst:
+                    noticias_tv["lista"] = lst
+                    noticias_tv["idx"] = 0
+                    _mostrar_noticia()
+                else:
+                    lbl_n_titulo.text = "Nenhuma notícia ainda — aguarde coleta"
+            except Exception:
+                pass
+
+        def _mostrar_noticia():
+            lst = noticias_tv["lista"]
+            if not lst:
+                return
+            idx = noticias_tv["idx"] % len(lst)
+            item = lst[idx]
+            lbl_n_titulo.text = item.get("titulo", "")[:120]
+            lbl_n_desc.text = (item.get("descricao", "") or "")[:180]
+            lbl_n_fonte.text = f"{item.get('fonte','')} • {item.get('tema','')}"
+            noticias_tv["idx"] = (idx + 1) % len(lst)
+
+        ui.timer(3.0, refresh_chamada)
+        ui.timer(7.0, _mostrar_noticia)
+        refresh_chamada()
+        carregar_noticias()
+        # recarrega lista a cada 2 minutos
+        ui.timer(120.0, carregar_noticias)
