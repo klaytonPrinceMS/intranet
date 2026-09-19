@@ -279,35 +279,55 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
                 ativo=(not chave_modulo))
 
             ui.separator().classes("w-full")
-            for chave, nome, icone, rota, ativa in autenticacao.modulos_do_usuario(nome_usuario):
-                if ativa:
-                    ui_comum.item_menu_drawer(
-                        nome, icone=icone,
-                        on_click=lambda r=rota: ui.navigate.to(r),
-                        tooltip=f"Abrir o módulo {nome}",
-                        chave_modulo=chave_modulo or "intranet",
-                        testid=f"menu-{chave}",
-                        ativo=(chave == chave_modulo))
-                else:
-                    # Módulo removido/desativado com vínculo remanescente: alerta chamativo
-                    with ui.item(on_click=lambda n=nome: notificar(
-                            f"⚠ '{n}' está indisponível/removido. Procure o administrador.",
-                            type="warning", position="top")) \
-                            .classes("w-full rounded-lg my-0.5 bg-orange-2 border border-orange-6 cursor-pointer "
-                                     "focus-visible:ring-2 focus-visible:outline-none") \
-                            .style("min-width: 0") \
-                            .props(f'data-testid=menu-{chave}-indisponivel aria-label="{nome} — módulo indisponível"') \
-                            .tooltip(f"'{nome}' está indisponível — procure o administrador"):
-                        with ui.item_section().props("avatar"):
-                            ui.icon("report_problem").classes("text-orange-9 shrink-0").props('aria-hidden="true"')
-                        with ui.item_section().style("min-width: 0"):
-                            ui.item_label(nome).classes("text-orange-10 font-bold truncate max-w-full").style("min-width: 0")
-                            ui.item_label("Módulo indisponível").classes("text-caption text-orange-9 truncate max-w-full").style("min-width: 0")
+
+            # ===== ORDENAÇÃO HAMBÚRGUER (requisito 2026-09-19) =====
+            # Home fica isolado acima (já renderizado). Demais módulos em ordem
+            # alfabética por nome, exceto Blog/Usuários/Auditoria que são
+            # agrupados após Administração e antes de Documentação/Sair.
+            _CHAVES_POS_ADMIN = {"blog", "usuarios", "auditoria"}
+            _ORDEM_POS_ADMIN = ["blog", "usuarios", "auditoria"]
+            _todos = autenticacao.modulos_do_usuario(nome_usuario)
+            _map_todos = {c: (c, n, ic, r, a) for c, n, ic, r, a in _todos}
+            _outros = [t for t in _todos if t[0] not in _CHAVES_POS_ADMIN]
+            _outros.sort(key=lambda t: t[1].lower())
+            _pos_admin = [_map_todos[c] for c in _ORDEM_POS_ADMIN if c in _map_todos]
+
+            def _render_lista_modulos(lista):
+                """Renders a list of drawer entries (active via item_menu_drawer or orange unavailable card).
+
+                Renderiza uma lista de entradas do drawer (ativa via item_menu_drawer ou card laranja de indisponível).
+                """
+                for chave, nome, icone, rota, ativa in lista:
+                    if ativa:
+                        ui_comum.item_menu_drawer(
+                            nome, icone=icone,
+                            on_click=lambda r=rota: ui.navigate.to(r),
+                            tooltip=f"Abrir o módulo {nome}",
+                            chave_modulo=chave_modulo or "intranet",
+                            testid=f"menu-{chave}",
+                            ativo=(chave == chave_modulo))
+                    else:
+                        with ui.item(on_click=lambda n=nome: notificar(
+                                f"⚠ '{n}' está indisponível/removido. Procure o administrador.",
+                                type="warning", position="top")) \
+                                .classes("w-full rounded-lg my-0.5 bg-orange-2 border border-orange-6 cursor-pointer "
+                                         "focus-visible:ring-2 focus-visible:outline-none") \
+                                .style("min-width: 0") \
+                                .props(f'data-testid=menu-{chave}-indisponivel aria-label="{nome} — módulo indisponível"') \
+                                .tooltip(f"'{nome}' está indisponível — procure o administrador"):
+                            with ui.item_section().props("avatar"):
+                                ui.icon("report_problem").classes("text-orange-9 shrink-0").props('aria-hidden="true"')
+                            with ui.item_section().style("min-width: 0"):
+                                ui.item_label(nome).classes("text-orange-10 font-bold truncate max-w-full").style("min-width: 0")
+                                ui.item_label("Módulo indisponível").classes("text-caption text-orange-9 truncate max-w-full").style("min-width: 0")
+
+            _render_lista_modulos(_outros)
 
             # Padrão PIC definido — exemplos de CSS removidos do menu (mantidos em disco/docs para comparação direta via URL se necessário).
 
-            # ===== SISTEMA: menu de Administração — exclusivo do administrador geral =====
-            if autenticacao.perfil_global_de(nome_usuario) == "administrador_geral":
+            # ===== SISTEMA: Administração + trio Blog/Usuários/Auditoria + Documentação =====
+            _eh_admin_geral = autenticacao.perfil_global_de(nome_usuario) == "administrador_geral"
+            if _eh_admin_geral:
                 ui.separator().classes("w-full")
                 if chave_modulo:
                     _nome_mod_atual = autenticacao.nome_do_modulo(chave_modulo) or chave_modulo
@@ -325,6 +345,13 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
                     testid="menu-admin",
                     ativo=False)
 
+            # Trio Blog/Usuários/Auditoria — sempre após Administração (se houver) e antes de Documentação/Sair
+            if _pos_admin:
+                if not _eh_admin_geral:
+                    ui.separator().classes("w-full")
+                _render_lista_modulos(_pos_admin)
+
+            if _eh_admin_geral:
                 # Documentação MkDocs servida em /documentacao (main.py monta o site/)
                 ui_comum.item_menu_drawer(
                     "Documentação", icone="menu_book",

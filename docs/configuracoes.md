@@ -61,9 +61,10 @@ Os bancos são criados na **raiz do projeto** (mesma pasta do `main.py`):
 | `db_mod_blog.db` | blog | `mod_blog/bd_manipulador.py:41-45` |
 | `db_mod_edit_pdf.db` | editor de PDF | `mod_edit_pdf/bd_manipulador.py:23` |
 | `db_mod_renomear_empenho.db` | renomear empenho | `mod_renomear_empenho/bd_manipulador.py:20` |
-| `db_mod_solicita_impressao.db` | solicitação de impressão | `mod_solicita_impressao/bd_manipulador.py:25` |
+| `db_mod_solicita_impressao.db` | solicitação de impressão | `mod_solicita_impressao/bd_manipulador.py:30` — **cotAS 1000/200 via `ORGANOGRAMA_BASE` do `mod_lista_telefonica` (19/09/2026)** |
 | `db_mod_tecnico.db` | técnico — software + backup | `mod_tecnico/bd_manipulador.py:26` — pastas `software/` + `backup/YYYYMMDD_HHMM_nomePc_ip` |
 | `db_mod_filas.db` | filas (TV) — esqueleto | `mod_filas/bd_manipulador.py:12` — `tb_fila`/`tb_chamada` + `/tv` pública |
+| `db_mod_lista_telefonica.db` | lista telefônica (organograma) | `mod_lista_telefonica/bd_manipulador.py:18` — `tb_unidade` (`secretaria\|setor\|subsetor`) + `tb_contato` (alfabético) + `ORGANOGRAMA_BASE` 12 secretarias |
 | `db_mod_auditoria.db` | auditoria (uma tabela por módulo) | `mod_auditoria/bd_manipulador.py:25` — `tb_auditoria_<modulo>` |
 
 Todos operam em **modo WAL** (`PRAGMA journal_mode=WAL`), gerando arquivos `*.db-wal` e `*.db-shm` ao lado do `.db`.
@@ -95,9 +96,10 @@ Definida em `mod_intranet/mod_intranet_inicializacao_bd.py:13-46`. Ordem **crít
 5. `init_users()` → `db_mod_gest_cad_usuario.db` + seed `master`/`master`.
 6. `init_db_pdf()` → `db_mod_edit_pdf.db`.
 7. `init_db_empenho()` → `db_mod_renomear_empenho.db`.
-8. `init_solicita()` → `db_mod_solicita_impressao.db`.
+8. `init_solicita()` → `db_mod_solicita_impressao.db` — **importa `ORGANOGRAMA_BASE` do `mod_lista_telefonica` (19/09/2026)**: `tb_secretarias` 1000 + `tb_setores` 200 (subsetores achatados), migração `UPDATE` idempotente 1000/200.
 9. `init_db()` técnico (`mod_tecnico/bd_manipulador.py:71`) → `db_mod_tecnico.db` + `software/`/`backup/` + `tb_backup`/`tb_backup_arquivo`.
 10. `init_db()` filas (`mod_filas/bd_manipulador.py:34`) → `db_mod_filas.db` + seed `Geral A000` + `tb_fila`/`tb_chamada`.
+11. `init_db()` lista telefônica (`mod_lista_telefonica/bd_manipulador.py:106`) → `db_mod_lista_telefonica.db` + `tb_unidade`/`tb_contato` + semente 12 secretarias `ORGANOGRAMA_BASE` (idempotente, só quando `tb_unidade` vazia).
 
 O processo é **idempotente** (nunca apaga dados) e pode ser rodado novamente para aplicar seeds sem reiniciar nada.
 
@@ -123,9 +125,10 @@ As principais chaves, agrupadas por dono:
 | Usuários | `usuarios_senha_min` (6), tema `usuarios_*` | `6` | política de senha mínima — senha vazia/None em `criar_usuario`/`duplicar_usuario` cai em `123456` (18/09/2026) |
 | Técnico | `tecnico_max_zip_mb` (1024), tema `tecnico_*` + pastas `software/`/`backup/` | — | backup T.I. — ver [Módulo Técnico](modulos/tecnico.md) |
 | Filas | `filas_modo_tv` (1), `filas_senha_prefixo` (A), `filas_guiche_padrao` (01), tema `filas_*` | — | esqueleto TV — ver [Módulo Filas](modulos/filas.md) |
+| Lista Telefônica | `lista_telefonica_*` (tema), 12 secretarias genéricas | — | organograma `Secretaria→Setor→Subsetor` + contatos alfabéticos + `tel:` — ver [Módulo Lista Telefônica](modulos/lista_telefonica.md) |
 | Auditoria | `auditoria_limite` (1000), `auditoria_retencao_dias` (90), `auditoria_texto_header`, `auditoria_campos:<usuario>` (JSON) | — | paginação/retirada/campos |
 | Empenhos | `empenhos_pastas_monitoradas` (multi-pasta, uma por linha — local/UNC), `empenhos_pasta_monitorada` (legado, fallback de 1 pasta), `empenhos_monitor_intervalo_seg` (60), `empenhos_template_nome`, `empenhos_organizador_paginas_pasta` (200), `empenhos_organizador_pastas_caixa` (4), `renomear_autorizar_download` (0), `empenhos_texto_header`, tema `empenhos_*` | — | monitor/aparência/organizador |
-| Impressão | variáveis de tempo e padrões na aba Administração → Configurações do módulo | — | ver [Módulo de Solicitação de Impressão](modulos/solicitacao_impressao.md) |
+| Impressão | variáveis de tempo e padrões na aba Administração → Configurações do módulo + **cotas padrão 1000/200 via `ORGANOGRAMA_BASE` do `mod_lista_telefonica` (19/09/2026)** | — | ver [Módulo de Solicitação de Impressão](modulos/solicitacao_impressao.md) |
 | E-mail/SMTP | `smtp_*` | — | credenciais (aba "E-mail" de Configurações) |
 | Logs | `log_ativo`, `log_nivel`, `log_rotacao` (`1 month`), `log_retencao` (`4 months`), `log_console` (`auto`), `log_otel_envio` (`1`), `log_otel_nivel` (`DEBUG`) | — | observabilidade loguru (console e envio ao Loki configuráveis) |
 | Telemetria OTel | `otel_ativo` (`1`/`0`), `otel_endpoint` (`localhost:4317`, env `OTEL_ENDPOINT` tem prioridade), `otel_auto_start_stack` (`1`) | — | stack local (Docker) ou servidor dedicado; troca exige restart. Desde 11/09 a escolha `0`/`1` também é **persistida pelo assistente de ativação do boot** (`set_config("otel_ativo", ...)`) — a opção "não" sobrevive ao restart |
@@ -344,9 +347,26 @@ Ordem padrão vigente (instalações novas e "Restaurar padrão") — `mod_intra
 
 `blog → editar_pdf → empenhos → solicita_impressao → usuarios → auditoria`
 
-Comportamento garantido: no primeiro boot o menu abre nessa sequência; após o usuário reordenar via ↑/↓ (persistência imediata por `reordenar_modulos`), a ordem **permanece como ele deixou, inclusive após reinícios** (validado após 2 restarts, incl. ciclo reordenar-via-API + restart com assert; `/login` 200).
+Comportamento garantido: no primeiro boot a **persistência** `tb_modulos.ordem` abre nessa sequência; após o usuário reordenar via ↑/↓ (persistência imediata por `reordenar_modulos`), a ordem **permanece como ele deixou, inclusive após reinícios** (validado após 2 restarts, incl. ciclo reordenar-via-API + restart com assert; `/login` 200).
 
 Causa raiz corrigida: `Repositorio.reordenar_modulos` (`mod_intranet/repositorio.py:675`) gravava o primeiro item com `ordem=0` (`enumerate` 0-based); no boot seguinte `_garantir_tb_modulos` (`mod_intranet/autenticacao.py:29-80`) via `COUNT(*) WHERE ordem=0 > 0` reescrevia TODOS os nativos para `MODULOS_SISTEMA`, apagando a personalização a cada reinício. Correção em 3 pontos: `repositorio.py:675` `enumerate(..., start=1)` (1-based); `_garantir_tb_modulos` endurecido — numera SOMENTE linhas com `ordem=0` (nativas zeradas seguem `MODULOS_SISTEMA`, demais após as numeradas por nome) e nunca reescreve linhas já numeradas; `MODULOS_SISTEMA` reordenado para a sequência acima. Detalhes em [Registro de Mudanças](registro_de_mudancas/index.md).
+
+### Ordenação do menu hambúrguer — apresentação (19/09/2026, `mod_intranet/telas.py:_montar_layout` ~283–367)
+
+> **Apresentação ≠ persistência:** `tb_modulos.ordem` (esta aba, ↑/↓) persiste a ordem desejada no banco, mas o **drawer reordena em memória na renderização** — sem `UPDATE` em `tb_modulos` ao abrir o menu. A filtragem continua via `autenticacao.modulos_do_usuario` / `validar_acesso_modulo` e módulos indisponíveis viram card laranja `menu-<chave>-indisponivel`.
+
+**Regra de agrupamento do drawer (implementada via `_CHAVES_POS_ADMIN`, `_ORDEM_POS_ADMIN`, `_outros.sort`, `_render_lista_modulos`):**
+
+1. **Home isolado no topo** — `Home` (`menu-home`) + separador.
+2. **Demais módulos em ordem alfabética por nome** — `_outros.sort(key=lambda t: t[1].lower())` sobre `modulos_do_usuario` exceto trio.
+3. **Administração** — só `administrador_geral`, após os demais e com separador acima; rótulo contextual (`/admin/{chave_modulo}` vs `/configuracoes`).
+4. **Trio fixo `Blog → Usuários → Auditoria`** — `_ORDEM_POS_ADMIN = ["blog","usuarios","auditoria"]`, sempre após Administração e antes de Documentação/Sair (se não-admin, separador antes do trio).
+5. **Documentação** — só `administrador_geral` (`/documentacao` nova aba), após o trio.
+6. **Sair sempre último** — `menu-sair` após separador final.
+
+**Exemplo `master`:** `Home | Editor PDF, Empenhos, Filas, Lista Telefônica, Solicitação de Impressão, Técnico | Administração | Blog, Usuários, Auditoria | Documentação | Sair`.
+
+Ver também: [Arquitetura — Guarda de página e layout](arquitetura.md#guarda-de-pagina-e-layout) e [Análise do Núcleo](analise_mod_intranet.md#guarda-de-pagina-layout_telapagina_restrita).
 
 ## Sem variáveis de ambiente `.env`
 

@@ -44,6 +44,23 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` (`bd_cone
 4. Monta o layout de 4 partes: header (hambúrguer, botão de backup do módulo quando autorizado, "Meu Perfil" em botão único sempre visível `header-nome-usuario` com nome completo + tooltip completo — sem toggles `hidden sm:*`, badge de perfil sempre visível, logout), drawer lateral (módulos liberados; vínculo a módulo inativo vira item laranja de alerta; Configurações só ao administrador geral), rodapé escondido com reveal no hover/focus (`rodape-sistema`, `mod_intranet/telas.py:346-359` — `opacity:0 + translateY(calc(100% - 5px))`, faixa de 5px como pista, `:hover`/`:focus-within` → `opacity:1 + transform:none`; conteúdo/cores `bg-grey-8` inalterados), área principal. Detalhe em [Módulos (resumo)](modulos/intranet.md) ("Header — botão único sempre visível", correção final 14/09/2026, `mod_intranet/telas.py:225-260`).
 5. Se `precisa_trocar_senha()`, abre diálogo persistent de troca obrigatória.
 
+### Drawer — ordenação do menu hambúrguer (2026-09-19, `mod_intranet/telas.py:_montar_layout` ~283–367)
+
+> **Apresentação ≠ persistência:** `tb_modulos.ordem` (editável em `/configuracoes` → aba Módulo via ↑/↓ e `reordenar_modulos`) **não é alterado pelo drawer** — o drawer aplica ordenação de apresentação em memória.
+
+**Regra de agrupamento (`_CHAVES_POS_ADMIN`, `_ORDEM_POS_ADMIN`, `_outros.sort`, `_render_lista_modulos`):**
+
+1. **Home isolado no topo** — `Home` (`menu-home`, `ativo` quando `chave_modulo is None`) + separador.
+2. **Demais módulos em ordem alfabética por nome** — `_outros = [t for t in _todos if t[0] not in _CHAVES_POS_ADMIN]` + `_outros.sort(key=lambda t: t[1].lower())`; só módulos de `modulos_do_usuario(nome)` e com card laranja `menu-<chave>-indisponivel` quando `ativa == False`.
+3. **Administração** — só `administrador_geral`, após os demais e com separador; rótulo contextual (`/admin/{chave_modulo}` vs `/configuracoes`).
+4. **Trio fixo `Blog → Usuários → Auditoria`** — `_ORDEM_POS_ADMIN = ["blog","usuarios","auditoria"]`, sempre **após Administração** (ou separador quando não-admin) e **antes de Documentação/Sair**; só aparece se liberado em `modulos_do_usuario`.
+5. **Documentação** — só `administrador_geral` (`/documentacao` nova aba, `menu-docs`), após o trio.
+6. **Sair sempre último** — `menu-sair` após separador final.
+
+**Exemplo `master`:** `Home | Editor PDF, Empenhos, Filas, Lista Telefônica, Solicitação de Impressão, Técnico | Administração | Blog, Usuários, Auditoria | Documentação | Sair`.
+
+**Helper:** `_render_lista_modulos(lista)` renderiza cada entrada como `item_menu_drawer` (ativo) ou item laranja indisponível (warning + `notificar`).
+
 ## Rastreabilidade — `contexto.py`
 
 ContextVar do NiceGUI disponibiliza IP/UA tanto na renderização quanto nos callbacks. IP prioriza `X-Forwarded-For` (proxy reverso); `rotulo_dispositivo()` produz ex.: "Chrome 126 · Windows 10/11"; `mac_best_effort()` só consulta IPs `192.168.*` via `ping -c1 -W1` + `ip neigh show` — sintaxe Linux: neste host Windows retorna `None` silenciosamente.
