@@ -62,6 +62,9 @@ Os bancos são criados na **raiz do projeto** (mesma pasta do `main.py`):
 | `db_mod_edit_pdf.db` | editor de PDF | `mod_edit_pdf/bd_manipulador.py:23` |
 | `db_mod_renomear_empenho.db` | renomear empenho | `mod_renomear_empenho/bd_manipulador.py:20` |
 | `db_mod_solicita_impressao.db` | solicitação de impressão | `mod_solicita_impressao/bd_manipulador.py:25` |
+| `db_mod_tecnico.db` | técnico — software + backup | `mod_tecnico/bd_manipulador.py:26` — pastas `software/` + `backup/YYYYMMDD_HHMM_nomePc_ip` |
+| `db_mod_filas.db` | filas (TV) — esqueleto | `mod_filas/bd_manipulador.py:12` — `tb_fila`/`tb_chamada` + `/tv` pública |
+| `db_mod_auditoria.db` | auditoria (uma tabela por módulo) | `mod_auditoria/bd_manipulador.py:25` — `tb_auditoria_<modulo>` |
 
 Todos operam em **modo WAL** (`PRAGMA journal_mode=WAL`), gerando arquivos `*.db-wal` e `*.db-shm` ao lado do `.db`.
 
@@ -93,6 +96,8 @@ Definida em `mod_intranet/mod_intranet_inicializacao_bd.py:13-46`. Ordem **crít
 6. `init_db_pdf()` → `db_mod_edit_pdf.db`.
 7. `init_db_empenho()` → `db_mod_renomear_empenho.db`.
 8. `init_solicita()` → `db_mod_solicita_impressao.db`.
+9. `init_db()` técnico (`mod_tecnico/bd_manipulador.py:71`) → `db_mod_tecnico.db` + `software/`/`backup/` + `tb_backup`/`tb_backup_arquivo`.
+10. `init_db()` filas (`mod_filas/bd_manipulador.py:34`) → `db_mod_filas.db` + seed `Geral A000` + `tb_fila`/`tb_chamada`.
 
 O processo é **idempotente** (nunca apaga dados) e pode ser rodado novamente para aplicar seeds sem reiniciar nada.
 
@@ -114,8 +119,10 @@ As principais chaves, agrupadas por dono:
 | Backup | `backup_horas:<modulo>` | `12` | intervalo em horas por módulo (mín. 1 h) |
 | Editor PDF | `editpdf_lote_arquivos`, `editpdf_lote_mb`, `editpdf_usuario_gb`, `editpdf_expiracao_min` | — | cotas/limites/expiração |
 | Editor PDF (tema) | `editpdf_cor_botao`, `editpdf_cor_texto_botao`, `editpdf_cor_fundo`, `editpdf_cor_titulo`, `editpdf_btn_tamanho` | — | aparência da tela |
-| Blog | `blog_modo_exibicao`, `blog_largura_imagem`, `blog_tags_permitidas`, `blog_texto_header` + tema `blog_*` | — | comportamento/aparência |
-| Usuários | `usuarios_senha_min`, tema `usuarios_*` | `6` | política de senha mínima |
+| Blog | `blog_modo_exibicao` (**`carrossel` padrão com 3 básicas 18/09/2026**, `historico`/`unica`/`carrossel`), `blog_postagem_unica_id`, `blog_carrossel_postagens_ids` (CSV), `blog_carrossel_tempo` (10 s), `blog_largura_imagem`, `blog_tags_permitidas`, `blog_texto_header` + tema `blog_*` | — | comportamento/aparência — `init_db` garante carrossel 3 básicas via `_garantir_carrossel_padrao` (`bd_manipulador.py:241`) |
+| Usuários | `usuarios_senha_min` (6), tema `usuarios_*` | `6` | política de senha mínima — senha vazia/None em `criar_usuario`/`duplicar_usuario` cai em `123456` (18/09/2026) |
+| Técnico | `tecnico_max_zip_mb` (1024), tema `tecnico_*` + pastas `software/`/`backup/` | — | backup T.I. — ver [Módulo Técnico](modulos/tecnico.md) |
+| Filas | `filas_modo_tv` (1), `filas_senha_prefixo` (A), `filas_guiche_padrao` (01), tema `filas_*` | — | esqueleto TV — ver [Módulo Filas](modulos/filas.md) |
 | Auditoria | `auditoria_limite` (1000), `auditoria_retencao_dias` (90), `auditoria_texto_header`, `auditoria_campos:<usuario>` (JSON) | — | paginação/retirada/campos |
 | Empenhos | `empenhos_pastas_monitoradas` (multi-pasta, uma por linha — local/UNC), `empenhos_pasta_monitorada` (legado, fallback de 1 pasta), `empenhos_monitor_intervalo_seg` (60), `empenhos_template_nome`, `empenhos_organizador_paginas_pasta` (200), `empenhos_organizador_pastas_caixa` (4), `renomear_autorizar_download` (0), `empenhos_texto_header`, tema `empenhos_*` | — | monitor/aparência/organizador |
 | Impressão | variáveis de tempo e padrões na aba Administração → Configurações do módulo | — | ver [Módulo de Solicitação de Impressão](modulos/solicitacao_impressao.md) |

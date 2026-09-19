@@ -19,17 +19,19 @@ Cada módulo é um pacote `mod_<nome>/` com `telas.py` (obrigatório: `mostrar_t
 
 ## Banco de dados
 
-- **Central** `db_mod_intranet.db`: `tb_config`, `tb_sessoes`, `tb_modulos`.
-- **Auditoria** `db_mod_auditoria.db`: `tb_auditoria_<modulo>` (uma tabela por módulo produtor) + `tb_auditoria_meta`.
-- Cada módulo tem seu `.db` na raiz em modo **WAL** (`*.db-wal`, `*.db-shm`).
+- **Central** `db_mod_intranet.db`: `tb_config`, `tb_sessoes`, `tb_modulos` (seed `MODULOS_SISTEMA` com 8 módulos — 6 + `tecnico` + `filas` 18/09/2026).
+- **Auditoria** `db_mod_auditoria.db`: `tb_auditoria_<modulo>` (uma tabela por módulo produtor, inclui `tecnico`/`filas`/`tv`) + `tb_auditoria_meta`.
+- Cada módulo tem seu `.db` na raiz em modo **WAL** (`*.db-wal`, `*.db-shm`) — **novos** `db_mod_tecnico.db` (`tb_backup`/`tb_backup_arquivo` + pastas `software/`+`backup/`) e `db_mod_filas.db` (`tb_fila`/`tb_chamada`).
 - **Não cross-query**: consultar via o `bd_manipulador` do próprio módulo.
-- Auditoria LGPD via `audit_log` → banco exclusivo `db_mod_auditoria.db` (tabela por módulo) para toda escrita; operações de PDF registram hash SHA-256 (`hash_arquivo`).
+- Auditoria LGPD via `audit_log` → banco exclusivo `db_mod_auditoria.db` (tabela por módulo) para toda escrita; operações de PDF e backup registram hash SHA-256 (`hash_arquivo`).
 
 ## Agendadores (APScheduler)
 
-- **Backups:** a cada 12 h por módulo (chave `backup_horas:<modulo>`), retenção de 10 cópias em `backup/`.
+- **Backups:** a cada 12 h por módulo (chave `backup_horas:<modulo>`), retenção de 10 cópias em `backup/` — `MAPA_BACKUPS` inclui `tecnico` + `filas` 18/09/2026.
 - **Expiração do editor PDF:** varredura a cada 1 min, independente de usuários.
 - **Limpeza de solicitação de impressão:** `cleanup_solicita` a cada 1 min (`mod_intranet/rotinas.py`).
+- **Monitor de empenhos:** `monitor_empenho` a cada `empenhos_monitor_intervalo_seg` (60 s) — ver [Renomear Empenhos](../modulos/renomear_empenho.md).
+- **Poda da auditoria:** `poda_auditoria` a cada 24 h (LGPD).
 - **Observabilidade:** `loguru` com rotação/retenção/compressão, por módulo (`mod_intranet/observabilidade.py`).
 
 ## Autenticação e sessões

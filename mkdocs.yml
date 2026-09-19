@@ -64,6 +64,8 @@ nav:
       - Renomear Empenhos: analise_mod_renomear_empenho.md
       - Auditoria: analise_mod_auditoria.md
       - Solicitação de Impressão: analise_mod_solicita_impressao.md
+      - Técnico: analise_mod_tecnico.md
+      - Filas (TV, esqueleto): analise_mod_filas.md
   - Módulos (resumo):
       - Intranet (núcleo): modulos/intranet.md
       - Gestão de Usuários: modulos/gest_cad_usuario.md
@@ -72,3 +74,5 @@ nav:
       - Renomear Empenhos: modulos/renomear_empenho.md
       - Auditoria: modulos/auditoria.md
       - Solicitação de Impressão: modulos/solicitacao_impressao.md
+      - Técnico: modulos/tecnico.md
+      - Filas (TV, esqueleto): modulos/filas.md

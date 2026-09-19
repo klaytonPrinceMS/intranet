@@ -1,12 +1,12 @@
 # Intranet Modular — Technical Documentation
 
-> Central index of the Intranet Modular (NiceGUI) engineering documentation for the rede interna. This site follows the "Documentos de Engenharia de Software" standard (MkDocs Material): every page carries an English summary followed by the Portuguese (Brazil) summary, and is organized into per-topic folders.
+> Central index of the Intranet Modular (NiceGUI) engineering documentation for the rede interna. This site follows the "Documentos de Engenharia de Software" standard (MkDocs **readthedocs**): every page carries an English summary followed by the Portuguese (Brazil) summary, and is organized into per-topic folders.
 
 ---
 
 # Intranet Modular — Documentação Técnica
 
-> Índice central da documentação de engenharia da Intranet Modular (NiceGUI) da rede interna. Este sítio segue o padrão "Documentos de Engenharia de Software" (MkDocs Material): cada página traz um resumo em inglês seguido do resumo em português (Brasil) e é organizada em pastas por tema.
+> Índice central da documentação de engenharia da Intranet Modular (NiceGUI) da rede interna. Este sítio segue o padrão "Documentos de Engenharia de Software" (MkDocs **readthedocs**): cada página traz um resumo em inglês seguido do resumo em português (Brasil) e é organizada em pastas por tema.
 
 ## Documentos de Engenharia de Software
 
@@ -39,6 +39,20 @@
 - [Renomear Empenho](analise_mod_renomear_empenho.md)
 - [Auditoria](analise_mod_auditoria.md)
 - [Solicitação de Impressão](analise_mod_solicita_impressao.md)
+- [Técnico](analise_mod_tecnico.md) — software + backup `YYYYMMDD_HHMM_nomePc_ip`, owner-isolation, `webkitdirectory`
+- [Filas (TV, esqueleto)](analise_mod_filas.md) — gestor de chamadas com TV (`/filas` + `/tv` pública)
+
+## Módulos (resumo)
+
+- [Intranet (núcleo)](modulos/intranet.md)
+- [Gestão de Usuários](modulos/gest_cad_usuario.md)
+- [Blog](modulos/blog.md) — carrossel padrão com 3 postagens básicas (18/09/2026)
+- [Editor de PDF](modulos/edit_pdf.md)
+- [Renomear Empenho](modulos/renomear_empenho.md)
+- [Auditoria](modulos/auditoria.md)
+- [Solicitação de Impressão](modulos/solicitacao_impressao.md)
+- [Técnico](modulos/tecnico.md) — **novo** (18/09/2026)
+- [Filas (TV, esqueleto)](modulos/filas.md) — **novo** esqueleto (18/09/2026)
 
 ## Documentos-raiz de apoio
 

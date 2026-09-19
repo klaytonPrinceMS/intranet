@@ -25,17 +25,19 @@
 
 ## Módulos do sistema
 
-O sistema é composto por um **núcleo** (`mod_intranet`) e **6 módulos de negócio**:
+O sistema é composto por um **núcleo** (`mod_intranet`) e **8 módulos de negócio** (6 históricos + 2 novos em 18/09/2026):
 
 | Módulo | Chave | Rota | Banco | Função |
 |:---|:---|:---|:---|:---|
 | **Intranet (núcleo)** | `intranet` | `/`, `/login`, `/configuracoes`, `/documentacao` | `db_mod_intranet.db` | autenticação, sessões, configurações, backups, observabilidade |
 | **Gestão de Usuários** | `usuarios` | `/users` | `db_mod_gest_cad_usuario.db` | CRUD soft de usuários, perfis, papéis por módulo, sessões ativas |
-| **Blog** | `blog` | `/blog` | `db_mod_blog.db` | postagens/comentários HTML sanitizados (`nh3`) |
+| **Blog** | `blog` | `/blog` | `db_mod_blog.db` | postagens/comentários HTML sanitizados (`nh3`) — **padrão `carrossel` com 3 básicas (18/09/2026)** |
 | **Editor de PDF** | `editar_pdf` | `/edit-pdf` | `db_mod_edit_pdf.db` | reduzir, juntar, cortar, dividir, verificar, ZIP — com cotas e expiração |
 | **Renomear Empenhos** | `empenhos` | `/renomear-empenho` | `db_mod_renomear_empenho.db` | extração de texto, regex dinâmicas, FTS5, quarentena, renomeação sequencial, organizador |
 | **Auditoria** | `auditoria` | `/auditoria` | `db_mod_auditoria.db` (uma tabela por módulo) | trilha LGPD + visualização/filtro/exportação |
 | **Solicitação de Impressão** | `solicita_impressao` | `/solicita-impressao` | `db_mod_solicita_impressao.db` | envio de PDF, contagem de páginas, cotas mensais, autorização, impressão |
+| **Técnico** | `tecnico` | `/tecnico` | `db_mod_tecnico.db` | **novo** — software (download zip multi-seleção) + backup `YYYYMMDD_HHMM_nomePc_ip` owner-isolated, `webkitdirectory` |
+| **Filas (TV)** | `filas` | `/filas` + `/tv` (pública) | `db_mod_filas.db` | **novo esqueleto** — gestor de chamadas com TV (fila Geral `A000→A001`, auto-refresh 3s + beep) |
 
 > O cadastro real de módulos vive em `tb_modulos` (banco central), semeado por `MODULOS_SISTEMA` em `mod_intranet/autenticacao.py:15-22`.
 
@@ -45,10 +47,10 @@ O sistema é composto por um **núcleo** (`mod_intranet`) e **6 módulos de neg�
 flowchart TD
     U[Usuário] -->|/login| L[Autenticação bcrypt]
     L -->|ok| S[Sessão revogável<br/>tb_sessoes + cookie_hash<br/>+ Visitas ++contador_acessos_total]
-    S --> D[Dashboard /<br/>boas-vindas + Resumo dinâmico Water + feed do Blog]
+    S --> D[Dashboard /<br/>boas-vindas + Resumo dinâmico Water + feed do Blog<br/>sem botão Abrir Blog (18/09/2026)]
     D --> M[Drawer lateral<br/>módulos liberados]
-    M --> R1[/blog] & R2[/users] & R3[/edit-pdf] & R4[/renomear-empenho] & R5[/solicita-impressao] & R6[/auditoria]
-    R1 & R2 & R3 & R4 & R5 & R6 --> G[pagina_restrita<br/>autenticação + permissão + layout]
+    M --> R1[/blog] & R2[/users] & R3[/edit-pdf] & R4[/renomear-empenho] & R5[/solicita-impressao] & R6[/auditoria] & R7[/tecnico] & R8[/filas]
+    R1 & R2 & R3 & R4 & R5 & R6 & R7 & R8 --> G[pagina_restrita<br/>autenticação + permissão + layout<br/>/tv sem guarda]
     G --> AC[audit_log<br/>db_mod_auditoria.db<br/>tb_auditoria_&lt;modulo&gt;]
     D -->|logout| LO[registrar_logout + /login]
     BG[APScheduler<br/>backups · cleanups · monitor · poda] -.->|2º plano| AC
@@ -62,15 +64,16 @@ flowchart TD
 6. Ações relevantes gravam a **trilha de auditoria** (`audit_log` → banco exclusivo `db_mod_auditoria.db`, tabela por módulo) com IP/user-agent/hash quando aplicável.
 7. Em segundo plano, **APScheduler** executa backups por módulo, limpezas e monitor de pasta.
 
-### Dashboard `/` — Resumo dinâmico (redesign 09/2026)
+### Dashboard `/` — Resumo dinâmico (redesign 09/2026, padronizado 18/09/2026)
 
-> Home visual **Water escopado só no card** (`home_visual.injetar_water_card()` → `.home-resumo-water/.home-stat-water` border `#dfe8f0` bg `#fafcfd`, ícone 36px, `modelo="water"` fixo em `page_dashboard`).
+> Home visual **Water escopado só no card** (`home_visual.injetar_water_card()` → `.home-resumo-water/.home-stat-water` border `#dfe8f0` bg `#fafcfd`, ícone 36px, `modelo="water"` fixo em `page_dashboard` — **18/09/2026**: sombra lateral direita `box-shadow:6px 0 16px rgba(0,0,0,.07)` + `border-left-color` = **cor do módulo `intranet`** via `ler_tema("intranet")["cor_botao"]` (antes `#000000`/`#EF6C00` fixos) + `classes_card_resumo` com `shadow-md`).
 
 - **Sem botão Atualizar**: `_orquestrar_resumo_dados()` (`main.py:250`) recalcula **a cada acesso** (9 contadores: usuários `filtro_ativo=None`, sessões `WHERE logout IS NULL`, visitas `contador_acessos_total`, postagens, quarentena `processado=0`, PDFs `ativo=1`, auditoria 24h `SUM WHERE timestamp >= -1 day`, fila impressão pendente, logs totais).
-- **2 cards, altura -50%+25%**: `gap-1 px-2 py-1`, ícone 36px `text-2xl`, número `text-h6` 4 dígitos (`>9999` com total real no tooltip único do card; `Logs>9999` com alerta `⚠️ realize backup do banco de auditoria (db_mod_auditoria.db)`), layout horizontal ícone esq + número, tooltip simples (`Usuarios/Sessões/Noticias/Logs/Visitas/Fila geral/Para autorizar/Quarentena/PDFs/Auditoria 24h`).
+- **Sem botão "Abrir Blog completo" (removido 18/09/2026)**: o header do feed em `main.py:448-453` é agora só `row items-center` com `label "Publicações recentes"` — o acesso ao Blog permanece pelo drawer (`/blog`); a Home usa `renderizar_postagens` (mesmo padrão do módulo) sem navegação dedicada.
+- **2 cards, altura -50%+25% com sombra lateral direita e cor do módulo**: `gap-1 px-2 py-1`, ícone 36px `text-2xl`, número `text-h6` 4 dígitos (`>9999` com total real no tooltip único do card; `Logs>9999` com alerta `⚠️ realize backup do banco de auditoria (db_mod_auditoria.db)`), layout horizontal ícone esq + número, tooltip simples (`Usuarios/Sessões/Noticias/Logs/Visitas/Fila geral/Para autorizar/Quarentena/PDFs/Auditoria 24h`). Estilo: `.home-resumo-water` + `.home-resumo-pic` com `border-left-width:4px` + `box-shadow:6px 0 16px` + `shadow-md` em `classes_card_resumo`.
 - **Visibilidade por papel**:
-    - **"Resumo do sistema"** (8 métricas: Usuários, Sessões, Visitas, Postagens, Quarentena, PDFs, Logs, Logs 24h) — **só `administrador_geral`/`administrador_modulo`** (`eh_admin` `main.py:500`).
-    - **"Resumo do sistema — Impressão"** (Fila geral + Para autorizar) — **só autorizador** (`tb_responsaveis_autorizacao ativo=1` via `_eh_autorizador_impressao()` `main.py:446`) **ou `administrador_geral`** (`_contar_fila_para_autorizar()` `main.py:460`; admin geral = fila geral).
+    - **"Resumo do sistema"** (8 métricas: Usuários, Sessões, Visitas, Postagens, Quarentena, PDFs, Logs, Logs 24h) — **só `administrador_geral`/`administrador_modulo`** (`eh_admin` `main.py:500`, `main.py:406-426` com `_cor_modulo_home` via `ler_tema("intranet")`).
+    - **"Resumo do sistema — Impressão"** (Fila geral + Para autorizar) — **só autorizador** (`tb_responsaveis_autorizacao ativo=1` via `_eh_autorizador_impressao()` `main.py:446`) **ou `administrador_geral`** (`_contar_fila_para_autorizar()` `main.py:460`; admin geral = fila geral; `main.py:427-441` com `_cor_modulo_home2` idem, antes `#EF6C00` fixo).
 - Comparativo `/home-*` revertido e hambúrguer sem seção comparativa; serviço `http://localhost:8080` water OK.
 
 ## Perfis de usuário
@@ -96,6 +99,8 @@ Além do perfil global, existe o **papel por módulo** (`tb_acesso_usuario`): v�
 | Configurações | ✗ | ✗ | somente este perfil |
 | Gestão de Usuários | ✗ | admin do módulo `usuarios` | tudo |
 | Solicitação de Impressão | solicitar/acompanhar | imprimir/gerenciar | tudo |
+| Técnico | software/backup do próprio PC | — | tudo + ver todos os backups em `/admin/tecnico` |
+| Filas (TV) | chamar próxima / ver TV | — | tudo |
 
 ## Autorização por módulo
 

@@ -29,19 +29,20 @@
 ┌────────────────────────────── main.py (único entry point) ──────────────────────────────┐
 │  inicializar_bancos()  →  verifica telas.py  →  iniciar_agendador()  →  ui.run(8080)     │
 └───────────────┬──────────────────────────────────────────────┬──────────────────────────┘
-                │                                              │
-   ┌────────────▼───────────┐                     ┌────────────▼───────────┐
-   │ mod_intranet (núcleo)  │                     │ Módulos de negócio      │
-   │ autenticacao · layout  │◄── importa ────────►│ mod_blog, mod_gest_*,   │
-   │ bd_conexao · rotinas   │                     │ mod_edit_pdf,           │
-   │ observabilidade · etc. │                     │ mod_renomear_*,         │
-   └────────────┬───────────┘                     │ mod_auditoria,          │
-                │                                 │ mod_solicita_impressao  │
-   db_mod_intranet.db (WAL)                       └─────────┬───────────────┘
-   tb_config · tb_sessoes · tb_modulos                      │ cada um com seu
-                                                            ▼ db_mod_*.db (WAL)
-   db_mod_auditoria.db (WAL) — trilha LGPD, UMA TABELA POR MÓDULO
-   (tb_auditoria_<modulo>), gravada via audit_log → registrar_auditoria
+                 │                                              │
+    ┌────────────▼───────────┐                     ┌────────────▼───────────┐
+    │ mod_intranet (núcleo)  │                     │ Módulos de negócio      │
+    │ autenticacao · layout  │◄── importa ────────►│ mod_blog, mod_gest_*,   │ (8: 6 + tecnico + filas 18/09/2026)
+    │ bd_conexao · rotinas   │                     │ mod_edit_pdf,           │
+    │ observabilidade · etc. │                     │ mod_renomear_*,         │
+    └────────────┬───────────┘                     │ mod_auditoria,          │
+                 │                                 │ mod_solicita_impressao, │
+    db_mod_intranet.db (WAL)                       │ mod_tecnico, mod_filas  │
+    tb_config · tb_sessoes · tb_modulos            └─────────┬───────────────┘
+                                                             │ cada um com seu
+                                                             ▼ db_mod_*.db (WAL)
+    db_mod_auditoria.db (WAL) — trilha LGPD, UMA TABELA POR MÓDULO
+    (tb_auditoria_<modulo>), gravada via audit_log → registrar_auditoria
 ```
 
 ```mermaid
@@ -58,9 +59,10 @@ flowchart LR
         CONN --- OBS[observabilidade<br/>loguru]
         ROT[rotinas<br/>APScheduler] --- DIA[dialogo_backup]
     end
-    subgraph Negocio["módulos de negócio"]
+    subgraph Negocio["módulos de negócio — 8 (6 + 2 novos 18/09/2026)"]
         B[mod_blog] ; U[mod_gest_cad_usuario] ; P[mod_edit_pdf]
         E[mod_renomear_empenho] ; A[mod_auditoria] ; S[mod_solicita_impressao]
+        T[mod_tecnico] ; F[mod_filas]
     end
     subgraph Bancos["SQLite WAL — um por módulo"]
         DBC[(db_mod_intranet.db<br/>tb_config · tb_sessoes · tb_modulos)]
@@ -96,11 +98,13 @@ Cada funcionalidade é um **pacote próprio** na raiz:
 |:---|:---|:---:|:---|
 | `mod_intranet/` | `db_mod_intranet.db` | ✗ (rotas no `main.py`) | núcleo: autenticação, config, layout, rotinas, observabilidade |
 | `mod_gest_cad_usuario/` | `db_mod_gest_cad_usuario.db` | ✓ | usuários, perfis, papéis, sessões |
-| `mod_blog/` | `db_mod_blog.db` | ✓ | postagens/comentários |
+| `mod_blog/` | `db_mod_blog.db` | ✓ | postagens/comentários — **padrão `carrossel` 3 básicas (18/09/2026)** |
 | `mod_edit_pdf/` | `db_mod_edit_pdf.db` | ✓ | edição de PDFs |
 | `mod_renomear_empenho/` | `db_mod_renomear_empenho.db` | ✓ | empenhos/FTS5 |
 | `mod_auditoria/` | `db_mod_auditoria.db` (uma tabela por módulo) | ✓ | trilha LGPD + visualizador |
 | `mod_solicita_impressao/` | `db_mod_solicita_impressao.db` | ✓ | solicitação de impressão |
+| `mod_tecnico/` | `db_mod_tecnico.db` | ✓ | **novo** — software + backup `YYYYMMDD_HHMM_nomePc_ip`, owner-isolation, `webkitdirectory` |
+| `mod_filas/` | `db_mod_filas.db` | ✓ (`telas.py` + `mostrar_tv`) | **novo esqueleto** — gestor de chamadas com TV (`/filas` + `/tv` pública) |
 
 Subpacotes/fluxos relevantes do núcleo:
 
@@ -257,9 +261,9 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 5. Monta o **layout de 4 partes**: header (hambúrguer com `data-testid=menu-hamburguer`, "Meu Perfil", badge de perfil, logout), drawer lateral (fábrica `ui_comum.item_menu_drawer` com `data-testid` `menu-*`, módulos liberados), rodapé com versões, área principal.
 6. Se `precisa_trocar_senha`, abre o diálogo persistente de troca obrigatória.
 
-### Dashboard `/` — Home redesenhada (09/2026)
+### Dashboard `/` — Home redesenhada (09/2026, padronizada 18/09/2026)
 
-`page_dashboard()` (`main.py:492` fixa `modelo="water"`) → `_construir_dashboard()` (`main.py:368` `home_visual.aplicar_modelo("water")`) com `_orquestrar_resumo_dados()` (`main.py:250`, 9 contadores a cada acesso, sem botão Atualizar) e `_stat()` (`main.py:325`, altura `gap-1 px-2 py-1` ícone 36px `text-h6`, 4 dígitos `>9999` tooltip único no card). Visual **Water escopado só no card** (`home_visual.injetar_water_card()` `home_visual.py:176` `.home-resumo-water/.home-stat-water` `#dfe8f0`/`#fafcfd`). **Geral** (8 métricas, só `administrador_geral`/`administrador_modulo`): `[Usuarios,Sessões,Visitas,Postagens,Quarentena,PDFs,Logs,Logs 24h]` + **Impressão** (Fila geral + Para autorizar, só autorizador `tb_responsaveis_autorizacao` ou `administrador_geral` via `_eh_autorizador_impressao()`/`_contar_fila_para_autorizar()` `main.py:446/460`); contador `contador_acessos_total` só em login (`bd_conexao.incrementar_contador_acessos()` `main.py:229`); comparativo `/home-*` revertido e hambúrguer sem seção comparativa. Serviço `http://localhost:8080`.
+`page_dashboard()` (`main.py:492` fixa `modelo="water"`) → `_construir_dashboard()` (`main.py:368` `home_visual.aplicar_modelo("water")`) com `_orquestrar_resumo_dados()` (`main.py:250`, 9 contadores a cada acesso, sem botão Atualizar) e `_stat()` (`main.py:325`, altura `gap-1 px-2 py-1` ícone 36px `text-h6`, 4 dígitos `>9999` tooltip único no card). Visual **Water escopado só no card** (`home_visual.injetar_water_card()` `home_visual.py:176` `.home-resumo-water/.home-stat-water` `#dfe8f0`/`#fafcfd` — **18/09/2026** `border-left-color` agora = **cor do módulo `intranet`** via `ler_tema("intranet")["cor_botao"]` (`main.py:406-441`) + `box-shadow:6px 0 16px` lateral direita + `shadow-md` em `classes_card_resumo` (`home_visual.py:237`); antes `#000000`/`#EF6C00` fixos). Feed do Blog usa `renderizar_postagens` no **mesmo padrão do módulo** (`main.py:443-454`) com header só `label "Publicações recentes"` — **botão "Abrir Blog completo" removido 18/09/2026** (`main.py` diff 7f5c031). **Geral** (8 métricas, só `administrador_geral`/`administrador_modulo`): `[Usuarios,Sessões,Visitas,Postagens,Quarentena,PDFs,Logs,Logs 24h]` + **Impressão** (Fila geral + Para autorizar, só autorizador `tb_responsaveis_autorizacao` ou `administrador_geral` via `_eh_autorizador_impressao()`/`_contar_fila_para_autorizar()` `main.py:446/460`); contador `contador_acessos_total` só em login (`bd_conexao.incrementar_contador_acessos()` `main.py:229`); comparativo `/home-*` revertido e hambúrguer sem seção comparativa. Serviço `http://localhost:8080`.
 
 ## Agendadores (APScheduler)
 
@@ -273,7 +277,7 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 | `poda_auditoria` | **24 h** | remove registros das tabelas por módulo de `db_mod_auditoria.db` mais antigos que `auditoria_retencao_dias` (default 90) |
 | `monitor_empenho` | `empenhos_monitor_intervalo_seg` (default **60 s**) | varredura automática das pastas monitoradas de empenhos (`rodar_monitor("sistema")`) |
 
-> **Ajuste fino:** o `MAPA_BACKUPS` (`rotinas.py:16-22`) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, auditoria, empenhos, solicita — expandido em 06/09 com auditoria e solicita_impressao).
+> **Ajuste fino:** o `MAPA_BACKUPS` (`rotinas.py:16-22`) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, auditoria, empenhos, solicita — expandido em 06/09 com auditoria e solicita_impressao — **18/09/2026** `+ tecnico: db_mod_tecnico.db` + `filas: db_mod_filas.db`).
 
 ## Auditoria LGPD (banco exclusivo)
 
@@ -317,7 +321,9 @@ Raiz do projeto (scaffold base — Fase 0 do `PLANO.md`):
 | `mod_renomear_empenho/organizadorPasta/` | saída do organizador físico do renomear empenho (caixas/subpastas — `PASTA_ORGANIZADOR`) |
 | `mod_renomear_empenho/quarentena/` | PDFs com erro de leitura/corrupção na fila de quarentena (`PASTA_QUARENTENA`) |
 | `mod_edit_pdf/editorPDF/` | arquivos temporários do Editor de PDF (expiração automática, default 10 min — `PASTA_EDITOR`/`PASTA_EDITOR_PDF`) |
-| `main.py`, `requirements.txt`, `mkdocs.yml`, `db_mod_*.db` | entry point único, dependências, build da doc e bancos SQLite (WAL) por módulo (incl. `db_mod_auditoria.db` — trilha LGPD) |
+| `mod_tecnico/software/` | executáveis/portáteis para download (versionável, `.gitkeep` — `mod_tecnico/bd_manipulador.py:24`) |
+| `mod_tecnico/backup/YYYYMMDD_HHMM_nomePc_ip/` | backups por PC/técnico (owner-isolated, uma pasta por dono — `mod_tecnico/bd_manipulador.py:25`, `nome_pasta_backup`) |
+| `main.py`, `requirements.txt`, `mkdocs.yml`, `db_mod_*.db` | entry point único, dependências, build da doc e bancos SQLite (WAL) por módulo (incl. `db_mod_auditoria.db` — trilha LGPD; **novos** `db_mod_tecnico.db`, `db_mod_filas.db`) |
 
 > Pastas operacionais **dentro dos módulos** (`mod_edit_pdf/editorPDF/`, `mod_renomear_empenho/doc/`,
 > `organizadorPasta/`, `quarentena/`) existem com `.gitkeep` no repositório e também são
