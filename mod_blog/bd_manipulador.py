@@ -238,18 +238,68 @@ def _semear_postagens_padrao(cur):
         _log().exception("semeadura de postagens padrão falhou no init_db")
 
 
+def _garantir_carrossel_padrao(cur):
+    """Garante padrão de exibição carrossel com as 3 postagens básicas.
+
+    - Banco novo: modo já vem 'carrossel' (INSERT OR IGNORE), mas ids vazios —
+      preenche com os ids das 3 postagens padrão recém-semeadas (ou das 3 primeiras ativas).
+    - Banco legado: migra 'historico' + ids vazio para 'carrossel' com as mesmas 3 postagens,
+      preservando escolha manual do admin quando ids já definidos.
+    Idempotente: nunca sobrescreve ids já preenchidos nem modo já em 'carrossel'/'unica'.
+    """
+    try:
+        cur.execute("SELECT valor FROM tb_config WHERE chave='blog_modo_exibicao'")
+        row = cur.fetchone()
+        modo = (row[0] if row else "").strip() if row else ""
+        cur.execute("SELECT valor FROM tb_config WHERE chave='blog_carrossel_postagens_ids'")
+        row2 = cur.fetchone()
+        ids_csv = (row2[0] if row2 else "").strip() if row2 else ""
+        if ids_csv:
+            return  # já configurado manualmente — preserva
+        # ids vazio: precisa preencher com as 3 básicas
+        cur.execute("SELECT id, titulo FROM tb_postagens WHERE ativo=1 ORDER BY id")
+        linhas = cur.fetchall()
+        if not linhas:
+            return
+        # tenta casar pelas 3 básicas (sanitizadas); fallback nas 3 primeiras ativas
+        esperados = {_sanitizar_texto(p["titulo"]) for p in POSTAGENS_PADRAO}
+        ids_escolhidos = [str(r[0]) for r in linhas if r[1] in esperados]
+        if len(ids_escolhidos) < 3:
+            ids_escolhidos = [str(r[0]) for r in linhas[:3]]
+        else:
+            ids_escolhidos = ids_escolhidos[:3]
+        if len(ids_escolhidos) < 2:
+            return
+        csv_ids = ",".join(ids_escolhidos)
+        if modo == "historico" and not ids_csv:
+            cur.execute("UPDATE tb_config SET valor=? WHERE chave='blog_modo_exibicao'", ("carrossel",))
+            cur.execute("UPDATE tb_config SET valor=? WHERE chave='blog_carrossel_postagens_ids'", (csv_ids,))
+            _log().info(f"carrossel padrão garantido: migra historico→carrossel ids={csv_ids}")
+        elif modo == "carrossel" and not ids_csv:
+            cur.execute("UPDATE tb_config SET valor=? WHERE chave='blog_carrossel_postagens_ids'", (csv_ids,))
+            _log().info(f"carrossel padrão semeado: ids={csv_ids}")
+        elif not modo:
+            cur.execute("UPDATE tb_config SET valor=? WHERE chave='blog_modo_exibicao'", ("carrossel",))
+            cur.execute("UPDATE tb_config SET valor=? WHERE chave='blog_carrossel_postagens_ids'", (csv_ids,))
+            _log().info(f"carrossel padrão aplicado (sem modo): ids={csv_ids}")
+    except Exception as e:
+        _log().warning(f"_garantir_carrossel_padrao falhou: {e}")
+
+
 def init_db():
     """Creates tables and local config seeds (idempotent bootstrap, via CrudBase).
 
     Cria `tb_postagens`, `tb_comentarios` (FK CASCADE) e a `tb_config` LOCAL
-    do módulo com os padrões (`blog_modo_exibicao`, `blog_postagem_unica_id`,
-    `blog_largura_imagem`, `blog_tags_permitidas`, `blog_texto_header`,
-    `blog_habilitar_mermaid`, `blog_carrossel_tempo`,
-    `blog_carrossel_postagens_ids`) e semeia as postagens de guia "Como usar"
-    (apenas em banco recém-criado). Executado no import e pelo
-    bootstrap central; nunca sobrescreve edições manuais. O DDL e os seeds
-    rodam numa única transação de `CrudBase.transacao` (commit/rollback e
-    fechamento garantidos)."""
+    do módulo com os padrões (`blog_modo_exibicao` padrão ``carrossel`` com as
+    3 postagens básicas, `blog_postagem_unica_id`, `blog_largura_imagem`,
+    `blog_tags_permitidas`, `blog_texto_header`, `blog_habilitar_mermaid`,
+    `blog_carrossel_tempo`, `blog_carrossel_postagens_ids`) e semeia as
+    postagens de guia "Como usar" (apenas em banco recém-criado). Garante via
+    `_garantir_carrossel_padrao` que o carrossel com as 3 básicas seja o
+    padrão inclusive em bancos legados (migra ``historico``→``carrossel`` quando
+    ids vazio). Executado no import e pelo bootstrap central; nunca sobrescreve
+    edições manuais de ids já definidos. O DDL e os seeds rodam numa única
+    transação de `CrudBase.transacao` (commit/rollback e fechamento garantidos)."""
     with _crud.transacao() as cur:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS tb_postagens (
@@ -281,7 +331,7 @@ def init_db():
         """)
         # Padrões locais do módulo (idempotente; não sobrescreve edições manuais).
         for _chave_local, _valor in (
-            ("blog_modo_exibicao", "historico"),  # 'unica' | 'historico'
+            ("blog_modo_exibicao", "carrossel"),  # 'unica' | 'historico' | 'carrossel' — padrão carrossel com 3 postagens básicas
             ("blog_postagem_unica_id", ""),  # id fixado no modo 'unica' (vazio = mais recente)
             ("blog_largura_imagem", "200-400"),
             ("blog_tags_permitidas", _TAGS_PADRAO),
@@ -294,6 +344,8 @@ def init_db():
                         (_chave_local, _valor))
         # Postagens de guia "Como usar" (apenas em banco recém-criado, tabela vazia).
         _semear_postagens_padrao(cur)
+        # Garante padrão de exibição carrossel com as 3 postagens básicas (migração + seed de ids).
+        _garantir_carrossel_padrao(cur)
     # Pasta de imagens do editor (dentro do módulo; servida em /img_postagens/*).
     try:
         os.makedirs(PASTA_IMAGENS, exist_ok=True)
@@ -1034,13 +1086,13 @@ def _largura_imagem():
 def obter_modo_exibicao():
     """Retorna o modo de exibição do blog ('unica', 'historico' ou 'carrossel').
 
-    Lê a config local; default histórico.
+    Lê a config local; default carrossel com as 3 postagens básicas.
     """
     try:
-        modo = (get_config_local("blog_modo_exibicao", "historico") or "historico").strip()
-        return modo if modo in ("unica", "historico", "carrossel") else "historico"
+        modo = (get_config_local("blog_modo_exibicao", "carrossel") or "carrossel").strip()
+        return modo if modo in ("unica", "historico", "carrossel") else "carrossel"
     except Exception:
-        return "historico"
+        return "carrossel"
 
 
 def obter_postagem_unica_id():

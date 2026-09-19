@@ -544,10 +544,16 @@ def mostrar_tela(usuario_logado: str, perfil: str):
 
             def _restaurar_padrao():
                 try:
-                    from mod_blog.bd_manipulador import set_config_local as _sc, definir_postagem_unica_id as _su, definir_carrossel_postagens_ids as _sc2, definir_carrossel_tempo as _st
-                    _sc("blog_modo_exibicao", "historico")
+                    from mod_blog.bd_manipulador import set_config_local as _sc, definir_postagem_unica_id as _su, definir_carrossel_postagens_ids as _sc2, definir_carrossel_tempo as _st, listar_postagens as _lst
+                    # Padrão do sistema: carrossel com as 3 postagens básicas do início
+                    try:
+                        primeiras = _lst(ativo=True, ordem="ASC")[:3]
+                        ids_padrao = [p[0] for p in primeiras] if len(primeiras) >= 2 else []
+                    except Exception:
+                        ids_padrao = []
+                    _sc("blog_modo_exibicao", "carrossel")
                     _su(None)
-                    _sc2([])
+                    _sc2(ids_padrao if ids_padrao else [])
                     _st(10)
                     try:
                         from mod_intranet.crud_base import audit_reg as _audit
