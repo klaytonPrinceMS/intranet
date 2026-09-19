@@ -357,16 +357,33 @@ def init_db():
     cur.execute("UPDATE tb_configuracoes_modulo SET valor='1.0.260913' "
                 "WHERE chave='versao_modulo' AND valor='1.0.260908'")
 
-    # Seeds fixos de secretarias/setores (idempotente — só insere se sigla/nome ainda não existe)
-    _SECRETARIAS_PADRAO = [
-        ("Saúde", "SEC_SAU", 1000, 20),
-        ("Educação", "SEC_EDU", 1500, 20),
-        ("Administração", "SEC_ADM", 600, 10),
-        ("Social", "SEC_SOC", 400, 10),
-        ("Governo", "SEC_GOV", 1000, 10),
-        ("Infraestrutura", "SEC_INF", 200, 10),
-        ("Finanças", "SEC_FIN", 300, 10),
-    ]
+    # Seeds organograma — secretarias 1000 impressões, setores/subsetores 200 cópias
+    # Popula automaticamente no início do sistema (quando o banco é criado).
+    # Idempotente: só insere se sigla/nome ainda não existe.
+    try:
+        from mod_lista_telefonica.bd_manipulador import ORGANOGRAMA_BASE as _ORG_BASE
+    except Exception:
+        _ORG_BASE = [
+            ("Gabinete", []),
+            ("Administração", []),
+            ("Finanças", []),
+            ("Saúde", []),
+            ("Educação", []),
+            ("Obras e Infraestrutura", []),
+        ]
+
+    def _sigla_sec(nome):
+        import unicodedata
+        s = unicodedata.normalize("NFKD", nome).encode("ascii", "ignore").decode().lower()
+        s = "".join(c for c in s if c.isalnum())
+        base = s[:4].upper() if len(s) >= 4 else s.upper().ljust(3, "X")
+        return f"SEC_{base}"
+
+    _SECRETARIAS_PADRAO = []
+    for _sec_nome, _setores in _ORG_BASE:
+        _sig = _sigla_sec(_sec_nome)
+        _SECRETARIAS_PADRAO.append((_sec_nome, _sig, 1000, 20))
+
     for _nome, _sigla, _cota, _lim in _SECRETARIAS_PADRAO:
         try:
             cur.execute(
@@ -381,25 +398,32 @@ def init_db():
                 )
         except Exception:
             pass
-    # Mapa sigla -> id para vínculo de setores
+    # Mapa nome secretaria -> id e sigla -> id
+    _mapa_nome_id = {}
     _mapa_sigla_id = {}
     try:
-        for row in cur.execute("SELECT id, sigla FROM tb_secretarias").fetchall():
-            if row[1]:
-                _mapa_sigla_id[row[1].strip()] = row[0]
+        for row in cur.execute("SELECT id, nome, sigla FROM tb_secretarias").fetchall():
+            _mapa_nome_id[row[1].strip()] = row[0]
+            if row[2]:
+                _mapa_sigla_id[row[2].strip()] = row[0]
     except Exception:
         pass
-    _SETORES_PADRAO = [
-        ("DTI", "SEC_ADM", 0, 2),
-        ("Cohab", "SEC_EDU", 200, 3),
-        ("Florianita", "SEC_EDU", 200, 3),
-        ("Centro Educacional", "SEC_EDU", 200, 3),
-    ]
-    for _nome_setor, _sigla_secr, _cota_s, _lim_s in _SETORES_PADRAO:
+
+    # Seedes setores (200 cópias padrão) — inclui subsetores achatados como setores
+    _SETORES_PADRAO = []
+    for _sec_nome, _setores in _ORG_BASE:
+        for _set_nome, _subsetores in _setores:
+            _SETORES_PADRAO.append((_set_nome, _sec_nome, 200, 10))
+            for _sub in _subsetores:
+                _SETORES_PADRAO.append((_sub, _sec_nome, 200, 10))
+
+    for _nome_setor, _sec_nome, _cota_s, _lim_s in _SETORES_PADRAO:
         try:
-            _sid = _mapa_sigla_id.get(_sigla_secr.strip())
+            _sid = _mapa_nome_id.get(_sec_nome.strip())
             if not _sid:
-                cur.execute("SELECT id FROM tb_secretarias WHERE sigla=?", (_sigla_secr.strip(),))
+                _sid = _mapa_sigla_id.get(_sigla_sec(_sec_nome).strip())
+            if not _sid:
+                cur.execute("SELECT id FROM tb_secretarias WHERE nome=?", (_sec_nome.strip(),))
                 _r = cur.fetchone()
                 _sid = _r[0] if _r else None
             if not _sid:
@@ -416,6 +440,27 @@ def init_db():
                 )
         except Exception:
             pass
+
+    # Garante cotas padrão organograma (migração para bancos já existentes)
+    for _nome, _sigla, _cota, _lim in _SECRETARIAS_PADRAO:
+        try:
+            cur.execute("UPDATE tb_secretarias SET cota_paginas_mensal=1000 WHERE nome=? AND cota_paginas_mensal != 1000", (_nome,))
+        except Exception:
+            pass
+    for _nome_setor, _sec_nome, _cota_s, _lim_s in _SETORES_PADRAO:
+        try:
+            cur.execute("""
+                UPDATE tb_setores SET cota_paginas_mensal=200
+                WHERE nome=? AND secretaria_id IN (SELECT id FROM tb_secretarias WHERE nome=?)
+                AND cota_paginas_mensal != 200
+            """, (_nome_setor, _sec_nome))
+        except Exception:
+            pass
+    # Também corrige setores legados com cota 0 (ex.: DTI) para 200 quando não estão no organograma mas são setores padrão
+    try:
+        cur.execute("UPDATE tb_setores SET cota_paginas_mensal=200 WHERE cota_paginas_mensal=0")
+    except Exception:
+        pass
 
     # Índices
     cur.execute("CREATE INDEX IF NOT EXISTS idx_sol_usuario ON tb_solicitacoes(usuario_solicitante)")

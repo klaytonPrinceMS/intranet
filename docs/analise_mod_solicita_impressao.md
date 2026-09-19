@@ -1,12 +1,12 @@
 # Solicitação de Impressão — `mod_solicita_impressao`
 
-> Print request module: route `/solicita-impressao` (key `solicita_impressao`) · own database `db_mod_solicita_impressao.db` · PDF upload, page counting, hierarchical monthly quotas, dual-mode print, central audit.
+> Print request module: route `/solicita-impressao` (key `solicita_impressao`) · own database `db_mod_solicita_impressao.db` · PDF upload, page counting, hierarchical monthly quotas (1000/200 via `ORGANOGRAMA_BASE`), dual-mode print, central audit.
 
 ---
 
 # Solicitação de Impressão — `mod_solicita_impressao`
 
-> Módulo de solicitação de impressão: rota `/solicita-impressao` (chave `solicita_impressao`) · banco próprio `db_mod_solicita_impressao.db` · envio de PDF, contagem de páginas, cotas mensais hierárquicas, impressão dual, auditoria central.
+> Módulo de solicitação de impressão: rota `/solicita-impressao` (chave `solicita_impressao`) · banco próprio `db_mod_solicita_impressao.db` · envio de PDF, contagem de páginas, cotas mensais hierárquicas (1000/200 via `ORGANOGRAMA_BASE` do `mod_lista_telefonica`), impressão dual, auditoria central.
 >
 > **Versionamento**: `versao_modulo:solicita_impressao = 1.0.260913` (seed em `bd_conexao.init_db()` — chave `tb_config` central, formato `1.0.AAMMDD`, exibida no rodapé em `/solicita-impressao` junto à versão global). Duplicada também em `tb_configuracoes_modulo` (`versao_modulo`) do banco do módulo. Atualizar a cada alteração do módulo.
 
@@ -49,8 +49,8 @@ com outros módulos).
   **grupo_id** (agrupamento "1 pedido por envio"; criado via ALTER idempotente +
   backfill `grupo_id = id` para registros sem grupo + índice `idx_sol_grupo` —
   `bd_manipulador.py:278-287`).
-- **`tb_secretarias`**: id, nome, sigla, cota_paginas_mensal, limite_pedidos_abertos, ativo.
-- **`tb_setores`**: id, nome, secretaria_id FK, cota_paginas_mensal, limite_pedidos_abertos, ativo.
+- **`tb_secretarias`**: id, nome, sigla, cota_paginas_mensal (**1000 padrão via `ORGANOGRAMA_BASE` do `mod_lista_telefonica`**), limite_pedidos_abertos (20 padrão), ativo.
+- **`tb_setores`**: id, nome, secretaria_id FK, cota_paginas_mensal (**200 padrão via `ORGANOGRAMA_BASE` — subsetores achatados como setores**), limite_pedidos_abertos (10 padrão), ativo.
 - **`tb_responsaveis_autorizacao`**: id, user_nome, secretaria_id FK, setor_id FK (opcional), ativo.
 - **`tb_cotas_impressao`**: id, secretaria_id, setor_id (NULL=secretaria), cota_paginas,
   mes_referencia (YYYY-MM, único por vínculo), ativo.
@@ -74,8 +74,8 @@ Exemplos: 10 pág × 3 cóp × A4 frente = 30; A4 frente/verso = 60; A3 frente =
 
 ## Cotas (mensal, hierárquicas)
 
-- Cada **secretaria** tem cota máxima mensal (total do mês).
-- Cada **setor** pode ter cota própria; se não tiver, usa o **pool da secretaria**.
+- Cada **secretaria** tem cota máxima mensal (total do mês) — **1000 cópias padrão do `ORGANOGRAMA_BASE` do `mod_lista_telefonica`** (semeada no `init_db` + migração `UPDATE` para bancos existentes — `bd_manipulador.py:382-463`).
+- Cada **setor** pode ter cota própria (**200 cópias padrão** — subsetores achatados como setores); se não tiver, usa o **pool da secretaria**.
 - Ao **exceder**: o envio é **permitido**, porém a solicitação fica marcada como
   `excedente_cota` e a critério do autorizador/admin imprimir ou não.
 - Consumo descontado **somente na impressão efetiva** (admin confirma).
@@ -359,6 +359,14 @@ central — ver [Análise do Núcleo](analise_mod_intranet.md#hora-do-servidor-n
 ### Adições recentes (09/2026) — responsividade global RNF-UI-01
 
 - **Auditado 320/768/1024** (`kbp-web-design`) — proposta P0/P1/P2 por `container`/`row`/`grid`: abas `overflow-x-auto`, formulário `grid-cols-1 sm:grid-cols-2`, lista de solicitações `overflow-x-auto`, dialogs `w-full max-w`, barra de ações `flex-wrap` `gap` via `.style`. Ver [Padrões](padroes_codificacao/index.md) §8.1.
+
+### Integração organograma (`mod_lista_telefonica`) — cotas padrão 1000/200
+
+- **Importação do organograma genérico** (`bd_manipulador.py:364-464`): `init_db()` importa `ORGANOGRAMA_BASE` do `mod_lista_telefonica` (12 secretarias genéricas) via `from mod_lista_telefonica.bd_manipulador import ORGANOGRAMA_BASE as _ORG_BASE` (fallback genérico de 6 itens se a importação falhar — `bd_manipulador.py:365-373`).
+- **Semente automática em banco novo**: `_SECRETARIAS_PADRAO = [(nome, sigla, 1000, 20) for sec in _ORG_BASE]` — cada secretaria do organograma nasce com **1000 cópias** (`cota_paginas_mensal=1000`) e `limite_pedidos_abertos=20`; `_SETORES_PADRAO = [(setor, sec_nome, 200, 10) ... for sub in subsetores]` — cada setor **e cada subsetor achatado como setor** nasce com **200 cópias** (`cota_paginas_mensal=200`) e limite 10 (`bd_manipulador.py:382-442`). Inserção idempotente via `SELECT id FROM tb_secretarias WHERE sigla=? OR nome=?` / `SELECT id FROM tb_setores WHERE nome=? AND secretaria_id=?` — só insere quando ainda não existe; sigla gerada por `_sigla_sec(nome)` (`NFKD` sem acentos + 4 chars upper `SEC_XXXX`, `bd_manipulador.py:375-380`).
+- **Migração idempotente para bancos já existentes** (`bd_manipulador.py:444-463`): `UPDATE tb_secretarias SET cota_paginas_mensal=1000 WHERE nome=? AND cota !=1000` por secretaria do organograma + `UPDATE tb_setores SET cota=200 WHERE nome=? AND secretaria_id IN (SELECT id FROM tb_secretarias WHERE nome=?) AND cota !=200` por setor do organograma + `UPDATE tb_setores SET cota=200 WHERE cota=0` para legados zerados (ex.: DTI). Executa **no início do sistema (quando o banco é criado)** e também corrige bancos antigos sem sobrescrever edições intencionais posteriores do admin (só corrige valores diversos de 1000/200).
+- **Modelo achatado**: `ORGANOGRAMA_BASE` possui 3 níveis `Secretaria→Setor→Subsetor` (lista telefônica), mas a impressão mantém **2 níveis** `Secretaria→Setor` — subsetores viram setores com 200 cópias para compatibilidade com `tb_solicitacoes.secretaria_id/setor_id` e hierarquia de cota `pool da secretaria`. A lista telefônica conserva os 3 níveis completos; a impressão consome apenas os dois primeiros (ver [Módulo Lista Telefônica](modulos/lista_telefonica.md) e [Análise Lista Telefônica](analise_mod_lista_telefonica.md)).
+- **Comportamento**: secretarias/setores criadas manualmente pelo admin mantêm a cota informada no cadastro (0 quando não informada cai no fallback); as do organograma podem ser editadas após a semente (ex.: ajustar cota/limite) sem serem sobrescritas na próxima reinicialização.
 
 ## Status
 

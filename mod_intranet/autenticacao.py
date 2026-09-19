@@ -21,6 +21,7 @@ MODULOS_SISTEMA = [
     ("auditoria", "Auditoria", "history", "/auditoria"),
     ("tecnico", "Técnico", "build", "/tecnico"),
     ("filas", "Filas", "queue", "/filas"),
+    ("lista_telefonica", "Lista Telefônica", "call", "/lista-telefonica"),
 ]
 
 CHAVE_POR_ROTA = {rota.strip("/"): chave for chave, _, _, rota in MODULOS_SISTEMA}

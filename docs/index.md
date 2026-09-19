@@ -38,9 +38,10 @@
 - [Edição de PDF](analise_mod_edit_pdf.md)
 - [Renomear Empenho](analise_mod_renomear_empenho.md)
 - [Auditoria](analise_mod_auditoria.md)
-- [Solicitação de Impressão](analise_mod_solicita_impressao.md)
+- [Solicitação de Impressão](analise_mod_solicita_impressao.md) — cotas 1000/200 via `ORGANOGRAMA_BASE` do organograma
 - [Técnico](analise_mod_tecnico.md) — software + backup `YYYYMMDD_HHMM_nomePc_ip`, owner-isolation, `webkitdirectory`
 - [Filas (TV, esqueleto)](analise_mod_filas.md) — gestor de chamadas com TV (`/filas` + `/tv` pública)
+- [Lista Telefônica (organograma)](analise_mod_lista_telefonica.md) — **novo** (19/09/2026) organograma 12 secretarias `Secretaria→Setor→Subsetor`, contatos alfabéticos, busca sem acentos, `tel:` no celular
 
 ## Módulos (resumo)
 
@@ -50,9 +51,10 @@
 - [Editor de PDF](modulos/edit_pdf.md)
 - [Renomear Empenho](modulos/renomear_empenho.md)
 - [Auditoria](modulos/auditoria.md)
-- [Solicitação de Impressão](modulos/solicitacao_impressao.md)
+- [Solicitação de Impressão](modulos/solicitacao_impressao.md) — **atualizado** cotas 1000/200 via `ORGANOGRAMA_BASE`
 - [Técnico](modulos/tecnico.md) — **novo** (18/09/2026)
 - [Filas (TV, esqueleto)](modulos/filas.md) — **novo** esqueleto (18/09/2026)
+- [Lista Telefônica (organograma)](modulos/lista_telefonica.md) — **novo** (19/09/2026) `Secretaria→Setor→Subsetor`, `tel:` clicável, admin com excluir ramo/mover/elevar
 
 ## Documentos-raiz de apoio
 

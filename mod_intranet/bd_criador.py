@@ -61,6 +61,9 @@ def inicializar_bancos():
     from mod_filas.bd_manipulador import init_db as init_filas
     init_filas()          # db_mod_filas.db
 
+    from mod_lista_telefonica.bd_manipulador import init_db as init_lista
+    init_lista()          # db_mod_lista_telefonica.db
+
 
 if __name__ == "__main__":
     inicializar_bancos()

@@ -1,12 +1,12 @@
 # Intranet Modular — System Overview
 
-> High-level view of the Intranet Modular: the 7 modules, the main usage flow (login → dashboard → modules) and the 3 user profiles (`comum`, `administrador_modulo`, `administrador_geral`) with per-module roles and access validation.
+> High-level view of the Intranet Modular: the 10 modules (core + 9 business including the new Phone Directory organogram `Secretaria→Setor→Subsetor`), the main usage flow (login → dashboard → modules) and the 3 user profiles (`comum`, `administrador_modulo`, `administrador_geral`) with per-module roles, access validation and quota integration (1000/200 via `ORGANOGRAMA_BASE`).
 
 ---
 
 # Intranet Modular — Visão Geral
 
-> Visão de alto nível da Intranet Modular: os 7 módulos, o fluxo principal de uso (login → dashboard → módulos) e os 3 perfis de usuário (`comum`, `administrador_modulo`, `administrador_geral`) com papéis por módulo e validação de acesso.
+> Visão de alto nível da Intranet Modular: os 10 módulos (núcleo + 9 de negócio incluindo a nova Lista Telefônica `Secretaria→Setor→Subsetor`), o fluxo principal de uso (login → dashboard → módulos) e os 3 perfis de usuário (`comum`, `administrador_modulo`, `administrador_geral`) com papéis por módulo, validação de acesso e integração de cotas (1000/200 via `ORGANOGRAMA_BASE`).
 
 ## Sumário
 
@@ -18,14 +18,15 @@
 
 ## Objetivos
 
-- Centralizar serviços internos da prefeitura em **uma única aplicação** acessível pela rede interna.
+- Centralizar serviços internos da rede em **uma única aplicação** acessível pela rede interna.
 - Garantir **rastreabilidade** (auditoria central LGPD) de todas as ações relevantes.
 - Permitir **evolução incremental**: cada funcionalidade é um módulo independente com banco próprio.
 - Operar **sem internet**: interface com Tailwind local, bibliotecas empacotadas e documentação embutida.
+- Manter **organograma único** compartilhado entre módulos (Lista Telefônica como fonte do organograma genérico e Solicitação de Impressão como consumidora das cotas 1000/200).
 
 ## Módulos do sistema
 
-O sistema é composto por um **núcleo** (`mod_intranet`) e **8 módulos de negócio** (6 históricos + 2 novos em 18/09/2026):
+O sistema é composto por um **núcleo** (`mod_intranet`) e **9 módulos de negócio** (6 históricos + 2 em 18/09/2026 + 1 em 19/09/2026):
 
 | Módulo | Chave | Rota | Banco | Função |
 |:---|:---|:---|:---|:---|
@@ -35,9 +36,10 @@ O sistema é composto por um **núcleo** (`mod_intranet`) e **8 módulos de neg�
 | **Editor de PDF** | `editar_pdf` | `/edit-pdf` | `db_mod_edit_pdf.db` | reduzir, juntar, cortar, dividir, verificar, ZIP — com cotas e expiração |
 | **Renomear Empenhos** | `empenhos` | `/renomear-empenho` | `db_mod_renomear_empenho.db` | extração de texto, regex dinâmicas, FTS5, quarentena, renomeação sequencial, organizador |
 | **Auditoria** | `auditoria` | `/auditoria` | `db_mod_auditoria.db` (uma tabela por módulo) | trilha LGPD + visualização/filtro/exportação |
-| **Solicitação de Impressão** | `solicita_impressao` | `/solicita-impressao` | `db_mod_solicita_impressao.db` | envio de PDF, contagem de páginas, cotas mensais, autorização, impressão |
-| **Técnico** | `tecnico` | `/tecnico` | `db_mod_tecnico.db` | **novo** — software (download zip multi-seleção) + backup `YYYYMMDD_HHMM_nomePc_ip` owner-isolated, `webkitdirectory` |
-| **Filas (TV)** | `filas` | `/filas` + `/tv` (pública) | `db_mod_filas.db` | **novo esqueleto** — gestor de chamadas com TV (fila Geral `A000→A001`, auto-refresh 3s + beep) |
+| **Solicitação de Impressão** | `solicita_impressao` | `/solicita-impressao` | `db_mod_solicita_impressao.db` | envio de PDF, contagem de páginas, cotas mensais (1000/200 via `ORGANOGRAMA_BASE`), autorização, impressão |
+| **Técnico** | `tecnico` | `/tecnico` | `db_mod_tecnico.db` | **novo** (18/09/2026) — software (download zip multi-seleção) + backup `YYYYMMDD_HHMM_nomePc_ip` owner-isolated, `webkitdirectory` |
+| **Filas (TV)** | `filas` | `/filas` + `/tv` (pública) | `db_mod_filas.db` | **novo esqueleto** (18/09/2026) — gestor de chamadas com TV (fila Geral `A000→A001`, auto-refresh 3s + beep) |
+| **Lista Telefônica** | `lista_telefonica` | `/lista-telefonica` + `/admin/lista_telefonica` | `db_mod_lista_telefonica.db` | **novo** (19/09/2026) — organograma 12 secretarias `Secretaria→Setor→Subsetor` genérico, contatos alfabéticos, busca sem acentos, `tel:` clicável no celular, admin com excluir ramo/mover/elevar/ordenar/transferir |
 
 > O cadastro real de módulos vive em `tb_modulos` (banco central), semeado por `MODULOS_SISTEMA` em `mod_intranet/autenticacao.py:15-22`.
 
@@ -49,11 +51,12 @@ flowchart TD
     L -->|ok| S[Sessão revogável<br/>tb_sessoes + cookie_hash<br/>+ Visitas ++contador_acessos_total]
     S --> D[Dashboard /<br/>boas-vindas + Resumo dinâmico Water + feed do Blog<br/>sem botão Abrir Blog (18/09/2026)]
     D --> M[Drawer lateral<br/>módulos liberados]
-    M --> R1[/blog] & R2[/users] & R3[/edit-pdf] & R4[/renomear-empenho] & R5[/solicita-impressao] & R6[/auditoria] & R7[/tecnico] & R8[/filas]
-    R1 & R2 & R3 & R4 & R5 & R6 & R7 & R8 --> G[pagina_restrita<br/>autenticação + permissão + layout<br/>/tv sem guarda]
+    M --> R1[/blog] & R2[/users] & R3[/edit-pdf] & R4[/renomear-empenho] & R5[/solicita-impressao] & R6[/auditoria] & R7[/tecnico] & R8[/filas] & R9[/lista-telefonica]
+    R1 & R2 & R3 & R4 & R5 & R6 & R7 & R8 & R9 --> G[pagina_restrita<br/>autenticação + permissão + layout<br/>/tv sem guarda]
     G --> AC[audit_log<br/>db_mod_auditoria.db<br/>tb_auditoria_&lt;modulo&gt;]
     D -->|logout| LO[registrar_logout + /login]
     BG[APScheduler<br/>backups · cleanups · monitor · poda] -.->|2º plano| AC
+    LT[(Lista Telefônica<br/>ORGANOGRAMA_BASE<br/>12 secretarias)] -.->|importa cotas 1000/200| R5
 ```
 
 1. O usuário acessa `/login` e informa usuário/senha (`autenticar` → bcrypt).
@@ -101,6 +104,7 @@ Além do perfil global, existe o **papel por módulo** (`tb_acesso_usuario`): v�
 | Solicitação de Impressão | solicitar/acompanhar | imprimir/gerenciar | tudo |
 | Técnico | software/backup do próprio PC | — | tudo + ver todos os backups em `/admin/tecnico` |
 | Filas (TV) | chamar próxima / ver TV | — | tudo |
+| Lista Telefônica | ver organograma + busca + ligar | gerenciar ramos/contatos/ordem | tudo |
 
 ## Autorização por módulo
 

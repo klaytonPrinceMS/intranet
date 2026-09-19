@@ -66,6 +66,7 @@ nav:
       - Solicitação de Impressão: analise_mod_solicita_impressao.md
       - Técnico: analise_mod_tecnico.md
       - Filas (TV, esqueleto): analise_mod_filas.md
+      - Lista Telefônica (organograma): analise_mod_lista_telefonica.md
   - Módulos (resumo):
       - Intranet (núcleo): modulos/intranet.md
       - Gestão de Usuários: modulos/gest_cad_usuario.md
@@ -76,3 +77,4 @@ nav:
       - Solicitação de Impressão: modulos/solicitacao_impressao.md
       - Técnico: modulos/tecnico.md
       - Filas (TV, esqueleto): modulos/filas.md
+      - Lista Telefônica (organograma): modulos/lista_telefonica.md

@@ -749,6 +749,20 @@ def page_tv():
     mostrar_tv()
 
 
+@ui.page("/lista-telefonica")
+def page_lista_telefonica():
+    from mod_intranet.telas import pagina_restrita
+    user = pagina_restrita("Lista Telefônica", chave_modulo="lista_telefonica")
+    if not user:
+        return
+    from mod_lista_telefonica.telas import mostrar_tela
+    mostrar_tela(user["nome"], user.get("perfil", ""))
+
+
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["lista_telefonica"] = page_lista_telefonica
+
+
 @app.get("/solicita-impressao/src/impressao.js")
 def servir_js_impressao():
     caminho = os.path.join(
@@ -835,6 +849,35 @@ def page_admin_modulo(chave_modulo: str):
         ui.colors(primary=ler_tema("solicita_impressao",
                                    cor_botao="#000000")["cor_botao"])
         mostrar_administracao(nome, eh_admin)
+
+    elif chave_modulo == "tecnico":
+        eh_admin = (perfil == "administrador_geral"
+                    or autenticacao.eh_admin_do_modulo(nome, "tecnico"))
+        from mod_tecnico.telas_administracao import mostrar_administracao
+        from mod_intranet.tema_modulo import ler_tema
+        ui.colors(primary=ler_tema("tecnico", cor_botao="#000000")["cor_botao"])
+        mostrar_administracao(nome)
+
+    elif chave_modulo == "filas":
+        eh_admin = (perfil == "administrador_geral"
+                    or autenticacao.eh_admin_do_modulo(nome, "filas"))
+        from mod_filas.telas_administracao import mostrar_administracao
+        from mod_intranet.tema_modulo import ler_tema
+        ui.colors(primary=ler_tema("filas", cor_botao="#000000")["cor_botao"])
+        mostrar_administracao(nome)
+
+    elif chave_modulo == "lista_telefonica":
+        eh_admin = (perfil == "administrador_geral"
+                    or autenticacao.eh_admin_do_modulo(nome, "lista_telefonica"))
+        from mod_lista_telefonica.telas_administracao import mostrar_administracao
+        from mod_intranet.tema_modulo import ler_tema
+        ui.colors(primary=ler_tema("lista_telefonica", cor_botao="#000000")["cor_botao"])
+        # admin requer papel; se não for admin, mostra aviso e redireciona para visual
+        if not eh_admin:
+            ui.notify("Acesso restrito a administradores", type="negative")
+            ui.navigate.to("/lista-telefonica")
+        else:
+            mostrar_administracao(nome)
 
     else:
         ui.navigate.to("/configuracoes")

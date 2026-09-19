@@ -48,6 +48,7 @@ PREFIXO_POR_CHAVE = {
     "intranet": "intranet",
     "tecnico": "tecnico",
     "filas": "filas",
+    "lista_telefonica": "lista_telefonica",
 }
 
 
@@ -75,6 +76,8 @@ PADROES_TEMA = {
                 "cor_titulo": "#212121", "btn_tamanho": "medium"},
     "filas": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
               "cor_titulo": "#212121", "btn_tamanho": "medium"},
+    "lista_telefonica": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
+                         "cor_titulo": "#212121", "btn_tamanho": "medium"},
 }
 
 
