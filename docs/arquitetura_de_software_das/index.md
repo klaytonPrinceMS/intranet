@@ -10,8 +10,8 @@
 
 ## Entry point
 
-- **`main.py`** é o único ponto de entrada. Sobe o servidor NiceGUI na porta `8080` (`reload=False`, `show=False`).
-- No boot chama `inicializar_bancos()` (`../../mod_intranet/bd_criador.py`), que cria o banco central **antes** de importar `mod_gest_cad_usuario`.
+- **`main.py`** é o único ponto de entrada. Sobe o servidor NiceGUI na porta `8080` (`reload=False`, `show=False`) e a documentação na porta `8000` (`porta_documentacao`, separada — `documentacao.iniciar_servidor`).
+- No boot chama `inicializar_bancos()` (`mod_intranet/mod_intranet_inicializacao_bd.py:13` — ordem `init_central` → `garantir_rastreabilidade` → `init_db_auditoria` + `migrar_dados_existentes` → `init_blog` → `init_users` → `init_db_pdf` → `init_db_empenho` → `init_solicita` (importa `ORGANOGRAMA_BASE` do `mod_lista_telefonica` para cotas 1000/200) → `init_db` técnico → `init_db` filas → `init_db` lista telefônica), que cria o banco central **antes** de importar qualquer módulo. `mod_intranet/bd_criador.py` e `bd_criador.py` dos módulos são **LEGADO/MORTO** — não executar (schema real via `bd_manipulador.init_db*` + `banco_conexao.conexao(chave)`).
 
 ## Layout de pacotes
 
@@ -19,20 +19,20 @@ Cada módulo é um pacote `mod_<nome>/` com `telas.py` (obrigatório: `mostrar_t
 
 ## Banco de dados
 
-- **Central** `db_mod_intranet.db`: `tb_config`, `tb_sessoes`, `tb_modulos` (seed `MODULOS_SISTEMA` com 8 módulos — 6 + `tecnico` + `filas` 18/09/2026).
-- **Auditoria** `db_mod_auditoria.db`: `tb_auditoria_<modulo>` (uma tabela por módulo produtor, inclui `tecnico`/`filas`/`tv`) + `tb_auditoria_meta`.
-- Cada módulo tem seu `.db` na raiz em modo **WAL** (`*.db-wal`, `*.db-shm`) — **novos** `db_mod_tecnico.db` (`tb_backup`/`tb_backup_arquivo` + pastas `software/`+`backup/`) e `db_mod_filas.db` (`tb_fila`/`tb_chamada`).
-- **Não cross-query**: consultar via o `bd_manipulador` do próprio módulo.
+- **Central** `db_mod_intranet.db`: `tb_config`, `tb_sessoes`, `tb_modulos` (seed `MODULOS_SISTEMA` com **9 de negócio + núcleo = 10** — 6 históricos + `tecnico` + `filas` 18/09/2026 + `lista_telefonica` 19/09/2026; 9 chaves: `editar_pdf`, `empenhos`, `solicita_impressao`, `blog`, `usuarios`, `auditoria`, `tecnico`, `filas`, `lista_telefonica`).
+- **Auditoria** `db_mod_auditoria.db`: `tb_auditoria_<modulo>` (uma tabela por módulo produtor, inclui `tecnico`/`filas`/`lista_telefonica`) + `tb_auditoria_meta` (criada via `mod_auditoria/bd_manipulador.py`).
+- Cada módulo tem seu `.db` na raiz em modo **WAL** (`*.db-wal`, `*.db-shm`) — **novos** `db_mod_tecnico.db` (`tb_backup`/`tb_backup_arquivo` + pastas `software/`+`backup/YYYYMMDD_HHMM_nomePc_ip`, owner-isolation) e `db_mod_filas.db` (`tb_fila`/`tb_chamada`) e `db_mod_lista_telefonica.db` (`tb_unidade` `secretaria|setor|subsetor` + `tb_contato` alfabético + `ORGANOGRAMA_BASE` 12 secretarias, `tel:` no celular). Backend duplo SQLite/PostgreSQL via `mod_intranet/banco_conexao.conexao(chave)` (um `DATABASE db_mod_<chave>` por módulo no Postgres, espelhando o arquivo SQLite).
+- **Não cross-query**: consultar via o `bd_manipulador` do próprio módulo (via `banco_conexao.conexao(chave)`, nunca `sqlite3.connect` cru em banco alheio); isolamento "um banco por módulo" válido nos dois backends.
 - Auditoria LGPD via `audit_log` → banco exclusivo `db_mod_auditoria.db` (tabela por módulo) para toda escrita; operações de PDF e backup registram hash SHA-256 (`hash_arquivo`).
 
 ## Agendadores (APScheduler)
 
-- **Backups:** a cada 12 h por módulo (chave `backup_horas:<modulo>`), retenção de 10 cópias em `backup/` — `MAPA_BACKUPS` inclui `tecnico` + `filas` 18/09/2026.
-- **Expiração do editor PDF:** varredura a cada 1 min, independente de usuários.
-- **Limpeza de solicitação de impressão:** `cleanup_solicita` a cada 1 min (`mod_intranet/rotinas.py`).
+- **Backups:** a cada 12 h por módulo (chave `backup_horas:<modulo>`), retenção de 10 cópias em `backup/` — `MAPA_BACKUPS` inclui `tecnico` + `filas` 18/09/2026 + `lista_telefonica` 19/09/2026 (`rotinas.py:16-22`).
+- **Expiração do editor PDF:** varredura a cada 1 min (`cleanup_pdf` → `expirar_antigos(cfg_expiracao_min())`, default 10 min; fallback `limpar_editor_pdf`).
+- **Limpeza de solicitação de impressão:** `cleanup_solicita` a cada 1 min (`mod_intranet/rotinas.py` — remove rascunhos não confirmados e impressos vencidos).
 - **Monitor de empenhos:** `monitor_empenho` a cada `empenhos_monitor_intervalo_seg` (60 s) — ver [Renomear Empenhos](../modulos/renomear_empenho.md).
-- **Poda da auditoria:** `poda_auditoria` a cada 24 h (LGPD).
-- **Observabilidade:** `loguru` com rotação/retenção/compressão, por módulo (`mod_intranet/observabilidade.py`).
+- **Poda da auditoria:** `poda_auditoria` a cada 24 h (LGPD, `auditoria_retencao_dias` default 90 — varre `tb_auditoria_<modulo>`).
+- **Observabilidade:** `loguru` com rotação/retenção/compressão, por módulo (`mod_intranet/observabilidade.py`); console `auto/sempre/nunca`, bridge OTel→Loki.
 
 ## Autenticação e sessões
 

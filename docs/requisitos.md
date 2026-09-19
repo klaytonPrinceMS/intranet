@@ -64,17 +64,17 @@ Fonte: `requirements.txt` (raiz).
 
 ### Armazenamento
 
-- **SQLite** (módulo `sqlite3` da stdlib) — sem servidor externo de banco.
-- **Modo WAL obrigatório**: cada conexão executa `PRAGMA journal_mode=WAL` (+ `synchronous=NORMAL` no central/auditoria).
-- **Um banco por módulo** na raiz do projeto: `db_mod_intranet.db`, `db_mod_gest_cad_usuario.db`, `db_mod_blog.db`, `db_mod_edit_pdf.db`, `db_mod_renomear_empenho.db`, `db_mod_auditoria.db`, `db_mod_solicita_impressao.db`.
-- Pastas de arquivos: na raiz — `assets/` (+ `assets/css/frameworks/`), `backup/`, `logs/` (loguru), `site/` (docs compiladas); **dentro dos módulos** — `mod_edit_pdf/editorPDF/`, `mod_renomear_empenho/doc/` (empenhos), `mod_renomear_empenho/quarentena/`, `mod_renomear_empenho/organizadorPasta/`, `mod_renomear_empenho/downloads/`, `mod_renomear_empenho/datahora_*PDF/`, `mod_renomear_empenho/tmp_ferramentas_pdf/`, `mod_solicita_impressao/solicitacaoImpressao/`.
+- **SQLite (padrão) ou PostgreSQL opcional** — backend duplo controlado por `banco_tipo` em `tb_config` central (`sqlite` padrão | `postgres`, `postgres_url` DSN) via `mod_intranet/banco_conexao.conexao(chave)`; no Postgres **um DATABASE `db_mod_<chave>` por módulo** (espelha `db_mod_<chave>.db`), preservando isolamento "um banco por módulo" (ver [Configurações](configuracoes.md#card-banco-de-dados-sqlite-ou-postgresql-0809) e [Arquitetura](arquitetura.md#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809)).
+- **Modo WAL obrigatório** (SQLite): cada conexão executa `PRAGMA journal_mode=WAL` (+ `synchronous=NORMAL` no central/auditoria); no Postgres o proxy traduz DDL (`AUTOINCREMENT`→`SERIAL`, `?`→`%s`, `INSERT OR IGNORE`→`ON CONFLICT DO NOTHING`, `GROUP_CONCAT`→`STRING_AGG`, datas normalizadas).
+- **Um banco por módulo** na raiz (SQLite): `db_mod_intranet.db`, `db_mod_gest_cad_usuario.db`, `db_mod_blog.db`, `db_mod_edit_pdf.db`, `db_mod_renomear_empenho.db`, `db_mod_auditoria.db`, `db_mod_solicita_impressao.db`, `db_mod_tecnico.db`, `db_mod_filas.db`, `db_mod_lista_telefonica.db` — 10 bancos (`MODULOS_BD` em `repositorio.py:57-68`; cada módulo com `CrudBase`/`banco_conexao.conexao(chave)`, nunca `sqlite3` cru cross-banco).
+- Pastas de arquivos: na raiz — `assets/` (+ `assets/css/frameworks/` 18 frameworks), `backup/` (retenção 10 por módulo), `logs/` (loguru), `site/` (docs compiladas); **dentro dos módulos** — `mod_edit_pdf/editorPDF/`, `mod_renomear_empenho/doc/` (empenhos), `mod_renomear_empenho/quarentena/`, `mod_renomear_empenho/organizadorPasta/`, `mod_tecnico/software/` + `mod_tecnico/backup/YYYYMMDD_HHMM_nomePc_ip/` (owner-isolated), `mod_solicita_impressao/solicitacaoImpressao/`, `mod_blog/img_postagens/`.
 
 ### Rede e interface
 
 - **Tailwind CSS local**: o NiceGUI embute/serve o `tailwindcss.min.js` localmente — exigência para rede interna.
-- **Frameworks CSS embarcados**: Bulma, DaisyUI, Pico e Picnic em `assets/css/frameworks/`, servidos localmente em `/css/frameworks/*` (sem CDN) via `tema_css.montar_rotas_static()` (`main.py:81-85`); injeção **por página** via `tema_css.injetar_framework()` — nunca global.
-- **Porta**: `8080` (`main.py:476`).
-- **Documentação**: servida na mesma porta em `/documentacao` (build MkDocs `docs/` → `site/`, montado pela própria aplicação — `mod_intranet/documentacao.py`).
+- **Frameworks CSS embarcados**: 18 frameworks em `assets/css/frameworks/` (Bootstrap, Bulma, DaisyUI, Pico, Picnic, Water etc.), servidos localmente em `/css/frameworks/*` (sem CDN) via `tema_css.montar_rotas_static()` (`main.py:81-85`); injeção **por página** via `tema_css.injetar_framework()` — nunca global; drawer 19/09 validado com Tailwind+Quasar.
+- **Portas**: **site/aplicação `8080`** (`porta_site`, `main.py:476`) e **documentação `8000`** (`porta_documentacao`, separada — `documentacao.iniciar_servidor` `ThreadingHTTPServer` em thread daemon servindo `site/`; `ativacao.config_persistida()` persiste ambas; CLI `--portasite`/`--portadocumentacao`).
+- **Documentação**: MkDocs `readthedocs` (`mkdocs.yml`) build `docs/` → `site/` no boot (`documentacao.construir_e_montar_documentacao`), servida em `/documentacao` via mount FastAPI na `:8080` e também no servidor dedicado `:8000` (`mod_intranet/documentacao.py`).
 
 ## Requisitos funcionais por módulo (status real)
 
@@ -194,6 +194,40 @@ Fonte: `requirements.txt` (raiz).
 | Configurações: impressoras padrão, aviso de presença, prazos de rascunho/exclusão, padrões do formulário | ✅ Implementado |
 | Limpeza automática (job 1 min): rascunhos vencidos + arquivos de impressos vencidos | ✅ Implementado |
 | Notificação por e-mail de eventos de cota | ❌ Não implementado (por design — sem SMTP neste fluxo) |
+| Cotas padrão do organograma 1000/200 (12 secretarias genéricas `ORGANOGRAMA_BASE` do `mod_lista_telefonica`) + migração `UPDATE` idempotente | ✅ Implementado (19/09/2026) |
+
+### Técnico (`mod_tecnico`) — novo 18/09/2026
+
+| Requisito | Situação |
+|:---|:---:|
+| Banco `db_mod_tecnico.db` (`tb_backup`/`tb_backup_arquivo`) + pastas `software/` (download) + `backup/YYYYMMDD_HHMM_nomePc_ip` (owner-isolation) | ✅ Implementado |
+| Software multi-seleção + zip recursivo (limite `tecnico_max_zip_mb` 1024) com `webkitdirectory` preservado | ✅ Implementado |
+| Backup 1-clique `webkitdirectory` (cria `YYYYMMDD_HHMM_nomePc_ip`, sanitiza `[^a-zA-Z0-9_-]` → `_`, owner-isolation, admin geral vê todos) | ✅ Implementado |
+| LGPD `remover_vinculos_usuario`/`renomear_usuario` + auditoria `tb_auditoria_tecnico` | ✅ Implementado |
+| Administração `/admin/tecnico` (aparência + `tecnico_max_zip_mb` + painel backup) | ✅ Implementado |
+
+### Filas — TV (`mod_filas`) — esqueleto 18/09/2026
+
+| Requisito | Situação |
+|:---|:---:|
+| Banco `db_mod_filas.db` (`tb_fila`/`tb_chamada`) + seed `Geral A000` | ✅ Implementado (esqueleto) |
+| `gerar_senha(fila_id, ator)` incremento `A000→A001` (`[A-Za-z]*\d+` → `:03d`) + `ultima_chamada()`/`listar_chamadas` | ✅ Implementado |
+| Painel `/filas` + preview + `Abrir TV` + `/tv` pública (full-screen `h-screen bg-black`, auto-refresh 3s + beep `AudioContext`) | ✅ Implementado |
+| LGPD `remover`/`renomear` + auditoria `tb_auditoria_filas` | ✅ Implementado |
+| Administração `/admin/filas` (aparência + backup) | ✅ Implementado |
+| Regras avançadas (múltiplas filas, prioridade, guichês dinâmicos) | ⏳ Pendente (esqueleto a título de conhecimento) |
+
+### Lista Telefônica (`mod_lista_telefonica`) — novo 19/09/2026
+
+| Requisito | Situação |
+|:---|:---:|
+| Banco `db_mod_lista_telefonica.db` (`tb_unidade` `secretaria\|setor\|subsetor` + `tb_contato` alfabético `COLLATE NOCASE`) + `ORGANOGRAMA_BASE` 12 secretarias genéricas | ✅ Implementado |
+| Organograma expansível `Secretaria→Setor→Subsetor` (selects cascata `clearable`, `disabled` até pai) + contatos alfabéticos | ✅ Implementado |
+| Busca global normalizada sem acentos (`_norm` NFKD + `re.findall`) sobre unidades e contatos | ✅ Implementado |
+| Telefone clicável `tel:` (`re.sub(r"[^0-9+]", "")`) + `ui.link(target="tel:...")` + diálogo "Ligar agora" (`window.location.href`) no celular | ✅ Implementado |
+| Admin: criar/mover/elevar/rebaixar/reordenar/comutar/excluir ramo (cascata `_coletar_ramo_ids` + FK CASCADE) + incluir via usuários (busca `on_value_change` por login/nome/e-mail) | ✅ Implementado |
+| LGPD `remover_vinculos_usuario`/`renomear_usuario` + auditoria `tb_auditoria_lista_telefonica` | ✅ Implementado |
+| Administração `/admin/lista_telefonica` (aparência + 2 cards + painel backup) + export `ORGANOGRAMA_BASE` para `solicita_impressao` 1000/200 | ✅ Implementado |
 
 ## Requisitos não funcionais (status real)
 
@@ -206,7 +240,7 @@ Fonte: `requirements.txt` (raiz).
 | **Segurança — anti-travessia** | `pasta_navegavel`/`raizes_navegacao` no renomeador; `_path_real` resolve `..`/`~` | ✅ |
 | **Segurança — storage_secret** | placeholder `intranet-secret-2026-mude-isto` em `main.py:474` — **precisa ser trocado em produção** | ⚠️ Parcial (placeholder) |
 | **Persistência SQLite/WAL** | `PRAGMA journal_mode=WAL` em todos os bancos; `synchronous=NORMAL` no central/auditoria; um banco por módulo | ✅ |
-| **Postgres** | Não há suporte — SQLite apenas (decisão de arquitetura do projeto) | ❌ Não aplicável |
+| **Postgres (backend duplo opcional, 08/09)** | `mod_intranet/banco_conexao.conexao(chave)` roteia por `banco_tipo` (`sqlite` padrão \| `postgres`, `postgres_url` em `tb_config`; `_ler_config_sqlite`/`salvar_backend`); no Postgres um `DATABASE db_mod_<chave>` por módulo (espelha `.db`), proxy traduz `?`→`%s`, DDL SQLite→Postgres, `INSERT OR IGNORE`→`ON CONFLICT`, `GROUP_CONCAT`→`STRING_AGG`, `PRAGMA`/FTS5 ignorados, `lastrowid` via `RETURNING id` + SAVEPOINT; `repositorio.engine/sessaodb` roteiam; card admin "Banco de dados — SQLite ou PostgreSQL" (`config-aplicar-banco`, sem reload, exige restart); container `assets/docker/postgres/docker-compose.yml` (`postgres:16-alpine`, `intranet/intranet`, `:5432`, healthcheck) | ✅ Opcional (SQLite padrão) |
 | **Frameworks CSS locais** | `assets/css/frameworks/` servido em `/css/frameworks/*` (Bulma, DaisyUI, Pico, Picnic — sem CDN); injeção por página via `tema_css.injetar_framework()` | ✅ |
 | **Loguru padronizado** | `_FMT` com `{module}:{function}:{line}`; arquivo por módulo (`logs/<modulo>_<data>.log`); rotação/retenção/compressão; excepthook global | ✅ |
 | **try/except (fail-soft)** | Handlers de UI e acessos a BD protegidos nos módulos; falhas registradas com loguru; renderização nunca derruba a tela | ⚠️ Parcial (pontos legados restantes, ex.: `print` em fallbacks) |
@@ -230,19 +264,23 @@ flowchart TD
     C -->|falha| B
     C -->|ok| D[registrar_login<br/>tb_sessoes + cookie_hash]
     D --> E[Dashboard /<br/>boas-vindas + resumo admin + feed do Blog]
-    E --> F{Menu lateral<br/>módulos liberados}
+    E --> F{Menu lateral<br/>Home isolado + alfabética<br/>+ Administração + trio Blog→Usuários→Auditoria → Docs/Sair<br/>19/09/2026}
     F --> G[/blog]
     F --> H[/users]
     F --> I[/edit-pdf]
     F --> J[/renomear-empenho]
-    F --> K[/solicita-impressao]
-    F --> L[/auditoria<br/>só admin geral]
-    G & H & I & J & K & L --> M[pagina_restrita<br/>revalida usuário + sessão + permissão]
-    M -->|sem permissão| N[acesso_negado + volta ao /]
-    M -->|ok| O[Ações do módulo<br/>CRUD · operações · configurações]
-    O --> P[audit_log<br/>db_mod_auditoria.db<br/>tb_auditoria_&lt;modulo&gt;]
-    O --> Q[notificar<br/>toast com notificacao_timeout]
-    E -->|logout| R[registrar_logout + /login]
+    F --> K[/solicita-impressao<br/>cotas 1000/200]
+    F --> L[/tecnico]
+    F --> M[/filas]
+    F --> N[/lista-telefonica<br/>organograma + tel:]
+    F --> O[/auditoria<br/>só admin geral]
+    F --> P[/tv pública<br/>sem guarda]
+    G & H & I & J & K & L & M & N & O & P --> Q[pagina_restrita<br/>revalida usuário + sessão + permissão<br/>/tv sem guarda]
+    Q -->|sem permissão| R[acesso_negado + volta ao /]
+    Q -->|ok| S[Ações do módulo<br/>CRUD · operações · configurações]
+    S --> T[audit_log<br/>db_mod_auditoria.db<br/>tb_auditoria_&lt;modulo&gt;]
+    S --> U[notificar<br/>toast com notificacao_timeout]
+    E -->|logout| V[registrar_logout + /login]
 ```
 
 ### Modelo de dados

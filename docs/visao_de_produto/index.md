@@ -26,10 +26,12 @@ Sistema intranet modularizado (NiceGUI/FastAPI) da rede interna, que centraliza 
 
 ## Módulos em operação
 
-`mod_intranet` (núcleo), `mod_gest_cad_usuario`, `mod_blog`, `mod_edit_pdf`, `mod_renomear_empenho`, `mod_auditoria`, `mod_solicita_impressao`.
+`mod_intranet` (núcleo) + 9 de negócio: `mod_gest_cad_usuario`, `mod_blog`, `mod_edit_pdf`, `mod_renomear_empenho`, `mod_auditoria`, `mod_solicita_impressao` (cotas 1000/200 via `ORGANOGRAMA_BASE`), `mod_tecnico` (**novo** 18/09/2026 — `software/` + `backup/YYYYMMDD_HHMM_nomePc_ip`, owner-isolation, `webkitdirectory`), `mod_filas` (**novo esqueleto** 18/09/2026 — `/filas` + `/tv` pública 3s+beep) e `mod_lista_telefonica` (**novo** 19/09/2026 — organograma 12 secretarias `Secretaria→Setor→Subsetor`, contatos alfabéticos, busca sem acentos, `tel:` no celular).
+
+Total **10 módulos** (1 núcleo + 9 de negócio), semeados por `MODULOS_SISTEMA` em `mod_intranet/autenticacao.py:15-25` e `MODULOS_BD` em `mod_intranet/repositorio.py:57-68`.
 
 ## Propósito de negócio
 
-Hub centralizador de acesso, gestão de identidade (soft CRUD, LGPD), comunicação (Blog), manipulação de PDF, gestão de empenhos e solicitação de impressão — tudo com trilha de auditoria unificada.
+Hub centralizador de acesso, gestão de identidade (soft CRUD, LGPD), comunicação (Blog), manipulação de PDF, gestão de empenhos e solicitação de impressão (cotas 1000/200), apoio de T.I. (software + backup owner-isolated), gestor de filas/TV e lista telefônica/organograma — tudo com trilha de auditoria unificada (banco exclusivo `db_mod_auditoria.db`, uma tabela por módulo).
 
 Veja [Arquitetura](../arquitetura_de_software_das/index.md) e [Manual de Instalação](../manual_de_uso_instalacao/index.md).

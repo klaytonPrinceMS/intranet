@@ -41,10 +41,13 @@ O sistema nasceu da necessidade de organizar processos internos da prefeitura em
 - **Gestão de acesso** — cadastro de usuários com perfis e papéis granulares por módulo.
 - **Arquivo físico/digital** — renomeação automática de empenhos (PDFs) e organização em caixas/subpastas.
 - **Ofimática** — edição de PDFs (reduzir, juntar, cortar, dividir) em espaço temporário por usuário.
-- **Serviços administrativos** — solicitação de impressão com cotas mensais hierárquicas e autorização.
-- **Governança** — auditoria central de todas as ações relevantes (LGPD) e observabilidade (loguru).
+- **Serviços administrativos** — solicitação de impressão com cotas mensais hierárquicas (1000/200 via `ORGANOGRAMA_BASE`) e autorização.
+- **Apoio de T.I.** — software portátil + backup owner-isolated `YYYYMMDD_HHMM_nomePc_ip` com `webkitdirectory` (Técnico).
+- **Atendimento** — gestor de filas/TV (`/filas` + `/tv` pública, esqueleto 3s+beep).
+- **Organograma** — lista telefônica expansível `Secretaria→Setor→Subsetor` com busca e `tel:` no celular (Lista Telefônica).
+- **Governança** — auditoria central de todas as ações relevantes (LGPD, uma tabela por módulo) e observabilidade (loguru).
 
-Tudo roda **em uma única aplicação** (entry point `main.py`, porta `8080`), sem necessidade de infraestrutura externa além do servidor local.
+Tudo roda **em uma única aplicação** (entry point `main.py`, porta `8080` + documentação `8000`), com **10 módulos** (1 núcleo + 9 de negócio), sem necessidade de infraestrutura externa além do servidor local.
 
 ## Público-alvo
 
