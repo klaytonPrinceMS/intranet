@@ -55,6 +55,12 @@ def inicializar_bancos():
     from mod_solicita_impressao.bd_manipulador import init_db as init_solicita
     init_solicita()       # db_mod_solicita_impressao.db
 
+    from mod_tecnico.bd_manipulador import init_db as init_tecnico
+    init_tecnico()        # db_mod_tecnico.db
+
+    from mod_filas.bd_manipulador import init_db as init_filas
+    init_filas()          # db_mod_filas.db
+
 
 if __name__ == "__main__":
     inicializar_bancos()

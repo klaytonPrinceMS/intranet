@@ -174,14 +174,14 @@ def aplicar_modelo(modelo: str) -> bool:
 
 
 def injetar_water_card():
-    """Water.css escopado — estiliza APENAS o card Resumo (sem reset global)."""
+    """Water.css escopado — estiliza APENAS o card Resumo (sem reset global) + sombra lateral direita."""
     try:
         from nicegui import ui
 
         ui.add_head_html("""
 <style>
-/* Home — Water escopado (só no Resumo) — altura -25% + ícone ampliado */
-.home-resumo-water{border-radius:12px;border:1px solid #dfe8f0;background:#fafcfd}
+/* Home — Water escopado (só no Resumo) — altura -25% + ícone ampliado + sombra lateral direita */
+.home-resumo-water{border-radius:12px;border:1px solid #dfe8f0;background:#fafcfd;box-shadow:6px 0 16px rgba(0,0,0,.07);border-left-width:4px}
 .home-stat-water{border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1px solid #dfe8f0;background:#ffffff;transition:box-shadow .18s ease, transform .15s ease, border-color .18s}
 .home-stat-water:hover{box-shadow:0 8px 22px rgba(0,0,0,.08);transform:translateY(-2px);border-color:#c8d7e6}
 .home-stat-water .home-stat-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e8f1f8}
@@ -196,14 +196,14 @@ def injetar_water_card():
 
 
 def injetar_pic_suave():
-    """PIC puro — Quasar nativo suave para o Resumo."""
+    """PIC puro — Quasar nativo suave para o Resumo (sombra lateral direita padronizada)."""
     try:
         from nicegui import ui
 
         ui.add_head_html("""
 <style>
-/* Home — PIC puro (sem framework externo) — altura -25% + ícone ampliado */
-.home-resumo-pic{border-radius:16px}
+/* Home — PIC puro (sem framework externo) — altura -25% + ícone ampliado + sombra lateral direita */
+.home-resumo-pic{border-radius:16px;box-shadow:6px 0 16px rgba(0,0,0,.07);border:1px solid #e5e7eb;border-left-width:4px}
 .home-stat-pic{border-radius:16px;box-shadow:0 1px 8px rgba(0,0,0,.06);border:1px solid #e5e7eb;background:#fff;transition:box-shadow .18s ease, transform .15s ease}
 .home-stat-pic:hover{box-shadow:0 8px 22px rgba(0,0,0,.08);transform:translateY(-2px)}
 .home-stat-pic .home-stat-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center}
@@ -235,9 +235,9 @@ def injetar_resumo_overrides(framework: str):
 # ===== Helpers de classes condicionais =====
 
 def classes_card_resumo(modelo: str) -> str:
-    """Classes do card externo 'Resumo do sistema' por modelo."""
+    """Classes do card externo 'Resumo do sistema' por modelo (sombra lateral direita padronizada)."""
     m = (modelo or "pic").lower()
-    base = "w-full border-l-4"
+    base = "w-full border-l-4 shadow-md"
     if m == "pic":
         return f"{base} home-resumo-pic"
     return f"{base} home-framework home-resumo-{m}"

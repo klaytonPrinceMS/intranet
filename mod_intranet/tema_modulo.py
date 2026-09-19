@@ -46,6 +46,8 @@ PREFIXO_POR_CHAVE = {
     "empenhos": "empenhos",
     "solicita_impressao": "solicita_impressao",
     "intranet": "intranet",
+    "tecnico": "tecnico",
+    "filas": "filas",
 }
 
 
@@ -69,6 +71,10 @@ PADROES_TEMA = {
                  "cor_titulo": "#212121", "btn_tamanho": "medium"},
     "solicita_impressao": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
                            "cor_titulo": "#212121", "btn_tamanho": "medium"},
+    "tecnico": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
+                "cor_titulo": "#212121", "btn_tamanho": "medium"},
+    "filas": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
+              "cor_titulo": "#212121", "btn_tamanho": "medium"},
 }
 
 

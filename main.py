@@ -404,10 +404,14 @@ def _construir_dashboard(nome: str, perfil: str, eh_admin: bool, modelo: str = "
             except Exception:
                 pass
         if eh_admin:
-            from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2
+            from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2, ler_tema as _ler_tema_home
             from mod_intranet import home_visual as _hv2
+            try:
+                _cor_modulo_home = (_ler_tema_home("intranet").get("cor_botao") or "#000000").strip() or "#000000"
+            except Exception:
+                _cor_modulo_home = "#000000"
             with ui.card().classes(_hv2.classes_card_resumo(modelo)).style(
-                    f"border-left-color:#000000;{_estilo_cartao_fn2()}"):
+                    f"border-left-color:{_cor_modulo_home};box-shadow:6px 0 16px rgba(0,0,0,0.07);{_estilo_cartao_fn2()}"):
                 with ui.card_section().classes("gap-3 w-full"):
                     ui.label("Resumo do sistema").classes("text-h6 font-bold text-grey-9")
                     with ui.row().classes(_hv2.classes_wrap_resumo(modelo)):
@@ -419,13 +423,17 @@ def _construir_dashboard(nome: str, perfil: str, eh_admin: bool, modelo: str = "
                         _stat("PDFs", n_pdf, "picture_as_pdf", modelo=modelo)
                         _stat("Registros de auditoria", n_logs, "history", modelo=modelo)
                         _stat("Auditoria 24h", n_24h, "schedule", modelo=modelo)
-        # Somente autorizador de impressão vê este card (admin geral também é autorizador implícito via perfil)
+        # Somente autorizador de impressão vê este card (admin geral também é autorizador implícito via perfil) — cor padronizada do módulo + sombra lateral direita
         if _eh_autorizador_impressao(nome) or perfil == "administrador_geral":
-            from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2b
+            from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2b, ler_tema as _ler_tema_home2
             from mod_intranet import home_visual as _hv2b
             n_para_autorizar = _contar_fila_para_autorizar(nome, eh_admin_geral=(perfil == "administrador_geral"))
+            try:
+                _cor_modulo_home2 = (_ler_tema_home2("intranet").get("cor_botao") or "#000000").strip() or "#000000"
+            except Exception:
+                _cor_modulo_home2 = "#000000"
             with ui.card().classes(_hv2b.classes_card_resumo(modelo)).style(
-                    f"border-left-color:#EF6C00;{_estilo_cartao_fn2b()}"):
+                    f"border-left-color:{_cor_modulo_home2};box-shadow:6px 0 16px rgba(0,0,0,0.07);{_estilo_cartao_fn2b()}"):
                 with ui.card_section().classes("gap-3 w-full"):
                     ui.label("Resumo do sistema — Impressão").classes("text-h6 font-bold text-grey-9")
                     with ui.row().classes(_hv2b.classes_wrap_resumo(modelo)):
@@ -437,12 +445,8 @@ def _construir_dashboard(nome: str, perfil: str, eh_admin: bool, modelo: str = "
         pode_publicar_blog = (perfil == "administrador_geral"
                               or autenticacao.eh_admin_do_modulo(nome, "blog"))
         with ui.column().classes("w-full gap-4"):
-            with ui.row().classes("w-full items-center justify-between"):
+            with ui.row().classes("w-full items-center"):
                 ui.label("Publicações recentes").classes("text-h6 font-bold text-grey-9")
-                from mod_intranet.tema_modulo import botao as _botao_tema
-                _botao_tema("Abrir Blog completo", icone="article",
-                            variante="contorno",
-                            on_click=lambda: ui.navigate.to("/blog"))
             _feed_wrap = ui.column().classes("w-full gap-4")
             renderizar_postagens(_feed_wrap, nome, perfil,
                                  pode_publicar_blog,
@@ -708,6 +712,41 @@ def page_solicita_impressao():
 
 if rotas_modulos is not None:
     rotas_modulos.REGISTRO_MODULOS["solicita_impressao"] = page_solicita_impressao
+
+
+@ui.page("/tecnico")
+def page_tecnico():
+    from mod_intranet.telas import pagina_restrita
+    user = pagina_restrita("Técnico", chave_modulo="tecnico")
+    if not user:
+        return
+    from mod_tecnico.telas import mostrar_tela
+    mostrar_tela(user["nome"], user.get("perfil", ""))
+
+
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["tecnico"] = page_tecnico
+
+
+@ui.page("/filas")
+def page_filas():
+    from mod_intranet.telas import pagina_restrita
+    user = pagina_restrita("Filas", chave_modulo="filas")
+    if not user:
+        return
+    from mod_filas.telas import mostrar_tela
+    mostrar_tela(user["nome"], user.get("perfil", ""))
+
+
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["filas"] = page_filas
+
+
+@ui.page("/tv")
+def page_tv():
+    # TV de chamadas — acesso livre na rede (sem login), esqueleto
+    from mod_filas.telas import mostrar_tv
+    mostrar_tv()
 
 
 @app.get("/solicita-impressao/src/impressao.js")
