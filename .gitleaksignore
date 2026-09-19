@@ -1,0 +1,10 @@
+# Gitleaks allowlist — falsos-positivos conhecidos (kbp-devSecOps 2026-09-19)
+# Formato: fingerprint exato do arquivo:regra:linha
+# `gitleaks detect` lê este arquivo automaticamente na raiz (.gitleaksignore).
+# Não contém segredos reais — apenas ignora auditados abaixo.
+# Ver: assets/docker/verify-credentials.sh (credencial padrão Grafana master:master — não segredo de produção)
+# e graphify-out/cache/stat-index.json (hashes SHA256 de conteúdo, não API keys)
+assets/docker/verify-credentials.sh:curl-auth-user:66
+graphify-out/cache/stat-index.json:generic-api-key:1
+# site/ (mkdocs build) e graphify-out/ cache podem conter HTML com hashes — não auditar como segredo
+# Se gitleaks for executado com --no-git, filtrar manualmente; com --redact, segredos nunca exibidos.

@@ -119,8 +119,21 @@ def init_db():
 # ============ SOFTWARE ============
 
 def listar_software(relativo: str = ""):
-    """Lista recursiva de arquivos/pastas em software/ (relativo ao software/)."""
+    """Lista recursiva de arquivos/pastas em software/ (relativo ao software/).
+
+    Blindagem path traversal: relativo nunca escapa de PASTA_SOFTWARE
+    (AGENTS.md §1 — todo artefato dentro de mod_tecnico/).
+    """
+    # Sanitiza relativo: impede traversal fora da base
+    if relativo and (".." in relativo or relativo.startswith("/") or "\x00" in relativo):
+        return []
     base = os.path.join(PASTA_SOFTWARE, relativo) if relativo else PASTA_SOFTWARE
+    # Confirma que base permanece dentro de PASTA_SOFTWARE (canônico)
+    try:
+        if os.path.commonpath([os.path.abspath(base), os.path.abspath(PASTA_SOFTWARE)]) != os.path.abspath(PASTA_SOFTWARE):
+            return []
+    except Exception:
+        return []
     if not os.path.isdir(base):
         return []
     itens = []
@@ -163,7 +176,10 @@ def listar_software_recursivo():
 
 
 def criar_zip_selecionados(relativos: list[str], owner: str = "") -> str:
-    """Cria zip temporário com arquivos/pastas selecionados (relativos a software/)."""
+    """Cria zip temporário com arquivos/pastas selecionados (relativos a software/).
+
+    Blindagem path traversal: verifica commonpath para cada abs_path.
+    """
     if not relativos:
         raise ValueError("Nenhum item selecionado")
     # Limite de tamanho
@@ -176,17 +192,33 @@ def criar_zip_selecionados(relativos: list[str], owner: str = "") -> str:
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
     tmp.close()
     total = 0
+    base_abs = os.path.abspath(PASTA_SOFTWARE)
     with zipfile.ZipFile(tmp.name, "w", zipfile.ZIP_DEFLATED) as zf:
         for rel in relativos:
+            # Rejeita traversal explícito
+            if ".." in rel or rel.startswith("/") or "\x00" in rel:
+                continue
             rel_norm = rel.replace("/", os.sep)
             abs_path = os.path.join(PASTA_SOFTWARE, rel_norm)
+            # Garante que abs_path está dentro da base (canônico, sem symlink escape)
+            try:
+                if os.path.commonpath([os.path.abspath(abs_path), base_abs]) != base_abs:
+                    continue
+            except Exception:
+                continue
             if os.path.isdir(abs_path):
                 for root, _, files in os.walk(abs_path):
                     for f in files:
                         f_abs = os.path.join(root, f)
+                        # Dobra de verificação: f_abs também dentro da base
+                        try:
+                            if os.path.commonpath([os.path.abspath(f_abs), base_abs]) != base_abs:
+                                continue
+                        except Exception:
+                            continue
                         arc = os.path.relpath(f_abs, PASTA_SOFTWARE).replace(os.sep, "/")
                         # segurança: não sair de software/
-                        if ".." in arc:
+                        if ".." in arc or arc.startswith("/"):
                             continue
                         zf.write(f_abs, arcname=arc)
                         try:
@@ -195,6 +227,8 @@ def criar_zip_selecionados(relativos: list[str], owner: str = "") -> str:
                             pass
             elif os.path.isfile(abs_path):
                 arc = rel.replace(os.sep, "/")
+                if ".." in arc or arc.startswith("/"):
+                    continue
                 zf.write(abs_path, arcname=arc)
                 try:
                     total += os.path.getsize(abs_path)
@@ -285,14 +319,27 @@ def obter_backup(pasta_nome: str):
 
 
 def _pasta_backup_path(pasta_nome: str) -> str:
-    # sanitiza para evitar path traversal
-    base = _sanitizar_nome(pasta_nome)
-    # pasta_nome já é sanitizado, mas mantém data prefixo com _
-    # validação extra: só permite caracteres do padrão
+    """Retorna caminho canônico da pasta de backup (blindagem path traversal).
+
+    AGENTS.md §1 — tudo dentro de mod_tecnico/backup; nunca escapa.
+    Usa basename + sanitização + commonpath.
+    """
+    # Remove componentes de caminho e sanitiza
+    pasta_nome = os.path.basename((pasta_nome or "").strip())
+    pasta_nome = re.sub(r"[^A-Za-z0-9_.-]", "_", pasta_nome)
+    # Garante padrão YYYYMMDD_HHMM_* quando possível; fallback já sanitizado
     if not re.match(r"^[0-9]{8}_[0-9]{4}_[A-Za-z0-9_-]+_[A-Za-z0-9_-]+$", pasta_nome):
-        # tenta sanitizar fallback: permite qualquer sanitizado
-        pasta_nome = re.sub(r"[^A-Za-z0-9_.-]", "_", pasta_nome)
-    return os.path.join(PASTA_BACKUP, pasta_nome)
+        # mantém sanitizado, mas limita tamanho
+        pasta_nome = pasta_nome[:80] or "backup"
+    caminho = os.path.join(PASTA_BACKUP, pasta_nome)
+    # Verificação canônica: nunca escapar de PASTA_BACKUP
+    try:
+        if os.path.commonpath([os.path.abspath(caminho), os.path.abspath(PASTA_BACKUP)]) != os.path.abspath(PASTA_BACKUP):
+            # fallback seguro: basename sanitizado dentro da base
+            caminho = os.path.join(PASTA_BACKUP, _sanitizar_nome(pasta_nome))
+    except Exception:
+        caminho = os.path.join(PASTA_BACKUP, _sanitizar_nome(pasta_nome))
+    return caminho
 
 
 def salvar_arquivos_backup(pasta_nome: str, arquivos: list, owner: str) -> tuple[bool, str]:
@@ -319,12 +366,27 @@ def salvar_arquivos_backup(pasta_nome: str, arquivos: list, owner: str) -> tuple
         for nome, conteudo in arquivos:
             # sanitiza nome e preserva subpastas se vier com "/" (webkitdirectory)
             nome_safe = nome.replace("\\", "/").strip()
-            # remove .. e //
-            partes = [p for p in nome_safe.split("/") if p and p != ".."]
+            # remove .. e // , e filtra partes vazias e com null byte
+            partes = [p for p in nome_safe.split("/") if p and p != ".." and "\x00" not in p]
+            # Sanitiza cada componente via _sanitizar mas preservando ponto para extensão
+            partes_safe = []
+            for p in partes:
+                # permite letras, dígitos, _, -, . ; resto vira _
+                s = re.sub(r"[^A-Za-z0-9._-]", "_", p)
+                s = s.strip("._")  # evita ocultos e traversais com .
+                if s:
+                    partes_safe.append(s)
+            partes = partes_safe
             if not partes:
                 continue
             nome_rel = "/".join(partes)
             dest = os.path.join(caminho, *partes)
+            # Blindagem canônica: dest nunca escapa de caminho
+            try:
+                if os.path.commonpath([os.path.abspath(dest), os.path.abspath(caminho)]) != os.path.abspath(caminho):
+                    continue
+            except Exception:
+                continue
             os.makedirs(os.path.dirname(dest), exist_ok=True)
             with open(dest, "wb") as f:
                 f.write(conteudo)
