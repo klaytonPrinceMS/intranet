@@ -216,30 +216,122 @@ def contar_noticias(tema=None):
         conn.close()
 
 
+def _parse_data_pub(raw: str):
+    """Tenta converter data crua de RSS/Google/BBC para YYYY-MM-DD HH:MM:SS."""
+    if not raw:
+        return None
+    s = str(raw).strip()
+    # tenta RFC822 via email.utils (robusto para Tue, 19 Sep 2026 12:34:56 GMT)
+    try:
+        from email.utils import parsedate_to_datetime
+        dt = parsedate_to_datetime(s)
+        if dt:
+            # normaliza para naive local (sem tz)
+            if dt.tzinfo:
+                dt = dt.astimezone().replace(tzinfo=None)
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+    except Exception:
+        pass
+    # normaliza Z
+    t = s.replace("Z", "+00:00")
+    # remove colon em tz para strptime (+00:00 -> +0000)
+    if len(t) >= 6 and t[-3] == ":" and t[-6] in "+-":
+        t = t[:-3] + t[-2:]
+    for fmt in (
+        "%Y-%m-%dT%H:%M:%S%z",
+        "%Y-%m-%dT%H:%M:%S.%f%z",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%dT%H:%M:%SZ",
+        "%Y-%m-%dT%H:%M:%S.%fZ",
+        "%a, %d %b %Y %H:%M:%S %z",
+        "%a, %d %b %Y %H:%M:%S %Z",
+        "%d/%m/%Y %H:%M",
+    ):
+        try:
+            dt = datetime.strptime(t, fmt)
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception:
+            continue
+    m = re.search(r"(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})", s)
+    if m:
+        try:
+            dt = datetime.strptime(m.group(1).replace("T", " "), "%Y-%m-%d %H:%M:%S")
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception:
+            pass
+    return None
+
+
 def listar_noticias(tema=None, limite=30, offset=0):
     conn = get_connection()
     try:
         cur = conn.cursor()
+        # ordena por tempo real da postagem (data_publicacao) com fallback data_coleta
         if tema:
-            cur.execute("SELECT id, titulo, fonte, tema, url, imagem_url, descricao, data_publicacao, data_coleta FROM tb_noticia WHERE tema=? ORDER BY data_coleta DESC LIMIT ? OFFSET ?", (tema, limite, offset))
+            cur.execute("SELECT id, titulo, fonte, tema, url, imagem_url, descricao, data_publicacao, data_coleta FROM tb_noticia WHERE tema=? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ? OFFSET ?", (tema, limite, offset))
         else:
-            cur.execute("SELECT id, titulo, fonte, tema, url, imagem_url, descricao, data_publicacao, data_coleta FROM tb_noticia ORDER BY data_coleta DESC LIMIT ? OFFSET ?", (limite, offset))
+            cur.execute("SELECT id, titulo, fonte, tema, url, imagem_url, descricao, data_publicacao, data_coleta FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ? OFFSET ?", (limite, offset))
         return cur.fetchall()
     finally:
         conn.close()
 
 
 def listar_para_tv(limite=10):
-    """API para mod_filas TV — carrossel título+descrição."""
+    """API para mod_filas TV — carrossel título+descrição (filtra censuradas, ordena por tempo real)."""
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema FROM tb_noticia ORDER BY data_coleta DESC LIMIT ?", (limite,))
+        # pega mais que limite para filtrar censuradas sem perder slots, ordena por data real da postagem
+        cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (limite * 3,))
         rows = cur.fetchall()
-        # fallback: se vazio, retorna lista vazia (TV mostra placeholder)
-        return [{"titulo": r[0], "descricao": r[1] or r[0], "url": r[2], "imagem": r[3], "fonte": r[4], "tema": r[5]} for r in rows]
+        # filtra censura
+        try:
+            from mod_intranet.censura import titulo_bloqueado
+            filtradas = []
+            for r in rows:
+                bloqueado, _ = titulo_bloqueado(r[0] or "")
+                if not bloqueado:
+                    filtradas.append(r)
+                if len(filtradas) >= limite:
+                    break
+            rows = filtradas
+        except Exception:
+            rows = rows[:limite]
+        return [{"titulo": r[0], "descricao": r[1] or r[0], "url": r[2], "imagem": r[3], "fonte": r[4], "tema": r[5]} for r in rows[:limite]]
     finally:
         conn.close()
+
+
+def limpar_censuradas():
+    """Remove do banco notícias já coletadas cujo título contém palavra bloqueada. Retorna qtd removida."""
+    try:
+        from mod_intranet.censura import obter_palavras_bloqueadas, titulo_bloqueado
+        palavras = obter_palavras_bloqueadas()
+        if not palavras:
+            return 0
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id, titulo FROM tb_noticia")
+            todas = cur.fetchall()
+            ids_remover = []
+            for nid, tit in todas:
+                bloqueado, _ = titulo_bloqueado(tit or "", palavras)
+                if bloqueado:
+                    ids_remover.append((nid,))
+            if ids_remover:
+                cur.executemany("DELETE FROM tb_noticia WHERE id=?", ids_remover)
+                conn.commit()
+                _log().info(f"limpeza censura: {len(ids_remover)} notícias removidas")
+                _audit("sistema", "limpar_censuradas", f"{len(ids_remover)} removidas")
+                return len(ids_remover)
+            return 0
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().warning(f"limpar_censuradas falhou: {e}")
+        return 0
 
 
 def limpar_antigas(horas=24):
@@ -261,17 +353,39 @@ def limpar_antigas(horas=24):
 def inserir_noticia(titulo, fonte, tema, url, imagem_url="", descricao="", data_publicacao=None):
     if not titulo or not url:
         return False
-    # sanitiza
+    # censura
+    try:
+        from mod_intranet.censura import titulo_bloqueado
+        bloqueado, palavra = titulo_bloqueado(titulo or "")
+        if bloqueado:
+            _log().info(f"notícia censurada: palavra '{palavra}' no título '{titulo[:80]}' — descartada")
+            return False
+    except Exception:
+        pass
     titulo = titulo.strip()[:500]
     url = url.strip()[:2000]
     if not titulo or not url:
         return False
-    # normaliza url google news
     if url.startswith("/"):
         url = "https://news.google.com" + url
+    # normaliza título para deduplicação (sem acentos, lower, strip)
+    import unicodedata
+    def _norm_tit(s):
+        s = unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower()
+        return " ".join(s.split())
+    titulo_norm = _norm_tit(titulo)
     conn = get_connection()
     try:
         cur = conn.cursor()
+        # impede duplicatas por URL (UNIQUE) e por título normalizado (mesma notícia já incluída)
+        cur.execute("SELECT 1 FROM tb_noticia WHERE url=? LIMIT 1", (url,))
+        if cur.fetchone():
+            return False
+        # verifica título duplicado (case-insensitive, sem acentos)
+        cur.execute("SELECT titulo FROM tb_noticia")
+        for (t_exist,) in cur.fetchall():
+            if _norm_tit(t_exist) == titulo_norm:
+                return False
         cur.execute("""
             INSERT OR IGNORE INTO tb_noticia (titulo, fonte, tema, url, imagem_url, descricao, data_publicacao)
             VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
@@ -312,9 +426,11 @@ def _coletar_google(url: str, fonte_nome: str, tema: str) -> int:
                 href = "https://news.google.com/" + href.lstrip("./")
             elif href.startswith("/"):
                 href = "https://news.google.com" + href
-            # imagem
             img = (x.css("img::attr(src)").get() or x.css("img::attr(data-src)").get() or "").strip()
-            if inserir_noticia(txt, f"Google News - {fonte_nome}", tema, href, img, txt):
+            # tempo real da postagem: tenta time[datetime], span com data
+            raw_time = (x.css("time::attr(datetime)").get() or x.css("time::text").get() or x.css("[datetime]::attr(datetime)").get() or "").strip()
+            data_pub = _parse_data_pub(raw_time) if raw_time else None
+            if inserir_noticia(txt, f"Google News - {fonte_nome}", tema, href, img, txt, data_pub):
                 n += 1
             if n >= 20:
                 break
@@ -332,15 +448,23 @@ def _coletar_bbc(url: str, tema: str) -> int:
         import parsel
         sel = parsel.Selector(text=html)
         n = 0
-        for x in sel.css(".bbc-uk8dsi, .bbc-19j92fr, article"):
-            txt = (x.css("a::text").get() or "").strip()
-            href = (x.css("a::attr(href)").get() or "").strip()
+        for x in sel.css(".bbc-uk8dsi, .bbc-19j92fr, article, a[href*='/portuguese/articles'], a[href*='/portuguese/topics']"):
+            txt = (x.css("::text").get() or x.css("a::text").get() or "").strip()
+            href = (x.css("::attr(href)").get() or x.css("a::attr(href)").get() or "").strip()
             if not txt or not href:
-                continue
+                if x.css("::text").get():
+                    txt = x.css("::text").get().strip()
+                    href = x.css("::attr(href)").get().strip()
+                if not txt or not href:
+                    continue
             if href.startswith("/"):
                 href = "https://www.bbc.com" + href
-            img = (x.css("img::attr(src)").get() or "").strip()
-            if inserir_noticia(txt, "BBC", tema, href, img, txt):
+            if href.count("/") < 3 or len(txt) < 15:
+                continue
+            img = (x.css("img::attr(src)").get() or x.css("img::attr(data-src)").get() or "").strip()
+            raw_time = (x.css("time::attr(datetime)").get() or x.css("time::text").get() or "").strip()
+            data_pub = _parse_data_pub(raw_time) if raw_time else None
+            if inserir_noticia(txt, "BBC", tema, href, img, txt, data_pub):
                 n += 1
             if n >= 15:
                 break
@@ -358,13 +482,15 @@ def _coletar_jfp(url: str, tema: str) -> int:
         import parsel
         sel = parsel.Selector(text=html)
         n = 0
-        for x in sel.css(".td-module-title a"):
-            txt = (x.css("::text").get() or "").strip()
-            href = (x.css("::attr(href)").get() or "").strip()
+        for x in sel.css(".td-module-title"):
+            txt = (x.css("a::text").get() or x.css("::text").get() or "").strip()
+            href = (x.css("a::attr(href)").get() or "").strip()
             if not txt or not href:
                 continue
             img = (x.css("img::attr(src)").get() or "").strip()
-            if inserir_noticia(txt, "JFP Notícias", tema, href, img, txt):
+            raw_time = (x.css("time::attr(datetime)").get() or x.css(".td-post-date::text").get() or "").strip()
+            data_pub = _parse_data_pub(raw_time) if raw_time else None
+            if inserir_noticia(txt, "JFP Notícias", tema, href, img, txt, data_pub):
                 n += 1
             if n >= 15:
                 break
@@ -386,14 +512,20 @@ def _coletar_rss(url: str, fonte_nome: str, tema: str) -> int:
             txt = (item.css("title::text").get() or "").strip()
             href = (item.css("link::text").get() or item.css("link::attr(href)").get() or "").strip()
             desc = (item.css("description::text").get() or "").strip()
+            raw_time = (item.css("pubDate::text").get() or item.css("dc\\:date::text").get() or item.css("published::text").get() or "").strip()
+            data_pub = _parse_data_pub(raw_time) if raw_time else None
             img = ""
-            # tenta media:content
             m = item.css("media\\:content::attr(url)").get()
             if m:
                 img = m.strip()
+            else:
+                # tenta enclosure
+                enc = item.css("enclosure::attr(url)").get()
+                if enc and any(enc.lower().endswith(ext) for ext in (".jpg",".jpeg",".png",".webp")):
+                    img = enc.strip()
             if not txt or not href:
                 continue
-            if inserir_noticia(txt, fonte_nome or "RSS", tema, href, img, desc[:500]):
+            if inserir_noticia(txt, fonte_nome or "RSS", tema, href, img, desc[:500], data_pub):
                 n += 1
             if n >= 15:
                 break
@@ -415,10 +547,10 @@ def _coletar_pesquisa_google(termo: str, tema: str = "Geral") -> int:
         return 0
 
 
-def coletar_todas(ator="sistema"):
-    """Investiga fontes com intervalo configurado, se habilitado. Retorna total inseridas."""
-    if not habilitado():
-        _log().info("Coleta ignorada: módulo desabilitado")
+def coletar_todas(ator="sistema", forcar: bool = False):
+    """Investiga fontes com intervalo configurado, se habilitado (forcar ignora flag). Retorna total inseridas."""
+    if not forcar and not habilitado():
+        _log().info("Coleta ignorada: módulo desabilitado (use forcar=True para coleta manual)")
         return 0
     fontes = fontes_config()
     termo = termo_pesquisa()

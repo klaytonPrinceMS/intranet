@@ -178,8 +178,3 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             # CSS já garante 3 colunas no desktop; NiceGUI will render
 
         grid()
-
-        # Info para TV
-        with ui.card().classes("w-full bg-blue-50 border border-blue-200 mt-2"):
-            ui.label("Integração TV — Filas").classes("text-caption font-bold text-blue-9")
-            ui.label("Enquanto aguardam, a TV (/tv) exibe carrossel com título+descrição das últimas notícias via ag.listar_para_tv() (3 colunas aqui, carrossel lá).").classes("text-caption text-blue-8")
