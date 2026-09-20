@@ -30,6 +30,7 @@
 | `/midia_filas/*` | `mod_filas` (`PASTA_MIDIA` `mod_filas/midia`) | — | público (áudios MP3 elevador / vídeos MP4 propaganda, playlist global 40s quando ociosa) |
 | `/lista-telefonica` | `mod_lista_telefonica` | `lista_telefonica` | liberados (organograma `Secretaria→Setor→Subsetor`, busca, `tel:`) |
 | `censura` | `mod_intranet/censura.py` | `conteudo_palavras_bloqueadas` | central (Blog `criar/atualizar` bloqueia + Agregador `inserir` descarta (`fonte_icon`/`imagem` extração `faviconV2`/`api/attachments`) / `listar_para_tv` filtra `LIMIT*3` (`fonte_icon` incluso) / `limpar_censuradas` remove; `lower+NFD` sem acentos) |
+| `/api/attachments/{caminho:path}` | `main.py:820` `fallback_attachments` | — (público) | **fallback silencioso** antes de `/assets/noticia`: `favicon.png` placeholder se caminho termina em `-w280-h168-p-df/.png/.jpg/.jpeg` senão `404` — evita log spam `http://localhost:8080/api/attachments/CC8... not found` no boot `NiceGUI ready`, TV/Blog sem imagem quebrada (compatível, sem quebrar coleta) |
 | `/css/frameworks/*` | `mod_intranet/tema_css` | — | público (Bulma/DaisyUI/Pico/Picnic etc. locais, sem CDN) |
 | `/img_postagens/*` | `mod_blog` | `blog` | público (imagens do WYSIWYG, `mod_blog/img_postagens/`) |
 

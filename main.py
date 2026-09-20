@@ -817,6 +817,25 @@ def page_agregador_noticias_puro():
     mostrar_tela_pura(user["nome"], user.get("perfil", ""))
 
 
+@app.get("/api/attachments/{caminho:path}")
+def fallback_attachments(caminho: str):
+    """EN: Fallback for broken /api/attachments/* exported from Trello/Notion.
+    Serves assets/noticia/favicon.png as visual placeholder when path ends with
+    -w280-h168-p-df/.png/.jpg/.jpeg, otherwise 404. Inserted BEFORE
+    /assets/noticia route to avoid log spam of 'http://localhost:8080/api/attachments/CC8... not found' seen on boot (NiceGUI ready). Silent fallback, TV and Blog never attempt to load broken external attachments.
+
+    PT-BR: Fallback 404 para /api/attachments/* quebrado de export Trello/Notion no conteúdo do Blog/Agregador.
+    Evita log spam de 'http://localhost:8080/api/attachments/CC8... not found' que aparecia no boot (NiceGUI ready) e serve placeholder visual favicon.png quando o caminho termina em -w280-h168-p-df/.png/.jpg/.jpeg; caso contrário 404. Inserido ANTES de /assets/noticia. Requisitos: TV e Blog não tentam carregar attachments externos quebrados; fallback silencioso, compatível, sem quebrar coleta, sem log spam, com placeholder visual."""
+    # opcional: placeholder transparente 1x1
+    # tenta servir assets/noticia/favicon.png como fallback visual se for imagem
+    if caminho.endswith(("-w280-h168-p-df", "-w280-h168", ".png", ".jpg", ".jpeg")):
+        base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "noticia")
+        placeholder = os.path.join(base, "favicon.png")
+        if os.path.isfile(placeholder):
+            return FileResponse(placeholder, media_type="image/png")
+    return Response(status_code=404)
+
+
 @app.get("/assets/noticia/{caminho:path}")
 def servir_assets_noticia(caminho: str):
     base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "noticia")

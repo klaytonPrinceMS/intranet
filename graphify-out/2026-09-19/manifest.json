@@ -720,9 +720,9 @@
     "semantic_hash": ""
   },
   "mod_intranet/rotinas.py": {
-    "mtime": 1789864092.3598871,
-    "seen": 1789866341.7535517,
-    "ast_hash": "9fe891c8a8c5a863542593a3545a2f93",
+    "mtime": 1789855385.7096524,
+    "seen": 1789860257.306047,
+    "ast_hash": "80e8c328d4b6bc72da287449eea52e1d",
     "semantic_hash": ""
   },
   "mod_intranet/tela_configuracoes.py": {
@@ -1044,9 +1044,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_blog.md": {
-    "mtime": 1789864402.1611576,
-    "seen": 1789866341.7538788,
-    "ast_hash": "53c1eff85b6bb17257adab3c23a9eddf",
+    "mtime": 1789764402.491555,
+    "seen": 1789822293.3867438,
+    "ast_hash": "22411d1868b39bf2731aca410cef8a6e",
     "semantic_hash": ""
   },
   "docs/analise_mod_edit_pdf.md": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_intranet.md": {
-    "mtime": 1789864585.1990697,
-    "seen": 1789866341.753898,
-    "ast_hash": "f51333e2653a7040363126229c3950bc",
+    "mtime": 1789821078.9090853,
+    "seen": 1789822293.3867817,
+    "ast_hash": "0b948894eacb6fc85a39653383486e66",
     "semantic_hash": ""
   },
   "docs/analise_mod_renomear_empenho.md": {
@@ -1086,21 +1086,21 @@
     "semantic_hash": ""
   },
   "docs/arquitetura.md": {
-    "mtime": 1789866037.4220583,
-    "seen": 1789866341.7539277,
-    "ast_hash": "f67107a146c4297ca80c1e726939bf81",
+    "mtime": 1789855810.2713642,
+    "seen": 1789860257.3068354,
+    "ast_hash": "c3a055ad33bf49605aed4dc4fc1422c9",
     "semantic_hash": ""
   },
   "docs/arquitetura_de_software_das/index.md": {
-    "mtime": 1789864570.3081856,
-    "seen": 1789866341.753932,
-    "ast_hash": "caff0cbaaf3774ddf439b71f435a15d8",
+    "mtime": 1789821929.5552323,
+    "seen": 1789822293.3868523,
+    "ast_hash": "e28db329f33296257bd857cc48a4dbc6",
     "semantic_hash": ""
   },
   "docs/configuracoes.md": {
-    "mtime": 1789866057.9811094,
-    "seen": 1789866341.753936,
-    "ast_hash": "9a8d673c7c277d081ee90bb1646ac222",
+    "mtime": 1789855836.2917302,
+    "seen": 1789860257.3068519,
+    "ast_hash": "7dbaf6b55c3877d66bc050dd621606b8",
     "semantic_hash": ""
   },
   "docs/contribuicoes/index.md": {
@@ -1122,9 +1122,9 @@
     "semantic_hash": ""
   },
   "docs/guia_API/index.md": {
-    "mtime": 1789866037.4261985,
-    "seen": 1789866341.7539554,
-    "ast_hash": "d6c1e97e7c75df87026b7ba55a39381d",
+    "mtime": 1789821951.7164237,
+    "seen": 1789822293.3869019,
+    "ast_hash": "ed5228c4c0b31ce6838cadf6325ad0d3",
     "semantic_hash": ""
   },
   "docs/index.md": {
@@ -1194,9 +1194,9 @@
     "semantic_hash": ""
   },
   "docs/modulos/blog.md": {
-    "mtime": 1789862914.6488578,
-    "seen": 1789866341.7540193,
-    "ast_hash": "c2891572ce3f12752b804c52ba41cee5",
+    "mtime": 1789783446.8341355,
+    "seen": 1789822293.3870273,
+    "ast_hash": "9ab2dcf5eb4c1b00043130b4552808d6",
     "semantic_hash": ""
   },
   "docs/modulos/edit_pdf.md": {
@@ -1248,9 +1248,9 @@
     "semantic_hash": ""
   },
   "docs/requisitos.md": {
-    "mtime": 1789866117.6368132,
-    "seen": 1789866341.7540796,
-    "ast_hash": "0dfc9f995185e11ba786c7c7b7834cac",
+    "mtime": 1789822011.0159135,
+    "seen": 1789822293.3871481,
+    "ast_hash": "5e2f30d91133fcbd40bf578a5ef4c059",
     "semantic_hash": ""
   },
   "docs/seguranca/auditoria_menu_2026-09-12.md": {
@@ -1314,15 +1314,15 @@
     "semantic_hash": ""
   },
   "docs/visao_geral.md": {
-    "mtime": 1789866037.4234278,
-    "seen": 1789866341.7541368,
-    "ast_hash": "5a1e14aff4a8670e588a6184004fa73d",
+    "mtime": 1789855755.315595,
+    "seen": 1789860257.30715,
+    "ast_hash": "ad78c4aecdc4669d8417af330eaf96cf",
     "semantic_hash": ""
   },
   "mkdocs.yml": {
-    "mtime": 1789864878.4882262,
-    "seen": 1789866341.7541418,
-    "ast_hash": "e7b531e583350a35a6eaa5be7b9fe960",
+    "mtime": 1789855714.9540334,
+    "seen": 1789860257.3071551,
+    "ast_hash": "f4bea7a1155e81da4964d14cba686192",
     "semantic_hash": ""
   },
   "requirements-dev.txt": {
@@ -1374,9 +1374,9 @@
     "semantic_hash": ""
   },
   "mod_blog/bd_manipulador.py": {
-    "mtime": 1789861921.6160967,
-    "seen": 1789866341.7533174,
-    "ast_hash": "f72e75d2590b2754e8902c94b444b9d5",
+    "mtime": 1789779357.8029234,
+    "seen": 1789822293.3834543,
+    "ast_hash": "4c9ae05bf728671d15151da2357c6419",
     "semantic_hash": ""
   },
   "mod_blog/telas.py": {
@@ -1386,9 +1386,9 @@
     "semantic_hash": ""
   },
   "mod_blog/telas_administracao.py": {
-    "mtime": 1789861943.8194876,
-    "seen": 1789866341.7533274,
-    "ast_hash": "99a60107a4b8454c77380742bbf56ec4",
+    "mtime": 1789764402.665555,
+    "seen": 1789822293.3834743,
+    "ast_hash": "fc93ebfd95bf471e3c9503db56d8a513",
     "semantic_hash": ""
   },
   "assets/test/check_integridade.py": {
@@ -1428,9 +1428,9 @@
     "semantic_hash": ""
   },
   "mod_filas/bd_manipulador.py": {
-    "mtime": 1789864854.2092097,
-    "seen": 1789866341.7533698,
-    "ast_hash": "1ff1c9a454dcf15a0237a01259e8a295",
+    "mtime": 1789861206.3910885,
+    "seen": 1789861328.3630717,
+    "ast_hash": "5c58620d169c97da4abb3549aa13da00",
     "semantic_hash": ""
   },
   "mod_filas/models/__init__.py": {
@@ -1446,9 +1446,9 @@
     "semantic_hash": ""
   },
   "mod_filas/telas_administracao.py": {
-    "mtime": 1789864861.6252134,
-    "seen": 1789866341.753384,
-    "ast_hash": "75000dde774eb1cfde88b6ddad3e2a78",
+    "mtime": 1789861234.235802,
+    "seen": 1789861328.3630946,
+    "ast_hash": "76d850b4076b0aac248e80f0610a7ab6",
     "semantic_hash": ""
   },
   "mod_lista_telefonica/__init__.py": {
@@ -1524,9 +1524,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_filas.md": {
-    "mtime": 1789864897.9372485,
-    "seen": 1789866341.7538886,
-    "ast_hash": "cd880e8ad5167e80d82aa6d779c319eb",
+    "mtime": 1789855890.6364973,
+    "seen": 1789860257.3067725,
+    "ast_hash": "900c7a07f69e8299aba9d3c20023993d",
     "semantic_hash": ""
   },
   "docs/analise_mod_lista_telefonica.md": {
@@ -1542,9 +1542,9 @@
     "semantic_hash": ""
   },
   "docs/modulos/filas.md": {
-    "mtime": 1789864370.5215065,
-    "seen": 1789866341.7540293,
-    "ast_hash": "fb8af11b70978455aa8d4a670370b38b",
+    "mtime": 1789855862.7091026,
+    "seen": 1789860257.3069975,
+    "ast_hash": "fd3ac9ff854c815be1fd1f05f56039c1",
     "semantic_hash": ""
   },
   "docs/modulos/lista_telefonica.md": {
@@ -1578,39 +1578,39 @@
     "semantic_hash": ""
   },
   "mod_agregador_noticias/bd_manipulador.py": {
-    "mtime": 1789865062.1757188,
-    "seen": 1789866341.753221,
-    "ast_hash": "99e8e88cb23748ba30c384155f7b80df",
+    "mtime": 1789860054.4030213,
+    "seen": 1789860257.3055658,
+    "ast_hash": "878e968b89ea2bd7b93a60012735ac77",
     "semantic_hash": ""
   },
   "mod_agregador_noticias/models/__init__.py": {
-    "mtime": 1789865003.381497,
-    "seen": 1789866341.7532263,
-    "ast_hash": "f8aaee5e2f16771f32fbe22a8077e00b",
+    "mtime": 1789855246.1650085,
+    "seen": 1789860257.3055718,
+    "ast_hash": "ce06afc6d92d2d862e255eead22eaae2",
     "semantic_hash": ""
   },
   "mod_agregador_noticias/telas.py": {
-    "mtime": 1789865841.539899,
-    "seen": 1789866341.7532313,
-    "ast_hash": "648c7f2bb11523574385b2deec687d00",
+    "mtime": 1789860073.4440866,
+    "seen": 1789860257.305577,
+    "ast_hash": "39701c3254920723a782bf4491517438",
     "semantic_hash": ""
   },
   "mod_agregador_noticias/telas_administracao.py": {
-    "mtime": 1789864148.067167,
-    "seen": 1789866341.7532368,
-    "ast_hash": "b1a3a925624dc2f5862d4f82fbae36bd",
+    "mtime": 1789860091.2491477,
+    "seen": 1789860257.3055823,
+    "ast_hash": "5d440e203a6cb7f2d046fa190776bb5b",
     "semantic_hash": ""
   },
   "docs/analise_mod_agregador_noticias.md": {
-    "mtime": 1789866010.064504,
-    "seen": 1789866341.7538695,
-    "ast_hash": "166ed7183da39ee3f6a4b8068002db6c",
+    "mtime": 1789855707.9799366,
+    "seen": 1789860257.3067358,
+    "ast_hash": "da426412905025904f97bd5b988a685d",
     "semantic_hash": ""
   },
   "docs/modulos/agregador_noticias.md": {
-    "mtime": 1789865950.6031642,
-    "seen": 1789866341.7540107,
-    "ast_hash": "7167c9cbad2ca2fb25bec34a58fa5297",
+    "mtime": 1789855681.771574,
+    "seen": 1789860257.3069663,
+    "ast_hash": "dffcb6c9ee8cf40aea4451ae3f2a41b0",
     "semantic_hash": ""
   },
   "mod_filas/midia/propaganda.mp4": {
@@ -1623,126 +1623,6 @@
     "mtime": 1789860165.2531528,
     "seen": 1789860257.307207,
     "ast_hash": "ae25b8b10091eca14cb7895a0a4e0a4c",
-    "semantic_hash": ""
-  },
-  "assets/noticia/js/jquery-2.1.3.min.js": {
-    "mtime": 1789865415.8820033,
-    "seen": 1789866341.7526686,
-    "ast_hash": "32015dd42e9582a80a84736f5d9a44d7",
-    "semantic_hash": ""
-  },
-  "assets/noticia/js/main.js": {
-    "mtime": 1789865415.882631,
-    "seen": 1789866341.7526753,
-    "ast_hash": "735a214cc0f934b8d7c20fc2def1ad82",
-    "semantic_hash": ""
-  },
-  "assets/noticia/js/modernizr.js": {
-    "mtime": 1789865415.8829892,
-    "seen": 1789866341.7526803,
-    "ast_hash": "0bbb8b987eed0472d54106aaa85dba61",
-    "semantic_hash": ""
-  },
-  "assets/noticia/js/pace.min.js": {
-    "mtime": 1789865415.8834238,
-    "seen": 1789866341.7526846,
-    "ast_hash": "874d8be9cd6d6b72f1d63a5435edf2c3",
-    "semantic_hash": ""
-  },
-  "assets/noticia/js/plugins.js": {
-    "mtime": 1789865415.8836246,
-    "seen": 1789866341.75269,
-    "ast_hash": "282351c029a423e31cfe3b6c6e70c519",
-    "semantic_hash": ""
-  },
-  "mod_intranet/censura.py": {
-    "mtime": 1789861893.676615,
-    "seen": 1789866341.753454,
-    "ast_hash": "e69c74ea74b07eced62d25a1989fcc32",
-    "semantic_hash": ""
-  },
-  "assets/noticia/css/font-awesome/fonts/fontawesome-webfont.svg": {
-    "mtime": 1789865415.721961,
-    "seen": 1789866341.754213,
-    "ast_hash": "65bcbc899f379216109acd0b6c494618",
-    "semantic_hash": ""
-  },
-  "assets/noticia/css/micons/fonts/icomoon.svg": {
-    "mtime": 1789865415.7399611,
-    "seen": 1789866341.7542226,
-    "ast_hash": "81edc20628720a70eec4bb593dc06041",
-    "semantic_hash": ""
-  },
-  "assets/noticia/favicon.png": {
-    "mtime": 1789865415.7579613,
-    "seen": 1789866341.7542312,
-    "ast_hash": "8499e5e91f2b99f562a471a40dc6e2f3",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/lora/lora-bold-webfont.svg": {
-    "mtime": 1789865415.7759616,
-    "seen": 1789866341.7542396,
-    "ast_hash": "980daf324e301d456acc1251460a1bc7",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/lora/lora-bolditalic-webfont.svg": {
-    "mtime": 1789865415.7785852,
-    "seen": 1789866341.7542477,
-    "ast_hash": "e30d63912d9a716b75b40903a22bad7e",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/lora/lora-italic-webfont.svg": {
-    "mtime": 1789865415.826962,
-    "seen": 1789866341.7542899,
-    "ast_hash": "51f319fe6f9569843f9eece7f743ba14",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/lora/lora-regular-webfont.svg": {
-    "mtime": 1789865415.8319619,
-    "seen": 1789866341.7542982,
-    "ast_hash": "65873b44e2940ed66d5a8b12e5597615",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/poppins/poppins-bold-webfont.svg": {
-    "mtime": 1789865415.8359756,
-    "seen": 1789866341.754307,
-    "ast_hash": "794eab2be996e11c11bc539525c9f11b",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/poppins/poppins-light-webfont.svg": {
-    "mtime": 1789865415.8559623,
-    "seen": 1789866341.754314,
-    "ast_hash": "709be76c3a24a3ecbaa7f46946a797c4",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/poppins/poppins-medium-webfont.svg": {
-    "mtime": 1789865415.8609622,
-    "seen": 1789866341.75432,
-    "ast_hash": "c4814d6b70494e9f7282cd9ac4b41859",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/poppins/poppins-regular-webfont.svg": {
-    "mtime": 1789865415.8638475,
-    "seen": 1789866341.7543268,
-    "ast_hash": "3509cfd5819b8cf878a79ab52dc9a01b",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/poppins/poppins-semibold-webfont.svg": {
-    "mtime": 1789865415.8661492,
-    "seen": 1789866341.754334,
-    "ast_hash": "a55f17e069c24c24f1b97dd99f98bf79",
-    "semantic_hash": ""
-  },
-  "assets/noticia/images/bg.jpg": {
-    "mtime": 1789865415.8729622,
-    "seen": 1789866341.7543406,
-    "ast_hash": "b9a80947f7a55c7259525732b933d2b3",
-    "semantic_hash": ""
-  },
-  "assets/noticia/images/intro-bg.jpg": {
-    "mtime": 1789865415.8809624,
-    "seen": 1789866341.7543473,
-    "ast_hash": "40ba31e2271e6c361b786236ce09186f",
     "semantic_hash": ""
   }
 }

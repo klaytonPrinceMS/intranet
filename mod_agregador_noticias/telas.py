@@ -155,7 +155,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             ui.icon("newspaper").classes("text-grey-6")
             sel_tema = ui.select({"": "Todos os temas"} | {t: t for t in temas}, value="", label="Filtrar por tema").props("outlined dense").classes("min-w-[200px]").props('data-testid=agregador-filtro-tema')
             inp_busca = ui.input(placeholder="Buscar palavra…", value="").props("outlined dense clearable debounce='300'").classes("min-w-[220px] flex-1").props('data-testid=agregador-busca')
-            inp_busca.tooltip("Pesquisar entre as notícias por palavra no título/descrição")
+            inp_busca.tooltip("Pesquisar em todos os temas por palavra no título/descrição/fonte")
             def _atualizar():
                 grid.refresh()
             botao("Atualizar", icone="refresh", on_click=_atualizar, variante="texto", chave_modulo="agregador_noticias").props('data-testid=agregador-atualizar')
@@ -181,7 +181,6 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                             pass
                         _estado_coleta["ocupado"] = False
                 botao("Coletar agora", icone="sync", on_click=_coletar, variante="primario", chave_modulo="agregador_noticias").props('data-testid=agregador-coletar')
-            botao("Ver puro Noticia", icone="visibility", on_click=lambda: ui.navigate.to("/agregador-noticias-puro"), variante="contorno", chave_modulo="agregador_noticias").props('data-testid=agregador-ver-puro')
 
         # Paginação 10 por página, mais atual → mais antiga (ORDER BY data_publicacao DESC)
         # estado já contém pagina e busca
@@ -191,8 +190,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             busca = (estado.get("busca") or "").strip()
             # total para paginação (com busca)
             if busca:
-                # busca em memória para contar filtrado (sem acentos, lower) — sobre 500 mais recentes
-                todas = ag.listar_noticias(tema=tema_f, limite=500, offset=0)
+                # busca global: ignora o filtro de tema (vale para todos os temas,
+                # pois notícias de termo livre caem em "Geral" e sumiriam do resultado)
+                todas = ag.listar_noticias(tema=None, limite=500, offset=0)
                 # filtra por palavra no título/descrição/fonte/tema/fonte_icon (normaliza sem acentos)
                 import unicodedata
                 def _norm(s):
@@ -230,8 +230,11 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             if not noticias:
                 with ui.card().classes("w-full p-8 items-center"):
                     ui.icon("article", size="48px").classes("text-grey-4")
-                    ui.label("Nenhuma notícia ainda. Ative a coleta nas Configurações.").classes("text-grey-6")
-                    if tema_f:
+                    if busca:
+                        ui.label(f'Nenhuma notícia para "{busca}" (busca em todos os temas).').classes("text-grey-6")
+                    else:
+                        ui.label("Nenhuma notícia ainda. Ative a coleta nas Configurações.").classes("text-grey-6")
+                    if tema_f and not busca:
                         ui.label(f"Tema: {tema_f}").classes("text-caption text-grey-5")
                 return
             # 3 colunas desktop / 2 tablet / 1 celular — responsivo + altura padronizada

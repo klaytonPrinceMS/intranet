@@ -31,11 +31,31 @@ DB_PATH = os.path.join(BASE_DIR, "db_mod_agregador_noticias.db")
 # Temas padrão alinhados ao Noticia/main.py
 TEMAS_PADRAO = ["Brasil", "Internacional", "Economia", "Saúde", "Ciência e Tecnologia", "Entretenimento", "Esporte", "Monte Santo de Minas", "Geral"]
 
-# Fontes padrão (espelho Sites de classesKBP.py) — admin pode sobrescrever via config
-FONTES_PADRAO = [
+# Default antigo (3 fontes) — usado só para migrar quem nunca customizou (ver init_db)
+_FONTES_PADRAO_LEGADO = [
     {"tipo": "google", "nome": "Google News - Brasil", "url": "https://news.google.com/topics/CAAqJQgKIh9DQkFTRVFvSUwyMHZNREUxWm5JU0JYQjBMVUpTS0FBUAE?hl=pt-BR&gl=BR&ceid=BR%3Apt-419", "tema": "Brasil"},
     {"tipo": "bbc", "nome": "BBC - Brasil", "url": "https://www.bbc.com/portuguese/topics/cz74k717pw5t", "tema": "Brasil"},
     {"tipo": "google", "nome": "Google News - Saúde", "url": "https://news.google.com/topics/CAAqJQgKIh9DQkFTRVFvSUwyMHZNR3QwTlRFU0JYQjBMVUpTS0FBUAE?hl=pt-BR&gl=BR&ceid=BR%3Apt-419", "tema": "Saúde"},
+]
+
+# Fontes padrão (Google/BBC espelham Sites de classesKBP.py; RSS oficiais verificados em 20/09/2026) — admin pode sobrescrever via config
+_FONTES_PADRAO_V1 = _FONTES_PADRAO_LEGADO + [
+    {"tipo": "rss", "nome": "Agência Brasil", "url": "https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml", "tema": "Brasil"},
+    {"tipo": "rss", "nome": "Senado Federal", "url": "https://www12.senado.leg.br/noticias/rss", "tema": "Brasil"},
+    {"tipo": "rss", "nome": "G1 - Últimas", "url": "https://g1.globo.com/rss/g1/", "tema": "Geral"},
+    {"tipo": "rss", "nome": "G1 - Economia", "url": "https://g1.globo.com/rss/g1/economia/", "tema": "Economia"},
+    {"tipo": "rss", "nome": "G1 - Saúde", "url": "https://g1.globo.com/rss/g1/saude/", "tema": "Saúde"},
+    {"tipo": "rss", "nome": "G1 - Tecnologia", "url": "https://g1.globo.com/rss/g1/tecnologia/", "tema": "Ciência e Tecnologia"},
+    {"tipo": "rss", "nome": "Poder360", "url": "https://www.poder360.com.br/feed/", "tema": "Brasil"},
+    {"tipo": "rss", "nome": "Folha de S.Paulo", "url": "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml", "tema": "Brasil"},
+]
+
+# Default atual = V1 + cobertura dos temas vazios (Internacional/Entretenimento/Esporte/MSM)
+FONTES_PADRAO = _FONTES_PADRAO_V1 + [
+    {"tipo": "rss", "nome": "G1 - Mundo", "url": "https://g1.globo.com/rss/g1/mundo/", "tema": "Internacional"},
+    {"tipo": "rss", "nome": "G1 - Pop e Arte", "url": "https://g1.globo.com/rss/g1/pop-arte/", "tema": "Entretenimento"},
+    {"tipo": "rss", "nome": "GE - Esporte", "url": "https://ge.globo.com/rss/ge/", "tema": "Esporte"},
+    {"tipo": "rss", "nome": "JFP - Monte Santo de Minas", "url": "https://jfpnoticias.com.br/feed/", "tema": "Monte Santo de Minas"},
 ]
 
 def _log():
@@ -151,14 +171,28 @@ def temas_config() -> list[str]:
         try:
             dados = json.loads(raw)
             if isinstance(dados, list) and dados:
-                return [str(t).strip() for t in dados if str(t).strip()]
+                # deduplica preservando ordem (admin pode ter salvo repetidos)
+                vistos, unicos = set(), []
+                for t in dados:
+                    t = str(t).strip()
+                    if t and t not in vistos:
+                        vistos.add(t)
+                        unicos.append(t)
+                if unicos:
+                    return unicos
         except Exception:
             pass
     return list(TEMAS_PADRAO)
 
 
 def definir_temas(temas: list[str], ator="sistema"):
-    txt = json.dumps([t.strip() for t in temas if t.strip()], ensure_ascii=False)
+    vistos, unicos = set(), []
+    for t in temas:
+        t = str(t).strip()
+        if t and t not in vistos:
+            vistos.add(t)
+            unicos.append(t)
+    txt = json.dumps(unicos, ensure_ascii=False)
     ok = _set_config("temas_json", txt)
     if ok:
         _audit(ator, "configurar", "temas_json", txt)
@@ -261,6 +295,20 @@ def init_db():
             c.close()
         except Exception:
             pass
+    # migração 20/09/2026: quem tem o default antigo (nunca customizou fontes) ganha os RSS oficiais
+    try:
+        from mod_intranet.bd_conexao import get_config as _getc, set_config as _setc
+        _atual = _getc("agregador_noticias_fontes_json", "")
+        if _atual:
+            try:
+                _dados = json.loads(_atual)
+            except Exception:
+                _dados = None
+            if _dados == _FONTES_PADRAO_LEGADO or _dados == _FONTES_PADRAO_V1:
+                _setc("agregador_noticias_fontes_json", json.dumps(FONTES_PADRAO, ensure_ascii=False))
+                _log().info("agregador: fontes RSS oficiais adicionadas ao default")
+    except Exception:
+        pass
     conn.commit()
     conn.close()
 
@@ -430,6 +478,19 @@ def inserir_noticia(titulo, fonte, tema, url, imagem_url="", descricao="", data_
         return False
     if url.startswith("/"):
         url = "https://news.google.com" + url
+    # filtra imagem quebrada de export Trello/Notion do Blog ("/api/attachments/..."
+    # relativo ou localhost). NÃO filtra thumbnails legítimos do Google News
+    # ("https://news.google.com/api/attachments/..." absoluto — 302 → encrypted-tbn gstatic, 200 image/jpeg).
+    for _campo in ("imagem_url", "fonte_icon_url"):
+        _v = imagem_url if _campo == "imagem_url" else fonte_icon_url
+        if _v and "/api/attachments" in _v:
+            _vv = _v.strip()
+            if _vv.startswith("/api/attachments") or "localhost" in _vv or "127.0.0.1" in _vv:
+                if _campo == "imagem_url":
+                    imagem_url = ""
+                else:
+                    fonte_icon_url = ""
+            # absoluto news.google.com/api/attachments → mantém (thumbnail real)
     # normaliza título para deduplicação (sem acentos, lower, strip)
     import unicodedata
     def _norm_tit(s):
@@ -460,12 +521,56 @@ def inserir_noticia(titulo, fonte, tema, url, imagem_url="", descricao="", data_
 
 # ============ COLETA (scrapy-like) ============
 
+# ============ CORTEZIA ANTI-BAN (scraper educado) ============
+# Google bloqueia por reputação de IP + padrão robotizado (429/captcha no /search
+# comprovado com httpx E com Chromium real). Scrapy/Playwright/Selenium NÃO burlam:
+# são o mesmo nível HTTP (Scrapy usa Twisted, fingerprintável) e o bloqueio é do IP,
+# não do motor. Via viável: RSS oficial (permitido para leitores pessoais) com
+# tráfego "regular": UA comum de navegador, intervalo mínimo entre requisições com
+# jitter (nunca rajada), sem retry agressivo, cooldown após 429.
+UA_COLETA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+CORTEZIA_SEG = 1.5  # intervalo mínimo entre requisições externas (+jitter 0–1s)
+COOLDOWN_429_SEG = 1800  # 30min sem HTML do Google após 429
+_ULTIMA_REQ = {"t": 0.0}
+_GOOGLE_HTML_BLOQUEADO_ATE = {"t": 0.0}
+
+
+def _aguardar_cortezia():
+    """Espaça requisições externas (nunca rajada) com jitter anti-padrão."""
+    import time
+    import random
+    agora = time.monotonic()
+    espera = CORTEZIA_SEG + random.uniform(0, 1.0) - (agora - _ULTIMA_REQ["t"])
+    if espera > 0:
+        time.sleep(espera)
+    _ULTIMA_REQ["t"] = time.monotonic()
+
+
+def _url_ja_coletada(url: str) -> bool:
+    """Pré-checagem para NÃO buscar og:image de notícia repetida (economiza requisições)."""
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM tb_noticia WHERE url=? LIMIT 1", (url,))
+            return cur.fetchone() is not None
+        finally:
+            conn.close()
+    except Exception:
+        return False
+
+
 def _get_html(url: str, timeout=12) -> str:
     try:
         import httpx
-        r = httpx.get(url, timeout=timeout, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (IntrAnEt; AgregadorNoticias)"})
+        _aguardar_cortezia()
+        r = httpx.get(url, timeout=timeout, follow_redirects=True, headers={"User-Agent": UA_COLETA})
         if r.status_code == 200:
             return r.text
+        if r.status_code == 429 and "news.google.com" in url and "/rss/" not in url:
+            import time
+            _GOOGLE_HTML_BLOQUEADO_ATE["t"] = time.monotonic() + COOLDOWN_429_SEG
+            _log().warning(f"_get_html 429 (HTML Google em cooldown {COOLDOWN_429_SEG//60}min): {url[:80]}")
     except Exception as e:
         _log().warning(f"_get_html falhou {url}: {e}")
     return ""
@@ -490,6 +595,10 @@ def _normalizar_imagem_url(url: str, base: str = "https://news.google.com") -> s
 
 
 def _coletar_google(url: str, fonte_nome: str, tema: str) -> int:
+    import time
+    if time.monotonic() < _GOOGLE_HTML_BLOQUEADO_ATE["t"]:
+        _log().warning(f"_coletar_google {fonte_nome}: pulado (cooldown 429 ativo)")
+        return 0
     html = _get_html(url)
     if not html:
         return 0
@@ -548,6 +657,8 @@ def _coletar_google(url: str, fonte_nome: str, tema: str) -> int:
                     img_article = ""
             if not fonte_icon:
                 fonte_icon = (a.xpath("ancestor::div[1]//img[contains(@src,'faviconV2')]/@src").get() or "").strip()
+            # normaliza relativo "/api/attachments/..." → absoluto news.google.com (senão cai no fallback localhost)
+            img_article = _normalizar_imagem_url(img_article, base="https://news.google.com")
             data_pub = data_pub  # já definido acima
             if inserir_noticia(txt, f"Google News - {fonte_nome}", tema, href, img_article, txt, data_pub, fonte_icon):
                 n += 1
@@ -567,7 +678,7 @@ def _coletar_google(url: str, fonte_nome: str, tema: str) -> int:
                 img = (x.css("img::attr(src)").get() or x.css("img::attr(data-src)").get() or "").strip()
                 # separa favicon vs artigo
                 fonte_ic = img if "faviconV2" in img else ""
-                art_img = "" if "faviconV2" in img else img
+                art_img = "" if "faviconV2" in img else _normalizar_imagem_url(img, base="https://news.google.com")
                 raw_time = (x.css("time::attr(datetime)").get() or x.css("time::text").get() or x.css("[datetime]::attr(datetime)").get() or "").strip()
                 data_pub = _parse_data_pub(raw_time) if raw_time else None
                 if inserir_noticia(txt, f"Google News - {fonte_nome}", tema, href, art_img, txt, data_pub, fonte_ic):
@@ -671,6 +782,27 @@ def _coletar_jfp(url: str, tema: str) -> int:
         return 0
 
 
+def _og_image(url: str, timeout=6) -> str:
+    """Busca miniatura via og:image/twitter:image da página (RSS não traz imagem).
+    Fail-soft: qualquer falha retorna '' (notícia é salva mesmo sem imagem)."""
+    if not url or not url.startswith("http"):
+        return ""
+    try:
+        import httpx
+        _aguardar_cortezia()
+        r = httpx.get(url, timeout=timeout, follow_redirects=True, headers={"User-Agent": UA_COLETA})
+        if r.status_code != 200 or not r.text:
+            return ""
+        for tag in re.findall(r"<meta[^>]+>", r.text[:200000], re.I):
+            if "og:image" in tag or "twitter:image" in tag:
+                m = re.search(r'content=["\']([^"\']+)', tag)
+                if m and m.group(1).startswith("http"):
+                    return m.group(1).strip()
+    except Exception as e:
+        _log().warning(f"_og_image falhou {url[:80]}: {e}")
+    return ""
+
+
 def _coletar_rss(url: str, fonte_nome: str, tema: str) -> int:
     xml = _get_html(url)
     if not xml:
@@ -682,21 +814,77 @@ def _coletar_rss(url: str, fonte_nome: str, tema: str) -> int:
         for item in sel.css("item"):
             txt = (item.css("title::text").get() or "").strip()
             href = (item.css("link::text").get() or item.css("link::attr(href)").get() or "").strip()
-            desc = (item.css("description::text").get() or "").strip()
+            # resumo: description (todos os nós de texto, cobre CDATA e HTML interno) com fallback content:encoded
+            try:
+                _partes = [t.strip() for t in item.css("description ::text").getall() if (t or "").strip()]
+                desc = re.sub(r"\s+", " ", " ".join(_partes)).strip()
+            except Exception:
+                desc = ""
+            if not desc:
+                try:
+                    _partes = [t.strip() for t in item.css("content\\:encoded ::text").getall() if (t or "").strip()]
+                    desc = re.sub(r"\s+", " ", " ".join(_partes)).strip()
+                except Exception:
+                    desc = ""
+            # Google RSS devolve description com HTML (<a>titulo</a><font>fonte</font>) — limpa para texto
+            if desc and "<" in desc:
+                try:
+                    import html as _html
+                    desc = _html.unescape(desc)
+                    desc = re.sub(r"<[^>]+>", " ", desc)
+                    desc = re.sub(r"\s+", " ", desc).strip()
+                except Exception:
+                    pass
+            # suprime resumo redundante (só repete título/fonte, ex: Google RSS "titulo Fonte") — card oculta desc vazia
+            try:
+                import unicodedata as _ud
+                def _nn(s):
+                    return _ud.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower().strip()
+                _dt, _tt = _nn(desc), _nn(txt)
+                if desc and (_dt == _tt or _dt.startswith(_tt) or _tt.startswith(_dt)):
+                    desc = ""
+            except Exception:
+                pass
             raw_time = (item.css("pubDate::text").get() or item.css("dc\\:date::text").get() or item.css("published::text").get() or "").strip()
             data_pub = _parse_data_pub(raw_time) if raw_time else None
             img = ""
             m = item.css("media\\:content::attr(url)").get()
             if m:
                 img = m.strip()
-            else:
+            if not img:
+                # BBC usa media:thumbnail direto no RSS
+                m = item.css("media\\:thumbnail::attr(url)").get()
+                if m:
+                    img = m.strip()
+            if not img:
                 # tenta enclosure
                 enc = item.css("enclosure::attr(url)").get()
                 if enc and any(enc.lower().endswith(ext) for ext in (".jpg",".jpeg",".png",".webp")):
                     img = enc.strip()
+            # fonte real via <source>Nome</source> (ex: G1) + ícone favicon (Google RSS não traz imagem)
+            fonte_real = (item.css("source::text").get() or "").strip() or (fonte_nome or "RSS")
+            fonte_icon = ""
+            try:
+                source_url = (item.css("source::attr(url)").get() or "").strip()
+                _dom = ""
+                if source_url:
+                    _dom = re.sub(r"^https?://", "", source_url).split("/")[0].strip()
+                if not _dom and href:
+                    _dom = re.sub(r"^https?://", "", href).split("/")[0].strip()
+                if _dom:
+                    from urllib.parse import quote as _qd
+                    fonte_icon = f"https://www.google.com/s2/favicons?domain={_qd(_dom)}&sz=32"
+            except Exception:
+                fonte_icon = ""
             if not txt or not href:
                 continue
-            if inserir_noticia(txt, fonte_nome or "RSS", tema, href, img, desc[:500], data_pub):
+            # já coletada? pula ANTES do og:image (evita requisição inútil)
+            if _url_ja_coletada(href):
+                continue
+            # RSS (Google) não traz imagem — enriquece via og:image do link (fail-soft)
+            if not img:
+                img = _og_image(href)
+            if inserir_noticia(txt, fonte_real, tema, href, img, (desc or txt)[:500], data_pub, fonte_icon):
                 n += 1
             if n >= 15:
                 break
@@ -707,12 +895,13 @@ def _coletar_rss(url: str, fonte_nome: str, tema: str) -> int:
 
 
 def _coletar_pesquisa_google(termo: str, tema: str = "Geral") -> int:
+    """Coleta por termo livre via RSS (HTML /search retorna 429/captcha para scraper)."""
     if not termo:
         return 0
     try:
         from urllib.parse import quote as _q
-        url = f"https://news.google.com/search?q={_q(termo)}&hl=pt-BR&gl=BR&ceid=BR%3Apt-419"
-        return _coletar_google(url, f"Pesquisa:{termo}", tema)
+        url = f"https://news.google.com/rss/search?q={_q(termo)}&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+        return _coletar_rss(url, f"Pesquisa:{termo}", tema)
     except Exception as e:
         _log().warning(f"_coletar_pesquisa {termo}: {e}")
         return 0
