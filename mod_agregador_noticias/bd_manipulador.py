@@ -471,6 +471,24 @@ def _get_html(url: str, timeout=12) -> str:
     return ""
 
 
+
+def _normalizar_imagem_url(url: str, base: str = "https://news.google.com") -> str:
+    if not url:
+        return ""
+    url = url.strip()
+    if url.startswith("//"):
+        return "https:" + url
+    if url.startswith("/"):
+        return base.rstrip("/") + url
+    if url.startswith("http"):
+        return url
+    # handle srcset first url
+    if "," in url:
+        # srcset may contain multiple URLs, take first
+        url = url.split(",")[0].strip().split(" ")[0]
+    return url
+
+
 def _coletar_google(url: str, fonte_nome: str, tema: str) -> int:
     html = _get_html(url)
     if not html:

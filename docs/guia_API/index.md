@@ -29,7 +29,7 @@
 | `/tv/{fila_id}` | `mod_filas` (`mostrar_tv` isolada) | — (pública) | **pública sem login** (TV isolada por fila, ícone padrão intranet, bip+voz só novo id, mídia pausada ao chamar) |
 | `/midia_filas/*` | `mod_filas` (`PASTA_MIDIA` `mod_filas/midia`) | — | público (áudios MP3 elevador / vídeos MP4 propaganda, playlist global 40s quando ociosa) |
 | `/lista-telefonica` | `mod_lista_telefonica` | `lista_telefonica` | liberados (organograma `Secretaria→Setor→Subsetor`, busca, `tel:`) |
-| `censura` | `mod_intranet/censura.py` | `conteudo_palavras_bloqueadas` | central (Blog `criar/atualizar` bloqueia + Agregador `inserir` descarta / `listar_para_tv` filtra `LIMIT*3` / `limpar_censuradas` remove; `lower+NFD` sem acentos) |
+| `censura` | `mod_intranet/censura.py` | `conteudo_palavras_bloqueadas` | central (Blog `criar/atualizar` bloqueia + Agregador `inserir` descarta (`fonte_icon`/`imagem` extração `faviconV2`/`api/attachments`) / `listar_para_tv` filtra `LIMIT*3` (`fonte_icon` incluso) / `limpar_censuradas` remove; `lower+NFD` sem acentos) |
 | `/css/frameworks/*` | `mod_intranet/tema_css` | — | público (Bulma/DaisyUI/Pico/Picnic etc. locais, sem CDN) |
 | `/img_postagens/*` | `mod_blog` | `blog` | público (imagens do WYSIWYG, `mod_blog/img_postagens/`) |
 

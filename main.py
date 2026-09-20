@@ -139,6 +139,8 @@ try:
 except Exception:
     print("[css] Aviso: não foi possível montar as rotas de /css/frameworks")
 
+
+
 # ================== IMAGENS DO BLOG (/img_postagens/*) ==================
 # Arquivos enviados pelo editor WYSIWYG, gravados em mod_blog/img_postagens/.
 try:
@@ -803,6 +805,32 @@ def page_agregador_noticias():
 
 if rotas_modulos is not None:
     rotas_modulos.REGISTRO_MODULOS["agregador_noticias"] = page_agregador_noticias
+
+
+@ui.page("/agregador-noticias-puro")
+def page_agregador_noticias_puro():
+    from mod_intranet.telas import pagina_restrita
+    user = pagina_restrita("Agregador de Notícias — Puro", chave_modulo="agregador_noticias")
+    if not user:
+        return
+    from mod_agregador_noticias.telas_puro import mostrar_tela_pura
+    mostrar_tela_pura(user["nome"], user.get("perfil", ""))
+
+
+@app.get("/assets/noticia/{caminho:path}")
+def servir_assets_noticia(caminho: str):
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "noticia")
+    # segurança: normaliza e garante dentro da base
+    caminho_abs = os.path.normpath(os.path.join(base, caminho))
+    if not caminho_abs.startswith(os.path.abspath(base)):
+        return Response(status_code=404)
+    if not os.path.isfile(caminho_abs):
+        return Response(status_code=404)
+    # tipo MIME básico
+    import mimetypes
+    mime, _ = mimetypes.guess_type(caminho_abs)
+    mime = mime or "application/octet-stream"
+    return FileResponse(caminho_abs, media_type=mime)
 
 
 @app.get("/solicita-impressao/src/impressao.js")

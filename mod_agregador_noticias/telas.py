@@ -1,6 +1,20 @@
-"""Tela do Agregador de Notícias — 3 colunas, link externo, integração TV.
+"""Aggregator screen — 3-column masonry, tema filter + busca, fonte_icon + 30x30 thumbnail, TV integration.
 
-EN: Aggregator screen — 3 columns, external link, TV integration.
+EN: Aggregator screen with 3-column masonry (column-count:3), tema select
+    + busca input (debounced, NFKD normalized) side-by-side, card with
+    fonte_icon (faviconV2 16×16) + imagem 30×30 thumbnail before title
+    (both optional, fail-soft), badge tema + title ui.link new_tab + descricao
+    + tempo relativo, pagination 10 (Primeira/Anterior/Próxima/Última),
+    Coleta badge removed, async Coletar via run.io_bound, integration TV via
+    listar_para_tv.
+
+Tela do Agregador de Notícias — 3 colunas, filtro tema + busca, ícone fonte + miniatura 30×30, integração TV.
+
+Barra com filtro tema e busca lado a lado (sem badge Coleta), card com
+ícone da fonte (fonte_icon_url faviconV2 16×16) + miniatura 30×30
+(imagem_url 30×30 object-cover) antes do título quando presentes, badge
+tema + título link externo + descrição + tempo relativo, paginação 10
+com busca em memória (500 limite, NFKD lower).
 """
 
 import sys, os, re
@@ -89,17 +103,38 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             return (data_str or "")[:16]
 
     def _noticia_card(n):
-        # n = (id, titulo, fonte, tema, url, imagem_url, descricao, data_pub, data_coleta)
-        nid, titulo, fonte, tema_n, url, img, desc, data_pub, data_col = n
+        # n = (id, titulo, fonte, tema, url, imagem_url, fonte_icon_url, descricao, data_pub, data_col) — 10 cols
+        # compat: se ainda vier 9 cols (sem fonte_icon_url), normaliza
+        if len(n) == 10:
+            nid, titulo, fonte, tema_n, url, img, fonte_icon, desc, data_pub, data_col = n
+        elif len(n) == 9:
+            nid, titulo, fonte, tema_n, url, img, desc, data_pub, data_col = n
+            fonte_icon = ""
+        else:
+            # fallback genérico: tenta desempacotar últimos 3 como desc/data_pub/data_col
+            try:
+                nid, titulo, fonte, tema_n, url = n[0], n[1], n[2], n[3], n[4]
+                img = n[5] if len(n) > 5 else ""
+                fonte_icon = n[6] if len(n) > 9 else ""
+                desc = n[7] if len(n) == 10 else (n[6] if len(n) == 9 else "")
+                data_pub = n[8] if len(n) == 10 else (n[7] if len(n) == 9 else "")
+                data_col = n[9] if len(n) == 10 else (n[8] if len(n) == 9 else "")
+            except Exception:
+                nid, titulo, fonte, tema_n, url, img, fonte_icon, desc, data_pub, data_col = n[0], n[1] if len(n) > 1 else "", "", "", "#", "", "", "", "", ""
         href = url or "#"
-        with ui.card().classes("w-full overflow-hidden hover:shadow-lg transition-shadow cursor-pointer").style("break-inside: avoid;"):
+        with ui.card().classes("w-full overflow-hidden hover:shadow-lg transition-shadow cursor-pointer card-noticia").style(""):
             with ui.card_section().classes("gap-2 w-full"):
                 # linha 1: indicativo tema + tempo (ordem alterada)
                 with ui.row().classes("w-full items-center justify-between"):
                     ui.badge(tema_n or "Geral", color="blue-grey-2").props("outline dense")
                     ui.label(_tempo_relativo(data_pub or data_col)).classes("text-caption text-grey-5")
-                # linha 2: título (row de baixo) com miniatura 30x30 antes se houver foto
+                # linha 2: título com ícone fonte 16×16 + miniatura 30×30 antes do título
                 with ui.row().classes("w-full items-start gap-2"):
+                    if fonte_icon:
+                        try:
+                            ui.image(fonte_icon).classes("shrink-0 rounded").style("width:16px;height:16px;object-fit:contain;").props("fit=contain")
+                        except Exception:
+                            pass
                     if img:
                         try:
                             ui.image(img).classes("shrink-0 rounded").style("width:30px;height:30px;object-fit:cover;").props("fit=cover")
@@ -146,6 +181,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                             pass
                         _estado_coleta["ocupado"] = False
                 botao("Coletar agora", icone="sync", on_click=_coletar, variante="primario", chave_modulo="agregador_noticias").props('data-testid=agregador-coletar')
+            botao("Ver puro Noticia", icone="visibility", on_click=lambda: ui.navigate.to("/agregador-noticias-puro"), variante="contorno", chave_modulo="agregador_noticias").props('data-testid=agregador-ver-puro')
 
         # Paginação 10 por página, mais atual → mais antiga (ORDER BY data_publicacao DESC)
         # estado já contém pagina e busca
@@ -155,19 +191,31 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             busca = (estado.get("busca") or "").strip()
             # total para paginação (com busca)
             if busca:
-                # busca em memória para contar filtrado (sem acentos, lower)
+                # busca em memória para contar filtrado (sem acentos, lower) — sobre 500 mais recentes
                 todas = ag.listar_noticias(tema=tema_f, limite=500, offset=0)
-                # filtra por palavra no título/descrição/fonte/tema
+                # filtra por palavra no título/descrição/fonte/tema/fonte_icon (normaliza sem acentos)
                 import unicodedata
                 def _norm(s):
                     s = unicodedata.normalize("NFKD", s or "").encode("ascii","ignore").decode().lower()
                     return s
                 busca_n = _norm(busca)
-                filtradas = [n for n in todas if busca_n in _norm(n[1]) or busca_n in _norm(n[6] or "") or busca_n in _norm(n[2] or "") or busca_n in _norm(n[3] or "")]
+                # índices com 10 cols: 1 titulo, 2 fonte, 3 tema, 6 fonte_icon, 7 descricao
+                def _camp(n, idx):
+                    try:
+                        return n[idx] or ""
+                    except Exception:
+                        return ""
+                filtradas = [
+                    n for n in todas
+                    if busca_n in _norm(_camp(n, 1))
+                    or busca_n in _norm(_camp(n, 7) if len(n) == 10 else _camp(n, 6))
+                    or busca_n in _norm(_camp(n, 2))
+                    or busca_n in _norm(_camp(n, 3))
+                ]
                 total = len(filtradas)
             else:
                 total = ag.contar_noticias(tema=tema_f)
-            por_pagina = 10
+            por_pagina = 12
             total_pag = max(1, (total + por_pagina - 1) // por_pagina)
             if estado["pagina"] > total_pag:
                 estado["pagina"] = total_pag
@@ -186,10 +234,20 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     if tema_f:
                         ui.label(f"Tema: {tema_f}").classes("text-caption text-grey-5")
                 return
-            # 3 colunas via CSS columns (masonry) — responsivo
-            with ui.element("div").classes("w-full").style("column-count: 3; column-gap: 1rem;"):
+            # 3 colunas desktop / 2 tablet / 1 celular — responsivo + altura padronizada
+            # CSS responsivo injetado uma vez
+            ui.add_head_html("""
+            <style>
+            .grid-noticias { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+            .card-noticia { min-height: 160px; max-height: 220px; display: flex; flex-direction: column; }
+            .card-noticia .q-card__section { flex: 1; display: flex; flex-direction: column; }
+            @media (max-width: 1024px) { .grid-noticias { grid-template-columns: repeat(2, 1fr); } }
+            @media (max-width: 640px) { .grid-noticias { grid-template-columns: 1fr; } .card-noticia { min-height: 140px; max-height: none; } }
+            </style>
+            """)
+            with ui.element("div").classes("grid-noticias w-full"):
                 for n in noticias:
-                    with ui.element("div").style("break-inside: avoid; margin-bottom: 1rem;"):
+                    with ui.element("div"):
                         _noticia_card(n)
             # Paginação: anterior / próxima / última
             with ui.row().classes("w-full items-center justify-between mt-3 flex-wrap gap-2"):
