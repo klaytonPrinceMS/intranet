@@ -170,9 +170,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -193,9 +195,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -224,12 +230,12 @@
               
                 <h1 id="intranet-modular-system-overview">Intranet Modular — System Overview<a class="headerlink" href="#intranet-modular-system-overview" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>High-level view of the Intranet Modular: the 10 modules (core + 9 business including the new Phone Directory organogram <code>Secretaria→Setor→Subsetor</code>), the main usage flow (login → dashboard → modules) and the 3 user profiles (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) with per-module roles, access validation and quota integration (1000/200 via <code>ORGANOGRAMA_BASE</code>).</p>
+<p>High-level view of the Intranet Modular: the 11 modules (core + 10 business including the new News Aggregator <code>httpx+parsel</code> multi-source <code>Google/BBC/JFP/RSS</code> 3-column masonry + TV carousel and the Phone Directory organogram <code>Secretaria→Setor→Subsetor</code>), the main usage flow (login → dashboard → modules) and the 3 user profiles (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) with per-module roles, access validation and quota integration (1000/200 via <code>ORGANOGRAMA_BASE</code>).</p>
 </blockquote>
 <hr />
 <h1 id="intranet-modular-visao-geral">Intranet Modular — Visão Geral<a class="headerlink" href="#intranet-modular-visao-geral" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Visão de alto nível da Intranet Modular: os 10 módulos (núcleo + 9 de negócio incluindo a nova Lista Telefônica <code>Secretaria→Setor→Subsetor</code>), o fluxo principal de uso (login → dashboard → módulos) e os 3 perfis de usuário (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) com papéis por módulo, validação de acesso e integração de cotas (1000/200 via <code>ORGANOGRAMA_BASE</code>).</p>
+<p>Visão de alto nível da Intranet Modular: os 11 módulos (núcleo + 10 de negócio incluindo o novo Agregador de Notícias <code>httpx+parsel</code> multi-fonte <code>Google/BBC/JFP/RSS</code> 3 colunas masonry + carrossel TV e a nova Lista Telefônica <code>Secretaria→Setor→Subsetor</code>), o fluxo principal de uso (login → dashboard → módulos) e os 3 perfis de usuário (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) com papéis por módulo, validação de acesso e integração de cotas (1000/200 via <code>ORGANOGRAMA_BASE</code>).</p>
 </blockquote>
 <h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
 <ol>
@@ -248,7 +254,7 @@
 <li>Manter <strong>organograma único</strong> compartilhado entre módulos (Lista Telefônica como fonte do organograma genérico e Solicitação de Impressão como consumidora das cotas 1000/200).</li>
 </ul>
 <h2 id="modulos-do-sistema">Módulos do sistema<a class="headerlink" href="#modulos-do-sistema" title="Permanent link">&para;</a></h2>
-<p>O sistema é composto por um <strong>núcleo</strong> (<code>mod_intranet</code>) e <strong>9 módulos de negócio</strong> (6 históricos + 2 em 18/09/2026 + 1 em 19/09/2026):</p>
+<p>O sistema é composto por um <strong>núcleo</strong> (<code>mod_intranet</code>) e <strong>10 módulos de negócio</strong> (6 históricos + 2 em 18/09/2026 + 2 em 19/09/2026):</p>
 <table>
 <thead>
 <tr>
@@ -319,9 +325,9 @@
 <tr>
 <td style="text-align: left;"><strong>Filas (TV)</strong></td>
 <td style="text-align: left;"><code>filas</code></td>
-<td style="text-align: left;"><code>/filas</code> + <code>/tv</code> (pública)</td>
+<td style="text-align: left;"><code>/filas</code> + <code>/tv?grupo=</code> (compartilhada) + <code>/tv/{fila_id}</code> (isolada)</td>
 <td style="text-align: left;"><code>db_mod_filas.db</code></td>
-<td style="text-align: left;"><strong>novo esqueleto</strong> (18/09/2026) — gestor de chamadas com TV (fila Geral <code>A000→A001</code>, auto-refresh 3s + beep)</td>
+<td style="text-align: left;">multi-filas por local (<code>endereco/prefixo/inicio→fim</code> <code>fim=0</code> infinito, <code>criado_por</code>, <code>tv_grupo</code>, <code>tb_fila_etapa</code>/<code>tb_midia</code>, isolamento por criador vs <code>administrador_geral</code>, TV <code>/tv/{id}</code> isolada vs <code>/tv?grupo=</code> compartilhada, ícone padrão intranet, bip+voz só novo id, playlist áudio elevador/vídeo <code>/midia_filas</code>, exclusão uma/todas exceto Geral, censura filtrada)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Lista Telefônica</strong></td>
@@ -330,10 +336,17 @@
 <td style="text-align: left;"><code>db_mod_lista_telefonica.db</code></td>
 <td style="text-align: left;"><strong>novo</strong> (19/09/2026) — organograma 12 secretarias <code>Secretaria→Setor→Subsetor</code> genérico, contatos alfabéticos, busca sem acentos, <code>tel:</code> clicável no celular, admin com excluir ramo/mover/elevar/ordenar/transferir</td>
 </tr>
+<tr>
+<td style="text-align: left;"><strong>Agregador de Notícias</strong></td>
+<td style="text-align: left;"><code>agregador_noticias</code></td>
+<td style="text-align: left;"><code>/agregador-noticias</code> + <code>/agregador-noticias-puro</code> (pura) + <code>/assets/noticia/*</code> + <code>/admin/agregador_noticias</code></td>
+<td style="text-align: left;"><code>db_mod_agregador_noticias.db</code></td>
+<td style="text-align: left;"><strong>novo</strong> (19/09/2026) — multi-fonte <code>httpx+parsel</code> (Google/BBC/JFP/RSS) espelhando <code>klaytonPrinceMS/Noticia</code>, termo livre + fontes configuráveis, 10–360 min, <strong>barra filtro tema + busca lado a lado</strong> <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> NFKD (<strong>sem badge <code>Coleta:</code></strong> removido a169c9a) + <code>agregador-ver-puro</code> → <code>/agregador-noticias-puro</code>, grid responsivo <strong>3→2→1 via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries 1024px/640px + <code>.card-noticia {min-height:160px; max-height:220px}</code> (média 91 notícias: título 79/75, descrição 34, 87.9% imagem, 24% fonte_icon)</strong> <code>ui.link(target=href, new_tab=True)</code> + <strong>ícone fonte 16×16 + imagem 30×30 lado a lado antes do título</strong> (<code>fonte_icon_url</code> <code>faviconV2</code> + <code>imagem_url</code>), paginação 12 + busca 500 NFKD, <strong>tela pura</strong> <code>telas_puro.py</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> (12 notícias <code>COALESCE DESC</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code>), 24h <code>limpar_antigas</code>/<code>reiniciar_banco</code> <code>06:00</code> <code>CronTrigger</code>, TV <code>listar_para_tv</code> (<code>fonte_icon</code> incluso, censura filtrada) + censura central <code>conteudo_palavras_bloqueadas</code> + <code>assets/noticia/</code> 4.9M servido via rota estática</td>
+</tr>
 </tbody>
 </table>
 <blockquote>
-<p>O cadastro real de módulos vive em <code>tb_modulos</code> (banco central), semeado por <code>MODULOS_SISTEMA</code> em <code>mod_intranet/autenticacao.py:15-22</code>.</p>
+<p>O cadastro real de módulos vive em <code>tb_modulos</code> (banco central), semeado por <code>MODULOS_SISTEMA</code> em <code>mod_intranet/autenticacao.py:15-26</code>.</p>
 </blockquote>
 <h2 id="fluxo-de-alto-nivel">Fluxo de alto nível<a class="headerlink" href="#fluxo-de-alto-nivel" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart TD
@@ -341,12 +354,14 @@
     L --&gt;|ok| S[Sessão revogável&lt;br/&gt;tb_sessoes + cookie_hash&lt;br/&gt;+ Visitas ++contador_acessos_total]
     S --&gt; D[Dashboard /&lt;br/&gt;boas-vindas + Resumo dinâmico Water + feed do Blog&lt;br/&gt;sem botão Abrir Blog (18/09/2026)]
     D --&gt; M[Drawer lateral&lt;br/&gt;módulos liberados]
-    M --&gt; R1[/blog] &amp; R2[/users] &amp; R3[/edit-pdf] &amp; R4[/renomear-empenho] &amp; R5[/solicita-impressao] &amp; R6[/auditoria] &amp; R7[/tecnico] &amp; R8[/filas] &amp; R9[/lista-telefonica]
-    R1 &amp; R2 &amp; R3 &amp; R4 &amp; R5 &amp; R6 &amp; R7 &amp; R8 &amp; R9 --&gt; G[pagina_restrita&lt;br/&gt;autenticação + permissão + layout&lt;br/&gt;/tv sem guarda]
+    M --&gt; R1[/blog] &amp; R2[/users] &amp; R3[/edit-pdf] &amp; R4[/renomear-empenho] &amp; R5[/solicita-impressao] &amp; R6[/auditoria] &amp; R7[/tecnico] &amp; R8[/filas] &amp; R9[/lista-telefonica] &amp; R10[/agregador-noticias]
+    R1 &amp; R2 &amp; R3 &amp; R4 &amp; R5 &amp; R6 &amp; R7 &amp; R8 &amp; R9 &amp; R10 --&gt; G[pagina_restrita&lt;br/&gt;autenticação + permissão + layout&lt;br/&gt;/tv sem guarda]
     G --&gt; AC[audit_log&lt;br/&gt;db_mod_auditoria.db&lt;br/&gt;tb_auditoria_&amp;lt;modulo&amp;gt;]
     D --&gt;|logout| LO[registrar_logout + /login]
-    BG[APScheduler&lt;br/&gt;backups · cleanups · monitor · poda] -.-&gt;|2º plano| AC
-    LT[(Lista Telefônica&lt;br/&gt;ORGANOGRAMA_BASE&lt;br/&gt;12 secretarias)] -.-&gt;|importa cotas 1000/200| R5</code></pre>
+    BG[APScheduler&lt;br/&gt;backups · cleanups · monitor · poda&lt;br/&gt;+ agregador_coleta/limpeza] -.-&gt;|2º plano| AC
+    LT[(Lista Telefônica&lt;br/&gt;ORGANOGRAMA_BASE&lt;br/&gt;12 secretarias)] -.-&gt;|importa cotas 1000/200| R5
+     AG[(Agregador&lt;br/&gt;tb_noticia 24h&lt;br/&gt;httpx+parsel&lt;br/&gt;censura filtrada)] -.-&gt;|listar_para_tv&lt;br/&gt;carrossel 7s/120s filtrado| R8
+     CS[(Censura&lt;br/&gt;tb_config conteudo_palavras_bloqueadas&lt;br/&gt;lower+NFD)] -.-&gt;|titulo_bloqueado| R1 &amp; R10 &amp; R8</code></pre>
 <ol>
 <li>O usuário acessa <code>/login</code> e informa usuário/senha (<code>autenticar</code> → bcrypt).</li>
 <li>Login bem-sucedido cria uma <strong>sessão revogável</strong> (<code>registrar_login</code>) amarrada a um cookie HTTP-Only (<code>cookie_hash</code>) e incrementa <strong>uma única vez</strong> o contador <code>tb_config contador_acessos_total</code> (<code>bd_conexao.incrementar_contador_acessos()</code> só em <code>main.py:tentar_login()</code> — nunca em navegação/refresh; <code>contador_acessos_inicio</code> em <code>YYYY-MM-DD</code> semeado em <code>bd_conexao.init_db()</code>).</li>
@@ -413,9 +428,9 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Blog</td>
-<td style="text-align: center;">somente leitura</td>
-<td style="text-align: center;">criar/editar/publicar</td>
-<td style="text-align: center;">tudo</td>
+<td style="text-align: center;">somente leitura (censura <code>titulo_bloqueado</code> bloqueia <code>criar/atualizar</code> se palavra proibida)</td>
+<td style="text-align: center;">criar/editar/publicar (censura bloqueia título com palavra proibida)</td>
+<td style="text-align: center;">tudo + gerenciar censura (<code>blog-palavras-bloqueadas</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;">Editor de PDF</td>
@@ -461,15 +476,21 @@
 </tr>
 <tr>
 <td style="text-align: left;">Filas (TV)</td>
-<td style="text-align: center;">chamar próxima / ver TV</td>
-<td style="text-align: center;">—</td>
-<td style="text-align: center;">tudo</td>
+<td style="text-align: center;">chamar próxima / ver TV isolada <code>/tv/{id}</code> ou compartilhada <code>/tv?grupo=</code> + notícias censura-filtradas + mídia</td>
+<td style="text-align: center;">gerenciar multi-filas do próprio dono; mídia global só admin</td>
+<td style="text-align: center;">tudo (todas as filas + mídia global)</td>
 </tr>
 <tr>
 <td style="text-align: left;">Lista Telefônica</td>
 <td style="text-align: center;">ver organograma + busca + ligar</td>
 <td style="text-align: center;">gerenciar ramos/contatos/ordem</td>
 <td style="text-align: center;">tudo</td>
+</tr>
+<tr>
+<td style="text-align: left;">Agregador de Notícias</td>
+<td style="text-align: center;">ver 3 colunas + <strong>filtro tema + busca lado a lado</strong> <code>agregador-busca</code> <code>debounce 300</code> NFKD + abrir link externo (<strong>ícone fonte 16×16 + imagem 30×30 antes do título</strong>, sem badge <code>Coleta:</code>, censura filtra <code>listar_para_tv</code>)</td>
+<td style="text-align: center;">configurar habilitado/intervalo/termo/fontes/temas + censura (<code>agregador-palavras-bloqueadas</code>) + <strong>busca NFKD</strong></td>
+<td style="text-align: center;">tudo + <code>Coletar agora</code> + <code>Remover já censuradas</code></td>
 </tr>
 </tbody>
 </table>

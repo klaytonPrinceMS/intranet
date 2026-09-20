@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Agregador de Notícias - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Agregador de Not\u00edcias";
+        var mkdocs_page_input_path = "analise_mod_agregador_noticias.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Agregador de Notícias</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Módulos (análise)</li>
+      <li class="breadcrumb-item active">Agregador de Notícias</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="agregador-de-noticias-mod_agregador_noticias">Agregador de Notícias — <code>mod_agregador_noticias</code><a class="headerlink" href="#agregador-de-noticias-mod_agregador_noticias" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>News aggregator: routes <code>/agregador-noticias</code> + <code>/agregador-noticias-puro</code> (pure Noticia style) (key <code>agregador_noticias</code>) · own database <code>db_mod_agregador_noticias.db</code> · table <code>tb_noticia</code> (title/source/theme/url/image/fonte_icon/description/dates, <code>fonte_icon_url</code> 16×16 faviconV2 + <code>imagem_url</code> 30×30, <strong>daily recycle at 06:00 configurable <code>hora_reinicio</code> via <code>reiniciar_banco</code> DELETE + <code>CronTrigger</code></strong>, <strong>no backup</strong> <code>MAPA_BACKUPS</code> without <code>agregador_noticias</code>) · scrapy-like <code>httpx+parsel</code> mirroring <code>klaytonPrinceMS/Noticia</code> (Sites gn_brasil/gn_saude + Noticias get_noticiasGN/BBC/JFP/RSS) · interval 10–360 min + habilitado flag + free term + configurable sources (google/bbc/jfp/rss) · deduplication by URL (<code>SELECT url</code>) + normalized title (<code>_norm_tit</code> NFKD lower) before <code>INSERT OR IGNORE</code> · real post time via <code>_parse_data_pub</code> (<code>email.utils.parsedate_to_datetime</code> + ISO/RSS fallback) ordered by <code>COALESCE(data_publicacao, data_coleta) DESC</code> · <strong>bar tema filter + busca input side-by-side</strong> (<code>agregador-filtro-tema</code> + <code>agregador-busca</code> <code>debounce 300</code> NFKD, <code>placeholder "Buscar palavra…"</code>, <code>clearable</code>, tooltip, no Coleta badge) · <strong>pagination 12 + busca</strong> (<code>pagina</code> state <code>por_pagina=12</code> <code>total_pag</code> <code>offset</code>, <code>busca</code> in-memory 500 NFKD title/desc/fonte/tema, <code>ORDER BY COALESCE(...) DESC</code> newest→oldest, buttons <code>Primeira/Anterior/Próxima/Última</code> with <code>data-testid=agregador-primeira/anterior/proxima/ultima</code>) · grid responsivo <strong>3 colunas desktop → 2 tablet (max-width 1024px) → 1 celular (max-width 640px) via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries, cards <code>min-height 160px max-height 220px</code> (<code>.card-noticia</code>) baseado na média de 91 notícias (título média 79 chars mediana 75, descrição média 34, 87.9% com imagem, 24% com fonte_icon)</strong> · cards <strong>(fonte_icon <code>16×16</code> <code>contain</code> + thumbnail <code>30×30</code> <code>cover</code> side-by-side before title when present <code>16px/30px object-cover/contain</code> + badge theme + title as <code>ui.link(new_tab=True)</code> + description + relative time <code>_tempo_relativo</code> using real <code>data_publicacao</code>, no button — title click suffices, no TV card, absolute date replaced, busca NFKD)</strong> · <strong>pure screen</strong> <code>telas_puro.py:mostrar_tela_pura</code> (<code>/agregador-noticias-puro</code>) copying <code>klaytonPrinceMS/Noticia</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> with current cards (3 cols, <code>fonte_icon 16×16</code> + <code>imagem 30×30</code>, relative time) + original <code>assets/noticia/</code> (<code>base.css</code>, <code>vendor.css</code>, <code>main.css</code>, <code>font-awesome</code>, <code>micons</code>, <code>fonts/lora/poppins</code>, <code>images/bg/intro</code>, <code>js/modernizr/pace/jquery/plugins/main.js</code>, <code>favicon.png</code>) served via <code>main.py</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> + button <code>Ver puro Noticia</code> <code>data-testid=agregador-ver-puro</code> · admin: habilitado, intervalo, termo, fontes, temas, <strong>hora_reinicio <code>06:00</code> + reinício diário <code>reiniciar_banco</code></strong> · TV filas <code>listar_para_tv</code> carousel (7s rotate, 120s reload, <code>fonte_icon</code> included) · <code>assets/noticia/</code> 4.9M served via static route · <code>mod_filas/midia/</code> (<code>PASTA_MIDIA</code> <code>/midia_filas</code>) · audit only <strong>who changed what</strong> (<code>definir_*</code> + <code>reiniciar_banco</code>, no audit for localized posts).</p>
+</blockquote>
+<hr />
+<h1 id="agregador-de-noticias-mod_agregador_noticias_1">Agregador de Notícias — <code>mod_agregador_noticias</code><a class="headerlink" href="#agregador-de-noticias-mod_agregador_noticias_1" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Agregador de notícias: rotas <code>/agregador-noticias</code> + <code>/agregador-noticias-puro</code> (pura estilo Noticia) (chave <code>agregador_noticias</code>) · banco próprio <code>db_mod_agregador_noticias.db</code> · tabela <code>tb_noticia</code> (título/fonte/tema/url/imagem/ícone_fonte/descrição/datas, <code>fonte_icon_url</code> 16×16 faviconV2 + <code>imagem_url</code> 30×30, <strong>banco reciclado diariamente às <code>06:00</code> configurável <code>hora_reinicio</code> via <code>reiniciar_banco</code> <code>DELETE</code> + <code>CronTrigger</code>, sem backup</strong> <code>MAPA_BACKUPS</code> sem <code>agregador_noticias</code>) · scrapy-like <code>httpx+parsel</code> espelhando <code>klaytonPrinceMS/Noticia</code> (Sites gn_brasil/gn_saude + Noticias get_noticiasGN/BBC/JFP/RSS) · intervalo 10–360 min + flag habilitado + termo livre + fontes configuráveis (google/bbc/jfp/rss) · deduplicação por URL (<code>SELECT url</code>) + título normalizado (<code>_norm_tit</code> NFKD lower) antes de <code>INSERT OR IGNORE</code> · tempo real da postagem via <code>_parse_data_pub</code> (<code>email.utils.parsedate_to_datetime</code> + fallback ISO/RSS) ordenado por <code>COALESCE(data_publicacao, data_coleta) DESC</code> · <strong>barra filtro tema + busca lado a lado</strong> (<code>agregador-filtro-tema</code> + <code>agregador-busca</code> <code>debounce 300</code> NFKD, <code>placeholder "Buscar palavra…"</code>, <code>clearable</code>, tooltip, sem badge <code>Coleta:</code>) · <strong>paginação 12 + busca</strong> (<code>pagina</code> <code>por_pagina=12</code> <code>total_pag</code> <code>offset</code>, busca em memória 500 NFKD título/descrição/fonte/tema, ordenação <code>COALESCE(...) DESC</code> mais atual→mais antiga, botões <code>Primeira/Anterior/Próxima/Última</code> <code>data-testid=agregador-primeira/anterior/proxima/ultima</code>) · grid responsivo <strong>3 colunas desktop → 2 tablet (max-width 1024px) → 1 celular (max-width 640px) via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries, cards <code>min-height 160px max-height 220px</code> (<code>.card-noticia</code>) baseado na média de 91 notícias (título média 79 chars mediana 75, descrição média 34, 87.9% com imagem, 24% com fonte_icon)</strong> · cards <strong>(ícone fonte <code>16×16</code> <code>contain</code> + miniatura <code>30×30</code> <code>cover</code> lado a lado antes do título quando há imagem/ícone <code>16px/30px object-cover/contain</code> + badge tema + título como <code>ui.link(new_tab=True)</code> + descrição + tempo relativo <code>_tempo_relativo</code> usando <code>data_publicacao</code> real, sem botão — título clicável basta, sem card TV, data absoluta substituída, busca NFKD)</strong> · <strong>tela pura</strong> <code>telas_puro.py:mostrar_tela_pura</code> (<code>/agregador-noticias-puro</code>) copiando padrão <code>klaytonPrinceMS/Noticia</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> com cards atuais (3 colunas, <code>fonte_icon 16×16</code> + <code>imagem 30×30</code>, tempo relativo) + originais <code>assets/noticia/</code> (<code>base.css</code>, <code>vendor.css</code>, <code>main.css</code>, <code>font-awesome</code>, <code>micons</code>, <code>fonts/lora/poppins</code>, <code>images/bg/intro</code>, <code>js/modernizr/pace/jquery/plugins/main.js</code>, <code>favicon.png</code>) servidos via <code>main.py</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> + botão <code>Ver puro Noticia</code> <code>data-testid=agregador-ver-puro</code> · admin: habilitado, intervalo, termo, fontes, temas, <strong>hora <code>06:00</code> + reinício <code>reiniciar_banco</code></strong> · TV filas <code>listar_para_tv</code> carrossel (7s rotação, 120s recarrega, <code>fonte_icon</code> incluso) · <code>assets/noticia/</code> 4.9M servido via rota estática · <code>mod_filas/midia/</code> (<code>PASTA_MIDIA</code> <code>mod_filas/midia</code> → <code>/midia_filas</code>) · auditoria só <strong>quem alterou o quê</strong> (<code>definir_*</code> + <code>reiniciar_banco</code>, sem postagens).</p>
+</blockquote>
+<h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
+<p>Módulo que <strong>agrega notícias multi-fonte</strong> para a rede interna, com <strong>conteúdo de pesquisa configurável pelo admin</strong> (termo livre) e <strong>previsão de não apenas Google News, mas outras fontes</strong> (<code>BBC</code>, <code>JFP</code>, <code>RSS</code>). Coleta <strong>scrapy-like</strong> (<code>httpx</code> + <code>parsel</code>) espelhando <code>https://github.com/klaytonPrinceMS/Noticia</code> — <code>Sites</code> (<code>gn_brasil</code>, <code>gn_saude</code> etc) + <code>Noticias.get_noticiasGN/BBC/JFP/RSS</code> — investigando a cada <strong>10 min–6 h</strong> (clamp) quando <strong>habilitado</strong>. Banco <strong>reciclado diariamente às horas da manhã</strong> (padrão <code>06:00</code> configurável <code>obter_hora_reinicio</code>/<code>definir_hora_reinicio</code>, <code>reiniciar_banco</code> <code>DELETE</code> + <code>CronTrigger</code> em <code>rotinas.py</code>, <strong>sem backup</strong> <code>MAPA_BACKUPS</code> sem <code>agregador_noticias</code>; <code>telas_administracao</code> sem <code>painel_backup</code>, card <code>Reinício diário — banco reciclado</code> com <code>Zerar agora</code>). <strong>Deduplicação</strong> por URL e por título normalizado (<code>_norm_tit</code> NFKD lower, <code>join</code>) impede notícia já incluída com mesmo título (case-insensitive, sem acentos) ou mesma URL antes de <code>INSERT OR IGNORE</code>. <strong>Timer com tempo real</strong>: <code>data_publicacao</code> extraída da postagem (<code>time[datetime]</code>, <code>pubDate</code>/<code>dc:date</code>) via <code>_parse_data_pub</code> (<code>email.utils.parsedate_to_datetime</code> + fallback ISO/RSS) e ordenação por <code>COALESCE(data_publicacao, data_coleta) DESC</code>; <code>_tempo_relativo</code> usa <code>data_pub</code> real ou <code>data_coleta</code> fallback. Visual em <strong>grid responsivo 3→2→1 colunas (desktop 3, tablet 2 max-width 1024px, celular 1 max-width 640px) paginado 12</strong> com card <strong>sem fonte e sem botão</strong> — apenas <strong>miniatura <code>30x30</code> antes do título quando há imagem (<code>30px object-cover</code> <code>fit=cover</code>, <code>try</code> fail-soft) + badge tema + título como <code>ui.link(target=href, new_tab=True)</code> + descrição + tempo relativo</strong> (<code>_tempo_relativo</code> → <code>agora</code>/<code>X minuto(s)/hora(s)/dia(s)/semana(s)/mês(es)/ano(s) atrás</code>, data absoluta substituída) e <strong>título clicável basta — botão "Abrir notícia" removido 19/09/2026</strong>, <strong>paginação <code>12</code> com botões <code>Primeira/Anterior/Próxima/Última</code> (<code>data-testid=agregador-primeira/anterior/proxima/ultima</code>) mais atual→mais antiga <code>COALESCE DESC</code> + grid <code>.grid-noticias</code> + cards <code>.card-noticia</code> <code>min-height 160px max-height 220px</code> (baseado na média de 91 notícias: título média 79 mediana 75, descrição 34, 87.9% imagem, 24% fonte_icon)</strong>. <strong>Card "Integração TV — Filas" removido da tela agregador</strong>. Integra a <strong>TV do <code>mod_filas</code></strong> (<code>/tv</code>) com <strong>carrossel título+descrição</strong> via <code>listar_para_tv</code> (<code>timer 7s</code> rotação + <code>120s</code> recarrega). <strong>Auditoria só quem alterou o quê</strong> (<code>definir_habilitado/intervalo/termo/fontes/temas/hora_reinicio/reiniciar_banco</code> com <code>_audit</code>), <strong>sem auditar postagens localizadas</strong> (removido <code>_audit</code> de <code>coletar_todas</code>, <code>limpar_antigas</code>, <code>limpar_censuradas</code>).</p>
+<h2 id="banco-proprio">Banco próprio<a class="headerlink" href="#banco-proprio" title="Permanent link">&para;</a></h2>
+<p>Conexão WAL + <code>foreign_keys=ON</code> via <code>mod_intranet/banco_conexao.conexao("agregador_noticias")</code> (backend duplo SQLite/PostgreSQL). Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:209-250</code>, executado no import (<code>bd_manipulador.py:705</code> <code>init_db()</code>) e pelo bootstrap central (<code>mod_intranet/bd_criador.py:67</code> <code>init_agregador</code>).</p>
+<p><strong><code>tb_noticia</code></strong>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Coluna</th>
+<th style="text-align: left;">Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>id</code></td>
+<td style="text-align: left;">PK AUTOINCREMENT</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>titulo</code></td>
+<td style="text-align: left;">TEXT NOT NULL (<code>[:500]</code> em <code>inserir_noticia</code>, dedup via <code>_norm_tit</code> NFKD lower)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>fonte</code></td>
+<td style="text-align: left;">TEXT NOT NULL (<code>[:100]</code> — ex.: <code>Google News - Brasil</code>, <code>BBC</code>, <code>JFP Notícias</code>, <code>RSS</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tema</code></td>
+<td style="text-align: left;">TEXT NOT NULL DEFAULT <code>Geral</code> (<code>[:50]</code> — ex.: <code>Brasil</code>, <code>Saúde</code>, <code>Economia</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>url</code></td>
+<td style="text-align: left;">TEXT NOT NULL UNIQUE (<code>[:2000]</code>, normalizada <code>/</code>→ <code>https://news.google.com</code> + <code>/</code>) — <code>SELECT url</code> + <code>INSERT OR IGNORE</code> deduplica</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>imagem_url</code></td>
+<td style="text-align: left;">TEXT DEFAULT <code>''</code> (<code>[:2000]</code> — <code>img::attr(src)</code>/<code>data-src</code>/<code>media:content</code>/<code>/api/attachments</code> <code>lh3.googleusercontent</code>, 30×30 <code>cover</code> antes do título)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>fonte_icon_url</code></td>
+<td style="text-align: left;">TEXT DEFAULT <code>''</code> (<code>[:2000]</code> — <code>faviconV2</code> <code>16×16</code> <code>object-contain</code> antes do título, extraído via <code>//img[contains(@src,'faviconV2')]/@src</code> ancestral <code>div[1..3]</code>, <code>try</code> fail-soft, migração idempotente <code>ALTER TABLE ADD COLUMN</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>descricao</code></td>
+<td style="text-align: left;">TEXT DEFAULT <code>''</code> (<code>[:1000]</code> — <code>description::text</code> RSS ou <code>txt</code> Google/BBC/JFP)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>data_publicacao</code></td>
+<td style="text-align: left;">DATETIME (<code>COALESCE(?, datetime('now'))</code> — preenchido via <code>_parse_data_pub</code> com tempo real da postagem ou <code>now</code> fallback, ordenação <code>COALESCE(data_publicacao, data_coleta) DESC</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>data_coleta</code></td>
+<td style="text-align: left;">DATETIME DEFAULT <code>CURRENT_TIMESTAMP</code> (<code>ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Índices <code>idx_noticia_tema(tema)</code>, <code>idx_noticia_fonte(fonte)</code>, <code>idx_noticia_data(data_coleta)</code>.</p>
+<p><strong>Temas padrão</strong> (<code>TEMAS_PADRAO</code> — <code>bd_manipulador.py:24</code>): <code>["Brasil","Internacional","Economia","Saúde","Ciência e Tecnologia","Entretenimento","Esporte","Monte Santo de Minas","Geral"]</code> — 9 temas, semente <code>temas_json</code> em <code>tb_config</code> central (<code>json.dumps</code>).</p>
+<p><strong>Fontes padrão</strong> (<code>FONTES_PADRAO</code> — <code>bd_manipulador.py:27-31</code>, espelho <code>Sites</code> <code>gn_brasil</code>/<code>gn_saude</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><code>tipo</code></th>
+<th style="text-align: left;"><code>nome</code></th>
+<th style="text-align: left;"><code>url</code></th>
+<th style="text-align: left;"><code>tema</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>google</code></td>
+<td style="text-align: left;">Google News - Brasil</td>
+<td style="text-align: left;"><code>https://news.google.com/topics/CAAqJQgKIh9DQkFTRVFvSUwyMHZNREUxWm5JU0JYQjBMVUpTS0FBUAE?hl=pt-BR&amp;gl=BR&amp;ceid=BR%3Apt-419</code></td>
+<td style="text-align: left;"><code>Brasil</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bbc</code></td>
+<td style="text-align: left;">BBC - Brasil</td>
+<td style="text-align: left;"><code>https://www.bbc.com/portuguese/topics/cz74k717pw5t</code></td>
+<td style="text-align: left;"><code>Brasil</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>google</code></td>
+<td style="text-align: left;">Google News - Saúde</td>
+<td style="text-align: left;"><code>https://news.google.com/topics/CAAqJQgKIh9DQkFTRVFvSUwyMHZNR3QwTlRFU0JYQjBMVUpTS0FBUAE?hl=pt-BR&amp;gl=BR&amp;ceid=BR%3Apt-419</code></td>
+<td style="text-align: left;"><code>Saúde</code></td>
+</tr>
+</tbody>
+</table>
+<p>Seeds <code>tb_config</code> central incluem <code>agregador_noticias_hora_reinicio</code> <code>06:00</code> (<code>HH:MM</code> validado <code>re.match</code>).</p>
+<p>⚠️ <code>bd_criador.py</code> legado/morto.</p>
+<h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Gate <code>_pode_ver</code> (<code>telas.py:19-25</code>): <code>administrador_geral</code> ou <code>validar_acesso_modulo(user,"agregador_noticias")</code>; sem acesso → <code>block</code> 64px + "Acesso restrito".</li>
+<li><code>mostrar_tela(user_nome, perfil_global)</code> (<code>telas.py:28-216</code>, 216 linhas): <code>ler_tema("agregador_noticias", cor_botao="#000000", texto_header="Notícias agregadas de múltiplas fontes — 3 colunas, clique abre no site original. Para TV do Filas, carrossel título+descrição.")</code> + <code>ui.colors(primary)</code> + <code>cabecalho(... chave_modulo="agregador_noticias")</code> + <code>estado={"tema":"","busca":"","pagina":1}</code> + <code>temas=temas_config()</code> + helper <strong><code>_tempo_relativo(data_str)</code> (<code>telas.py:47-89</code>)</strong> — converte ISO flexível (<code>YYYY-MM-DD HH:MM:SS</code>/<code>YYYY-MM-DD HH:MM</code>/<code>YYYY-MM-DD</code>, normaliza <code>T</code>/<code>Z</code>/fração <code>.\d+</code>, <code>re.split</code>, <code>strptime</code> por formato, <code>now - dt</code> → <code>total_seconds</code> → <code>agora</code> (&lt;60 s) / <code>X minuto(s) atrás</code> (&lt;3600) / <code>X hora(s) atrás</code> (&lt;86400) / <code>X dia(s) atrás</code> (&lt;604800) / <code>X semana(s) atrás</code> (&lt;2592000) / <code>X mês(es) atrás</code> (&lt;31536000) / <code>X ano(s) atrás</code>, <code>delta&lt;0→0</code>, fallback <code>[:16]</code>), <strong>usa <code>data_publicacao</code> real da postagem (extraída via <code>_parse_data_pub</code> de <code>time[datetime]</code>/<code>pubDate</code>) com fallback <code>data_coleta</code>, ordenação <code>COALESCE(data_publicacao, data_coleta) DESC</code> garante "3 minutos atrás, 25 minutos atrás, 2 semanas..." com tempo real</strong>.</li>
+<li><strong>Barra</strong> (<code>telas.py:119-148</code>): <code>newspaper</code> icon + <code>sel_tema</code> (<code>data-testid=agregador-filtro-tema</code>, <code>Todos os temas</code> + <code>temas</code>, <code>min-w-[200px]</code>) <strong>+ <code>inp_busca</code> (<code>data-testid=agregador-busca</code>, <code>Buscar palavra…</code> <code>debounce 300</code> <code>min-w-[220px] flex-1</code>, <code>placeholder "Buscar palavra…"</code> <code>outlined dense clearable debounce='300'</code>, <code>tooltip "Pesquisar entre as notícias por palavra no título/descrição"</code>, <code>on_value_change→estado["busca"]=val, pagina=1, grid.refresh()</code>) lado a lado (<code>flex-wrap</code> <code>gap-3</code> <code>bg-white rounded-lg shadow-sm px-3 py-2</code>)</strong> — <strong>badge <code>Coleta: ativa/desabilitada</code> removido a169c9a</strong> + <code>botao Atualizar</code> (<code>data-testid=agregador-atualizar</code>, <code>texto</code>, <code>grid.refresh()</code>) + <code>botao Coletar agora</code> (<code>data-testid=agregador-coletar</code>, <code>primario</code>, só <code>administrador_geral</code>/<code>eh_admin_do_modulo</code> → <strong><code>async _coletar</code> com <code>run.io_bound(lambda: ag.coletar_todas(ator=user_nome, forcar=True))</code>, spinner <code>aria-label=Coletando notícias</code>, trava <code>ocupado</code>, <code>notificar</code> + <code>grid.refresh()</code> — anti-disconnect</strong>) + <code>botao Ver puro Noticia</code> (<code>visibility</code>, <code>contorno</code>, <code>data-testid=agregador-ver-puro</code>, <code>ui.navigate.to("/agregador-noticias-puro")</code>).</li>
+<li><strong><code>_noticia_card(n)</code></strong> (<code>telas.py:91-113</code> compat <code>len==10</code> <code>fonte_icon_url</code> + <code>len==9</code> fallback): <code>n=(id,titulo,fonte,tema,url,imagem_url,fonte_icon_url,descricao,data_pub,data_col)</code> (10 cols, <code>fonte_icon</code> <code>16×16</code>) → <code>ui.card w-full hover:shadow-lg cursor-pointer break-inside:avoid</code> + <strong>ícone fonte <code>16×16</code> <code>ui.image(fonte_icon).classes("shrink-0 rounded").style("width:16px;height:16px;object-fit:contain;").props("fit=contain")</code> quando <code>fonte_icon_url</code> (<code>faviconV2</code>) + miniatura <code>30×30</code> <code>ui.image(img).classes("shrink-0 rounded").style("width:30px;height:30px;object-fit:cover;").props("fit=cover")</code> antes do título quando <code>imagem_url</code> (<code>/api/attachments</code>/<code>lh3.googleusercontent</code>)</strong> (ambos <code>try</code> fail-soft, <code>row w-full items-start gap-2</code> <code>shrink-0</code> + <code>flex-1</code> título, ordem ícone→imagem→título) + <code>card_section</code> com <code>badge(tema)</code> (<code>outline dense</code>), <code>ui.link(titulo,target=href,new_tab=True) font-bold</code> (<code>try</code> → <code>label</code> fallback, <code>new_tab=True</code> abre externo), <code>descricao[:180] + …</code> (<code>text-caption text-grey-7</code>), <strong><code>row</code> apenas <code>ui.label(_tempo_relativo(data_pub or data_col)).classes("text-caption text-grey-5")</code> — fonte textual removida, data absoluta <code>[:16]</code> substituída por tempo relativo real</strong>, <strong>sem botão "Abrir notícia" — removido 19/09/2026 (antes <code>flat dense</code> + helper <code>window.open</code> fallback, agora título <code>ui.link</code> clicável basta)</strong> + mantém <strong>3 colunas masonry <code>grid-noticias</code> <code>display:grid; grid-template-columns: repeat(3,1fr)</code> + media queries <code>max-width 1024px→2</code> <code>640px→1</code> + <code>.card-noticia</code> <code>min-height 160px max-height 220px</code> no <code>grid()</code></strong>.</li>
+<li><strong><code>grid()</code></strong> (<code>@ui.refreshable</code>, <code>telas.py:186-274</code>): <code>estado {"tema":"","busca":"","pagina":1}</code> → <code>tema_f=estado["tema"] or None</code>, <code>busca=(estado["busca"] or "").strip()</code> → se <code>busca</code>: <code>todas=ag.listar_noticias(tema_f, limite=500)</code> → <code>filtradas=[n for n in todas if busca_n in titulo[1]/descricao[7]/fonte[2]/tema[3]]</code> via <code>_norm</code> <code>NFKD lower</code> <code>ascii ignore</code> (<code>_camp</code> helper, <code>busca_n=_norm(busca)</code>) → <code>total=len(filtradas)</code> senão <code>total=contar_noticias(tema_f)</code> → <code>por_pagina=12</code> → <code>total_pag = max(1, (total+12-1)//12)</code> → clamp <code>pagina</code> <code>1..total_pag</code> → <code>offset=(pagina-1)*12</code> → <strong>se busca: <code>noticias=filtradas[offset:offset+12]</code> senão <code>ag.listar_noticias(tema_f, limite=12, offset=offset)</code> <code>ORDER BY COALESCE(data_publicacao, data_coleta) DESC</code></strong> → <code>`.grid-noticias</code> <code>display:grid</code> responsivo 3→2→1 com <code>gap:1rem</code> + <code>.card-noticia</code> <code>min-height 160px max-height 220px</code>; vazio → <code>article 48px</code> + <code>"Nenhuma notícia ainda. Ative a coleta nas Configurações."</code> + tema se filtrado. <strong>Paginação rodapé</strong> <code>row w-full items-center justify-between mt-3 flex-wrap gap-2</code> com <code>ui.button icon=first_page</code> <code>data-testid=agregador-primeira</code> → <code>pagina=1</code> + <code>chevron_left</code> <code>agregador-anterior</code> → <code>max(1,pagina-1)</code> + <code>label Página X de Y • N notícias</code> + <code>chevron_right</code> <code>agregador-proxima</code> → <code>min(total_pag,pagina+1)</code> + <code>last_page</code> <code>agregador-ultima</code> → <code>total_pag</code> + <code>label Exibindo len de total</code> + <code>ui.label Exibindo len de total</code>. <strong>Sem busca:</strong> <code>contar_noticias</code> direto; <strong>com busca:</strong> em memória 500 NFKD. <strong>Card "Integração TV — Filas" removido (antes <code>telas.py:184-187</code> <code>card bg-blue-50</code> — grid agora termina com paginação + busca).</strong> <code>on_tema</code> + <code>on_busca</code> (<code>inp_busca.on_value_change</code>) ambos resetam <code>pagina=1</code> e <code>grid.refresh()</code> (<strong>sem badge <code>Coleta:</code></strong>).</li>
+<li><strong>Sem card TV nesta tela</strong> — integração TV permanece via <code>mod_filas/tv</code> + <code>listar_para_tv</code>.</li>
+<li><strong>Tela pura Noticia</strong> (<code>telas_puro.py:mostrar_tela_pura</code>, <code>telas_puro.py:48-145</code>): gate <code>validar_acesso_modulo(user, "agregador_noticias")</code> + <code>ui.add_head_html</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code> + <code>favicon.png</code> + <code>modernizr.js</code>/<code>pace.min.js</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> (<code>normpath</code> + <code>startswith(base)</code> anti-traversal + <code>mimetypes.guess_type</code> → <code>FileResponse</code>, <code>404</code> se fora) + <code>ler_tema("agregador_noticias")</code> + <code>section intro-overlay</code> (<code>background:#111417</code>) + <code>intro-content</code> <code>PRINCE. K,B.</code> + <code>DTI - Notícias</code> + <code>Pref. Municipal — Agregador puro</code> + <code>Início</code> (<code>/agregador-noticias</code>) / <code>Fim</code> (<code>window.scrollTo</code>) + <code>section about</code> <code>Principais notícias</code> + <code>row about-content</code> <code>col-six tab-full</code> <code>ul.info-list</code> com <strong>12 notícias <code>listar_noticias(limite=12)</code> <code>COALESCE DESC</code></strong> <code>li.border-b py-3</code> (<code>fonte_icon 16×16</code> + <code>badge tema</code> + <code>tempo _tempo_relativo</code> + <code>fonte ml-auto</code> + <code>imagem 30×30</code> + <code>ui.link titulo new_tab</code> + <code>descricao[:160]</code> + <code>href[:60] font-mono</code> + <code>&lt;a&gt;Abrir no site original →&lt;/a&gt;</code>) + <code>footer bg-grey-900</code> <code>© Copyright DTI</code> + <code>js/jquery-2.1.3/plugins/main</code>; helper <code>_tempo_relativo(s)</code> <code>T/Z/fração</code> <code>strptime</code> → <code>agora</code>/minutos/horas/dias/semanas, acesso via <code>Ver puro Noticia</code> <code>agregador-ver-puro</code> em <code>/agregador-noticias</code>.</li>
+<li>Responsividade: <code>w-full p-6 gap-4</code>, <code>flex-wrap</code>, <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> desktop 3 → tablet 2 <code>max-width 1024px</code> → celular 1 <code>max-width 640px</code> + <code>.card-noticia {min-height:160px; max-height:220px}</code> (celular 140px <code>max-height:none</code>) + <code>min-width:0</code>.</li>
+<li><strong>Admin</strong> (<code>telas_administracao.py:15-241</code>): <code>bloco_aparencia</code> + <code>card "Coleta"</code> (switch <code>data-testid=agregador-habilitado</code> + select <code>agregador-intervalo</code> 10/30/60/120/180/360 + input <code>agregador-termo</code> + <strong>input <code>agregador-hora-reinicio</code> <code>06:00</code> + <code>rodape data-testid=agregador-salvar-coleta</code> + <code>Coletar agora</code> + <code>Limpar antigas</code></strong>) + <code>card "Fontes"</code> (<code>data-testid agregador-fonte-tipo/nome/tema/url</code>, <code>estado_fontes</code> + <code>render_fontes</code> + <code>Adicionar fonte</code> <code>data-testid=agregador-add-fonte</code> + <code>rodape data-testid=agregador-salvar-fontes</code>) + <code>card "Temas"</code> (<code>data-testid=agregador-temas</code>, <code>rodape data-testid=agregador-salvar-temas</code>) + <strong><code>card "Censura"</code> + <code>card "Reinício diário — banco reciclado"</code> (substitui <code>painel_backup</code>, <code>data-testid=agregador-reiniciar-agora</code> <code>Zerar agora</code>)</strong>.</li>
+</ul>
+<h2 id="regras-de-negocio-relevantes">Regras de negócio relevantes<a class="headerlink" href="#regras-de-negocio-relevantes" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Habilitado</strong> (<code>habilitado()</code>/<code>definir_habilitado(bool,ator)</code> — <code>bd_manipulador.py:77-85</code>): <code>get_config("agregador_noticias_habilitado","0")=="1"</code>; <code>set_config</code> + <code>audit configurar habilitado</code>; <code>init_db</code> semente <code>0</code> (desabilitado).</li>
+<li><strong>Intervalo</strong> (<code>intervalo_min()</code>/<code>definir_intervalo(min,ator)</code> — <code>bd_manipulador.py:88-101</code>): <code>int(get_config("agregador_noticias_intervalo_min","60"))</code> com <code>try</code> fallback <code>60</code> + <code>clamp max(10,min(360,v))</code>; <code>definir_intervalo</code> <code>clamp 10–360</code> + <code>audit</code> + <code>return ok,v</code> (<code>v</code> clampado).</li>
+<li><strong>Termo</strong> (<code>termo_pesquisa()</code>/<code>definir_termo(termo,ator)</code> — <code>bd_manipulador.py:104-112</code>): <code>get_config("agregador_noticias_termo_pesquisa","").strip()</code>; <code>definir_termo</code> <code>strip</code> + <code>audit</code>.</li>
+<li><strong>Fontes</strong> (<code>fontes_config()</code>/<code>definir_fontes(list,ator)</code> — <code>bd_manipulador.py:115-138</code>): <code>json.loads(get_config("agregador_noticias_fontes_json",""))</code> → <code>list</code> se <code>isinstance(list) and dados</code> senão <code>FONTES_PADRAO</code>; <code>definir_fontes</code> <code>json.dumps(ensure_ascii=False)</code> + <code>set_config</code> + <code>audit configurar fontes_json N fontes</code>.</li>
+<li><strong>Temas</strong> (<code>temas_config()</code>/<code>definir_temas(list,ator)</code> — <code>bd_manipulador.py:140-157</code>): <code>json.loads(temas_json)</code> → <code>[t.strip() for t in dados if strip]</code> senão <code>TEMAS_PADRAO</code>; <code>definir_temas</code> <code>json.dumps([t.strip() if strip])</code> + <code>audit</code>.</li>
+<li><strong>Hora reinício</strong> (<code>obter_hora_reinicio()</code>/<code>definir_hora_reinicio(hora_str,ator)</code> — <code>bd_manipulador.py:160-186</code>): <code>get_config("agregador_noticias_hora_reinicio","06:00")</code> validado <code>re.match HH:MM</code> <code>00–23:00–59</code> → <code>f"{h:02d}:{mi:02d}"</code> ou <code>06:00</code> fallback; <code>definir</code> valida <code>HH:MM</code>, normaliza, <code>audit configurar hora_reinicio</code>, <code>return False+msg</code> se inválido.</li>
+<li><strong>Reiniciar banco</strong> (<code>reiniciar_banco(ator)</code> — <code>bd_manipulador.py:189-204</code>): <code>SELECT COUNT(*)</code> + <code>DELETE FROM tb_noticia</code> + <code>commit</code> + <code>log info</code> + <strong><code>audit reiniciar_banco N notícias + hora</code></strong>; job diário <code>agregador_reinicio</code> <code>CronTrigger</code> às <code>hora_reinicio</code>.</li>
+<li><strong>Tempo real da postagem</strong> (<code>_parse_data_pub(raw)</code> — <code>bd_manipulador.py:267-311</code>): tenta <code>email.utils.parsedate_to_datetime</code> (robusto RFC822 <code>Tue, 19 Sep 2026 12:34:56 GMT</code>) → <code>astimezone().replace(tzinfo=None)</code> → <code>YYYY-MM-DD HH:MM:SS</code>; fallback ISO/RSS (<code>%Y-%m-%dT%H:%M:%S%z</code>, <code>%Y-%m-%dT%H:%M:%S.%f%z</code>, <code>%Y-%m-%dT%H:%M:%S</code>, <code>%Y-%m-%d %H:%M:%S</code>, <code>%a, %d %b %Y %H:%M:%S %z/%Z</code>, <code>%d/%m/%Y %H:%M</code>, normaliza <code>Z</code>→<code>+00:00</code>, <code>+00:00</code>→<code>+0000</code>, regex <code>YYYY-MM-DD[ T]HH:MM:SS</code>) → <code>None</code> se falhar; usado em <code>_coletar_google/bbc/jfp/rss</code> para extrair <code>time[datetime]</code>/<code>pubDate</code>/<code>dc:date</code> real e passar para <code>inserir_noticia</code>.</li>
+<li><strong>Relativo</strong> (<code>_parse_relativo_para_absoluto(texto)</code> — <code>bd_manipulador.py:523-551</code>): <code>"Ontem"</code>, <code>"3 horas atrás"</code> → <code>now - delta</code> → <code>YYYY-MM-DD HH:MM:SS</code> usado em <code>_coletar_google</code> fallback.</li>
+<li><strong>Inserir</strong> (<code>inserir_noticia</code> — <code>bd_manipulador.py:399-443</code>): <code>titulo[:500]</code>, <code>url[:2000]</code>, <code>url "/"→"https://news.google.com"+url</code> (relativa Google), <code>fonte[:100]</code>, <code>tema[:50] or Geral</code>, <code>imagem[:2000]</code>, <code>desc[:1000]</code>, <strong>deduplicação: <code>SELECT 1 WHERE url=?</code> (UNIQUE) + loop <code>SELECT titulo</code> com <code>_norm_tit</code> (<code>unicodedata.normalize NFKD → ascii ignore → lower → " ".join(split)</code>) — evita notícia já incluída com mesmo título case-insensitive sem acentos ou mesma URL antes de <code>INSERT OR IGNORE</code> + <code>COALESCE(data_pub, datetime('now'))</code></strong>, censura <code>titulo_bloqueado</code> descarta → <code>return rowcount&gt;0</code>.</li>
+<li><strong>Listar</strong> (<code>listar_noticias(tema,limite,offset)</code> — <code>bd_manipulador.py:314-325</code>): <code>SELECT ... WHERE tema=? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ? OFFSET ?</code> / <code>ORDER BY COALESCE(...) DESC LIMIT/OFFSET</code> sem tema; <strong>paginação 12</strong> <code>por_pagina=12</code> <code>total_pag</code> <code>offset</code> com botões <code>Primeira/Anterior/Próxima/Última</code> <code>data-testid=agregador-*</code> no <code>grid()</code>; <code>contar_noticias(tema?)</code> (<code>bd_manipulador.py:254-264</code>); <code>listar_para_tv(limite=10)</code> (<code>bd_manipulador.py:330-352</code> <code>SELECT titulo,descricao,url,imagem_url,fonte,tema ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?*3</code> filtrando censuradas via <code>titulo_bloqueado</code> → <code>[{"titulo","descricao":desc or titulo,"url","imagem","fonte","tema"}]</code>).</li>
+<li><strong>Limpar</strong> (<code>limpar_antigas(horas=24)</code> — <code>bd_manipulador.py:384-397</code>): <code>DELETE WHERE data_coleta &lt; datetime('now','-N hours')</code> (portável: <code>banco_conexao</code> traduz <code>datetime('now','-24 hours')</code> → <code>LOCALTIMESTAMP</code>/<code>CURRENT_TIMESTAMP</code> no Postgres proxy) + <code>rowcount n</code> + <code>log info</code> <strong>sem <code>audit</code></strong> (postagens não auditadas); chamada ao fim de <code>coletar_todas</code>.</li>
+<li><strong>Limpar censuradas</strong> (<code>limpar_censuradas()</code> — <code>bd_manipulador.py:354-381</code>): <code>SELECT id,titulo</code> → <code>titulo_bloqueado</code> → <code>DELETE WHERE id=?</code> + <code>log info</code> <strong>sem audit</strong>; chamada ao salvar censura.</li>
+<li><strong>Reiniciar</strong> (<code>reiniciar_banco(ator)</code> — <code>bd_manipulador.py:189-204</code>): <code>DELETE FROM tb_noticia</code> (zera todas) + <strong><code>audit reiniciar_banco</code></strong> (quem alterou); usado pelo <code>CronTrigger</code> diário <code>06:00</code> + botão <code>Zerar agora</code>.</li>
+<li><strong>Coleta</strong> (<code>coletar_todas(ator, forcar=False)</code> — <code>bd_manipulador.py:661-698</code>): <code>if not forcar and not habilitado(): 0</code> + <code>fontes_config()</code> + <code>termo_pesquisa()</code> → <code>total=0</code> + loop <code>for f in fontes: tipo=(tipo or google).lower(), url, tema or Geral, nome or url[:30]; tipo google→_coletar_google, bbc→_coletar_bbc, jfp→_coletar_jfp, rss→_coletar_rss, else→_coletar_google</code> (fail-soft <code>warning</code>) + <code>termo → _coletar_pesquisa_google(termo,Geral)</code> + <code>limpar_antigas(24)</code> (<code>try</code> <strong>sem audit</strong>) + <code>log info</code> <strong>sem <code>_audit coletar</code></strong> (auditoria só quem alterou config).</li>
+<li><strong><code>_get_html(url,timeout=12)</code></strong> (<code>bd_manipulador.py:447-455</code>): <code>httpx.get(url, timeout, follow_redirects=True, headers={"User-Agent":"Mozilla/5.0 (IntrAnEt; AgregadorNoticias)"})</code> → <code>r.text</code> se <code>200</code> senão <code>""</code> (<code>warning</code> em exceção).</li>
+<li><strong>Parsers</strong> (<code>parsel.Selector</code>): Google <code>".gPFEn, .JtKRv, .a7P8L, article"</code> + <code>a::text</code>/<code>href</code> (<code>.</code>/<code>/</code>→ <code>https://news.google.com</code>) + <code>img::attr(src/data-src)</code> + <code>time[datetime]</code>→<code>_parse_data_pub</code> (20); BBC <code>".bbc-uk8dsi, .bbc-19j92fr, article, a[href*='/portuguese/articles']"</code> (<code>/</code>→ <code>https://www.bbc.com</code>) + <code>time[datetime]</code> (15); JFP <code>".td-module-title"</code> + <code>time[datetime]</code>/<code>.td-post-date</code> (15); RSS <code>type="xml"</code> <code>item</code> → <code>title::text</code> + <code>link::text/attr(href)</code> + <code>description::text</code> + <code>pubDate</code>/<code>dc:date</code>/<code>published</code>→<code>_parse_data_pub</code> + <code>media:content::attr(url)</code> (15); pesquisa Google <code>https://news.google.com/search?q={quote(termo)}&amp;...</code> → <code>_coletar_google</code>.</li>
+<li><strong>LGPD</strong>: notícias públicas sem vínculo por usuário; sem <code>remover_vinculos</code> ainda (futuro se necessário).</li>
+<li><strong>Censura</strong>: <code>inserir_noticia</code> descarta bloqueadas, <code>listar_para_tv</code> filtra <code>LIMIT*3</code> com <code>titulo_bloqueado</code>, <code>limpar_censuradas</code> remove já coletadas (<code>bd_manipulador.py:306-396</code>).</li>
+</ul>
+<h2 id="censura-de-conteudo-palavras-bloqueadas-central-mod_intranetcensurapy">Censura de conteúdo — palavras bloqueadas (central <code>mod_intranet/censura.py</code>)<a class="headerlink" href="#censura-de-conteudo-palavras-bloqueadas-central-mod_intranetcensurapy" title="Permanent link">&para;</a></h2>
+<p>Funcionalidade compartilhada Blog ↔ Agregador (chave única <code>conteudo_palavras_bloqueadas</code> em <code>tb_config</code> central):</p>
+<ul>
+<li><strong>Núcleo</strong> (<code>censura.py:1-95</code>): <code>CHAVE_CONFIG="conteudo_palavras_bloqueadas"</code> · <code>obter_palavras_bloqueadas()</code> (split <code>,;\n</code> + JSON fallback, <code>lower</code>) · <code>definir_palavras_bloqueadas(lista, ator)</code> (normaliza <code>lower</code> dedup, grava CSV via <code>set_config</code>, <code>audit_log</code> <code>censura/palavras_bloqueadas</code>) · <code>titulo_bloqueado(titulo, palavras=None)</code> / <code>filtrar_titulo</code> → <code>(bloqueado, palavra)</code> com <code>_normalizar</code> <code>lower+NFD</code> sem acentos (<code>suicidio</code> bloqueia <code>suicídio</code>, substring insensível) — docstring bilíngue EN/PT-BR.</li>
+<li><strong>Agregador</strong> (<code>bd_manipulador.py:399-443</code> <code>inserir_noticia</code> descarta censurada; <code>328-352</code> <code>listar_para_tv</code> filtra <code>LIMIT*3</code> → <code>titulo_bloqueado</code>; <code>354-381</code> <code>limpar_censuradas()</code> remove já coletadas censuradas).</li>
+<li><strong>Blog</strong> (<code>bd_manipulador.py:646-703</code>): <code>criar/atualizar</code> bloqueiam título censurado.</li>
+<li><strong>Admin Agregador</strong> (<code>telas_administracao.py:187-241</code>): card <code>Censura de conteúdo — palavras bloqueadas</code> (<code>block</code>, <code>data-testid=agregador-palavras-bloqueadas</code>, <code>textarea</code> CSV/;/linha, <code>Salvar censura</code> <code>data-testid=agregador-salvar-censura</code> + <code>Restaurar</code>, ao salvar <code>definir_palavras_bloqueadas</code> + <code>limpar_censuradas</code>) + botão <code>Remover já censuradas agora</code> (<code>data-testid=agregador-limpar-censuradas</code>).</li>
+<li><strong>Admin Blog</strong> (<code>mod_blog/telas_administracao.py:72-106</code>): mesmo card (<code>data-testid=blog-palavras-bloqueadas</code>).</li>
+<li><strong>Normalização</strong>: <code>lower</code> + <code>NFD</code> remove <code>Mn</code> → <code>suicidio</code> bloqueia <code>suicídio</code>; substring (não exige palavra inteira).</li>
+<li><strong>RNF</strong>: persistência <code>banco_conexao</code> WAL por módulo, auditoria <code>censura/palavras_bloqueadas</code>, segurança <code>lower+NFD</code> substring, performance <code>limpar_censuradas</code> sem travar TV (TV filtra em <code>LIMIT*3</code>), usabilidade textarea CSV/;/linha.</li>
+</ul>
+<h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
+<p>Importa <code>autenticacao.validar_acesso_modulo</code>/<code>perfil_global_de</code>/<code>eh_admin_do_modulo</code>, <code>banco_conexao.conexao</code>/<code>get_config</code>/<code>set_config</code>, <code>tema_modulo.ler_tema</code>/<code>notificar</code>/<code>bloco_aparencia</code>, <code>ui_comum.botao</code>/<code>card_admin</code>/<code>rodape_salvar_restaurar</code>, <code>observabilidade.get_logger</code>. Grava via <code>audit_log</code> → <code>tb_auditoria_agregador_noticias</code> (<strong>só quem alterou o quê</strong>: <code>definir_habilitado/intervalo/termo/fontes/temas/hora_reinicio/reiniciar_banco</code> auditam <code>configurar</code>/<code>reiniciar_banco</code>; <code>coletar_todas</code>/<code>limpar_antigas</code>/<code>limpar_censuradas</code> <strong>sem audit</strong>). Agendadores <code>rotinas._job_agregador_coleta</code> (<code>interval minutes</code> + <code>CronTrigger</code> hora) + <code>_job_agregador_reinicio</code> (<code>CronTrigger hora_reinicio</code> <code>06:00</code> default → <code>reiniciar_banco</code> <code>DELETE</code>) + <code>reconfigurar_agregador_noticias()</code> (<code>pause/resume</code>+<code>reschedule minutes</code>+<code>reschedule CronTrigger</code>). <strong>Sem backup</strong>: <code>MAPA_BACKUPS</code> sem <code>agregador_noticias</code>, <code>painel_backup</code> removido, card <code>Reinício diário — banco reciclado</code> com <code>Zerar agora</code> <code>data-testid=agregador-reiniciar-agora</code>. <code>PREFIXO_POR_CHAVE</code>/<code>PADROES_TEMA</code>/<code>MODULOS_SISTEMA</code>/<code>MODULOS_BD</code> com <code>agregador_noticias</code>. <code>bd_criador.py</code> init_agregador no <code>mod_intranet/bd_criador.py</code>. TV <code>mod_filas</code> consome <code>listar_para_tv</code>.</p>
+<h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Habilitado default <code>0</code> — sem coleta até admin habilitar; <code>reconfigurar_agregador_noticias()</code> (<code>rotinas.py:256</code>) <code>pause</code> quando desabilitado, <code>resume+reschedule</code> quando habilitado + <code>CronTrigger</code> hora (sem restart).</li>
+<li>Intervalo <code>clamp 10–360</code> — <code>intervalo_min()</code> e <code>definir_intervalo</code> garantem faixa; admin select limita a 6 opções, API aceita qualquer <code>10–360</code>.</li>
+<li><strong>Hora <code>06:00</code> configurável + reinício diário <code>CronTrigger</code> + sem backup</strong>: <code>obter_hora_reinicio()</code>/<code>definir_hora_reinicio(HH:MM)</code> validam <code>00–23:00–59</code>, normalizam <code>06:00</code>, auditam, <code>reconfigurar_agregador_noticias()</code> reaplica <code>CronTrigger(hour=H, minute=M)</code> sem restart; <code>reiniciar_banco(ator)</code> <code>DELETE</code> + <code>audit</code> + <code>Zerar agora</code> <code>data-testid=agregador-reiniciar-agora</code>; <code>MAPA_BACKUPS</code> sem <code>agregador_noticias</code>, <code>telas_administracao</code> sem <code>painel_backup</code> — banco reciclado.</li>
+<li><strong>Auditoria só quem alterou o quê</strong>: <code>definir_*</code> + <code>reiniciar_banco</code> auditam; <code>coletar_todas</code>/<code>limpar_*</code> <strong>sem audit</strong> (postagens não auditadas).</li>
+<li><strong>Paginação 12 + grid responsivo 3→2→1 + altura 160–220px — mais atual → mais antiga</strong>: <code>estado pagina=1</code> <code>por_pagina=12</code> <code>total_pag=max(1,(total+12-1)//12)</code> <code>offset=(pagina-1)*12</code> <code>listar_noticias(tema_f, limite=12, offset=offset)</code> <code>ORDER BY COALESCE(data_publicacao, data_coleta) DESC</code>; botões <code>agregador-primeira/anterior/proxima/ultima</code> + label <code>Página X de Y • N notícias</code> + <code>Exibindo len de total</code>; <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + <code>@media 1024px→2 640px→1</code> + <code>.card-noticia {min-height:160px; max-height:220px}</code> (média 91 notícias: título 79/75, descrição 34, 87.9% imagem, 24% fonte_icon) + imagem <code>30x30</code> antes do título, sem fonte/botão/card-TV.</li>
+<li><strong>Deduplicação por URL + título normalizado</strong> (<code>inserir_noticia</code> + <code>_norm_tit</code> NFKD lower): <code>SELECT 1 WHERE url=?</code> (UNIQUE) + <code>SELECT titulo</code> loop com <code>_norm_tit</code> (<code>NFKD → ascii ignore → lower → join</code>) — evita duplicata com mesmo título case-insensitive sem acentos ou mesma URL; <code>INSERT OR IGNORE</code> vira <code>ON CONFLICT DO NOTHING</code> no Postgres via <code>_CursorPostgres</code>.</li>
+<li><strong>Timer com tempo real</strong> (<code>_parse_data_pub</code> + <code>COALESCE(data_publicacao, data_coleta) DESC</code> + <code>_tempo_relativo</code>): <code>_parse_data_pub</code> reescrito via <code>email.utils.parsedate_to_datetime</code> + fallback ISO/RSS → <code>YYYY-MM-DD HH:MM:SS</code> usado em todos os coletores (<code>time[datetime]</code>, <code>pubDate</code>) para <code>data_publicacao</code> real; <code>listar_noticias</code>/<code>listar_para_tv</code> ordenam por <code>COALESCE(data_publicacao, data_coleta) DESC</code>; <code>telas.py _tempo_relativo</code> usa <code>data_pub</code> real ou <code>data_col</code> fallback (<code>agora</code>/&lt;60s, minutos/&lt;60m, horas/&lt;24h, dias/&lt;7d, semanas/&lt;30d, meses/&lt;365d, anos, <code>delta&lt;0→0</code>, <code>T</code>/<code>Z</code>/fração, fallback <code>[:16]</code>).</li>
+<li><code>datetime('now','-N hours')</code> portável — <code>banco_conexao</code> traduz para <code>LOCALTIMESTAMP</code> no Postgres (<code>_CursorPostgres._preparar</code> + <code>_ddl_postgres</code>).</li>
+<li><code>httpx</code>+<code>parsel</code> (<code>requirements.txt</code>); sem internet coleta <code>0</code> (fail-soft); <code>User-Agent</code> custom; timeout <code>12s</code>; <code>try/except</code> com <code>warning</code> em cada coletor.</li>
+<li><code>url</code> relativa Google normalizada em <code>inserir_noticia</code> + <code>_coletar_google</code> (<code>./</code>/<code>/</code>→<code>https://news.google.com</code>).</li>
+<li><code>listar_para_tv</code> <code>descricao or titulo</code> — TV nunca mostra vazio; <code>habilitado()==False</code> → placeholder desabilitado; vazio → placeholder aguarde.</li>
+<li><strong>Card sem fonte e sem botão, só tempo relativo + miniatura <code>30x30</code> antes do título + título link, grid responsivo 3→2→1 + paginação 12 + altura 160–220px, sem card TV</strong> (<code>telas.py:47-89</code> <code>_tempo_relativo</code> + <code>telas.py:91-113</code> <code>_noticia_card</code> <code>ui.card card-noticia</code> + <code>186-274</code> <code>grid()</code> <code>grid-noticias</code> paginação <code>12</code> + altura padronizada): <code>tb_noticia.fonte</code> continua gravada (útil para <code>listar_para_tv</code> e auditoria) mas <strong>não renderizada no card</strong>; <code>data_pub</code> real via <code>_parse_data_pub</code> ou <code>data_col</code> fallback com <code>[:16]</code> absoluto substituído por relativo <code>agora</code>/minutos/horas/dias/semanas/meses/anos (parse flexível <code>T</code>/<code>Z</code>/fração, <code>delta&lt;0→agora</code>); <strong>miniatura <code>30x30</code> mantida antes do título (<code>30px object-cover</code> <code>fit=cover</code>, <code>row gap-2</code>) + <code>badge tema</code> + <code>titulo</code> <code>ui.link(target=href, new_tab=True)</code> clicável basta + <code>descricao[:180]… + tempo relativo</code>text-caption text-grey-5<code>; **botão "Abrir notícia" removido 19/09/2026 + card TV</code>bg-blue-50<code>removido, substituído por paginação 12 com 4 botões**, mantém **grid responsivo</code>.grid-noticias<code>3→2→1 +</code>.card-noticia<code>160–220px + paginação</code>Página X de Y`</strong>.</li>
+</ul>
+<h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Item</th>
+<th style="text-align: left;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Banco WAL <code>tb_noticia</code> + <code>fonte_icon_url</code> <code>16×16</code> + <code>TEMAS/FONTES_PADRAO</code> + seeds <code>tb_config</code> + deduplicação <code>_norm_tit</code> NFKD + <code>COALESCE(data_publicacao, data_coleta)</code> + <strong><code>hora_reinicio 06:00</code> + <code>reiniciar_banco</code> + sem backup</strong></td>
+<td style="text-align: left;">Implementado (<code>init_db()</code> CREATE TABLE fonte_icon_url + ALTER TABLE ADD COLUMN migração + <code>inserir_noticia</code> SELECT url + SELECT titulo _norm_tit + _parse_data_pub + fonte_icon/imagem extração faviconV2/api-attachments + obter_hora_reinicio/definir_hora_reinicio/reiniciar_banco + MAPA_BACKUPS sem agregador_noticias)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Coleta scrapy-like <code>httpx+parsel</code> Google/BBC/JFP/RSS + pesquisa termo + tempo real <code>_parse_data_pub</code> (<code>time[datetime]</code>/<code>pubDate</code>→<code>data_publicacao</code>)</td>
+<td style="text-align: left;">Implementado (<code>_coletar_google/bbc/jfp/rss/pesquisa</code> + <code>coletar_todas</code> + <code>_parse_data_pub</code> RFC822/ISO)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Habilitado flag + intervalo 10–360 clamp + termo livre + fontes/temas <code>json</code> + <strong>hora <code>06:00</code> + reinício diário</strong></td>
+<td style="text-align: left;">Implementado (<code>habilitado/definir_habilitado</code>, <code>intervalo_min/definir_intervalo</code>, <code>termo/definir_termo</code>, <code>fontes/temas_config</code>, <code>obter_hora_reinicio</code>/<code>definir_hora_reinicio</code> + audit, <code>reiniciar_banco</code> + audit)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Sem backup — banco reciclado</strong> <code>MAPA_BACKUPS</code> sem <code>agregador_noticias</code> + card <code>Reinício diário</code> + <code>Zerar agora</code></td>
+<td style="text-align: left;">Implementado (<code>rotinas.py:19-30</code> MAPA sem agregador, <code>telas_administracao.py:235-241</code> card <code>restart_alt</code> com <code>reiniciar_banco</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Paginação 12 + busca + grid responsivo 3→2→1 + altura 160–220px</strong> <code>pagina</code> <code>por_pagina=12</code> <code>total_pag</code> <code>offset</code> <code>COALESCE DESC</code> + <strong>busca lado a lado <code>agregador-busca</code> <code>debounce 300</code> NFKD 500 + remoção badge <code>Coleta:</code> + ícone fonte <code>16×16</code> + imagem <code>30×30</code> + grid <code>.grid-noticias</code> 3→2→1 (<code>1024px</code>/<code>640px</code>) + <code>.card-noticia</code> 160–220px (média 91 notícias: título 79/75, descrição 34, 87.9% imagem, 24% fonte_icon)</strong> + botões <code>Primeira/Anterior/Próxima/Última</code> <code>data-testid=agregador-primeira/anterior/proxima/ultima</code> + mais atual→mais antiga</td>
+<td style="text-align: left;">Implementado (<code>telas.py:186-274</code> estado tema/busca/pagina + <code>por_pagina=12</code> + total com busca filtradas 500 NFKD vs <code>contar_noticias</code> + 4 botões + <code>inp_busca</code> <code>agregador-busca</code> <code>debounce 300</code> lado a lado <code>sel_tema</code> + <code>grid-noticias</code> <code>display:grid 3→2→1</code> + <code>card-noticia</code> <code>min-height 160px max-height 220px</code> + <code>fonte_icon</code> <code>16×16</code> + <code>imagem</code> <code>30×30</code> antes do título)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Grid responsivo <code>display:grid</code> 3→2→1 (<code>grid-noticias</code> 1024px/640px) + card <strong>ícone fonte <code>16×16</code> + miniatura <code>30x30</code> lado a lado antes do título</strong> <code>ui.image</code> + badge tema + título <code>ui.link(new_tab=True)</code> + descrição + tempo relativo <code>_tempo_relativo</code> (<code>agora</code>/<code>X atrás</code>, <code>data_publicacao</code> real + <code>COALESCE</code> fallback, <strong>busca NFKD</strong>) <strong>sem botão — título clicável basta + sem card TV + paginação 12 + busca + altura padronizada <code>card-noticia</code> 160–220px</strong> (<strong>sem fonte textual</strong>, data <code>[:16]</code> substituída, <code>gap:1rem</code> + <code>hover:shadow-lg</code>, <strong>sem badge <code>Coleta:</code></strong>, <strong>grid 3→2→1 + altura 160–220px baseado na média 91 notícias: título 79/75, descrição 34, 87.9% imagem, 24% fonte_icon</strong>)</td>
+<td style="text-align: left;">Implementado (<code>telas.py _tempo_relativo</code> real + <code>_noticia_card</code> <code>card-noticia</code> fonte_icon 16×16 contain + imagem 30×30 cover antes do título + ui.link + grid <code>grid-noticias</code> 3→2→1 paginado 12 + altura 160–220px + busca agregador-busca debounce 300 lado a lado sel_tema, botão removido 19/09/2026, card TV removido 19/09/2026, paginação 12 20/09/2026, grid responsivo 20/09/2026)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Filtro tema + <strong>busca <code>agregador-busca</code> <code>debounce 300</code> NFKD lado a lado + sem badge <code>Coleta:</code></strong> + <code>Coletar agora</code> async</td>
+<td style="text-align: left;">Implementado (<code>sel_tema</code> + <code>inp_busca</code> <code>agregador-busca</code> <code>debounce 300</code> NFKD lado a lado, <code>on_busca</code> pagina=1 + <code>grid.refresh</code> com <code>pagina=1</code> + <code>async _coletar</code> <code>run.io_bound</code> + <code>spinner</code> <code>ocupado</code> + <code>forcar=True</code>, badge <code>Coleta:</code> removido a169c9a)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Admin: switch habilitado + select intervalo + input termo + <strong>input hora <code>06:00</code></strong> + card fontes + card temas + <strong>censura + reinício diário</strong> (5 cards, sem <code>painel_backup</code>)</td>
+<td style="text-align: left;">Implementado (<code>telas_administracao.py</code> 241 linhas, <code>data-testid</code> QA incluindo <code>agregador-hora-reinicio</code> + <code>agregador-reiniciar-agora</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_para_tv</code> + TV <code>mod_filas</code> carrossel 7s/120s (ordena <code>COALESCE</code> + filtra censuradas)</td>
+<td style="text-align: left;">Implementado (<code>listar_para_tv</code> <code>LIMIT *3</code> + <code>titulo_bloqueado</code> + <code>mod_filas/telas.py mostrar_tv</code> <code>noticias_tv</code> <code>7s</code>+<code>120s</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>MODULOS_SISTEMA</code>/<code>MODULOS_BD</code>/<code>PADROES_TEMA</code>/<code>PREFIXO_POR_CHAVE</code> <strong>+ <code>MAPA_BACKUPS</code> sem agregador</strong></td>
+<td style="text-align: left;">Implementado (<code>autenticacao.py:25</code>, <code>repositorio.py:68</code>, <code>tema_modulo.py:82</code>, <code>rotinas.py:19-30</code> sem <code>agregador_noticias</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Agendadores <code>agregador_coleta</code> (<code>interval minutes</code>) + <strong><code>agregador_reinicio</code> (<code>CronTrigger 06:00</code> + <code>reiniciar_banco</code> <code>DELETE</code>)</strong> + <code>reconfigurar_agregador_noticias()</code> (<code>pause/resume</code>+<code>reschedule</code>+<code>CronTrigger</code>)</td>
+<td style="text-align: left;">Implementado (<code>rotinas.py:228-285</code> + <code>483</code> <code>CronTrigger</code> + <code>reconfigurar</code> com <code>CronTrigger</code> hora)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>main.py</code> <code>/agregador-noticias</code> + <code>/admin/agregador_noticias</code> + <code>bd_criador init_agregador</code></td>
+<td style="text-align: left;">Implementado (<code>main.py:766-777</code>, <code>896-906</code>, <code>bd_criador.py:67</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Auditoria só <strong>quem alterou o quê</strong> (<code>configurar</code> <code>habilitado</code>/<code>intervalo_min</code>/<code>termo_pesquisa</code>/<code>fontes_json</code>/<code>temas_json</code>/<code>hora_reinicio</code>/<code>reiniciar_banco</code>) <strong>sem postagens</strong></td>
+<td style="text-align: left;">Implementado (<code>bd_manipulador.py:77-204</code> <code>definir_*</code> + <code>reiniciar_banco</code> com <code>_audit</code>; <code>coletar_todas</code>/<code>limpar_*</code> sem <code>_audit</code>)</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../analise_mod_lista_telefonica/" class="btn btn-neutral float-left" title="Lista Telefônica (organograma)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../modulos/intranet/" class="btn btn-neutral float-right" title="Intranet (núcleo)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../analise_mod_lista_telefonica/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../modulos/intranet/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

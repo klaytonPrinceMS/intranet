@@ -170,9 +170,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -193,9 +195,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -259,8 +265,18 @@
 <li><strong>Gestão de despublicadas</strong>: aba Administração lista postagens inativas (<code>listar_postagens(ativo=False)</code>) com botão <strong>Republicar</strong> (<code>publicar_postagem</code>).</li>
 <li>Soft delete: postagens inativas saem da lista pública; comentários só são removidos fisicamente por cascade quando a postagem é deletada fisicamente (fluxo da limpeza cruzada do módulo de usuários).</li>
 </ul>
+<h2 id="censura-de-conteudo-palavras-bloqueadas-central-mod_intranetcensurapy">Censura de conteúdo — palavras bloqueadas (central <code>mod_intranet/censura.py</code>)<a class="headerlink" href="#censura-de-conteudo-palavras-bloqueadas-central-mod_intranetcensurapy" title="Permanent link">&para;</a></h2>
+<p>Funcionalidade compartilhada Blog ↔ Agregador (chave única <code>conteudo_palavras_bloqueadas</code> em <code>tb_config</code> central):</p>
+<ul>
+<li><strong>Núcleo</strong> (<code>censura.py:1-95</code>): <code>CHAVE_CONFIG="conteudo_palavras_bloqueadas"</code> · <code>obter_palavras_bloqueadas()</code> (split <code>,;\n</code> + JSON fallback, <code>lower</code>) · <code>definir_palavras_bloqueadas(lista, ator)</code> (normaliza <code>lower</code> dedup, grava CSV via <code>set_config</code>, <code>audit_log</code> <code>censura/palavras_bloqueadas</code>) · <code>titulo_bloqueado(titulo, palavras=None)</code> / <code>filtrar_titulo</code> → <code>(bloqueado, palavra)</code> com <code>_normalizar</code> <code>lower+NFD</code> semacentos (<code>suicidio</code> bloqueia <code>suicídio</code>, substring insensível) — docstring bilíngue EN/PT-BR.</li>
+<li><strong>Blog</strong> (<code>bd_manipulador.py:646-703</code>): <code>criar_postagem</code> e <code>atualizar_postagem</code> verificam <code>titulo_bloqueado(titulo)</code> <strong>antes</strong> de <code>nh3</code>; se bloqueado retornam <code>None</code>/<code>False</code> com <code>warning</code> + <code>notificar("Título contém palavra bloqueada: '...'")</code> e não sanitizam/gravam.</li>
+<li><strong>Agregador</strong> (<code>bd_manipulador.py:353-396</code> <code>inserir_noticia</code> descarta se bloqueado; <code>280-303</code> <code>listar_para_tv</code> filtra <code>LIMIT*3</code> → <code>titulo_bloqueado</code>; <code>306-334</code> <code>limpar_censuradas()</code> remove já coletadas censuradas).</li>
+<li><strong>Admin Blog</strong> (<code>telas_administracao.py:72-106</code>): card <code>Censura de conteúdo — palavras bloqueadas</code> (<code>block</code>, <code>data-testid=blog-palavras-bloqueadas</code>, <code>textarea</code> CSV/;/linha, <code>Salvar censura</code> <code>data-testid=blog-salvar-censura</code> + <code>Restaurar</code>, ao salvar <code>definir_palavras_bloqueadas</code> + <code>limpar_censuradas</code> do agregador).</li>
+<li><strong>Admin Agregador</strong> (<code>mod_agregador_noticias/telas_administracao.py:177-223</code>): mesmo card (<code>data-testid=agregador-palavras-bloqueadas</code>) + botão <code>Remover já censuradas agora</code> (<code>data-testid=agregador-limpar-censuradas</code>, <code>limpar_censuradas()</code>).</li>
+<li><strong>Normalização</strong>: <code>lower</code> + <code>NFD</code> remove <code>Mn</code> → <code>suicidio</code> bloqueia <code>suicídio</code>; substring (não exige palavra inteira).</li>
+</ul>
 <h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
-<p>Importa <code>autenticacao.pode_publicar_no_blog</code> e <code>eh_admin_do_modulo</code>. Grava na trilha via <code>audit_log</code> (banco exclusivo <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_blog</code>) para criar/alterar/despublicar/republicar/excluir postagens e comentários. Config de aparência na <code>tb_config</code> central (prefixo <code>blog_*</code>); config de comportamento na <code>tb_config</code> LOCAL do módulo. Consumido pelo núcleo: bootstrap cria o banco, scheduler faz backup e o dashboard usa <code>contar_postagens(ativo=True)</code>.</p>
+<p>Importa <code>autenticacao.pode_publicar_no_blog</code> e <code>eh_admin_do_modulo</code>. Grava na trilha via <code>audit_log</code> (banco exclusivo <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_blog</code>) para criar/alterar/despublicar/republicar/excluir postagens e comentários. Config de aparência na <code>tb_config</code> central (prefixo <code>blog_*</code>); config de comportamento na <code>tb_config</code> LOCAL do módulo. Consumido pelo núcleo: bootstrap cria o banco, scheduler faz backup e o dashboard usa <code>contar_postagens(ativo=True)</code>. Censura via <code>mod_intranet/censura.titulo_bloqueado</code> + chave central <code>conteudo_palavras_bloqueadas</code>.</p>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
 <li>O <code>bd_criador.py</code> do blog é <strong>legado/morto</strong>: conecta no banco central e duplica os CRUDs com sanitização sem whitelist — não executar.</li>

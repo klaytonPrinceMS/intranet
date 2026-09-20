@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Agregador de Notícias — Tela Pura - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Agregador de Not\u00edcias \u2014 Tela Pura";
+        var mkdocs_page_input_path = "modulos/agregador_noticias_puro.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Agregador de Notícias — Tela Pura</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Módulos (resumo)</li>
+      <li class="breadcrumb-item active">Agregador de Notícias — Tela Pura</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="pure-news-screen-mod_agregador_noticiastelas_puropy-agregador-noticias-puro">Pure News Screen — <code>mod_agregador_noticias/telas_puro.py</code> (<code>/agregador-noticias-puro</code>)<a class="headerlink" href="#pure-news-screen-mod_agregador_noticiastelas_puropy-agregador-noticias-puro" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Pure display screen: route <code>/agregador-noticias-puro</code> (key <code>agregador_noticias</code>, same gate as <code>/agregador-noticias</code>) · reuses <code>db_mod_agregador_noticias.db</code> <code>tb_noticia</code> (<code>fonte_icon_url</code> 16×16 + <code>imagem_url</code> 30×30) via <code>listar_noticias(limite=12)</code> <code>ORDER BY COALESCE(data_publicacao, data_coleta) DESC</code> · copies display pattern from <code>https://github.com/klaytonPrinceMS/Noticia</code> (<code>intro-overlay</code> + <code>about</code> section with <code>tema</code> + <code>info-list</code> <code>ul</code>) but with current cards (3-column, <code>fonte_icon 16×16</code> <code>contain</code> + <code>imagem 30×30</code> <code>cover</code> before title, <code>badge tema</code> + <code>title ui.link(new_tab=True)</code> + <code>descricao[:160]</code> + <code>tempo relativo</code> + external link) · original <code>assets/noticia/</code> (<code>base.css</code>, <code>vendor.css</code>, <code>main.css</code>, <code>font-awesome/css/font-awesome.min.css</code>, <code>micons/micons.css</code>, <code>fonts/lora/poppins</code>, <code>images/bg.jpg/intro-bg.jpg</code>, <code>js/modernizr.js/pace.min.js/jquery-2.1.3.min.js/plugins.js/main.js</code>, <code>favicon.png</code> 4.9M) served via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> (path-traversal safe <code>normpath</code> + <code>startswith(base)</code> + <code>mimetypes.guess_type</code> → <code>FileResponse</code>, <code>404</code> if outside base) · access via button <code>Ver puro Noticia</code> <code>data-testid=agregador-ver-puro</code> (<code>ui.navigate.to("/agregador-noticias-puro")</code>) on <code>/agregador-noticias</code> · <code>intro-content</code> <code>PRINCE. K,B.</code> + <code>DTI - Notícias</code> + buttons <code>Início</code> (<code>/agregador-noticias</code>) / <code>Fim</code> (<code>window.scrollTo(0, document.body.scrollHeight)</code>) · <code>about-content</code> <code>info-list</code> with <code>12</code> most recent news (<code>COALESCE DESC</code>) · footer <code>© Copyright DTI</code>.</p>
+</blockquote>
+<hr />
+<h1 id="tela-pura-de-noticias-mod_agregador_noticiastelas_puropy-agregador-noticias-puro">Tela Pura de Notícias — <code>mod_agregador_noticias/telas_puro.py</code> (<code>/agregador-noticias-puro</code>)<a class="headerlink" href="#tela-pura-de-noticias-mod_agregador_noticiastelas_puropy-agregador-noticias-puro" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Tela pura de notícias: rota <code>/agregador-noticias-puro</code> (chave <code>agregador_noticias</code>, mesmo gate de <code>/agregador-noticias</code>) · reutiliza <code>db_mod_agregador_noticias.db</code> <code>tb_noticia</code> (<code>fonte_icon_url</code> 16×16 + <code>imagem_url</code> 30×30) via <code>listar_noticias(limite=12)</code> <code>ORDER BY COALESCE(data_publicacao, data_coleta) DESC</code> · copia padrão de exibição do repositório <code>https://github.com/klaytonPrinceMS/Noticia</code> (<code>intro-overlay</code> + <code>about</code> com <code>tema</code> + <code>info-list</code> <code>ul</code>) porém com cards atuais (3 colunas, <code>fonte_icon 16×16</code> <code>contain</code> + <code>imagem 30×30</code> <code>cover</code> antes do título, <code>badge tema</code> + <code>título ui.link(new_tab=True)</code> + <code>descrição[:160]</code> + <code>tempo relativo</code> + link externo) · originais <code>assets/noticia/</code> (<code>base.css</code>, <code>vendor.css</code>, <code>main.css</code>, <code>font-awesome/css/font-awesome.min.css</code>, <code>micons/micons.css</code>, <code>fonts/lora/poppins</code>, <code>images/bg.jpg/intro-bg.jpg</code>, <code>js/modernizr.js/pace.min.js/jquery-2.1.3.min.js/plugins.js/main.js</code>, <code>favicon.png</code> 4.9M) servidos via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> (seguro path-traversal <code>normpath</code> + <code>startswith(base)</code> + <code>mimetypes.guess_type</code> → <code>FileResponse</code>, <code>404</code> se fora da base) · acesso via botão <code>Ver puro Noticia</code> <code>data-testid=agregador-ver-puro</code> (<code>ui.navigate.to("/agregador-noticias-puro")</code>) em <code>/agregador-noticias</code> · <code>intro-content</code> <code>PRINCE. K,B.</code> + <code>DTI - Notícias</code> + botões <code>Início</code> (<code>/agregador-noticias</code>) / <code>Fim</code> (<code>window.scrollTo(0, document.body.scrollHeight)</code>) · <code>about-content</code> <code>info-list</code> com <code>12</code> mais recentes (<code>COALESCE DESC</code>) · rodapé <code>© Copyright DTI</code>.</p>
+</blockquote>
+<h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
+<p>Tela <strong>pura</strong> que replica fielmente o <strong>modelo visual do repositório <code>Noticia</code></strong> (<code>https://github.com/klaytonPrinceMS/Noticia</code> — <code>gerarSite</code> com <code>intro overlay</code>, <code>about section</code> com <code>tema</code>, <code>info-list</code> <code>ul</code>), mas <strong>reutiliza os cards atuais do Agregador</strong> (3 colunas, <code>fonte_icon_url</code> <code>faviconV2</code> <code>16×16</code> <code>contain</code> + <code>imagem_url</code> <code>/api/attachments</code> <code>30×30</code> <code>cover</code> lado a lado antes do título, <code>badge tema</code>, <code>ui.link(target=href, new_tab=True)</code>, <code>descrição</code>, <code>tempo relativo</code> <code>_tempo_relativo</code> via <code>data_publicacao</code> real ou <code>data_coleta</code> fallback). O <strong>CSS/JS original</strong> do Noticia foi <strong>copiado para <code>assets/noticia/</code></strong> e é <strong>servido via rota estática <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code></strong> — <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>fonts</code>/<code>js</code>/<code>images</code>/<code>favicon.png</code> 4.9M. O acesso à tela pura é via <strong>botão <code>Ver puro Noticia</code></strong> (<code>visibility</code> <code>contorno</code> <code>data-testid=agregador-ver-puro</code> → <code>ui.navigate.to("/agregador-noticias-puro")</code>) na barra de <code>/agregador-noticias</code> (mesmo gate <code>validar_acesso_modulo(user, "agregador_noticias")</code>).</p>
+<blockquote>
+<p>Status: <strong>ativa</strong> (rota <code>/agregador-noticias-puro</code> <code>page_agregador_noticias_puro</code> + <code>assets/noticia/</code> servido via <code>servir_assets_noticia</code> + <code>telas_puro.py:mostrar_tela_pura</code> com <code>intro</code> + <code>about</code> + <code>info-list</code> + footer Noticia, cards atuais 3 colunas).</p>
+</blockquote>
+<h2 id="banco-de-dados-reuso">Banco de dados (reuso)<a class="headerlink" href="#banco-de-dados-reuso" title="Permanent link">&para;</a></h2>
+<p>Reusa o mesmo <code>db_mod_agregador_noticias.db</code> / <code>tb_noticia</code> de <code>/agregador-noticias</code> — ver <a href="../agregador_noticias/#banco-de-dados">Agregador de Notícias</a> (<code>fonte_icon_url</code> <code>faviconV2</code> <code>16×16</code> + <code>imagem_url</code> <code>30×30</code>, <code>COALESCE(data_publicacao, data_coleta) DESC</code>). A tela pura chama <code>ag.listar_noticias(limite=12)</code> (ordenação <code>COALESCE DESC</code>, 12 mais recentes, sem paginação) e exibe <code>fonte_icon</code> + <code>imagem</code> + <code>tempo relativo</code> com o mesmo <code>listar_noticias</code> do agregador principal.</p>
+<h2 id="funcionalidades-telas_puropymostrar_tela_pura">Funcionalidades — <code>telas_puro.py:mostrar_tela_pura</code><a class="headerlink" href="#funcionalidades-telas_puropymostrar_tela_pura" title="Permanent link">&para;</a></h2>
+<h3 id="docstring-bilingue-telas_puropy1-8">Docstring bilíngue (<code>telas_puro.py:1-8</code>)<a class="headerlink" href="#docstring-bilingue-telas_puropy1-8" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="sd">"""Tela pura do Agregador — estilo original Noticia (gerarSite) com cards atuais.</span>
+
+<span class="sd">EN: Pure display — original Noticia style with current cards.</span>
+<span class="sd">Copia o padrão de exibição do repositório https://github.com/klaytonPrinceMS/Noticia</span>
+<span class="sd">(intro overlay, about section com tema, info-list) porém com os cards em uso</span>
+<span class="sd">(tema badge + tempo relativo, título link, descrição, miniatura 30×30 + ícone fonte 16×16).</span>
+<span class="sd">CSS/JS originais em assets/noticia/ são servidos via rota estática /assets/noticia/*.</span>
+<span class="sd">"""</span>
+</code></pre></div>
+<h3 id="mostrar_tela_purauser_nome-perfil_global-telas_puropy48-145"><code>mostrar_tela_pura(user_nome, perfil_global)</code> (<code>telas_puro.py:48-145</code>)<a class="headerlink" href="#mostrar_tela_purauser_nome-perfil_global-telas_puropy48-145" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Passo</th>
+<th style="text-align: left;">Código</th>
+<th style="text-align: left;">Detalhe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Gate</strong></td>
+<td style="text-align: left;"><code>telas_puro.py:48-58</code></td>
+<td style="text-align: left;"><code>administrador_geral</code> ou <code>validar_acesso_modulo(user, "agregador_noticias")</code> — sem acesso → <code>block</code> 64px + "Acesso restrito" (mesmo gate de <code>telas.py:_pode_ver</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Injeção CSS/JS head</strong></td>
+<td style="text-align: left;"><code>telas_puro.py:60-71</code></td>
+<td style="text-align: left;"><code>ui.add_head_html</code> com 5 <code>&lt;link rel="stylesheet" href="/assets/noticia/css/base.css"&gt;</code>, <code>vendor.css</code>, <code>main.css</code>, <code>font-awesome/css/font-awesome.min.css</code>, <code>micons/micons.css</code>, <code>&lt;link rel="icon" href="/assets/noticia/favicon.png"&gt;</code>, <code>&lt;script src="/assets/noticia/js/modernizr.js"&gt;</code>, <code>pace.min.js</code> — servidos via <code>main.py:818</code> <code>servir_assets_noticia</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Tema</strong></td>
+<td style="text-align: left;"><code>telas_puro.py:73-75</code></td>
+<td style="text-align: left;"><code>ler_tema("agregador_noticias", cor_botao="#000000", texto_header="Exibição pura do modelo Noticia — intro + lista info-list, com cards atuais")</code> + <code>ui.colors(primary=tema["cor_botao"])</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Dados</strong></td>
+<td style="text-align: left;"><code>telas_puro.py:78</code></td>
+<td style="text-align: left;"><code>noticias = ag.listar_noticias(limite=12)</code> <code>ORDER BY COALESCE(data_publicacao, data_coleta) DESC</code> — 12 mais recentes (sem filtro tema/busca, sem paginação).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Intro overlay puro Noticia</strong></td>
+<td style="text-align: left;"><code>telas_puro.py:81-92</code></td>
+<td style="text-align: left;"><code>section.w-full</code> <code>background:#111417;color:#fff;padding:2rem 0;</code> + <code>div.intro-overlay</code> + <code>div.intro-content</code> <code>row</code> <code>col-twelve</code> com <code>label PRINCE. K,B.</code> <code>text-caption tracking-widest</code> + <code>label DTI - Notícias</code> <code>text-h2 font-bold</code> + <code>label Pref. Municipal — Agregador puro</code> <code>text-subtitle2 opacity-80</code> + <code>row gap-2 mt-4</code> com <code>ui.button "Início"</code> (<code>ui.navigate.to("/agregador-noticias")</code>, <code>outline color=white</code>) + <code>ui.button "Fim"</code> (<code>ui.run_javascript("window.scrollTo(0, document.body.scrollHeight)")</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>About section + info-list com cards atuais</strong></td>
+<td style="text-align: left;"><code>telas_puro.py:94-131</code></td>
+<td style="text-align: left;"><code>section.w-full bg-white py-8</code> + <code>div.row section-intro</code> <code>col-twelve</code> com <code>Principais notícias</code> <code>text-h6 tracking-widest text-grey-6</code> + <code>Tema: Todos • N notícias (3 colunas atuais dentro do modelo puro)</code> <code>text-h5 font-bold</code> + <code>div.row about-content</code> <code>col-six tab-full</code> + <code>ul.info-list</code> com <code>for nid,titulo,fonte,tema_n,url,img,fonte_icon,desc,data_pub,data_col in noticias</code> por <code>li.border-b py-3</code> com <strong>linha <code>fonte_icon 16×16</code> + <code>badge tema</code> + <code>tempo _tempo_relativo(data_pub or data_col)</code> + <code>fonte ml-auto</code> + <code>row</code> <code>imagem 30×30</code> + <code>ui.link(titulo, target=href, new_tab=True)</code></strong> + <code>descricao[:160]…</code> <code>text-caption text-grey-7</code> + <code>href[:60]…</code> <code>font-mono</code> + <code>ui.html('&lt;span&gt;&lt;a href="{href}" target="_blank" style="color:#0066cc;"&gt;Abrir no site original →&lt;/a&gt;&lt;/span&gt;')</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Footer puro Noticia</strong></td>
+<td style="text-align: left;"><code>telas_puro.py:133-139</code></td>
+<td style="text-align: left;"><code>footer.w-full bg-grey-900 text-white py-6 mt-8</code> <code>row</code> <code>col-six tab-full</code> <code>copyright</code> <code>© Copyright DTI — Agregador puro (Noticia) — Design by Klayton</code> + <code>col-six tab-full text-right</code> <code>ui.link("Voltar ao topo", target="#top")</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>JS rodapé</strong></td>
+<td style="text-align: left;"><code>telas_puro.py:141-145</code></td>
+<td style="text-align: left;"><code>ui.add_head_html</code> com <code>&lt;script src="/assets/noticia/js/jquery-2.1.3.min.js"&gt;</code>, <code>plugins.js</code>, <code>main.js</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Helper <code>_tempo_relativo(s)</code></strong></td>
+<td style="text-align: left;"><code>telas_puro.py:19-45</code></td>
+<td style="text-align: left;">Normaliza <code>T</code>/<code>Z</code>/fração (<code>re.split(r"\.\d+", t)</code>), <code>for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d")</code> <code>strptime</code>, <code>delta = agora - dt</code> → <code>agora</code> (&lt;60 s) / <code>X minutos atrás</code> (&lt;3600) / <code>X horas atrás</code> (&lt;86400) / <code>X dias atrás</code> (&lt;604800) / <code>X semanas atrás</code> else fallback <code>[:16]</code> (versão simplificada de <code>telas.py:_tempo_relativo</code> sem meses/anos).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rota-estatica-assetsnoticia-mainpy818-831">Rota estática <code>assets/noticia/</code> (<code>main.py:818-831</code>)<a class="headerlink" href="#rota-estatica-assetsnoticia-mainpy818-831" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/assets/noticia/{caminho:path}"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">servir_assets_noticia</span><span class="p">(</span><span class="n">caminho</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span> <span class="s2">"assets"</span><span class="p">,</span> <span class="s2">"noticia"</span><span class="p">)</span>
+    <span class="n">caminho_abs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">caminho</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">caminho_abs</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">base</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">caminho_abs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">mimetypes</span>
+    <span class="n">mime</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">caminho_abs</span><span class="p">)</span>
+    <span class="n">mime</span> <span class="o">=</span> <span class="n">mime</span> <span class="ow">or</span> <span class="s2">"application/octet-stream"</span>
+    <span class="k">return</span> <span class="n">FileResponse</span><span class="p">(</span><span class="n">caminho_abs</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">mime</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li><strong>Segurança</strong>: <code>os.path.normpath</code> + <code>startswith(os.path.abspath(base))</code> bloqueia <code>../</code> (path-traversal) → <code>404</code>; arquivo inexistente → <code>404</code>.</li>
+<li><strong>MIME</strong>: <code>mimetypes.guess_type</code> (<code>text/css</code> para <code>.css</code>, <code>application/javascript</code> para <code>.js</code>, <code>font/woff2</code> etc).</li>
+<li><strong>Conteúdo</strong> (<code>assets/noticia/</code> 4.9M): <code>css/base.css</code>, <code>vendor.css</code>, <code>main.css</code>, <code>font-awesome/css/font-awesome.min.css</code> + <code>fonts/FontAwesome.*</code>, <code>micons/micons.css</code> + <code>fonts/icomoon.*</code>, <code>fonts.css</code>, <code>fonts/lora/poppins</code> <code>woff/ttf/eot/svg</code> <code>stylesheet.css</code>, <code>images/bg.jpg</code> <code>intro-bg.jpg</code>, <code>js/jquery-2.1.3.min.js</code> <code>modernizr.js</code> <code>pace.min.js</code> <code>plugins.js</code> <code>main.js</code>, <code>favicon.png</code> — <strong>originais do Noticia</strong>, copiados verbatim por <code>kbp-web-design</code> (não entram no <code>mkdocs.yml</code> nav, mas são servidos em runtime).</li>
+</ul>
+<h2 id="permissoes">Permissões<a class="headerlink" href="#permissoes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Ação</th>
+<th style="text-align: center;"><code>comum</code> com <code>agregador_noticias</code></th>
+<th style="text-align: center;"><code>administrador_modulo</code>/<code>administrador_geral</code></th>
+<th style="text-align: center;">Sem acesso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Ver <code>/agregador-noticias-puro</code> (intro Noticia + about <code>info-list</code> + 12 cards atuais)</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✗ ("Acesso restrito")</td>
+</tr>
+<tr>
+<td style="text-align: left;">Acesso via botão <code>Ver puro Noticia</code> em <code>/agregador-noticias</code> (<code>data-testid=agregador-ver-puro</code>)</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">Rota estática <code>/assets/noticia/*</code> (CSS/JS/fonts/images)</td>
+<td style="text-align: center;">público (sem gate, mas arquivos só acessíveis se souber o caminho)</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+</tr>
+</tbody>
+</table>
+<p>Gate <code>/agregador-noticias-puro</code>: mesmo de <code>/agregador-noticias</code> — <code>validar_acesso_modulo(user, "agregador_noticias")</code> ou <code>administrador_geral</code>.</p>
+<h2 id="rota-e-integracoes">Rota e integrações<a class="headerlink" href="#rota-e-integracoes" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Rotas</strong>: <code>/agregador-noticias-puro</code> (<code>main.py:808-815</code> <code>page_agregador_noticias_puro</code> <code>pagina_restrita("Agregador de Notícias — Puro", chave_modulo="agregador_noticias")</code> + <code>mostrar_tela_pura(...)</code> <code>telas_puro.py:48-145</code>); <code>/assets/noticia/{caminho:path}</code> (<code>main.py:818-831</code> <code>servir_assets_noticia</code>); <code>/agregador-noticias</code> com botão <code>Ver puro Noticia</code> (<code>telas.py:184</code> <code>data-testid=agregador-ver-puro</code> → <code>/agregador-noticias-puro</code>).</li>
+<li><strong>Integração com <code>/agregador-noticias</code></strong>: botão <code>Ver puro Noticia</code> (<code>visibility</code>, <code>contorno</code>, <code>data-testid=agregador-ver-puro</code>, <code>ui.navigate.to("/agregador-noticias-puro")</code>) na barra de filtro+busca de <code>telas.py:184</code> — visível a todos com acesso ao Agregador.</li>
+<li><strong>Auditoria</strong>: nenhuma específica da tela pura (mesma regra do Agregador — só <code>quem alterou o quê</code> em <code>bd_manipulador.py</code> <code>definir_*</code>/<code>reiniciar_banco</code>, sem audit de visualização).</li>
+<li><strong>TV Filas</strong>: <code>listar_para_tv</code> continua fornecendo dados à TV (a tela pura não afeta o carrossel).</li>
+</ul>
+<p>Ver <a href="../agregador_noticias/">Agregador de Notícias</a> (tela principal 3 colunas + busca) e <a href="../../analise_mod_agregador_noticias/">Análise do Agregador</a>.</p>
+<h2 id="testes">Testes<a class="headerlink" href="#testes" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Smoke do módulo puro (import + listar_noticias + assets)</span>
+.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from mod_agregador_noticias.telas_puro import mostrar_tela_pura; print(mostrar_tela_pura.__doc__[:80])"</span>
+.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from mod_agregador_noticias.bd_manipulador import listar_noticias; print(len(listar_noticias(limite=12)))"</span>
+<span class="c1"># assets/noticia — verificar arquivos copiados</span>
+ls<span class="w"> </span>assets/noticia/css/base.css<span class="w"> </span>assets/noticia/css/vendor.css<span class="w"> </span>assets/noticia/css/main.css<span class="w"> </span>assets/noticia/js/jquery-2.1.3.min.js<span class="w"> </span>assets/noticia/js/modernizr.js<span class="w"> </span>assets/noticia/js/pace.min.js<span class="w"> </span>assets/noticia/js/plugins.js<span class="w"> </span>assets/noticia/js/main.js<span class="w"> </span>assets/noticia/favicon.png
+<span class="c1"># Rota estática — iniciar servidor e curl</span>
+curl<span class="w"> </span>-I<span class="w"> </span>http://localhost:8080/assets/noticia/css/base.css<span class="w">  </span><span class="c1"># 200 text/css</span>
+curl<span class="w"> </span>-I<span class="w"> </span>http://localhost:8080/assets/noticia/js/jquery-2.1.3.min.js<span class="w">  </span><span class="c1"># 200 application/javascript</span>
+<span class="c1"># Playwright — botão Ver puro Noticia</span>
+.venv/bin/pytest<span class="w"> </span>assets/test/teste_agregador_noticias.py<span class="w"> </span>-k<span class="w"> </span><span class="s2">"puro or busca or pure"</span><span class="w">  </span><span class="c1"># cobre agregador-ver-puro</span>
+</code></pre></div>
+<h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Não é página MkDocs</strong>: <code>assets/noticia/</code> é <strong>asset de runtime</strong> (CSS/JS/fonts/images originais <code>klaytonPrinceMS/Noticia</code> 4.9M) servido via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> — <strong>não entra no <code>mkdocs.yml</code> nav</strong> como doc, mas é servido em runtime; <code>mkdocs build --strict</code> continua 0 warnings.</li>
+<li><strong>Segurança da rota estática</strong>: <code>servir_assets_noticia</code> normaliza com <code>os.path.normpath(os.path.join(base, caminho))</code> e verifica <code>startswith(os.path.abspath(base))</code> — bloqueia <code>../</code> (ex.: <code>/assets/noticia/../../etc/passwd</code> → <code>404</code>); <code>mimetypes.guess_type</code> define <code>media_type</code> correto.</li>
+<li><strong>Gate igual ao Agregador</strong>: a tela pura reutiliza <code>validar_acesso_modulo(user, "agregador_noticias")</code> — usuário sem acesso ao Agregador não vê nem a principal nem a pura.</li>
+<li><strong>12 notícias sem paginação</strong>: a tela pura exibe <code>listar_noticias(limite=12)</code> <code>COALESCE DESC</code> (12 mais recentes, sem filtro tema/busca, sem paginação <code>Primeira/Anterior/Próxima/Última</code>); a busca/filtro permanece só em <code>/agregador-noticias</code>.</li>
+<li><strong>Cards com <code>fonte_icon 16×16</code> + <code>imagem 30×30</code> + tempo relativo</strong>: mesmos <code>fonte_icon_url</code> <code>faviconV2</code> <code>16×16</code> <code>contain</code> + <code>imagem_url</code> <code>30×30</code> <code>cover</code> do <code>tb_noticia</code> (extraídos via <code>//img[contains(@src,'faviconV2')]</code> vs <code>/api/attachments</code> ancestral <code>div[1..3]</code>), <code>badge tema</code> + <code>ui.link(new_tab=True)</code> + <code>descricao[:160]</code> + <code>tempo relativo</code> <code>_tempo_relativo</code> (<code>agora</code>/minutos/horas/dias/semanas).</li>
+<li><strong><code>bd_criador.py</code> morto</strong>: schema real <code>bd_manipulador.py:209-250</code> <code>init_db()</code> (<code>fonte_icon_url</code> <code>faviconV2</code>).</li>
+<li><strong>Dependências</strong>: <code>httpx</code> + <code>parsel</code> (<code>requirements.txt</code>); <code>assets/noticia/</code> 4.9M não adiciona dependência Python.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../agregador_noticias/" class="btn btn-neutral float-left" title="Agregador de Notícias"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../agregador_noticias/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

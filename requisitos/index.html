@@ -170,9 +170,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -193,9 +195,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -573,6 +579,10 @@ Detalhe em <code>ferramentas/graphify.md</code>.</p>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
+<td style="text-align: left;">Censura de conteúdo — palavras bloqueadas (<code>mod_intranet/censura.py</code> <code>conteudo_palavras_bloqueadas</code>, <code>titulo_bloqueado</code> <code>lower+NFD</code> sem acentos, <code>criar/atualizar</code> bloqueia <code>None/False</code> antes de <code>nh3</code>, card <code>blog-palavras-bloqueadas</code> + <code>Salvar censura</code> + <code>limpar_censuradas</code> no agregador)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
 <td style="text-align: left;">Comentários (só admins escrevem; leitura para todos)</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
@@ -841,7 +851,7 @@ Detalhe em <code>ferramentas/graphify.md</code>.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="filas-tv-mod_filas-esqueleto-18092026">Filas — TV (<code>mod_filas</code>) — esqueleto 18/09/2026<a class="headerlink" href="#filas-tv-mod_filas-esqueleto-18092026" title="Permanent link">&para;</a></h3>
+<h3 id="filas-tv-mod_filas-multi-filas-092026">Filas — TV (<code>mod_filas</code>) — multi-filas 09/2026<a class="headerlink" href="#filas-tv-mod_filas-multi-filas-092026" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -851,28 +861,36 @@ Detalhe em <code>ferramentas/graphify.md</code>.</p>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">Banco <code>db_mod_filas.db</code> (<code>tb_fila</code>/<code>tb_chamada</code>) + seed <code>Geral A000</code></td>
-<td style="text-align: center;">✅ Implementado (esqueleto)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>gerar_senha(fila_id, ator)</code> incremento <code>A000→A001</code> (<code>[A-Za-z]*\d+</code> → <code>:03d</code>) + <code>ultima_chamada()</code>/<code>listar_chamadas</code></td>
+<td style="text-align: left;">Banco <code>db_mod_filas.db</code> (<code>tb_fila</code> + <code>tb_fila_etapa</code> + <code>tb_chamada</code> + <code>tb_midia</code> + <code>tb_config_filas</code>) + seed <code>Geral A000</code> + 3 etapas padrão + <code>PASTA_MIDIA</code> <code>mod_filas/midia</code></td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">Painel <code>/filas</code> + preview + <code>Abrir TV</code> + <code>/tv</code> pública (full-screen <code>h-screen bg-black</code>, auto-refresh 3s + beep <code>AudioContext</code>)</td>
+<td style="text-align: left;"><code>criar_fila</code> por local (<code>endereco/prefixo/senha_inicio/fim</code> <code>fim=0</code> infinito, <code>criado_por</code>, <code>tv_grupo</code>) + <code>listar_filas_visiveis</code> isolamento por criador vs <code>administrador_geral</code> + <code>atualizar/excluir</code> + <code>excluir_todas_filas</code> (exceto Geral)</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">LGPD <code>remover</code>/<code>renomear</code> + auditoria <code>tb_auditoria_filas</code></td>
+<td style="text-align: left;"><code>gerar_senha(fila_id, ator, paciente_nome, etapa_nome)</code> + <code>_proxima_senha</code> infinito (<code>fim=0</code>) + <code>avancar_chamada</code> sequencial + <code>ultima_chamada_tv</code> (<code>fila_id</code>/<code>tv_grupo</code> <code>IN</code>)</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">Administração <code>/admin/filas</code> (aparência + backup)</td>
+<td style="text-align: left;">Painel <code>/filas</code> multi-filas isolado (criar + card por fila + etapas + <code>Chamar próximo</code> + histórico isolado + <code>Avançar</code>) + <code>Excluir todas</code></td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">Regras avançadas (múltiplas filas, prioridade, guichês dinâmicos)</td>
-<td style="text-align: center;">⏳ Pendente (esqueleto a título de conhecimento)</td>
+<td style="text-align: left;">TV <code>/tv</code> (<code>?grupo=</code> compartilhada) + <code>/tv/{fila_id}</code> (isolada) full-screen <code>h-screen bg-black</code>, ícone padrão intranet, auto-refresh 3s <code>AudioContext</code> bip + <code>speechSynthesis pt-BR</code> só novo <code>id</code>, playlist <code>/midia_filas</code> (áudio elevador/vídeo propaganda, 40s rotação quando ociosa, pausada ao chamar) + carrossel notícias censura-filtrado</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">LGPD <code>remover</code>/<code>renomear</code> (<code>criado_por</code> + <code>chamado_por</code>) + auditoria <code>tb_auditoria_filas</code></td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Administração <code>/admin/filas</code> 2 cards (Filas por local + Mídia TV global <code>/midia_filas</code>, upload sanitizado + <code>uuid6</code>, <code>Ativar/Desativar</code>, <code>↑/↓</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Censura filtrada na TV (<code>listar_para_tv</code> <code>conteudo_palavras_bloqueadas</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
 </tr>
 </tbody>
 </table>
@@ -911,6 +929,53 @@ Detalhe em <code>ferramentas/graphify.md</code>.</p>
 </tr>
 <tr>
 <td style="text-align: left;">Administração <code>/admin/lista_telefonica</code> (aparência + 2 cards + painel backup) + export <code>ORGANOGRAMA_BASE</code> para <code>solicita_impressao</code> 1000/200</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="agregador-de-noticias-mod_agregador_noticias-19092026-censura-092026">Agregador de Notícias (<code>mod_agregador_noticias</code>) — 19/09/2026 + censura 09/2026<a class="headerlink" href="#agregador-de-noticias-mod_agregador_noticias-19092026-censura-092026" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requisito</th>
+<th style="text-align: center;">Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Banco <code>db_mod_agregador_noticias.db</code> (<code>tb_noticia</code> 11 colunas, <code>data_publicacao</code> real via <code>_parse_data_pub</code>, <code>data_coleta</code>, índices <code>tema/fonte/data</code>) + seeds <code>tb_config</code> (<code>habilitado 0</code>, <code>intervalo 60</code>, <code>temas_json</code>, <code>fontes_json</code>, <code>hora_reinicio 06:00</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Coleta scrapy-like <code>httpx+parsel</code> Google/BBC/JFP/RSS + pesquisa termo livre + <code>UA Mozilla</code> + <code>timeout 12s</code> + deduplicação <code>_norm_tit</code> NFKD + <code>SELECT url</code> antes de <code>INSERT OR IGNORE</code></td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Habilitado flag + intervalo 10–360 clamp + termo livre + fontes/temas <code>json</code> configuráveis sem restart</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Hora reinício <code>06:00</code> configurável + reinício diário <code>CronTrigger</code> <code>reiniciar_banco</code> <code>DELETE</code> + <code>Zerar agora</code> (<code>agregador-reiniciar-agora</code>) — sem backup</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Paginação 12 + <strong>busca lado a lado filtro tema</strong> (<code>pagina</code> <code>por_pagina=12</code> <code>total_pag</code> <code>offset</code>, <code>ORDER BY COALESCE(data_publicacao, data_coleta) DESC</code>, botões <code>agregador-primeira/anterior/proxima/ultima</code>, <strong>busca <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> NFKD 500 <code>titulo/descricao/fonte/tema</code> lado a lado filtro tema, sem badge <code>Coleta:</code> + botão <code>Ver puro Noticia</code> <code>agregador-ver-puro</code> → <code>/agregador-noticias-puro</code></strong>) + grid responsivo <strong>3 colunas desktop → 2 tablet (max-width 1024px) → 1 celular (max-width 640px) via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries, cards <code>min-height 160px max-height 220px</code> (<code>.card-noticia</code>) baseado na média de 91 notícias (título média 79 mediana 75, descrição 34, 87.9% imagem, 24% fonte_icon)</strong> + cards (<strong>ícone fonte <code>16×16</code> <code>contain</code> + <code>30x30</code> <code>cover</code> lado a lado antes do título</strong>, <code>badge tema</code>, <code>ui.link new_tab</code>, <code>descricao</code>, <code>_tempo_relativo</code> real) + <strong>tela pura</strong> <code>telas_puro.py</code> (<code>/agregador-noticias-puro</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> 12 notícias <code>COALESCE DESC</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code>)</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_para_tv(limite=10)</code> <code>LIMIT*3</code> filtrado por censura + carrossel TV 7s/120s + <code>habilitado</code> placeholder</td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Censura: <code>inserir_noticia</code> descarta se <code>titulo_bloqueado</code> + <code>listar_para_tv</code> filtra <code>LIMIT*3</code> → <code>titulo_bloqueado</code> + <code>limpar_censuradas()</code> remove já coletadas (<code>titulo_bloqueado</code> <code>lower+NFD</code> substring, <code>conteudo_palavras_bloqueadas</code>) — card <code>agregador-palavras-bloqueadas</code> + <code>agregador-limpar-censuradas</code> + <code>agregador-salvar-censura</code></td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Admin 5 cards (Coleta + Fontes + Temas + Censura + Reinício diário) — <code>agregador-habilitado</code>/<code>agregador-intervalo</code>/<code>agregador-termo</code>/<code>agregador-hora-reinicio</code> + <code>agregador-add-fonte</code> + <code>agregador-palavras-bloqueadas</code></td>
+<td style="text-align: center;">✅ Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>coletar_todas(ator, forcar)</code> + <code>limpar_antigas(24)</code> + <code>reiniciar_banco</code> + <code>reconfigurar_agregador_noticias()</code> (<code>CronTrigger hora</code>) + auditoria só <code>definir_*</code>/<code>reiniciar_banco</code></td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 </tbody>

@@ -170,9 +170,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -193,9 +195,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -343,13 +349,18 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>db_mod_filas.db</code></td>
-<td style="text-align: left;">filas (TV) — esqueleto</td>
-<td style="text-align: left;"><code>mod_filas/bd_manipulador.py:12</code> — <code>tb_fila</code>/<code>tb_chamada</code> + <code>/tv</code> pública</td>
+<td style="text-align: left;">filas — multi-filas (<code>tb_fila</code> com <code>endereco/prefixo/inicio→fim</code> <code>fim=0</code> infinito + <code>criado_por</code> + <code>tv_grupo</code>, <code>tb_fila_etapa</code>, <code>tb_chamada</code> com <code>paciente_nome/etapa_nome</code>, <code>tb_midia</code> global) + <code>/tv/{id}</code> isolada + <code>/tv?grupo=</code> compartilhada + mídia <code>/midia_filas</code> + carrossel Agregador <code>listar_para_tv</code> filtra <code>conteudo_palavras_bloqueadas</code></td>
+<td style="text-align: left;"><code>mod_filas/bd_manipulador.py:15</code> — <code>PASTA_MIDIA</code> <code>mod_filas/midia</code> + <code>/midia_filas/*</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>db_mod_lista_telefonica.db</code></td>
 <td style="text-align: left;">lista telefônica (organograma)</td>
 <td style="text-align: left;"><code>mod_lista_telefonica/bd_manipulador.py:18</code> — <code>tb_unidade</code> (<code>secretaria\|setor\|subsetor</code>) + <code>tb_contato</code> (alfabético) + <code>ORGANOGRAMA_BASE</code> 12 secretarias</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db_mod_agregador_noticias.db</code></td>
+<td style="text-align: left;">agregador de notícias</td>
+<td style="text-align: left;"><code>mod_agregador_noticias/bd_manipulador.py:21</code> — <code>tb_noticia</code> (titulo/fonte/tema/url/<strong>imagem+ícone_fonte</strong>/descricao/data_publicacao/data_coleta, <code>fonte_icon_url</code> 16×16 <code>faviconV2</code> + <code>imagem_url</code> 30×30 <code>/api/attachments</code>) + <code>TEMAS_PADRAO</code> 9 + <code>FONTES_PADRAO</code> 3 (Google/BBC), coleta <code>httpx+parsel</code> grid responsivo <strong>3→2→1 + paginado 12</strong> + <strong>busca lado a lado filtro tema</strong> (<code>por_pagina=12</code> <code>COALESCE DESC</code> <code>Primeira/Anterior/Próxima/Última</code> <code>agregador-primeira/anterior/proxima/ultima</code> + <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> NFKD, <strong>sem badge <code>Coleta:</code></strong> removido, <strong>grid <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + <code>@media 1024px→2 640px→1</code> + <code>.card-noticia {min-height:160px; max-height:220px}</code> (média 91 notícias: título 79/75, descrição 34, 87.9% imagem, 24% fonte_icon) + ícone fonte 16×16 + imagem 30×30 lado a lado antes do título + botão <code>Ver puro Noticia</code> <code>agregador-ver-puro</code> → <code>/agregador-noticias-puro</code></strong>), <strong>tela pura</strong> <code>telas_puro.py</code> (12 notícias <code>info-list</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> path-traversal safe), <strong>sem backup</strong> (<code>MAPA_BACKUPS</code> sem <code>agregador_noticias</code>), <strong>reinício diário <code>06:00</code> configurável</strong> (<code>agregador_noticias_hora_reinicio</code> <code>HH:MM</code> + <code>reiniciar_banco</code> <code>DELETE</code> + <code>CronTrigger</code>) + <code>assets/noticia/</code> 4.9M servido via rota estática + <code>mod_filas/midia/</code> (<code>PASTA_MIDIA</code> <code>/midia_filas</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>db_mod_auditoria.db</code></td>
@@ -438,8 +449,9 @@
 <li><code>init_db_empenho()</code> → <code>db_mod_renomear_empenho.db</code>.</li>
 <li><code>init_solicita()</code> → <code>db_mod_solicita_impressao.db</code> — <strong>importa <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code> (19/09/2026)</strong>: <code>tb_secretarias</code> 1000 + <code>tb_setores</code> 200 (subsetores achatados), migração <code>UPDATE</code> idempotente 1000/200.</li>
 <li><code>init_db()</code> técnico (<code>mod_tecnico/bd_manipulador.py:71</code>) → <code>db_mod_tecnico.db</code> + <code>software/</code>/<code>backup/</code> + <code>tb_backup</code>/<code>tb_backup_arquivo</code>.</li>
-<li><code>init_db()</code> filas (<code>mod_filas/bd_manipulador.py:34</code>) → <code>db_mod_filas.db</code> + seed <code>Geral A000</code> + <code>tb_fila</code>/<code>tb_chamada</code>.</li>
+<li><code>init_db()</code> filas (<code>mod_filas/bd_manipulador.py:34</code>) → <code>db_mod_filas.db</code> + seed <code>Geral A000</code> + <code>tb_fila</code>/<code>tb_chamada</code> + TV <code>listar_para_tv</code> carrossel.</li>
 <li><code>init_db()</code> lista telefônica (<code>mod_lista_telefonica/bd_manipulador.py:106</code>) → <code>db_mod_lista_telefonica.db</code> + <code>tb_unidade</code>/<code>tb_contato</code> + semente 12 secretarias <code>ORGANOGRAMA_BASE</code> (idempotente, só quando <code>tb_unidade</code> vazia).</li>
+<li><code>init_db()</code> agregador de notícias (<code>mod_agregador_noticias/bd_manipulador.py:209</code>) → <code>db_mod_agregador_noticias.db</code> + <code>tb_noticia</code> + <code>TEMAS_PADRAO</code> 9 + <code>FONTES_PADRAO</code> 3 (idempotente, seeds <code>tb_config</code> <code>habilitado=0</code>/<code>intervalo=60</code>/<code>termo=""</code>/<code>hora_reinicio=06:00</code> + <code>reiniciar_banco</code> <code>DELETE</code>; <strong>sem backup</strong> <code>MAPA_BACKUPS</code> sem <code>agregador_noticias</code>; agendadores <code>agregador_coleta</code> <code>10–360 min</code> + <code>agregador_reinicio</code> <code>CronTrigger</code> <code>06:00</code> configurável).</li>
 </ol>
 <p>O processo é <strong>idempotente</strong> (nunca apaga dados) e pode ser rodado novamente para aplicar seeds sem reiniciar nada.</p>
 <h2 id="chaves-de-configuracao-tb_config">Chaves de configuração (<code>tb_config</code>)<a class="headerlink" href="#chaves-de-configuracao-tb_config" title="Permanent link">&para;</a></h2>
@@ -454,6 +466,12 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">Censura (central)</td>
+<td style="text-align: left;"><code>conteudo_palavras_bloqueadas</code></td>
+<td style="text-align: left;"><code>""</code></td>
+<td style="text-align: left;">lista CSV de palavras bloqueadas em títulos (Blog <code>criar/atualizar</code> + Agregador <code>inserir</code>/<code>listar_para_tv</code>/<code>limpar_censuradas</code>); normalização <code>lower+NFD</code> sem acentos (<code>suicidio</code>→<code>suicídio</code>), substring insensível; <code>mod_intranet/censura.py</code> <code>CHAVE_CONFIG</code></td>
+</tr>
 <tr>
 <td style="text-align: left;">Sistema</td>
 <td style="text-align: left;"><code>versao_sistema</code></td>
@@ -528,9 +546,9 @@
 </tr>
 <tr>
 <td style="text-align: left;">Blog</td>
-<td style="text-align: left;"><code>blog_modo_exibicao</code> (<strong><code>carrossel</code> padrão com 3 básicas 18/09/2026</strong>, <code>historico</code>/<code>unica</code>/<code>carrossel</code>), <code>blog_postagem_unica_id</code>, <code>blog_carrossel_postagens_ids</code> (CSV), <code>blog_carrossel_tempo</code> (10 s), <code>blog_largura_imagem</code>, <code>blog_tags_permitidas</code>, <code>blog_texto_header</code> + tema <code>blog_*</code></td>
+<td style="text-align: left;"><code>blog_modo_exibicao</code> (<strong><code>carrossel</code> padrão com 3 básicas 18/09/2026</strong>, <code>historico</code>/<code>unica</code>/<code>carrossel</code>), <code>blog_postagem_unica_id</code>, <code>blog_carrossel_postagens_ids</code> (CSV), <code>blog_carrossel_tempo</code> (10 s), <code>blog_largura_imagem</code>, <code>blog_tags_permitidas</code>, <code>blog_texto_header</code> + tema <code>blog_*</code> + <strong>censura</strong> <code>conteudo_palavras_bloqueadas</code> (central, <code>mod_intranet/censura.py</code>, <code>data-testid=blog-palavras-bloqueadas</code>, <code>titulo_bloqueado</code> antes de <code>nh3</code>)</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">comportamento/aparência — <code>init_db</code> garante carrossel 3 básicas via <code>_garantir_carrossel_padrao</code> (<code>bd_manipulador.py:241</code>)</td>
+<td style="text-align: left;">comportamento/aparência + censura — <code>init_db</code> garante carrossel 3 básicas via <code>_garantir_carrossel_padrao</code> (<code>bd_manipulador.py:241</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;">Usuários</td>
@@ -546,15 +564,21 @@
 </tr>
 <tr>
 <td style="text-align: left;">Filas</td>
-<td style="text-align: left;"><code>filas_modo_tv</code> (1), <code>filas_senha_prefixo</code> (A), <code>filas_guiche_padrao</code> (01), tema <code>filas_*</code></td>
+<td style="text-align: left;"><code>filas_modo_tv</code> (1), <code>filas_senha_prefixo</code> (A), <code>filas_guiche_padrao</code> (01), tema <code>filas_*</code> + multi-filas (<code>endereco/prefixo/inicio→fim</code> infinito, <code>criado_por</code>, <code>tv_grupo</code>, <code>tb_fila_etapa</code>/<code>tb_midia</code>, <code>/tv/{id}</code> vs <code>/tv?grupo=</code>, <code>/midia_filas</code>, censura filtrada)</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">esqueleto TV — ver <a href="../modulos/filas/">Módulo Filas</a></td>
+<td style="text-align: left;">multi-filas por local + TV isolada/compartilhada + mídia elevador/propaganda — ver <a href="../modulos/filas/">Módulo Filas</a></td>
 </tr>
 <tr>
 <td style="text-align: left;">Lista Telefônica</td>
 <td style="text-align: left;"><code>lista_telefonica_*</code> (tema), 12 secretarias genéricas</td>
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">organograma <code>Secretaria→Setor→Subsetor</code> + contatos alfabéticos + <code>tel:</code> — ver <a href="../modulos/lista_telefonica/">Módulo Lista Telefônica</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">Agregador de Notícias</td>
+<td style="text-align: left;"><code>agregador_noticias_habilitado</code> (<code>0</code>), <code>agregador_noticias_intervalo_min</code> (<code>60</code> clamp 10–360), <code>agregador_noticias_termo_pesquisa</code> (<code>""</code>), <code>agregador_noticias_temas_json</code> (<code>TEMAS_PADRAO</code> 9), <code>agregador_noticias_fontes_json</code> (<code>FONTES_PADRAO</code> 3), <strong><code>agregador_noticias_hora_reinicio</code> (<code>06:00</code> <code>HH:MM</code> 00–23:00–59)</strong>, tema <code>agregador_noticias_*</code> + <strong>censura</strong> <code>conteudo_palavras_bloqueadas</code> (central, <code>limpar_censuradas()</code> sem audit, <code>listar_para_tv</code> filtra <code>fonte_icon</code> incluso) + <strong>paginação 12 + busca + grid responsivo 3→2→1 + altura 160–220px</strong> (<code>por_pagina=12</code> <code>COALESCE DESC</code> <code>Primeira/Anterior/Próxima/Última</code> <code>agregador-primeira/anterior/proxima/ultima</code> + <code>agregador-busca</code> <code>debounce 300</code> NFKD lado a lado filtro tema, <strong>sem badge <code>Coleta:</code></strong>, <strong>grid <code>.grid-noticias</code> 3→2→1 + <code>.card-noticia</code> 160–220px (média 91 notícias: título 79/75, descrição 34, 87.9% imagem, 24% fonte_icon) + ícone fonte 16×16 + imagem 30×30 lado a lado antes do título</strong>) + <strong>reinício diário <code>06:00</code> <code>CronTrigger</code></strong> (<code>obter_hora_reinicio</code>/<code>definir_hora_reinicio</code> audit + <code>reiniciar_banco</code> <code>DELETE</code> audit, <code>reconfigurar_agregador_noticias</code> <code>CronTrigger</code>) <strong>sem backup</strong> (<code>MAPA_BACKUPS</code> sem <code>agregador_noticias</code>) + <strong>auditoria só quem alterou o quê</strong> (<code>definir_*</code>/<code>reiniciar_banco</code>, sem postagens)</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;"><strong>paginação 12 + busca + grid 3→2→1 + altura 160–220px + <code>16×16</code>+<code>30×30</code></strong> + <strong>reinício diário <code>06:00</code> <code>06:00</code> configurável + <code>Zerar agora</code></strong> + sem backup (banco reciclado) + <code>httpx+parsel</code> (Google/BBC/JFP/RSS) + grid responsivo <code>COALESCE DESC</code> + <strong>busca NFKD lado a lado</strong> + TV <code>listar_para_tv</code> (<code>fonte_icon</code> incluso) filtrado + censura compartilhada + assets <code>assets/noticia/</code> (tema Noticia 4.9M) — ver <a href="../modulos/agregador_noticias/">Módulo Agregador</a></td>
 </tr>
 <tr>
 <td style="text-align: left;">Auditoria</td>

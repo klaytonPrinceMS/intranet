@@ -170,9 +170,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="analise_mod_tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="analise_mod_filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -193,9 +195,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="modulos/tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="modulos/filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="modulos/filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -262,8 +268,9 @@
 <li><a href="analise_mod_auditoria/">Auditoria</a></li>
 <li><a href="analise_mod_solicita_impressao/">Solicitação de Impressão</a> — cotas 1000/200 via <code>ORGANOGRAMA_BASE</code> do organograma</li>
 <li><a href="analise_mod_tecnico/">Técnico</a> — software + backup <code>YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation, <code>webkitdirectory</code></li>
-<li><a href="analise_mod_filas/">Filas (TV, esqueleto)</a> — gestor de chamadas com TV (<code>/filas</code> + <code>/tv</code> pública)</li>
+<li><a href="analise_mod_filas/">Filas (TV, esqueleto)</a> — gestor de chamadas com TV (<code>/filas</code> + <code>/tv</code> pública) + <strong>carrossel de notícias</strong> do Agregador</li>
 <li><a href="analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a> — <strong>novo</strong> (19/09/2026) organograma 12 secretarias <code>Secretaria→Setor→Subsetor</code>, contatos alfabéticos, busca sem acentos, <code>tel:</code> no celular</li>
+<li><a href="analise_mod_agregador_noticias/">Agregador de Notícias</a> — <strong>novo</strong> (19/09/2026) <code>httpx+parsel</code> scrapy-like (Google/BBC/JFP/RSS), 3 colunas masonry, 24h retenção, integração TV <code>listar_para_tv</code></li>
 </ul>
 <h2 id="modulos-resumo">Módulos (resumo)<a class="headerlink" href="#modulos-resumo" title="Permanent link">&para;</a></h2>
 <ul>
@@ -275,8 +282,9 @@
 <li><a href="modulos/auditoria/">Auditoria</a></li>
 <li><a href="modulos/solicitacao_impressao/">Solicitação de Impressão</a> — <strong>atualizado</strong> cotas 1000/200 via <code>ORGANOGRAMA_BASE</code></li>
 <li><a href="modulos/tecnico/">Técnico</a> — <strong>novo</strong> (18/09/2026)</li>
-<li><a href="modulos/filas/">Filas (TV, esqueleto)</a> — <strong>novo</strong> esqueleto (18/09/2026)</li>
+<li><a href="modulos/filas/">Filas (TV, esqueleto)</a> — <strong>novo</strong> esqueleto (18/09/2026) + <strong>carrossel Agregador</strong> (19/09/2026)</li>
 <li><a href="modulos/lista_telefonica/">Lista Telefônica (organograma)</a> — <strong>novo</strong> (19/09/2026) <code>Secretaria→Setor→Subsetor</code>, <code>tel:</code> clicável, admin com excluir ramo/mover/elevar</li>
+<li><a href="modulos/agregador_noticias/">Agregador de Notícias</a> — <strong>novo</strong> (19/09/2026) <code>httpx+parsel</code> multi-fonte (Google/BBC/JFP/RSS), 3 colunas masonry <code>window.open</code>, TV <code>listar_para_tv</code> 7s/120s</li>
 </ul>
 <h2 id="documentos-raiz-de-apoio">Documentos-raiz de apoio<a class="headerlink" href="#documentos-raiz-de-apoio" title="Permanent link">&para;</a></h2>
 <ul>
@@ -332,5 +340,5 @@
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2026-09-19 12:58:55.309828+00:00
+Build Date UTC : 2026-09-20 12:22:51.324483+00:00
 -->

@@ -170,9 +170,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -193,9 +195,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -224,12 +230,12 @@
               
                 <h1 id="intranet-modular-architecture">Intranet Modular — Architecture<a class="headerlink" href="#intranet-modular-architecture" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Technical architecture of the Intranet Modular: single entry point (<code>main.py</code>), modular packages (<code>mod_*</code>), the <code>bd_manipulador.py</code> / <code>telas.py</code> / <code>telas_administracao.py</code> pattern (with <code>models/</code> SQLAlchemy as the pattern to propagate and <code>bd_criador.py</code> kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor and audit pruning).</p>
+<p>Technical architecture of the Intranet Modular: single entry point (<code>main.py</code>), modular packages (<code>mod_*</code>), the <code>bd_manipulador.py</code> / <code>telas.py</code> / <code>telas_administracao.py</code> pattern (with <code>models/</code> SQLAlchemy as the pattern to propagate and <code>bd_criador.py</code> kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor, audit pruning, aggregator coleta 10–360 min + daily recycle <code>reiniciar_banco</code> at <code>06:00</code> configurable <code>CronTrigger</code>, no backup for aggregator).</p>
 </blockquote>
 <hr />
 <h1 id="intranet-modular-arquitetura">Intranet Modular — Arquitetura<a class="headerlink" href="#intranet-modular-arquitetura" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Arquitetura técnica da Intranet Modular: entry point único (<code>main.py</code>), pacotes modulares (<code>mod_*</code>), padrão <code>bd_manipulador.py</code> / <code>telas.py</code> / <code>telas_administracao.py</code> (com <code>models/</code> SQLAlchemy como padrão a propagar e <code>bd_criador.py</code> mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta e poda da auditoria).</p>
+<p>Arquitetura técnica da Intranet Modular: entry point único (<code>main.py</code>), pacotes modulares (<code>mod_*</code>), padrão <code>bd_manipulador.py</code> / <code>telas.py</code> / <code>telas_administracao.py</code> (com <code>models/</code> SQLAlchemy como padrão a propagar e <code>bd_criador.py</code> mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta, poda da auditoria, coleta do agregador 10–360 min + reinício diário <code>reiniciar_banco</code> às <code>06:00</code> configurável <code>CronTrigger</code>, sem backup para o agregador).</p>
 </blockquote>
 <h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
 <ol>
@@ -253,13 +259,14 @@
                  │                                              │
     ┌────────────▼───────────┐                     ┌────────────▼───────────┐
     │ mod_intranet (núcleo)  │                     │ Módulos de negócio      │
-    │ autenticacao · layout  │◄── importa ────────►│ mod_blog, mod_gest_*,   │ (9: 6 + tecnico + filas 18/09/2026 + lista_telefonica 19/09/2026)
+    │ autenticacao · layout  │◄── importa ────────►│ mod_blog, mod_gest_*,   │ (10: 6 + tecnico + filas 18/09/2026 + lista_telefonica + agregador_noticias 19/09/2026)
     │ bd_conexao · rotinas   │                     │ mod_edit_pdf,           │
     │ observabilidade · etc. │                     │ mod_renomear_*,         │
     └────────────┬───────────┘                     │ mod_auditoria,          │
                  │                                 │ mod_solicita_impressao, │
     db_mod_intranet.db (WAL)                       │ mod_tecnico, mod_filas, │
-    tb_config · tb_sessoes · tb_modulos            │ mod_lista_telefonica    │
+    tb_config · tb_sessoes · tb_modulos            │ mod_lista_telefonica,   │
+                                                   │ mod_agregador_noticias  │
                                                    └─────────┬───────────────┘
                                                              │ cada um com seu
                                                              ▼ db_mod_*.db (WAL)
@@ -279,10 +286,10 @@
         CONN --- OBS[observabilidade&lt;br/&gt;loguru]
         ROT[rotinas&lt;br/&gt;APScheduler] --- DIA[dialogo_backup]
     end
-    subgraph Negocio["módulos de negócio — 9 (6 + 2 novos 18/09/2026 + 1 novo 19/09/2026)"]
+    subgraph Negocio["módulos de negócio — 10 (6 + 2 novos 18/09/2026 + 2 novos 19/09/2026)"]
         B[mod_blog] ; U[mod_gest_cad_usuario] ; P[mod_edit_pdf]
         E[mod_renomear_empenho] ; A[mod_auditoria] ; S[mod_solicita_impressao]
-        T[mod_tecnico] ; F[mod_filas] ; L[mod_lista_telefonica]
+        T[mod_tecnico] ; F[mod_filas] ; L[mod_lista_telefonica] ; N[mod_agregador_noticias]
     end
     subgraph Bancos["SQLite WAL — um por módulo"]
         DBC[(db_mod_intranet.db&lt;br/&gt;tb_config · tb_sessoes · tb_modulos)]
@@ -370,14 +377,20 @@
 <tr>
 <td style="text-align: left;"><code>mod_filas/</code></td>
 <td style="text-align: left;"><code>db_mod_filas.db</code></td>
-<td style="text-align: center;">✓ (<code>telas.py</code> + <code>mostrar_tv</code>)</td>
-<td style="text-align: left;"><strong>novo esqueleto</strong> (18/09/2026) — gestor de chamadas com TV (<code>/filas</code> + <code>/tv</code> pública)</td>
+<td style="text-align: center;">✓ (<code>telas.py</code> + <code>mostrar_tv</code> + <code>PASTA_MIDIA</code>)</td>
+<td style="text-align: left;">multi-filas por local (<code>endereco/prefixo/inicio→fim</code> infinito + <code>criado_por</code> + <code>tv_grupo</code> + <code>tb_fila_etapa</code>/<code>tb_midia</code>, isolamento por criador, <code>/tv/{id}</code> isolada vs <code>/tv?grupo=</code> compartilhada, <code>/midia_filas</code> playlist, censura filtrada)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>mod_lista_telefonica/</code></td>
 <td style="text-align: left;"><code>db_mod_lista_telefonica.db</code></td>
 <td style="text-align: center;">✓</td>
 <td style="text-align: left;"><strong>novo</strong> (19/09/2026) — organograma <code>Secretaria→Setor→Subsetor</code> genérico 12 secretarias, contatos alfabéticos, <code>tel:</code> no celular</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_agregador_noticias/</code></td>
+<td style="text-align: left;"><code>db_mod_agregador_noticias.db</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: left;"><strong>novo</strong> (19/09/2026) — multi-fonte <code>httpx+parsel</code> (Google/BBC/JFP/RSS) grid responsivo <strong>3→2→1 + altura 160–220px</strong> <code>ui.link(target=href, new_tab=True)</code> + <strong>busca NFKD lado a lado filtro tema</strong> <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> <code>clearable</code> (<code>agregador-filtro-tema</code> + <code>agregador-busca</code> lado a lado, <strong>sem badge <code>Coleta:</code></strong> removido a169c9a), 24h <code>tb_noticia</code> (<code>fonte_icon_url</code> 16×16 <code>faviconV2</code> + <code>imagem_url</code> 30×30 <code>/api/attachments</code>), dedup <code>_norm_tit</code> + <code>COALESCE</code> + <code>fonte_icon</code>/<code>imagem</code> extração, grid responsivo <strong><code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + <code>@media 1024px→2 640px→1</code> + <code>.card-noticia {min-height:160px; max-height:220px}</code> (média 91 notícias: título 79/75, descrição 34, 87.9% imagem, 24% fonte_icon)</strong> + paginação 12 + busca 500 NFKD, <strong>tela pura</strong> <code>/agregador-noticias-puro</code> (<code>telas_puro.py:mostrar_tela_pura</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> com cards atuais 3 cols <code>fonte_icon 16×16</code> + <code>imagem 30×30</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>fonts/lora/poppins</code>/<code>images/bg/intro</code>/<code>js/modernizr/pace/jquery/plugins/main.js</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> + botão <code>Ver puro Noticia</code> <code>data-testid=agregador-ver-puro</code>), <code>listar_para_tv</code> (<code>fonte_icon</code> incluso, censura <code>conteudo_palavras_bloqueadas</code> + <code>limpar_censuradas</code>), termo+fontes configuráveis</td>
 </tr>
 </tbody>
 </table>
@@ -450,7 +463,7 @@
 <li>Toda conexão aplica <code>PRAGMA journal_mode=WAL</code> (+ <code>synchronous=NORMAL</code> no central e na auditoria).</li>
 <li><strong>Convenção:</strong> consultar um banco somente pelo <code>bd_manipulador</code> do seu próprio módulo (evitar cross-query). Exceções conhecidas e documentadas: a limpeza cruzada LGPD da exclusão de usuário (<code>mod_gest_cad_usuario</code> varre bancos vizinhos para anonimizar/excluir dados — ver <a href="../modulos/gest_cad_usuario/">Módulo de Gestão de Usuários</a>) e a escrita de auditoria (<code>audit_log</code> no núcleo grava no banco exclusivo de auditoria via <code>registrar_auditoria</code>).</li>
 <li>O banco <strong>central</strong> (<code>db_mod_intranet.db</code>) guarda <code>tb_config</code>, <code>tb_sessoes</code> e <code>tb_modulos</code> (a antiga <code>tb_auditoria</code> central foi migrada e removida — ver <a href="#auditoria-lgpd-banco-exclusivo">Auditoria</a>).</li>
-<li><strong>SQLAlchemy em TODOS os bancos (06/09):</strong> o mapa <code>MODULOS_BD</code> (<code>repositorio.py:57-67</code>) registra os 10 bancos (<code>intranet</code>, <code>blog</code>, <code>editar_pdf</code>, <code>usuarios</code>, <code>empenhos</code>, <code>auditoria</code>, <code>solicita_impressao</code>, <code>tecnico</code>, <code>filas</code>, <code>lista_telefonica</code>); <code>engine(chave)</code>/<code>sessaodb(chave)</code>/<code>Repositorio(chave_db=...)</code> operam em qualquer um deles — ver <a href="#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura de acesso a dados do núcleo</a>.</li>
+<li><strong>SQLAlchemy em TODOS os bancos (06/09):</strong> o mapa <code>MODULOS_BD</code> (<code>repositorio.py:57-68</code>) registra os 11 bancos (<code>intranet</code>, <code>blog</code>, <code>editar_pdf</code>, <code>usuarios</code>, <code>empenhos</code>, <code>auditoria</code>, <code>solicita_impressao</code>, <code>tecnico</code>, <code>filas</code>, <code>lista_telefonica</code>, <code>agregador_noticias</code>); <code>engine(chave)</code>/<code>sessaodb(chave)</code>/<code>Repositorio(chave_db=...)</code> operam em qualquer um deles — ver <a href="#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura de acesso a dados do núcleo</a>.</li>
 <li><strong>Backend duplo controlado pelo sistema (08/09):</strong> além do SQLite, o sistema agora suporta <strong>PostgreSQL opcional</strong> — a chave <code>banco_tipo</code> em <code>tb_config</code> central (<code>'sqlite'</code> padrão | <code>'postgres'</code>) seleciona o backend. No Postgres, <strong>um DATABASE <code>db_mod_&lt;chave&gt;</code> por módulo</strong> preserva o isolamento "um banco por módulo" e evita colisão de nomes de tabela (ex.: <code>tb_solicitacoes</code>). SQLite continua o padrão. Ver <a href="#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Backend duplo (08/09)</a> abaixo.</li>
 </ul>
 <h3 id="arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura de acesso a dados do núcleo — backend duplo (08/09)<a class="headerlink" href="#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809" title="Permanent link">&para;</a></h3>
@@ -525,8 +538,8 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>MODULOS_BD</code></td>
-<td style="text-align: left;"><code>repositorio.py:57-67</code></td>
-<td style="text-align: left;">mapa chave→arquivo dos 10 bancos: <code>intranet</code>→<code>db_mod_intranet.db</code>, <code>blog</code>→<code>db_mod_blog.db</code>, <code>editar_pdf</code>→<code>db_mod_edit_pdf.db</code>, <code>usuarios</code>→<code>db_mod_gest_cad_usuario.db</code>, <code>empenhos</code>→<code>db_mod_renomear_empenho.db</code>, <code>auditoria</code>→<code>db_mod_auditoria.db</code>, <code>solicita_impressao</code>→<code>db_mod_solicita_impressao.db</code>, <code>tecnico</code>→<code>db_mod_tecnico.db</code>, <code>filas</code>→<code>db_mod_filas.db</code>, <code>lista_telefonica</code>→<code>db_mod_lista_telefonica.db</code></td>
+<td style="text-align: left;"><code>repositorio.py:57-68</code></td>
+<td style="text-align: left;">mapa chave→arquivo dos 11 bancos: <code>intranet</code>→<code>db_mod_intranet.db</code>, <code>blog</code>→<code>db_mod_blog.db</code>, <code>editar_pdf</code>→<code>db_mod_edit_pdf.db</code>, <code>usuarios</code>→<code>db_mod_gest_cad_usuario.db</code>, <code>empenhos</code>→<code>db_mod_renomear_empenho.db</code>, <code>auditoria</code>→<code>db_mod_auditoria.db</code>, <code>solicita_impressao</code>→<code>db_mod_solicita_impressao.db</code>, <code>tecnico</code>→<code>db_mod_tecnico.db</code>, <code>filas</code>→<code>db_mod_filas.db</code>, <code>lista_telefonica</code>→<code>db_mod_lista_telefonica.db</code>, <code>agregador_noticias</code>→<code>db_mod_agregador_noticias.db</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>caminho_db(chave)</code></td>
@@ -732,10 +745,20 @@
 <td style="text-align: left;"><code>empenhos_monitor_intervalo_seg</code> (default <strong>60 s</strong>)</td>
 <td style="text-align: left;">varredura automática das pastas monitoradas de empenhos (<code>rodar_monitor("sistema")</code>)</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>agregador_coleta</code></td>
+<td style="text-align: left;"><code>agregador_noticias_intervalo_min</code> (<strong>10–360 min</strong>, default <strong>60 min</strong>, <code>habilitado</code> flag)</td>
+<td style="text-align: left;">coleta scrapy-like <code>httpx+parsel</code> (Google/BBC/JFP/RSS + pesquisa termo) via <code>coletar_todas()</code> — <code>reconfigurar_agregador_noticias()</code> sem restart</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>agregador_reinicio</code></td>
+<td style="text-align: left;"><strong>diário <code>CronTrigger</code> às <code>06:00</code> configurável</strong> (<code>agregador_noticias_hora_reinicio</code> <code>HH:MM</code>, default <code>06:00</code>, <code>obter_hora_reinicio</code>/<code>definir_hora_reinicio</code> + audit)</td>
+<td style="text-align: left;"><strong>reinício diário</strong> <code>reiniciar_banco(ator)</code> — <code>DELETE FROM tb_noticia</code> (zera todas, banco reciclado, <strong>sem backup</strong>) + <code>audit reiniciar_banco</code>; reagendável sem restart via <code>reconfigurar_agregador_noticias()</code> <code>CronTrigger(hour, minute)</code></td>
+</tr>
 </tbody>
 </table>
 <blockquote>
-<p><strong>Ajuste fino:</strong> o <code>MAPA_BACKUPS</code> (<code>rotinas.py:16-22</code>) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, auditoria, empenhos, solicita — expandido em 06/09 com auditoria e solicita_impressao — <strong>18/09/2026</strong> <code>+ tecnico: db_mod_tecnico.db</code> + <code>filas: db_mod_filas.db</code> — <strong>19/09/2026</strong> <code>+ lista_telefonica: db_mod_lista_telefonica.db</code>).</p>
+<p><strong>Ajuste fino:</strong> o <code>MAPA_BACKUPS</code> (<code>rotinas.py:19-30</code>) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, auditoria, empenhos, solicita — expandido em 06/09 com auditoria e solicita_impressao — <strong>18/09/2026</strong> <code>+ tecnico: db_mod_tecnico.db</code> + <code>filas: db_mod_filas.db</code> — <strong>19/09/2026</strong> <code>+ lista_telefonica: db_mod_lista_telefonica.db</code> — <strong>20/09/2026 sem <code>agregador_noticias: db_mod_agregador_noticias.db</code></strong>, agregador <strong>sem backup</strong>, banco reciclado diariamente <code>reiniciar_banco</code> às <code>06:00</code> configurável <code>CronTrigger</code>).</p>
 </blockquote>
 <h2 id="auditoria-lgpd-banco-exclusivo">Auditoria LGPD (banco exclusivo)<a class="headerlink" href="#auditoria-lgpd-banco-exclusivo" title="Permanent link">&para;</a></h2>
 <ul>
@@ -822,8 +845,12 @@
 <td style="text-align: left;">backups por PC/técnico (owner-isolated, uma pasta por dono — <code>mod_tecnico/bd_manipulador.py:25</code>, <code>nome_pasta_backup</code>)</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>mod_agregador_noticias/</code></td>
+<td style="text-align: left;"><code>mod_agregador_noticias/telas_puro.py</code> + <code>assets/noticia/</code> (tema Noticia 4.9M <code>css→base.css/vendor.css/main.css/font-awesome/micons, fonts→lora/poppins, images→bg.jpg/intro-bg.jpg, js→jquery-2.1.3/modernizr/pace/plugins/main</code>, <code>favicon.png</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> path-traversal safe) — tela pura <code>/agregador-noticias-puro</code> (<code>intro-overlay</code> + <code>about</code> <code>info-list</code> com cards atuais 3 cols <code>fonte_icon 16×16</code> + <code>imagem 30×30</code>, 12 notícias <code>listar_noticias(limite=12)</code>) + <code>mod_filas/midia/</code> (<code>PASTA_MIDIA</code> <code>/midia_filas</code> 12K) — banco <code>tb_noticia</code> (<code>fonte_icon_url</code> 16×16 + <code>imagem_url</code> 30×30) grid responsivo <strong><code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + <code>@media 1024px→2 640px→1</code> + <code>.card-noticia {min-height:160px; max-height:220px}</code> (média 91 notícias: título 79/75, descrição 34, 87.9% imagem, 24% fonte_icon)</strong> paginado 12 + <strong>busca</strong> (<code>por_pagina=12</code> <code>COALESCE DESC</code> <code>Primeira/Anterior/Próxima/Última</code> <code>agregador-primeira/anterior/proxima/ultima</code> + <code>agregador-busca</code> <code>debounce 300</code> NFKD <code>placeholder "Buscar palavra…"</code> lado a lado filtro tema, <strong>sem badge <code>Coleta:</code></strong>), <strong>ícone fonte 16×16 + imagem 30×30 lado a lado antes do título + botão <code>Ver puro Noticia</code> <code>agregador-ver-puro</code> → <code>/agregador-noticias-puro</code></strong>, sem backup — banco reciclado <code>reiniciar_banco</code> <code>06:00</code> <code>CronTrigger</code> + coleta <code>httpx+parsel</code> + <code>listar_para_tv</code> (<code>fonte_icon</code> incluso) + <code>assets/noticia/</code> servido via rota estática 4.9M</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>main.py</code>, <code>requirements.txt</code>, <code>mkdocs.yml</code>, <code>db_mod_*.db</code></td>
-<td style="text-align: left;">entry point único, dependências, build da doc e bancos SQLite (WAL) por módulo (incl. <code>db_mod_auditoria.db</code> — trilha LGPD; <strong>novos</strong> <code>db_mod_tecnico.db</code>, <code>db_mod_filas.db</code>, <code>db_mod_lista_telefonica.db</code> <strong>(19/09/2026)</strong>)</td>
+<td style="text-align: left;">entry point único, dependências, build da doc e bancos SQLite (WAL) por módulo (incl. <code>db_mod_auditoria.db</code> — trilha LGPD; <strong>novos</strong> <code>db_mod_tecnico.db</code>, <code>db_mod_filas.db</code>, <code>db_mod_lista_telefonica.db</code> <strong>(19/09/2026)</strong>, <code>db_mod_agregador_noticias.db</code> <strong>(19/09/2026 — Notícias)</strong>)</td>
 </tr>
 </tbody>
 </table>

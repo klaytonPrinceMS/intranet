@@ -168,9 +168,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -193,9 +195,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -256,6 +262,7 @@
 <li><strong>Fonte única de exibição — Home mostra o MESMO padrão</strong>: a nova função <strong><code>renderizar_postagens(wrap, usuario_logado, perfil, pode_publicar, ao_atualizar, ao_editar=None, termo="", data_f="")</code></strong> (<code>telas.py:368</code>) é a <strong>FONTE ÚNICA</strong> do padrão de exibição (histórico/única/carrossel) — usada pela tela do Blog <strong>e pela Home</strong> (<code>main.py:443-454</code>), que exibe "Publicações recentes" no mesmo padrão configurado no módulo (<strong>sem botão "Abrir Blog completo" desde 18/09/2026</strong> — <code>main.py:448</code> só <code>label</code>, acesso ao Blog pelo drawer). O <code>atualizar()</code> do Blog foi refatorado para chamar <code>renderizar_postagens</code> (<code>telas.py:749</code>); <code>termo</code>/<code>data_f</code> filtram título/conteúdo/autor e data. Padrão inicial da Home = carrossel 3 básicas quando banco novo.</li>
 <li><strong>Gestão de despublicadas</strong>: lista de postagens inativas com botão de republicar — na aba <strong>"Despublicadas"</strong> da própria tela do blog (<code>telas.py:251,469</code>). O painel de administração standalone (<code>/admin/blog</code>) <strong>não tem mais</strong> o card "Postagens despublicadas (gestão)" (removido em 06/09) — ficou apenas com "Configurações de cores" + "Configurações específicas" + backup.</li>
 <li><strong>Somente-leitura para <code>comum</code></strong>: controles ocultos na UI e bloqueados no backend.</li>
+<li><strong>Censura de conteúdo — palavras bloqueadas (central <code>mod_intranet/censura.py</code>)</strong>: títulos que contenham palavra da lista <code>conteudo_palavras_bloqueadas</code> (chave <code>tb_config</code> central) são <strong>bloqueados na criação e na edição</strong> — <code>criar_postagem(titulo, conteudo, autor)</code> e <code>atualizar_postagem(id, titulo, conteudo, autor)</code> verificam <code>titulo_bloqueado(titulo)</code> <strong>antes</strong> de sanitizar com <code>nh3</code>; se bloqueado retornam <code>None</code>/<code>False</code>, logam <code>warning</code> e exibem <code>notificar("Título contém palavra bloqueada: '...'")</code> (tipo <code>negative</code>). Normalização: <code>lower</code> + <code>NFD</code> sem acentos (ex.: <code>suicidio</code> bloqueia <code>suicídio</code>) + substring insensível. Lista compartilhada com o <strong>Agregador</strong> (<code>inserir_noticia</code> descarta + <code>listar_para_tv</code> filtra + <code>limpar_censuradas()</code>). Configuração no card <strong>"Censura de conteúdo — palavras bloqueadas"</strong> (<code>block</code>, <code>data-testid=blog-palavras-bloqueadas</code>, <code>textarea</code> CSV/<code>;</code>/linha, botões Salvar/Restaurar via <code>rodape_salvar_restaurar</code> <code>data-testid=blog-salvar-censura</code>; ao salvar chama <code>definir_palavras_bloqueadas(lista, ator)</code> + <code>limpar_censuradas()</code> do agregador e <code>audit_log</code> <code>censura/palavras_bloqueadas</code>).</li>
 <li><strong>Auditoria</strong> (banco exclusivo <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_blog</code>) para criar/atualizar/despublicar/republicar/excluir postagens e comentários.</li>
 <li><strong>Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 <code>kbp-web-design</code>)</strong>: filtros justificados (<code>flex-wrap</code> <code>gap</code> via <code>.style</code>), exibição centralizada (<code>w-full justify-center</code>), seleção em lote com <code>grid mobile-first</code>; dialogs <code>w-full max-w</code>; proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code> (cards <code>grid-cols-1 sm:grid-cols-2</code>).</li>
 <li><strong>Versionamento</strong>: <code>versao_modulo:blog</code> exibido no rodapé de <code>/blog</code>.</li>

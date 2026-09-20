@@ -170,9 +170,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -193,9 +195,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -239,9 +245,9 @@
 <p>Cada módulo é um pacote <code>mod_&lt;nome&gt;/</code> com <code>telas.py</code> (obrigatório: <code>mostrar_tela(nome, perfil)</code>), <code>telas_administracao.py</code> (painel admin), <code>bd_manipulador.py</code> (único acesso ao DB) e <code>bd_criador.py</code> (legado/morto — o schema real é criado por <code>init_db*</code> no <code>bd_manipulador</code>). Acesso a dados concentra-se em <code>bd_manipulador.py</code>.</p>
 <h2 id="banco-de-dados">Banco de dados<a class="headerlink" href="#banco-de-dados" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Central</strong> <code>db_mod_intranet.db</code>: <code>tb_config</code>, <code>tb_sessoes</code>, <code>tb_modulos</code> (seed <code>MODULOS_SISTEMA</code> com <strong>9 de negócio + núcleo = 10</strong> — 6 históricos + <code>tecnico</code> + <code>filas</code> 18/09/2026 + <code>lista_telefonica</code> 19/09/2026; 9 chaves: <code>editar_pdf</code>, <code>empenhos</code>, <code>solicita_impressao</code>, <code>blog</code>, <code>usuarios</code>, <code>auditoria</code>, <code>tecnico</code>, <code>filas</code>, <code>lista_telefonica</code>).</li>
-<li><strong>Auditoria</strong> <code>db_mod_auditoria.db</code>: <code>tb_auditoria_&lt;modulo&gt;</code> (uma tabela por módulo produtor, inclui <code>tecnico</code>/<code>filas</code>/<code>lista_telefonica</code>) + <code>tb_auditoria_meta</code> (criada via <code>mod_auditoria/bd_manipulador.py</code>).</li>
-<li>Cada módulo tem seu <code>.db</code> na raiz em modo <strong>WAL</strong> (<code>*.db-wal</code>, <code>*.db-shm</code>) — <strong>novos</strong> <code>db_mod_tecnico.db</code> (<code>tb_backup</code>/<code>tb_backup_arquivo</code> + pastas <code>software/</code>+<code>backup/YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation) e <code>db_mod_filas.db</code> (<code>tb_fila</code>/<code>tb_chamada</code>) e <code>db_mod_lista_telefonica.db</code> (<code>tb_unidade</code> <code>secretaria|setor|subsetor</code> + <code>tb_contato</code> alfabético + <code>ORGANOGRAMA_BASE</code> 12 secretarias, <code>tel:</code> no celular). Backend duplo SQLite/PostgreSQL via <code>mod_intranet/banco_conexao.conexao(chave)</code> (um <code>DATABASE db_mod_&lt;chave&gt;</code> por módulo no Postgres, espelhando o arquivo SQLite).</li>
+<li><strong>Central</strong> <code>db_mod_intranet.db</code>: <code>tb_config</code> (incl. <code>conteudo_palavras_bloqueadas</code> censura central <code>mod_intranet/censura.py</code>), <code>tb_sessoes</code>, <code>tb_modulos</code> (seed <code>MODULOS_SISTEMA</code> com <strong>9 de negócio + núcleo = 10</strong> — 6 históricos + <code>tecnico</code> + <code>filas</code> multi-filas 09/2026 + <code>lista_telefonica</code> 19/09/2026 + <code>agregador_noticias</code> 19/09/2026; 11 módulos no <code>MODULOS_BD</code>).</li>
+<li><strong>Auditoria</strong> <code>db_mod_auditoria.db</code>: <code>tb_auditoria_&lt;modulo&gt;</code> (uma tabela por módulo produtor, inclui <code>tecnico</code>/<code>filas</code>/<code>lista_telefonica</code>/<code>agregador_noticias</code> + <code>censura</code> <code>palavras_bloqueadas</code> em <code>audit_log</code>) + <code>tb_auditoria_meta</code> (criada via <code>mod_auditoria/bd_manipulador.py</code>).</li>
+<li>Cada módulo tem seu <code>.db</code> na raiz em modo <strong>WAL</strong> (<code>*.db-wal</code>, <code>*.db-shm</code>) — <strong>novos</strong> <code>db_mod_tecnico.db</code> (<code>tb_backup</code>/<code>tb_backup_arquivo</code> + pastas <code>software/</code>+<code>backup/YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation), <code>db_mod_filas.db</code> <strong>multi-filas</strong> (<code>tb_fila</code> com <code>endereco/prefixo/inicio→fim</code> <code>fim=0</code> infinito + <code>criado_por</code> + <code>tv_grupo</code>, <code>tb_fila_etapa</code>, <code>tb_chamada</code> com <code>paciente_nome/etapa_nome</code>, <code>tb_midia</code> global, <code>PASTA_MIDIA</code> <code>mod_filas/midia</code> → <code>/midia_filas/*</code>, rotas <code>/tv</code> + <code>/tv/{id}</code> + <code>/tv?grupo=</code>) e <code>db_mod_lista_telefonica.db</code> (<code>tb_unidade</code> <code>secretaria|setor|subsetor</code> + <code>tb_contato</code> alfabético + <code>ORGANOGRAMA_BASE</code> 12 secretarias, <code>tel:</code> no celular) e <code>db_mod_agregador_noticias.db</code> (<code>tb_noticia</code> com censura <code>titulo_bloqueado</code>/<code>limpar_censuradas</code> + <code>listar_para_tv</code> filtra <code>LIMIT*3</code>). Backend duplo SQLite/PostgreSQL via <code>mod_intranet/banco_conexao.conexao(chave)</code> (um <code>DATABASE db_mod_&lt;chave&gt;</code> por módulo no Postgres, espelhando o arquivo SQLite). <strong>Censura central</strong> (<code>mod_intranet/censura.py</code>, <code>conteudo_palavras_bloqueadas</code>) compartilhada Blog↔Agregador (filtrada na TV).</li>
 <li><strong>Não cross-query</strong>: consultar via o <code>bd_manipulador</code> do próprio módulo (via <code>banco_conexao.conexao(chave)</code>, nunca <code>sqlite3.connect</code> cru em banco alheio); isolamento "um banco por módulo" válido nos dois backends.</li>
 <li>Auditoria LGPD via <code>audit_log</code> → banco exclusivo <code>db_mod_auditoria.db</code> (tabela por módulo) para toda escrita; operações de PDF e backup registram hash SHA-256 (<code>hash_arquivo</code>).</li>
 </ul>

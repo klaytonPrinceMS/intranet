@@ -170,9 +170,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -193,9 +195,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -327,6 +333,27 @@
 <td style="text-align: left;"><code>mod_solicita_impressao</code></td>
 <td style="text-align: left;">público (JS)</td>
 <td style="text-align: left;"><code>main.py:430</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/agregador-noticias</code></td>
+<td style="text-align: left;"><code>@ui.page</code></td>
+<td style="text-align: left;"><code>mod_agregador_noticias</code></td>
+<td style="text-align: left;">liberados (<code>agregador_noticias</code>, <code>_pode_ver</code> + <code>validar_acesso_modulo</code>) — grid responsivo <code>grid-noticias</code> 3→2→1 (1024px/640px) + <code>.card-noticia</code> 160–220px (média 91 notícias) <code>agregador-filtro-tema</code> + <code>agregador-busca</code> <code>debounce 300</code> + <code>agregador-ver-puro</code> → <code>/agregador-noticias-puro</code>, paginação 12 <code>agregador-primeira/anterior/proxima/ultima</code></td>
+<td style="text-align: left;"><code>main.py:794</code> <code>page_agregador_noticias</code> → <code>mod_agregador_noticias/telas.py:mostrar_tela</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/agregador-noticias-puro</code></td>
+<td style="text-align: left;"><code>@ui.page</code></td>
+<td style="text-align: left;"><code>mod_agregador_noticias</code></td>
+<td style="text-align: left;">liberados (<code>agregador_noticias</code>, mesmo gate) — pura estilo Noticia <code>intro-overlay</code> + <code>about</code> <code>info-list</code> com cards atuais (3 cols, <code>fonte_icon 16×16</code> + <code>imagem 30×30</code>, tempo relativo, 12 notícias <code>listar_noticias(limite=12)</code>) + <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code></td>
+<td style="text-align: left;"><code>main.py:808</code> <code>page_agregador_noticias_puro</code> → <code>mod_agregador_noticias/telas_puro.py:mostrar_tela_pura</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/assets/noticia/{caminho:path}</code></td>
+<td style="text-align: left;"><code>@app.get</code> (FastAPI)</td>
+<td style="text-align: left;"><code>mod_agregador_noticias</code></td>
+<td style="text-align: left;">público (CSS/JS/fonts/images da tela pura) — path-traversal safe <code>normpath</code> + <code>startswith(base)</code> + <code>mimetypes.guess_type</code> → <code>FileResponse</code>, <code>404</code> se fora ou não existe</td>
+<td style="text-align: left;"><code>main.py:818</code> <code>servir_assets_noticia</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/configuracoes</code></td>

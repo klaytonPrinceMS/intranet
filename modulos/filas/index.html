@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Filas (TV, esqueleto) - INTRANET Modular — Documentação Técnica</title>
+    <title>Filas (TV, multi-filas) - INTRANET Modular — Documentação Técnica</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Filas (TV, esqueleto)";
+        var mkdocs_page_name = "Filas (TV, multi-filas)";
         var mkdocs_page_input_path = "modulos/filas.md";
         var mkdocs_page_url = null;
       </script>
@@ -168,9 +168,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -191,11 +193,15 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Filas (TV, multi-filas)</a>
     <ul class="current">
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -213,7 +219,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Módulos (resumo)</li>
-      <li class="breadcrumb-item active">Filas (TV, esqueleto)</li>
+      <li class="breadcrumb-item active">Filas (TV, multi-filas)</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -222,22 +228,22 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="queue-module-mod_filas-skeleton">Queue Module — <code>mod_filas</code> (Skeleton)<a class="headerlink" href="#queue-module-mod_filas-skeleton" title="Permanent link">&para;</a></h1>
+                <h1 id="queue-module-mod_filas-multi-queue-news-carousel-media">Queue Module — <code>mod_filas</code> (Multi-queue + News Carousel + Media)<a class="headerlink" href="#queue-module-mod_filas-multi-queue-news-carousel-media" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Queue/call manager module (skeleton, TV): routes <code>/filas</code> (key <code>filas</code>) + <code>/tv</code> (public) · own database <code>db_mod_filas.db</code> (WAL) · tables <code>tb_fila</code>/<code>tb_chamada</code>/<code>tb_config_filas</code> · next password <code>A000→A001</code> · TV auto-refresh 3s + beep · central LGPD audit.</p>
+<p>Queue/call manager module (multi-queue): routes <code>/filas</code> (key <code>filas</code>) + <code>/tv</code> (public shared <code>?grupo=</code>) + <code>/tv/{fila_id}</code> (isolated) · own database <code>db_mod_filas.db</code> (WAL) · tables <code>tb_fila</code>/<code>tb_fila_etapa</code>/<code>tb_chamada</code>/<code>tb_midia</code>/<code>tb_config_filas</code> · queue per local with <code>endereco/prefixo/senha_inicio/fim</code> (fim=0 infinite) + <code>criado_por</code> + <code>tv_grupo</code> · isolated by creator vs <code>administrador_geral</code> · sequential steps + TV carousel + elevator audio / propaganda video <code>/midia_filas</code> · central LGPD audit.</p>
 </blockquote>
 <hr />
-<h1 id="modulo-filas-mod_filas-esqueleto-tv">Módulo Filas — <code>mod_filas</code> (Esqueleto TV)<a class="headerlink" href="#modulo-filas-mod_filas-esqueleto-tv" title="Permanent link">&para;</a></h1>
+<h1 id="modulo-filas-mod_filas-multi-filas-carrossel-noticias-midia-tv">Módulo Filas — <code>mod_filas</code> (Multi-filas + Carrossel Notícias + Mídia TV)<a class="headerlink" href="#modulo-filas-mod_filas-multi-filas-carrossel-noticias-midia-tv" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo gestor de filas/chamadas (esqueleto, TV): rotas <code>/filas</code> (chave <code>filas</code>) + <code>/tv</code> (pública) · banco próprio <code>db_mod_filas.db</code> (WAL) · tabelas <code>tb_fila</code>/<code>tb_chamada</code>/<code>tb_config_filas</code> · próxima senha <code>A000→A001</code> · TV auto-refresh 3s + beep · auditoria central LGPD.</p>
+<p>Módulo gestor de filas/chamadas (multi-filas): rotas <code>/filas</code> (chave <code>filas</code>) + <code>/tv?grupo=</code> (compartilhada) + <code>/tv/{fila_id}</code> (isolada) · banco próprio <code>db_mod_filas.db</code> (WAL) · tabelas <code>tb_fila</code>/<code>tb_fila_etapa</code>/<code>tb_chamada</code>/<code>tb_midia</code>/<code>tb_config_filas</code> · fila por local com <code>endereco/prefixo/senha_inicio/fim</code> (fim=0 infinito) + <code>criado_por</code> + <code>tv_grupo</code> · isolamento por criador vs <code>administrador_geral</code> · etapas sequenciais + TV carrossel + áudio elevador / vídeo propaganda <code>/midia_filas</code> · auditoria central LGPD.</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
-<p>Esqueleto <strong>a título de conhecimento</strong> do futuro gestor de chamadas para atendimento com TV na rede interna — rota <code>/filas</code> (painel de filas) + <code>/tv</code> (painel full-screen para TV). Já operacional com fluxo mínimo: uma fila "Geral" semeada, incremento de senha e display da última chamada. Regras completas (múltiplas filas, prioridade, guichês, som, integração) serão detalhadas em iteração futura.</p>
+<p>Gestor de <strong>múltiplas filas por local</strong> com chamadas sequenciais e TV dedicada. Cada fila é isolada (não interfere em outra) e tem <strong>numeração própria</strong> (<code>prefixo</code> + <code>senha_inicio</code>→<code>senha_fim</code>, com <code>fim=0</code> = infinito circular) e <strong>etapas sequenciais</strong> (<code>tb_fila_etapa</code>: Atendimento → Triagem → Consultório 3). A TV pode ser <strong>isolada</strong> (<code>/tv/{fila_id}</code>) ou <strong>compartilhada por grupo</strong> (<code>/tv?grupo=recepcao</code> — todas as filas com mesmo <code>tv_grupo</code> aparecem na mesma TV). Quando ociosa, reproduz playlist de <strong>áudio elevador (MP3)</strong> / <strong>vídeo propaganda (MP4)</strong> em <code>/midia_filas</code>; ao chamar, toca <strong>bip + voz</strong> (SpeechSynthesis <code>pt-BR</code>) somente no novo <code>id</code>.</p>
 <blockquote>
-<p>Status: <code>SKELETON = True</code> (<code>mod_filas/__init__.py:7</code>). Estrutura pronta (DB + telas + admin + rotas), sem impacto no core.</p>
+<p>Status: <strong>multi-filas operacional</strong> (antes esqueleto). Isolamento por criador + TV grupo + mídia global.</p>
 </blockquote>
 <h2 id="banco-de-dados">Banco de dados<a class="headerlink" href="#banco-de-dados" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:34-68</code> (bootstrap central + <code>init_db()</code> no import).</p>
+<p>Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:56-141</code> (bootstrap central + <code>init_db()</code> no import). Migração via <code>_garantir_coluna</code> para colunas novas.</p>
 <table>
 <thead>
 <tr>
@@ -248,11 +254,19 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>tb_fila</code></td>
-<td style="text-align: left;"><code>id</code> PK, <code>nome</code> UNIQUE (<code>Geral</code> semeada), <code>senha_atual</code> (<code>A000</code> default), <code>status</code> (<code>ativa</code>), <code>guiche</code> (<code>01</code> default), <code>data_criacao</code></td>
+<td style="text-align: left;"><code>id</code> PK, <code>nome</code> UNIQUE, <code>senha_atual</code> (<code>A000</code> default), <code>status</code> (<code>ativa</code>), <code>guiche</code> (<code>01</code> default), <code>data_criacao</code> + <code>endereco</code> TEXT, <code>descricao</code> TEXT, <code>prefixo</code> TEXT (<code>A</code>), <code>criado_por</code> TEXT (login do criador), <code>senha_inicio</code> INTEGER (1), <code>senha_fim</code> INTEGER (0 = infinito), <code>tv_grupo</code> TEXT (vazio = TV isolada)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_fila_etapa</code></td>
+<td style="text-align: left;"><code>id</code> PK, <code>fila_id</code> FK CASCADE, <code>ordem</code> INTEGER, <code>nome</code> TEXT (ex.: Atendimento/Triagem/Consultório 3), <code>guiche</code> TEXT, <code>ativo</code> INTEGER</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_chamada</code></td>
-<td style="text-align: left;"><code>id</code> PK, <code>fila_id</code> FK CASCADE → <code>tb_fila</code>, <code>senha</code> (ex.: <code>A001</code>), <code>guiche</code> (snapshot do <code>tb_fila.guiche</code>), <code>chamado_em</code> (timestamp), <code>chamado_por</code> (login ator)</td>
+<td style="text-align: left;"><code>id</code> PK, <code>fila_id</code> FK CASCADE, <code>senha</code> (ex.: <code>A001</code>), <code>guiche</code> (snapshot), <code>chamado_em</code>, <code>chamado_por</code> + <code>paciente_nome</code> TEXT, <code>etapa_nome</code> TEXT, <code>fila_nome</code> TEXT</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_midia</code></td>
+<td style="text-align: left;"><code>id</code> PK, <code>nome</code> TEXT, <code>tipo</code> CHECK(<code>audio</code>/<code>video</code>), <code>caminho</code> TEXT (<code>/midia_filas/...</code>), <code>arquivo_original</code> TEXT, <code>ordem</code> INTEGER, <code>ativo</code> INTEGER, <code>criado_em</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_config_filas</code></td>
@@ -260,35 +274,45 @@
 </tr>
 </tbody>
 </table>
-<p>Seed: <code>INSERT OR IGNORE INTO tb_fila (nome, senha_atual, status, guiche) VALUES ('Geral','A000','ativa','01')</code> (<code>bd_manipulador.py:66</code>). Conexão via <code>mod_intranet/banco_conexao.conexao("filas")</code> (WAL + <code>foreign_keys=ON</code>, backend duplo SQLite/PostgreSQL). Auditoria via <code>audit_log</code> → <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_filas</code> (<code>gerar_senha</code>).</p>
-<p>⚠️ O <code>bd_criador.py</code> do módulo é <strong>legado/morto</strong> — não executar (o schema real está em <code>bd_manipulador.py</code>).</p>
-<p>Modelos tipados (<code>models/__init__.py</code> — dataclasses <code>Fila</code>/<code>Chamada</code>, sem <code>map_imperatively</code> ainda): <code>Fila(id, nome, senha_atual, status, guiche)</code>, <code>Chamada(id, fila_id, senha, guiche, chamado_em, chamado_por)</code>.</p>
+<p>Seed: <code>INSERT OR IGNORE INTO tb_fila (Geral, A000, ativa, 01, '', 'Fila geral de atendimento', 'A', '', 1, 0, '')</code> + 3 etapas padrão para <code>Geral</code> (Atendimento 01, Triagem 02, Consultório 3). Conexão via <code>mod_intranet/banco_conexao.conexao("filas")</code> (WAL + <code>foreign_keys=ON</code>, backend duplo). Auditoria via <code>audit_log</code> → <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_filas</code> (<code>criar_fila</code>, <code>atualizar_fila</code>, <code>excluir_fila</code>, <code>gerar_senha</code>, <code>avancar_chamada</code>).</p>
+<p>Pasta de mídia: <code>mod_filas/midia/</code> servida em <code>/midia_filas/*</code> via <code>montar_rotas_static()</code> (<code>bd_manipulador.py:684-694</code>, <code>app.add_static_files("/midia_filas", PASTA_MIDIA)</code>), montada no boot em <code>main.py:152-156</code>.</p>
+<blockquote>
+<p><code>bd_criador.py</code> legado/morto — não executar.</p>
+</blockquote>
+<p>Modelos: <code>Fila</code>/<code>Chamada</code> dataclass parcial (sem <code>map_imperatively</code> ainda).</p>
 <h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
-<h3 id="painel-filas-gestor-de-chamadas-skeleton">Painel <code>/filas</code> — gestor de chamadas (skeleton)<a class="headerlink" href="#painel-filas-gestor-de-chamadas-skeleton" title="Permanent link">&para;</a></h3>
+<h3 id="painel-filas-gestor-multi-filas-isolado-por-criador">Painel <code>/filas</code> — gestor multi-filas isolado por criador<a class="headerlink" href="#painel-filas-gestor-multi-filas-isolado-por-criador" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Gate</strong> (<code>_pode_acessar</code> — <code>telas.py:16-22</code>): <code>administrador_geral</code> sempre; senão <code>validar_acesso_modulo(user, "filas")</code> — sem acesso → "Acesso restrito".</li>
-<li><strong>Cabeçalho temático</strong> (<code>telas.py:31-36</code>): <code>ler_tema("filas", cor_botao="#000000", texto_header="Gestor de chamadas para atendimento (TV). Esqueleto a título de conhecimento.")</code> + <code>ui.colors(primary=tema["cor_botao"])</code> + <code>cabecalho("Filas — Chamadas", ..., chave_modulo="filas")</code> (borda = <code>cor_botao</code> via <code>PADROES_TEMA["filas"]</code> → <code>#000000</code>).</li>
-<li><strong>Card Filas (esqueleto)</strong> (<code>telas.py:37-58</code>): <code>listar_filas()</code> (<code>SELECT id,nome,senha_atual,status,guiche</code>); por fila renderiza <code>nome</code> + <code>Senha atual: X • Guichê: Y • status</code> + botão <code>Chamar próximo</code> (<code>campaign</code>, <code>primario</code>, <code>chave_modulo="filas"</code>) que chama <code>gerar_senha(fid, ator=user)</code> + <code>ui.notify</code> + <code>render()</code>; botão <code>Abrir TV</code> (<code>tv</code>, <code>contorno</code>, <code>data-testid=filas-abrir-tv</code>, <code>ui.navigate.to("/tv")</code>).</li>
-<li><strong>Card Última chamada (preview TV)</strong> (<code>telas.py:58-70</code>): <code>ultima_chamada()</code> (<code>SELECT senha,guiche,chamado_em ORDER BY id DESC LIMIT 1</code>); exibe <code>Senha: A001</code> (<code>text-h4 font-extrabold text-primary</code>) + <code>Guichê: 01 • data</code>; histórico 5 últimas (<code>listar_chamadas(5)</code> — <code>senha — guichê — por — data</code>). Sem chamada → "Nenhuma chamada ainda.".</li>
+<li><strong>Gate</strong> (<code>_pode_acessar</code> — <code>telas.py:19-25</code>): <code>administrador_geral</code> sempre; senão <code>validar_acesso_modulo(user, "filas")</code>.</li>
+<li><strong>Cabeçalho</strong> (<code>telas.py:35-43</code>): <code>ler_tema("filas")</code> + <code>cabecalho("Filas — Chamadas", chave_modulo="filas")</code>.</li>
+<li><strong>Criar fila</strong> (<code>telas.py:45-93</code>): qualquer usuário com acesso cria a <strong>sua</strong> fila; <code>admin geral</code> cria para qualquer local. Campos: <code>Nome*</code>, <code>Endereço</code>, <code>Descrição</code>, <code>Prefixo</code> (<code>A</code>), <code>Início</code> (1), <code>Fim (0=infinito)</code> (0), <code>Guichê base</code> (01), <code>TV grupo</code> (vazio = isolada). Validação: prefixo <code>^[A-Za-z0-9]+$</code>, <code>inicio&gt;=0</code>, <code>fim==0</code> ou <code>fim&gt;=inicio</code>. <code>criar_fila(nome, endereco, descricao, prefixo, guiche, ator, senha_inicio, senha_fim, tv_grupo)</code> (<code>bd_manipulador.py:208-255</code>) → <code>senha_atual = prefixo + (inicio-1):03d</code> (04d se &gt;999) + 3 etapas padrão + <code>audit criar_fila</code>.
+  Ao criar, exibe link TV: <code>tv_grupo ? /tv?grupo={grupo} (compartilhada) : /tv/{fid} (isolada)</code> + botão <strong>Abrir TV desta fila</strong> + <code>notificar</code>.</li>
+<li><strong>Listagem isolada</strong> (<code>render_filas</code> — <code>telas.py:97-165</code>): <code>listar_filas_visiveis(user_nome, perfil_global, eh_admin_modulo)</code> (<code>bd_manipulador.py:157-175</code>) — dono (<code>criado_por=user_nome</code>) ou legado vazio <strong>ou</strong> <code>admin geral/modulo</code> vê <strong>todas</strong>; senão só as suas. Card por fila: <code>nome • endereco • descricao • Senha atual • Prefixo • inicio→fim (∞ se 0) • Guichê base • TV isolada/grupo • Dono • status</code> + botão <code>TV grupo {tv_grupo}</code> (<code>/tv?grupo=</code>) ou <code>Abrir TV desta fila</code> (<code>/tv/{fid}</code>) + <strong>Excluir</strong> (só dono/admin, <code>excluir_fila</code> bloqueia <code>Geral</code>) + <code>Link: /tv...</code> (caption). 
+  Etapas: badges <code>ordem. nome (guiche)</code>; Chamar: <code>Paciente (opcional p/ voz)</code> + <code>select Etapa/Destino</code> (primeira por padrão) + <strong>Chamar próximo</strong> → <code>gerar_senha(fid, ator, paciente_nome, etapa_nome)</code> (<code>bd_manipulador.py:462-501</code>, <code>_proxima_senha</code> com <code>fim=0</code> infinito, padding 3/4, snapshot guichê da etapa) + <code>notificar</code> + <code>render_filas</code>.
+  Histórico isolado: <code>expansion Histórico desta fila (isolado)</code> com <code>listar_chamadas(5, fila_id=fid)</code> (isolado) + botão <strong>Avançar</strong> sequencial (<code>avancar_chamada</code>, só dono/admin e se não for última etapa).</li>
+<li><strong>Excluir em lote</strong> (<code>telas.py:167-185</code>): <code>Excluir todas as filas</code> (admin) ou <code>Excluir todas minhas filas</code> (comum) → dialog confirmação → <code>excluir_todas_filas(ator, somente_do_criador, eh_admin)</code> (<code>bd_manipulador.py:335-356</code>, <code>DELETE WHERE nome&lt;&gt;'Geral'</code> com filtro <code>criado_por</code> quando não-admin) → <code>notificar</code> + <code>render_filas</code>. <strong>Geral preservada</strong> sempre.</li>
+<li><strong>Admin link</strong> → <code>/admin/filas</code>.</li>
 </ul>
-<h4 id="gerar_senha-incremento-simples-bd_manipuladorpy79-107"><code>gerar_senha</code> — incremento simples (<code>bd_manipulador.py:79-107</code>)<a class="headerlink" href="#gerar_senha-incremento-simples-bd_manipuladorpy79-107" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="n">atual</span> <span class="o">=</span> <span class="n">SELECT</span> <span class="n">senha_atual</span> <span class="n">FROM</span> <span class="n">tb_fila</span> <span class="n">WHERE</span> <span class="nb">id</span><span class="o">=</span><span class="err">?</span>
-<span class="c1"># regex r"([A-Za-z]*)(\d+)" → pref + num+1 com :03d</span>
-<span class="n">nova</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pref</span><span class="si">}{</span><span class="n">num</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">"</span>  <span class="c1"># A000→A001, sem letra → A001</span>
-<span class="n">UPDATE</span> <span class="n">tb_fila</span> <span class="n">SET</span> <span class="n">senha_atual</span><span class="o">=</span><span class="n">nova</span>
-<span class="n">INSERT</span> <span class="n">INTO</span> <span class="n">tb_chamada</span> <span class="p">(</span><span class="n">fila_id</span><span class="p">,</span> <span class="n">senha</span><span class="p">,</span> <span class="n">guiche</span><span class="p">,</span> <span class="n">chamado_por</span><span class="p">)</span>
-  <span class="n">VALUES</span> <span class="p">(</span><span class="err">?</span><span class="p">,</span> <span class="n">nova</span><span class="p">,</span> <span class="p">(</span><span class="n">SELECT</span> <span class="n">guiche</span> <span class="n">FROM</span> <span class="n">tb_fila</span> <span class="n">WHERE</span> <span class="nb">id</span><span class="o">=</span><span class="err">?</span><span class="p">),</span> <span class="n">ator</span><span class="p">)</span>
-<span class="n">_audit</span><span class="p">(</span><span class="n">ator</span><span class="p">,</span> <span class="s2">"gerar_senha"</span><span class="p">,</span> <span class="n">nova</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"fila=</span><span class="si">{</span><span class="n">fila_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<h4 id="gerar_senha-_proxima_senha-bd_manipuladorpy79-107-440-501"><code>gerar_senha</code> + <code>_proxima_senha</code> (<code>bd_manipulador.py:79-107</code> + <code>440-501</code>)<a class="headerlink" href="#gerar_senha-_proxima_senha-bd_manipuladorpy79-107-440-501" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="n">_proxima_senha</span><span class="p">(</span><span class="n">atual</span><span class="p">,</span> <span class="n">prefixo</span><span class="p">,</span> <span class="n">inicio</span><span class="p">,</span> <span class="n">fim</span><span class="p">):</span> <span class="n">regex</span> <span class="sa">r</span><span class="s2">"([A-Za-z]*)(\d+)"</span> <span class="err">→</span> <span class="n">pref</span><span class="o">+</span><span class="n">num</span><span class="o">+</span><span class="mi">1</span> <span class="n">com</span> <span class="p">:</span><span class="mi">03</span><span class="n">d</span><span class="o">/</span><span class="mi">04</span><span class="n">d</span><span class="p">;</span> <span class="n">se</span> <span class="n">fim</span><span class="o">&gt;</span><span class="mi">0</span> <span class="n">e</span> <span class="n">prox</span><span class="o">&gt;</span><span class="n">fim</span> <span class="err">→</span> <span class="n">prox</span><span class="o">=</span><span class="n">inicio</span> <span class="p">(</span><span class="n">circular</span><span class="p">);</span> <span class="n">infinito</span> <span class="n">quando</span> <span class="n">fim</span><span class="o">=</span><span class="mi">0</span>
+<span class="n">gerar_senha</span><span class="p">(</span><span class="n">fila_id</span><span class="p">,</span> <span class="n">ator</span><span class="p">,</span> <span class="n">paciente_nome</span><span class="p">,</span> <span class="n">etapa_nome</span><span class="p">):</span> <span class="n">SELECT</span> <span class="n">fila</span> <span class="err">→</span> <span class="n">_proxima_senha</span> <span class="err">→</span> <span class="n">resolve</span> <span class="n">guichê</span> <span class="n">da</span> <span class="n">etapa</span> <span class="p">(</span><span class="n">SELECT</span> <span class="n">guiche</span> <span class="n">FROM</span> <span class="n">tb_fila_etapa</span><span class="p">)</span> <span class="err">→</span> <span class="n">UPDATE</span> <span class="n">tb_fila</span> <span class="n">senha_atual</span> <span class="err">→</span> <span class="n">INSERT</span> <span class="n">tb_chamada</span> <span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">paciente_nome</span><span class="p">,</span> <span class="n">etapa_nome</span><span class="p">,</span> <span class="n">fila_nome</span><span class="p">)</span> <span class="o">+</span> <span class="n">audit</span>
 </code></pre></div>
-<p>Fail-soft: <code>try/except</code> + log <code>filas</code> + <code>(False, str(e))</code>.</p>
-<h3 id="painel-tv-display-full-screen-publico">Painel <code>/tv</code> — display full-screen (público)<a class="headerlink" href="#painel-tv-display-full-screen-publico" title="Permanent link">&para;</a></h3>
+<h4 id="etapas-sequenciais-bd_manipuladorpy359-436">Etapas sequenciais (<code>bd_manipulador.py:359-436</code>)<a class="headerlink" href="#etapas-sequenciais-bd_manipuladorpy359-436" title="Permanent link">&para;</a></h4>
+<p><code>listar_etapas(fila_id)</code> <code>ORDER BY ordem</code>; <code>criar_etapa(fila_id, nome, guiche)</code> (max ordem +1); <code>atualizar_etapa</code>; <code>excluir_etapa</code>; <code>reordenar_etapas(fila_id, ordem_ids)</code> (SAVEPOINT por statement).</p>
+<h3 id="painel-tv-e-tvfila_id-grupo-display-full-screen-com-voz-bip-e-midia">Painel <code>/tv</code> e <code>/tv/{fila_id}</code> + <code>?grupo=</code> — display full-screen com voz, bip e mídia<a class="headerlink" href="#painel-tv-e-tvfila_id-grupo-display-full-screen-com-voz-bip-e-midia" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Rota</strong> <code>/tv</code> (<code>main.py:745-749</code>): <strong>sem <code>pagina_restrita</code></strong> — acesso livre na rede (TV na recepção); <code>from mod_filas.telas import mostrar_tv; mostrar_tv()</code>.</li>
-<li><strong>Layout</strong> (<code>mostrar_tv</code> — <code>telas.py:72-93</code>): <code>ui.column</code> <code>w-full h-screen items-center justify-center bg-black text-white gap-6 p-8</code> + <code>lbl_senha</code> (<code>text-[10vw] font-extrabold</code>), <code>lbl_guiche</code> (<code>text-[4vw] font-bold</code>), <code>lbl_topo</code> <code>"FILA — AGUARDE CHAMADA"</code> (<code>text-[2vw] tracking-widest</code>); <code>tema = ler_tema("filas")</code> + <code>ui.colors(primary=...)</code>.</li>
-<li><strong>Auto-refresh 3s</strong>: <code>ui.timer(3.0, refresh)</code> + <code>refresh()</code> imediato — <code>ultima_chamada()</code> → atualiza <code>lbl_senha</code>/<code>lbl_guiche</code> + beep via <code>ui.run_javascript("new AudioContext().createOscillator()...")</code> (fail-soft). Sem chamada mantém "—".</li>
+<li><strong>Rotas</strong> (<code>main.py:753-778</code>): <code>/tv</code> pública (sem <code>pagina_restrita</code>) com <code>?grupo=xxx</code> (compartilhada) + <code>/tv/{fila_id}</code> isolada. <code>page_tv()</code> lê <code>query_params.get("grupo")</code> e chama <code>mostrar_tv(tv_grupo=grupo)</code>; <code>page_tv_fila(fila_id)</code> chama <code>mostrar_tv(fila_id=fila_id)</code> (resolve <code>tv_grupo</code> se fila pertence a grupo).</li>
+<li><strong>Layout <code>mostrar_tv(fila_id=None, tv_grupo=None)</code></strong> (<code>telas.py:191-370</code>): <code>ler_tema("filas")</code> + ícone/título do sistema (<code>get_config("icone_sistema"/"titulo_sistema", "hub"/"INTRANET")</code>, <strong>ícone padrão intranet da TV</strong>) + header <code>bg-grey-900</code> com <code>icone_sistema</code> 28px + <code>titulo_sistema</code> + <code>TV — Grupo {tv_grupo} (compartilhada)</code> ou <code>TV — Fila {nome} (isolada)</code> ou <code>TV — Todas as filas</code> (sem filtro). Corpo central: <code>lbl_topo AGUARDE CHAMADA</code> + <code>lbl_senha 10vw</code> + <code>lbl_paciente 2.5vw yellow-3</code> + <code>lbl_destino 3vw</code> + <code>lbl_guiche 2vw</code>. <strong>Mídia</strong>: <code>media_container</code> + <code>media_html</code> (audio/video). <strong>Rodapé notícias</strong>: <code>Notícias — agregador</code> + <code>lbl_n_titulo 1.4vw</code> + <code>lbl_n_desc 0.9vw</code> + <code>lbl_n_fonte</code>.</li>
+<li><strong>Chamada com bip+voz só no novo id</strong> (<code>refresh_chamada</code>, <code>telas.py:296-328</code>, <code>ui.timer 3.0</code>): <code>ultima_chamada_tv(fila_id/tv_grupo)</code> (<code>bd_manipulador.py:544-603</code>) → se <code>cid == estado["ultimo_id"]</code> <strong>return</strong> (não repete bip/voz); senão atualiza labels + <code>_js_beep_e_voz(texto)</code> (<code>AudioContext</code> oscilador 880Hz 0.35s + <code>speechSynthesis</code> <code>pt-BR</code> <code>rate 0.9</code> cancelando anterior, sanitize <code>'</code>/<code>"</code>/<code>\n</code>) + <code>media_html = "🔊 Chamada em andamento — mídia pausada"</code> + <code>ui.timer 12.0 _render_midia</code> (retoma). Texto de voz: <code>paciente, senha X, dirigir-se a etapa, fila Y, guichê Z</code>.</li>
+<li><strong>Carrossel notícias</strong> (<code>carregar_noticias</code> + <code>_mostrar_noticia</code>, <code>telas.py:330-357</code>, <code>ui.timer 7.0</code> rotate + <code>120.0</code> reload): <code>listar_para_tv(limite=10)</code> filtrando censuradas (<code>conteudo_palavras_bloqueadas</code>).</li>
+<li><strong>Playlist mídia</strong> (<code>telas.py:282-363</code>): <code>listar_midias(somente_ativas=True)</code> → <code>_render_midia(idx)</code> com <code>src /midia_filas/{basename}</code> (audio <code>controls autoplay loop</code>, video <code>autoplay muted loop controls playsinline max-height:32vh</code>); <code>rotacionar_midia</code> <code>ui.timer 40.0</code> (só quando <code>ultimo_id is None</code> = ociosa) + inicial <code>_render_midia(0)</code>.</li>
 </ul>
 <h3 id="administracao-adminfilas">Administração (<code>/admin/filas</code>)<a class="headerlink" href="#administracao-adminfilas" title="Permanent link">&para;</a></h3>
-<p><code>telas_administracao.py:13-30</code> — <code>bloco_aparencia</code> (cupê "Aparência" <code>filas_*</code>, <code>com_texto_header=True</code>, defaults <code>cor_botao=""</code> → <code>PADROES_TEMA["filas"]</code> <code>#000000</code>) + <code>card_admin("Fila — Esqueleto", icone="queue", chave_modulo="filas", grade=False)</code>: notas "Esqueleto a título de conhecimento…" + "Tabela tb_fila (Geral) já semeada…" + <code>painel_backup(usuario, "filas")</code> (backup do banco <code>db_mod_filas.db</code>, job <code>backup:filas</code> 12h).</p>
+<p><code>telas_administracao.py:18-218</code> — <code>bloco_aparencia</code> (cupê "Aparência" <code>filas_*</code>, <code>com_texto_header=True</code>) + 2 cards + <code>painel_backup</code>.</p>
+<p><strong>Card "Filas — por local/endereço (isoladas por criador, TV por fila ou grupo)"</strong> (<code>queue</code>, <code>grade=False</code>, <code>telas_administracao.py:31-124</code>):
+- Lista <strong>admin vê todas</strong> (<code>listar_filas()</code> todas 13 colunas); card por fila com <code>nome (prefixo+senha) • endereco • descricao • Guichê base • TV isolada/grupo • inicio→fim (∞) • Dono • status</code> + <code>Link TV: /tv...</code> + <code>Abrir TV</code> + <code>Excluir</code> (<code>delete</code>, <code>negative</code>) + edição inline (<code>Nome/Endereço/Descrição/Prefixo/Início/Fim/Guichê/TV grupo</code> + <strong>Salvar</strong> → <code>atualizar_fila</code> com <code>ator</code>). Etapas: por etapa <code>ordem. + input nome + guichê + Salvar/Excluir</code> (<code>atualizar_etapa</code>/<code>excluir_etapa</code>), nova etapa <code>input + Adicionar etapa</code> (<code>criar_etapa</code>). Botões: <code>Recarregar</code>, <code>Abrir TV geral</code> (<code>/tv</code>), <code>Excluir todas as filas</code> (dialog, <code>excluir_todas_filas(eh_admin=True)</code>, Geral preservada).</p>
+<p><strong>Card "Mídia da TV — áudios e vídeos (global para todas as TVs)"</strong> (<code>queue_music</code>, <code>grade=False</code>, <code>telas_administracao.py:126-216</code>):
+- Legenda áudio elevador <code>MP3/WAV/OGG/M4A</code> e vídeo propaganda <code>MP4/WEBM</code> em <code>mod_filas/midia/</code> servidos em <code>/midia_filas/*</code> (global para todas as TVs isoladas/compartilhadas; quando ociosa reproduz playlist em loop, ao chamar pausa). Preview <code>audio controls</code>/<code>video controls</code> + <code>Ativar/Desativar</code> (<code>set_midia_ativa</code>) + <code>Excluir</code> (<code>excluir_midia</code> remove arquivo se dentro de <code>PASTA_MIDIA</code>) + <code>↑/↓</code> (<code>reordenar_midias</code>). Upload <code>ui.upload</code> <code>accept=.mp3,.wav,.ogg,.m4a,.mp4,.webm</code> <code>multiple</code> <code>auto_upload=True</code> → sanitiza nome <code>[^a-zA-Z0-9._-]→_</code> + <code>uuid6</code> + <code>adicionar_midia(nome, tipo, /midia_filas/..., ator)</code>; <code>Recarregar mídia</code> + <code>Preview TV</code> (<code>/tv</code>).</p>
 <ul>
 <li><strong>Versionamento</strong>: <code>versao_modulo:filas</code> no rodapé de <code>/filas</code>.</li>
 </ul>
@@ -304,59 +328,82 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">Ver <code>/filas</code></td>
-<td style="text-align: center;">✓</td>
-<td style="text-align: center;">✓</td>
+<td style="text-align: left;">Ver <code>/filas</code> (multi-filas isoladas)</td>
+<td style="text-align: center;">✓ (só suas)</td>
+<td style="text-align: center;">✓ (todas)</td>
 <td style="text-align: center;">✗ ("Acesso restrito")</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>Chamar próximo</code> (gera senha)</td>
-<td style="text-align: center;">✓</td>
-<td style="text-align: center;">✓</td>
-<td style="text-align: center;">—</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>Abrir TV</code></td>
-<td style="text-align: center;">✓</td>
+<td style="text-align: left;"><code>Criar fila</code> (por local)</td>
+<td style="text-align: center;">✓ (sua)</td>
 <td style="text-align: center;">✓</td>
 <td style="text-align: center;">—</td>
 </tr>
 <tr>
-<td style="text-align: left;">Ver <code>/tv</code></td>
-<td style="text-align: center;">✓ (público, sem login)</td>
+<td style="text-align: left;"><code>Chamar próximo</code> / <code>Avançar</code> (por fila)</td>
+<td style="text-align: center;">✓ só nas suas</td>
+<td style="text-align: center;">✓ todas</td>
+<td style="text-align: center;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>Excluir</code> (uma fila)</td>
+<td style="text-align: center;">✓ só suas (exceto Geral)</td>
+<td style="text-align: center;">✓ (exceto Geral)</td>
+<td style="text-align: center;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>Excluir todas</code></td>
+<td style="text-align: center;"><code>Excluir todas minhas filas</code></td>
+<td style="text-align: center;"><code>Excluir todas as filas</code></td>
+<td style="text-align: center;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>Abrir TV</code> (<code>/tv/{id}</code> isolada ou <code>/tv?grupo=xxx</code> compartilhada)</td>
+<td style="text-align: center;">✓ (pública, sem login)</td>
 <td style="text-align: center;">✓</td>
 <td style="text-align: center;">✓</td>
 </tr>
 <tr>
-<td style="text-align: left;">Ver <code>/admin/filas</code></td>
+<td style="text-align: left;">Ver <code>/tv</code> / <code>/tv/{id}</code></td>
+<td style="text-align: center;">✓ (pública)</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td style="text-align: left;">Ver <code>/admin/filas</code> (todas + mídia global)</td>
 <td style="text-align: center;">✗</td>
 <td style="text-align: center;">✓</td>
 <td style="text-align: center;">✗</td>
 </tr>
 </tbody>
 </table>
-<p>Gate <code>/filas</code>: <code>_pode_acessar</code> (admin geral ou <code>validar_acesso_modulo(user,"filas")</code>). <code>/tv</code> sem gate.</p>
-<p>LGPD: <code>remover_vinculos_usuario</code> (esqueleto, retorna 0 — sem vínculo por usuário ainda), <code>renomear_usuario</code> propaga <code>UPDATE tb_chamada SET chamado_por</code>.</p>
+<p>Gate <code>/filas</code>: <code>_pode_acessar</code> (admin geral ou <code>validar_acesso_modulo(user,"filas")</code>). <code>/tv</code> sem gate. LGPD: <code>remover_vinculos_usuario</code> (0) + <code>renomear_usuario</code> (<code>UPDATE tb_chamada/ tb_fila criado_por</code>).</p>
 <h2 id="rota-e-integracoes">Rota e integrações<a class="headerlink" href="#rota-e-integracoes" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Rotas: <code>/filas</code> (chave <code>filas</code>, ícone <code>queue</code>) — <code>main.py:731-743</code> (<code>pagina_restrita("Filas", chave_modulo="filas")</code> + <code>REGISTRO_MODULOS["filas"] = page_filas</code>); <code>/tv</code> — <code>main.py:745-749</code> (sem guarda). Slugs customizáveis via <code>/configuracoes</code> → aba Módulo (<code>rotas_modulos.montar_rotas_ativas()</code>).</li>
-<li>Auditoria: <code>audit_log</code> (núcleo) → <code>mod_auditoria</code> banco exclusivo <code>db_mod_auditoria.db</code>, tabela <code>tb_auditoria_filas</code> (<code>gerar_senha</code> com <code>fila=id</code>).</li>
-<li>Backup do banco: job <code>backup:filas</code> (<code>backup_horas:filas</code> default 12h, <code>MAPA_BACKUPS</code> inclui <code>filas: db_mod_filas.db</code>).</li>
-<li>Cadastro central: <code>MODULOS_SISTEMA</code> (<code>autenticacao.py:22</code> → <code>("filas","Filas","queue","/filas")</code>), <code>MODULOS_BD</code> (<code>repositorio.py:66</code> → <code>filas: db_mod_filas.db</code>), <code>PADROES_TEMA["filas"]</code> (<code>tema_modulo.py:76</code> → <code>#000000</code>).</li>
+<li>Rotas: <code>/filas</code> (chave <code>filas</code>, ícone <code>queue</code>) — <code>main.py:739-751</code> (<code>pagina_restrita("Filas")</code>); <code>/tv</code> — <code>main.py:753-771</code> (<code>?grupo=</code> compartilhada) + <code>/tv/{fila_id}</code> — <code>main.py:773-778</code> (isolada, resolve grupo). <code>REGISTRO_MODULOS["filas"]=page_filas</code>. Slugs via <code>/configuracoes</code> → aba Módulo (<code>rotas_modulos.montar_rotas_ativas()</code>).</li>
+<li>Auditoria: <code>audit_log</code> → <code>tb_auditoria_filas</code> (<code>criar_fila</code>, <code>atualizar_fila</code>, <code>excluir_fila</code>, <code>gerar_senha</code>, <code>avancar_chamada</code>, <code>excluir_todas_filas</code>, <code>criar_etapa</code> etc.).</li>
+<li>Backup: job <code>backup:filas</code> (<code>backup_horas:filas</code> 12h, <code>MAPA_BACKUPS</code> <code>filas: db_mod_filas.db</code>).</li>
+<li><strong>Integração Agregador</strong>: TV consome <code>listar_para_tv</code> filtrando <code>conteudo_palavras_bloqueadas</code> (censura).</li>
+<li><strong>Mídia</strong>: <code>PASTA_MIDIA = mod_filas/midia</code> + <code>app.add_static_files("/midia_filas", ...)</code> (isFormats <code>mp3/wav/ogg/m4a</code>→<code>audio</code>, <code>mp4/webm</code>→<code>video</code>).</li>
+<li>Cadastro: <code>MODULOS_SISTEMA</code> (<code>autenticacao.py</code>→<code>("filas","Filas","queue","/filas")</code>), <code>MODULOS_BD</code> (<code>filas: db_mod_filas.db</code>), <code>PADROES_TEMA["filas"]</code> (<code>#000000</code>).</li>
 </ul>
 <h2 id="testes">Testes<a class="headerlink" href="#testes" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="c1"># Smoke do módulo (import + init_db + CRUD mínimo)</span>
-.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from mod_filas.bd_manipulador import init_db, listar_filas, gerar_senha; init_db(); print(listar_filas()); print(gerar_senha(1,'master'))"</span>
-<span class="c1"># Playwright (quando coberto)</span>
-.venv/bin/pytest<span class="w"> </span>assets/test/teste_filas.py<span class="w"> </span>-k<span class="w"> </span>filas
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from mod_filas.bd_manipulador import init_db, listar_filas, gerar_senha, criar_fila; init_db(); print(listar_filas()); print(gerar_senha(1,'master')); print(criar_fila('Ambulatório','xyz','desc','A','01','master',1,0,'recepcao'))"</span>
+.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from mod_filas.bd_manipulador import listar_filas_visiveis; print(listar_filas_visiveis('qacomum','comum',False))"</span>
+.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from mod_intranet.censura import definir_palavras_bloqueadas; definir_palavras_bloqueadas(['tinder'], ator='master'); from mod_agregador_noticias.bd_manipulador import listar_para_tv; print(listar_para_tv(3))"</span>
 </code></pre></div>
 <p>Ver <a href="../../analise_mod_filas/">Análise do Módulo</a> e <a href="../../arquitetura/">Arquitetura</a>.</p>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Esqueleto</strong>: fluxo mínimo validado (Geral + A000→A001 + TV); múltiplas filas/prioridade/guichês/som serão acrescidos sem quebrar o contrato <code>gerar_senha(fila_id, ator) → (bool,str)</code> nem a tabela <code>tb_fila</code> (já com <code>status</code>/<code>guiche</code>).</li>
-<li><code>/tv</code> é <strong>pública</strong> (sem login) propositalmente — TV na recepção não tem sessão; se expor fora da rede interna, adicionar gate ou rede/ACL.</li>
-<li><code>tb_chamada.guiche</code> é snapshot do <code>tb_fila.guiche</code> no momento do <code>INSERT ... SELECT guiche FROM tb_fila</code> — mudança posterior de guichê não retroage chamadas.</li>
-<li><code>bd_criador.py</code> morto — nunca executar; schema real é <code>init_db()</code> do <code>bd_manipulador</code>.</li>
+<li><strong>Isolamento por criador</strong>: filas são isoladas por <code>criado_por</code>; comum vê só as suas + legadas (<code>criado_por=''</code>) até serem assumidas; admin geral vê todas. <code>listar_filas_visiveis</code> implementa.</li>
+<li><strong>Numeração infinita</strong>: <code>senha_fim=0</code> = infinito circular; <code>_proxima_senha</code> reinicia em <code>inicio</code> quando <code>prox&gt;fim</code>.</li>
+<li><strong>TV grupo vs isolada</strong>: <code>tv_grupo</code> vazio → <code>/tv/{id}</code>; preenchido → <code>/tv?grupo=xxx</code> compartilhada entre todas do mesmo grupo; <code>ultima_chamada_tv</code> agrega por <code>IN</code> quando <code>tv_grupo</code>.</li>
+<li><strong>Bip+voz só no novo id</strong>: <code>estado["ultimo_id"]</code> evita repetir bip/SpeechSynthesis a cada 3s; <code>speechSynthesis.cancel()</code> + <code>AudioContext</code> 880Hz.</li>
+<li><strong>Mídia global</strong>: playlist <code>tb_midia</code> é global (todas TVs); upload sanitiza + <code>uuid6</code>; <code>excluir_midia</code> só remove dentro de <code>PASTA_MIDIA</code>.</li>
+<li><code>Geral</code> nunca excluível (regra <code>excluir_fila</code>).</li>
+<li><code>/tv</code> pública — TV na recepção sem sessão; se expor fora da rede, adicionar <code>ACL</code>.</li>
+<li><code>tb_chamada.guiche</code> snapshot — não retroage.</li>
+<li><code>bd_criador.py</code> morto.</li>
 </ul>
               
             </div>

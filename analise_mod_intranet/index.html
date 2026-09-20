@@ -170,9 +170,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -193,9 +195,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, esqueleto)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -452,6 +458,15 @@ sistema</strong>: a data atual e de gravação devem vir SEMPRE do servidor (nun
   <code>datetime('now','localtime')</code> no SQL — ver <a href="../analise_mod_solicita_impressao/#hora-do-servidor-fonte-da-verdade-de-datahora">Análise do Módulo de Impressão</a>.</li>
 <li><strong>Robustez</strong>: todas as funções com <code>try/except</code> + loguru (<code>_log()</code> →
   <code>observabilidade.get_logger("intranet")</code>), fail-soft (nunca derruba a hora).</li>
+</ul>
+<h2 id="censura-de-conteudo-palavras-bloqueadas-central-mod_intranetcensurapy">Censura de conteúdo — palavras bloqueadas (central <code>mod_intranet/censura.py</code>)<a class="headerlink" href="#censura-de-conteudo-palavras-bloqueadas-central-mod_intranetcensurapy" title="Permanent link">&para;</a></h2>
+<p>Serviço central de <strong>censura configurável pelo admin</strong> (chave única <code>conteudo_palavras_bloqueadas</code> em <code>tb_config</code> central, via <code>get_config</code>/<code>set_config</code>):</p>
+<ul>
+<li><strong><code>censura.py</code> (<code>mod_intranet/censura.py:1-95</code>, docstring bilíngue EN/PT-BR)</strong>: <code>CHAVE_CONFIG="conteudo_palavras_bloqueadas"</code> · <code>_normalizar(texto)</code> (<code>lower</code> + <code>NFD</code> remove <code>Mn</code> → sem acentos) · <code>obter_palavras_bloqueadas()</code> (lê <code>get_config</code>, suporta CSV/JSON, split <code>re.split(r"[,\n;]+")</code>, <code>lower</code>, sem vazio) · <code>definir_palavras_bloqueadas(lista, ator)</code> (normaliza <code>lower</code>, dedup <code>set</code>, grava CSV <code>", ".join</code>, <code>set_config</code> + <code>audit_log</code> <code>censura/palavras_bloqueadas</code> fail-soft) · <code>titulo_bloqueado(titulo, palavras=None)</code> / <code>filtrar_titulo(titulo)</code> → <code>(bloqueado, palavra)</code> (itera <code>norm_pal in norm_titulo</code>, substring insensível — <code>suicidio</code> bloqueia <code>suicídio</code>).</li>
+<li><strong>Consumo no Blog</strong> (<code>mod_blog/bd_manipulador.py:646-703</code>): <code>criar_postagem</code>/<code>atualizar_postagem</code> verificam <code>titulo_bloqueado(titulo)</code> <strong>antes</strong> de <code>nh3</code>; se bloqueado retornam <code>None</code>/<code>False</code> com <code>warning</code> + <code>notificar</code>.</li>
+<li><strong>Consumo no Agregador</strong> (<code>mod_agregador_noticias/bd_manipulador.py:306-396</code>): <code>inserir_noticia</code> descarta se bloqueado (<code>return False</code>), <code>listar_para_tv</code> filtra (<code>LIMIT*3</code> → <code>titulo_bloqueado</code>), <code>limpar_censuradas()</code> (<code>SELECT id,titulo</code> → <code>titulo_bloqueado</code> → <code>DELETE</code> + <code>audit</code>).</li>
+<li><strong>Admin</strong> (<code>mod_blog/telas_administracao.py:72-106</code> <code>data-testid=blog-palavras-bloqueadas</code> + <code>mod_agregador_noticias/telas_administracao.py:177-223</code> <code>data-testid=agregador-palavras-bloqueadas</code> + botão <code>Remover já censuradas agora</code> <code>data-testid=agregador-limpar-censuradas</code>).</li>
+<li><strong>LGPD/Riscos</strong>: lista compartilhada Blog↔Agregador (TV) — separadores <code>,</code> <code>;</code> <code>\n</code>; <code>audit_log</code> em <code>definir</code>/<code>limpar_censuradas</code>.</li>
 </ul>
 <h2 id="ativacao-e-cli-opcao-c-092026">Ativação e CLI — Opção C (09/2026)<a class="headerlink" href="#ativacao-e-cli-opcao-c-092026" title="Permanent link">&para;</a></h2>
 <blockquote>
