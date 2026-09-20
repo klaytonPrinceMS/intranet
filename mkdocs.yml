@@ -65,7 +65,7 @@ nav:
       - Auditoria: analise_mod_auditoria.md
       - Solicitação de Impressão: analise_mod_solicita_impressao.md
       - Técnico: analise_mod_tecnico.md
-      - Filas (TV, esqueleto): analise_mod_filas.md
+      - Filas (TV, multi-filas): analise_mod_filas.md
       - Lista Telefônica (organograma): analise_mod_lista_telefonica.md
       - Agregador de Notícias: analise_mod_agregador_noticias.md
   - Módulos (resumo):
@@ -77,6 +77,6 @@ nav:
       - Auditoria: modulos/auditoria.md
       - Solicitação de Impressão: modulos/solicitacao_impressao.md
       - Técnico: modulos/tecnico.md
-      - Filas (TV, esqueleto): modulos/filas.md
+      - Filas (TV, multi-filas): modulos/filas.md
       - Lista Telefônica (organograma): modulos/lista_telefonica.md
       - Agregador de Notícias: modulos/agregador_noticias.md

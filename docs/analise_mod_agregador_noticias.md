@@ -77,6 +77,19 @@ Seeds `tb_config` central incluem `agregador_noticias_hora_reinicio` `06:00` (`H
 - **`_get_html(url,timeout=12)`** (`bd_manipulador.py:447-455`): `httpx.get(url, timeout, follow_redirects=True, headers={"User-Agent":"Mozilla/5.0 (IntrAnEt; AgregadorNoticias)"})` → `r.text` se `200` senão `""` (`warning` em exceção).
 - **Parsers** (`parsel.Selector`): Google `".gPFEn, .JtKRv, .a7P8L, article"` + `a::text`/`href` (`.`/`/`→ `https://news.google.com`) + `img::attr(src/data-src)` + `time[datetime]`→`_parse_data_pub` (20); BBC `".bbc-uk8dsi, .bbc-19j92fr, article, a[href*='/portuguese/articles']"` (`/`→ `https://www.bbc.com`) + `time[datetime]` (15); JFP `".td-module-title"` + `time[datetime]`/`.td-post-date` (15); RSS `type="xml"` `item` → `title::text` + `link::text/attr(href)` + `description::text` + `pubDate`/`dc:date`/`published`→`_parse_data_pub` + `media:content::attr(url)` (15); pesquisa Google `https://news.google.com/search?q={quote(termo)}&...` → `_coletar_google`.
 - **LGPD**: notícias públicas sem vínculo por usuário; sem `remover_vinculos` ainda (futuro se necessário).
+- **Censura**: `inserir_noticia` descarta bloqueadas, `listar_para_tv` filtra `LIMIT*3` com `titulo_bloqueado`, `limpar_censuradas` remove já coletadas (`bd_manipulador.py:306-396`).
+
+## Censura de conteúdo — palavras bloqueadas (central `mod_intranet/censura.py`)
+
+Funcionalidade compartilhada Blog ↔ Agregador (chave única `conteudo_palavras_bloqueadas` em `tb_config` central):
+
+- **Núcleo** (`censura.py:1-95`): `CHAVE_CONFIG="conteudo_palavras_bloqueadas"` · `obter_palavras_bloqueadas()` (split `,;\n` + JSON fallback, `lower`) · `definir_palavras_bloqueadas(lista, ator)` (normaliza `lower` dedup, grava CSV via `set_config`, `audit_log` `censura/palavras_bloqueadas`) · `titulo_bloqueado(titulo, palavras=None)` / `filtrar_titulo` → `(bloqueado, palavra)` com `_normalizar` `lower+NFD` sem acentos (`suicidio` bloqueia `suicídio`, substring insensível) — docstring bilíngue EN/PT-BR.
+- **Agregador** (`bd_manipulador.py:399-443` `inserir_noticia` descarta censurada; `328-352` `listar_para_tv` filtra `LIMIT*3` → `titulo_bloqueado`; `354-381` `limpar_censuradas()` remove já coletadas censuradas).
+- **Blog** (`bd_manipulador.py:646-703`): `criar/atualizar` bloqueiam título censurado.
+- **Admin Agregador** (`telas_administracao.py:187-241`): card `Censura de conteúdo — palavras bloqueadas` (`block`, `data-testid=agregador-palavras-bloqueadas`, `textarea` CSV/;/linha, `Salvar censura` `data-testid=agregador-salvar-censura` + `Restaurar`, ao salvar `definir_palavras_bloqueadas` + `limpar_censuradas`) + botão `Remover já censuradas agora` (`data-testid=agregador-limpar-censuradas`).
+- **Admin Blog** (`mod_blog/telas_administracao.py:72-106`): mesmo card (`data-testid=blog-palavras-bloqueadas`).
+- **Normalização**: `lower` + `NFD` remove `Mn` → `suicidio` bloqueia `suicídio`; substring (não exige palavra inteira).
+- **RNF**: persistência `banco_conexao` WAL por módulo, auditoria `censura/palavras_bloqueadas`, segurança `lower+NFD` substring, performance `limpar_censuradas` sem travar TV (TV filtra em `LIMIT*3`), usabilidade textarea CSV/;/linha.
 
 ## Integrações com o núcleo
 

@@ -147,6 +147,14 @@ try:
 except Exception:
     print("[blog] Aviso: não foi possível montar as rotas de /img_postagens")
 
+# ================== MÍDIA DAS FILAS (/midia_filas/*) ==================
+# Áudios MP3 (música elevador) e vídeos MP4 (propaganda) para a TV.
+try:
+    from mod_filas.bd_manipulador import montar_rotas_static as _montar_midia_filas
+    _montar_midia_filas()
+except Exception:
+    print("[filas] Aviso: não foi possível montar as rotas de /midia_filas")
+
 # ================== ROTAS DINÂMICAS DE MÓDULOS (slugs customizados) ==================
 # Permite que a URL de cada página (tb_modulos.rota) seja editada em
 # /configuracoes e re-registrada no servidor sem restart. Os decorators fixos
@@ -744,9 +752,29 @@ if rotas_modulos is not None:
 
 @ui.page("/tv")
 def page_tv():
-    # TV de chamadas — acesso livre na rede (sem login), esqueleto
+    # TV de chamadas — acesso livre na rede (sem login), suporta ?grupo=xxx para TV compartilhada e /tv/{id} para isolada
     from mod_filas.telas import mostrar_tv
+    # query param grupo para TV compartilhada
+    try:
+        from nicegui import context as _ctx
+        grupo = None
+        try:
+            grupo = _ctx.client.request.query_params.get("grupo")
+        except Exception:
+            grupo = None
+        if grupo:
+            mostrar_tv(tv_grupo=grupo)
+            return
+    except Exception:
+        pass
     mostrar_tv()
+
+
+@ui.page("/tv/{fila_id}")
+def page_tv_fila(fila_id: int):
+    # TV isolada por fila (não interfere em outra) — também resolve grupo compartilhado se fila pertence a grupo
+    from mod_filas.telas import mostrar_tv
+    mostrar_tv(fila_id=fila_id)
 
 
 @ui.page("/lista-telefonica")

@@ -1,11 +1,19 @@
-"""Agregador de Notícias — BD próprio, coleta multi-fonte, limpeza 24h.
+"""News aggregator — own DB, multi-source scrapy-like collection, 24h recycle.
+
+EN: News aggregator with own DB db_mod_agregador_noticias.db (WAL). Table
+    tb_noticia (title/source/theme/url UNIQUE/image/description/dates), sources
+    Google News + BBC + JFP + generic RSS configurable by admin, httpx+parsel
+    collection interval 10min–6h with enabled flag, daily recycle at 06:00,
+    censorship via titulo_bloqueado (conteudo_palavras_bloqueadas).
+
+Agregador de Notícias — BD próprio, coleta multi-fonte, limpeza 24h.
 
 BD: db_mod_agregador_noticias.db (WAL)
 Tabelas: tb_noticia (titulo, fonte, tema, url UNIQUE, imagem_url, descricao, data_publicacao, data_coleta)
 Fontes: Google News + BBC + JFP + RSS genérico, configuráveis pelo admin (conteúdo da pesquisa).
 Coleta via httpx+parsel (scrapy-like) com intervalo 10min–6h, habilitado por flag.
 Limpeza: DELETE WHERE data_coleta < now-24h (reiniciado 24/24h).
-Integração: API listar_para_tv() usada pelo mod_filas TV.
+Integração: API listar_para_tv() usada pelo mod_filas TV (filtra censura).
 """
 
 import os
@@ -217,11 +225,19 @@ def init_db():
             tema TEXT NOT NULL DEFAULT 'Geral',
             url TEXT NOT NULL UNIQUE,
             imagem_url TEXT DEFAULT '',
+            fonte_icon_url TEXT DEFAULT '',
             descricao TEXT DEFAULT '',
             data_publicacao DATETIME,
             data_coleta DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # migração idempotente para BDs antigos sem fonte_icon_url
+    try:
+        cols = [c[1] for c in cur.execute("PRAGMA table_info(tb_noticia)").fetchall()]
+        if "fonte_icon_url" not in cols:
+            cur.execute("ALTER TABLE tb_noticia ADD COLUMN fonte_icon_url TEXT DEFAULT ''")
+    except Exception:
+        pass
     cur.execute("CREATE INDEX IF NOT EXISTS idx_noticia_tema ON tb_noticia(tema)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_noticia_fonte ON tb_noticia(fonte)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_noticia_data ON tb_noticia(data_coleta)")
@@ -317,9 +333,9 @@ def listar_noticias(tema=None, limite=30, offset=0):
         cur = conn.cursor()
         # ordena por tempo real da postagem (data_publicacao) com fallback data_coleta
         if tema:
-            cur.execute("SELECT id, titulo, fonte, tema, url, imagem_url, descricao, data_publicacao, data_coleta FROM tb_noticia WHERE tema=? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ? OFFSET ?", (tema, limite, offset))
+            cur.execute("SELECT id, titulo, fonte, tema, url, imagem_url, fonte_icon_url, descricao, data_publicacao, data_coleta FROM tb_noticia WHERE tema=? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ? OFFSET ?", (tema, limite, offset))
         else:
-            cur.execute("SELECT id, titulo, fonte, tema, url, imagem_url, descricao, data_publicacao, data_coleta FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ? OFFSET ?", (limite, offset))
+            cur.execute("SELECT id, titulo, fonte, tema, url, imagem_url, fonte_icon_url, descricao, data_publicacao, data_coleta FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ? OFFSET ?", (limite, offset))
         return cur.fetchall()
     finally:
         conn.close()
@@ -331,7 +347,7 @@ def listar_para_tv(limite=10):
     try:
         cur = conn.cursor()
         # pega mais que limite para filtrar censuradas sem perder slots, ordena por data real da postagem
-        cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (limite * 3,))
+        cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (limite * 3,))
         rows = cur.fetchall()
         # filtra censura
         try:
@@ -346,7 +362,7 @@ def listar_para_tv(limite=10):
             rows = filtradas
         except Exception:
             rows = rows[:limite]
-        return [{"titulo": r[0], "descricao": r[1] or r[0], "url": r[2], "imagem": r[3], "fonte": r[4], "tema": r[5]} for r in rows[:limite]]
+        return [{"titulo": r[0], "descricao": r[1] or r[0], "url": r[2], "imagem": r[3], "fonte": r[4], "tema": r[5], "fonte_icon": r[6] if len(r) > 6 else ""} for r in rows[:limite]]
     finally:
         conn.close()
 
@@ -396,7 +412,7 @@ def limpar_antigas(horas=24):
         conn.close()
 
 
-def inserir_noticia(titulo, fonte, tema, url, imagem_url="", descricao="", data_publicacao=None):
+def inserir_noticia(titulo, fonte, tema, url, imagem_url="", descricao="", data_publicacao=None, fonte_icon_url=""):
     if not titulo or not url:
         return False
     # censura
@@ -433,9 +449,9 @@ def inserir_noticia(titulo, fonte, tema, url, imagem_url="", descricao="", data_
             if _norm_tit(t_exist) == titulo_norm:
                 return False
         cur.execute("""
-            INSERT OR IGNORE INTO tb_noticia (titulo, fonte, tema, url, imagem_url, descricao, data_publicacao)
-            VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
-        """, (titulo, fonte[:100], tema[:50] or "Geral", url, imagem_url[:2000] or "", descricao[:1000] or "", data_publicacao))
+            INSERT OR IGNORE INTO tb_noticia (titulo, fonte, tema, url, imagem_url, fonte_icon_url, descricao, data_publicacao)
+            VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
+        """, (titulo, fonte[:100], tema[:50] or "Geral", url, imagem_url[:2000] or "", fonte_icon_url[:2000] or "", descricao[:1000] or "", data_publicacao))
         conn.commit()
         return cur.rowcount > 0
     finally:
@@ -487,12 +503,35 @@ def _coletar_google(url: str, fonte_nome: str, tema: str) -> int:
                     data_pub = _parse_data_pub(raw_time) if raw_time else None
             else:
                 data_pub = _parse_data_pub(raw_time)
-            img = (a.xpath("ancestor::div[1]//img/@src").get() or a.xpath("ancestor::div[2]//img/@src").get() or "").strip()
-            # se ainda sem data, tenta seguir redirecionamento e extrair meta do artigo (fallback leve)
-            if not data_pub:
-                # tenta buscar data via og:published_time no HTML do resumo (se disponível, mas evita request extra por performance)
-                data_pub = None
-            if inserir_noticia(txt, f"Google News - {fonte_nome}", tema, href, img, txt, data_pub):
+            # tenta extrair imagem do artigo (prioridade /api/attachments) e ícone da fonte (faviconV2)
+            # busca em ancestrais que contêm o bloco da notícia (IBr9hb ou similar)
+            img_article = ""
+            fonte_icon = ""
+            # procura em até 3 níveis de ancestral que contenham o bloco
+            for level in [2, 3, 1]:
+                anc = a.xpath(f"ancestor::div[{level}]")
+                if anc:
+                    # tenta artigo: img com /api/attachments ou lh3.googleusercontent
+                    cand = anc.xpath(".//img[contains(@src,'/api/attachments') or contains(@src,'lh3.googleusercontent')]/@src").get()
+                    if cand and not img_article:
+                        img_article = cand.strip()
+                    # tenta favicon
+                    cand_fav = anc.xpath(".//img[contains(@src,'faviconV2')]/@src").get()
+                    if cand_fav and not fonte_icon:
+                        fonte_icon = cand_fav.strip()
+                    if img_article and fonte_icon:
+                        break
+            # fallback: busca genérica se não achou
+            if not img_article:
+                img_article = (a.xpath("ancestor::div[1]//img/@src").get() or a.xpath("ancestor::div[2]//img/@src").get() or "").strip()
+                # se for favicon, não usar como artigo
+                if "faviconV2" in img_article:
+                    fonte_icon = img_article
+                    img_article = ""
+            if not fonte_icon:
+                fonte_icon = (a.xpath("ancestor::div[1]//img[contains(@src,'faviconV2')]/@src").get() or "").strip()
+            data_pub = data_pub  # já definido acima
+            if inserir_noticia(txt, f"Google News - {fonte_nome}", tema, href, img_article, txt, data_pub, fonte_icon):
                 n += 1
             if n >= 20:
                 break
@@ -508,9 +547,12 @@ def _coletar_google(url: str, fonte_nome: str, tema: str) -> int:
                 elif href.startswith("/"):
                     href = "https://news.google.com" + href
                 img = (x.css("img::attr(src)").get() or x.css("img::attr(data-src)").get() or "").strip()
+                # separa favicon vs artigo
+                fonte_ic = img if "faviconV2" in img else ""
+                art_img = "" if "faviconV2" in img else img
                 raw_time = (x.css("time::attr(datetime)").get() or x.css("time::text").get() or x.css("[datetime]::attr(datetime)").get() or "").strip()
                 data_pub = _parse_data_pub(raw_time) if raw_time else None
-                if inserir_noticia(txt, f"Google News - {fonte_nome}", tema, href, img, txt, data_pub):
+                if inserir_noticia(txt, f"Google News - {fonte_nome}", tema, href, art_img, txt, data_pub, fonte_ic):
                     n += 1
                 if n >= 20:
                     break

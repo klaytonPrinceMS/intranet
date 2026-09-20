@@ -11,6 +11,7 @@ class Noticia:
     tema: str
     url: str
     imagem_url: str
+    fonte_icon_url: str
     descricao: str
     data_publicacao: str
     data_coleta: str

@@ -69,6 +69,41 @@ def mostrar_administracao(usuario_logado: str, pode_publicar: bool):
     bloco_aparencia(usuario_logado, "blog", tema,
                     prefixo_auditoria="blog", com_texto_header=False)
 
+    # ---- Censura — palavras bloqueadas em títulos ----
+    with card_admin("Censura de conteúdo — palavras bloqueadas", icone="block",
+                    chave_modulo="blog", extra_classes="mt-2", grade=False):
+        ui.label("Títulos que contenham estas palavras serão bloqueados na criação/edição (ex: tinder, suicídio). Separe por vírgula ou linha. Vale para Blog e Agregador (TV).").classes("text-caption text-grey-6")
+        from mod_intranet.censura import obter_palavras_bloqueadas, definir_palavras_bloqueadas
+        palavras_atuais = ", ".join(obter_palavras_bloqueadas())
+        inp_censura = ui.textarea("Palavras bloqueadas", value=palavras_atuais, placeholder="ex: tinder, suicidio, aposta, pornografia").props("outlined dense").classes("w-full").props('data-testid=blog-palavras-bloqueadas')
+        inp_censura.tooltip("Palavras insensíveis a maiúscula/acentos; substring — 'suicidio' bloqueia 'suicídio'")
+
+        def salvar_censura():
+            lista = [p.strip() for p in (inp_censura.value or "").replace("\n", ",").split(",") if p.strip()]
+            # também suporta ; e linha
+            tmp = []
+            for item in lista:
+                tmp.extend([x.strip() for x in item.split(";") if x.strip()])
+            lista = tmp
+            ok = definir_palavras_bloqueadas(lista, ator=usuario_logado)
+            notificar("Lista de censura salva" if ok else "Falha ao salvar", type="positive" if ok else "negative")
+            if ok:
+                try:
+                    from mod_agregador_noticias.bd_manipulador import limpar_censuradas
+                    n = limpar_censuradas()
+                    if n:
+                        notificar(f"{n} notícias censuradas removidas do agregador", type="info")
+                except Exception:
+                    pass
+
+        def restaurar_censura():
+            definir_palavras_bloqueadas([], ator=usuario_logado)
+            inp_censura.value = ""
+            inp_censura.update()
+            notificar("Censura removida — nenhuma palavra bloqueada", type="positive")
+
+        rodape_salvar_restaurar(salvar_censura, restaurar=restaurar_censura, chave_modulo="blog", rotulo_salvar="Salvar censura", data_testid="blog-salvar-censura")
+
     # ---- Configurações específicas ----
     with card_admin("Configurações específicas", icone="tune",
                     chave_modulo="blog", extra_classes="mt-2", grade=False):

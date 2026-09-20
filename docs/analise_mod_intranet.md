@@ -176,6 +176,16 @@ sistema**: a data atual e de gravação devem vir SEMPRE do servidor (nunca do n
 - **Robustez**: todas as funções com `try/except` + loguru (`_log()` →
   `observabilidade.get_logger("intranet")`), fail-soft (nunca derruba a hora).
 
+## Censura de conteúdo — palavras bloqueadas (central `mod_intranet/censura.py`)
+
+Serviço central de **censura configurável pelo admin** (chave única `conteudo_palavras_bloqueadas` em `tb_config` central, via `get_config`/`set_config`):
+
+- **`censura.py` (`mod_intranet/censura.py:1-95`, docstring bilíngue EN/PT-BR)**: `CHAVE_CONFIG="conteudo_palavras_bloqueadas"` · `_normalizar(texto)` (`lower` + `NFD` remove `Mn` → sem acentos) · `obter_palavras_bloqueadas()` (lê `get_config`, suporta CSV/JSON, split `re.split(r"[,\n;]+")`, `lower`, sem vazio) · `definir_palavras_bloqueadas(lista, ator)` (normaliza `lower`, dedup `set`, grava CSV `", ".join`, `set_config` + `audit_log` `censura/palavras_bloqueadas` fail-soft) · `titulo_bloqueado(titulo, palavras=None)` / `filtrar_titulo(titulo)` → `(bloqueado, palavra)` (itera `norm_pal in norm_titulo`, substring insensível — `suicidio` bloqueia `suicídio`).
+- **Consumo no Blog** (`mod_blog/bd_manipulador.py:646-703`): `criar_postagem`/`atualizar_postagem` verificam `titulo_bloqueado(titulo)` **antes** de `nh3`; se bloqueado retornam `None`/`False` com `warning` + `notificar`.
+- **Consumo no Agregador** (`mod_agregador_noticias/bd_manipulador.py:306-396`): `inserir_noticia` descarta se bloqueado (`return False`), `listar_para_tv` filtra (`LIMIT*3` → `titulo_bloqueado`), `limpar_censuradas()` (`SELECT id,titulo` → `titulo_bloqueado` → `DELETE` + `audit`).
+- **Admin** (`mod_blog/telas_administracao.py:72-106` `data-testid=blog-palavras-bloqueadas` + `mod_agregador_noticias/telas_administracao.py:177-223` `data-testid=agregador-palavras-bloqueadas` + botão `Remover já censuradas agora` `data-testid=agregador-limpar-censuradas`).
+- **LGPD/Riscos**: lista compartilhada Blog↔Agregador (TV) — separadores `,` `;` `\n`; `audit_log` em `definir`/`limpar_censuradas`.
+
 ## Ativação e CLI — Opção C (09/2026)
 
 > **Boot sem argumentos → config persistida; `--config` → wizard; demais flags via Typer com prefixos semânticos.**

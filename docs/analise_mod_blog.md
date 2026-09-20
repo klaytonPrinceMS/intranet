@@ -40,9 +40,20 @@ Criador vigente: `init_db()` em `bd_manipulador.py:96-143` (bootstrap central).
 - **Gestão de despublicadas**: aba Administração lista postagens inativas (`listar_postagens(ativo=False)`) com botão **Republicar** (`publicar_postagem`).
 - Soft delete: postagens inativas saem da lista pública; comentários só são removidos fisicamente por cascade quando a postagem é deletada fisicamente (fluxo da limpeza cruzada do módulo de usuários).
 
+## Censura de conteúdo — palavras bloqueadas (central `mod_intranet/censura.py`)
+
+Funcionalidade compartilhada Blog ↔ Agregador (chave única `conteudo_palavras_bloqueadas` em `tb_config` central):
+
+- **Núcleo** (`censura.py:1-95`): `CHAVE_CONFIG="conteudo_palavras_bloqueadas"` · `obter_palavras_bloqueadas()` (split `,;\n` + JSON fallback, `lower`) · `definir_palavras_bloqueadas(lista, ator)` (normaliza `lower` dedup, grava CSV via `set_config`, `audit_log` `censura/palavras_bloqueadas`) · `titulo_bloqueado(titulo, palavras=None)` / `filtrar_titulo` → `(bloqueado, palavra)` com `_normalizar` `lower+NFD` semacentos (`suicidio` bloqueia `suicídio`, substring insensível) — docstring bilíngue EN/PT-BR.
+- **Blog** (`bd_manipulador.py:646-703`): `criar_postagem` e `atualizar_postagem` verificam `titulo_bloqueado(titulo)` **antes** de `nh3`; se bloqueado retornam `None`/`False` com `warning` + `notificar("Título contém palavra bloqueada: '...'")` e não sanitizam/gravam.
+- **Agregador** (`bd_manipulador.py:353-396` `inserir_noticia` descarta se bloqueado; `280-303` `listar_para_tv` filtra `LIMIT*3` → `titulo_bloqueado`; `306-334` `limpar_censuradas()` remove já coletadas censuradas).
+- **Admin Blog** (`telas_administracao.py:72-106`): card `Censura de conteúdo — palavras bloqueadas` (`block`, `data-testid=blog-palavras-bloqueadas`, `textarea` CSV/;/linha, `Salvar censura` `data-testid=blog-salvar-censura` + `Restaurar`, ao salvar `definir_palavras_bloqueadas` + `limpar_censuradas` do agregador).
+- **Admin Agregador** (`mod_agregador_noticias/telas_administracao.py:177-223`): mesmo card (`data-testid=agregador-palavras-bloqueadas`) + botão `Remover já censuradas agora` (`data-testid=agregador-limpar-censuradas`, `limpar_censuradas()`).
+- **Normalização**: `lower` + `NFD` remove `Mn` → `suicidio` bloqueia `suicídio`; substring (não exige palavra inteira).
+
 ## Integrações com o núcleo
 
-Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na trilha via `audit_log` (banco exclusivo `db_mod_auditoria.db`, tabela `tb_auditoria_blog`) para criar/alterar/despublicar/republicar/excluir postagens e comentários. Config de aparência na `tb_config` central (prefixo `blog_*`); config de comportamento na `tb_config` LOCAL do módulo. Consumido pelo núcleo: bootstrap cria o banco, scheduler faz backup e o dashboard usa `contar_postagens(ativo=True)`.
+Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na trilha via `audit_log` (banco exclusivo `db_mod_auditoria.db`, tabela `tb_auditoria_blog`) para criar/alterar/despublicar/republicar/excluir postagens e comentários. Config de aparência na `tb_config` central (prefixo `blog_*`); config de comportamento na `tb_config` LOCAL do módulo. Consumido pelo núcleo: bootstrap cria o banco, scheduler faz backup e o dashboard usa `contar_postagens(ativo=True)`. Censura via `mod_intranet/censura.titulo_bloqueado` + chave central `conteudo_palavras_bloqueadas`.
 
 ## Pontos de atenção
 

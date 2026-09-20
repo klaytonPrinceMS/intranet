@@ -649,10 +649,24 @@ def mover_mermaid_para_fim(conteudo):
 def criar_postagem(titulo, conteudo, autor):
     """Creates a post (sanitized) after checking publish permission.
 
-    Valida permissão (`_pode_publicar`), move ```mermaid para o fim,
-    sanitiza título e conteúdo com nh3, grava no banco próprio, audita
-    `criar_postagem` e registra no loguru. Retorna o id criado ou None
-    em falha/sem permissão."""
+    Valida permissão (`_pode_publicar`), censura (palavras bloqueadas no
+    título), move ```mermaid para o fim, sanitiza título e conteúdo com nh3,
+    grava no banco próprio, audita `criar_postagem` e registra no loguru.
+    Retorna o id criado ou None em falha/sem permissão/bloqueado."""
+    # censura: título não pode conter palavra bloqueada (admin configura em /admin/blog)
+    try:
+        from mod_intranet.censura import titulo_bloqueado
+        bloqueado, palavra = titulo_bloqueado(titulo or "")
+        if bloqueado:
+            _log().warning(f"postagem bloqueada por censura: palavra '{palavra}' no título '{titulo}' por {autor}")
+            try:
+                from mod_intranet.tema_modulo import notificar as _not
+                _not(f"Título contém palavra bloqueada: '{palavra}'", type="negative")
+            except Exception:
+                pass
+            return None
+    except Exception:
+        pass
     titulo_sanitizado = _sanitizar_texto(titulo)
     conteudo_sanitizado = _sanitizar_texto(mover_mermaid_para_fim(conteudo))
     post_id = _crud.criar(
@@ -668,9 +682,17 @@ def criar_postagem(titulo, conteudo, autor):
 def atualizar_postagem(id_post, titulo, conteudo, autor):
     """Updates title/content (sanitized) after checking permission. Returns bool.
 
-    Valida permissão, move ```mermaid para o fim, sanitiza com nh3, atualiza
-    `data_atualizacao` e audita `atualizar_postagem`. False em falha/sem
-    permissão/postagem inexistente."""
+    Valida permissão e censura do título, move ```mermaid para o fim,
+    sanitiza com nh3, atualiza `data_atualizacao` e audita. False em
+    falha/sem permissão/bloqueado/postagem inexistente."""
+    try:
+        from mod_intranet.censura import titulo_bloqueado
+        bloqueado, palavra = titulo_bloqueado(titulo or "")
+        if bloqueado:
+            _log().warning(f"atualização bloqueada por censura: palavra '{palavra}' no título '{titulo}' por {autor}")
+            return False
+    except Exception:
+        pass
     titulo_sanitizado = _sanitizar_texto(titulo)
     conteudo_sanitizado = _sanitizar_texto(mover_mermaid_para_fim(conteudo))
     afetadas = _crud.atualizar(

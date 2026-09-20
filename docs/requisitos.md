@@ -127,6 +127,7 @@ Fonte: `requirements.txt` (raiz).
 | Modo de exibição histórico OU publicação única (config local `blog_modo_exibicao`) | ✅ Implementado |
 | Gestão de postagens despublicadas com republicar (aba Administração) | ✅ Implementado |
 | Somente-leitura para `comum` (UI esconde + backend valida em toda escrita) | ✅ Implementado |
+| Censura de conteúdo — palavras bloqueadas (`mod_intranet/censura.py` `conteudo_palavras_bloqueadas`, `titulo_bloqueado` `lower+NFD` sem acentos, `criar/atualizar` bloqueia `None/False` antes de `nh3`, card `blog-palavras-bloqueadas` + `Salvar censura` + `limpar_censuradas` no agregador) | ✅ Implementado |
 | Comentários (só admins escrevem; leitura para todos) | ✅ Implementado |
 | Feed do Blog no dashboard `/` (RF-09) | ✅ Implementado |
 
@@ -206,16 +207,18 @@ Fonte: `requirements.txt` (raiz).
 | LGPD `remover_vinculos_usuario`/`renomear_usuario` + auditoria `tb_auditoria_tecnico` | ✅ Implementado |
 | Administração `/admin/tecnico` (aparência + `tecnico_max_zip_mb` + painel backup) | ✅ Implementado |
 
-### Filas — TV (`mod_filas`) — esqueleto 18/09/2026
+### Filas — TV (`mod_filas`) — multi-filas 09/2026
 
 | Requisito | Situação |
 |:---|:---:|
-| Banco `db_mod_filas.db` (`tb_fila`/`tb_chamada`) + seed `Geral A000` | ✅ Implementado (esqueleto) |
-| `gerar_senha(fila_id, ator)` incremento `A000→A001` (`[A-Za-z]*\d+` → `:03d`) + `ultima_chamada()`/`listar_chamadas` | ✅ Implementado |
-| Painel `/filas` + preview + `Abrir TV` + `/tv` pública (full-screen `h-screen bg-black`, auto-refresh 3s + beep `AudioContext`) | ✅ Implementado |
-| LGPD `remover`/`renomear` + auditoria `tb_auditoria_filas` | ✅ Implementado |
-| Administração `/admin/filas` (aparência + backup) | ✅ Implementado |
-| Regras avançadas (múltiplas filas, prioridade, guichês dinâmicos) | ⏳ Pendente (esqueleto a título de conhecimento) |
+| Banco `db_mod_filas.db` (`tb_fila` + `tb_fila_etapa` + `tb_chamada` + `tb_midia` + `tb_config_filas`) + seed `Geral A000` + 3 etapas padrão + `PASTA_MIDIA` `mod_filas/midia` | ✅ Implementado |
+| `criar_fila` por local (`endereco/prefixo/senha_inicio/fim` `fim=0` infinito, `criado_por`, `tv_grupo`) + `listar_filas_visiveis` isolamento por criador vs `administrador_geral` + `atualizar/excluir` + `excluir_todas_filas` (exceto Geral) | ✅ Implementado |
+| `gerar_senha(fila_id, ator, paciente_nome, etapa_nome)` + `_proxima_senha` infinito (`fim=0`) + `avancar_chamada` sequencial + `ultima_chamada_tv` (`fila_id`/`tv_grupo` `IN`) | ✅ Implementado |
+| Painel `/filas` multi-filas isolado (criar + card por fila + etapas + `Chamar próximo` + histórico isolado + `Avançar`) + `Excluir todas` | ✅ Implementado |
+| TV `/tv` (`?grupo=` compartilhada) + `/tv/{fila_id}` (isolada) full-screen `h-screen bg-black`, ícone padrão intranet, auto-refresh 3s `AudioContext` bip + `speechSynthesis pt-BR` só novo `id`, playlist `/midia_filas` (áudio elevador/vídeo propaganda, 40s rotação quando ociosa, pausada ao chamar) + carrossel notícias censura-filtrado | ✅ Implementado |
+| LGPD `remover`/`renomear` (`criado_por` + `chamado_por`) + auditoria `tb_auditoria_filas` | ✅ Implementado |
+| Administração `/admin/filas` 2 cards (Filas por local + Mídia TV global `/midia_filas`, upload sanitizado + `uuid6`, `Ativar/Desativar`, `↑/↓`) | ✅ Implementado |
+| Censura filtrada na TV (`listar_para_tv` `conteudo_palavras_bloqueadas`) | ✅ Implementado |
 
 ### Lista Telefônica (`mod_lista_telefonica`) — novo 19/09/2026
 
@@ -228,6 +231,20 @@ Fonte: `requirements.txt` (raiz).
 | Admin: criar/mover/elevar/rebaixar/reordenar/comutar/excluir ramo (cascata `_coletar_ramo_ids` + FK CASCADE) + incluir via usuários (busca `on_value_change` por login/nome/e-mail) | ✅ Implementado |
 | LGPD `remover_vinculos_usuario`/`renomear_usuario` + auditoria `tb_auditoria_lista_telefonica` | ✅ Implementado |
 | Administração `/admin/lista_telefonica` (aparência + 2 cards + painel backup) + export `ORGANOGRAMA_BASE` para `solicita_impressao` 1000/200 | ✅ Implementado |
+
+### Agregador de Notícias (`mod_agregador_noticias`) — 19/09/2026 + censura 09/2026
+
+| Requisito | Situação |
+|:---|:---:|
+| Banco `db_mod_agregador_noticias.db` (`tb_noticia` 11 colunas, `data_publicacao` real via `_parse_data_pub`, `data_coleta`, índices `tema/fonte/data`) + seeds `tb_config` (`habilitado 0`, `intervalo 60`, `temas_json`, `fontes_json`, `hora_reinicio 06:00`) | ✅ Implementado |
+| Coleta scrapy-like `httpx+parsel` Google/BBC/JFP/RSS + pesquisa termo livre + `UA Mozilla` + `timeout 12s` + deduplicação `_norm_tit` NFKD + `SELECT url` antes de `INSERT OR IGNORE` | ✅ Implementado |
+| Habilitado flag + intervalo 10–360 clamp + termo livre + fontes/temas `json` configuráveis sem restart | ✅ Implementado |
+| Hora reinício `06:00` configurável + reinício diário `CronTrigger` `reiniciar_banco` `DELETE` + `Zerar agora` (`agregador-reiniciar-agora`) — sem backup | ✅ Implementado |
+| Paginação 10 (`pagina` `por_pagina=10` `total_pag` `offset`, `ORDER BY COALESCE(data_publicacao, data_coleta) DESC`, botões `agregador-primeira/anterior/proxima/ultima`) + 3 colunas masonry (`30x30` `object-cover` `fit=cover`, `badge tema`, `ui.link new_tab`, `descricao`, `_tempo_relativo` real) | ✅ Implementado |
+| `listar_para_tv(limite=10)` `LIMIT*3` filtrado por censura + carrossel TV 7s/120s + `habilitado` placeholder | ✅ Implementado |
+| Censura: `inserir_noticia` descarta se `titulo_bloqueado` + `listar_para_tv` filtra `LIMIT*3` → `titulo_bloqueado` + `limpar_censuradas()` remove já coletadas (`titulo_bloqueado` `lower+NFD` substring, `conteudo_palavras_bloqueadas`) — card `agregador-palavras-bloqueadas` + `agregador-limpar-censuradas` + `agregador-salvar-censura` | ✅ Implementado |
+| Admin 5 cards (Coleta + Fontes + Temas + Censura + Reinício diário) — `agregador-habilitado`/`agregador-intervalo`/`agregador-termo`/`agregador-hora-reinicio` + `agregador-add-fonte` + `agregador-palavras-bloqueadas` | ✅ Implementado |
+| `coletar_todas(ator, forcar)` + `limpar_antigas(24)` + `reiniciar_banco` + `reconfigurar_agregador_noticias()` (`CronTrigger hora`) + auditoria só `definir_*`/`reiniciar_banco` | ✅ Implementado |
 
 ## Requisitos não funcionais (status real)
 

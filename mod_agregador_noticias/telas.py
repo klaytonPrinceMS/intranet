@@ -40,9 +40,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
     t_cor_fundo = tema["cor_fundo"]
     t_texto_header = tema["texto_header"]
 
-    # Filtro por tema
+    # Filtro por tema + busca
     temas = ag.temas_config()
-    estado = {"tema": ""}
+    estado = {"tema": "", "busca": "", "pagina": 1}
 
     def _tempo_relativo(data_str: str) -> str:
         """Converte data ISO para texto relativo: 3 minutos atrás, 2 semanas etc."""
@@ -118,8 +118,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
 
         with ui.row().classes("w-full items-center gap-3 flex-wrap bg-white rounded-lg shadow-sm px-3 py-2"):
             ui.icon("newspaper").classes("text-grey-6")
-            sel_tema = ui.select({"": "Todos os temas"} | {t: t for t in temas}, value="", label="Filtrar por tema").props("outlined dense").classes("min-w-[220px]").props('data-testid=agregador-filtro-tema')
-            ui.label(f"Coleta: {'ativa' if ag.habilitado() else 'desabilitada'} • intervalo {ag.intervalo_min()} min • {ag.contar_noticias()} notícias (24h)").classes("text-caption text-grey-6")
+            sel_tema = ui.select({"": "Todos os temas"} | {t: t for t in temas}, value="", label="Filtrar por tema").props("outlined dense").classes("min-w-[200px]").props('data-testid=agregador-filtro-tema')
+            inp_busca = ui.input(placeholder="Buscar palavra…", value="").props("outlined dense clearable debounce='300'").classes("min-w-[220px] flex-1").props('data-testid=agregador-busca')
+            inp_busca.tooltip("Pesquisar entre as notícias por palavra no título/descrição")
             def _atualizar():
                 grid.refresh()
             botao("Atualizar", icone="refresh", on_click=_atualizar, variante="texto", chave_modulo="agregador_noticias").props('data-testid=agregador-atualizar')
@@ -147,22 +148,37 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 botao("Coletar agora", icone="sync", on_click=_coletar, variante="primario", chave_modulo="agregador_noticias").props('data-testid=agregador-coletar')
 
         # Paginação 10 por página, mais atual → mais antiga (ORDER BY data_publicacao DESC)
-        estado["pagina"] = 1
-
+        # estado já contém pagina e busca
         @ui.refreshable
         def grid():
             tema_f = estado["tema"] or None
-            # total para paginação
-            total = ag.contar_noticias(tema=tema_f)
+            busca = (estado.get("busca") or "").strip()
+            # total para paginação (com busca)
+            if busca:
+                # busca em memória para contar filtrado (sem acentos, lower)
+                todas = ag.listar_noticias(tema=tema_f, limite=500, offset=0)
+                # filtra por palavra no título/descrição/fonte/tema
+                import unicodedata
+                def _norm(s):
+                    s = unicodedata.normalize("NFKD", s or "").encode("ascii","ignore").decode().lower()
+                    return s
+                busca_n = _norm(busca)
+                filtradas = [n for n in todas if busca_n in _norm(n[1]) or busca_n in _norm(n[6] or "") or busca_n in _norm(n[2] or "") or busca_n in _norm(n[3] or "")]
+                total = len(filtradas)
+            else:
+                total = ag.contar_noticias(tema=tema_f)
             por_pagina = 10
             total_pag = max(1, (total + por_pagina - 1) // por_pagina)
-            # ajusta página se fora do intervalo
             if estado["pagina"] > total_pag:
                 estado["pagina"] = total_pag
             if estado["pagina"] < 1:
                 estado["pagina"] = 1
             offset = (estado["pagina"] - 1) * por_pagina
-            noticias = ag.listar_noticias(tema=tema_f, limite=por_pagina, offset=offset)
+            if busca:
+                # pagina sobre filtradas
+                noticias = filtradas[offset:offset+por_pagina]
+            else:
+                noticias = ag.listar_noticias(tema=tema_f, limite=por_pagina, offset=offset)
             if not noticias:
                 with ui.card().classes("w-full p-8 items-center"):
                     ui.icon("article", size="48px").classes("text-grey-4")
@@ -189,7 +205,12 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             estado["tema"] = e.value or ""
             estado["pagina"] = 1
             grid.refresh()
-        # rebind _on_tema after grid defined
         sel_tema.on_value_change(_on_tema)
+
+        def _on_busca(e):
+            estado["busca"] = e.value or ""
+            estado["pagina"] = 1
+            grid.refresh()
+        inp_busca.on_value_change(_on_busca)
 
         grid()
