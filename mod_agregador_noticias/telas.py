@@ -93,31 +93,24 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         nid, titulo, fonte, tema_n, url, img, desc, data_pub, data_col = n
         href = url or "#"
         with ui.card().classes("w-full overflow-hidden hover:shadow-lg transition-shadow cursor-pointer").style("break-inside: avoid;"):
-            if img:
-                try:
-                    ui.image(img).classes("w-full h-40 object-cover").props("fit=cover")
-                except Exception:
-                    pass
-            with ui.card_section().classes("gap-1 w-full"):
-                ui.badge(tema_n or "Geral", color="blue-grey-2").props("outline dense")
-                try:
-                    ui.link(titulo, target=href, new_tab=True).classes("font-bold text-grey-9 leading-tight hover:text-primary").style("display:block; word-break: break-word;")
-                except Exception:
-                    ui.label(titulo).classes("font-bold text-grey-9")
+            with ui.card_section().classes("gap-2 w-full"):
+                # linha 1: indicativo tema + tempo (ordem alterada)
+                with ui.row().classes("w-full items-center justify-between"):
+                    ui.badge(tema_n or "Geral", color="blue-grey-2").props("outline dense")
+                    ui.label(_tempo_relativo(data_pub or data_col)).classes("text-caption text-grey-5")
+                # linha 2: título (row de baixo) com miniatura 30x30 antes se houver foto
+                with ui.row().classes("w-full items-start gap-2"):
+                    if img:
+                        try:
+                            ui.image(img).classes("shrink-0 rounded").style("width:30px;height:30px;object-fit:cover;").props("fit=cover")
+                        except Exception:
+                            pass
+                    try:
+                        ui.link(titulo, target=href, new_tab=True).classes("font-bold text-grey-9 leading-tight hover:text-primary flex-1").style("word-break: break-word; min-width:0;")
+                    except Exception:
+                        ui.label(titulo).classes("font-bold text-grey-9 flex-1").style("min-width:0;")
                 if desc and desc != titulo:
                     ui.label(desc[:180] + ("…" if len(desc) > 180 else "")).classes("text-caption text-grey-7")
-                with ui.row().classes("w-full items-center justify-between mt-1"):
-                    # fonte removida conforme solicitado — apenas tempo relativo
-                    ui.label(_tempo_relativo(data_pub or data_col)).classes("text-caption text-grey-5")
-                # clique no card também abre
-                def _abrir():
-                    try:
-                        ui.run_javascript(f"window.open('{href}', '_blank')")
-                    except Exception:
-                        pass
-            # miniatura já exibida via ui.image acima quando há imagem;
-            # título clicável (ui.link) abre a notícia externa — botão removido conforme solicitado
-            # fallback: sem botão, clique no título basta
 
     with ui.column().classes("w-full p-6 gap-4"):
         cabecalho("Agregador de Notícias", t_texto_header, chave_modulo="agregador_noticias",
@@ -153,15 +146,23 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         _estado_coleta["ocupado"] = False
                 botao("Coletar agora", icone="sync", on_click=_coletar, variante="primario", chave_modulo="agregador_noticias").props('data-testid=agregador-coletar')
 
-            def _on_tema(e):
-                estado["tema"] = e.value or ""
-                grid.refresh()
-            sel_tema.on_value_change(_on_tema)
+        # Paginação 10 por página, mais atual → mais antiga (ORDER BY data_publicacao DESC)
+        estado["pagina"] = 1
 
         @ui.refreshable
         def grid():
             tema_f = estado["tema"] or None
-            noticias = ag.listar_noticias(tema=tema_f, limite=45)
+            # total para paginação
+            total = ag.contar_noticias(tema=tema_f)
+            por_pagina = 10
+            total_pag = max(1, (total + por_pagina - 1) // por_pagina)
+            # ajusta página se fora do intervalo
+            if estado["pagina"] > total_pag:
+                estado["pagina"] = total_pag
+            if estado["pagina"] < 1:
+                estado["pagina"] = 1
+            offset = (estado["pagina"] - 1) * por_pagina
+            noticias = ag.listar_noticias(tema=tema_f, limite=por_pagina, offset=offset)
             if not noticias:
                 with ui.card().classes("w-full p-8 items-center"):
                     ui.icon("article", size="48px").classes("text-grey-4")
@@ -174,7 +175,21 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 for n in noticias:
                     with ui.element("div").style("break-inside: avoid; margin-bottom: 1rem;"):
                         _noticia_card(n)
-            # fallback grid para mobile
-            # CSS já garante 3 colunas no desktop; NiceGUI will render
+            # Paginação: anterior / próxima / última
+            with ui.row().classes("w-full items-center justify-between mt-3 flex-wrap gap-2"):
+                with ui.row().classes("items-center gap-1"):
+                    ui.button(icon="first_page", on_click=lambda: (estado.__setitem__("pagina", 1), grid.refresh())).props("flat dense").tooltip("Primeira página").props('data-testid=agregador-primeira')
+                    ui.button(icon="chevron_left", on_click=lambda: (estado.__setitem__("pagina", max(1, estado["pagina"]-1)), grid.refresh())).props("flat dense").tooltip("Anterior").props('data-testid=agregador-anterior')
+                    ui.label(f"Página {estado['pagina']} de {total_pag} • {total} notícias").classes("text-caption text-grey-7 mx-2")
+                    ui.button(icon="chevron_right", on_click=lambda: (estado.__setitem__("pagina", min(total_pag, estado["pagina"]+1)), grid.refresh())).props("flat dense").tooltip("Próxima").props('data-testid=agregador-proxima')
+                    ui.button(icon="last_page", on_click=lambda: (estado.__setitem__("pagina", total_pag), grid.refresh())).props("flat dense").tooltip("Última página").props('data-testid=agregador-ultima')
+                ui.label(f"Exibindo {len(noticias)} de {total}").classes("text-caption text-grey-5")
+
+        def _on_tema(e):
+            estado["tema"] = e.value or ""
+            estado["pagina"] = 1
+            grid.refresh()
+        # rebind _on_tema after grid defined
+        sel_tema.on_value_change(_on_tema)
 
         grid()

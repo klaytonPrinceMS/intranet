@@ -157,6 +157,53 @@ def definir_temas(temas: list[str], ator="sistema"):
     return ok
 
 
+def obter_hora_reinicio() -> str:
+    """Hora do reinício diário (HH:MM), padrão 06:00 da manhã."""
+    raw = (_get_config("hora_reinicio", "06:00") or "06:00").strip()
+    # valida HH:MM
+    m = re.match(r"^(\d{1,2}):(\d{2})$", raw)
+    if not m:
+        return "06:00"
+    h, mi = int(m.group(1)), int(m.group(2))
+    if not (0 <= h <= 23 and 0 <= mi <= 59):
+        return "06:00"
+    return f"{h:02d}:{mi:02d}"
+
+
+def definir_hora_reinicio(hora_str: str, ator="sistema"):
+    s = (hora_str or "").strip()
+    m = re.match(r"^(\d{1,2}):(\d{2})$", s)
+    if not m:
+        return False, "Formato inválido, use HH:MM (ex: 06:00)"
+    h, mi = int(m.group(1)), int(m.group(2))
+    if not (0 <= h <= 23 and 0 <= mi <= 59):
+        return False, "Hora inválida"
+    norm = f"{h:02d}:{mi:02d}"
+    ok = _set_config("hora_reinicio", norm)
+    if ok:
+        _audit(ator, "configurar", "hora_reinicio", norm)
+        return True, norm
+    return False, "Falha ao salvar"
+
+
+def reiniciar_banco(ator="sistema"):
+    """Zera todas as notícias (DELETE) — reinício diário da manhã."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM tb_noticia")
+        n = cur.fetchone()[0]
+        cur.execute("DELETE FROM tb_noticia")
+        # opcional: VACUUM para liberar espaço (sem travar muito, usa TRUNCATE pragmático)
+        conn.commit()
+        if n:
+            _log().info(f"Reinício diário: {n} notícias zeradas por {ator}")
+            _audit(ator, "reiniciar_banco", f"{n} notícias", f"hora={obter_hora_reinicio()}")
+        return n
+    finally:
+        conn.close()
+
+
 # ============ INIT ============
 
 def init_db():
@@ -185,6 +232,7 @@ def init_db():
         ("agregador_noticias_termo_pesquisa", ""),
         ("agregador_noticias_temas_json", json.dumps(TEMAS_PADRAO, ensure_ascii=False)),
         ("agregador_noticias_fontes_json", json.dumps(FONTES_PADRAO, ensure_ascii=False)),
+        ("agregador_noticias_hora_reinicio", "06:00"),
     ]:
         try:
             from mod_intranet.bd_conexao import get_connection as gc
@@ -304,7 +352,7 @@ def listar_para_tv(limite=10):
 
 
 def limpar_censuradas():
-    """Remove do banco notícias já coletadas cujo título contém palavra bloqueada. Retorna qtd removida."""
+    """Remove do banco notícias já coletadas cujo título contém palavra bloqueada. Retorna qtd removida — sem auditoria de postagens."""
     try:
         from mod_intranet.censura import obter_palavras_bloqueadas, titulo_bloqueado
         palavras = obter_palavras_bloqueadas()
@@ -324,7 +372,6 @@ def limpar_censuradas():
                 cur.executemany("DELETE FROM tb_noticia WHERE id=?", ids_remover)
                 conn.commit()
                 _log().info(f"limpeza censura: {len(ids_remover)} notícias removidas")
-                _audit("sistema", "limpar_censuradas", f"{len(ids_remover)} removidas")
                 return len(ids_remover)
             return 0
         finally:
@@ -335,7 +382,7 @@ def limpar_censuradas():
 
 
 def limpar_antigas(horas=24):
-    """Reinicia banco a cada 24h (DELETE antigas)."""
+    """Reinicia banco a cada 24h (DELETE antigas) — sem auditoria de postagens (só config audita)."""
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -344,7 +391,6 @@ def limpar_antigas(horas=24):
         conn.commit()
         if n:
             _log().info(f"Limpeza 24h: {n} notícias removidas")
-            _audit("sistema", "limpar_antigas", f"{n} removidas", f"{horas}h")
         return n
     finally:
         conn.close()
@@ -417,27 +463,92 @@ def _coletar_google(url: str, fonte_nome: str, tema: str) -> int:
         import parsel
         sel = parsel.Selector(text=html)
         n = 0
-        for x in sel.css(".gPFEn, .JtKRv, .a7P8L, article"):
-            txt = (x.css("a::text").get() or "").strip()
-            href = (x.css("a::attr(href)").get() or "").strip()
+        # Google News: cada notícia tem <a class="gPFEn"> e <time class="hvbAAd" datetime="..."> como irmãos
+        for a in sel.css("a.gPFEn, a.JtKRv"):
+            txt = (a.css("::text").get() or "").strip()
+            href = (a.attrib.get("href") or "").strip()
             if not txt or txt in ["Local","Página inicial","Para você","Brasil","Mundo","Esportes",""]:
                 continue
             if href.startswith("./"):
                 href = "https://news.google.com/" + href.lstrip("./")
             elif href.startswith("/"):
                 href = "https://news.google.com" + href
-            img = (x.css("img::attr(src)").get() or x.css("img::attr(data-src)").get() or "").strip()
-            # tempo real da postagem: tenta time[datetime], span com data
-            raw_time = (x.css("time::attr(datetime)").get() or x.css("time::text").get() or x.css("[datetime]::attr(datetime)").get() or "").strip()
-            data_pub = _parse_data_pub(raw_time) if raw_time else None
+            if not href:
+                continue
+            # tenta extrair tempo real da postagem: datetime do <time> seguinte ou ancestral
+            raw_time = (a.xpath("following::time[1]/@datetime").get() or a.xpath("ancestor::div[1]//time/@datetime").get() or a.xpath("ancestor::div[2]//time/@datetime").get() or "").strip()
+            if not raw_time:
+                # fallback: texto relativo "3 horas atrás" / "Ontem"
+                raw_time = (a.xpath("following::time[1]/text()").get() or "").strip()
+                # converte relativo para absoluto se for "X horas atrás"
+                if "atrás" in raw_time or "hora" in raw_time.lower():
+                    data_pub = _parse_relativo_para_absoluto(raw_time)
+                else:
+                    data_pub = _parse_data_pub(raw_time) if raw_time else None
+            else:
+                data_pub = _parse_data_pub(raw_time)
+            img = (a.xpath("ancestor::div[1]//img/@src").get() or a.xpath("ancestor::div[2]//img/@src").get() or "").strip()
+            # se ainda sem data, tenta seguir redirecionamento e extrair meta do artigo (fallback leve)
+            if not data_pub:
+                # tenta buscar data via og:published_time no HTML do resumo (se disponível, mas evita request extra por performance)
+                data_pub = None
             if inserir_noticia(txt, f"Google News - {fonte_nome}", tema, href, img, txt, data_pub):
                 n += 1
             if n >= 20:
                 break
+        # fallback: caso não achou via a.gPFEn, tenta seletores antigos
+        if n == 0:
+            for x in sel.css(".gPFEn, .JtKRv, .a7P8L, article"):
+                txt = (x.css("a::text").get() or "").strip()
+                href = (x.css("a::attr(href)").get() or "").strip()
+                if not txt or txt in ["Local","Página inicial","Para você","Brasil","Mundo","Esportes",""]:
+                    continue
+                if href.startswith("./"):
+                    href = "https://news.google.com/" + href.lstrip("./")
+                elif href.startswith("/"):
+                    href = "https://news.google.com" + href
+                img = (x.css("img::attr(src)").get() or x.css("img::attr(data-src)").get() or "").strip()
+                raw_time = (x.css("time::attr(datetime)").get() or x.css("time::text").get() or x.css("[datetime]::attr(datetime)").get() or "").strip()
+                data_pub = _parse_data_pub(raw_time) if raw_time else None
+                if inserir_noticia(txt, f"Google News - {fonte_nome}", tema, href, img, txt, data_pub):
+                    n += 1
+                if n >= 20:
+                    break
         return n
     except Exception as e:
         _log().warning(f"_coletar_google {fonte_nome}: {e}")
         return 0
+
+
+def _parse_relativo_para_absoluto(texto: str):
+    """Converte '3 horas atrás', '25 minutos atrás', 'Ontem', '2 dias atrás' para datetime absoluto."""
+    if not texto:
+        return None
+    txt = texto.strip().lower()
+    agora = datetime.now()
+    try:
+        if txt == "ontem":
+            dt = agora - timedelta(days=1)
+            return dt.strftime("%Y-%m-%d 12:00:00")
+        m = re.search(r"(\d+)\s*minuto", txt)
+        if m:
+            dt = agora - timedelta(minutes=int(m.group(1)))
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+        m = re.search(r"(\d+)\s*hora", txt)
+        if m:
+            dt = agora - timedelta(hours=int(m.group(1)))
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+        m = re.search(r"(\d+)\s*dia", txt)
+        if m:
+            dt = agora - timedelta(days=int(m.group(1)))
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+        m = re.search(r"(\d+)\s*semana", txt)
+        if m:
+            dt = agora - timedelta(weeks=int(m.group(1)))
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+    except Exception:
+        pass
+    return _parse_data_pub(texto)
 
 
 def _coletar_bbc(url: str, tema: str) -> int:
@@ -577,12 +688,11 @@ def coletar_todas(ator="sistema", forcar: bool = False):
             _log().warning(f"coletar fonte {f}: {e}")
     if termo:
         total += _coletar_pesquisa_google(termo, "Geral")
-    # limpeza 24h após coleta (reiniciado 24/24h)
+    # limpeza 24h após coleta (reiniciado 24/24h) — sem auditoria de postagens
     try:
         limpar_antigas(24)
     except Exception:
         pass
-    _audit(ator, "coletar", f"{total} novas", f"fontes={len(fontes)} termo={termo[:30]}")
     _log().info(f"Coleta agregador: {total} novas de {len(fontes)} fontes (termo={termo})")
     return total
 

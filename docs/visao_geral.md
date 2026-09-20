@@ -38,9 +38,9 @@ O sistema é composto por um **núcleo** (`mod_intranet`) e **10 módulos de neg
 | **Auditoria** | `auditoria` | `/auditoria` | `db_mod_auditoria.db` (uma tabela por módulo) | trilha LGPD + visualização/filtro/exportação |
 | **Solicitação de Impressão** | `solicita_impressao` | `/solicita-impressao` | `db_mod_solicita_impressao.db` | envio de PDF, contagem de páginas, cotas mensais (1000/200 via `ORGANOGRAMA_BASE`), autorização, impressão |
 | **Técnico** | `tecnico` | `/tecnico` | `db_mod_tecnico.db` | **novo** (18/09/2026) — software (download zip multi-seleção) + backup `YYYYMMDD_HHMM_nomePc_ip` owner-isolated, `webkitdirectory` |
-| **Filas (TV)** | `filas` | `/filas` + `/tv` (pública) | `db_mod_filas.db` | **novo esqueleto** (18/09/2026) — gestor de chamadas com TV (fila Geral `A000→A001`, auto-refresh 3s + beep + **carrossel de notícias do Agregador 19/09/2026**) |
+| **Filas (TV)** | `filas` | `/filas` + `/tv?grupo=` (compartilhada) + `/tv/{fila_id}` (isolada) | `db_mod_filas.db` | multi-filas por local (`endereco/prefixo/inicio→fim` `fim=0` infinito, `criado_por`, `tv_grupo`, `tb_fila_etapa`/`tb_midia`, isolamento por criador vs `administrador_geral`, TV `/tv/{id}` isolada vs `/tv?grupo=` compartilhada, ícone padrão intranet, bip+voz só novo id, playlist áudio elevador/vídeo `/midia_filas`, exclusão uma/todas exceto Geral, censura filtrada) |
 | **Lista Telefônica** | `lista_telefonica` | `/lista-telefonica` + `/admin/lista_telefonica` | `db_mod_lista_telefonica.db` | **novo** (19/09/2026) — organograma 12 secretarias `Secretaria→Setor→Subsetor` genérico, contatos alfabéticos, busca sem acentos, `tel:` clicável no celular, admin com excluir ramo/mover/elevar/ordenar/transferir |
-| **Agregador de Notícias** | `agregador_noticias` | `/agregador-noticias` + `/admin/agregador_noticias` | `db_mod_agregador_noticias.db` | **novo** (19/09/2026) — multi-fonte `httpx+parsel` (Google/BBC/JFP/RSS) espelhando `klaytonPrinceMS/Noticia`, termo livre + fontes configuráveis pelo admin, investigação 10–360 min, 3 colunas masonry `window.open`, 24h retenção `limpar_antigas`, TV `listar_para_tv` |
+| **Agregador de Notícias** | `agregador_noticias` | `/agregador-noticias` + `/admin/agregador_noticias` | `db_mod_agregador_noticias.db` | **novo** (19/09/2026) — multi-fonte `httpx+parsel` (Google/BBC/JFP/RSS) espelhando `klaytonPrinceMS/Noticia`, termo livre + fontes configuráveis, 10–360 min, 3 colunas masonry `window.open`, 24h `limpar_antigas`, TV `listar_para_tv` (censura filtrada) + censura central `conteudo_palavras_bloqueadas` (compartilhada com Blog) |
 
 > O cadastro real de módulos vive em `tb_modulos` (banco central), semeado por `MODULOS_SISTEMA` em `mod_intranet/autenticacao.py:15-26`.
 
@@ -58,7 +58,8 @@ flowchart TD
     D -->|logout| LO[registrar_logout + /login]
     BG[APScheduler<br/>backups · cleanups · monitor · poda<br/>+ agregador_coleta/limpeza] -.->|2º plano| AC
     LT[(Lista Telefônica<br/>ORGANOGRAMA_BASE<br/>12 secretarias)] -.->|importa cotas 1000/200| R5
-    AG[(Agregador<br/>tb_noticia 24h<br/>httpx+parsel)] -.->|listar_para_tv<br/>carrossel 7s/120s| R8
+     AG[(Agregador<br/>tb_noticia 24h<br/>httpx+parsel<br/>censura filtrada)] -.->|listar_para_tv<br/>carrossel 7s/120s filtrado| R8
+     CS[(Censura<br/>tb_config conteudo_palavras_bloqueadas<br/>lower+NFD)] -.->|titulo_bloqueado| R1 & R10 & R8
 ```
 
 1. O usuário acessa `/login` e informa usuário/senha (`autenticar` → bcrypt).
@@ -97,7 +98,7 @@ Além do perfil global, existe o **papel por módulo** (`tb_acesso_usuario`): v�
 
 | Módulo | `comum` | `administrador_modulo` | `administrador_geral` |
 |:---|:---:|:---:|:---:|
-| Blog | somente leitura | criar/editar/publicar | tudo |
+| Blog | somente leitura (censura `titulo_bloqueado` bloqueia `criar/atualizar` se palavra proibida) | criar/editar/publicar (censura bloqueia título com palavra proibida) | tudo + gerenciar censura (`blog-palavras-bloqueadas`) |
 | Editor de PDF | usar editor | — | cotas/expiração (aba Administração) |
 | Renomear Empenhos | processar/pesquisar/ZIP | regras/quarentena | tudo |
 | Auditoria | ✗ | ✗ | somente este perfil |
@@ -105,9 +106,9 @@ Além do perfil global, existe o **papel por módulo** (`tb_acesso_usuario`): v�
 | Gestão de Usuários | ✗ | admin do módulo `usuarios` | tudo |
 | Solicitação de Impressão | solicitar/acompanhar | imprimir/gerenciar | tudo |
 | Técnico | software/backup do próprio PC | — | tudo + ver todos os backups em `/admin/tecnico` |
-| Filas (TV) | chamar próxima / ver TV + notícias carrossel | — | tudo |
+| Filas (TV) | chamar próxima / ver TV isolada `/tv/{id}` ou compartilhada `/tv?grupo=` + notícias censura-filtradas + mídia | gerenciar multi-filas do próprio dono; mídia global só admin | tudo (todas as filas + mídia global) |
 | Lista Telefônica | ver organograma + busca + ligar | gerenciar ramos/contatos/ordem | tudo |
-| Agregador de Notícias | ver 3 colunas + filtro tema + abrir link externo | configurar habilitado/intervalo/termo/fontes/temas | tudo + `Coletar agora` |
+| Agregador de Notícias | ver 3 colunas + filtro tema + abrir link externo (censura filtra `listar_para_tv`) | configurar habilitado/intervalo/termo/fontes/temas + censura (`agregador-palavras-bloqueadas`) | tudo + `Coletar agora` + `Remover já censuradas` |
 
 ## Autorização por módulo
 

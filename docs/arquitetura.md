@@ -1,12 +1,12 @@
 # Intranet Modular — Architecture
 
-> Technical architecture of the Intranet Modular: single entry point (`main.py`), modular packages (`mod_*`), the `bd_manipulador.py` / `telas.py` / `telas_administracao.py` pattern (with `models/` SQLAlchemy as the pattern to propagate and `bd_criador.py` kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor, audit pruning, aggregator coleta 10–360 min + limpeza 24h).
+> Technical architecture of the Intranet Modular: single entry point (`main.py`), modular packages (`mod_*`), the `bd_manipulador.py` / `telas.py` / `telas_administracao.py` pattern (with `models/` SQLAlchemy as the pattern to propagate and `bd_criador.py` kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor, audit pruning, aggregator coleta 10–360 min + daily recycle `reiniciar_banco` at `06:00` configurable `CronTrigger`, no backup for aggregator).
 
 ---
 
 # Intranet Modular — Arquitetura
 
-> Arquitetura técnica da Intranet Modular: entry point único (`main.py`), pacotes modulares (`mod_*`), padrão `bd_manipulador.py` / `telas.py` / `telas_administracao.py` (com `models/` SQLAlchemy como padrão a propagar e `bd_criador.py` mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta, poda da auditoria, coleta do agregador 10–360 min + limpeza 24h).
+> Arquitetura técnica da Intranet Modular: entry point único (`main.py`), pacotes modulares (`mod_*`), padrão `bd_manipulador.py` / `telas.py` / `telas_administracao.py` (com `models/` SQLAlchemy como padrão a propagar e `bd_criador.py` mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta, poda da auditoria, coleta do agregador 10–360 min + reinício diário `reiniciar_banco` às `06:00` configurável `CronTrigger`, sem backup para o agregador).
 
 ## Sumário
 
@@ -106,9 +106,9 @@ Cada funcionalidade é um **pacote próprio** na raiz:
 | `mod_auditoria/` | `db_mod_auditoria.db` (uma tabela por módulo) | ✓ | trilha LGPD + visualizador |
 | `mod_solicita_impressao/` | `db_mod_solicita_impressao.db` | ✓ | solicitação de impressão — **cotAS 1000/200 via `ORGANOGRAMA_BASE` do `mod_lista_telefonica` (19/09/2026)** |
 | `mod_tecnico/` | `db_mod_tecnico.db` | ✓ | **novo** (18/09/2026) — software + backup `YYYYMMDD_HHMM_nomePc_ip`, owner-isolation, `webkitdirectory` |
-| `mod_filas/` | `db_mod_filas.db` | ✓ (`telas.py` + `mostrar_tv`) | **novo esqueleto** (18/09/2026) — gestor de chamadas com TV (`/filas` + `/tv` pública, **+ carrossel do Agregador 19/09/2026**) |
+| `mod_filas/` | `db_mod_filas.db` | ✓ (`telas.py` + `mostrar_tv` + `PASTA_MIDIA`) | multi-filas por local (`endereco/prefixo/inicio→fim` infinito + `criado_por` + `tv_grupo` + `tb_fila_etapa`/`tb_midia`, isolamento por criador, `/tv/{id}` isolada vs `/tv?grupo=` compartilhada, `/midia_filas` playlist, censura filtrada) |
 | `mod_lista_telefonica/` | `db_mod_lista_telefonica.db` | ✓ | **novo** (19/09/2026) — organograma `Secretaria→Setor→Subsetor` genérico 12 secretarias, contatos alfabéticos, `tel:` no celular |
-| `mod_agregador_noticias/` | `db_mod_agregador_noticias.db` | ✓ | **novo** (19/09/2026) — multi-fonte `httpx+parsel` (Google/BBC/JFP/RSS) 3 colunas masonry `window.open`, 24h `tb_noticia`, termo+fontes configuráveis, TV `listar_para_tv` |
+| `mod_agregador_noticias/` | `db_mod_agregador_noticias.db` | ✓ | **novo** (19/09/2026) — multi-fonte `httpx+parsel` (Google/BBC/JFP/RSS) 3 colunas masonry `window.open`, 24h `tb_noticia`, dedup `_norm_tit` + `COALESCE`, `listar_para_tv` (censura filtrada `conteudo_palavras_bloqueadas` + `limpar_censuradas`), termo+fontes configuráveis |
 
 Subpacotes/fluxos relevantes do núcleo:
 
@@ -298,9 +298,9 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 | `poda_auditoria` | **24 h** | remove registros das tabelas por módulo de `db_mod_auditoria.db` mais antigos que `auditoria_retencao_dias` (default 90) |
 | `monitor_empenho` | `empenhos_monitor_intervalo_seg` (default **60 s**) | varredura automática das pastas monitoradas de empenhos (`rodar_monitor("sistema")`) |
 | `agregador_coleta` | `agregador_noticias_intervalo_min` (**10–360 min**, default **60 min**, `habilitado` flag) | coleta scrapy-like `httpx+parsel` (Google/BBC/JFP/RSS + pesquisa termo) via `coletar_todas()` — `reconfigurar_agregador_noticias()` sem restart |
-| `agregador_limpeza` | **24 h** | `limpar_antigas(24)` — `DELETE WHERE data_coleta < datetime('now','-24 hours')` (banco reiniciado 24/24h) |
+| `agregador_reinicio` | **diário `CronTrigger` às `06:00` configurável** (`agregador_noticias_hora_reinicio` `HH:MM`, default `06:00`, `obter_hora_reinicio`/`definir_hora_reinicio` + audit) | **reinício diário** `reiniciar_banco(ator)` — `DELETE FROM tb_noticia` (zera todas, banco reciclado, **sem backup**) + `audit reiniciar_banco`; reagendável sem restart via `reconfigurar_agregador_noticias()` `CronTrigger(hour, minute)` |
 
-> **Ajuste fino:** o `MAPA_BACKUPS` (`rotinas.py:16-30`) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, auditoria, empenhos, solicita — expandido em 06/09 com auditoria e solicita_impressao — **18/09/2026** `+ tecnico: db_mod_tecnico.db` + `filas: db_mod_filas.db` — **19/09/2026** `+ lista_telefonica: db_mod_lista_telefonica.db` + `agregador_noticias: db_mod_agregador_noticias.db`).
+> **Ajuste fino:** o `MAPA_BACKUPS` (`rotinas.py:19-30`) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, auditoria, empenhos, solicita — expandido em 06/09 com auditoria e solicita_impressao — **18/09/2026** `+ tecnico: db_mod_tecnico.db` + `filas: db_mod_filas.db` — **19/09/2026** `+ lista_telefonica: db_mod_lista_telefonica.db` — **20/09/2026 sem `agregador_noticias: db_mod_agregador_noticias.db`**, agregador **sem backup**, banco reciclado diariamente `reiniciar_banco` às `06:00` configurável `CronTrigger`).
 
 ## Auditoria LGPD (banco exclusivo)
 
@@ -346,7 +346,7 @@ Raiz do projeto (scaffold base — Fase 0 do `PLANO.md`):
 | `mod_edit_pdf/editorPDF/` | arquivos temporários do Editor de PDF (expiração automática, default 10 min — `PASTA_EDITOR`/`PASTA_EDITOR_PDF`) |
 | `mod_tecnico/software/` | executáveis/portáteis para download (versionável, `.gitkeep` — `mod_tecnico/bd_manipulador.py:24`) |
 | `mod_tecnico/backup/YYYYMMDD_HHMM_nomePc_ip/` | backups por PC/técnico (owner-isolated, uma pasta por dono — `mod_tecnico/bd_manipulador.py:25`, `nome_pasta_backup`) |
-| `mod_agregador_noticias/` | sem pastas operacionais — banco `tb_noticia` + coleta `httpx+parsel` + `listar_para_tv` (sem arquivos em disco além do `.db`) |
+| `mod_agregador_noticias/` | sem pastas operacionais — banco `tb_noticia` paginado 10 (`por_pagina=10` `COALESCE DESC` `Primeira/Anterior/Próxima/Última` `agregador-primeira/anterior/proxima/ultima`, `30x30` antes do título, sem backup — banco reciclado `reiniciar_banco` `06:00` `CronTrigger`) + coleta `httpx+parsel` + `listar_para_tv` (sem arquivos em disco além do `.db`) |
 | `main.py`, `requirements.txt`, `mkdocs.yml`, `db_mod_*.db` | entry point único, dependências, build da doc e bancos SQLite (WAL) por módulo (incl. `db_mod_auditoria.db` — trilha LGPD; **novos** `db_mod_tecnico.db`, `db_mod_filas.db`, `db_mod_lista_telefonica.db` **(19/09/2026)**, `db_mod_agregador_noticias.db` **(19/09/2026 — Notícias)**) |
 
 > Pastas operacionais **dentro dos módulos** (`mod_edit_pdf/editorPDF/`, `mod_renomear_empenho/doc/`,

@@ -15,6 +15,7 @@ PASTA_BACKUP = os.path.join(BASE_DIR, "backup")
 PASTA_EDITOR_PDF = os.path.join(BASE_DIR, "mod_edit_pdf", "editorPDF")
 
 # Mapeamento chave do módulo -> arquivo de banco gerenciado por ele
+# Agregador de Notícias NÃO possui backup (banco reciclado diariamente)
 MAPA_BACKUPS = {
     "intranet": ("db_mod_intranet.db", "Intranet (central)"),
     "usuarios": ("db_mod_gest_cad_usuario.db", "Usuários"),
@@ -26,7 +27,6 @@ MAPA_BACKUPS = {
     "tecnico": ("db_mod_tecnico.db", "Técnico"),
     "filas": ("db_mod_filas.db", "Filas"),
     "lista_telefonica": ("db_mod_lista_telefonica.db", "Lista Telefônica"),
-    "agregador_noticias": ("db_mod_agregador_noticias.db", "Agregador de Notícias"),
 }
 
 _agendador = None  # referência global para reagendamento em tempo de execução
@@ -240,37 +240,46 @@ def _job_agregador_coleta():
             pass
 
 
-def _job_agregador_limpeza():
-    """Limpeza 24h do Agregador (reiniciado 24/24h)."""
+def _job_agregador_reinicio():
+    """Reinício diário do Agregador — zera todas as notícias às horas da manhã."""
     try:
-        from mod_agregador_noticias.bd_manipulador import limpar_antigas
-        limpar_antigas(24)
+        from mod_agregador_noticias.bd_manipulador import reiniciar_banco
+        reiniciar_banco(ator="sistema")
     except Exception as ex:
         try:
             from mod_intranet import observabilidade
-            observabilidade.get_logger("agregador_noticias").warning(f"limpeza agregador falhou: {ex}")
+            observabilidade.get_logger("agregador_noticias").warning(f"reinício agregador falhou: {ex}")
         except Exception:
             pass
 
 
 def reconfigurar_agregador_noticias():
-    """Reaplica intervalo do agregador sem restart."""
+    """Reaplica intervalo e hora do agregador sem restart."""
     if _agendador is None:
         return False
     try:
-        from mod_agregador_noticias.bd_manipulador import intervalo_min, habilitado
+        from mod_agregador_noticias.bd_manipulador import intervalo_min, habilitado, obter_hora_reinicio
+        # coleta
         if not habilitado():
             try:
                 _agendador.pause_job("agregador_coleta")
             except Exception:
                 pass
-            return True
+        else:
+            try:
+                _agendador.resume_job("agregador_coleta")
+            except Exception:
+                pass
+            mins = intervalo_min()
+            _agendador.reschedule_job("agregador_coleta", trigger="interval", minutes=mins)
+        # reinício diário
         try:
-            _agendador.resume_job("agregador_coleta")
+            hora_str = obter_hora_reinicio()
+            h, m = map(int, hora_str.split(":"))
+            from apscheduler.triggers.cron import CronTrigger
+            _agendador.reschedule_job("agregador_reinicio", trigger=CronTrigger(hour=h, minute=m))
         except Exception:
             pass
-        mins = intervalo_min()
-        _agendador.reschedule_job("agregador_coleta", trigger="interval", minutes=mins)
         return True
     except Exception:
         return False
@@ -460,14 +469,18 @@ def iniciar_agendador():
     sched.add_job(_job_poda_auditoria, "interval", hours=24, id="poda_auditoria")
     sched.add_job(_job_monitor_empenho, "interval", seconds=intervalo_monitor_empenho(),
                   id="monitor_empenho")
-    # Agregador de Notícias — coleta com intervalo 10min–6h e limpeza 24h
+    # Agregador de Notícias — coleta com intervalo 10min–6h e reinício diário às horas da manhã (zerar tudo)
     try:
-        from mod_agregador_noticias.bd_manipulador import intervalo_min, habilitado
+        from mod_agregador_noticias.bd_manipulador import intervalo_min, habilitado, obter_hora_reinicio
         _int_ag = intervalo_min() if habilitado() else 60
+        _hora_ag = obter_hora_reinicio()
+        _h_ag, _m_ag = map(int, _hora_ag.split(":"))
     except Exception:
         _int_ag = 60
+        _h_ag, _m_ag = 6, 0
     sched.add_job(_job_agregador_coleta, "interval", minutes=_int_ag, id="agregador_coleta")
-    sched.add_job(_job_agregador_limpeza, "interval", hours=24, id="agregador_limpeza")
+    from apscheduler.triggers.cron import CronTrigger
+    sched.add_job(_job_agregador_reinicio, CronTrigger(hour=_h_ag, minute=_m_ag), id="agregador_reinicio")
     sched.start()
     _agendador = sched
     return sched
