@@ -389,28 +389,102 @@ def listar_noticias(tema=None, limite=30, offset=0):
         conn.close()
 
 
-def listar_para_tv(limite=10):
-    """API para mod_filas TV — carrossel título+descrição (filtra censuradas, ordena por tempo real)."""
+def _corte_horas(horas):
+    """Converte horas (ex: 4) em corte 'YYYY-MM-DD HH:MM:SS' para filtrar notícias recentes."""
+    if horas is None:
+        return None
+    try:
+        horas_int = int(horas)
+    except Exception:
+        return None
+    if horas_int <= 0:
+        return None
+    return (datetime.now() - timedelta(hours=horas_int)).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _filtrar_censura_tv(linhas, limite):
+    """Filtra linhas censuradas pelo título, preservando no máximo limite itens."""
+    try:
+        from mod_intranet.censura import titulo_bloqueado
+        filtradas = []
+        for r in linhas:
+            bloqueado, _ = titulo_bloqueado(r[0] or "")
+            if not bloqueado:
+                filtradas.append(r)
+            if len(filtradas) >= limite:
+                break
+        return filtradas
+    except Exception:
+        return list(linhas[:limite])
+
+
+def _linha_tv_para_dict(r):
+    """Converte linha SQL da TV no dict público (mesmas 7 chaves de sempre)."""
+    return {"titulo": r[0], "descricao": r[1] or r[0], "url": r[2], "imagem": r[3],
+            "fonte": r[4], "tema": r[5], "fonte_icon": r[6] if len(r) > 6 else ""}
+
+
+def listar_para_tv(limite=10, por_tema=False, horas=None):
+    """API para mod_filas TV — carrossel título+descrição (filtra censuradas, ordena por tempo real).
+
+    EN: TV feed — latest headlines (censorship filtered, real post time first).
+    Params opcionais retrocompatíveis: por_tema=True devolve UMA notícia por
+    categoria de temas_config() (na ordem configurada, para rodar as categorias);
+    horas=N prioriza notícias com COALESCE(data_publicacao, data_coleta) das
+    últimas N horas — no modo por_tema cada categoria sem novidade usa a mais
+    recente disponível (fallback por categoria).
+    """
+    try:
+        limite = max(1, int(limite or 10))
+    except Exception:
+        limite = 10
+    corte = _corte_horas(horas)
     conn = get_connection()
     try:
         cur = conn.cursor()
-        # pega mais que limite para filtrar censuradas sem perder slots, ordena por data real da postagem
-        cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (limite * 3,))
-        rows = cur.fetchall()
-        # filtra censura
-        try:
-            from mod_intranet.censura import titulo_bloqueado
-            filtradas = []
-            for r in rows:
-                bloqueado, _ = titulo_bloqueado(r[0] or "")
-                if not bloqueado:
-                    filtradas.append(r)
-                if len(filtradas) >= limite:
+        if por_tema:
+            try:
+                temas = temas_config()
+            except Exception:
+                temas = []
+            if not temas:
+                temas = []
+            coletadas = []
+            for tema in temas:
+                if len(coletadas) >= limite:
                     break
-            rows = filtradas
+                item = None
+                # 1ª tentativa: só recentes (quando horas pedido); 2ª: qualquer época
+                tentativas = [corte, None] if corte else [None]
+                for tentativa in tentativas:
+                    try:
+                        if tentativa:
+                            cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE tema=? AND COALESCE(data_publicacao, data_coleta) >= ? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (tema, tentativa, 5))
+                        else:
+                            cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE tema=? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (tema, 5))
+                        candidatas = cur.fetchall()
+                    except Exception:
+                        candidatas = []
+                    filtradas = _filtrar_censura_tv(candidatas, 1)
+                    if filtradas:
+                        item = _linha_tv_para_dict(filtradas[0])
+                        break
+                if item:
+                    coletadas.append(item)
+            return coletadas
+        # modo geral (legado): mais recentes primeiro, com filtro opcional de horas
+        try:
+            if corte:
+                cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE COALESCE(data_publicacao, data_coleta) >= ? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (corte, limite * 3))
+            else:
+                # pega mais que limite para filtrar censuradas sem perder slots, ordena por data real da postagem
+                cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (limite * 3,))
+            rows = cur.fetchall()
         except Exception:
-            rows = rows[:limite]
-        return [{"titulo": r[0], "descricao": r[1] or r[0], "url": r[2], "imagem": r[3], "fonte": r[4], "tema": r[5], "fonte_icon": r[6] if len(r) > 6 else ""} for r in rows[:limite]]
+            rows = []
+        # filtra censura
+        rows = _filtrar_censura_tv(rows, limite)
+        return [_linha_tv_para_dict(r) for r in rows[:limite]]
     finally:
         conn.close()
 

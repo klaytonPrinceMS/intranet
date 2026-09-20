@@ -33,3 +33,6 @@ psycopg2-binary>=2.9
 httpx>=0.27
 parsel>=1.9
 lxml>=5.0
+
+# Filas — duração real de áudio/vídeo da TV (mutagen puro-python)
+mutagen>=1.45

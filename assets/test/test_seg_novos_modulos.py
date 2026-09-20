@@ -391,8 +391,10 @@ from mod_filas import bd_manipulador as filas  # noqa: E402
 
 filas.init_db()
 filas_list = filas.listar_filas()
-check(len(filas_list) >= 1, f"filas seed Geral presente: {len(filas_list)}")
-fid = filas_list[0][0] if filas_list else 1
+check(True, f"filas init sem seed fixa (projeto nasce sem filas): {len(filas_list)}")
+ok_c, fid_c = filas.criar_fila("QA-SEG-FILA", ator="qa_seg", tv_grupo="qa-seg")
+check(ok_c, f"criar fila de teste: {fid_c}")
+fid = fid_c if ok_c else (filas_list[0][0] if filas_list else 1)
 # pega senha atual
 import re as _re
 conn = filas.get_connection()
@@ -427,6 +429,157 @@ check("gerar_senha" in SRC_FILAS and "audit" in SRC_FILAS.lower(), "filas audit 
 # testar que gerar_senha rejeita fila inexistente
 ok_inv, msg_inv = filas.gerar_senha(999999, ator="qa_seg")
 check(not ok_inv and "não encontrada" in msg_inv.lower(), "gerar_senha fila inexistente rejeita")
+# tv_grupo vira slug seguro de URL
+ok_g, slug_g = filas.normalizar_tv_grupo("Ambulatório Geral")
+check(ok_g and slug_g == "ambulatorio-geral", f"tv_grupo slug URL: {slug_g}")
+ok_g2, _ = filas.normalizar_tv_grupo("!!!")
+check(not ok_g2, "tv_grupo inválido rejeitado")
+# limpeza da fila de teste
+try:
+    filas.excluir_fila(fid, ator="qa_seg")
+    check(True, "fila de teste excluída (projeto pode ficar sem filas)")
+except Exception as e:
+    check(False, f"excluir fila de teste: {e}")
+
+# ========== D2. FILAS — lista única + prioridades + revezamento ==========
+print("\n-- D2. Filas — lista única, prioridades, revezamento --")
+ok_p, fid_p = filas.criar_fila("QA-PRIO", ator="qa_seg", tv_grupo="qa-prio")
+check(ok_p, "criar fila prio")
+ok_i, msg_i = filas.importar_nomes(fid_p, "G1 #gestante\nI1 #idoso\nD1 #deficiente\nC1\nC2\nC3", ator="qa_seg")
+check(ok_i, f"importar lista com tags: {msg_i}")
+pend = filas.listar_nomes(fid_p, True)
+check([p[4] for p in pend] == ["gestante", "idoso", "deficiente", "comum", "comum", "comum"], "tags parseadas")
+ok_i2, msg_i2 = filas.importar_nomes(fid_p, "Outro", ator="qa_seg")
+check(not ok_i2 and "lista" in msg_i2.lower(), "segunda lista bloqueada (uma por fila)")
+ordem = []
+for _ in range(5):
+    ok_s, _ = filas.gerar_senha(fid_p, ator="qa_seg")
+    c = filas.get_connection()
+    try:
+        cur = c.cursor()
+        cur.execute("SELECT paciente_nome, prioridade FROM tb_chamada WHERE fila_id=? ORDER BY id DESC LIMIT 1", (fid_p,))
+        ordem.append(cur.fetchone())
+    finally:
+        c.close()
+check([o[1] for o in ordem] == ["gestante", "idoso", "deficiente", "comum", "comum"], f"revezamento 1-1-1-2: {[o[0] for o in ordem]}")
+ok_b, fid_b = filas.criar_fila("QA-PRIO-B", ator="qa_seg", tv_grupo="qa-prio")
+check(ok_b, "criar fila destino mesma TV")
+ok_t, _ = filas.transferir_todos(fid_p, fid_b, ator="qa_seg")
+check(ok_t and filas.contar_nomes_pendentes(fid_b) == 1, "transferir resto p/ mesma TV")
+filas.excluir_fila(fid_p, ator="qa_seg")
+filas.excluir_fila(fid_b, ator="qa_seg")
+check(True, "filas prio excluídas")
+
+# ========== D3. FILAS — manchester domina + etapas/salas ==========
+print("\n-- D3. Filas — manchester, etapas, espera --")
+ok_m, fid_m = filas.criar_fila("QA-MANCH", ator="qa_seg", etapas=[("Recepção", "01"), ("Triagem", "02")])
+check(ok_m, "criar fila com sequência de etapas")
+ets = filas.listar_etapas(fid_m)
+check([e[3] for e in ets] == ["Recepção", "Triagem"], "etapas na sequência criada")
+ok_mi, _ = filas.importar_nomes(fid_m, "Velho #idoso #verde\nJovem #vermelho", ator="qa_seg")
+check(ok_mi, "importar com manchester")
+filas.gerar_senha(fid_m, ator="qa_seg")
+filas.gerar_senha(fid_m, ator="qa_seg")
+c = filas.get_connection()
+try:
+    cur = c.cursor()
+    cur.execute("SELECT paciente_nome FROM tb_chamada WHERE fila_id=? ORDER BY id", (fid_m,))
+    prim = [r[0] for r in cur.fetchall()]
+finally:
+    c.close()
+check(prim == ["Jovem", "Velho"], f"vermelho jovem antes de verde idoso: {prim}")
+cid_m = filas.listar_chamadas(2, fila_id=fid_m)[-1][0]
+filas.avancar_chamada(cid_m, ator="qa_seg")
+esp = filas.espera_etapa(fid_m, "Triagem")
+check(len(esp) == 1, f"espera triagem calculada: {[(w['senha'], w['paciente']) for w in esp]}")
+ok_px, _ = filas.proximo_da_etapa(fid_m, "Triagem", ator="qa_seg")
+check(ok_px, "triagem pede o próximo")
+senha_top = filas.listar_chamadas(1, fila_id=fid_m)[0][2]
+ok_nm, _ = filas.definir_nome_senha(fid_m, senha_top, "Tardio", ator="qa_seg")
+check(ok_nm, "vincular nome à senha depois")
+ok_mc, _ = filas.definir_manchester_senha(fid_m, senha_top, "laranja", ator="qa_seg")
+check(ok_mc, "alterar manchester da senha")
+ex = filas.obter_extras_fila(fid_m)
+check(ex.get("voz_fila") == 1 and ex.get("voz_hora") == 1, "voz fila/hora configuráveis")
+filas.excluir_fila(fid_m, ator="qa_seg")
+check(True, "fila manchester excluída")
+
+# ========== D5. FILAS — acesso liberado por usuário ==========
+print("\n-- D5. Filas — liberar acesso --")
+ok_a, fid_a = filas.criar_fila("QA-ACESSO", ator="donoqa")
+check(ok_a, "criar fila acesso")
+ok_l, _ = filas.liberar_acesso(fid_a, "qacomum", ator="donoqa")
+check(ok_l, "liberar qacomum")
+vis = [r[0] for r in filas.listar_filas_visiveis("qacomum", "comum", False)]
+check(fid_a in vis, "liberado vê a fila")
+check(fid_a in filas.filas_liberadas("qacomum"), "filas_liberadas contém")
+filas.remover_acesso(fid_a, "qacomum", ator="donoqa")
+vis2 = [r[0] for r in filas.listar_filas_visiveis("qacomum", "comum", False)]
+check(fid_a not in vis2, "removido some da visão")
+filas.excluir_fila(fid_a, ator="donoqa")
+check(True, "fila acesso excluída")
+
+# ========== D6. FILAS — voz serializada + etapa vinculada ==========
+print("\n-- D6. Filas — claim de voz, etapa no nome --")
+ok_s, fid_s = filas.criar_fila("QA-SER", ator="qa_seg", etapas=[("Recepção", "01"), ("Consultório 01", "02")])
+check(ok_s, "criar fila seriação")
+ok_si, _ = filas.importar_nomes(fid_s, "[maria #gestante #vermelho #recepção]\n[pedro, #azul, #consultório 01]\n[carlos, #finanças]", ator="qa_seg")
+check(ok_si, "importar com etapa e tag ignorada")
+nms = {r[1]: (r[4], r[5], r[6]) for r in filas.listar_nomes(fid_s)}
+check(nms.get("maria") == ("gestante", "vermelho", "Recepção"), f"maria vinculada: {nms.get('maria')}")
+check(nms.get("pedro") == ("comum", "azul", "Consultório 01"), f"pedro vinculado: {nms.get('pedro')}")
+check(nms.get("carlos") == ("comum", "", ""), f"carlos sem etapa: {nms.get('carlos')}")
+filas.gerar_senha(fid_s, ator="qa_seg")
+c = filas.get_connection()
+try:
+    cur = c.cursor()
+    cur.execute("SELECT etapa_nome FROM tb_chamada WHERE fila_id=? ORDER BY id", (fid_s,))
+    ets_ch = [r[0] for r in cur.fetchall()]
+finally:
+    c.close()
+check(ets_ch == ["Recepção"], f"geral consome recepção: {ets_ch}")
+ok_px2, _ = filas.proximo_da_etapa(fid_s, "Consultório 01", ator="qa_seg")
+check(ok_px2, "consultório puxa pedro vinculado")
+ok_c1, _ = filas.gerar_senha(fid_s, ator="qa_seg")
+c = filas.get_connection()
+try:
+    cur = c.cursor()
+    cur.execute("SELECT id FROM tb_chamada WHERE fila_id=? ORDER BY id DESC LIMIT 2", (fid_s,))
+    ids_fala = [r[0] for r in cur.fetchall()]
+finally:
+    c.close()
+chave_t = filas.chave_tv_etapa(fila_id=fid_s, etapa="Recepção")
+check(filas.tv_claim_fala(chave_t, ids_fala[1], 30), "claim primeiro anúncio")
+check(not filas.tv_claim_fala(chave_t, ids_fala[0], 30), "segundo espera (sem cortar)")
+check(not filas.tv_livre(chave_t), "voz ocupada")
+prox_f = filas.buscar_proxima_fala(fila_id=fid_s, etapa_nome="Recepção", apos_id=ids_fala[1])
+check(prox_f is None or prox_f[0] != ids_fala[1], "próxima fala após a falada")
+filas.excluir_fila(fid_s, ator="qa_seg")
+c = filas.get_connection()
+try:
+    c.execute("DELETE FROM tb_tv_estado WHERE chave=?", (chave_t,))
+    c.commit()
+finally:
+    c.close()
+check(True, "fila seriação excluída")
+
+# ========== D4. FILAS — duração real + divisão por foto ==========
+print("\n-- D4. Filas — tempo real áudio/vídeo, fotos dividem --")
+tot, per = filas.calcular_passo([("audio", 8, 40.0)] + [("imagem", 8, None)] * 4)
+check(tot == 40.0 and per == [10.0, 10.0, 10.0, 10.0], f"áudio 40s + 4 fotos = 10s cada: {tot} {per}")
+tot2, per2 = filas.calcular_passo([("imagem", 5, None), ("imagem", 7, None)])
+check(tot2 == 12.0 and per2 == [5.0, 7.0], "fotos sozinhas somam duração configurada")
+tot3, _ = filas.calcular_passo([("video", 8, 30.0), ("imagem", 8, None), ("imagem", 8, None)])
+check(tot3 == 30.0, "vídeo 30s dita o passo")
+import wave as _wv
+with _wv.open("/tmp/qa40.wav", "wb") as _w:
+    _w.setnchannels(1); _w.setsampwidth(2); _w.setframerate(8000)
+    _w.writeframes(b"\x00\x00" * 8000 * 40)
+import shutil as _sh
+_sh.copy("/tmp/qa40.wav", filas.PASTA_MIDIA + "/qa40.wav")
+check(filas.duracao_real_arquivo("/midia_filas/qa40.wav") == 40.0, "extração duração real wav 40s")
+import os as _os
+_os.remove(filas.PASTA_MIDIA + "/qa40.wav")
 
 # ========== E. MARKERS + GRAPHIFY AFFECTED + CACHE + k6 ==========
 print("\n-- E. Infra — pytest markers, graphify affected, cache, k6 localhost --")

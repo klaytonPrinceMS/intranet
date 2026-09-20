@@ -202,6 +202,7 @@ mod_renomear_empenho/datahora_*PDF/*
 mod_renomear_empenho/tmp_ferramentas_pdf/*
 mod_renomear_empenho/downloads/*
 mod_edit_pdf/editorPDF/*
+mod_filas/midia/*
 mod_solicita_impressao/solicitacaoImpressao/*
 !**/.gitkeep
 

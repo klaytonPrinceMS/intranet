@@ -15,6 +15,7 @@ from mod_intranet.ui_comum import card_admin, rodape_salvar_restaurar
 from mod_intranet.tema_modulo import ler_tema, notificar, bloco_aparencia
 from mod_intranet import observabilidade
 from mod_filas import bd_manipulador as filas
+from mod_filas.telas import bloco_midia_fila, bloco_nomes_fila, bloco_controle_tv
 
 log = observabilidade.get_logger("filas")
 PASTA_MIDIA = filas.PASTA_MIDIA
@@ -68,13 +69,32 @@ def mostrar_administracao(usuario_logado: str = ""):
                             inp_inicio = ui.input("Início", value=str(senha_inicio or 1)).props("outlined dense type=number").classes("w-[80px]")
                             inp_fim = ui.input("Fim (0=∞)", value=str(senha_fim or 0)).props("outlined dense type=number").classes("w-[80px]")
                             inp_guiche = ui.input("Guichê base", value=guiche or "01").props("outlined dense").classes("w-[80px]")
-                            inp_grupo = ui.input("TV grupo", value=tv_grupo or "").props("outlined dense").classes("flex-1 min-w-[140px]")
+                        with ui.row().classes("w-full gap-2 flex-wrap items-end"):
+                            try:
+                                _grupos = filas.listar_grupos_tv()
+                            except Exception:
+                                _grupos = []
+                            _ops = ["(manter/isolada)"] + [g for g in _grupos if g != (tv_grupo or "")]
+                            if tv_grupo:
+                                _ops = [tv_grupo] + [g for g in _grupos if g != tv_grupo] + ["(nova abaixo)"]
+                            sel_grupo = ui.select(_ops, label="TV grupo em uso").props("outlined dense").classes("flex-1 min-w-[160px]")
+                            inp_grupo = ui.input("Nova TV grupo (slug)", placeholder="ex: recepcao-2 — vazio=isolada").props("outlined dense").classes("flex-1 min-w-[140px]")
 
-                            def _salvar(fid=fid, a=inp_nome, b=inp_end, c=inp_desc, d=inp_pref, e=inp_guiche, si=inp_inicio, sf=inp_fim, g=inp_grupo):
-                                ok, msg = filas.atualizar_fila(fid, nome=a.value, endereco=b.value, descricao=c.value, prefixo=d.value, guiche=e.value, senha_inicio=si.value, senha_fim=sf.value, tv_grupo=g.value, ator=usuario_logado)
+                            def _grupo_final(sel=sel_grupo, novo=inp_grupo):
+                                digitado = (novo.value or "").strip()
+                                if digitado:
+                                    return digitado
+                                s = sel.value or ""
+                                if s in ("(manter/isolada)", "(nova abaixo)"):
+                                    return ""
+                                return s
+
+                            def _salvar(fid=fid, a=inp_nome, b=inp_end, c=inp_desc, d=inp_pref, e=inp_guiche, si=inp_inicio, sf=inp_fim, gf=_grupo_final):
+                                ok, msg = filas.atualizar_fila(fid, nome=a.value, endereco=b.value, descricao=c.value, prefixo=d.value, guiche=e.value, senha_inicio=si.value, senha_fim=sf.value, tv_grupo=gf(), ator=usuario_logado)
                                 notificar(msg, type="positive" if ok else "negative")
                                 render_filas()
                             ui.button("Salvar", icon="save", on_click=_salvar).props("dense color=primary")
+                        ui.label("Lista = grupos em uso (selecione p/ compartilhar a TV) ou digite um novo slug. Vazio = TV isolada.").classes("text-caption text-grey-6")
 
                         # etapas
                         ui.separator()
@@ -107,6 +127,50 @@ def mostrar_administracao(usuario_logado: str = ""):
                                     render_filas()
                             ui.button("Adicionar etapa", icon="add", on_click=_add_etapa).props("dense color=primary")
 
+                        # voz + repetição + textos da TV
+                        try:
+                            _cfg = filas.obter_extras_fila(fid)
+                        except Exception:
+                            _cfg = {}
+                        with ui.expansion("Voz e textos da TV", icon="record_voice_over").classes("w-full"):
+                            with ui.row().classes("w-full gap-2 flex-wrap items-center"):
+                                ui.label("Falar:").classes("text-caption font-bold")
+                                v_nome = ui.checkbox("Nome", value=bool(_cfg.get("voz_nome", 1)))
+                                v_senha = ui.checkbox("Senha", value=bool(_cfg.get("voz_senha", 1)))
+                                v_dest = ui.checkbox("Destino", value=bool(_cfg.get("voz_destino", 1)))
+                                v_guiche = ui.checkbox("Guichê", value=bool(_cfg.get("voz_guiche", 1)))
+                                v_fila = ui.checkbox("Fila", value=bool(_cfg.get("voz_fila", 1)))
+                                v_hora = ui.checkbox("Hora cheia/meia", value=bool(_cfg.get("voz_hora", 1)))
+                                v_rep = ui.number("Repetir", value=_cfg.get("voz_repetir", 0), min=0, max=10, step=1).props("outlined dense").classes("w-[90px]")
+                                v_int = ui.number("Intervalo(s)", value=_cfg.get("voz_intervalo", 2), min=1, max=60, step=1).props("outlined dense").classes("w-[100px]")
+                            t_tit = ui.input("Título da TV", value=_cfg.get("tv_titulo") or "").props("outlined dense").classes("w-full")
+                            t_sub = ui.input("Subtítulo da TV", value=_cfg.get("tv_subtitulo") or "").props("outlined dense").classes("w-full")
+                            t_ag = ui.input("Texto quando ociosa", value=_cfg.get("tv_aguardando") or "AGUARDE CHAMADA").props("outlined dense").classes("w-full")
+                            t_leg = ui.input("Legenda da mídia", value=_cfg.get("tv_midia_legenda") or "").props("outlined dense").classes("w-full")
+                            t_not = ui.input("Título das notícias", value=_cfg.get("tv_noticias_titulo") or "Notícias").props("outlined dense").classes("w-full")
+
+                            def _salvar_voz(fid=fid, a=v_nome, b=v_senha, c=v_dest, d=v_guiche, vf=v_fila, vh=v_hora, e=v_rep, f2=v_int, g=t_tit, h=t_sub, i=t_ag, j=t_leg, k=t_not):
+                                try:
+                                    rep = int(float(e.value or 0))
+                                except Exception:
+                                    rep = 0
+                                try:
+                                    interv = int(float(f2.value or 2))
+                                except Exception:
+                                    interv = 2
+                                ok, msg = filas.atualizar_fila(fid, ator=usuario_logado, voz_nome=a.value, voz_senha=b.value, voz_destino=c.value, voz_guiche=d.value, voz_fila=vf.value, voz_hora=vh.value, voz_repetir=rep, voz_intervalo=interv, tv_titulo=g.value, tv_subtitulo=h.value, tv_aguardando=i.value, tv_midia_legenda=j.value, tv_noticias_titulo=k.value)
+                                notificar(msg, type="positive" if ok else "negative")
+                                render_filas()
+                            ui.button("Salvar voz e textos", icon="save", on_click=_salvar_voz).props("dense color=primary")
+
+                        bloco_nomes_fila(fid, usuario_logado, render_filas)
+                        bloco_midia_fila(fid, usuario_logado, render_filas)
+                        try:
+                            _ids_tv = filas.ids_do_grupo(tv_grupo) if tv_grupo else [fid]
+                        except Exception:
+                            _ids_tv = [fid]
+                        bloco_controle_tv(filas.chave_tv(tv_grupo=tv_grupo) if tv_grupo else filas.chave_tv(fila_id=fid), tv_grupo or nome, fila_ids=_ids_tv)
+
         render_filas()
 
         with ui.row().classes("w-full gap-2 flex-wrap mt-2"):
@@ -115,7 +179,7 @@ def mostrar_administracao(usuario_logado: str = ""):
             def _confirmar_todas_admin():
                 with ui.dialog() as dlg, ui.card():
                     ui.label("Excluir todas as filas").classes("font-bold")
-                    ui.label("Todas as filas (exceto Geral) serão apagadas com chamadas e etapas. Confirmar?").classes("text-caption text-grey-7")
+                    ui.label("Todas as filas serão apagadas com chamadas, etapas, mídias e nomes. Confirmar?").classes("text-caption text-grey-7")
                     with ui.row().classes("w-full justify-end gap-2"):
                         ui.button("Cancelar", on_click=dlg.close).props("flat")
                         def _exec():
@@ -125,33 +189,43 @@ def mostrar_administracao(usuario_logado: str = ""):
                             render_filas()
                         ui.button("Confirmar", on_click=_exec).props("color=negative")
                 dlg.open()
-            ui.button("Excluir todas as filas", icon="delete_forever", on_click=_confirmar_todas_admin).props("outline dense color=negative").tooltip("Exclui todas exceto Geral")
+            ui.button("Excluir todas as filas", icon="delete_forever", on_click=_confirmar_todas_admin).props("outline dense color=negative").tooltip("Exclui todas as filas")
 
-    # ===== Mídia TV — áudios MP3 (música elevador) e vídeos propaganda =====
-    with card_admin("Mídia da TV — áudios e vídeos (global para todas as TVs)", icone="queue_music", chave_modulo="filas", grade=False):
-        ui.label("Selecione um conjunto de áudios MP3 (música de elevador) ou vídeos MP4 (propagandas da prefeitura/local). Quando a TV está ociosa, reproduz a playlist em loop; ao chamar, pausa e toca bip + voz. Mídia é global (aparece em todas as TVs isoladas e compartilhadas).").classes("text-caption text-grey-6")
-        ui.label("Formatos aceitos: .mp3, .wav, .ogg (áudio) e .mp4, .webm (vídeo). Arquivos ficam em mod_filas/midia/ e são servidos em /midia_filas/*.").classes("text-caption text-grey-6")
+    # ===== Áudio ambiente global — toca em TODAS as TVs (menu hambúrguer → Administração) =====
+    with card_admin("Áudio ambiente global — toca em todas as filas", icone="queue_music", chave_modulo="filas", grade=False):
+        ui.label("Áudios aqui tocam em TODAS as TVs (isoladas, grupos e geral), após as mídias de cada fila. Gerencie a altura do som (volume) por áudio. Vídeos/fotos globais ficam só na TV geral (/tv).").classes("text-caption text-grey-6")
+        ui.label("Formatos: .mp3, .wav, .ogg (áudio), .mp4, .webm (vídeo) e .jpg, .png, .webp (foto). Arquivos ficam em mod_filas/midia/ e são servidos em /midia_filas/*.").classes("text-caption text-grey-6")
 
         box_midia = ui.column().classes("w-full gap-2")
 
         def render_midia():
             box_midia.clear()
             with box_midia:
-                midias = filas.listar_midias()
+                midias = [m for m in filas.listar_midias() if not m[8]]
                 if not midias:
-                    ui.label("Nenhuma mídia cadastrada. Faça upload abaixo.").classes("text-caption text-grey-6 italic")
-                for mid, nome, tipo, caminho, orig, ordem, ativo, criado in midias:
+                    ui.label("Nenhuma mídia global. Faça upload abaixo ou envie por fila.").classes("text-caption text-grey-6 italic")
+                for mid, nome, tipo, caminho, orig, ordem, ativo, criado, f_id, volume, duracao, slot, real in midias:
                     src = f"/midia_filas/{os.path.basename(caminho)}"
+                    _onde = "todas as TVs" if tipo == "audio" else "só TV geral"
                     with ui.card().classes("w-full p-3 gap-2"):
                         with ui.row().classes("w-full items-center justify-between gap-2 flex-wrap"):
                             with ui.column().classes("gap-0 flex-1"):
-                                ui.label(f"{ordem}. [{tipo}] {nome}").classes("font-bold text-caption")
+                                ui.label(f"Exibição {slot} • [{tipo}] {nome} • vol {volume} • {_onde}").classes("font-bold text-caption")
                                 ui.label(f"{orig or os.path.basename(caminho)} • {src} • {'ativo' if ativo else 'inativo'} • {criado[:16] if criado else ''}").classes("text-caption text-grey-6")
                                 if tipo == "audio":
                                     ui.html(f"<audio controls style='width:100%;max-width:400px'><source src='{src}' type='audio/mpeg'></audio>", sanitize=False)
-                                else:
+                                elif tipo == "video":
                                     ui.html(f"<video controls style='width:100%;max-width:400px;max-height:180px;background:#111'><source src='{src}' type='video/mp4'></video>", sanitize=False)
-                            with ui.row().classes("gap-1 flex-wrap"):
+                                else:
+                                    ui.image(src).classes("w-full max-w-[400px]")
+                            with ui.row().classes("gap-1 flex-wrap items-end"):
+                                inp_vol_g = ui.number("Volume", value=volume, min=0, max=100, step=1).props("outlined dense").classes("w-[90px]")
+                                def _salvar_vol(mid=mid, v=inp_vol_g):
+                                    ok, msg = filas.atualizar_midia(mid, volume=v.value)
+                                    notificar(msg, type="positive" if ok else "negative")
+                                    if ok:
+                                        render_midia()
+                                ui.button("Salvar vol", icon="save", on_click=_salvar_vol).props("dense color=primary").tooltip("Altura do som desta reprodução")
                                 def _toggle(mid=mid, ativo=ativo):
                                     filas.set_midia_ativa(mid, not ativo)
                                     notificar("Mídia " + ("ativada" if not ativo else "desativada"), type="positive")
@@ -164,7 +238,7 @@ def mostrar_administracao(usuario_logado: str = ""):
                                 ui.button("Excluir", icon="delete", on_click=_excluir).props("dense outline color=negative")
                         with ui.row().classes("gap-1"):
                             def _subir(mid=mid):
-                                mids = [m[0] for m in filas.listar_midias()]
+                                mids = [m[0] for m in filas.listar_midias() if not m[8]]
                                 if mid in mids:
                                     idx = mids.index(mid)
                                     if idx > 0:
@@ -172,7 +246,7 @@ def mostrar_administracao(usuario_logado: str = ""):
                                         filas.reordenar_midias(mids)
                                         render_midia()
                             def _descer(mid=mid):
-                                mids = [m[0] for m in filas.listar_midias()]
+                                mids = [m[0] for m in filas.listar_midias() if not m[8]]
                                 if mid in mids:
                                     idx = mids.index(mid)
                                     if idx < len(mids)-1:
@@ -184,23 +258,20 @@ def mostrar_administracao(usuario_logado: str = ""):
 
         render_midia()
 
-        def _on_upload(e):
+        async def _on_upload(e):
+            from mod_filas.telas import _ler_upload
             try:
-                nome_arq = getattr(e, "name", "midia")
-                conteudo = e.content.read() if hasattr(e, "content") and hasattr(e.content, "read") else None
-                if conteudo is None and hasattr(e, "file"):
-                    conteudo = e.file.read()
+                nome_arq, conteudo = await _ler_upload(e)
                 if not conteudo:
                     notificar("Falha ao ler arquivo", type="negative")
                     return
                 ext = os.path.splitext(nome_arq)[1].lower()
-                tipo = "video" if ext in (".mp4", ".webm", ".mov", ".avi") else "audio" if ext in (".mp3", ".wav", ".ogg", ".m4a") else None
+                tipo = filas.tipo_por_extensao(nome_arq)
                 if not tipo:
-                    notificar(f"Formato não suportado: {ext} (use mp3/wav/ogg/mp4/webm)", type="negative")
+                    notificar(f"Formato não suportado: {ext} (use mp3/wav/ogg/mp4/webm/jpg/png/webp)", type="negative")
                     return
-                import re as _re, uuid as _uuid
-                base = _re.sub(r"[^a-zA-Z0-9._-]", "_", os.path.splitext(nome_arq)[0])[:40]
-                nome_seguro = f"{base}_{_uuid.uuid4().hex[:6]}{ext}"
+                # sobe automaticamente e renomeia no servidor: datahora_global.ext
+                nome_seguro = filas.nome_arquivo_midia(None, nome_arq)
                 dest = os.path.join(PASTA_MIDIA, nome_seguro)
                 os.makedirs(PASTA_MIDIA, exist_ok=True)
                 with open(dest, "wb") as f:
@@ -213,7 +284,8 @@ def mostrar_administracao(usuario_logado: str = ""):
             except Exception as ex:
                 notificar(f"Erro no upload: {ex}", type="negative")
 
-        ui.upload(label="Arraste MP3/MP4 aqui ou clique", auto_upload=True, on_upload=_on_upload, multiple=True).props("accept='.mp3,.wav,.ogg,.m4a,.mp4,.webm'").classes("w-full")
+        from mod_filas.telas import _rejeitado
+        ui.upload(label="Selecionar MP3/MP4/fotos — envia sozinho (global, só TV geral)", auto_upload=True, on_upload=_on_upload, on_rejected=_rejeitado, multiple=True).props("accept='.mp3,.wav,.ogg,.m4a,.mp4,.webm,.jpg,.jpeg,.png,.webp'").classes("w-full")
 
         with ui.row().classes("w-full gap-2 mt-2"):
             ui.button("Recarregar mídia", icon="refresh", on_click=render_midia).props("outline dense")

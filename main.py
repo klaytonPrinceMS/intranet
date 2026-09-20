@@ -760,12 +760,17 @@ def page_tv():
     try:
         from nicegui import context as _ctx
         grupo = None
+        etapa = None
         try:
             grupo = _ctx.client.request.query_params.get("grupo")
+            etapa = _ctx.client.request.query_params.get("etapa")
         except Exception:
             grupo = None
         if grupo:
-            mostrar_tv(tv_grupo=grupo)
+            mostrar_tv(tv_grupo=grupo, etapa=etapa)
+            return
+        if etapa:
+            mostrar_tv(etapa=etapa)
             return
     except Exception:
         pass
@@ -776,7 +781,12 @@ def page_tv():
 def page_tv_fila(fila_id: int):
     # TV isolada por fila (não interfere em outra) — também resolve grupo compartilhado se fila pertence a grupo
     from mod_filas.telas import mostrar_tv
-    mostrar_tv(fila_id=fila_id)
+    try:
+        from nicegui import context as _ctx
+        etapa = _ctx.client.request.query_params.get("etapa")
+    except Exception:
+        etapa = None
+    mostrar_tv(fila_id=fila_id, etapa=etapa)
 
 
 @ui.page("/lista-telefonica")
