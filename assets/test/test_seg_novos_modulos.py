@@ -563,6 +563,43 @@ finally:
     c.close()
 check(True, "fila seriação excluída")
 
+# ========== D7. FILAS — ordem da fala por fila ==========
+print("\n-- D7. Filas — ordem da fala --")
+ok_o, _ = filas.normalizar_voz_ordem("senha,nome")
+check(ok_o, "ordem senha,nome válida")
+ok_ox, _ = filas.normalizar_voz_ordem("bla")
+check(not ok_ox, "ordem inválida rejeitada")
+ok_of, fid_of = filas.criar_fila("QA-ORDEM", ator="qa_seg", voz_fila=0, voz_ordem="senha,nome")
+check(ok_of and filas.obter_extras_fila(fid_of)["voz_ordem"] == "senha,nome,fila,destino,guiche", "criar com ordem")
+ok_ou, _ = filas.atualizar_fila(fid_of, voz_ordem="nome,senha", ator="qa_seg")
+check(ok_ou and filas.obter_extras_fila(fid_of)["voz_ordem"] == "nome,senha,fila,destino,guiche", "trocar ordem")
+filas.excluir_fila(fid_of, ator="qa_seg")
+check(True, "fila ordem excluída")
+
+# ========== D8. FILAS — fundo, volume 40, rename padrão ==========
+print("\n-- D8. Filas — papel de fundo e padrão --")
+check(filas.VOLUME_AMBIENTE_PADRAO == 40, "volume ambiente padrão 40")
+ok_fd, fid_fd = filas.criar_fila("QA-FUNDO", ator="qa_seg")
+check(ok_fd, "criar fila fundo")
+filas.adicionar_midia("f1", "imagem", "/midia_filas/f1.jpg", ator="qa_seg", fila_id=fid_fd)
+filas.adicionar_midia("s1", "audio", "/midia_filas/s1.mp3", ator="qa_seg", fila_id=fid_fd)
+mids = {m[1]: m[0] for m in filas.listar_midias(fila_id=fid_fd)}
+ok_fu, _ = filas.set_midia_fundo(mids["f1"], True, ator="qa_seg")
+check(ok_fu, "foto vira fundo")
+ok_fua, msg_fua = filas.set_midia_fundo(mids["s1"], True, ator="qa_seg")
+check(not ok_fua and "foto" in msg_fua.lower(), "áudio não vira fundo")
+filas.adicionar_midia("f2", "imagem", "/midia_filas/f2.jpg", ator="qa_seg", fila_id=fid_fd)
+mids = {m[1]: m[0] for m in filas.listar_midias(fila_id=fid_fd)}
+filas.set_midia_fundo(mids["f2"], True, ator="qa_seg")
+flags = {m[1]: m[13] for m in filas.listar_midias(fila_id=fid_fd)}
+check(flags == {"f1": 0, "s1": 0, "f2": 1}, f"só um fundo: {flags}")
+ok_rn, _ = filas.atualizar_fila(fid_fd, nome="QA-FUNDO2", ator="qa_seg")
+check(ok_rn, "renomear fila reaplica padrão")
+for m in filas.listar_midias():
+    filas.excluir_midia(m[0], ator="qa_seg")
+filas.excluir_fila(fid_fd, ator="qa_seg")
+check(True, "fila fundo excluída")
+
 # ========== D4. FILAS — duração real + divisão por foto ==========
 print("\n-- D4. Filas — tempo real áudio/vídeo, fotos dividem --")
 tot, per = filas.calcular_passo([("audio", 8, 40.0)] + [("imagem", 8, None)] * 4)

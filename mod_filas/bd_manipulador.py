@@ -89,16 +89,17 @@ def _migrar_midia_para_imagem(cur):
                 ativo INTEGER NOT NULL DEFAULT 1,
                 criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
                 fila_id INTEGER REFERENCES tb_fila(id) ON DELETE CASCADE,
-                volume INTEGER NOT NULL DEFAULT 20,
+                volume INTEGER NOT NULL DEFAULT 40,
                 duracao INTEGER NOT NULL DEFAULT 8,
                 slot INTEGER NOT NULL DEFAULT 0,
-                duracao_real REAL
+                duracao_real REAL,
+                fundo INTEGER NOT NULL DEFAULT 0
             )
         """)
         cur.execute("""
             INSERT INTO tb_midia_nova
-                (id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em)
-            SELECT id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em
+                (id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, fundo)
+            SELECT id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, 0
             FROM tb_midia
         """)
         cur.execute("DROP TABLE tb_midia")
@@ -139,6 +140,7 @@ def init_db():
     _garantir_coluna(cur, "tb_fila", "voz_guiche", "INTEGER DEFAULT 1")
     _garantir_coluna(cur, "tb_fila", "voz_fila", "INTEGER DEFAULT 1")
     _garantir_coluna(cur, "tb_fila", "voz_hora", "INTEGER DEFAULT 1")
+    _garantir_coluna(cur, "tb_fila", "voz_ordem", "TEXT DEFAULT 'fila,senha,nome,destino,guiche'")
     _garantir_coluna(cur, "tb_fila", "voz_repetir", "INTEGER DEFAULT 0")
     _garantir_coluna(cur, "tb_fila", "voz_intervalo", "INTEGER DEFAULT 2")
     # textos da TV editáveis pelo criador da fila
@@ -190,17 +192,18 @@ def init_db():
             ativo INTEGER NOT NULL DEFAULT 1,
             criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
             fila_id INTEGER REFERENCES tb_fila(id) ON DELETE CASCADE,
-            volume INTEGER NOT NULL DEFAULT 20,
+            volume INTEGER NOT NULL DEFAULT 40,
             duracao INTEGER NOT NULL DEFAULT 8,
             slot INTEGER NOT NULL DEFAULT 0,
             duracao_real REAL
         )
     """)
     _garantir_coluna(cur, "tb_midia", "fila_id", "INTEGER REFERENCES tb_fila(id) ON DELETE CASCADE")
-    _garantir_coluna(cur, "tb_midia", "volume", "INTEGER NOT NULL DEFAULT 20")
+    _garantir_coluna(cur, "tb_midia", "volume", "INTEGER NOT NULL DEFAULT 40")
     _garantir_coluna(cur, "tb_midia", "duracao", "INTEGER NOT NULL DEFAULT 8")
     _garantir_coluna(cur, "tb_midia", "slot", "INTEGER NOT NULL DEFAULT 0")
     _garantir_coluna(cur, "tb_midia", "duracao_real", "REAL")
+    _garantir_coluna(cur, "tb_midia", "fundo", "INTEGER NOT NULL DEFAULT 0")
     _migrar_midia_para_imagem(cur)
     # preenche duração real de mídias antigas (melhor esforço)
     try:
@@ -273,6 +276,20 @@ def init_db():
     cur.execute("CREATE INDEX IF NOT EXISTS idx_fila_acesso_user ON tb_fila_acesso(user_nome)")
 
     os.makedirs(PASTA_MIDIA, exist_ok=True)
+    # limpa staging órfão (stage_* com +24h sem vincular)
+    try:
+        import time as _t
+        agora = _t.time()
+        for arq in os.listdir(PASTA_MIDIA):
+            if arq.startswith("stage_"):
+                full = os.path.join(PASTA_MIDIA, arq)
+                try:
+                    if os.path.isfile(full) and agora - os.path.getmtime(full) > 86400:
+                        os.remove(full)
+                except Exception:
+                    continue
+    except Exception:
+        pass
     conn.commit()
     conn.close()
 
@@ -402,17 +419,36 @@ def listar_grupos_tv():
         conn.close()
 
 
+VOZ_ORDEM_PADRAO = "fila,senha,nome,destino,guiche"
+VOZ_CAMPOS = ("fila", "senha", "nome", "destino", "guiche")
+
+
+def normalizar_voz_ordem(valor: str) -> tuple[bool, str]:
+    """Valida ordem da fala: só fila|senha|nome|destino|guiche, sem repetir; completa faltantes no fim."""
+    vistos = []
+    for tok in (valor or "").split(","):
+        t = tok.strip().lower()
+        if t and t in VOZ_CAMPOS and t not in vistos:
+            vistos.append(t)
+    if not vistos:
+        return False, "Ordem da fala vazia — use ex: senha,nome,destino (campos: fila,senha,nome,destino,guiche)"
+    for t in VOZ_CAMPOS:
+        if t not in vistos:
+            vistos.append(t)
+    return True, ",".join(vistos)
+
+
 def obter_extras_fila(fila_id: int) -> dict:
     """Config extras da fila: voz (quais campos + repetição) e textos da TV."""
     padrao = {"voz_nome": 1, "voz_senha": 1, "voz_destino": 1, "voz_guiche": 1,
-              "voz_fila": 1, "voz_hora": 1,
+              "voz_fila": 1, "voz_hora": 1, "voz_ordem": VOZ_ORDEM_PADRAO,
               "voz_repetir": 0, "voz_intervalo": 2, "tv_titulo": "",
               "tv_subtitulo": "", "tv_aguardando": "AGUARDE CHAMADA",
               "tv_midia_legenda": "", "tv_noticias_titulo": "Notícias"}
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT voz_nome, voz_senha, voz_destino, voz_guiche, voz_fila, voz_hora, voz_repetir, voz_intervalo, tv_titulo, tv_subtitulo, tv_aguardando, tv_midia_legenda, tv_noticias_titulo FROM tb_fila WHERE id=?", (fila_id,))
+        cur.execute("SELECT voz_nome, voz_senha, voz_destino, voz_guiche, voz_fila, voz_hora, voz_ordem, voz_repetir, voz_intervalo, tv_titulo, tv_subtitulo, tv_aguardando, tv_midia_legenda, tv_noticias_titulo FROM tb_fila WHERE id=?", (fila_id,))
         row = cur.fetchone()
         if not row:
             return padrao
@@ -425,7 +461,7 @@ def obter_extras_fila(fila_id: int) -> dict:
         conn.close()
 
 
-def criar_fila(nome: str, endereco: str = "", descricao: str = "", prefixo: str = "A", guiche: str = "01", ator: str = "", senha_inicio: int = 1, senha_fim: int = 0, tv_grupo: str = "", voz_nome: int = 1, voz_senha: int = 1, voz_destino: int = 1, voz_guiche: int = 1, voz_fila: int = 1, voz_hora: int = 1, voz_repetir: int = 0, voz_intervalo: int = 2, tv_titulo: str = "", tv_subtitulo: str = "", tv_aguardando: str = "AGUARDE CHAMADA", tv_midia_legenda: str = "", tv_noticias_titulo: str = "Notícias", etapas=None):
+def criar_fila(nome: str, endereco: str = "", descricao: str = "", prefixo: str = "A", guiche: str = "01", ator: str = "", senha_inicio: int = 1, senha_fim: int = 0, tv_grupo: str = "", voz_nome: int = 1, voz_senha: int = 1, voz_destino: int = 1, voz_guiche: int = 1, voz_fila: int = 1, voz_hora: int = 1, voz_ordem: str = VOZ_ORDEM_PADRAO, voz_repetir: int = 0, voz_intervalo: int = 2, tv_titulo: str = "", tv_subtitulo: str = "", tv_aguardando: str = "AGUARDE CHAMADA", tv_midia_legenda: str = "", tv_noticias_titulo: str = "Notícias", etapas=None):
     nome = (nome or "").strip()
     if not nome:
         return False, "Nome da fila é obrigatório"
@@ -451,6 +487,9 @@ def criar_fila(nome: str, endereco: str = "", descricao: str = "", prefixo: str 
     if not ok_grupo:
         return False, slug_grupo
     tv_grupo = slug_grupo
+    ok_ordem, voz_ordem = normalizar_voz_ordem(voz_ordem)
+    if not ok_ordem:
+        return False, voz_ordem
     try:
         voz_repetir = max(0, min(int(voz_repetir or 0), 10))
     except Exception:
@@ -467,8 +506,8 @@ def criar_fila(nome: str, endereco: str = "", descricao: str = "", prefixo: str 
         # padding dinâmico: se inicio/fim >999 usa 4+ dígitos
         if senha_inicio > 999 or senha_fim > 999:
             senha_atual = f"{prefixo}{(senha_inicio - 1):04d}" if senha_inicio > 0 else f"{prefixo}0000"
-        cur.execute("INSERT INTO tb_fila (nome, senha_atual, status, guiche, endereco, descricao, prefixo, criado_por, senha_inicio, senha_fim, tv_grupo, voz_nome, voz_senha, voz_destino, voz_guiche, voz_fila, voz_hora, voz_repetir, voz_intervalo, tv_titulo, tv_subtitulo, tv_aguardando, tv_midia_legenda, tv_noticias_titulo) VALUES (?, ?, 'ativa', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (nome, senha_atual, guiche, endereco, descricao, prefixo, ator or "", senha_inicio, senha_fim, tv_grupo, 1 if voz_nome else 0, 1 if voz_senha else 0, 1 if voz_destino else 0, 1 if voz_guiche else 0, 1 if voz_fila else 0, 1 if voz_hora else 0, voz_repetir, voz_intervalo, (tv_titulo or "").strip(), (tv_subtitulo or "").strip(), (tv_aguardando or "AGUARDE CHAMADA").strip(), (tv_midia_legenda or "").strip(), (tv_noticias_titulo or "Notícias").strip()))
+        cur.execute("INSERT INTO tb_fila (nome, senha_atual, status, guiche, endereco, descricao, prefixo, criado_por, senha_inicio, senha_fim, tv_grupo, voz_nome, voz_senha, voz_destino, voz_guiche, voz_fila, voz_hora, voz_ordem, voz_repetir, voz_intervalo, tv_titulo, tv_subtitulo, tv_aguardando, tv_midia_legenda, tv_noticias_titulo) VALUES (?, ?, 'ativa', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (nome, senha_atual, guiche, endereco, descricao, prefixo, ator or "", senha_inicio, senha_fim, tv_grupo, 1 if voz_nome else 0, 1 if voz_senha else 0, 1 if voz_destino else 0, 1 if voz_guiche else 0, 1 if voz_fila else 0, 1 if voz_hora else 0, voz_ordem, voz_repetir, voz_intervalo, (tv_titulo or "").strip(), (tv_subtitulo or "").strip(), (tv_aguardando or "AGUARDE CHAMADA").strip(), (tv_midia_legenda or "").strip(), (tv_noticias_titulo or "Notícias").strip()))
         conn.commit()
         fid = cur.lastrowid
         # sequência de etapas/salas: cada etapa vira subfila (guichê próprio, TV replicável)
@@ -497,7 +536,7 @@ def criar_fila(nome: str, endereco: str = "", descricao: str = "", prefixo: str 
         conn.close()
 
 
-def atualizar_fila(fila_id: int, nome: str = None, endereco: str = None, descricao: str = None, prefixo: str = None, guiche: str = None, status: str = None, senha_inicio=None, senha_fim=None, tv_grupo: str = None, ator: str = "", voz_nome=None, voz_senha=None, voz_destino=None, voz_guiche=None, voz_fila=None, voz_hora=None, voz_repetir=None, voz_intervalo=None, tv_titulo: str = None, tv_subtitulo: str = None, tv_aguardando: str = None, tv_midia_legenda: str = None, tv_noticias_titulo: str = None):
+def atualizar_fila(fila_id: int, nome: str = None, endereco: str = None, descricao: str = None, prefixo: str = None, guiche: str = None, status: str = None, senha_inicio=None, senha_fim=None, tv_grupo: str = None, ator: str = "", voz_nome=None, voz_senha=None, voz_destino=None, voz_guiche=None, voz_fila=None, voz_hora=None, voz_ordem: str = None, voz_repetir=None, voz_intervalo=None, tv_titulo: str = None, tv_subtitulo: str = None, tv_aguardando: str = None, tv_midia_legenda: str = None, tv_noticias_titulo: str = None):
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -546,6 +585,11 @@ def atualizar_fila(fila_id: int, nome: str = None, endereco: str = None, descric
         for campo, val in (("voz_nome", voz_nome), ("voz_senha", voz_senha), ("voz_destino", voz_destino), ("voz_guiche", voz_guiche), ("voz_fila", voz_fila), ("voz_hora", voz_hora)):
             if val is not None:
                 sets.append(f"{campo}=?"); vals.append(1 if val else 0)
+        if voz_ordem is not None:
+            ok_ordem, ordem_norm = normalizar_voz_ordem(voz_ordem)
+            if not ok_ordem:
+                return False, ordem_norm
+            sets.append("voz_ordem=?"); vals.append(ordem_norm)
         if voz_repetir is not None:
             try:
                 sets.append("voz_repetir=?"); vals.append(max(0, min(int(voz_repetir or 0), 10)))
@@ -564,6 +608,12 @@ def atualizar_fila(fila_id: int, nome: str = None, endereco: str = None, descric
         vals.append(fila_id)
         cur.execute(f"UPDATE tb_fila SET {', '.join(sets)} WHERE id=?", vals)
         conn.commit()
+        # nome mudou → reaplica datahora_nomeFila nos arquivos (padrão sempre vale)
+        if any(s.startswith("nome=") for s in sets):
+            try:
+                renomear_arquivos_fila(fila_id, ator or "sistema")
+            except Exception:
+                pass
         _audit(ator or "sistema", "atualizar_fila", str(fila_id), ",".join(sets))
         return True, "Fila atualizada"
     except Exception as e:
@@ -987,6 +1037,56 @@ def _norm_etapa(texto: str) -> str:
     return re.sub(r"\s+", " ", n).strip()
 
 
+def csv_para_tags(texto: str):
+    """Converte CSV (nome,grupo,cor,etapa com , ou ;) para linhas de tags. Retorna None se não for CSV."""
+    linhas = [l.strip() for l in (texto or "").splitlines() if l.strip()]
+    if not linhas:
+        return None
+    if any(";" in l for l in linhas):
+        delim = ";"
+    elif sum(1 for l in linhas if "," in l) >= max(1, len(linhas) // 2):
+        delim = ","
+    else:
+        return None
+    nomes_cab = {"nome", "nomes", "name", "paciente", "usuario", "usuário"}
+    grupo_cab = {"grupo", "prioridade", "categoria"}
+    cor_cab = {"cor", "manchester", "classificacao", "classificação", "risco"}
+    etapa_cab = {"etapa", "setor", "sala", "destino", "local"}
+    def _norm_cab(s):
+        n = unicodedata.normalize("NFKD", (s or "").strip().lower())
+        return "".join(c for c in n if not unicodedata.combining(c))
+    primeira = [_norm_cab(c) for c in linhas[0].split(delim)]
+    tem_cab = any(c in nomes_cab for c in primeira)
+    idx = {"nome": 0, "grupo": 1, "cor": 2, "etapa": 3}
+    inicio = 0
+    if tem_cab:
+        inicio = 1
+        for i, c in enumerate(primeira):
+            if c in nomes_cab:
+                idx["nome"] = i
+            elif c in grupo_cab:
+                idx["grupo"] = i
+            elif c in cor_cab:
+                idx["cor"] = i
+            elif c in etapa_cab:
+                idx["etapa"] = i
+    saida = []
+    for lin in linhas[inicio:]:
+        cels = [c.strip() for c in lin.split(delim)]
+        nome = cels[idx["nome"]] if idx["nome"] < len(cels) else ""
+        if not nome:
+            continue
+        tags = []
+        if idx["grupo"] < len(cels) and cels[idx["grupo"]]:
+            tags.append("#" + cels[idx["grupo"]])
+        if idx["cor"] < len(cels) and cels[idx["cor"]]:
+            tags.append("#" + cels[idx["cor"]])
+        if idx["etapa"] < len(cels) and cels[idx["etapa"]]:
+            tags.append("#" + cels[idx["etapa"]])
+        saida.append((nome + " " + " ".join(tags)).strip())
+    return "\n".join(saida) if saida else None
+
+
 def _parse_nome_tags(linha: str, etapas: list = None) -> tuple[str, str, str, str]:
     """Separa 'Maria #gestante #vermelho #recepcao' em (nome, prioridade, manchester, etapa).
 
@@ -1340,7 +1440,7 @@ def _proximo_nome_pendente(cur, fila_id: int):
 
 # ============ MIDIA ============
 
-VOLUME_AMBIENTE_PADRAO = 20
+VOLUME_AMBIENTE_PADRAO = 40
 VOLUME_CHAMADA = 0.8
 TIPOS_MIDIA = ("audio", "video", "imagem")
 EXTENSAO_TIPO = {
@@ -1443,7 +1543,7 @@ def listar_midias(somente_ativas=False, fila_id=None):
     conn = get_connection()
     try:
         cur = conn.cursor()
-        base = "SELECT id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real FROM tb_midia"
+        base = "SELECT id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, fundo FROM tb_midia"
         conds = []
         vals = []
         if somente_ativas:
@@ -1610,6 +1710,55 @@ def reordenar_midias(ordem_ids: list[int]):
             cur.execute("UPDATE tb_midia SET ordem=? WHERE id=?", (idx, mid))
         conn.commit()
         return True, "Ordem atualizada"
+    finally:
+        conn.close()
+
+
+def set_midia_fundo(midia_id: int, fundo: bool, ator: str = ""):
+    """Marca foto como papel de fundo (uma por fila/global: as demais saem)."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT fila_id, tipo FROM tb_midia WHERE id=?", (midia_id,))
+        row = cur.fetchone()
+        if not row:
+            return False, "Mídia não encontrada"
+        if fundo and row[1] != "imagem":
+            return False, "Só foto pode ser papel de fundo"
+        if fundo:
+            cur.execute("UPDATE tb_midia SET fundo=0 WHERE (fila_id=? OR (fila_id IS NULL AND ? IS NULL)) AND id<>?",
+                        (row[0], row[0], midia_id))
+        cur.execute("UPDATE tb_midia SET fundo=? WHERE id=?", (1 if fundo else 0, midia_id))
+        conn.commit()
+        _audit(ator or "sistema", "fundo_midia", str(midia_id), f"fundo={bool(fundo)}")
+        return True, ("Papel de fundo ativado" if fundo else "Papel de fundo removido")
+    finally:
+        conn.close()
+
+
+def renomear_arquivos_fila(fila_id: int, ator: str = "") -> tuple[bool, str]:
+    """Reaplica datahora_nomeFila em todas as mídias da fila (ex: fila renomeada)."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id, arquivo_original FROM tb_midia WHERE fila_id=?", (fila_id,))
+        linhas = cur.fetchall()
+        n = 0
+        for mid, orig in linhas:
+            try:
+                final = nome_arquivo_midia(fila_id, orig or "midia")
+                cur.execute("SELECT caminho FROM tb_midia WHERE id=?", (mid,))
+                antigo = (cur.fetchone()[0] or "")
+                src = os.path.join(PASTA_MIDIA, os.path.basename(antigo))
+                dst = os.path.join(PASTA_MIDIA, final)
+                if os.path.isfile(src) and src != dst:
+                    os.rename(src, dst)
+                    cur.execute("UPDATE tb_midia SET caminho=? WHERE id=?", (f"/midia_filas/{final}", mid))
+                    n += 1
+            except Exception:
+                continue
+        conn.commit()
+        return True, f"{n} arquivo(s) renomeado(s)"
     finally:
         conn.close()
 

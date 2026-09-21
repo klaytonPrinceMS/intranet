@@ -43,7 +43,7 @@ O sistema nasceu da necessidade de organizar processos internos da prefeitura em
 - **Ofimática** — edição de PDFs (reduzir, juntar, cortar, dividir) em espaço temporário por usuário.
 - **Serviços administrativos** — solicitação de impressão com cotas mensais hierárquicas (1000/200 via `ORGANOGRAMA_BASE`) e autorização.
 - **Apoio de T.I.** — software portátil + backup owner-isolated `YYYYMMDD_HHMM_nomePc_ip` com `webkitdirectory` (Técnico).
-- **Atendimento** — gestor de filas/TV (`/filas` + `/tv` pública, esqueleto 3s+beep).
+- **Atendimento** — gestor de filas/TV multi-filas (`/filas` + `/tv` pública isolada/compartilhada/por sala, voz serializada por claim na ordem `voz_ordem`, volume 40, papel de fundo).
 - **Organograma** — lista telefônica expansível `Secretaria→Setor→Subsetor` com busca e `tel:` no celular (Lista Telefônica).
 - **Governança** — auditoria central de todas as ações relevantes (LGPD, uma tabela por módulo) e observabilidade (loguru).
 

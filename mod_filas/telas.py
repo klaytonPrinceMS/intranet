@@ -91,9 +91,12 @@ async def _salvar_arquivo_midia(e, fila_id, user_nome, volume, duracao, slot, re
 
 def bloco_midia_fila(fila_id: int, user_nome: str, recarregar):
     """Mídias da fila: upload mp3/mp4/foto + sequência (exibição) + volume. Reuso em /filas e /admin/filas."""
-    with ui.expansion("Mídias desta fila — áudio, foto e vídeo (sequência + volume)", icon="perm_media").classes("w-full"):
-        ui.label("Exibição: itens com o MESMO número tocam juntos. Volume 0-100 (padrão 20) p/ áudio e vídeo. Duração = tempo REAL do áudio/vídeo; fotos dividem esse tempo (áudio 40s + 4 fotos = 10s cada); foto sozinha usa a duração configurada.").classes("text-caption text-grey-6")
-        box_lista = ui.column().classes("w-full gap-2")
+    with ui.expansion("Mídias desta fila — áudio, foto e vídeo (sequência + volume)", icon="perm_media").classes("w-full").style("min-width: 0"):
+        with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+            _info_m = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: mídias"')
+            with _info_m:
+                ui.tooltip("Itens com o MESMO número tocam juntos (ex: foto + áudio). Volume 0-100 (padrão 40) p/ áudio e vídeo. Duração = tempo REAL do áudio/vídeo; fotos dividem esse tempo (áudio 40s + 4 fotos = 10s cada); foto sozinha usa a duração configurada.").props("delay=1000")
+        box_lista = ui.column().classes("w-full gap-2").style("min-width: 0")
 
         def _render():
             box_lista.clear()
@@ -101,27 +104,44 @@ def bloco_midia_fila(fila_id: int, user_nome: str, recarregar):
                 proprias = filas.listar_midias(fila_id=fila_id)
                 if not proprias:
                     ui.label("Nenhuma mídia desta fila. Selecione abaixo — sobe sozinho e fica só nesta fila.").classes("text-caption text-grey-6 italic")
-                for mid, nome, tipo, caminho, orig, ordem, ativo, criado, f_id, volume, duracao, slot, real in proprias:
+                _slot_atual = None
+                for mid, nome, tipo, caminho, orig, ordem, ativo, criado, f_id, volume, duracao, slot, real, fundo in proprias:
+                    if slot != _slot_atual:
+                        _slot_atual = slot
+                        ui.label(f"— Exibição {slot} (juntos) —").classes("text-caption font-bold text-primary")
                     src = f"/midia_filas/{os.path.basename(caminho)}"
-                    with ui.card().classes("w-full p-2 gap-1"):
+                    with ui.card().classes("w-full p-2 gap-1").style("min-width: 0"):
                         _real_txt = f" • {real}s reais" if real else ""
-                        ui.label(f"Exibição {slot} • [{tipo}] {nome} • vol {volume} • {duracao}s{_real_txt} • {'ativo' if ativo else 'inativo'}").classes("text-caption font-bold")
+                        _fundo_txt = " • FUNDO" if fundo else ""
+                        ui.label(f"[{tipo}] {nome} • vol {volume} • {duracao}s{_real_txt}{_fundo_txt} • {'ativo' if ativo else 'inativo'}").classes("text-caption font-bold").style("min-width: 0; overflow-wrap: break-word")
                         if tipo == "audio":
                             ui.html(f"<audio controls style='width:100%;max-width:400px'><source src='{src}'></audio>", sanitize=False)
                         elif tipo == "video":
                             ui.html(f"<video controls style='width:100%;max-width:400px;max-height:180px;background:#111'><source src='{src}'></video>", sanitize=False)
                         else:
                             ui.image(src).classes("w-full max-w-[400px]")
-                        with ui.row().classes("w-full gap-1 flex-wrap items-end"):
+                        with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.25rem; min-width: 0"):
                             inp_vol = ui.number("Volume", value=volume, min=0, max=100, step=1).props("outlined dense").classes("w-[90px]")
+                            with inp_vol:
+                                ui.tooltip("Altura do som desta reprodução (padrão 40; na chamada cai à metade).").props("delay=1000")
                             inp_dur = ui.number("Duração(s)", value=duracao, min=3, max=120, step=1).props("outlined dense").classes("w-[100px]")
+                            with inp_dur:
+                                ui.tooltip("Só vale p/ foto SOZINHA (com áudio ela divide o tempo real).").props("delay=1000")
                             inp_slot = ui.number("Exibição", value=slot, min=0, max=999, step=1).props("outlined dense").classes("w-[90px]")
+                            with inp_slot:
+                                ui.tooltip("Posição na sequência; mesmo número = juntos.").props("delay=1000")
                             def _salvar(mid=mid, v=inp_vol, d=inp_dur, s=inp_slot):
                                 ok, msg = filas.atualizar_midia(mid, volume=v.value, duracao=d.value, slot=s.value)
                                 notificar(msg, type="positive" if ok else "negative")
                                 if ok:
                                     recarregar()
-                            ui.button("Salvar", on_click=_salvar).props("dense color=primary")
+                            ui.button("Salvar", on_click=_salvar).props("dense color=primary").props('data-testid=filas-midia-salvar')
+                            if tipo == "imagem":
+                                def _fundo(mid=mid, fundo=fundo):
+                                    ok, msg = filas.set_midia_fundo(mid, not fundo, ator=user_nome)
+                                    notificar(msg, type="positive" if ok else "negative")
+                                    recarregar()
+                                ui.button("Fundo" if not fundo else "Tirar fundo", icon="wallpaper", on_click=_fundo).props("dense outline color=primary" if not fundo else "dense outline").tooltip("Foto permanente atrás de tudo na TV").props('data-testid=filas-midia-fundo')
                             def _toggle(mid=mid, ativo=ativo):
                                 filas.set_midia_ativa(mid, not ativo)
                                 notificar("Mídia " + ("ativada" if not ativo else "desativada"), type="positive")
@@ -132,7 +152,7 @@ def bloco_midia_fila(fila_id: int, user_nome: str, recarregar):
                                 recarregar()
                             ui.button("Ativar" if not ativo else "Desativar", on_click=_toggle).props("dense outline")
                             ui.button("Excluir", on_click=_excluir).props("dense outline color=negative")
-                        with ui.row().classes("gap-1"):
+                        with ui.row().classes("w-full flex-wrap").style("gap: 0.25rem; min-width: 0"):
                             def _subir(mid=mid):
                                 ids = [m[0] for m in filas.listar_midias(fila_id=fila_id) if m[8] == fila_id]
                                 if mid in ids:
@@ -152,10 +172,16 @@ def bloco_midia_fila(fila_id: int, user_nome: str, recarregar):
                             ui.button(icon="arrow_upward", on_click=_subir).props("dense flat").tooltip("Antecipar na sequência")
                             ui.button(icon="arrow_downward", on_click=_descer).props("dense flat").tooltip("Adiar na sequência")
 
-        with ui.row().classes("w-full gap-2 flex-wrap items-end"):
-            up_vol = ui.number("Volume (padrão 20)", value=filas.VOLUME_AMBIENTE_PADRAO, min=0, max=100, step=1).props("outlined dense").classes("w-[110px]")
+        with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0"):
+            up_vol = ui.number("Volume (padrão 40)", value=filas.VOLUME_AMBIENTE_PADRAO, min=0, max=100, step=1).props("outlined dense").classes("w-[110px]")
+            with up_vol:
+                ui.tooltip("Altura do som (padrão 40; na chamada cai à metade).").props("delay=1000")
             up_dur = ui.number("Duração foto (s)", value=8, min=3, max=120, step=1).props("outlined dense").classes("w-[130px]")
+            with up_dur:
+                ui.tooltip("Só vale p/ foto SOZINHA (com áudio ela divide o tempo real).").props("delay=1000")
             up_slot = ui.number("Exibição", value=0, min=0, max=999, step=1).props("outlined dense").classes("w-[90px]")
+            with up_slot:
+                ui.tooltip("Posição na sequência; mesmo número = juntos.").props("delay=1000")
         ui.upload(label="Selecionar MP3 / MP4 / fotos — envia sozinho para esta fila", auto_upload=True,
                   on_upload=lambda e: _salvar_arquivo_midia(e, fila_id, user_nome, up_vol.value, up_dur.value, up_slot.value, recarregar),
                   on_rejected=lambda e: _rejeitado(e),
@@ -208,8 +234,10 @@ def _fundo_rodape_escuro(cor_botao: str) -> str:
 
 def bloco_nomes_fila(fila_id: int, user_nome: str, recarregar):
     """Lista ÚNICA da fila (só visível nela): importa, ajusta prioridade e envia p/ outra fila da mesma TV."""
-    with ui.expansion("Nomes para chamar (lista única desta fila)", icon="format_list_numbered").classes("w-full"):
-        ui.label("Um nome por linha + tags (ex: maria #gestante #vermelho #recepcao). A ordem é respeitada sozinha: cor primeiro, depois grupo, depois chegada. Etapa na tag ou no seletor fixa onde o nome nasce.").classes("text-caption text-grey-6")
+    with ui.expansion("Nomes para chamar (lista única desta fila)", icon="format_list_numbered").classes("w-full").style("min-width: 0"):
+        _info_n = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: nomes"')
+        with _info_n:
+            ui.tooltip("Ex: maria #gestante #vermelho #recepcao. A ordem é respeitada sozinha: cor primeiro, depois grupo, depois chegada. Etapa na tag ou no seletor fixa onde o nome nasce.").props("delay=1000")
         # destinos: outras filas da MESMA tv
         try:
             _f = filas.obter_fila(fila_id)
@@ -227,7 +255,7 @@ def bloco_nomes_fila(fila_id: int, user_nome: str, recarregar):
                         destinos[f"{_of[1]}"] = _oid
             except Exception:
                 pass
-        box_n = ui.column().classes("w-full gap-1")
+        box_n = ui.column().classes("w-full gap-1").style("min-width: 0")
 
         def _render():
             box_n.clear()
@@ -237,7 +265,7 @@ def bloco_nomes_fila(fila_id: int, user_nome: str, recarregar):
                 usados = len(todos) - len(pend)
                 ui.label(f"{len(pend)} pendente(s) • {usados} já chamado(s)").classes("text-caption font-bold")
                 if destinos and pend:
-                    with ui.row().classes("w-full gap-2 flex-wrap items-end"):
+                    with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0"):
                         sel_dest = ui.select(list(destinos.keys()), label="Enviar para (mesma TV)").props("outlined dense").classes("flex-1 min-w-[160px]")
                         def _todos():
                             if not sel_dest.value:
@@ -246,10 +274,10 @@ def bloco_nomes_fila(fila_id: int, user_nome: str, recarregar):
                             ok, msg = filas.transferir_todos(fila_id, destinos[sel_dest.value], ator=user_nome)
                             notificar(msg, type="positive" if ok else "negative")
                             recarregar()
-                        ui.button("Enviar todos", icon="forward", on_click=_todos).props("dense outline")
+                        ui.button("Enviar todos", icon="forward", on_click=_todos).props("dense outline").props('data-testid=filas-transferir-todos')
                 for nid, nome, ordem, usado, prio, manch, etapa_n in pend[:50]:
-                    with ui.row().classes("w-full items-center gap-2"):
-                        ui.label(f"{ordem}. {nome}").classes("text-caption flex-1").style(_estilo_manchester(manch) or "")
+                    with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                        ui.label(f"{ordem}. {nome}").classes("text-caption flex-1").style("min-width: 0; " + (_estilo_manchester(manch) or ""))
                         if etapa_n:
                             ui.label(f"→ {etapa_n}").classes("text-caption text-primary")
                         sel_p = ui.select(list(PRIO_LABEL.values()), value=PRIO_LABEL.get(prio or "comum", "Comum")).props("outlined dense").classes("w-[130px]")
@@ -293,16 +321,18 @@ def bloco_nomes_fila(fila_id: int, user_nome: str, recarregar):
                 if len(pend) > 50:
                     ui.label(f"... e mais {len(pend) - 50}").classes("text-caption text-grey-6")
                 if todos:
-                    with ui.row().classes("gap-1"):
+                    with ui.row().classes("w-full flex-wrap").style("gap: 0.25rem; min-width: 0"):
                         def _limpar():
                             ok, msg = filas.limpar_nomes(fila_id, ator=user_nome)
                             notificar(msg, type="positive" if ok else "negative")
                             recarregar()
                         ui.button("Apagar lista", on_click=_limpar).props("dense outline color=negative")
 
-        with ui.row().classes("w-full gap-2 flex-wrap items-end"):
-            txt_nomes = ui.textarea("Colar nomes (um por linha + #prioridade)", placeholder="Maria #gestante\nZé #idoso\nAna #deficiente\nBeto").props("outlined dense").classes("flex-1 min-w-[200px]")
+        with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0"):
+            txt_nomes = ui.textarea("Colar nomes (um por linha + #prioridade)", placeholder="Maria #gestante\nZé #idoso\nAna #deficiente\nBeto").props("outlined dense").classes("flex-1 min-w-[200px]").props('data-testid=filas-importar-texto')
             chk_sub = ui.checkbox("Substituir lista atual", value=False)
+            with chk_sub:
+                ui.tooltip("Marcado apaga a lista atual antes de importar; desmarcado bloqueia se já houver lista.").props("delay=1000")
             def _importar_colado():
                 texto_colado = txt_nomes.value or ""
                 ok_s, nome_s = filas.salvar_lista_nomes(fila_id, texto_colado)
@@ -314,7 +344,7 @@ def bloco_nomes_fila(fila_id: int, user_nome: str, recarregar):
                 if ok:
                     txt_nomes.value = ""
                     recarregar()
-            ui.button("Importar", on_click=_importar_colado).props("color=primary")
+            ui.button("Importar", on_click=_importar_colado).props("color=primary").props('data-testid=filas-importar-submit')
 
         async def _on_txt(e):
             nome_arq, conteudo = await _ler_upload(e)
@@ -341,8 +371,10 @@ def bloco_etapas(fid: int, nome_fila: str, tv_grupo: str, user_nome: str, recarr
     Qualquer atendente com acesso pode usar (não só dono/admin). Reuso em /filas e /admin/filas.
     """
     from urllib.parse import quote as _q
-    with ui.expansion("Por etapa/sala — próximo, nome e cor (qualquer atendente)", icon="meeting_room").classes("w-full"):
-        ui.label("Cada etapa é uma subfila de sala. A sala pede o próximo (reanuncia o mais antigo aguardando ou chama quem está marcado para ela), vincula nome à senha do papelzinho e ajusta a cor a qualquer hora. TV replicada só da etapa.").classes("text-caption text-grey-6")
+    with ui.expansion("Por etapa/sala — próximo, nome e cor (qualquer atendente)", icon="meeting_room").classes("w-full").style("min-width: 0"):
+        _info_e = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: etapas"')
+        with _info_e:
+            ui.tooltip("Cada etapa é uma subfila de sala. A sala pede o próximo (reanuncia o mais antigo aguardando ou chama quem está marcado para ela), vincula nome à senha do papelzinho e ajusta a cor a qualquer hora. TV replicada só da etapa.").props("delay=1000")
         try:
             etapas = filas.listar_etapas(fid)
         except Exception:
@@ -356,25 +388,25 @@ def bloco_etapas(fid: int, nome_fila: str, tv_grupo: str, user_nome: str, recarr
                 tv_url = f"/tv?grupo={tv_grupo}&etapa={_q(_enome)}"
             else:
                 tv_url = f"/tv/{fid}?etapa={_q(_enome)}"
-            with ui.card().classes("w-full p-3 gap-2"):
-                with ui.row().classes("w-full items-center gap-2 flex-wrap"):
+            with ui.card().classes("w-full p-3 gap-2").style("min-width: 0"):
+                with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
                     ui.badge(f"{_ordem}. {_enome} ({_eguiche or '—'})", color="primary")
                     ui.label(f"{len(espera)} aguardando").classes("text-caption text-grey-6 flex-1")
                     def _prox(fn=fid, en=_enome):
                         ok, msg = filas.proximo_da_etapa(fn, en, ator=user_nome)
                         notificar(f"Chamando {msg}" if ok else msg, type="positive" if ok else "warning")
                         recarregar()
-                    botao("Próximo", icone="campaign", on_click=_prox, variante="primario", chave_modulo="filas")
+                    botao("Próximo", icone="campaign", on_click=_prox, variante="primario", chave_modulo="filas").props('data-testid=filas-etapa-proximo')
                     botao(f"TV {_enome}", icone="tv", on_click=lambda u=tv_url: ui.navigate.to(u, new_tab=True), variante="contorno", chave_modulo="filas")
                 for item in espera[:10]:
-                    with ui.row().classes("w-full items-center gap-2 flex-wrap"):
+                    with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
                         ui.label(f"{item['senha']}").classes("font-bold").style(_estilo_manchester(item["manchester"]) or "")
                         ui.label(item["paciente"] or "sem nome").classes("text-caption flex-1").style(_estilo_manchester(item["manchester"]) or "")
                         def _dlg_nome(senha=item["senha"], atual=item["paciente"]):
                             with ui.dialog() as dlg, ui.card():
                                 ui.label(f"Nome para a senha {senha}").classes("font-bold")
                                 inp = ui.input("Paciente", value=atual or "").props("outlined dense").classes("w-full")
-                                with ui.row().classes("w-full justify-end gap-2"):
+                                with ui.row().classes("w-full justify-end flex-wrap").style("gap: 0.5rem; min-width: 0"):
                                     ui.button("Cancelar", on_click=dlg.close).props("flat")
                                     def _sv(fn=fid, s=senha, i=inp):
                                         ok, msg = filas.definir_nome_senha(fn, s, i.value, ator=user_nome)
@@ -408,39 +440,84 @@ def dialogo_editar_fila(fid: int, user_nome: str, pode_liberar: bool, recarregar
         ex = {}
     with ui.dialog() as dlg, ui.card().classes("w-full max-w-[760px] p-4 gap-3"):
         ui.label(f"Editar fila — {_nome}").classes("font-bold text-h6")
-        with ui.row().classes("w-full gap-2 flex-wrap"):
+        with ui.row().classes("w-full flex-wrap").style("gap: 0.5rem; min-width: 0"):
             e_nome = ui.input("Nome da fila", value=_nome or "").props("outlined dense").classes("flex-1 min-w-[160px]")
-            e_end = ui.input("Endereço", value=_end or "").props("outlined dense").classes("flex-1 min-w-[160px]")
-            e_desc = ui.input("Descrição", value=_desc or "").props("outlined dense").classes("flex-1 min-w-[160px]")
-        with ui.row().classes("w-full gap-2 flex-wrap items-end"):
+            with e_nome:
+                ui.tooltip("Nome da fila (ex: Ambulatório). Aparece na TV e nos painéis.").props("delay=1000")
+        with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0"):
             e_pref = ui.input("Prefixo", value=_pref or "A").props("outlined dense").classes("w-[80px]")
+            with e_pref:
+                ui.tooltip("Letras/números no início da senha (ex: A gera A001).").props("delay=1000")
             e_si = ui.input("Início", value=str(_si or 1)).props("outlined dense type=number").classes("w-[90px]")
+            with e_si:
+                ui.tooltip("Número da primeira senha distribuída.").props("delay=1000")
             e_sf = ui.input("Fim (0=∞)", value=str(_sf or 0)).props("outlined dense type=number").classes("w-[90px]")
+            with e_sf:
+                ui.tooltip("Último número da sequência (0 = infinito, nunca reinicia).").props("delay=1000")
             e_gui = ui.input("Guichê base", value=_guiche or "01").props("outlined dense").classes("w-[90px]")
-        with ui.row().classes("w-full gap-2 flex-wrap items-end"):
+            with e_gui:
+                ui.tooltip("Guichê/sala base das chamadas desta fila.").props("delay=1000")
+        with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0"):
             try:
                 _gs = filas.listar_grupos_tv()
             except Exception:
                 _gs = []
             _ops = ([_grupo] if _grupo else ["(TV isolada)"]) + [g for g in _gs if g != (_grupo or "")] + ["(nova abaixo)"]
             e_sel = ui.select(_ops, label="TV grupo em uso").props("outlined dense").classes("flex-1 min-w-[180px]")
+            with e_sel:
+                ui.tooltip("Grupos em uso: escolha para dividir a mesma TV entre filas.").props("delay=1000")
             e_novo = ui.input("Nova TV grupo", placeholder="ex: recepcao-2").props("outlined dense").classes("flex-1 min-w-[180px]")
-        with ui.row().classes("w-full gap-3 flex-wrap items-center"):
+            with e_novo:
+                ui.tooltip("Novo grupo (só letras/números/hífen). Vazio = TV isolada.").props("delay=1000")
+        with ui.row().classes("w-full flex-wrap items-center").style("gap: 0.75rem; min-width: 0"):
             ui.label("Falar:").classes("text-caption font-bold")
             v_n = ui.checkbox("Nome", value=bool(ex.get("voz_nome", 1)))
+            with v_n:
+                ui.tooltip("Fala o nome do paciente na chamada.").props("delay=1000")
             v_s = ui.checkbox("Senha", value=bool(ex.get("voz_senha", 1)))
+            with v_s:
+                ui.tooltip("Fala o número da senha na chamada.").props("delay=1000")
             v_d = ui.checkbox("Destino", value=bool(ex.get("voz_destino", 1)))
+            with v_d:
+                ui.tooltip("Fala a sala/etapa de destino.").props("delay=1000")
             v_g = ui.checkbox("Guichê", value=bool(ex.get("voz_guiche", 1)))
+            with v_g:
+                ui.tooltip("Fala o guichê/sala da chamada.").props("delay=1000")
             v_f = ui.checkbox("Fila", value=bool(ex.get("voz_fila", 1)))
+            with v_f:
+                ui.tooltip("Fala o nome da fila na chamada.").props("delay=1000")
             v_h = ui.checkbox("Hora cheia/meia", value=bool(ex.get("voz_hora", 1)))
+            with v_h:
+                ui.tooltip("Anuncia a hora cheia e meia quando ociosa.").props("delay=1000")
             v_r = ui.number("Repetir", value=ex.get("voz_repetir", 0), min=0, max=10, step=1).props("outlined dense").classes("w-[90px]")
+            with v_r:
+                ui.tooltip("Quantas vezes a chamada repete sozinha (0 = fala 1x).").props("delay=1000")
             v_i = ui.number("Intervalo(s)", value=ex.get("voz_intervalo", 2), min=1, max=60, step=1).props("outlined dense").classes("w-[100px]")
-        with ui.expansion("Textos da TV", icon="tv").classes("w-full"):
-            t_t = ui.input("Título", value=ex.get("tv_titulo") or "").props("outlined dense").classes("w-full")
-            t_s = ui.input("Subtítulo", value=ex.get("tv_subtitulo") or "").props("outlined dense").classes("w-full")
-            t_a = ui.input("Texto ociosa", value=ex.get("tv_aguardando") or "AGUARDE CHAMADA").props("outlined dense").classes("w-full")
-            t_l = ui.input("Legenda mídia", value=ex.get("tv_midia_legenda") or "").props("outlined dense").classes("w-full")
-            t_n = ui.input("Título notícias", value=ex.get("tv_noticias_titulo") or "Notícias").props("outlined dense").classes("w-full")
+            with v_i:
+                ui.tooltip("Segundos entre a chamada e cada repetição.").props("delay=1000")
+        e_ordem = ui.input("Ordem da fala", value=ex.get("voz_ordem") or "fila,senha,nome,destino,guiche").props("outlined dense").classes("w-full")
+        with e_ordem:
+            ui.tooltip("Sequência dos textos (ex: senha,nome). Campos: fila,senha,nome,destino,guiche.").props("delay=1000")
+        with ui.expansion("Textos da TV", icon="tv").classes("w-full").style("min-width: 0"):
+            with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                _info_tt = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: textos da TV"')
+                with _info_tt:
+                    ui.tooltip("Textos do cabeçalho e rodapé da TV. Vazio usa o padrão.").props("delay=1000")
+            t_t = ui.input("Título", value=ex.get("tv_titulo") or "").props("outlined dense").classes("w-full").style("min-width: 0")
+            with t_t:
+                ui.tooltip("Título no topo da TV (vazio = padrão)." ).props("delay=1000")
+            t_s = ui.input("Subtítulo", value=ex.get("tv_subtitulo") or "").props("outlined dense").classes("w-full").style("min-width: 0")
+            with t_s:
+                ui.tooltip("Linha abaixo do título (vazio = fila/grupo)." ).props("delay=1000")
+            t_a = ui.input("Texto ociosa", value=ex.get("tv_aguardando") or "AGUARDE CHAMADA").props("outlined dense").classes("w-full").style("min-width: 0")
+            with t_a:
+                ui.tooltip("Exibido na lateral quando não há chamada.").props("delay=1000")
+            t_l = ui.input("Legenda mídia", value=ex.get("tv_midia_legenda") or "").props("outlined dense").classes("w-full").style("min-width: 0")
+            with t_l:
+                ui.tooltip("Legenda curta ao lado do cabeçalho da TV.").props("delay=1000")
+            t_n = ui.input("Título notícias", value=ex.get("tv_noticias_titulo") or "Notícias").props("outlined dense").classes("w-full").style("min-width: 0")
+            with t_n:
+                ui.tooltip("Título do rodapé de notícias da TV.").props("delay=1000")
 
         def _grupo_final():
             digitado = (e_novo.value or "").strip()
@@ -451,7 +528,7 @@ def dialogo_editar_fila(fid: int, user_nome: str, pode_liberar: bool, recarregar
                 return ""
             return s
 
-        with ui.row().classes("w-full justify-end gap-2"):
+        with ui.row().classes("w-full justify-end flex-wrap").style("gap: 0.5rem; min-width: 0"):
             ui.button("Cancelar", on_click=dlg.close).props("flat")
             def _salvar():
                 try:
@@ -462,7 +539,7 @@ def dialogo_editar_fila(fid: int, user_nome: str, pode_liberar: bool, recarregar
                     interv = int(float(v_i.value or 2))
                 except Exception:
                     interv = 2
-                ok, msg = filas.atualizar_fila(fid, nome=e_nome.value, endereco=e_end.value, descricao=e_desc.value, prefixo=e_pref.value, guiche=e_gui.value, senha_inicio=e_si.value, senha_fim=e_sf.value, tv_grupo=_grupo_final(), ator=user_nome, voz_nome=v_n.value, voz_senha=v_s.value, voz_destino=v_d.value, voz_guiche=v_g.value, voz_fila=v_f.value, voz_hora=v_h.value, voz_repetir=rep, voz_intervalo=interv, tv_titulo=t_t.value, tv_subtitulo=t_s.value, tv_aguardando=t_a.value, tv_midia_legenda=t_l.value, tv_noticias_titulo=t_n.value)
+                ok, msg = filas.atualizar_fila(fid, nome=e_nome.value, prefixo=e_pref.value, guiche=e_gui.value, senha_inicio=e_si.value, senha_fim=e_sf.value, tv_grupo=_grupo_final(), ator=user_nome, voz_nome=v_n.value, voz_senha=v_s.value, voz_destino=v_d.value, voz_guiche=v_g.value, voz_fila=v_f.value, voz_hora=v_h.value, voz_ordem=e_ordem.value, voz_repetir=rep, voz_intervalo=interv, tv_titulo=t_t.value, tv_subtitulo=t_s.value, tv_aguardando=t_a.value, tv_midia_legenda=t_l.value, tv_noticias_titulo=t_n.value)
                 notificar(msg, type="positive" if ok else "negative")
                 if ok:
                     dlg.close()
@@ -493,8 +570,8 @@ def bloco_liberar_acesso(fid: int, user_nome: str, recarregar):
             if not atual:
                 ui.label("Só você (dono) + admins.").classes("text-caption text-grey-6 italic")
             for un, dt in atual:
-                with ui.row().classes("w-full items-center gap-2"):
-                    ui.label(un).classes("text-caption flex-1")
+                with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                    ui.label(un).classes("text-caption flex-1").style("min-width: 0")
                     def _rm(un=un):
                         ok, msg = filas.remover_acesso(fid, un, ator=user_nome)
                         notificar(msg, type="positive" if ok else "negative")
@@ -502,7 +579,7 @@ def bloco_liberar_acesso(fid: int, user_nome: str, recarregar):
                         recarregar()
                     ui.button(icon="delete", on_click=_rm).props("dense flat color=negative").tooltip("Remover acesso")
 
-    with ui.row().classes("w-full gap-2 flex-wrap items-end"):
+    with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0"):
         inp_busca = ui.input("Buscar usuário cadastrado", placeholder="login ou nome").props("outlined dense").classes("flex-1 min-w-[180px]")
         box_res = ui.column().classes("w-full gap-1")
         def _buscar():
@@ -522,15 +599,15 @@ def bloco_liberar_acesso(fid: int, user_nome: str, recarregar):
                 if not cand:
                     ui.label("Nenhum usuário ativo encontrado.").classes("text-caption text-grey-6 italic")
                 for u in cand:
-                    with ui.row().classes("w-full items-center gap-2"):
-                        ui.label(f"{u[1]} — {u[9] or ''}").classes("text-caption flex-1")
+                    with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                        ui.label(f"{u[1]} — {u[9] or ''}").classes("text-caption flex-1").style("min-width: 0")
                         def _lib(un=u[1]):
                             ok, msg = filas.liberar_acesso(fid, un, ator=user_nome)
                             notificar(msg, type="positive" if ok else "negative")
                             _render_lib()
                             recarregar()
-                        ui.button("Chamar", icon="person_add", on_click=_lib).props("dense color=primary").tooltip(f"Chamar {u[1]} para esta fila")
-        ui.button("Buscar", icon="search", on_click=_buscar).props("dense outline")
+                        ui.button("Chamar", icon="person_add", on_click=_lib).props("dense color=primary").tooltip(f"Chamar {u[1]} para esta fila").props('data-testid=filas-acesso-chamar')
+        ui.button("Buscar", icon="search", on_click=_buscar).props("dense outline").props('data-testid=filas-acesso-buscar')
     _render_lib()
 
 
@@ -547,16 +624,20 @@ def dialogo_acesso_fila(fid: int, user_nome: str, recarregar):
 
 def bloco_controle_tv(chave: str, rotulo: str, fila_ids=None):
     """Edição: vê o que está reproduzindo + pausa/avança/retorna. Na TV não há controles."""
-    with ui.expansion(f"Controle da TV — {rotulo} (o que está tocando + pausar/avançar/retornar)", icon="tune").classes("w-full"):
-        lbl = ui.label("Lendo estado da TV...").classes("text-caption font-bold")
-        with ui.row().classes("gap-1 flex-wrap"):
+    with ui.expansion(f"Controle da TV — {rotulo} (o que está tocando + pausar/avançar/retornar)", icon="tune").classes("w-full").style("min-width: 0"):
+        with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+            _info_tv = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: controle da TV"')
+            with _info_tv:
+                ui.tooltip("Comandos remotos para a TV (pausar/avançar/retornar). Na TV não há botões — só aqui na edição.").props("delay=1000")
+            lbl = ui.label("Lendo estado da TV...").classes("text-caption font-bold").style("min-width: 0")
+        with ui.row().classes("w-full flex-wrap").style("gap: 0.25rem; min-width: 0"):
             def _cmd(c):
                 filas.enviar_comando_tv(chave, c)
                 notificar(f"Comando '{c}' enviado à TV", type="positive")
-            ui.button("Pausar", icon="pause", on_click=lambda: _cmd("pausar")).props("dense outline")
-            ui.button("Retomar", icon="play_arrow", on_click=lambda: _cmd("retomar")).props("dense outline color=primary")
-            ui.button("Retornar", icon="skip_previous", on_click=lambda: _cmd("anterior")).props("dense outline")
-            ui.button("Avançar", icon="skip_next", on_click=lambda: _cmd("proximo")).props("dense outline")
+            ui.button("Pausar", icon="pause", on_click=lambda: _cmd("pausar")).props("dense outline").props('data-testid=filas-tv-pausar')
+            ui.button("Retomar", icon="play_arrow", on_click=lambda: _cmd("retomar")).props("dense outline color=primary").props('data-testid=filas-tv-retomar')
+            ui.button("Retornar", icon="skip_previous", on_click=lambda: _cmd("anterior")).props("dense outline").props('data-testid=filas-tv-retornar')
+            ui.button("Avançar", icon="skip_next", on_click=lambda: _cmd("proximo")).props("dense outline").props('data-testid=filas-tv-avancar')
 
         def _poll():
             try:
@@ -591,26 +672,41 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         cabecalho("Filas — Chamadas", tema["texto_header"], chave_modulo="filas",
                   cor_titulo=tema["cor_titulo"], cor_fundo=tema["cor_fundo"])
 
-        # Criar fila — qualquer usuário com acesso pode criar a sua; admin cria para qualquer local
-        with ui.card().classes("w-full p-4 gap-3"):
-            ui.label("Nova fila por local").classes("text-subtitle2 font-bold")
-            ui.label("Ex: Ambulatório — xyz, Regulação de Viagem — abx, PSF AER. Cada fila tem etapas sequenciais (Atendimento → Triagem → Consultório 3). A fila criada fica visível só para você; admin geral vê todas. Numeração com início/fim e infinita quando fim=0.").classes("text-caption text-grey-6")
-            with ui.row().classes("w-full gap-2 flex-wrap"):
-                inp_nome = ui.input("Nome da fila *", placeholder="Ambulatório").props("outlined dense").classes("flex-1 min-w-[160px]")
-                inp_end = ui.input("Endereço", placeholder="xyz — Rua ...").props("outlined dense").classes("flex-1 min-w-[160px]")
-                inp_desc = ui.input("Descrição", placeholder="Atendimento geral").props("outlined dense").classes("flex-1 min-w-[160px]")
-            with ui.row().classes("w-full gap-2 flex-wrap"):
+        # Cadastro de fila — recolhível: uma linha; abre para criar, ou carrega fila ao Editar
+        edicao = {"fid": None}
+        with ui.expansion("Cadastro de fila", icon="add").classes("w-full").style("min-width: 0").props('data-testid=filas-cadastro') as exp_cad:
+            with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                _info_cad = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: cadastro de fila"')
+                with _info_cad:
+                    ui.tooltip("Crie uma fila por local. Para editar, use Editar no card — o painel abre sozinho; Salvar confirma, Cancelar fecha e limpa.").props("delay=1000")
+                lbl_modo = ui.label("").classes("text-caption text-primary font-bold").style("min-width: 0")
+            with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0"):
+                inp_nome = ui.input("Nome da fila *", placeholder="Ambulatório").props("outlined dense").classes("flex-1 min-w-[160px]").props('data-testid=filas-campo-nome')
+                with inp_nome:
+                    ui.tooltip("Nome da fila (ex: Ambulatório). Aparece na TV e nos painéis.").props("delay=1000")
                 inp_pref = ui.input("Prefixo", placeholder="A").props("outlined dense").classes("w-[80px]")
+                with inp_pref:
+                    ui.tooltip("Letras/números no início da senha (ex: A gera A001).").props("delay=1000")
                 inp_inicio = ui.input("Início", placeholder="1").props("outlined dense type=number").classes("w-[90px]")
-                inp_fim = ui.input("Fim (0=infinito)", placeholder="0").props("outlined dense type=number").classes("w-[110px]")
-                inp_guiche = ui.input("Guichê base", placeholder="01").props("outlined dense").classes("w-[90px]")
+                with inp_inicio:
+                    ui.tooltip("Número da primeira senha distribuída.").props("delay=1000")
+                inp_fim = ui.input("Fim (0=∞)", placeholder="0").props("outlined dense type=number").classes("w-[100px]")
+                with inp_fim:
+                    ui.tooltip("Último número da sequência (0 = infinito, nunca reinicia).").props("delay=1000")
                 inp_inicio.value = "1"
                 inp_fim.value = "0"
-            # TV grupo: lista grupos em uso para compartilhar a TV ou cria o próprio
-            with ui.row().classes("w-full gap-2 flex-wrap items-end"):
-                sel_grupo = ui.select([], label="TV grupo em uso (compartilhar)").props("outlined dense").classes("flex-1 min-w-[200px]")
-                inp_grupo_novo = ui.input("Nova TV grupo (ou vazio=TV isolada)", placeholder="ex: recepcao-2").props("outlined dense").classes("flex-1 min-w-[200px]")
-            ui.label("Selecione um grupo em uso para compartilhar a mesma TV, ou digite um novo (só letras/números/hífen, sem acento/espaço — ex: recepcao-2). Vazio = TV isolada só desta fila.").classes("text-caption text-grey-6")
+            # TV grupo lado a lado: em uso + novo
+            with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0"):
+                inp_guiche = ui.input("Guichê base", placeholder="01").props("outlined dense").classes("w-[90px]")
+                with inp_guiche:
+                    ui.tooltip("Guichê/sala base das chamadas desta fila.").props("delay=1000")
+                sel_grupo = ui.select([], label="TV grupo em uso").props("outlined dense").classes("flex-1 min-w-[180px]")
+                with sel_grupo:
+                    ui.tooltip("Grupos em uso: escolha para dividir a mesma TV entre filas.").props("delay=1000")
+                inp_grupo_novo = ui.input("Nova TV grupo (ou vazio=isolada)", placeholder="ex: recepcao-2").props("outlined dense").classes("flex-1 min-w-[200px]").props('data-testid=filas-campo-tv-grupo')
+                with inp_grupo_novo:
+                    ui.tooltip("Novo grupo (só letras/números/hífen, ex: recepcao-2). Vazio = TV isolada só desta fila.").props("delay=1000")
+            # TV grupo: seletor + novo (validação de slug no backend)
 
             def _atualizar_grupos():
                 try:
@@ -627,33 +723,290 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 return grupos
 
             _atualizar_grupos()
-            # Voz: quais campos são falados + repetição automática
-            with ui.row().classes("w-full gap-3 flex-wrap items-center"):
-                ui.label("Falar na TV:").classes("text-caption font-bold")
-                chk_nome = ui.checkbox("Nome", value=True)
+            # Voz inline: falar + ordem + repetir + intervalo na mesma linha
+            with ui.row().classes("w-full flex-wrap items-center").style("gap: 0.75rem; min-width: 0"):
+                ui.label("Falar na TV:").classes("text-caption font-bold").style("min-width: 0")
                 chk_senha = ui.checkbox("Senha", value=True)
+                with chk_senha:
+                    ui.tooltip("Fala o número da senha na chamada.").props("delay=1000")
+                chk_nome = ui.checkbox("Nome", value=True)
+                with chk_nome:
+                    ui.tooltip("Fala o nome do paciente na chamada.").props("delay=1000")
                 chk_dest = ui.checkbox("Destino", value=True)
+                with chk_dest:
+                    ui.tooltip("Fala a sala/etapa de destino.").props("delay=1000")
                 chk_guiche = ui.checkbox("Guichê", value=True)
+                with chk_guiche:
+                    ui.tooltip("Fala o guichê/sala da chamada.").props("delay=1000")
                 chk_fila = ui.checkbox("Fila", value=True)
+                with chk_fila:
+                    ui.tooltip("Fala o nome da fila na chamada.").props("delay=1000")
                 chk_hora = ui.checkbox("Hora cheia/meia", value=True)
+                with chk_hora:
+                    ui.tooltip("Anuncia a hora cheia e meia quando ociosa.").props("delay=1000")
+                inp_ordem = ui.input("Ordem da fala", value="fila,senha,nome,destino,guiche").props("outlined dense").classes("flex-1 min-w-[220px]").style("min-width: 0").props('data-testid=filas-campo-ordem-fala')
+                with inp_ordem:
+                    ui.tooltip("Quais textos e em que sequência (ex: senha,nome para só senha+nome; nome,senha para nome primeiro). Campos: fila,senha,nome,destino,guiche.").props("delay=1000")
                 num_rep = ui.number("Repetir chamada", value=0, min=0, max=10, step=1).props("outlined dense").classes("w-[130px]")
+                with num_rep:
+                    ui.tooltip("Quantas vezes a chamada repete sozinha após o intervalo (0 = fala 1x).").props("delay=1000")
                 num_int = ui.number("Intervalo (s)", value=2, min=1, max=60, step=1).props("outlined dense").classes("w-[120px]")
-            ui.label("Repetir = quantas vezes a chamada repete sozinha após o intervalo (0 = fala 1x).").classes("text-caption text-grey-6")
+                with num_int:
+                    ui.tooltip("Segundos entre a chamada e cada repetição.").props("delay=1000")
             # Sequência de etapas/salas: cada etapa vira subfila com guichê próprio e TV replicável
-            txt_etapas = ui.textarea("Sequência de etapas (uma por linha: Etapa | Guichê/Sala)", value="Recepção | 01\nTriagem | 02\nConsultório 3 | 03").props("outlined dense").classes("w-full")
-            ui.label("Cada etapa é uma subfila (ex: Recepção → Triagem → Consultório 3 cardiologista). Cada sala/etapa tem painel próprio de 'próximo' e TV replicada só dela.").classes("text-caption text-grey-6")
-            # Lista inicial opcional: já nasce com usuários — ou vazio (só senhas; nome vincula depois)
-            txt_lista = ui.textarea("Lista inicial de usuários (opcional — um por linha + tags)", placeholder="maria #gestante #vermelho #recepcao").props("outlined dense").classes("w-full")
-            ui.label("Vazio = fila só com senhas distribuídas; o nome é vinculado à senha depois, no painel.").classes("text-caption text-grey-6")
-            # Textos da TV editáveis pelo criador
-            with ui.expansion("Personalizar textos da TV (opcional)", icon="tv").classes("w-full"):
-                inp_tv_titulo = ui.input("Título da TV", placeholder="ex: Ambulatório — vazio=padrão do sistema").props("outlined dense").classes("w-full")
-                inp_tv_sub = ui.input("Subtítulo da TV", placeholder="ex: Retire sua senha e aguarde").props("outlined dense").classes("w-full")
-                inp_tv_ag = ui.input("Texto quando ociosa", value="AGUARDE CHAMADA").props("outlined dense").classes("w-full")
-                inp_tv_leg = ui.input("Legenda da mídia", placeholder="ex: Música ambiente / Propagandas").props("outlined dense").classes("w-full")
-                inp_tv_not = ui.input("Título das notícias", value="Notícias").props("outlined dense").classes("w-full")
+            # card recolhível: sequência de etapas + lista inicial + envio txt/csv
+            with ui.expansion("Etapas, lista inicial e arquivos (opcional)", icon="format_list_numbered").classes("w-full").style("min-width: 0") as exp_seq:
+                with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                    _info_seq = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: etapas e lista"')
+                    with _info_seq:
+                        ui.tooltip("Etapas viram subfilas de sala; lista inicial usa um nome por linha + tags. Detalhes em cada campo.").props("delay=1000")
+                with ui.row().classes("w-full flex-wrap items-start").style("gap: 0.5rem; min-width: 0"):
+                    txt_etapas = ui.textarea("Sequência de etapas (uma por linha: Etapa | Guichê/Sala)", value="Recepção | 01\nTriagem | 02\nConsultório 3 | 03").props("outlined dense").classes("flex-1 min-w-[220px]").props('data-testid=filas-campo-etapas')
+                    with txt_etapas:
+                        ui.tooltip("Cada etapa é uma subfila (ex: Recepção → Triagem → Consultório 3 cardiologista). Cada sala/etapa tem painel próprio de 'próximo' e TV replicada só dela.").props("delay=1000")
 
-            link_criada = ui.column().classes("w-full gap-1")
+                    txt_lista = ui.textarea("Lista inicial de usuários (opcional — um por linha + tags)", placeholder="maria #gestante #vermelho #recepcao").props("outlined dense").classes("flex-1 min-w-[220px]").props('data-testid=filas-campo-lista')
+                    with txt_lista:
+                        ui.tooltip("Vazio = fila só com senhas distribuídas; o nome é vinculado à senha depois, no painel. Um por linha + tags (# ou vírgula: Maria Cristina, gestante, vermelho, recepcao): grupo #gestante #idoso #deficiente, cor #vermelho #laranja #amarelo #verde #azul, etapa #recepcao.").props("delay=1000")
+
+                async def _preencher_lista(e):
+                    nome_arq, conteudo = await _ler_upload(e)
+                    texto = (conteudo or b"").decode("utf-8", errors="replace")
+                    if not texto.strip():
+                        notificar("Arquivo vazio ou ilegível", type="negative")
+                        return
+                    txt_lista.value = texto
+                    notificar(f"{nome_arq} carregado — confira e clique em Criar fila", type="positive")
+
+                ui.upload(label="Ou selecione nomes.txt/.csv (preenche a lista ao lado)", auto_upload=True, on_upload=_preencher_lista, on_rejected=_rejeitado, multiple=False).props("accept='.txt,.csv'").classes("w-full")
+
+            # card recolhível: anexo de MP4/MP3/fotos já na criação
+            with ui.expansion("Anexar vídeos, áudios e fotos (opcional)", icon="attach_file").classes("w-full").style("min-width: 0") as exp_anexo:
+                with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                    _info_anex = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: anexos"')
+                    with _info_anex:
+                        ui.tooltip("Anexos sobem na hora e entram na fila ao criar. Mesmo número de exibição = juntos.").props("delay=1000")
+                box_stage = ui.column().classes("w-full gap-1").style("min-width: 0")
+                midias_stage = []
+
+                row_stage = ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0")
+                with row_stage:
+                    st_vol = ui.number("Volume", value=filas.VOLUME_AMBIENTE_PADRAO, min=0, max=100, step=1).props("outlined dense").classes("w-[90px]")
+                    st_dur = ui.number("Duração foto (s)", value=8, min=3, max=120, step=1).props("outlined dense").classes("w-[130px]")
+                    with st_dur:
+                        ui.tooltip("Segundos de cada foto QUANDO sozinha (com áudio ela divide o tempo real).").props("delay=1000")
+                    st_slot = ui.number("Exibição", value=0, min=0, max=999, step=1).props("outlined dense").classes("w-[90px]")
+                    with st_slot:
+                        ui.tooltip("Ordem de exibição; mesmo número = juntos (foto + áudio).").props("delay=1000")
+                    st_fundo = ui.checkbox("Papel de fundo (fotos)", value=False)
+                    with st_fundo:
+                        ui.tooltip("Foto fixa atrás de tudo na TV (permanente).").props("delay=1000")
+                with st_vol:
+                    ui.tooltip("Altura do som (0-100, padrão 40) para os áudios e vídeos anexados. Duração vale só p/ foto sozinha; com áudio a foto divide o tempo real.").props("delay=1000")
+
+                def _render_stage():
+                    box_stage.clear()
+                    with box_stage:
+                        if not midias_stage:
+                            ui.label("Nenhuma mídia anexada. Selecione MP4/MP3/fotos abaixo — sobem na hora e entram na fila ao criar.").classes("text-caption text-grey-6 italic")
+                        for item in list(midias_stage):
+                            with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                                _fd = " • FUNDO" if item.get("fundo") else ""
+                                ui.label(f"[{item['tipo']}] {item['original']} • vol {item['volume']} • exibição {item['slot']}{_fd}").classes("text-caption flex-1")
+                                def _rm(item=item):
+                                    try:
+                                        os.remove(os.path.join(PASTA_MIDIA, item["temp"]))
+                                    except Exception:
+                                        pass
+                                    midias_stage.remove(item)
+                                    _render_stage()
+                                ui.button(icon="delete", on_click=_rm).props("dense flat color=negative").tooltip("Remover anexo")
+
+                async def _anexar_midia(e):
+                    nome_arq, conteudo = await _ler_upload(e)
+                    if not conteudo:
+                        notificar("Falha ao ler arquivo", type="negative")
+                        return
+                    tipo = filas.tipo_por_extensao(nome_arq)
+                    if not tipo:
+                        notificar("Formato não suportado (mp3/wav/ogg/mp4/webm/jpg/png/webp)", type="negative")
+                        return
+                    import uuid as _uuid
+                    base = re.sub(r"[^a-zA-Z0-9._-]", "_", os.path.splitext(nome_arq)[0])[:30]
+                    temp = f"stage_{_uuid.uuid4().hex[:8]}_{base}{os.path.splitext(nome_arq)[1].lower()}"
+                    try:
+                        with open(os.path.join(PASTA_MIDIA, temp), "wb") as fh:
+                            fh.write(conteudo)
+                    except Exception as ex:
+                        notificar(f"Erro ao subir: {ex}", type="negative")
+                        return
+                    try:
+                        vol = int(float(st_vol.value if st_vol.value not in (None, "") else filas.VOLUME_AMBIENTE_PADRAO))
+                    except Exception:
+                        vol = filas.VOLUME_AMBIENTE_PADRAO
+                    try:
+                        dur = int(float(st_dur.value or 8))
+                    except Exception:
+                        dur = 8
+                    try:
+                        sl = int(float(st_slot.value or 0))
+                    except Exception:
+                        sl = 0
+                    fundo = bool(st_fundo.value) and tipo == "imagem"
+                    midias_stage.append({"original": nome_arq, "temp": temp, "tipo": tipo, "volume": vol, "duracao": dur, "slot": sl, "fundo": fundo})
+                    notificar(f"{nome_arq} anexado", type="positive")
+                    _render_stage()
+
+                up_stage = ui.upload(label="Anexar vídeos MP4, áudios MP3 e fotos desta fila", auto_upload=True, on_upload=_anexar_midia, on_rejected=_rejeitado, multiple=True).props("accept='.mp3,.wav,.ogg,.m4a,.mp4,.webm,.jpg,.jpeg,.png,.webp'").classes("w-full")
+                _render_stage()
+            # Textos da TV editáveis pelo criador
+            with ui.expansion("Personalizar textos da TV (opcional)", icon="tv").classes("w-full").style("min-width: 0") as exp_textos:
+                with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                    _info_txt = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: textos da TV"')
+                    with _info_txt:
+                        ui.tooltip("Textos do cabeçalho e rodapé da TV. Vazio usa o padrão do sistema.").props("delay=1000")
+                inp_tv_titulo = ui.input("Título da TV", placeholder="ex: Ambulatório — vazio=padrão do sistema").props("outlined dense").classes("w-full").style("min-width: 0")
+                with inp_tv_titulo:
+                    ui.tooltip("Título no topo da TV (vazio = nome do sistema).").props("delay=1000")
+                inp_tv_sub = ui.input("Subtítulo da TV", placeholder="ex: Retire sua senha e aguarde").props("outlined dense").classes("w-full").style("min-width: 0")
+                with inp_tv_sub:
+                    ui.tooltip("Linha abaixo do título (vazio = fila/grupo).").props("delay=1000")
+                inp_tv_ag = ui.input("Texto quando ociosa", value="AGUARDE CHAMADA").props("outlined dense").classes("w-full").style("min-width: 0")
+                with inp_tv_ag:
+                    ui.tooltip("Exibido na lateral quando não há chamada.").props("delay=1000")
+                inp_tv_leg = ui.input("Legenda da mídia", placeholder="ex: Música ambiente / Propagandas").props("outlined dense").classes("w-full").style("min-width: 0")
+                with inp_tv_leg:
+                    ui.tooltip("Legenda curta ao lado do cabeçalho da TV.").props("delay=1000")
+                inp_tv_not = ui.input("Título das notícias", value="Notícias").props("outlined dense").classes("w-full").style("min-width: 0")
+                with inp_tv_not:
+                    ui.tooltip("Título do rodapé de notícias da TV.").props("delay=1000")
+
+            link_criada = ui.column().classes("w-full gap-1").style("min-width: 0")
+
+            with ui.row().classes("w-full flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                btn_criar = botao("Criar fila", icone="add", on_click=lambda: _salvar_cadastro(), variante="primario", chave_modulo="filas").props('data-testid=filas-criar')
+                btn_salvar = botao("Salvar alterações", icone="save", on_click=lambda: _salvar_cadastro(), variante="primario", chave_modulo="filas").props('data-testid=filas-salvar-edicao')
+                btn_cancelar = botao("Cancelar", icone="close", on_click=lambda: _cancelar_edicao(), variante="contorno", chave_modulo="filas").props('data-testid=filas-cancelar-edicao')
+                btn_salvar.visible = False
+                btn_cancelar.visible = False
+
+            def _limpar_form():
+                inp_nome.value = ""
+                inp_grupo_novo.value = ""
+                txt_lista.value = ""
+                for item in list(midias_stage):
+                    try:
+                        os.remove(os.path.join(PASTA_MIDIA, item["temp"]))
+                    except Exception:
+                        pass
+                midias_stage.clear()
+                try:
+                    _render_stage()
+                except Exception:
+                    pass
+                txt_etapas.value = "Recepção | 01\nTriagem | 02\nConsultório 3 | 03"
+                inp_tv_titulo.value = ""
+                inp_tv_sub.value = ""
+                inp_tv_ag.value = "AGUARDE CHAMADA"
+                inp_tv_leg.value = ""
+                inp_tv_not.value = "Notícias"
+                for c in (chk_senha, chk_nome, chk_dest, chk_guiche, chk_fila, chk_hora):
+                    c.value = True
+                num_rep.value = 0
+                num_int.value = 2
+                inp_ordem.value = "fila,senha,nome,destino,guiche"
+
+            def _cancelar_edicao():
+                edicao["fid"] = None
+                lbl_modo.text = ""
+                exp_seq.visible = True
+                exp_anexo.visible = True
+                try:
+                    exp_textos.visible = True
+                except Exception:
+                    pass
+                try:
+                    exp_seq.close()
+                except Exception:
+                    pass
+                try:
+                    exp_anexo.close()
+                except Exception:
+                    pass
+                try:
+                    exp_textos.close()
+                except Exception:
+                    pass
+                try:
+                    exp_cad.close()
+                except Exception:
+                    pass
+                link_criada.clear()
+                btn_criar.visible = True
+                btn_salvar.visible = False
+                btn_cancelar.visible = False
+                _limpar_form()
+
+            def _carregar_edicao(fid: int):
+                fila = filas.obter_fila(fid)
+                if not fila:
+                    notificar("Fila não encontrada", type="negative")
+                    return
+                _fid, _nome, _senha, _status, _guiche, _data, _end, _desc, _pref, _dono, _si, _sf, _grupo = fila
+                try:
+                    ex = filas.obter_extras_fila(fid)
+                except Exception:
+                    ex = {}
+                edicao["fid"] = fid
+                inp_nome.value = _nome or ""
+                inp_pref.value = _pref or "A"
+                inp_inicio.value = str(_si or 1)
+                inp_fim.value = str(_sf or 0)
+                inp_guiche.value = _guiche or "01"
+                _atualizar_grupos()
+                if _grupo and _grupo in (sel_grupo.options or []):
+                    sel_grupo.value = _grupo
+                    inp_grupo_novo.value = ""
+                else:
+                    sel_grupo.value = "(TV isolada / nova abaixo)"
+                    inp_grupo_novo.value = _grupo or ""
+                chk_nome.value = bool(ex.get("voz_nome", 1))
+                chk_senha.value = bool(ex.get("voz_senha", 1))
+                chk_dest.value = bool(ex.get("voz_destino", 1))
+                chk_guiche.value = bool(ex.get("voz_guiche", 1))
+                chk_fila.value = bool(ex.get("voz_fila", 1))
+                chk_hora.value = bool(ex.get("voz_hora", 1))
+                try:
+                    num_rep.value = ex.get("voz_repetir", 0) or 0
+                except Exception:
+                    pass
+                try:
+                    num_int.value = ex.get("voz_intervalo", 2) or 2
+                except Exception:
+                    pass
+                inp_ordem.value = ex.get("voz_ordem") or "fila,senha,nome,destino,guiche"
+                inp_tv_titulo.value = ex.get("tv_titulo") or ""
+                inp_tv_sub.value = ex.get("tv_subtitulo") or ""
+                inp_tv_ag.value = ex.get("tv_aguardando") or "AGUARDE CHAMADA"
+                inp_tv_leg.value = ex.get("tv_midia_legenda") or ""
+                inp_tv_not.value = ex.get("tv_noticias_titulo") or "Notícias"
+                exp_seq.visible = False
+                exp_anexo.visible = False
+                try:
+                    exp_textos.visible = True
+                except Exception:
+                    pass
+                lbl_modo.text = f"Editando: {_nome} (etapas, lista e mídias se gerenciam no card/administração)"
+                btn_criar.visible = False
+                btn_salvar.visible = True
+                btn_cancelar.visible = True
+                try:
+                    exp_cad.open()
+                except Exception:
+                    pass
+
+            def _editar_no_painel(fid: int):
+                _carregar_edicao(fid)
 
             def _grupo_escolhido():
                 try:
@@ -665,7 +1018,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     return sel
                 return (inp_grupo_novo.value or "").strip()
 
-            def _criar():
+            def _salvar_cadastro():
+                if edicao["fid"]:
+                    return _salvar_edicao()
                 si = inp_inicio.value or "1"
                 sf = inp_fim.value or "0"
                 try:
@@ -685,7 +1040,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     en = en.strip()
                     if en:
                         seq.append((en, eg.strip()))
-                ok, res = filas.criar_fila(inp_nome.value or "", endereco=inp_end.value or "", descricao=inp_desc.value or "", prefixo=inp_pref.value or "A", guiche=inp_guiche.value or "01", ator=user_nome, senha_inicio=si, senha_fim=sf, tv_grupo=_grupo_escolhido(), voz_nome=chk_nome.value, voz_senha=chk_senha.value, voz_destino=chk_dest.value, voz_guiche=chk_guiche.value, voz_fila=chk_fila.value, voz_hora=chk_hora.value, voz_repetir=rep, voz_intervalo=interv, tv_titulo=inp_tv_titulo.value or "", tv_subtitulo=inp_tv_sub.value or "", tv_aguardando=inp_tv_ag.value or "AGUARDE CHAMADA", tv_midia_legenda=inp_tv_leg.value or "", tv_noticias_titulo=inp_tv_not.value or "Notícias", etapas=seq or None)
+                ok, res = filas.criar_fila(inp_nome.value or "", prefixo=inp_pref.value or "A", guiche=inp_guiche.value or "01", ator=user_nome, senha_inicio=si, senha_fim=sf, tv_grupo=_grupo_escolhido(), voz_nome=chk_nome.value, voz_senha=chk_senha.value, voz_destino=chk_dest.value, voz_guiche=chk_guiche.value, voz_fila=chk_fila.value, voz_hora=chk_hora.value, voz_ordem=inp_ordem.value or "fila,senha,nome,destino,guiche", voz_repetir=rep, voz_intervalo=interv, tv_titulo=inp_tv_titulo.value or "", tv_subtitulo=inp_tv_sub.value or "", tv_aguardando=inp_tv_ag.value or "AGUARDE CHAMADA", tv_midia_legenda=inp_tv_leg.value or "", tv_noticias_titulo=inp_tv_not.value or "Notícias", etapas=seq or None)
                 if ok:
                     fid = res
                     if (txt_lista.value or "").strip():
@@ -693,6 +1048,33 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         notificar(f"Lista inicial: {msg_l}", type="positive" if ok_l else "warning")
                         if ok_l:
                             txt_lista.value = ""
+                    if midias_stage:
+                        n_ok = 0
+                        for item in list(midias_stage):
+                            try:
+                                final = filas.nome_arquivo_midia(fid, item["original"])
+                                os.rename(os.path.join(PASTA_MIDIA, item["temp"]), os.path.join(PASTA_MIDIA, final))
+                                ok_m, _ = filas.adicionar_midia(item["original"], item["tipo"], f"/midia_filas/{final}", arquivo_original=item["original"], ator=user_nome, fila_id=fid, volume=item["volume"], duracao=item["duracao"], slot=item["slot"])
+                                if ok_m:
+                                    n_ok += 1
+                                    if item.get("fundo"):
+                                        try:
+                                            _conn_f = filas.get_connection()
+                                            try:
+                                                _cur_f = _conn_f.cursor()
+                                                _cur_f.execute("SELECT id FROM tb_midia WHERE caminho=?", (f"/midia_filas/{final}",))
+                                                _r_f = _cur_f.fetchone()
+                                                if _r_f:
+                                                    filas.set_midia_fundo(_r_f[0], True, ator=user_nome)
+                                            finally:
+                                                _conn_f.close()
+                                        except Exception:
+                                            pass
+                            except Exception:
+                                pass
+                        midias_stage.clear()
+                        _render_stage()
+                        notificar(f"{n_ok} mídia(s) vinculada(s)", type="positive" if n_ok else "warning")
                     # link TV isolada ou compartilhada
                     fila = filas.obter_fila(fid)
                     grupo = fila[12] if fila and len(fila) > 12 else ""
@@ -705,18 +1087,34 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     notificar(f"Fila '{inp_nome.value.strip()}' criada — senha {fila[2] if fila else ''} início={si} fim={sf if sf!='0' else '∞'}", type="positive")
                     link_criada.clear()
                     with link_criada:
-                        with ui.row().classes("items-center gap-2"):
+                        with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
                             ui.icon("check_circle", size="20px").classes("text-green-7")
                             ui.label(tv_label).classes("font-bold text-caption")
-                            botao("Abrir TV desta fila", icone="tv", on_click=lambda url=tv_url: ui.navigate.to(url, new_tab=True), variante="primario", chave_modulo="filas")
+                            botao("Abrir TV desta fila", icone="tv", on_click=lambda url=tv_url: ui.navigate.to(url, new_tab=True), variante="primario", chave_modulo="filas").props('data-testid=filas-tv-recem-criada')
                             ui.label(f"Link: {tv_url}").classes("text-caption text-grey-6")
-                    inp_nome.value = inp_end.value = inp_desc.value = ""
+                    inp_nome.value = ""
                     inp_grupo_novo.value = ""
                     _atualizar_grupos()
                     render_filas()
                 else:
                     notificar(res, type="negative")
-            botao("Criar fila", icone="add", on_click=_criar, variante="primario", chave_modulo="filas")
+
+            def _salvar_edicao():
+                fid = edicao["fid"]
+                try:
+                    rep = int(float(num_rep.value or 0))
+                except Exception:
+                    rep = 0
+                try:
+                    interv = int(float(num_int.value or 2))
+                except Exception:
+                    interv = 2
+                ok, msg = filas.atualizar_fila(fid, nome=inp_nome.value, prefixo=inp_pref.value, guiche=inp_guiche.value, senha_inicio=inp_inicio.value or "1", senha_fim=inp_fim.value or "0", tv_grupo=_grupo_escolhido(), ator=user_nome, voz_nome=chk_nome.value, voz_senha=chk_senha.value, voz_destino=chk_dest.value, voz_guiche=chk_guiche.value, voz_fila=chk_fila.value, voz_hora=chk_hora.value, voz_ordem=inp_ordem.value or "fila,senha,nome,destino,guiche", voz_repetir=rep, voz_intervalo=interv, tv_titulo=inp_tv_titulo.value or "", tv_subtitulo=inp_tv_sub.value or "", tv_aguardando=inp_tv_ag.value or "AGUARDE CHAMADA", tv_midia_legenda=inp_tv_leg.value or "", tv_noticias_titulo=inp_tv_not.value or "Notícias")
+                notificar(msg, type="positive" if ok else "negative")
+                if ok:
+                    _cancelar_edicao()
+                    _atualizar_grupos()
+                    render_filas()
             with link_criada:
                 pass
 
@@ -738,40 +1136,46 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     ult = filas.ultima_chamada(fid)
                     pode_editar = eh_admin or criado_por == user_nome or fid in liberadas
                     pode_dono = eh_admin or criado_por == user_nome
-                    with ui.card().classes("w-full p-4 gap-3"):
-                        with ui.row().classes("w-full items-center justify-between flex-wrap gap-2"):
-                            with ui.column().classes("gap-0 flex-1 min-w-[200px]"):
+                    with ui.card().classes("w-full p-4 gap-3").style("min-width: 0"):
+                        with ui.row().classes("w-full items-center justify-between flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                            with ui.column().classes("gap-0 flex-1 min-w-[200px]").style("min-width: 0"):
                                 ui.label(nome).classes("font-bold text-h6")
-                                ui.label(f"{endereco or 'sem endereço'} • {descricao or ''}").classes("text-caption text-grey-6")
                                 ui.label(f"Senha atual: {senha} • Prefixo: {prefixo} • {senha_inicio}→{senha_fim if senha_fim else '∞'} • Guichê base: {guiche} • TV: {tv_grupo or 'isolada'} • Dono: {criado_por or '—'} • {status}").classes("text-caption text-grey-6")
-                            with ui.row().classes("gap-1 flex-wrap"):
+                            with ui.row().classes("w-full flex-wrap").style("gap: 0.25rem; min-width: 0"):
                                 # link TV isolada ou compartilhada
                                 if tv_grupo:
                                     tv_url = f"/tv?grupo={tv_grupo}"
-                                    botao(f"TV grupo {tv_grupo}", icone="tv", on_click=lambda u=tv_url: ui.navigate.to(u, new_tab=True), variante="contorno", chave_modulo="filas").tooltip(f"TV compartilhada — grupo {tv_grupo}")
+                                    botao(f"TV grupo {tv_grupo}", icone="tv", on_click=lambda u=tv_url: ui.navigate.to(u, new_tab=True), variante="contorno", chave_modulo="filas").tooltip(f"TV compartilhada — grupo {tv_grupo}").props('data-testid=filas-card-tv-grupo')
                                 else:
                                     tv_url = f"/tv/{fid}"
-                                    botao("Abrir TV desta fila", icone="tv", on_click=lambda u=tv_url: ui.navigate.to(u, new_tab=True), variante="contorno", chave_modulo="filas").tooltip(f"TV isolada — fila {nome}")
+                                    botao("Abrir TV desta fila", icone="tv", on_click=lambda u=tv_url: ui.navigate.to(u, new_tab=True), variante="contorno", chave_modulo="filas").tooltip(f"TV isolada — fila {nome}").props('data-testid=filas-card-abrir-tv')
                                 if eh_admin or criado_por == user_nome:
                                     def _excluir(fid=fid, nome=nome):
                                         ok, msg = filas.excluir_fila(fid, ator=user_nome)
                                         notificar(msg, type="positive" if ok else "negative")
                                         render_filas()
-                                    botao("Excluir", icone="delete", on_click=_excluir, variante="contorno", chave_modulo="filas")
+                                    botao("Excluir", icone="delete", on_click=_excluir, variante="contorno", chave_modulo="filas").props('data-testid=filas-excluir')
                                 if pode_editar:
-                                    botao("Editar", icone="edit", on_click=lambda fid=fid: dialogo_editar_fila(fid, user_nome, pode_dono, render_filas, _atualizar_grupos), variante="contorno", chave_modulo="filas")
+                                    botao("Editar", icone="edit", on_click=lambda fid=fid: _editar_no_painel(fid), variante="contorno", chave_modulo="filas").props('data-testid=filas-editar')
                                 if pode_dono:
-                                    botao("Acesso", icone="group_add", on_click=lambda fid=fid: dialogo_acesso_fila(fid, user_nome, render_filas), variante="contorno", chave_modulo="filas").tooltip("Chamar usuários para esta fila")
+                                    botao("Acesso", icone="group_add", on_click=lambda fid=fid: dialogo_acesso_fila(fid, user_nome, render_filas), variante="contorno", chave_modulo="filas").tooltip("Chamar usuários para esta fila").props('data-testid=filas-acesso-abrir')
                                 ui.label(f"Link: {tv_grupo and f'/tv?grupo={tv_grupo}' or f'/tv/{fid}'}").classes("text-caption text-grey-6 self-center")
                         # etapas — isoladas por fila
-                        with ui.row().classes("w-full gap-2 flex-wrap"):
+                        with ui.row().classes("w-full flex-wrap").style("gap: 0.5rem; min-width: 0"):
                             for eid, efid, ordem, enome, eguiche, eativo in etapas:
                                 ui.badge(f"{ordem}. {enome} ({eguiche or guiche})", color="primary").props("outline")
                         # chamar — isolado
-                        with ui.row().classes("w-full gap-2 flex-wrap items-end"):
-                            inp_paciente = ui.input("Paciente (avulso — vazio usa a lista)", placeholder="Nome").props("outlined dense").classes("flex-1 min-w-[160px]")
-                            sel_etapa = ui.select([e[3] for e in etapas], value=etapas[0][3] if etapas else "Atendimento", label="Etapa/Destino").props("outlined dense").classes("w-[180px]") if etapas else None
-                            sel_prio = ui.select(list(PRIO_LABEL.values()), value="Comum", label="Grupo (avulso)").props("outlined dense").classes("w-[150px]")
+                        with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0"):
+                            inp_paciente = ui.input("Paciente (avulso — vazio usa a lista)", placeholder="Nome").props("outlined dense").classes("flex-1 min-w-[160px]").style("min-width: 0")
+                            with inp_paciente:
+                                ui.tooltip("Nome avulso para esta senha; vazio consome o próximo da lista em ordem.").props("delay=1000")
+                            sel_etapa = ui.select([e[3] for e in etapas], value=etapas[0][3] if etapas else "Atendimento", label="Etapa/Destino").props("outlined dense").classes("w-[180px]").style("min-width: 0") if etapas else None
+                            if sel_etapa is not None:
+                                with sel_etapa:
+                                    ui.tooltip("Sala/etapa de destino desta chamada.").props("delay=1000")
+                            sel_prio = ui.select(list(PRIO_LABEL.values()), value="Comum", label="Grupo (avulso)").props("outlined dense").classes("w-[150px]").style("min-width: 0")
+                            with sel_prio:
+                                ui.tooltip("Grupo do avulso (Comum, Gestante, Idoso, Deficiente).").props("delay=1000")
 
                             def _chamar(fid=fid, inp=inp_paciente, sel=sel_etapa, sp=sel_prio):
                                 etapa = sel.value if sel else "Atendimento"
@@ -782,7 +1186,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                                 if inp:
                                     inp.value = ""
                                 render_filas()
-                            botao("Chamar próximo", icone="campaign", on_click=_chamar, variante="primario", chave_modulo="filas")
+                            botao("Chamar próximo", icone="campaign", on_click=_chamar, variante="primario", chave_modulo="filas").props('data-testid=filas-chamar-proximo')
                             if ult:
                                 cid, senha_u, guiche_u, data_u, pac_u, etapa_u, fnome_u, prio_u, manch_u = ult
                                 ui.label(f"Última: {senha_u} {pac_u or ''} → {etapa_u} ({guiche_u}) {data_u[:16] if data_u else ''}").classes("text-caption text-grey-7 self-center").style(_estilo_manchester(manch_u) or "")
@@ -794,9 +1198,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                                 ui.label(f"{n_pend} nome(s) na lista — o próximo chama em ordem").classes("text-caption text-primary self-center font-bold")
 
                         # histórico isolado desta fila
-                        with ui.expansion("Histórico desta fila (isolado)", icon="history").classes("w-full"):
+                        with ui.expansion("Histórico desta fila (isolado)", icon="history").classes("w-full").style("min-width: 0"):
                             for cid, fid2, senha2, guiche2, data2, por2, pac2, etapa2, fn2, prio2, manch2 in filas.listar_chamadas(5, fila_id=fid):
-                                with ui.row().classes("w-full items-center justify-between gap-2 flex-wrap"):
+                                with ui.row().classes("w-full items-center justify-between flex-wrap").style("gap: 0.5rem; min-width: 0"):
                                     ui.label(f"{senha2} — {etapa2} — {pac2 or '—'} — guichê {guiche2} — {data2[:16] if data2 else ''}").classes("text-caption flex-1").style(_estilo_manchester(manch2) or "")
                                     # qualquer atendente: cor a qualquer hora
                                     selmh = ui.select(list(MANCHESTER_LABEL.values()), value=MANCHESTER_LABEL.get(manch2 or "", "—")).props("outlined dense").classes("w-[120px]")
@@ -814,7 +1218,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                                                 ok, m = filas.avancar_chamada(cid, ator=user_nome)
                                                 notificar(m, type="positive" if ok else "warning")
                                                 render_filas()
-                                            botao("Avançar", icone="arrow_forward", on_click=_av, variante="texto", chave_modulo="filas")
+                                            botao("Avançar", icone="arrow_forward", on_click=_av, variante="texto", chave_modulo="filas").props('data-testid=filas-avancar')
 
                         # por etapa/sala: próximo, nome e Manchester — qualquer atendente
                         bloco_etapas(fid, nome, tv_grupo, user_nome, render_filas)
@@ -832,27 +1236,25 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         render_filas()
 
         # Excluir uma ou todas — confirmação
-        with ui.row().classes("w-full justify-center mt-2 gap-2 flex-wrap"):
+        with ui.row().classes("w-full justify-center flex-wrap mt-2").style("gap: 0.5rem; min-width: 0"):
             def _confirmar_excluir_todas():
                 titulo = "Excluir todas as filas" if eh_admin else "Excluir todas minhas filas"
                 msg = "Tem certeza? Todas as filas e suas chamadas/etapas/mídias/nomes serão apagadas. Esta ação não pode ser desfeita." if eh_admin else "Excluir todas as SUAS filas?"
                 with ui.dialog() as dlg, ui.card():
                     ui.label(titulo).classes("font-bold")
                     ui.label(msg).classes("text-caption text-grey-7")
-                    with ui.row().classes("w-full justify-end gap-2"):
+                    with ui.row().classes("w-full justify-end flex-wrap").style("gap: 0.5rem; min-width: 0"):
                         ui.button("Cancelar", on_click=dlg.close).props("flat")
                         def _executar():
                             ok, m = filas.excluir_todas_filas(ator=user_nome, somente_do_criador=user_nome, eh_admin=eh_admin)
                             notificar(m, type="positive" if ok else "negative")
                             dlg.close()
                             render_filas()
-                        ui.button("Confirmar exclusão", on_click=_executar).props("color=negative")
+                        ui.button("Confirmar exclusão", on_click=_executar).props("color=negative").props('data-testid=filas-confirmar-exclusao')
                 dlg.open()
             label_todas = "Excluir todas as filas" if eh_admin else "Excluir todas minhas filas"
-            botao(label_todas, icone="delete_forever", on_click=_confirmar_excluir_todas, variante="contorno", chave_modulo="filas").tooltip("Exclui em lote").props("color=negative")
-
-        with ui.row().classes("w-full justify-center mt-2 gap-2"):
-            botao("Administração", icone="admin_panel_settings", on_click=lambda: ui.navigate.to("/admin/filas"), variante="texto", chave_modulo="filas")
+            botao(label_todas, icone="delete_forever", on_click=_confirmar_excluir_todas, variante="contorno", chave_modulo="filas").tooltip("Exclui em lote").props("color=negative").props('data-testid=filas-excluir-todas')
+        # Administração: padrão dos módulos — menu hambúrguer → Administração (/admin/filas)
 
 
 def mostrar_tv(fila_id: int = None, tv_grupo: str = None, etapa: str = None):
@@ -895,7 +1297,7 @@ def mostrar_tv(fila_id: int = None, tv_grupo: str = None, etapa: str = None):
         pass
     if not cfg:
         cfg = {"voz_nome": 1, "voz_senha": 1, "voz_destino": 1, "voz_guiche": 1,
-               "voz_fila": 1,
+               "voz_fila": 1, "voz_hora": 1, "voz_ordem": "fila,senha,nome,destino,guiche",
                "voz_repetir": 0, "voz_intervalo": 2, "tv_titulo": "",
                "tv_subtitulo": "", "tv_aguardando": "AGUARDE CHAMADA",
                "tv_midia_legenda": "", "tv_noticias_titulo": "Notícias"}
@@ -941,33 +1343,33 @@ def mostrar_tv(fila_id: int = None, tv_grupo: str = None, etapa: str = None):
     aguardando = (cfg.get("tv_aguardando") or "AGUARDE CHAMADA").strip() or "AGUARDE CHAMADA"
 
     # cabeçalho com textos do criador
-    with ui.column().classes("w-full h-screen bg-black text-white gap-0 p-0").style("min-height: 100vh"):
-        with ui.row().classes("w-full items-center gap-3 px-4 py-2 bg-grey-900"):
-            ui.icon(icone_sistema).classes("text-white").style("font-size: 28px")
-            ui.label(titulo_tv).classes("text-white font-bold")
-            ui.label("•").classes("text-grey-5")
-            ui.label(subtitulo_tv).classes("text-white font-bold tracking-widest")
+    with ui.column().classes("w-full h-screen bg-black text-white gap-0 p-0").style("min-height: 100vh; min-width: 0"):
+        with ui.row().classes("w-full items-center flex-wrap px-4 py-2 bg-grey-900").style("gap: 0.75rem; min-width: 0"):
+            ui.icon(icone_sistema).classes("text-white").style("font-size: 28px; flex-shrink: 0")
+            ui.label(titulo_tv).classes("text-white font-bold").style("min-width: 0; overflow-wrap: break-word")
+            ui.label("•").classes("text-grey-5").style("flex-shrink: 0")
+            ui.label(subtitulo_tv).classes("text-white font-bold tracking-widest").style("min-width: 0; overflow-wrap: break-word")
             ui.space()
             if legenda_midia:
-                ui.label(legenda_midia).classes("text-caption text-grey-4")
+                ui.label(legenda_midia).classes("text-caption text-grey-4").style("min-width: 0")
 
-        # corpo: mídia (>90%) + faixa lateral direita com senhas
-        with ui.row().classes("w-full flex-1 gap-0").style("min-height: 0; flex: 1"):
-            with ui.column().classes("items-center justify-center gap-2 p-2").style("flex: 1 1 auto; min-width: 0; background: #000"):
-                media_html = ui.html("", sanitize=False).classes("w-full flex justify-center items-center").style("pointer-events: none; min-height: 40vh")
+        # corpo: mídia (flexível) + faixa lateral direita com senhas — empilha no mobile, lado a lado no desktop
+        with ui.row().classes("w-full flex-1 flex-wrap md:flex-nowrap").style("min-height: 0; flex: 1 1 auto; gap: 0; min-width: 0"):
+            with ui.column().classes("items-center justify-center p-2").style("flex: 1 1 320px; min-width: 0; background: #000; position: relative; overflow: hidden; gap: 0.5rem"):
+                media_html = ui.html("", sanitize=False).classes("w-full flex justify-center items-center").style("pointer-events: none; min-height: 40vh; min-width: 0").props('aria-label="Mídia ambiente da TV" role=img')
                 try:
                     media_html.props('id="tvmedia"')
                 except Exception:
                     pass
-            with ui.column().classes("gap-2 p-3 bg-grey-900").style("flex: 0 0 240px; max-width: 240px; overflow-y: auto"):
-                lbl_topo = ui.label(aguardando).classes("tracking-widest text-grey-4").style("font-size: 0.85rem")
-                lbl_senha = ui.label("—").classes("font-extrabold leading-none text-yellow-3").style("font-size: 3.2rem")
-                lbl_paciente = ui.label("").classes("font-bold text-white").style("font-size: 1.15rem")
-                lbl_destino = ui.label("").classes("font-bold text-white").style("font-size: 1rem")
-                lbl_guiche = ui.label("").classes("text-grey-4").style("font-size: 0.85rem")
+            with ui.column().classes("p-3 bg-grey-900").style("flex: 1 1 240px; min-width: 0; max-width: 100%; overflow-y: auto; gap: 0.5rem"):
+                lbl_topo = ui.label(aguardando).classes("tracking-widest text-grey-4").style("font-size: 0.85rem; min-width: 0; overflow-wrap: break-word")
+                lbl_senha = ui.label("—").classes("font-extrabold leading-none text-yellow-3").style("font-size: clamp(2.4rem, 6vw, 3.2rem); min-width: 0").props('aria-live=polite role=status aria-label="Senha chamada"')
+                lbl_paciente = ui.label("").classes("font-bold text-white").style("font-size: 1.15rem; min-width: 0; overflow-wrap: break-word").props('aria-live=polite aria-label="Paciente chamado"')
+                lbl_destino = ui.label("").classes("font-bold text-white").style("font-size: 1rem; min-width: 0; overflow-wrap: break-word").props('aria-label="Destino da chamada"')
+                lbl_guiche = ui.label("").classes("text-grey-4").style("font-size: 0.85rem; min-width: 0")
                 ui.separator()
-                ui.label("Últimos chamados").classes("text-caption tracking-widest text-grey-4")
-                box_ultimos = ui.column().classes("w-full gap-1")
+                ui.label("Últimos chamados").classes("text-caption tracking-widest text-grey-4").style("min-width: 0")
+                box_ultimos = ui.column().classes("w-full").style("gap: 0.25rem; min-width: 0")
                 with box_ultimos:
                     pass
 
@@ -982,7 +1384,7 @@ def mostrar_tv(fila_id: int = None, tv_grupo: str = None, etapa: str = None):
             with ui.row().classes("w-full items-center").style("gap: 0.75rem; min-width: 0"):
                 ui.label(titulo_noticias).classes("tracking-widest").style("font-size: 0.95rem; color: #FFFFFF; font-weight: bold; min-width: 0")
                 ui.space()
-                lbl_n_contador = ui.label("").style("font-size: 0.95rem; color: #CCCCCC; min-width: 0")
+                lbl_n_contador = ui.label("").style("font-size: 0.95rem; color: #CCCCCC; min-width: 0").props('aria-hidden=true')
             lbl_n_titulo = ui.label("Aguardando notícias...").classes("w-full font-bold").style(
                 "font-size: clamp(1.35rem, 2.4vw, 2.2rem); line-height: 1.25; color: #FFFFFF; "
                 "white-space: normal; overflow-wrap: break-word; word-break: break-word; min-width: 0")
@@ -1024,19 +1426,30 @@ def mostrar_tv(fila_id: int = None, tv_grupo: str = None, etapa: str = None):
             _js_duck_e_voz(texto)
 
         def _texto_chamada(paciente, senha, etapa, guiche, fnome):
-            """Monta a fala NA MESMA ORDEM da tela: fila → senha → nome → destino → guichê."""
-            partes = []
-            if cfg.get("voz_fila", 1) and fnome:
-                partes.append(f"fila {fnome}")
-            if cfg.get("voz_senha"):
-                partes.append(f"senha {senha}")
-            if cfg.get("voz_nome") and paciente:
-                partes.append(paciente)
-            if cfg.get("voz_destino") and etapa:
-                partes.append(f"dirigir-se a {etapa}")
-            if cfg.get("voz_guiche") and guiche:
+            """Monta a fala na ORDEM definida pela fila (voz_ordem: fila,senha,nome,destino,guiche)."""
+            liga = {"fila": bool(cfg.get("voz_fila", 1)), "senha": bool(cfg.get("voz_senha")),
+                    "nome": bool(cfg.get("voz_nome")), "destino": bool(cfg.get("voz_destino")),
+                    "guiche": bool(cfg.get("voz_guiche"))}
+            frag = {}
+            if fnome:
+                frag["fila"] = f"fila {fnome}"
+            frag["senha"] = f"senha {senha}"
+            if paciente:
+                frag["nome"] = paciente
+            if etapa:
+                frag["destino"] = f"dirigir-se a {etapa}"
+            if guiche:
                 g = (guiche or "").strip()
-                partes.append(g if "guich" in g.lower() else f"guichê {g}")
+                frag["guiche"] = g if "guich" in g.lower() else f"guichê {g}"
+            partes = []
+            try:
+                ok_o, ordem = filas.normalizar_voz_ordem(cfg.get("voz_ordem") or "")
+            except Exception:
+                ok_o, ordem = False, ""
+            seq = ordem.split(",") if ok_o else list(filas.VOZ_CAMPOS)
+            for campo in seq:
+                if liga.get(campo) and campo in frag:
+                    partes.append(frag[campo])
             if not partes:
                 partes.append(f"senha {senha}")
             return ", ".join(partes) + "."
@@ -1047,7 +1460,7 @@ def mostrar_tv(fila_id: int = None, tv_grupo: str = None, etapa: str = None):
             js = f"""
 try {{
   document.querySelectorAll('#tvmedia audio,#tvmedia video').forEach(el => {{
-    try {{ el.volume = Math.max(0, (parseFloat(el.dataset.vol || '0.2')) * 0.5); }} catch(e){{}}
+    try {{ el.volume = Math.max(0, (parseFloat(el.dataset.vol || '0.4')) * 0.5); }} catch(e){{}}
   }});
   setTimeout(() => {{
     try {{
@@ -1060,7 +1473,7 @@ try {{
       setTimeout(() => {{
         try {{
           document.querySelectorAll('#tvmedia audio,#tvmedia video').forEach(el => {{
-            const v = parseFloat(el.dataset.vol || '0.2');
+            const v = parseFloat(el.dataset.vol || '0.4');
             if (!isNaN(v)) el.volume = Math.max(0, Math.min(1, v));
           }});
         }} catch(e){{}}
@@ -1110,24 +1523,29 @@ try {{
             partes = []
             html_imgs = []
             tempos_foto = []
-            for (_id, _nome, _tipo, _caminho, _orig, _ordem, _ativo, _criado, _fid, _vol, _dur, _slot, _real) in itens:
+            # papel de fundo restrito à área de mídia: absolute inset:0 dentro do wrapper relativo da mídia (não cobre a página)
+            _fundos = [m for m in midias if m[2] == "imagem" and len(m) > 13 and m[13]]
+            if _fundos:
+                partes.append(f"<div style='position:absolute;inset:0;background:url({_src(_fundos[0][3])}) center/cover;opacity:0.22;pointer-events:none;z-index:0'></div>")
+            for (_id, _nome, _tipo, _caminho, _orig, _ordem, _ativo, _criado, _fid, _vol, _dur, _slot, _real, _fundo) in itens:
                 src = _src(_caminho)
                 vol = max(0, min(int(_vol if _vol not in (None, "") else filas.VOLUME_AMBIENTE_PADRAO), 100)) / 100
                 if _tipo == "imagem":
-                    html_imgs.append(src)
+                    if not _fundo:
+                        html_imgs.append(src)
                 elif _tipo == "video":
                     if not any("data-vid" in p for p in partes):
                         partes.append(f"<video autoplay loop playsinline data-vol='{vol}' data-vid='1' style='width:100%;max-height:62vh;background:#000;pointer-events:none'><source src='{src}'></video>")
                 else:
                     partes.append(f"<audio autoplay loop data-vol='{vol}' style='display:none'><source src='{src}'></audio>")
             # tempo total = real do áudio/vídeo; fotos dividem (40s + 4 fotos = 10s cada)
-            total, tempos_foto = filas.calcular_passo([(_t, _d, _r) for (_, _, _t, _, _, _, _, _, _, _, _d, _, _r) in itens])
+            total, tempos_foto = filas.calcular_passo([(_t, _d, _r) for (_, _, _t, _, _, _, _, _, _, _, _d, _, _r, *_x) in itens])
             for k, src in enumerate(html_imgs):
                 vis = "block" if k == 0 else "none"
                 partes.append(f"<img data-imgidx='{k}' src='{src}' style='display:{vis};max-width:100%;max-height:62vh;object-fit:contain;background:#000'>")
-            media_html.content = "<div style='width:100%;display:flex;flex-direction:column;align-items:center;gap:8px'>" + "".join(partes) + "</div>"
+            media_html.content = "<div style='position:relative;z-index:1;width:100%;display:flex;flex-direction:column;align-items:center;gap:8px'>" + "".join(partes) + "</div>"
             try:
-                ui.run_javascript("try{document.querySelectorAll('#tvmedia audio,#tvmedia video').forEach(el=>{const v=parseFloat(el.dataset.vol||'0.2'); if(!isNaN(v)) el.volume=Math.max(0,Math.min(1,v)); if(el.tagName==='VIDEO'){el.play().catch(()=>{el.muted=true; el.play().catch(()=>{});});}});}catch(e){}")
+                ui.run_javascript("try{document.querySelectorAll('#tvmedia audio,#tvmedia video').forEach(el=>{const v=parseFloat(el.dataset.vol||'0.4'); if(!isNaN(v)) el.volume=Math.max(0,Math.min(1,v)); const p=el.play(); if(p&&p.catch){p.catch(()=>{if(el.tagName==='VIDEO'){el.muted=true; el.play().catch(()=>{});}});}});}catch(e){}")
                 import json as _json
                 ui.run_javascript("try{if(window._tvt){clearTimeout(window._tvt);window._tvt=null;}const imgs=Array.from(document.querySelectorAll('#tvmedia [data-imgidx]'));const durs=" + _json.dumps([float(x) for x in tempos_foto]) + ";if(imgs.length>1){let p=0;const show=k=>{imgs.forEach((el,j)=>{el.style.display=(j===k?'block':'none');});};const adv=()=>{p=(p+1)%imgs.length;show(p);window._tvt=setTimeout(adv,(durs[p]||8)*1000);};window._tvt=setTimeout(adv,(durs[0]||8)*1000);}}catch(e){}")
             except Exception:
@@ -1168,9 +1586,9 @@ try {{
             box_ultimos.clear()
             with box_ultimos:
                 for (_cid, _fid2, _senha2, _guiche2, _data2, _por2, _pac2, _etapa2, _fn2, _prio2, _manch2) in (ultimos or [])[:3]:
-                    with ui.row().classes("w-full items-center gap-1"):
-                        ui.label(f"{_senha2} • {_pac2 or '—'}").classes("text-white font-bold").style(f"font-size: 0.95rem;{_estilo_manchester(_manch2)}")
-                    ui.label(f"{_etapa2 or ''} {_guiche2 and '• guichê ' + str(_guiche2) or ''} • {(_data2 or '')[:16]}").classes("text-grey-4").style("font-size: 0.75rem")
+                    with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.25rem; min-width: 0"):
+                        ui.label(f"{_senha2} • {_pac2 or '—'}").classes("text-white font-bold").style(f"font-size: 0.95rem; min-width: 0; overflow-wrap: break-word;{_estilo_manchester(_manch2)}")
+                    ui.label(f"{_etapa2 or ''} {_guiche2 and '• guichê ' + str(_guiche2) or ''} • {(_data2 or '')[:16]}").classes("text-grey-4").style("font-size: 0.75rem; min-width: 0; overflow-wrap: break-word")
 
         def refresh_chamada():
             # comando remoto da edição: pausar/retomar/próximo/anterior
@@ -1338,25 +1756,34 @@ try {{
             noticias_tv["idx"] = (idx + 1) % len(lst)
 
         def rotacionar_midia():
+            # corrente auto-sustentada: pausado só adia (nunca morre); erro nunca quebra a cadeia
             try:
-                if filas.obter_estado_tv(chave).get("pausado", 0):
-                    return
+                try:
+                    paus = filas.obter_estado_tv(chave).get("pausado", 0)
+                except Exception:
+                    paus = 0
+                if paus:
+                    dur = 5.0
+                else:
+                    estado["slot_pos"] = (estado["slot_pos"] + 1) % max(1, len(slots))
+                    dur = _render_slot()
             except Exception:
-                pass
-            estado["slot_pos"] = (estado["slot_pos"] + 1) % max(1, len(slots))
-            dur = _render_slot()
+                dur = 8.0
             try:
                 ui.timer(float(dur or 8), rotacionar_midia, once=True)
             except Exception:
                 pass
 
-        _render_slot()
+        try:
+            _d0 = float(_render_slot() or 8)
+        except Exception:
+            _d0 = 8.0
         refresh_chamada()
         carregar_noticias(primeira=True)
         ui.timer(3.0, refresh_chamada)
         ui.timer(15.0, _mostrar_noticia)
         ui.timer(120.0, carregar_noticias)
         try:
-            ui.timer(8.0, rotacionar_midia, once=True)
+            ui.timer(_d0, rotacionar_midia, once=True)
         except Exception:
             pass

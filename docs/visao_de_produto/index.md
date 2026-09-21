@@ -26,7 +26,7 @@ Sistema intranet modularizado (NiceGUI/FastAPI) da rede interna, que centraliza 
 
 ## Módulos em operação
 
-`mod_intranet` (núcleo) + 9 de negócio: `mod_gest_cad_usuario`, `mod_blog`, `mod_edit_pdf`, `mod_renomear_empenho`, `mod_auditoria`, `mod_solicita_impressao` (cotas 1000/200 via `ORGANOGRAMA_BASE`), `mod_tecnico` (**novo** 18/09/2026 — `software/` + `backup/YYYYMMDD_HHMM_nomePc_ip`, owner-isolation, `webkitdirectory`), `mod_filas` (**novo esqueleto** 18/09/2026 — `/filas` + `/tv` pública 3s+beep) e `mod_lista_telefonica` (**novo** 19/09/2026 — organograma 12 secretarias `Secretaria→Setor→Subsetor`, contatos alfabéticos, busca sem acentos, `tel:` no celular).
+`mod_intranet` (núcleo) + 9 de negócio: `mod_gest_cad_usuario`, `mod_blog`, `mod_edit_pdf`, `mod_renomear_empenho`, `mod_auditoria`, `mod_solicita_impressao` (cotas 1000/200 via `ORGANOGRAMA_BASE`), `mod_tecnico` (**novo** 18/09/2026 — `software/` + `backup/YYYYMMDD_HHMM_nomePc_ip`, owner-isolation, `webkitdirectory`), `mod_filas` (multi-filas 09/2026 — `/filas` + `/tv` pública isolada/compartilhada/por sala, ordem da fala `voz_ordem`, volume 40, papel de fundo) e `mod_lista_telefonica` (**novo** 19/09/2026 — organograma 12 secretarias `Secretaria→Setor→Subsetor`, contatos alfabéticos, busca sem acentos, `tel:` no celular).
 
 Total **10 módulos** (1 núcleo + 9 de negócio), semeados por `MODULOS_SISTEMA` em `mod_intranet/autenticacao.py:15-25` e `MODULOS_BD` em `mod_intranet/repositorio.py:57-68`.
 

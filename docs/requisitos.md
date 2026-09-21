@@ -211,13 +211,13 @@ Fonte: `requirements.txt` (raiz).
 
 | Requisito | Situação |
 |:---|:---:|
-| Banco `db_mod_filas.db` (`tb_fila` + `tb_fila_etapa` + `tb_chamada` + `tb_midia` + `tb_config_filas`) + seed `Geral A000` + 3 etapas padrão + `PASTA_MIDIA` `mod_filas/midia` | ✅ Implementado |
-| `criar_fila` por local (`endereco/prefixo/senha_inicio/fim` `fim=0` infinito, `criado_por`, `tv_grupo`) + `listar_filas_visiveis` isolamento por criador vs `administrador_geral` + `atualizar/excluir` + `excluir_todas_filas` (exceto Geral) | ✅ Implementado |
+| Banco `db_mod_filas.db` (`tb_fila` com `voz_ordem` + `tb_fila_etapa` + `tb_chamada` + `tb_fila_nomes` + `tb_midia` com `fundo` + volume 40 + `tb_tv_estado` + `tb_fila_acesso` + `tb_config_filas`) SEM seed (nasce vazio) + `PASTA_MIDIA` `mod_filas/midia` (`datahora_nomeFila` sempre) | ✅ Implementado |
+| `criar_fila` (`prefixo/senha_inicio/fim` `fim=0` infinito, `criado_por`, `tv_grupo` slug, `voz_ordem` via `normalizar_voz_ordem`) + `listar_filas_visiveis` isolamento por criador vs `administrador_geral` + `atualizar/excluir` (`renomear_arquivos_fila` ao renomear) + `excluir_todas_filas` (sem exceção) | ✅ Implementado |
 | `gerar_senha(fila_id, ator, paciente_nome, etapa_nome)` + `_proxima_senha` infinito (`fim=0`) + `avancar_chamada` sequencial + `ultima_chamada_tv` (`fila_id`/`tv_grupo` `IN`) | ✅ Implementado |
-| Painel `/filas` multi-filas isolado (criar + card por fila + etapas + `Chamar próximo` + histórico isolado + `Avançar`) + `Excluir todas` | ✅ Implementado |
-| TV `/tv` (`?grupo=` compartilhada) + `/tv/{fila_id}` (isolada) full-screen `h-screen bg-black`, ícone padrão intranet, auto-refresh 3s `AudioContext` bip + `speechSynthesis pt-BR` só novo `id`, playlist `/midia_filas` (áudio elevador/vídeo propaganda, 40s rotação quando ociosa, pausada ao chamar) + carrossel notícias censura-filtrado | ✅ Implementado |
+| Painel `/filas` multi-filas isolado (`Cadastro de fila` recolhível + criar/Editar no painel + etapas + lista única + anexos stage + `Chamar próximo` + histórico isolado + `Avançar`) + `Excluir todas` + `delay=1000` (admin via hambúrguer) | ✅ Implementado |
+| TV `/tv` (`?grupo=` compartilhada) + `/tv/{fila_id}` (isolada) + `?etapa=` (por sala), ícone padrão intranet, auto-refresh 3s bip 880Hz + `speechSynthesis pt-BR` serializada por claim na ordem `voz_ordem`, playlist `/midia_filas` (volume 40, ducking à metade, papel de fundo absoluto só na mídia) + carrossel notícias até 200 censura-filtrado | ✅ Implementado |
 | LGPD `remover`/`renomear` (`criado_por` + `chamado_por`) + auditoria `tb_auditoria_filas` | ✅ Implementado |
-| Administração `/admin/filas` 2 cards (Filas por local + Mídia TV global `/midia_filas`, upload sanitizado + `uuid6`, `Ativar/Desativar`, `↑/↓`) | ✅ Implementado |
+| Administração `/admin/filas` via hambúrguer (Filas + voz/ordem/textos + mídia/fundo + áudio global `/midia_filas`, `Ativar/Desativar`, `↑/↓`, `Fundo`) | ✅ Implementado |
 | Censura filtrada na TV (`listar_para_tv` `conteudo_palavras_bloqueadas`) | ✅ Implementado |
 
 ### Lista Telefônica (`mod_lista_telefonica`) — novo 19/09/2026
