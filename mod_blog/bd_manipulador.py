@@ -79,26 +79,22 @@ def extrair_segmentos_mermaid(conteudo):
     `formatar_conteudo_para_exibicao`) e 'mermaid' (blocos ```mermaid,
     com entidades HTML revertidas para sintaxe Mermaid). Retorna lista de
     tuplas (tipo, trecho)."""
-    try:
-        if not conteudo:
-            return [("texto", "")]
-        segmentos = []
-        pos = 0
-        for m in _FENCE_MERMAID.finditer(conteudo):
-            if m.start() > pos:
-                segmentos.append(("texto", conteudo[pos:m.start()]))
-            corpo_mermaid = html.unescape(m.group(1)).strip()
-            if corpo_mermaid:
-                segmentos.append(("mermaid", corpo_mermaid))
-            pos = m.end()
-        if pos < len(conteudo):
-            segmentos.append(("texto", conteudo[pos:]))
-        if not segmentos:
-            segmentos = [("texto", conteudo)]
-        return segmentos
-    except Exception:
-        _log().exception("extrair_segmentos_mermaid: falha ao segmentar conteúdo")
-        return [("texto", conteudo or "")]
+    if not conteudo:
+        return [("texto", "")]
+    segmentos = []
+    pos = 0
+    for m in _FENCE_MERMAID.finditer(conteudo):
+        if m.start() > pos:
+            segmentos.append(("texto", conteudo[pos:m.start()]))
+        corpo_mermaid = html.unescape(m.group(1)).strip()
+        if corpo_mermaid:
+            segmentos.append(("mermaid", corpo_mermaid))
+        pos = m.end()
+    if pos < len(conteudo):
+        segmentos.append(("texto", conteudo[pos:]))
+    if not segmentos:
+        segmentos = [("texto", conteudo)]
+    return segmentos
 
 
 _crud = CrudBase(DB_BLOG_PATH, "blog")
@@ -304,14 +300,6 @@ def init_db():
     ids vazio). Executado no import e pelo bootstrap central; nunca sobrescreve
     edições manuais de ids já definidos. O DDL e os seeds rodam numa única
     transação de `CrudBase.transacao` (commit/rollback e fechamento garantidos)."""
-    try:
-        _init_db_seguro()
-    except Exception:
-        _log().exception("init_db: falha no bootstrap do blog")
-
-
-def _init_db_seguro():
-    """Body of `init_db`, isolated so the entry point can protect it."""
     with _crud.transacao() as cur:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS tb_postagens (
@@ -400,23 +388,15 @@ def listar_config_local():
 
     Lista as chaves de configuração local do módulo blog, ordenadas por
     chave."""
-    try:
-        return _crud.listar("SELECT chave, valor FROM tb_config ORDER BY chave")
-    except Exception as e:
-        _log().exception(f"listar_config_local: falha ao listar config local | {e}")
-        return []
+    return _crud.listar("SELECT chave, valor FROM tb_config ORDER BY chave")
 
 
 def _ordem_sql(ordem):
     """Converte ordem ('ASC'/'DESC') para SQL seguro."""
-    try:
-        ordem = (ordem or "DESC").strip().upper()
-        if ordem in ("ASC", "DESC"):
-            return ordem
-        return "DESC"
-    except Exception:
-        _log().warning("_ordem_sql: ordem inválida; usando DESC")
-        return "DESC"
+    ordem = ordem.strip().upper()
+    if ordem in ("ASC", "DESC"):
+        return ordem
+    return "DESC"
 
 
 def listar_postagens(ativo=True, ordem="DESC"):
@@ -426,29 +406,21 @@ def listar_postagens(ativo=True, ordem="DESC"):
     inativas — usado pela gestão de despublicadas); `ordem` aceita apenas
     'ASC'/'DESC' (validado por `_ordem_sql`, qualquer outro valor cai em
     'DESC' — imune a injeção na cláusula ORDER BY)."""
-    try:
-        order = _ordem_sql(ordem)
-        if ativo is None:
-            return _crud.listar(
-                "SELECT id, titulo, conteudo, autor, data_criacao "
-                f"FROM tb_postagens ORDER BY data_criacao {order}")  # nosec B608 — order só ASC/DESC via _ordem_sql
+    order = _ordem_sql(ordem)
+    if ativo is None:
         return _crud.listar(
             "SELECT id, titulo, conteudo, autor, data_criacao "
-            f"FROM tb_postagens WHERE ativo=? ORDER BY data_criacao {order}",  # nosec B608 — order só ASC/DESC via _ordem_sql
-            (1 if ativo else 0,))
-    except Exception as e:
-        _log().exception(f"listar_postagens: falha ao listar postagens | {e}")
-        return []
+            f"FROM tb_postagens ORDER BY data_criacao {order}")  # nosec B608 — order só ASC/DESC via _ordem_sql
+    return _crud.listar(
+        "SELECT id, titulo, conteudo, autor, data_criacao "
+        f"FROM tb_postagens WHERE ativo=? ORDER BY data_criacao {order}",  # nosec B608 — order só ASC/DESC via _ordem_sql
+        (1 if ativo else 0,))
 
 
 def contar_postagens(ativo=True):
     """Contagem de postagens no banco do blog (db_mod_blog.db, via CrudBase)."""
-    try:
-        return _crud.obter("SELECT COUNT(*) FROM tb_postagens WHERE ativo=?",
-                           (1 if ativo else 0,))[0]
-    except Exception as e:
-        _log().exception(f"contar_postagens: falha ao contar postagens | {e}")
-        return 0
+    return _crud.obter("SELECT COUNT(*) FROM tb_postagens WHERE ativo=?",
+                       (1 if ativo else 0,))[0]
 
 
 def remover_vinculos_usuario(user_nome):
@@ -458,38 +430,31 @@ def remover_vinculos_usuario(user_nome):
     cada módulo limpa o PRÓPRIO banco (isolamento total — sem cross-query
     entre bancos). Sem o arquivo do banco no SQLite, limpa a cópia legada
     do banco central. Retorna o nº de postagens removidas."""
-    try:
-        if os.path.exists(DB_BLOG_PATH):
-            with _crud.transacao() as cc:
-                cc.execute("SELECT id FROM tb_postagens WHERE autor=?", (user_nome,))
-                ids = [r[0] for r in cc.fetchall()]
-                if ids:
-                    cc.executemany("DELETE FROM tb_comentarios WHERE postagem_id=?",
-                                   [(i,) for i in ids])
-                cc.execute("DELETE FROM tb_comentarios WHERE autor=?", (user_nome,))
-                cc.execute("DELETE FROM tb_postagens WHERE autor=?", (user_nome,))
-            return len(ids)
-        conn = get_connection()
-        try:
-            cc = conn.cursor()
-            cc.execute("PRAGMA foreign_keys=ON")
+    if os.path.exists(DB_BLOG_PATH):
+        with _crud.transacao() as cc:
             cc.execute("SELECT id FROM tb_postagens WHERE autor=?", (user_nome,))
             ids = [r[0] for r in cc.fetchall()]
             if ids:
-                q = ",".join("?" * len(ids))
-                cc.execute(f"DELETE FROM tb_comentarios WHERE postagem_id IN ({q})", ids)  # nosec B608 — q só tem "?" (len); ids via parâmetros
+                cc.executemany("DELETE FROM tb_comentarios WHERE postagem_id=?",
+                               [(i,) for i in ids])
             cc.execute("DELETE FROM tb_comentarios WHERE autor=?", (user_nome,))
             cc.execute("DELETE FROM tb_postagens WHERE autor=?", (user_nome,))
-            conn.commit()
-            return len(ids)
-        finally:
-            try:
-                conn.close()
-            except Exception:
-                pass
-    except Exception as e:
-        _log().exception(f"remover_vinculos_usuario: falha ao remover vínculos de {user_nome} | {e}")
-        return 0
+        return len(ids)
+    conn = get_connection()
+    try:
+        cc = conn.cursor()
+        cc.execute("PRAGMA foreign_keys=ON")
+        cc.execute("SELECT id FROM tb_postagens WHERE autor=?", (user_nome,))
+        ids = [r[0] for r in cc.fetchall()]
+        if ids:
+            q = ",".join("?" * len(ids))
+            cc.execute(f"DELETE FROM tb_comentarios WHERE postagem_id IN ({q})", ids)  # nosec B608 — q só tem "?" (len); ids via parâmetros
+        cc.execute("DELETE FROM tb_comentarios WHERE autor=?", (user_nome,))
+        cc.execute("DELETE FROM tb_postagens WHERE autor=?", (user_nome,))
+        conn.commit()
+        return len(ids)
+    finally:
+        conn.close()
 
 
 def renomear_autor(nome_atual, novo_nome):
@@ -504,24 +469,14 @@ def renomear_autor(nome_atual, novo_nome):
             cc.execute("UPDATE tb_postagens SET autor=? WHERE autor=?", (novo_nome, nome_atual))
             cc.execute("UPDATE tb_comentarios SET autor=? WHERE autor=?", (novo_nome, nome_atual))
         return
-    try:
-        conn = get_connection()
-    except Exception:
-        _log().exception(f"renomear_autor: falha ao conectar para renomear {nome_atual}->{novo_nome}")
-        raise
+    conn = get_connection()
     try:
         cc = conn.cursor()
         cc.execute("UPDATE tb_postagens SET autor=? WHERE autor=?", (novo_nome, nome_atual))
         cc.execute("UPDATE tb_comentarios SET autor=? WHERE autor=?", (novo_nome, nome_atual))
         conn.commit()
-    except Exception:
-        _log().exception(f"renomear_autor: falha ao renomear {nome_atual}->{novo_nome}")
-        raise
     finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
+        conn.close()
 
 
 def obter_postagem(id_post):
@@ -529,13 +484,9 @@ def obter_postagem(id_post):
 
     Busca postagem por id com todas as colunas (incl. `ativo`/
     `data_atualizacao`); retorna `None` quando inexistente."""
-    try:
-        return _crud.obter(
-            "SELECT id, titulo, conteudo, autor, data_criacao, "
-            "data_atualizacao, ativo FROM tb_postagens WHERE id=?", (id_post,))
-    except Exception as e:
-        _log().exception(f"obter_postagem: falha ao buscar postagem #{id_post} | {e}")
-        return None
+    return _crud.obter(
+        "SELECT id, titulo, conteudo, autor, data_criacao, "
+        "data_atualizacao, ativo FROM tb_postagens WHERE id=?", (id_post,))
 
 
 _URL_SCHEMES = {"http", "https", "data", "mailto", "relative"}
@@ -652,18 +603,14 @@ def _sanitizar_texto(texto):
     sem atributos.
     """
     if isinstance(texto, str):
-        try:
-            return clean(
-                texto,
-                tags=tags_permitidas() | {"div", "br"},
-                attributes=_ATTRS,
-                url_schemes=_URL_SCHEMES,
-                url_relative="pass_through",
-                link_rel="noopener noreferrer",
-            )
-        except Exception:
-            _log().exception("_sanitizar_texto: falha na sanitização; usando escape")
-            return html.escape(texto)
+        return clean(
+            texto,
+            tags=tags_permitidas() | {"div", "br"},
+            attributes=_ATTRS,
+            url_schemes=_URL_SCHEMES,
+            url_relative="pass_through",
+            link_rel="noopener noreferrer",
+        )
     return str(texto) if texto else ""
 
 
@@ -671,16 +618,12 @@ def _pode_publicar(usuario):
     """Regra do módulo: usuário COMUM só LÊ o blog.
     Publicar/comentar/excluir é privilégio de administrador geral ou
     administrador do módulo blog."""
+    if not usuario:
+        return False
+    from mod_intranet import autenticacao
     try:
-        if not usuario:
-            return False
-        from mod_intranet import autenticacao
-        try:
-            return autenticacao.pode_publicar_no_blog(usuario)
-        except Exception:
-            return False
+        return autenticacao.pode_publicar_no_blog(usuario)
     except Exception:
-        _log().exception(f"_pode_publicar: falha ao verificar permissão de {usuario}")
         return False
 
 
@@ -831,13 +774,9 @@ def listar_comentarios(postagem_id):
 
     Lista `(id, autor, conteudo, data_criacao)` dos comentários da
     postagem, ordenados cronologicamente."""
-    try:
-        return _crud.listar(
-            "SELECT id, autor, conteudo, data_criacao FROM tb_comentarios "
-            "WHERE postagem_id=? ORDER BY data_criacao", (postagem_id,))
-    except Exception as e:
-        _log().exception(f"listar_comentarios: falha ao listar comentários da postagem #{postagem_id} | {e}")
-        return []
+    return _crud.listar(
+        "SELECT id, autor, conteudo, data_criacao FROM tb_comentarios "
+        "WHERE postagem_id=? ORDER BY data_criacao DESC", (postagem_id,))
 
 
 @falha_suave(default=False, nivel="exception")
@@ -1081,27 +1020,23 @@ def formatar_conteudo_para_exibicao(conteudo):
     - HTML sanitizado (nh3) preservado e estilizado
     - Markdown leve (`#`, `-`, `**`) dentro de HTML do editor WYSIWYG convertido
     """
-    try:
-        if not conteudo:
-            return ""
-        limpo = _sanitizar_texto(conteudo)
-        if not limpo.strip():
-            return ""
-        # Sem tags HTML -> trata como texto puro/Markdown
-        if "<" not in limpo:
-            corpo = _markdown_leve(html.escape(limpo, quote=False))
-            return f'<div style="text-align:justify">{corpo}</div>'
-        # HTML (ex. do editor WYSIWYG, que envolve tudo em <p>) -> converte o
-        # Markdown digitado nos blocos antes de aplicar os estilos do padrão
-        limpo = _markdown_em_html(limpo)
-        # HTML sanitizado -> aplica estilos do padrão (largura de imagem configurável)
-        min_l, max_l = _largura_imagem()
-        parser = _FormatadorBlog(img_min=min_l, img_max=max_l)
-        parser.feed(limpo)
-        return f'<div style="text-align:justify">{parser.getvalue()}</div>'
-    except Exception:
-        _log().exception("formatar_conteudo_para_exibicao: falha ao formatar conteúdo")
-        return html.escape(conteudo or "")
+    if not conteudo:
+        return ""
+    limpo = _sanitizar_texto(conteudo)
+    if not limpo.strip():
+        return ""
+    # Sem tags HTML -> trata como texto puro/Markdown
+    if "<" not in limpo:
+        corpo = _markdown_leve(html.escape(limpo, quote=False))
+        return f'<div style="text-align:justify">{corpo}</div>'
+    # HTML (ex. do editor WYSIWYG, que envolve tudo em <p>) -> converte o
+    # Markdown digitado nos blocos antes de aplicar os estilos do padrão
+    limpo = _markdown_em_html(limpo)
+    # HTML sanitizado -> aplica estilos do padrão (largura de imagem configurável)
+    min_l, max_l = _largura_imagem()
+    parser = _FormatadorBlog(img_min=min_l, img_max=max_l)
+    parser.feed(limpo)
+    return f'<div style="text-align:justify">{parser.getvalue()}</div>'
 
 
 def _markdown_em_html(limpo):
@@ -1203,12 +1138,8 @@ def definir_postagem_unica_id(pid):
     a fixação, voltando a exibir a mais recente. Retorna `True` em sucesso
     (fail-soft via `set_config_local`).
     """
-    try:
-        return set_config_local("blog_postagem_unica_id",
-                                "" if pid is None else str(int(pid)))
-    except Exception as e:
-        _log().exception(f"definir_postagem_unica_id: falha ao fixar {pid} | {e}")
-        return False
+    return set_config_local("blog_postagem_unica_id",
+                            "" if pid is None else str(int(pid)))
 
 
 def obter_carrossel_tempo():
@@ -1218,7 +1149,7 @@ def obter_carrossel_tempo():
     10. Valores inválidos (não numéricos) caem no padrão 10."""
     try:
         v = (get_config_local("blog_carrossel_tempo", "10") or "10").strip()
-        return max(1, int(v))
+        return max(1, int(v) - 1)
     except (ValueError, TypeError):
         return 10
 

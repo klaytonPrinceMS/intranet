@@ -84,7 +84,7 @@ try:
           and get_config("blog_texto_header", "") == "QA",
           "restaurar_tema grava os defaults via salvar_tema")
 
-    # ---------- notificacao_timeout (clamp 1..30, default 10) ----------
+    # ---------- notificacao_timeout (clamp 1..30, default 4) ----------
     print("-- notificacao_timeout --")
     set_config("notificacao_timeout", "7")
     tema._cfg.cache_clear()
@@ -100,8 +100,8 @@ try:
           "timeout 0 elevado a 1")
     set_config("notificacao_timeout", "lixo")
     tema._cfg.cache_clear()
-    check(tema.notificacao_timeout() == 10,
-          "timeout inválido cai no padrão 10")
+    check(tema.notificacao_timeout() == 4,
+          "timeout inválido cai no padrão 4")
 
     # ---------- notificar (timeout configurado + fail-soft) ----------
     print("-- notificar --")

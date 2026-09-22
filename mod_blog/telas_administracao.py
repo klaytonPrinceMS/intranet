@@ -66,61 +66,41 @@ def mostrar_administracao(usuario_logado: str, pode_publicar: bool):
     ui.colors(primary=tema["cor_botao"], accent=tema["cor_botao"])
 
     # ---- Card padrão "Configurações de cores" (prévia ao vivo) ----
-    try:
-        bloco_aparencia(usuario_logado, "blog", tema,
-                        prefixo_auditoria="blog", com_texto_header=False)
-    except Exception:
-        observabilidade.get_logger("blog").exception(
-            "mostrar_administracao: falha ao montar bloco de aparência")
-        notificar("Erro ao carregar configurações de cores", type="negative")
+    bloco_aparencia(usuario_logado, "blog", tema,
+                    prefixo_auditoria="blog", com_texto_header=False)
 
     # ---- Censura — palavras bloqueadas em títulos ----
     with card_admin("Censura de conteúdo — palavras bloqueadas", icone="block",
                     chave_modulo="blog", extra_classes="mt-2", grade=False):
         ui.label("Títulos que contenham estas palavras serão bloqueados na criação/edição (ex: tinder, suicídio). Separe por vírgula ou linha. Vale para Blog e Agregador (TV).").classes("text-caption text-grey-6")
         from mod_intranet.censura import obter_palavras_bloqueadas, definir_palavras_bloqueadas
-        try:
-            palavras_atuais = ", ".join(obter_palavras_bloqueadas())
-        except Exception:
-            observabilidade.get_logger("blog").exception(
-                "admin: falha ao ler palavras bloqueadas")
-            palavras_atuais = ""
+        palavras_atuais = ", ".join(obter_palavras_bloqueadas())
         inp_censura = ui.textarea("Palavras bloqueadas", value=palavras_atuais, placeholder="ex: tinder, suicidio, aposta, pornografia").props("outlined dense").classes("w-full").props('data-testid=blog-palavras-bloqueadas')
         inp_censura.tooltip("Palavras insensíveis a maiúscula/acentos; substring — 'suicidio' bloqueia 'suicídio'")
 
         def salvar_censura():
-            try:
-                lista = [p.strip() for p in (inp_censura.value or "").replace("\n", ",").split(",") if p.strip()]
-                # também suporta ; e linha
-                tmp = []
-                for item in lista:
-                    tmp.extend([x.strip() for x in item.split(";") if x.strip()])
-                lista = tmp
-                ok = definir_palavras_bloqueadas(lista, ator=usuario_logado)
-                notificar("Lista de censura salva" if ok else "Falha ao salvar", type="positive" if ok else "negative")
-                if ok:
-                    try:
-                        from mod_agregador_noticias.bd_manipulador import limpar_censuradas
-                        n = limpar_censuradas()
-                        if n:
-                            notificar(f"{n} notícias censuradas removidas do agregador", type="info")
-                    except Exception:
-                        pass
-            except Exception:
-                observabilidade.get_logger("blog").exception(
-                    "salvar_censura: falha ao salvar lista de censura")
-                notificar("Erro ao salvar censura", type="negative")
+            lista = [p.strip() for p in (inp_censura.value or "").replace("\n", ",").split(",") if p.strip()]
+            # também suporta ; e linha
+            tmp = []
+            for item in lista:
+                tmp.extend([x.strip() for x in item.split(";") if x.strip()])
+            lista = tmp
+            ok = definir_palavras_bloqueadas(lista, ator=usuario_logado)
+            notificar("Lista de censura salva" if ok else "Falha ao salvar", type="positive" if ok else "negative")
+            if ok:
+                try:
+                    from mod_agregador_noticias.bd_manipulador import limpar_censuradas
+                    n = limpar_censuradas()
+                    if n:
+                        notificar(f"{n} notícias censuradas removidas do agregador", type="info")
+                except Exception:
+                    pass
 
         def restaurar_censura():
-            try:
-                definir_palavras_bloqueadas([], ator=usuario_logado)
-                inp_censura.value = ""
-                inp_censura.update()
-                notificar("Censura removida — nenhuma palavra bloqueada", type="positive")
-            except Exception:
-                observabilidade.get_logger("blog").exception(
-                    "restaurar_censura: falha ao remover censura")
-                notificar("Erro ao remover censura", type="negative")
+            definir_palavras_bloqueadas([], ator=usuario_logado)
+            inp_censura.value = ""
+            inp_censura.update()
+            notificar("Censura removida — nenhuma palavra bloqueada", type="positive")
 
         rodape_salvar_restaurar(salvar_censura, restaurar=restaurar_censura, chave_modulo="blog", rotulo_salvar="Salvar censura", data_testid="blog-salvar-censura")
 
@@ -223,10 +203,5 @@ def mostrar_administracao(usuario_logado: str, pode_publicar: bool):
                                 restaurar=restaurar_especificas,
                                 chave_modulo="blog")
 
-    try:
-        from mod_intranet.rotinas import painel_backup
-        painel_backup(usuario_logado, "blog")
-    except Exception:
-        observabilidade.get_logger("blog").exception(
-            "mostrar_administracao: falha ao montar painel de backup")
-        notificar("Erro ao carregar painel de backup", type="negative")
+    from mod_intranet.rotinas import painel_backup
+    painel_backup(usuario_logado, "blog")

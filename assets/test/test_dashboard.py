@@ -58,9 +58,9 @@ check('eh_admin = perfil in ("administrador_geral", "administrador_modulo")' in 
       and 'perfil = user.get("perfil"' in MAIN,
       "resumo restrito a admins (geral e de módulos)")
 check("if eh_admin:" in MAIN, "resumo do sistema exibido somente para admins")
-check("Resumo do sistema" in MAIN and "Publicações recentes" in MAIN
-      and MAIN.index("Resumo do sistema") < MAIN.index("Publicações recentes"),
-      "resumo fica acima das postagens do blog")
+check("Resumo do sistema" in MAIN and "Publicações recentes" not in MAIN
+      and MAIN.index("renderizar_postagens") < MAIN.index("Resumo do sistema"),
+      "feed do blog acima do resumo (sem título 'Publicações recentes')")
 # Produção atual: wrap centralizado em home_visual.classes_wrap_resumo
 # ("w-full justify-center gap-4 flex-wrap") usado via
 # `ui.row().classes(_hv2.classes_wrap_resumo(modelo))` (main.py:415,433).
@@ -78,15 +78,15 @@ check("translateY(-2px)" in HV, "microinteração hover -translate-y (CSS centra
 check(":hover" in HV and "box-shadow" in HV,
       "microinteração hover:shadow (CSS centralizado)")
 check('notificar(f"Bem-vindo(a), {nome}!' in MAIN
-      and "timeout=2" in MAIN,
-      "feedback de 2s: toast de boas-vindas com timeout=2 (via notificar)")
-# Produção atual (main.py:398-400): botão "Atualizar" manual REMOVIDO de
+      and '"timeout=" not in MAIN',
+      "feedback: toast de boas-vindas usa o timeout configurado (padrão 4s)")
+# Produção atual: botão "Atualizar" manual REMOVIDO de
 # propósito — dados calculados automaticamente a cada acesso; o feedback é
-# só o toast auto (ui.timer(0.1, ..., timeout=2), once=True).
+# só o toast auto (ui.timer(0.1, ..., once=True)) no tempo configurado.
 check('"Atualizado ✓" not in MAIN',
-      "feedback de 2s: sem botão 'Atualizar' manual (dados automáticos)")
+      "feedback: sem botão 'Atualizar' manual (dados automáticos)")
 check("lbl_fb_resumo" not in MAIN and "ui.timer(0.1" in MAIN,
-      "feedback de 2s: reversão manual removida (toast auto com timeout=2)")
+      "feedback: reversão manual removida (toast auto no tempo configurado)")
 # Dashboard deve ocupar a largura inteira (sem container max-w centralizador)
 check("max-w-6xl mx-auto" not in MAIN.split("# ================== DASHBOARD")[1]
       [:2000], "dashboard sem container max-w centralizador")

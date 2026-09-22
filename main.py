@@ -407,7 +407,7 @@ def _stat(rotulo, valor, icone, *, modelo="pic"):
 
 
 def _construir_dashboard(nome: str, perfil: str, eh_admin: bool, modelo: str = "pic"):
-    """Constrói o conteúdo da Home (banner + resumo dinâmico + feed)."""
+    """Constrói o conteúdo da Home (banner + feed + resumo dinâmico)."""
     try:
         from mod_intranet import home_visual as _hv
         _hv.aplicar_modelo(modelo)
@@ -423,13 +423,23 @@ def _construir_dashboard(nome: str, perfil: str, eh_admin: bool, modelo: str = "
                         ui.label(subtitulo_home).classes("text-subtitle1 opacity-90")
                     ui.icon("diversity_3", size="80px").classes("opacity-30")
 
-            # Feedback de 2s no carregamento: toast de boas-vindas (desaparece sozinho)
+            # Feedback no carregamento: toast de boas-vindas (desaparece sozinho
+            # no tempo configurado pelo admin — padrão 4s, `notificacao_timeout`)
             ui.timer(0.1, lambda: notificar(f"Bem-vindo(a), {nome}!",
-                                            type="positive", position="top", timeout=2),
+                                            type="positive", position="top"),
                      once=True)
 
+            # ---- Feed do Blog (RF-09) — logo abaixo do banner, sem título ----
+            from mod_blog.telas import renderizar_postagens
+            pode_publicar_blog = (perfil == "administrador_geral"
+                                  or autenticacao.eh_admin_do_modulo(nome, "blog"))
+            _feed_wrap = ui.column().classes("w-full gap-4")
+            renderizar_postagens(_feed_wrap, nome, perfil,
+                                 pode_publicar_blog,
+                                 lambda: ui.navigate.reload())
+
             # ---- Resumo do sistema (somente administradores) ----
-            # Fica logo abaixo das boas-vindas e acima das postagens. Sem botão
+            # Fica abaixo das postagens. Sem botão
             # Atualizar — os dados são calculados automaticamente a cada acesso
             # (dinâmico), sem ação manual.
             # Dados para os Resumos — coletados uma vez (fail-soft 0)
@@ -475,18 +485,6 @@ def _construir_dashboard(nome: str, perfil: str, eh_admin: bool, modelo: str = "
                         with ui.row().classes(_hv2b.classes_wrap_resumo(modelo)):
                             _stat("Fila geral", n_fila, "print", modelo=modelo)
                             _stat("Para autorizar", n_para_autorizar, "rule", modelo=modelo)
-
-            # ---- Feed do Blog (RF-09) — respeita o padrão de exibição ----
-            from mod_blog.telas import renderizar_postagens
-            pode_publicar_blog = (perfil == "administrador_geral"
-                                  or autenticacao.eh_admin_do_modulo(nome, "blog"))
-            with ui.column().classes("w-full gap-4"):
-                with ui.row().classes("w-full items-center"):
-                    ui.label("Publicações recentes").classes("text-h6 font-bold text-grey-9")
-                _feed_wrap = ui.column().classes("w-full gap-4")
-                renderizar_postagens(_feed_wrap, nome, perfil,
-                                     pode_publicar_blog,
-                                     lambda: ui.navigate.reload())
     except Exception as e:
         observabilidade.get_logger("intranet").exception(
             "_construir_dashboard: erro ao renderizar a Home de '%s': %s", nome, e)

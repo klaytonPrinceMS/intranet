@@ -204,7 +204,7 @@ desde que solicitados via comando no terminal pelo usuário.
 
 **Regras:**
 - `commit` e `push` somente com solicitação expressa do usuário no terminal.
-- Nunca `--force`, `--no-verify`, nem pular hooks. Se hooks barrarem, corrija a causa e faça um NOVO commit (não amend no rejeitado, salvo pedido).
+- NUNCA `--force`, `--no-verify`, nem pular hooks. Se hooks barrarem, corrija a causa e faça um NOVO commit (não amend no rejeitado, salvo pedido).
 - Nunca commitar segredos, `db_mod_*.db`, `*.db-wal/shm`, `backup/`, `logs/`, `site/`, `estrutura.md`, `.venv/`, `node_modules/`.
 - Em dúvida de padrão, consulte o subagente de referência `kbp-commit`.
 
