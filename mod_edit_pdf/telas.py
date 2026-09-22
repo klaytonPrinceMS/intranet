@@ -39,26 +39,68 @@ JANELA_LOTE_S = 60  # janela temporal do controle de lote (não configurável)
 
 def _fmt_bytes(n):
     """Formats a byte count as KB/MB/GB for display."""
-    if n >= 1024**3:
-        return f"{n/1024**3:.1f} GB"
-    if n >= 1024**2:
-        return f"{n/1024**2:.1f} MB"
-    return f"{n/1024:.0f} KB"
+    try:
+        if n >= 1024**3:
+            return f"{n/1024**3:.1f} GB"
+        if n >= 1024**2:
+            return f"{n/1024**2:.1f} MB"
+        return f"{n/1024:.0f} KB"
+    except Exception as e:
+        try:
+            log.exception(f"_fmt_bytes falhou: {e}")
+        except Exception:
+            pass
+        try:
+            notificar(f"Erro em _fmt_bytes: {e}", tipo="error")
+        except Exception:
+            try:
+                ui.notify(f"Erro em _fmt_bytes", type="negative")
+            except Exception:
+                pass
+        return None
 
 
 def _fmt_resta(seg):
     """Formats remaining seconds as 'm:ss' (countdown label)."""
-    seg = max(0, int(seg))
-    return f"{seg // 60}:{seg % 60:02d}"
+    try:
+        seg = max(0, int(seg))
+        return f"{seg // 60}:{seg % 60:02d}"
+    except Exception as e:
+        try:
+            log.exception(f"_fmt_resta falhou: {e}")
+        except Exception:
+            pass
+        try:
+            notificar(f"Erro em _fmt_resta: {e}", tipo="error")
+        except Exception:
+            try:
+                ui.notify(f"Erro em _fmt_resta", type="negative")
+            except Exception:
+                pass
+        return None
 
 
 def _cor_resta(seg):
     """Vermelho no último minuto; amarelo até ~5 min; verde acima."""
-    if seg <= 60:
-        return "red-8"
-    if seg <= 300:
-        return "amber-8"
-    return "green-8"
+    try:
+        if seg <= 60:
+            return "red-8"
+        if seg <= 300:
+            return "amber-8"
+        return "green-8"
+    except Exception as e:
+        try:
+            log.exception(f"_cor_resta falhou: {e}")
+        except Exception:
+            pass
+        try:
+            notificar(f"Erro em _cor_resta: {e}", tipo="error")
+        except Exception:
+            try:
+                ui.notify(f"Erro em _cor_resta", type="negative")
+            except Exception:
+                pass
+        return None
 
 
 def mostrar_tela(usuario_logado: str, perfil: str):
@@ -70,785 +112,1051 @@ def mostrar_tela(usuario_logado: str, perfil: str):
     (timer 5 s), operações (reduzir/juntar/cortar/dividir/verificar/ZIP/
     excluir) e aba Administração (cotas, limites, textos da tela, aparência
     e manutenção) exclusiva do `administrador_geral`."""
-    pasta = pasta_usuario(usuario_logado)
-    lote = deque()  # (timestamp, bytes) do lote atual de upload
-    sel_ids = set()
-    ordem_ids = []  # ids NA ORDEM EM QUE O USUÁRIO MARCOU (define a ordem do merge)
+    try:
+        pasta = pasta_usuario(usuario_logado)
+        lote = deque()  # (timestamp, bytes) do lote atual de upload
+        sel_ids = set()
+        ordem_ids = []  # ids NA ORDEM EM QUE O USUÁRIO MARCOU (define a ordem do merge)
 
-    eh_admin_geral = perfil == "administrador_geral"
+        eh_admin_geral = perfil == "administrador_geral"
 
-    # ---- Configurações dinâmicas (editadas na aba Administração) ----
-    lote_max = cfg_lote_arquivos()
-    lote_bytes_max = cfg_lote_mb() * 1024**2
-    usuario_gb = cfg_usuario_gb()
-    vida_pdf_s = cfg_expiracao_min() * 60
+        # ---- Configurações dinâmicas (editadas na aba Administração) ----
+        lote_max = cfg_lote_arquivos()
+        lote_bytes_max = cfg_lote_mb() * 1024**2
+        usuario_gb = cfg_usuario_gb()
+        vida_pdf_s = cfg_expiracao_min() * 60
 
-    # ---- Tema padronizado (cores e tamanho dos botões) ----
-    tema = ler_tema("editar_pdf", cor_botao="#000000", cor_texto_botao="#FFFFFF",
-                    cor_titulo="#212121")
-    ui.colors(primary=tema["cor_botao"])
+        # ---- Tema padronizado (cores e tamanho dos botões) ----
+        tema = ler_tema("editar_pdf", cor_botao="#000000", cor_texto_botao="#FFFFFF",
+                        cor_titulo="#212121")
+        ui.colors(primary=tema["cor_botao"])
 
-    def _app_tema():
-        """Aplica cor de fundo do editor (se configurada) e cor do título."""
-        try:
-            if tema["cor_fundo"]:
-                ui.query(".q-page").style(
-                    f"background-color:{tema['cor_fundo']}")
-        except Exception as e:
-            log.warning(f"_app_tema: falha ao aplicar cor de fundo | {e}")
-        try:
-            for it in (lbl_header_titulo, lbl_up_titulo, lbl_header_sub,):
-                if it is not None:
-                    it.style(f"color:{tema['cor_titulo']}")
-        except Exception as e:
-            log.warning(f"_app_tema: falha ao aplicar cor do título | {e}")
-
-    txt_upload_titulo = get_config("editar_pdf_texto_upload_titulo",
-                                   "Envie um ou mais PDFs") or "Envie um ou mais PDFs"
-    txt_upload_hint = get_config("editar_pdf_texto_upload_hint",
-                                 "") or ""
-    txt_upload_label = get_config("editar_pdf_texto_upload_label",
-                                  "Clique ou arraste PDFs aqui") or "Clique ou arraste PDFs aqui"
-    txt_header_sub = get_config("editar_pdf_texto_header_sub",
-                                "Reduza, junte, corte, divida e verifique seus documentos.") \
-        or "Reduza, junte, corte, divida e verifique seus documentos."
-
-    # ================= HANDLERS (todos antes da UI que os usa) =================
-
-    async def _receber_lote(e):
-        """Recebe o LOTE completo de arquivos e decide quais entram no servidor.
-
-        Recusados são listados NOMINALMENTE com motivo — nunca falha silencioso.
-        """
-        try:
-            agora = time.time()
-            while lote and agora - lote[0][0] > JANELA_LOTE_S:
-                lote.popleft()
-
-            enviados, recusados = [], []
-            ativos_upload = contar_uploads_ativos(usuario_logado)
-            pdfs = [f for f in e.files if (f.name or "").lower().endswith(".pdf")]
-            nao_pdf = [f.name for f in e.files if f not in pdfs]
-
-            # ---- Pré-checagem do LOTE inteiro (não só incremental) ----
-            # Métrica usada como N teto de upload de UMA vez. Impede que uma
-            # seleção grande (ex.: 100 arquivos/350 MB) escape do limite de MB
-            # quando o navegador divide o envio em várias janelas de 60 s.
-            total_lote_bytes = sum(f.size() for f in pdfs)
-            if ativos_upload + len(pdfs) > lote_max:
-                for f in pdfs:
-                    recusados.append((f.name,
-                                      f"limite de {lote_max} arquivos 'upload' no seu espaço "
-                                      f"— já tem {ativos_upload}; aguarde expiração ou exclua"))
-            elif total_lote_bytes > lote_bytes_max:
-                for f in pdfs:
-                    recusados.append((f.name, f"este envio de {_fmt_bytes(total_lote_bytes)} "
-                                              f"excede o máximo de {_fmt_bytes(lote_bytes_max)} por lote"))
-            else:
-                for f in pdfs:
-                    bytes_janela = sum(b for _, b in lote)
-                    if len(lote) >= lote_max:
-                        recusados.append((f.name, f"lote de {lote_max} arquivos atingido"))
-                        continue
-                    if bytes_janela + f.size() > lote_bytes_max:
-                        recusados.append((f.name, f"limite de {_fmt_bytes(lote_bytes_max)} por lote"))
-                        continue
-                    ok_q, msg_q = verificar_quota(usuario_logado, f.size())
-                    if not ok_q:
-                        recusados.append((f.name, msg_q))
-                        continue
-
-                    nome = f.name or ""
-                    destino = os.path.join(pasta, nome_padronizado(usuario_logado, "upload", nome))
-                    await f.save(destino)
-                    rid = registrar_arquivo(usuario_logado, destino, "upload")
-                    if rid:
-                        lote.append((agora, f.size()))
-                        enviados.append(nome)
-                        ativos_upload += 1
-                        try:
-                            audit_log(usuario_logado, "edit-pdf", "upload_hash",
-                                      f"{nome} sha256={hash_sha256(destino)}")
-                        except Exception:
-                            pass
-                    else:
-                        try:
-                            os.remove(destino)
-                        except OSError:
-                            pass
-                        recusados.append((f.name, "falha ao registrar"))
-
-            for nome in nao_pdf:
-                recusados.append((nome, "formato não-PDF"))
-
-            if enviados:
-                resumo = ", ".join(enviados[:5]) + ("…" if len(enviados) > 5 else "")
-                info_ok.set_text(f"Enviado(s): {len(enviados)} — {resumo}").classes(
-                    "text-caption text-green-8")
-            else:
-                info_ok.set_text("Nenhum arquivo novo enviado.").classes("text-caption text-grey-6")
-
-            if recusados:
-                detalhe = " | ".join(f"'{n}' ({m})" for n, m in recusados)
-                info_rec.set_text(f"NÃO ENVIADOS ({len(recusados)}) → {detalhe}").classes(
-                    "text-caption text-red-8")
-            else:
-                info_rec.set_text("")
-
-            up.reset()
-            if enviados and not recusados:
-                notificar(f"{len(enviados)} arquivo(s) enviado(s) ao servidor", type="positive")
-            elif enviados:
-                notificar(f"{len(enviados)} enviado(s); {len(recusados)} NÃO enviado(s) — veja a lista",
-                          type="warning", multi_line=True)
-            else:
-                notificar(f"Nenhum arquivo foi enviado ({len(recusados)} recusado(s)) — veja a lista",
-                          type="negative", multi_line=True)
-            atualizar_tabela()
-        except Exception as ex:
-            log.exception("erro interno no upload de lote")
-            notificar(f"Erro interno no upload: {ex}", type="negative", multi_line=True)
-
-    def _rows_do_evento(e):
-        """NiceGUI 3.x: seleção chega como .selection, dict {'added','rows','keys'}
-        ou lista — cobrir todos os formatos."""
-        rows = getattr(e, "selection", None)
-        if rows is None:
-            a = getattr(e, "args", None)
-            if isinstance(a, dict):
-                rows = a.get("rows") or []
-            elif isinstance(a, list):
-                rows = a
-            else:
-                rows = []
-        return rows or []
-
-    _ultimo_refresh = [0.0]
-    _reaplicando = [False]  # True durante re-marcação automática: ignora eco
-
-    def _ao_selecionar(e):
-        if _reaplicando[0]:
-            return  # eco da re-aplicação pós-refresh (não foi ação do usuário)
-        rows = _rows_do_evento(e)
-        if not rows and time.time() - _ultimo_refresh[0] < 1.0:
-            return  # ruído do re-render automático (não foi ação do usuário)
-        novos = [r["id"] for r in rows if isinstance(r, dict) and "id" in r]
-        if getattr(e, "selection", None) is not None:
-            # Evento pleno do NiceGUI 3.x: selection chega NA ORDEM DE CLIQUE
-            # do cliente (extend a cada marcação) — é a MESMA fonte dos
-            # badges "#". Confiar nela integralmente evita divergência
-            # entre o número exibido e a ordem usada pelo Juntar.
-            ordem_ids[:] = []
-            vistos = set()
-            for rid in novos:
-                if rid not in vistos:
-                    vistos.add(rid)
-                    ordem_ids.append(rid)
-        else:
-            # Fallback legado (dict {'added','rows','keys'} / lista parcial):
-            # mantém quem já está na fila e anexa os novos ao fim.
-            for rid in novos:
-                if rid not in ordem_ids:
-                    ordem_ids.append(rid)
-            for rid in [x for x in ordem_ids if x not in novos]:
-                ordem_ids.remove(rid)
-        sel_ids.clear()
-        sel_ids.update(ordem_ids)
-        lbl_res.set_text(f"{len(sel_ids)} selecionado(s)")
-        _renumerar()
-
-    def _renumerar():
-        """Mostra ao lado do checkbox o número da marcação (1º, 2º, …)."""
-        pos = {rid: i + 1 for i, rid in enumerate(ordem_ids)}
-        for r in tabela.rows:
-            r["sel_n"] = str(pos[r["id"]]) if r["id"] in pos else ""
-        tabela.update()
-
-    def _reaplicar_selecao():
-        """Re-marca os checkboxes após o cliente receber rows novas
-        (serialização troca referências e o Quasar solta a marcação).
-        Repõe NA ORDEM DE MARCAÇÃO (ordem_ids) — nunca na ordem da tabela —
-        e silencia o eco dos eventos disparados por esta re-marcação."""
-        if not sel_ids or not tabela.rows:
-            return
-        _reaplicando[0] = True
-        try:
-            por_id = {r["id"]: r for r in tabela.rows}
-            tabela.selected = [por_id[rid] for rid in ordem_ids if rid in por_id]
-            tabela.update()
-        finally:
-            ui.timer(1.0, lambda: _reaplicando.__setitem__(0, False), once=True)
-
-    def atualizar_tabela():
-        agora = time.time()
-        pos = {rid: i + 1 for i, rid in enumerate(ordem_ids)}
-        dados, ordem = {}, []
-        for r in obter_meus_arquivos(usuario_logado):
-            rid, nome, tam, op, dt = r
+        def _app_tema():
+            """Aplica cor de fundo do editor (se configurada) e cor do título."""
             try:
-                mtime = os.path.getmtime(os.path.join(pasta, nome))
-            except OSError:
-                mtime = agora
-            resta = vida_pdf_s - (agora - mtime)
-            dados[rid] = {"id": rid, "nome": nome, "tam": _fmt_bytes(tam),
-                          "op": op,
-                          "resta": _fmt_resta(resta),
-                          "cor": _cor_resta(resta),
-                          "sel_n": str(pos[rid]) if rid in pos else "",
-                          "dt": (dt or "")[:16]}
-            ordem.append(rid)
-        # ids marcados que sumiram da lista (expirados) saem da fila
-        for rid in [x for x in ordem_ids if x not in set(ordem)]:
-            ordem_ids.remove(rid)
-        atuais = {r["id"]: r for r in tabela.rows}
-        if set(ordem) != set(atuais):
-            tabela.rows = [dados[i] for i in ordem]  # conjunto mudou
-        else:
-            for i in ordem:
-                atuais[i].update(dados[i])  # mesmos ids: muta in-place, preserva refs
-        tabela.update()
-        _ultimo_refresh[0] = time.time()
-        if sel_ids:
-            ui.timer(0.2, _reaplicar_selecao, once=True)
-
-    def _alvos():
-        """Caminhos dos arquivos SELECIONADOS NA ORDEM DE MARCAÇÃO, ou None com aviso."""
-        if not ordem_ids:
-            notificar("Marque ao menos um arquivo na lista abaixo", type="warning")
-            return None
-        por_id = {r["id"]: r for r in tabela.rows}
-        return [os.path.join(pasta, por_id[rid]["nome"])
-                for rid in ordem_ids if rid in por_id]
-
-    def _auditar_hash(operacao, origem, destino):
-        """Auditoria LGPD: hash SHA-256 completo de origem(s) → destino
-        (campo dedicado hash_arquivo recebe o hash do resultado)."""
-        try:
-            origens = origem if isinstance(origem, list) else [origem]
-            hos = ";".join(
-                hash_sha256(o) if o and os.path.exists(o) else "-" for o in origens)
-            hd = (hash_sha256(destino)
-                  if destino and os.path.exists(destino) else "-")
-            audit_log(usuario_logado, "edit-pdf", operacao,
-                      f"sha256 origem=[{hos}]",
-                      hash_arquivo=hd)
-        except Exception:
-            pass
-
-    def _registrar_saida(caminho_out):
-        rid = registrar_arquivo(usuario_logado, caminho_out, "saida")
-        if rid:
-            notificar(f"Gerado: {os.path.basename(caminho_out)}", type="positive")
-            atualizar_tabela()
-
-    def _op_reduzir():
-        alvos = _alvos()
-        if not alvos:
-            return
-        feitos = falhas = 0
-        for caminho in alvos:
-            out = os.path.join(pasta, nome_padronizado(usuario_logado, "reduzido",
-                                                       os.path.basename(caminho)))
-            ok, msg = op_reduzir(caminho, out, qualidade=qual.value,
-                                 dpi=dpi_red.value, modo=modo_red.value,
-                                 biblioteca=bib_red.value)
-            if ok and os.path.exists(out):
-                _registrar_saida(out)
-                _auditar_hash("reduzir", caminho, out)
-                feitos += 1
-            else:
-                falhas += 1
-                audit_log(usuario_logado, "edit-pdf", "erro_reducao",
-                          f"{os.path.basename(caminho)}: {msg}",
-                          hash_arquivo=(hash_sha256(caminho)
-                                        if os.path.exists(caminho) else None))
-                notificar(f"Erro ao reduzir {os.path.basename(caminho)}: {msg}", type="negative")
-        notificar(f"{feitos} reduzido(s), {falhas} falha(s)",
-                  type="positive" if feitos else "negative")
-
-    def _op_juntar():
-        alvos = _alvos()
-        if not alvos:
-            return
-        if len(alvos) < 2:
-            notificar("Selecione ao menos 2 PDFs para juntar", type="warning")
-            return
-        out = os.path.join(pasta, nome_padronizado(usuario_logado, "junto", "documento_final.pdf"))
-        ok, msg = op_juntar(alvos, out)
-        if ok:
-            _registrar_saida(out)
-            _auditar_hash("juntar",
-                          [a for a in alvos if str(a).lower().endswith(".pdf")], out)
-            ordem_nomes = " → ".join(os.path.basename(a) for a in alvos)
-            notificar(f"Junção na ordem dos # : {ordem_nomes}",
-                      type="info", multi_line=True)
-            notificar(f"Juntado: {msg}", type="warning" if "IGNORADOS" in msg else "positive",
-                      multi_line=True)
-        else:
-            notificar(f"Nada foi juntado: {msg}", type="negative", multi_line=True)
-
-    def _op_cortar_sel(biblioteca="pymupdf"):
-        alvos = _alvos()
-        if not alvos:
-            return
-        modo = modo_corte.value
-        filtro = modo if modo in ("pares", "impares") else paginas_corte.value
-        feitos = falhas = 0
-        for caminho in alvos:
-            base = nome_padronizado(usuario_logado, "cortado",
-                                    os.path.splitext(os.path.basename(caminho))[0])
-            ok, res = op_cortar(caminho, filtro, pasta, base,
-                                biblioteca=biblioteca)
-            if ok:
-                _registrar_saida(res)
-                _auditar_hash("cortar", caminho, res)
-                feitos += 1
-            else:
-                falhas += 1
-                notificar(f"Corte sem efeito em '{os.path.basename(caminho)}': {res} "
-                          f"(filtro '{filtro}', bib '{biblioteca}')",
-                          type="warning", multi_line=True)
-        notificar(f"{feitos} corte(s) gerado(s)", type="positive" if feitos else "info")
-
-    def _op_dividir():
-        alvos = _alvos()
-        if not alvos:
-            return
-        modo = modo_div.value
-        bib = bib_pg.value
-        parametro = {"pagina": paginas_in.value,
-                     "cortes": corte_in.value,
-                     "intervalos": intervalos_in.value}.get(modo, "")
-        feitos = 0
-        for caminho in alvos:
-            base = nome_padronizado(usuario_logado, "dividido",
-                                    os.path.splitext(os.path.basename(caminho))[0])
+                if tema["cor_fundo"]:
+                    ui.query(".q-page").style(
+                        f"background-color:{tema['cor_fundo']}")
+            except Exception as e:
+                log.warning(f"_app_tema: falha ao aplicar cor de fundo | {e}")
             try:
-                ok, dados, aviso = op_dividir_partes(
-                    caminho, modo, parametro, pasta, base, biblioteca=bib)
+                for it in (lbl_header_titulo, lbl_up_titulo, lbl_header_sub,):
+                    if it is not None:
+                        it.style(f"color:{tema['cor_titulo']}")
+            except Exception as e:
+                log.warning(f"_app_tema: falha ao aplicar cor do título | {e}")
+
+        txt_upload_titulo = get_config("editar_pdf_texto_upload_titulo",
+                                       "Envie um ou mais PDFs") or "Envie um ou mais PDFs"
+        txt_upload_hint = get_config("editar_pdf_texto_upload_hint",
+                                     "") or ""
+        txt_upload_label = get_config("editar_pdf_texto_upload_label",
+                                      "Clique ou arraste PDFs aqui") or "Clique ou arraste PDFs aqui"
+        txt_header_sub = get_config("editar_pdf_texto_header_sub",
+                                    "Reduza, junte, corte, divida e verifique seus documentos.") \
+            or "Reduza, junte, corte, divida e verifique seus documentos."
+
+        # ================= HANDLERS (todos antes da UI que os usa) =================
+
+        async def _receber_lote(e):
+            """Recebe o LOTE completo de arquivos e decide quais entram no servidor.
+
+            Recusados são listados NOMINALMENTE com motivo — nunca falha silencioso.
+            """
+            try:
+                agora = time.time()
+                while lote and agora - lote[0][0] > JANELA_LOTE_S:
+                    lote.popleft()
+
+                enviados, recusados = [], []
+                ativos_upload = contar_uploads_ativos(usuario_logado)
+                pdfs = [f for f in e.files if (f.name or "").lower().endswith(".pdf")]
+                nao_pdf = [f.name for f in e.files if f not in pdfs]
+
+                # ---- Pré-checagem do LOTE inteiro (não só incremental) ----
+                # Métrica usada como N teto de upload de UMA vez. Impede que uma
+                # seleção grande (ex.: 100 arquivos/350 MB) escape do limite de MB
+                # quando o navegador divide o envio em várias janelas de 60 s.
+                total_lote_bytes = sum(f.size() for f in pdfs)
+                if ativos_upload + len(pdfs) > lote_max:
+                    for f in pdfs:
+                        recusados.append((f.name,
+                                          f"limite de {lote_max} arquivos 'upload' no seu espaço "
+                                          f"— já tem {ativos_upload}; aguarde expiração ou exclua"))
+                elif total_lote_bytes > lote_bytes_max:
+                    for f in pdfs:
+                        recusados.append((f.name, f"este envio de {_fmt_bytes(total_lote_bytes)} "
+                                                  f"excede o máximo de {_fmt_bytes(lote_bytes_max)} por lote"))
+                else:
+                    for f in pdfs:
+                        bytes_janela = sum(b for _, b in lote)
+                        if len(lote) >= lote_max:
+                            recusados.append((f.name, f"lote de {lote_max} arquivos atingido"))
+                            continue
+                        if bytes_janela + f.size() > lote_bytes_max:
+                            recusados.append((f.name, f"limite de {_fmt_bytes(lote_bytes_max)} por lote"))
+                            continue
+                        ok_q, msg_q = verificar_quota(usuario_logado, f.size())
+                        if not ok_q:
+                            recusados.append((f.name, msg_q))
+                            continue
+
+                        nome = f.name or ""
+                        destino = os.path.join(pasta, nome_padronizado(usuario_logado, "upload", nome))
+                        await f.save(destino)
+                        rid = registrar_arquivo(usuario_logado, destino, "upload")
+                        if rid:
+                            lote.append((agora, f.size()))
+                            enviados.append(nome)
+                            ativos_upload += 1
+                            try:
+                                audit_log(usuario_logado, "edit-pdf", "upload_hash",
+                                          f"{nome} sha256={hash_sha256(destino)}")
+                            except Exception:
+                                pass
+                        else:
+                            try:
+                                os.remove(destino)
+                            except OSError:
+                                pass
+                            recusados.append((f.name, "falha ao registrar"))
+
+                for nome in nao_pdf:
+                    recusados.append((nome, "formato não-PDF"))
+
+                if enviados:
+                    resumo = ", ".join(enviados[:5]) + ("…" if len(enviados) > 5 else "")
+                    info_ok.set_text(f"Enviado(s): {len(enviados)} — {resumo}").classes(
+                        "text-caption text-green-8")
+                else:
+                    info_ok.set_text("Nenhum arquivo novo enviado.").classes("text-caption text-grey-6")
+
+                if recusados:
+                    detalhe = " | ".join(f"'{n}' ({m})" for n, m in recusados)
+                    info_rec.set_text(f"NÃO ENVIADOS ({len(recusados)}) → {detalhe}").classes(
+                        "text-caption text-red-8")
+                else:
+                    info_rec.set_text("")
+
+                up.reset()
+                if enviados and not recusados:
+                    notificar(f"{len(enviados)} arquivo(s) enviado(s) ao servidor", type="positive")
+                elif enviados:
+                    notificar(f"{len(enviados)} enviado(s); {len(recusados)} NÃO enviado(s) — veja a lista",
+                              type="warning", multi_line=True)
+                else:
+                    notificar(f"Nenhum arquivo foi enviado ({len(recusados)} recusado(s)) — veja a lista",
+                              type="negative", multi_line=True)
+                atualizar_tabela()
             except Exception as ex:
-                log.exception(f"erro ao dividir {os.path.basename(caminho)}")
-                notificar(f"Erro ao dividir {os.path.basename(caminho)}: {ex}",
-                          type="negative")
-                continue
-            if not ok:
-                notificar(f"'{os.path.basename(caminho)}': {dados}",
-                          type="warning", multi_line=True)
-                continue
-            for caminho_p, _sufixo in dados:
-                _registrar_saida(caminho_p)
-                feitos += 1
-            audit_log(usuario_logado, "edit-pdf", "dividir",
-                      f"modo={modo} filtro='{parametro}' bib={bib} "
-                      f"arquivos={len(dados)} sha256_origem={hash_sha256(caminho)}")
-            if aviso:
-                notificar(f"{os.path.basename(caminho)}: {aviso}",
-                          type="warning", multi_line=True)
-        notificar(f"{feitos} arquivo(s) gerado(s)",
-                  type="positive" if feitos else "info")
+                log.exception("erro interno no upload de lote")
+                notificar(f"Erro interno no upload: {ex}", type="negative", multi_line=True)
 
-    def _op_verificar():
-        alvos = _alvos()
-        if not alvos:
-            return
-        for caminho in alvos:
-            ok, msg = op_verificar(caminho)
-            notificar(f"{os.path.basename(caminho)}: {msg}", type="positive" if ok else "negative")
-
-    def baixar_zip():
-        if not sel_ids:
-            notificar("Marque ao menos um arquivo para baixar", type="warning")
-            return
-        z = zip_por_ids(usuario_logado, list(ordem_ids))
-        if z:
+        def _rows_do_evento(e):
+            """NiceGUI 3.x: seleção chega como .selection, dict {'added','rows','keys'}
+            ou lista — cobrir todos os formatos."""
             try:
-                audit_log(usuario_logado, "edit-pdf", "zip",
-                          f"arquivos={len(sel_ids)} sha256={hash_sha256(z)}")
+                rows = getattr(e, "selection", None)
+                if rows is None:
+                    a = getattr(e, "args", None)
+                    if isinstance(a, dict):
+                        rows = a.get("rows") or []
+                    elif isinstance(a, list):
+                        rows = a
+                    else:
+                        rows = []
+                return rows or []
+            except Exception as e:
+                try:
+                    log.exception(f"_rows_do_evento falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _rows_do_evento: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _rows_do_evento", type="negative")
+                    except Exception:
+                        pass
+                return None
+
+        _ultimo_refresh = [0.0]
+        _reaplicando = [False]  # True durante re-marcação automática: ignora eco
+
+        def _ao_selecionar(e):
+            try:
+                if _reaplicando[0]:
+                    return  # eco da re-aplicação pós-refresh (não foi ação do usuário)
+                rows = _rows_do_evento(e)
+                if not rows and time.time() - _ultimo_refresh[0] < 1.0:
+                    return  # ruído do re-render automático (não foi ação do usuário)
+                novos = [r["id"] for r in rows if isinstance(r, dict) and "id" in r]
+                if getattr(e, "selection", None) is not None:
+                    # Evento pleno do NiceGUI 3.x: selection chega NA ORDEM DE CLIQUE
+                    # do cliente (extend a cada marcação) — é a MESMA fonte dos
+                    # badges "#". Confiar nela integralmente evita divergência
+                    # entre o número exibido e a ordem usada pelo Juntar.
+                    ordem_ids[:] = []
+                    vistos = set()
+                    for rid in novos:
+                        if rid not in vistos:
+                            vistos.add(rid)
+                            ordem_ids.append(rid)
+                else:
+                    # Fallback legado (dict {'added','rows','keys'} / lista parcial):
+                    # mantém quem já está na fila e anexa os novos ao fim.
+                    for rid in novos:
+                        if rid not in ordem_ids:
+                            ordem_ids.append(rid)
+                    for rid in [x for x in ordem_ids if x not in novos]:
+                        ordem_ids.remove(rid)
+                sel_ids.clear()
+                sel_ids.update(ordem_ids)
+                lbl_res.set_text(f"{len(sel_ids)} selecionado(s)")
+                _renumerar()
+            except Exception as e:
+                try:
+                    log.exception(f"_ao_selecionar falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _ao_selecionar: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _ao_selecionar", type="negative")
+                    except Exception:
+                        pass
+                return None
+
+        def _renumerar():
+            """Mostra ao lado do checkbox o número da marcação (1º, 2º, …)."""
+            try:
+                pos = {rid: i + 1 for i, rid in enumerate(ordem_ids)}
+                for r in tabela.rows:
+                    r["sel_n"] = str(pos[r["id"]]) if r["id"] in pos else ""
+                tabela.update()
+            except Exception as e:
+                try:
+                    log.exception(f"_renumerar falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _renumerar: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _renumerar", type="negative")
+                    except Exception:
+                        pass
+                return None
+
+        def _reaplicar_selecao():
+            """Re-marca os checkboxes após o cliente receber rows novas
+            (serialização troca referências e o Quasar solta a marcação).
+            Repõe NA ORDEM DE MARCAÇÃO (ordem_ids) — nunca na ordem da tabela —
+            e silencia o eco dos eventos disparados por esta re-marcação."""
+            if not sel_ids or not tabela.rows:
+                return
+            _reaplicando[0] = True
+            try:
+                por_id = {r["id"]: r for r in tabela.rows}
+                tabela.selected = [por_id[rid] for rid in ordem_ids if rid in por_id]
+                tabela.update()
+            finally:
+                ui.timer(1.0, lambda: _reaplicando.__setitem__(0, False), once=True)
+
+        def atualizar_tabela():
+            try:
+                agora = time.time()
+                pos = {rid: i + 1 for i, rid in enumerate(ordem_ids)}
+                dados, ordem = {}, []
+                for r in obter_meus_arquivos(usuario_logado):
+                    rid, nome, tam, op, dt = r
+                    try:
+                        mtime = os.path.getmtime(os.path.join(pasta, nome))
+                    except OSError:
+                        mtime = agora
+                    resta = vida_pdf_s - (agora - mtime)
+                    dados[rid] = {"id": rid, "nome": nome, "tam": _fmt_bytes(tam),
+                                  "op": op,
+                                  "resta": _fmt_resta(resta),
+                                  "cor": _cor_resta(resta),
+                                  "sel_n": str(pos[rid]) if rid in pos else "",
+                                  "dt": (dt or "")[:16]}
+                    ordem.append(rid)
+                # ids marcados que sumiram da lista (expirados) saem da fila
+                for rid in [x for x in ordem_ids if x not in set(ordem)]:
+                    ordem_ids.remove(rid)
+                atuais = {r["id"]: r for r in tabela.rows}
+                if set(ordem) != set(atuais):
+                    tabela.rows = [dados[i] for i in ordem]  # conjunto mudou
+                else:
+                    for i in ordem:
+                        atuais[i].update(dados[i])  # mesmos ids: muta in-place, preserva refs
+                tabela.update()
+                _ultimo_refresh[0] = time.time()
+                if sel_ids:
+                    ui.timer(0.2, _reaplicar_selecao, once=True)
+            except Exception as e:
+                try:
+                    log.exception(f"atualizar_tabela falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em atualizar_tabela: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em atualizar_tabela", type="negative")
+                    except Exception:
+                        pass
+                return None
+
+        def _alvos():
+            """Caminhos dos arquivos SELECIONADOS NA ORDEM DE MARCAÇÃO, ou None com aviso."""
+            try:
+                if not ordem_ids:
+                    notificar("Marque ao menos um arquivo na lista abaixo", type="warning")
+                    return None
+                por_id = {r["id"]: r for r in tabela.rows}
+                return [os.path.join(pasta, por_id[rid]["nome"])
+                        for rid in ordem_ids if rid in por_id]
+            except Exception as e:
+                try:
+                    log.exception(f"_alvos falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _alvos: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _alvos", type="negative")
+                    except Exception:
+                        pass
+                return None
+
+        def _auditar_hash(operacao, origem, destino):
+            """Auditoria LGPD: hash SHA-256 completo de origem(s) → destino
+            (campo dedicado hash_arquivo recebe o hash do resultado)."""
+            try:
+                origens = origem if isinstance(origem, list) else [origem]
+                hos = ";".join(
+                    hash_sha256(o) if o and os.path.exists(o) else "-" for o in origens)
+                hd = (hash_sha256(destino)
+                      if destino and os.path.exists(destino) else "-")
+                audit_log(usuario_logado, "edit-pdf", operacao,
+                          f"sha256 origem=[{hos}]",
+                          hash_arquivo=hd)
             except Exception:
                 pass
-            ui.download(z, filename=os.path.basename(z))
-            ui.timer(10.0, lambda p=z: os.remove(p) if os.path.exists(p) else None,
-                     once=True)
-            atualizar_tabela()
-        else:
-            notificar("Nenhum arquivo válido na seleção", type="info")
 
-    def excluir_selecionados():
-        if not sel_ids:
-            notificar("Marque ao menos um arquivo para excluir", type="warning")
-            return
-        n = len(ordem_ids)
-        for rid in list(ordem_ids):
-            deletar_arquivo(usuario_logado, rid)
-        sel_ids.clear()
-        ordem_ids.clear()
-        lbl_res.set_text("")
-        atualizar_tabela()
-        notificar(f"{n} arquivo(s) excluído(s)", type="info")
+        def _registrar_saida(caminho_out):
+            try:
+                rid = registrar_arquivo(usuario_logado, caminho_out, "saida")
+                if rid:
+                    notificar(f"Gerado: {os.path.basename(caminho_out)}", type="positive")
+                    atualizar_tabela()
+            except Exception as e:
+                try:
+                    log.exception(f"_registrar_saida falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _registrar_saida: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _registrar_saida", type="negative")
+                    except Exception:
+                        pass
+                return None
 
-    def baixar_originais():
-        """Baixa CADA arquivo marcado individualmente, sem compactar (ordem da numeração)."""
-        if not sel_ids:
-            notificar("Marque ao menos um arquivo para baixar", type="warning")
-            return
-        por_id = {r["id"]: r for r in tabela.rows}
-        validos = 0
-        for rid in list(ordem_ids):
-            r = por_id.get(rid)
-            if not r:
-                continue
-            caminho = os.path.join(pasta, r["nome"])
-            if os.path.exists(caminho):
-                validos += 1
-                ui.download(caminho, filename=r["nome"])
-        if not validos:
-            notificar("Nenhum arquivo válido na seleção", type="info")
-        else:
-            notificar(f"Iniciando {validos} download(s) — permita múltiplos "
-                      "downloads se o navegador perguntar.", type="info")
+        def _op_reduzir():
+            try:
+                alvos = _alvos()
+                if not alvos:
+                    return
+                feitos = falhas = 0
+                for caminho in alvos:
+                    out = os.path.join(pasta, nome_padronizado(usuario_logado, "reduzido",
+                                                               os.path.basename(caminho)))
+                    ok, msg = op_reduzir(caminho, out, qualidade=qual.value,
+                                         dpi=dpi_red.value, modo=modo_red.value,
+                                         biblioteca=bib_red.value)
+                    if ok and os.path.exists(out):
+                        _registrar_saida(out)
+                        _auditar_hash("reduzir", caminho, out)
+                        feitos += 1
+                    else:
+                        falhas += 1
+                        audit_log(usuario_logado, "edit-pdf", "erro_reducao",
+                                  f"{os.path.basename(caminho)}: {msg}",
+                                  hash_arquivo=(hash_sha256(caminho)
+                                                if os.path.exists(caminho) else None))
+                        notificar(f"Erro ao reduzir {os.path.basename(caminho)}: {msg}", type="negative")
+                notificar(f"{feitos} reduzido(s), {falhas} falha(s)",
+                          type="positive" if feitos else "negative")
+            except Exception as e:
+                try:
+                    log.exception(f"_op_reduzir falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _op_reduzir: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _op_reduzir", type="negative")
+                    except Exception:
+                        pass
+                return None
 
-    def salvar_configs():
-        nonlocal lote_max, lote_bytes_max, usuario_gb, vida_pdf_s
-        nonlocal txt_upload_titulo, txt_upload_hint, txt_upload_label, txt_header_sub
-        try:
-            gb_g = max(1, int(inp_cota_global.value or 10))
-            lot_a = max(1, int(inp_lote_arq.value or 10))
-            lot_mb = max(1, int(inp_lote_mb.value or 1024))
-            usr_g = max(1, int(inp_usuario_gb.value or 1))
-            exp_m = max(1, int(inp_expira_min.value or 10))
-            set_config("cotadisco_global_gb", gb_g)
-            set_config("editar_pdf_lote_arquivos", lot_a)
-            set_config("editar_pdf_lote_mb", lot_mb)
-            set_config("editar_pdf_usuario_gb", usr_g)
-            set_config("editar_pdf_expiracao_min", exp_m)
-            lote_max = lot_a
-            lote_bytes_max = lot_mb * 1024**2
-            usuario_gb = usr_g
-            vida_pdf_s = exp_m * 60
-            txt_upload_titulo = (inp_txt_titulo.value or "").strip() or "Envie um ou mais PDFs"
-            txt_upload_hint = (inp_txt_hint.value or "").strip()
-            txt_upload_label = (inp_txt_label.value or "").strip() or "Clique ou arraste PDFs aqui"
-            txt_header_sub = (inp_txt_header.value or "").strip() \
-                or "Reduza, junte, corte, divida e verifique seus documentos."
-            set_config("editar_pdf_texto_upload_titulo", txt_upload_titulo)
-            set_config("editar_pdf_texto_upload_hint", txt_upload_hint)
-            set_config("editar_pdf_texto_upload_label", txt_upload_label)
-            set_config("editar_pdf_texto_header_sub", txt_header_sub)
-            _app_tema()
-        except Exception as ex:
-            log.exception("erro ao salvar configurações do editor PDF")
-            notificar(f"Erro ao salvar configurações: {ex}", type="negative")
-            return
-        try:
-            lbl_up_titulo.set_text(f"1. {txt_upload_titulo}")
-            lbl_up_hint.set_text(_montar_hint())
-            lbl_header_sub.set_text(txt_header_sub)
-        except Exception:
-            pass
-        try:
-            audit_log(usuario_logado, "edit-pdf", "configuracao",
-                      f"cota_global={gb_g}GB lote={lot_a}arq/{lot_mb}MB "
-                      f"cota_usuario={usr_g}GB expiracao={exp_m}min")
-        except Exception:
-            pass
-        notificar("Configurações salvas — valem imediatamente, sem restart.",
-                  type="positive")
+        def _op_juntar():
+            try:
+                alvos = _alvos()
+                if not alvos:
+                    return
+                if len(alvos) < 2:
+                    notificar("Selecione ao menos 2 PDFs para juntar", type="warning")
+                    return
+                out = os.path.join(pasta, nome_padronizado(usuario_logado, "junto", "documento_final.pdf"))
+                ok, msg = op_juntar(alvos, out)
+                if ok:
+                    _registrar_saida(out)
+                    _auditar_hash("juntar",
+                                  [a for a in alvos if str(a).lower().endswith(".pdf")], out)
+                    ordem_nomes = " → ".join(os.path.basename(a) for a in alvos)
+                    notificar(f"Junção na ordem dos # : {ordem_nomes}",
+                              type="info", multi_line=True)
+                    notificar(f"Juntado: {msg}", type="warning" if "IGNORADOS" in msg else "positive",
+                              multi_line=True)
+                else:
+                    notificar(f"Nada foi juntado: {msg}", type="negative", multi_line=True)
+            except Exception as e:
+                try:
+                    log.exception(f"_op_juntar falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _op_juntar: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _op_juntar", type="negative")
+                    except Exception:
+                        pass
+                return None
 
-    def expirar_agora():
-        n = expirar_antigos(minutos=cfg_expiracao_min())
-        notificar(f"{n} arquivo(s) removido(s) pela expiração manual", type="info")
-        atualizar_tabela()
+        def _op_cortar_sel(biblioteca="pymupdf"):
+            try:
+                alvos = _alvos()
+                if not alvos:
+                    return
+                modo = modo_corte.value
+                filtro = modo if modo in ("pares", "impares") else paginas_corte.value
+                feitos = falhas = 0
+                for caminho in alvos:
+                    base = nome_padronizado(usuario_logado, "cortado",
+                                            os.path.splitext(os.path.basename(caminho))[0])
+                    ok, res = op_cortar(caminho, filtro, pasta, base,
+                                        biblioteca=biblioteca)
+                    if ok:
+                        _registrar_saida(res)
+                        _auditar_hash("cortar", caminho, res)
+                        feitos += 1
+                    else:
+                        falhas += 1
+                        notificar(f"Corte sem efeito em '{os.path.basename(caminho)}': {res} "
+                                  f"(filtro '{filtro}', bib '{biblioteca}')",
+                                  type="warning", multi_line=True)
+                notificar(f"{feitos} corte(s) gerado(s)", type="positive" if feitos else "info")
+            except Exception as e:
+                try:
+                    log.exception(f"_op_cortar_sel falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _op_cortar_sel: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _op_cortar_sel", type="negative")
+                    except Exception:
+                        pass
+                return None
 
-    PADROES_CFG = {
-        "cotadisco_global_gb": "10",
-        "editar_pdf_lote_arquivos": "10",
-        "editar_pdf_lote_mb": "1024",
-        "editar_pdf_usuario_gb": "1",
-        "editar_pdf_expiracao_min": "10",
-        "editar_pdf_texto_upload_titulo": "Envie um ou mais PDFs",
-        "editar_pdf_texto_upload_hint": "",
-        "editar_pdf_texto_upload_label": "Clique ou arraste PDFs aqui",
-        "editar_pdf_texto_header_sub": "Reduza, junte, corte, divida e verifique seus documentos.",
-        "editpdf_cor_botao": "#000000",
-        "editpdf_cor_texto_botao": "#FFFFFF",
-        "editpdf_cor_fundo": "",
-        "editpdf_cor_titulo": "#212121",
-        "editpdf_btn_tamanho": "medium",
-    }
+        def _op_dividir():
+            try:
+                alvos = _alvos()
+                if not alvos:
+                    return
+                modo = modo_div.value
+                bib = bib_pg.value
+                parametro = {"pagina": paginas_in.value,
+                             "cortes": corte_in.value,
+                             "intervalos": intervalos_in.value}.get(modo, "")
+                feitos = 0
+                for caminho in alvos:
+                    base = nome_padronizado(usuario_logado, "dividido",
+                                            os.path.splitext(os.path.basename(caminho))[0])
+                    try:
+                        ok, dados, aviso = op_dividir_partes(
+                            caminho, modo, parametro, pasta, base, biblioteca=bib)
+                    except Exception as ex:
+                        log.exception(f"erro ao dividir {os.path.basename(caminho)}")
+                        notificar(f"Erro ao dividir {os.path.basename(caminho)}: {ex}",
+                                  type="negative")
+                        continue
+                    if not ok:
+                        notificar(f"'{os.path.basename(caminho)}': {dados}",
+                                  type="warning", multi_line=True)
+                        continue
+                    for caminho_p, _sufixo in dados:
+                        _registrar_saida(caminho_p)
+                        feitos += 1
+                    audit_log(usuario_logado, "edit-pdf", "dividir",
+                              f"modo={modo} filtro='{parametro}' bib={bib} "
+                              f"arquivos={len(dados)} sha256_origem={hash_sha256(caminho)}")
+                    if aviso:
+                        notificar(f"{os.path.basename(caminho)}: {aviso}",
+                                  type="warning", multi_line=True)
+                notificar(f"{feitos} arquivo(s) gerado(s)",
+                          type="positive" if feitos else "info")
+            except Exception as e:
+                try:
+                    log.exception(f"_op_dividir falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _op_dividir: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _op_dividir", type="negative")
+                    except Exception:
+                        pass
+                return None
 
-    def resetar_configs():
-        nonlocal lote_max, lote_bytes_max, usuario_gb, vida_pdf_s
-        nonlocal txt_upload_titulo, txt_upload_hint, txt_upload_label, txt_header_sub
-        try:
-            for chave, valor in PADROES_CFG.items():
-                set_config(chave, valor)
-            lote_max = 10
-            lote_bytes_max = 1024 * 1024**2
-            usuario_gb = 1
-            vida_pdf_s = 10 * 60
-            txt_upload_titulo = "Envie um ou mais PDFs"
-            txt_upload_hint = ""
-            txt_upload_label = "Clique ou arraste PDFs aqui"
-            txt_header_sub = "Reduza, junte, corte, divida e verifique seus documentos."
-            inp_cota_global.value = 10
-            inp_lote_arq.value = 10
-            inp_lote_mb.value = 1024
-            inp_usuario_gb.value = 1
-            inp_expira_min.value = 10
-            inp_txt_titulo.value = txt_upload_titulo
-            inp_txt_hint.value = txt_upload_hint
-            inp_txt_label.value = txt_upload_label
-            inp_txt_header.value = txt_header_sub
-            lbl_up_titulo.set_text(f"1. {txt_upload_titulo}")
-            lbl_up_hint.set_text(_montar_hint())
-            lbl_header_sub.set_text(txt_header_sub)
-            _app_tema()
-            audit_log(usuario_logado, "edit-pdf", "configuracao",
-                      "reset para padroes de fabrica")
-            notificar("Configurações restauradas para o padrão de fábrica.",
+        def _op_verificar():
+            try:
+                alvos = _alvos()
+                if not alvos:
+                    return
+                for caminho in alvos:
+                    ok, msg = op_verificar(caminho)
+                    notificar(f"{os.path.basename(caminho)}: {msg}", type="positive" if ok else "negative")
+            except Exception as e:
+                try:
+                    log.exception(f"_op_verificar falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _op_verificar: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _op_verificar", type="negative")
+                    except Exception:
+                        pass
+                return None
+
+        def baixar_zip():
+            try:
+                if not sel_ids:
+                    notificar("Marque ao menos um arquivo para baixar", type="warning")
+                    return
+                z = zip_por_ids(usuario_logado, list(ordem_ids))
+                if z:
+                    try:
+                        audit_log(usuario_logado, "edit-pdf", "zip",
+                                  f"arquivos={len(sel_ids)} sha256={hash_sha256(z)}")
+                    except Exception:
+                        pass
+                    ui.download(z, filename=os.path.basename(z))
+                    ui.timer(10.0, lambda p=z: os.remove(p) if os.path.exists(p) else None,
+                             once=True)
+                    atualizar_tabela()
+                else:
+                    notificar("Nenhum arquivo válido na seleção", type="info")
+            except Exception as e:
+                try:
+                    log.exception(f"baixar_zip falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em baixar_zip: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em baixar_zip", type="negative")
+                    except Exception:
+                        pass
+                return None
+
+        def excluir_selecionados():
+            try:
+                if not sel_ids:
+                    notificar("Marque ao menos um arquivo para excluir", type="warning")
+                    return
+                n = len(ordem_ids)
+                for rid in list(ordem_ids):
+                    deletar_arquivo(usuario_logado, rid)
+                sel_ids.clear()
+                ordem_ids.clear()
+                lbl_res.set_text("")
+                atualizar_tabela()
+                notificar(f"{n} arquivo(s) excluído(s)", type="info")
+            except Exception as e:
+                try:
+                    log.exception(f"excluir_selecionados falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em excluir_selecionados: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em excluir_selecionados", type="negative")
+                    except Exception:
+                        pass
+                return None
+
+        def baixar_originais():
+            """Baixa CADA arquivo marcado individualmente, sem compactar (ordem da numeração)."""
+            try:
+                if not sel_ids:
+                    notificar("Marque ao menos um arquivo para baixar", type="warning")
+                    return
+                por_id = {r["id"]: r for r in tabela.rows}
+                validos = 0
+                for rid in list(ordem_ids):
+                    r = por_id.get(rid)
+                    if not r:
+                        continue
+                    caminho = os.path.join(pasta, r["nome"])
+                    if os.path.exists(caminho):
+                        validos += 1
+                        ui.download(caminho, filename=r["nome"])
+                if not validos:
+                    notificar("Nenhum arquivo válido na seleção", type="info")
+                else:
+                    notificar(f"Iniciando {validos} download(s) — permita múltiplos "
+                              "downloads se o navegador perguntar.", type="info")
+            except Exception as e:
+                try:
+                    log.exception(f"baixar_originais falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em baixar_originais: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em baixar_originais", type="negative")
+                    except Exception:
+                        pass
+                return None
+
+        def salvar_configs():
+            nonlocal lote_max, lote_bytes_max, usuario_gb, vida_pdf_s
+            nonlocal txt_upload_titulo, txt_upload_hint, txt_upload_label, txt_header_sub
+            try:
+                gb_g = max(1, int(inp_cota_global.value or 10))
+                lot_a = max(1, int(inp_lote_arq.value or 10))
+                lot_mb = max(1, int(inp_lote_mb.value or 1024))
+                usr_g = max(1, int(inp_usuario_gb.value or 1))
+                exp_m = max(1, int(inp_expira_min.value or 10))
+                set_config("cotadisco_global_gb", gb_g)
+                set_config("editar_pdf_lote_arquivos", lot_a)
+                set_config("editar_pdf_lote_mb", lot_mb)
+                set_config("editar_pdf_usuario_gb", usr_g)
+                set_config("editar_pdf_expiracao_min", exp_m)
+                lote_max = lot_a
+                lote_bytes_max = lot_mb * 1024**2
+                usuario_gb = usr_g
+                vida_pdf_s = exp_m * 60
+                txt_upload_titulo = (inp_txt_titulo.value or "").strip() or "Envie um ou mais PDFs"
+                txt_upload_hint = (inp_txt_hint.value or "").strip()
+                txt_upload_label = (inp_txt_label.value or "").strip() or "Clique ou arraste PDFs aqui"
+                txt_header_sub = (inp_txt_header.value or "").strip() \
+                    or "Reduza, junte, corte, divida e verifique seus documentos."
+                set_config("editar_pdf_texto_upload_titulo", txt_upload_titulo)
+                set_config("editar_pdf_texto_upload_hint", txt_upload_hint)
+                set_config("editar_pdf_texto_upload_label", txt_upload_label)
+                set_config("editar_pdf_texto_header_sub", txt_header_sub)
+                _app_tema()
+            except Exception as ex:
+                log.exception("erro ao salvar configurações do editor PDF")
+                notificar(f"Erro ao salvar configurações: {ex}", type="negative")
+                return
+            try:
+                lbl_up_titulo.set_text(f"1. {txt_upload_titulo}")
+                lbl_up_hint.set_text(_montar_hint())
+                lbl_header_sub.set_text(txt_header_sub)
+            except Exception:
+                pass
+            try:
+                audit_log(usuario_logado, "edit-pdf", "configuracao",
+                          f"cota_global={gb_g}GB lote={lot_a}arq/{lot_mb}MB "
+                          f"cota_usuario={usr_g}GB expiracao={exp_m}min")
+            except Exception:
+                pass
+            notificar("Configurações salvas — valem imediatamente, sem restart.",
                       type="positive")
-        except Exception as ex:
-            log.exception("erro ao resetar configurações do editor PDF")
-            notificar(f"Erro ao resetar configurações: {ex}", type="negative")
 
-    # ================= UI =================
+        def expirar_agora():
+            try:
+                n = expirar_antigos(minutos=cfg_expiracao_min())
+                notificar(f"{n} arquivo(s) removido(s) pela expiração manual", type="info")
+                atualizar_tabela()
+            except Exception as e:
+                try:
+                    log.exception(f"expirar_agora falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em expirar_agora: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em expirar_agora", type="negative")
+                    except Exception:
+                        pass
+                return None
 
-    # ---- Cabeçalho ----
-    arq = obter_meus_arquivos(usuario_logado)
-    usados = sum(a[2] for a in arq)
-    gb_global_atual = int(get_config("cotadisco_global_gb", "10") or 10)
-    with ui.card().classes("w-full border-l-8").style(
-            f'border-left-color:{tema["cor_botao"]}'):
-        with ui.row().classes("w-full flex-wrap items-center justify-between").style("gap: 0.75rem; min-width: 0"):
-            with ui.column().classes("gap-0"):
-                lbl_header_titulo = ui.label("Editor de PDF").classes("text-h5 font-bold")
-                lbl_header_sub = ui.label(txt_header_sub).classes("text-caption text-grey-6")
-                if eh_admin_geral:
-                    ui.label(f"Uso global do servidor: {_fmt_bytes(uso_global_bytes())} "
-                             f"/ {gb_global_atual} GB").classes("text-caption text-primary")
-            with ui.row().classes("flex-wrap items-center").style("gap: 0.5rem; min-width: 0"):
-                ui.icon("data_usage").classes("text-primary")
-                ui.linear_progress(min(usados / (usuario_gb * 1024**3), 1.0),
-                                   show_value=False).classes("w-40")
-                ui.label(f"{_fmt_bytes(usados)} / {usuario_gb} GB").classes(
-                    "text-caption text-grey-7")
+        PADROES_CFG = {
+            "cotadisco_global_gb": "10",
+            "editar_pdf_lote_arquivos": "10",
+            "editar_pdf_lote_mb": "1024",
+            "editar_pdf_usuario_gb": "1",
+            "editar_pdf_expiracao_min": "10",
+            "editar_pdf_texto_upload_titulo": "Envie um ou mais PDFs",
+            "editar_pdf_texto_upload_hint": "",
+            "editar_pdf_texto_upload_label": "Clique ou arraste PDFs aqui",
+            "editar_pdf_texto_header_sub": "Reduza, junte, corte, divida e verifique seus documentos.",
+            "editpdf_cor_botao": "#000000",
+            "editpdf_cor_texto_botao": "#FFFFFF",
+            "editpdf_cor_fundo": "",
+            "editpdf_cor_titulo": "#212121",
+            "editpdf_btn_tamanho": "medium",
+        }
 
-    # ---- Menu: Editor | Administração (exclusiva admin geral) ----
-    tabs_el = ui.tabs(value="editor")
-    with tabs_el:
-        ui.tab("editor", label="Editor", icon="picture_as_pdf")
+        def resetar_configs():
+            nonlocal lote_max, lote_bytes_max, usuario_gb, vida_pdf_s
+            nonlocal txt_upload_titulo, txt_upload_hint, txt_upload_label, txt_header_sub
+            try:
+                for chave, valor in PADROES_CFG.items():
+                    set_config(chave, valor)
+                lote_max = 10
+                lote_bytes_max = 1024 * 1024**2
+                usuario_gb = 1
+                vida_pdf_s = 10 * 60
+                txt_upload_titulo = "Envie um ou mais PDFs"
+                txt_upload_hint = ""
+                txt_upload_label = "Clique ou arraste PDFs aqui"
+                txt_header_sub = "Reduza, junte, corte, divida e verifique seus documentos."
+                inp_cota_global.value = 10
+                inp_lote_arq.value = 10
+                inp_lote_mb.value = 1024
+                inp_usuario_gb.value = 1
+                inp_expira_min.value = 10
+                inp_txt_titulo.value = txt_upload_titulo
+                inp_txt_hint.value = txt_upload_hint
+                inp_txt_label.value = txt_upload_label
+                inp_txt_header.value = txt_header_sub
+                lbl_up_titulo.set_text(f"1. {txt_upload_titulo}")
+                lbl_up_hint.set_text(_montar_hint())
+                lbl_header_sub.set_text(txt_header_sub)
+                _app_tema()
+                audit_log(usuario_logado, "edit-pdf", "configuracao",
+                          "reset para padroes de fabrica")
+                notificar("Configurações restauradas para o padrão de fábrica.",
+                          type="positive")
+            except Exception as ex:
+                log.exception("erro ao resetar configurações do editor PDF")
+                notificar(f"Erro ao resetar configurações: {ex}", type="negative")
 
-    with ui.tab_panels(tabs_el, value="editor").classes("w-full"):
-        # ---------- PAINEL EDITOR ----------
-        with ui.tab_panel("editor"):
-            with ui.card().classes("w-full"):
-                with ui.card_section().classes("gap-3 w-full"):
-                    # --- Upload ---
-                    lbl_up_titulo = ui.label(f"1. {txt_upload_titulo}") \
-                        .classes("text-h6 font-bold text-grey-9")
+        # ================= UI =================
 
-                    def _montar_hint():
-                        base = txt_upload_hint
-                        if not base:
-                            base = (f"Máximo por vez: {lote_max} arquivos ou "
-                                    f"{_fmt_bytes(lote_bytes_max)}. Excedentes NÃO são enviados. "
-                                    "Marque os checkboxes para escolher a operação. "
-                                    "Clique numa linha para baixar/excluir.")
-                        return base
-                    lbl_up_hint = ui.label(_montar_hint()).classes("text-caption text-grey-6")
-                    info_ok = ui.label("").classes("text-caption text-green-8")
-                    info_rec = ui.label("").classes("text-caption text-red-8")
-                    up = ui.upload(
-                        label=txt_upload_label,
-                        multiple=True,
-                        auto_upload=True,
-                        on_multi_upload=_receber_lote,
-                    ).props("accept=.pdf").classes("w-full")
+        # ---- Cabeçalho ----
+        arq = obter_meus_arquivos(usuario_logado)
+        usados = sum(a[2] for a in arq)
+        gb_global_atual = int(get_config("cotadisco_global_gb", "10") or 10)
+        with ui.card().classes("w-full border-l-8").style(
+                f'border-left-color:{tema["cor_botao"]}'):
+            with ui.row().classes("w-full flex-wrap items-center justify-between").style("gap: 0.75rem; min-width: 0"):
+                with ui.column().classes("gap-0"):
+                    lbl_header_titulo = ui.label("Editor de PDF").classes("text-h5 font-bold")
+                    lbl_header_sub = ui.label(txt_header_sub).classes("text-caption text-grey-6")
+                    if eh_admin_geral:
+                        ui.label(f"Uso global do servidor: {_fmt_bytes(uso_global_bytes())} "
+                                 f"/ {gb_global_atual} GB").classes("text-caption text-primary")
+                with ui.row().classes("flex-wrap items-center").style("gap: 0.5rem; min-width: 0"):
+                    ui.icon("data_usage").classes("text-primary")
+                    ui.linear_progress(min(usados / (usuario_gb * 1024**3), 1.0),
+                                       show_value=False).classes("w-40")
+                    ui.label(f"{_fmt_bytes(usados)} / {usuario_gb} GB").classes(
+                        "text-caption text-grey-7")
 
-                    # --- Arquivos no servidor ---
-                    with ui.row().classes("w-full flex-wrap items-center justify-between").style("gap: 0.75rem; min-width: 0"):
-                        lbl_res = ui.label("").classes("text-caption text-primary").style("min-width: 0")
-                        ui.label("Arquivos no servidor").classes("text-caption text-grey-6")
-                    colunas = [
-                        {"name": "sel_n", "label": "#", "field": "sel_n"},
-                        {"name": "nome", "label": "Arquivo", "field": "nome", "align": "left"},
-                        {"name": "tam", "label": "Tamanho", "field": "tam"},
-                        {"name": "op", "label": "Origem", "field": "op"},
-                        {"name": "resta", "label": "Expira em", "field": "resta"},
-                        {"name": "id", "label": "", "field": "id"},
-                    ]
-                    tabela = ui.table(columns=colunas, rows=[], row_key="id",
-                                      selection="multiple", on_select=_ao_selecionar,
-                                      ).props("flat bordered dense").classes("w-full")
-                    tabela.add_slot("body-cell-resta", """
-                        <q-td :props="props">
-                            <q-badge :color="props.row.cor" :label="props.row.resta">
-                                <q-tooltip>Enviado em {{ props.row.dt }} —
-                                expira após o tempo configurado pelo administrador</q-tooltip>
-                            </q-badge>
-                        </q-td>
-                    """)
-                    tabela.add_slot("body-cell-sel_n", """
-                        <q-td :props="props" style="width:48px; text-align:center;">
-                            <q-badge v-if="props.value" color="primary" :label="props.value">
-                                <q-tooltip>Ordem em que você marcou —
-                                Juntar/Reduzir/Cortar seguem esta sequência</q-tooltip>
-                            </q-badge>
-                        </q-td>
-                    """)
+        # ---- Menu: Editor | Administração (exclusiva admin geral) ----
+        tabs_el = ui.tabs(value="editor")
+        with tabs_el:
+            ui.tab("editor", label="Editor", icon="picture_as_pdf")
 
-                    # Menu de contexto da linha (NiceGUI 3.x: ui.menu sem move_to_element)
-                    linha_atual = [None]
+        with ui.tab_panels(tabs_el, value="editor").classes("w-full"):
+            # ---------- PAINEL EDITOR ----------
+            with ui.tab_panel("editor"):
+                with ui.card().classes("w-full"):
+                    with ui.card_section().classes("gap-3 w-full"):
+                        # --- Upload ---
+                        lbl_up_titulo = ui.label(f"1. {txt_upload_titulo}") \
+                            .classes("text-h6 font-bold text-grey-9")
 
-                    def _baixar_linha(linha):
-                        if not linha:
-                            return
-                        ui.download(os.path.join(pasta, linha["nome"]),
-                                    filename=linha["nome"])
+                        def _montar_hint():
+                            try:
+                                base = txt_upload_hint
+                                if not base:
+                                    base = (f"Máximo por vez: {lote_max} arquivos ou "
+                                            f"{_fmt_bytes(lote_bytes_max)}. Excedentes NÃO são enviados. "
+                                            "Marque os checkboxes para escolher a operação. "
+                                            "Clique numa linha para baixar/excluir.")
+                                return base
+                            except Exception as e:
+                                try:
+                                    log.exception(f"_montar_hint falhou: {e}")
+                                except Exception:
+                                    pass
+                                try:
+                                    notificar(f"Erro em _montar_hint: {e}", tipo="error")
+                                except Exception:
+                                    try:
+                                        ui.notify(f"Erro em _montar_hint", type="negative")
+                                    except Exception:
+                                        pass
+                                return None
+                        lbl_up_hint = ui.label(_montar_hint()).classes("text-caption text-grey-6")
+                        info_ok = ui.label("").classes("text-caption text-green-8")
+                        info_rec = ui.label("").classes("text-caption text-red-8")
+                        up = ui.upload(
+                            label=txt_upload_label,
+                            multiple=True,
+                            auto_upload=True,
+                            on_multi_upload=_receber_lote,
+                        ).props("accept=.pdf").classes("w-full")
 
-                    def _excluir_linha(linha):
-                        if not linha:
-                            return
-                        deletar_arquivo(usuario_logado, linha["id"])
-                        notificar("Arquivo excluído", type="info")
-                        atualizar_tabela()
+                        # --- Arquivos no servidor ---
+                        with ui.row().classes("w-full flex-wrap items-center justify-between").style("gap: 0.75rem; min-width: 0"):
+                            lbl_res = ui.label("").classes("text-caption text-primary").style("min-width: 0")
+                            ui.label("Arquivos no servidor").classes("text-caption text-grey-6")
+                        colunas = [
+                            {"name": "sel_n", "label": "#", "field": "sel_n"},
+                            {"name": "nome", "label": "Arquivo", "field": "nome", "align": "left"},
+                            {"name": "tam", "label": "Tamanho", "field": "tam"},
+                            {"name": "op", "label": "Origem", "field": "op"},
+                            {"name": "resta", "label": "Expira em", "field": "resta"},
+                            {"name": "id", "label": "", "field": "id"},
+                        ]
+                        tabela = ui.table(columns=colunas, rows=[], row_key="id",
+                                          selection="multiple", on_select=_ao_selecionar,
+                                          ).props("flat bordered dense").classes("w-full")
+                        tabela.add_slot("body-cell-resta", """
+                            <q-td :props="props">
+                                <q-badge :color="props.row.cor" :label="props.row.resta">
+                                    <q-tooltip>Enviado em {{ props.row.dt }} —
+                                    expira após o tempo configurado pelo administrador</q-tooltip>
+                                </q-badge>
+                            </q-td>
+                        """)
+                        tabela.add_slot("body-cell-sel_n", """
+                            <q-td :props="props" style="width:48px; text-align:center;">
+                                <q-badge v-if="props.value" color="primary" :label="props.value">
+                                    <q-tooltip>Ordem em que você marcou —
+                                    Juntar/Reduzir/Cortar seguem esta sequência</q-tooltip>
+                                </q-badge>
+                            </q-td>
+                        """)
 
-                    def on_row(e):
-                        try:
-                            linha_atual[0] = e.args[1]
-                        except Exception:
-                            log.debug("on_row: evento sem args esperados")
-                        menu_linha.open()
+                        # Menu de contexto da linha (NiceGUI 3.x: ui.menu sem move_to_element)
+                        linha_atual = [None]
 
-                    with tabela:
-                        with ui.context_menu() as menu_linha:
-                            ui.item("Baixar", on_click=lambda: _baixar_linha(linha_atual[0]))
-                            ui.item("Excluir", on_click=lambda: _excluir_linha(linha_atual[0]))
-                    tabela.on("row-click", on_row)
+                        def _baixar_linha(linha):
+                            try:
+                                if not linha:
+                                    return
+                                ui.download(os.path.join(pasta, linha["nome"]),
+                                            filename=linha["nome"])
+                            except Exception as e:
+                                try:
+                                    log.exception(f"_baixar_linha falhou: {e}")
+                                except Exception:
+                                    pass
+                                try:
+                                    notificar(f"Erro em _baixar_linha: {e}", tipo="error")
+                                except Exception:
+                                    try:
+                                        ui.notify(f"Erro em _baixar_linha", type="negative")
+                                    except Exception:
+                                        pass
+                                return None
 
-                    ui.separator().style("min-width: 0")
+                        def _excluir_linha(linha):
+                            try:
+                                if not linha:
+                                    return
+                                deletar_arquivo(usuario_logado, linha["id"])
+                                notificar("Arquivo excluído", type="info")
+                                atualizar_tabela()
+                            except Exception as e:
+                                try:
+                                    log.exception(f"_excluir_linha falhou: {e}")
+                                except Exception:
+                                    pass
+                                try:
+                                    notificar(f"Erro em _excluir_linha: {e}", tipo="error")
+                                except Exception:
+                                    try:
+                                        ui.notify(f"Erro em _excluir_linha", type="negative")
+                                    except Exception:
+                                        pass
+                                return None
 
-                    # --- Botões de ação centralizados (todos idênticos, ocupam extensão) ---
-                    with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
-                        botao("Atualizar", icone="refresh", on_click=atualizar_tabela,
-                              variante="primario", chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
-                              tooltip="Atualizar lista").props('data-testid=editar_pdf-atualizar')
-                        botao("Verificar integridade", icone="verified",
-                              on_click=_op_verificar, variante="primario",
-                              chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-verificar')
-                        botao("Juntar selecionados", icone="merge",
-                              on_click=_op_juntar, variante="primario",
-                              chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
-                              tooltip="Segue a ordem de marcação dos checkboxes").props('data-testid=editar_pdf-juntar')
-                        ui.element("span").classes("hidden")  # separator removido para equalização
-                        botao("Excluir selecionados", icone="delete",
-                              on_click=excluir_selecionados, variante="primario",
-                              chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-excluir')
-                        botao("Baixar selecionados (ZIP)", icone="download",
-                              on_click=baixar_zip, variante="primario",
-                              chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-baixar-zip')
-                        botao("Baixar selecionados (PDFs)",
-                              icone="file_download",
-                              on_click=baixar_originais, variante="primario",
-                              chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
-                              tooltip="Baixa cada PDF marcado individualmente, sem ZIP").props('data-testid=editar_pdf-baixar-pdfs')
-                        botao("Enviar agora", icone="upload",
-                              on_click=lambda: up.run_method("upload"),
-                              variante="primario", chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
-                              tooltip="Reenvia arquivos que ficaram pendentes").props('data-testid=editar_pdf-enviar')
-                        # compat: antigo data-testid sem underscore
-                        ui.element("span").props('data-testid=editpdf-upload').classes("hidden")
+                        def on_row(e):
+                            try:
+                                linha_atual[0] = e.args[1]
+                            except Exception:
+                                log.debug("on_row: evento sem args esperados")
+                            menu_linha.open()
 
-            # Operações
-            with ui.grid(columns=2).classes("w-full max-lg:grid-cols-2 max-sm:grid-cols-1").style("gap: 1rem; min-width: 0"):
-                with ui.card().classes("w-full").style("min-width: 0"):
-                    with ui.card_section().classes("gap-2 w-full").style("min-width: 0"):
-                        ui.label("2. Reduzir tamanho").classes("font-bold")
-                        with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
-                            modo_red = ui.toggle({"leve": "Leve", "agressivo": "Agressivo"},
-                                                 value="leve").props("dense spread unelevated").classes("w-full max-w-[360px]").style("min-width: 0")
-                            modo_red.props('data-testid=editar_pdf-modo-reduzir')
-                        qual = ui.slider(min=10, max=100, value=50, step=10).props("label")
-                        with ui.row().classes("items-center w-full"):
-                            ui.label("Qualidade:").classes("text-caption")
-                            lbl_q = ui.badge(f"{qual.value}%")
-                            qual.on("update:model-value",
-                                    lambda v: lbl_q.set_text(f"{v.args}%"))
-                        dpi_red = ui.slider(min=50, max=400, value=150, step=10) \
-                            .props("label").tooltip("DPI do raster no modo Agressivo (50–400)")
-                        with ui.row().classes("items-center w-full"):
-                            ui.label("DPI (agressivo):").classes("text-caption")
-                            lbl_dpi = ui.badge(f"{int(dpi_red.value)}")
-                            dpi_red.on("update:model-value",
-                                       lambda v: lbl_dpi.set_text(str(int(v.args))))
-                        bib_red = ui.select(
-                            {"auto": "Automático", "pymupdf": "pymupdf",
-                             "pikepdf": "pikepdf", "pypdf": "pypdf"},
-                            value="auto", label="Biblioteca (modo Leve)",
-                        ).props("outlined dense").classes("w-full").style("min-width: 0") \
-                            .tooltip("Automático tenta pymupdf → pikepdf → pypdf. "
-                                     "No modo Agressivo o raster é sempre pymupdf.")
-                        with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
-                            botao("Reduzir selecionados", icone="compress",
-                                  on_click=_op_reduzir, variante="primario",
-                                  chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-reduzir')
-
-                with ui.card().classes("w-full").style("min-width: 0"):
-                    with ui.card_section().classes("gap-2 w-full").style("min-width: 0"):
-                        ui.label("3. Páginas — cortar / dividir").classes("font-bold")
-                        bib_pg = ui.select(
-                            {"auto": "Automático", "pymupdf": "pymupdf",
-                             "pikepdf": "pikepdf", "pypdf": "pypdf"},
-                            value="auto", label="Biblioteca",
-                        ).props("outlined dense").classes("w-full") \
-                            .tooltip("Usada no Cortar e no Dividir. "
-                                     "Automático tenta pymupdf → pikepdf → pypdf.")
-
-                        ui.label("CORTAR → um único PDF") \
-                            .classes("text-caption font-bold text-grey-7")
-                        modo_corte = ui.select(
-                            {"impares": "Ímpares", "pares": "Pares",
-                             "lista": "Personalizado"},
-                            value="impares", label="Filtro",
-                        ).props("outlined dense").classes("w-full")
-                        paginas_corte = ui.input("Lista (ex.: 2-5,8)", value="1-3") \
-                            .props("outlined dense").classes("w-full")
-                        with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
-                            botao("Cortar selecionados", icone="content_cut",
-                                  on_click=lambda: _op_cortar_sel(bib_pg.value),
-                                  variante="primario", chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-cortar')
+                        with tabela:
+                            with ui.context_menu() as menu_linha:
+                                ui.item("Baixar", on_click=lambda: _baixar_linha(linha_atual[0]))
+                                ui.item("Excluir", on_click=lambda: _excluir_linha(linha_atual[0]))
+                        tabela.on("row-click", on_row)
 
                         ui.separator().style("min-width: 0")
 
-                        ui.label("DIVIDIR → vários PDFs") \
-                            .classes("text-caption font-bold text-grey-7")
-                        modo_div = ui.select(
-                            {"pagina": "Página a página",
-                             "parimpar": "Pares × Ímpares",
-                             "cortes": "Cortes múltiplos",
-                             "intervalos": "Intervalos"},
-                            value="pagina", label="Modo de divisão",
-                        ).props("outlined dense").classes("w-full")
-                        paginas_in = ui.input("Páginas (ex.: 1,3-5 ou 'todas')",
-                                              value="todas") \
-                            .props("outlined dense").classes("w-full")
-                        corte_in = ui.input("Cortar após a página (ex.: 5 ou 5,12)",
-                                            value="5") \
-                            .props("outlined dense").classes("w-full")
-                        intervalos_in = ui.input("Intervalos (ex.: 1-4,5-9)",
-                                                 value="1-4,5-9") \
-                            .props("outlined dense").classes("w-full")
-                        paginas_in.bind_visibility_from(
-                            modo_div, "value", backward=lambda v: v == "pagina")
-                        corte_in.bind_visibility_from(
-                            modo_div, "value", backward=lambda v: v == "cortes")
-                        intervalos_in.bind_visibility_from(
-                            modo_div, "value", backward=lambda v: v == "intervalos")
+                        # --- Botões de ação centralizados (todos idênticos, ocupam extensão) ---
                         with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
-                            botao("Dividir selecionados", icone="call_split",
-                                  on_click=_op_dividir, variante="primario",
-                                  chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-dividir')
+                            botao("Atualizar", icone="refresh", on_click=atualizar_tabela,
+                                  variante="primario", chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
+                                  tooltip="Atualizar lista").props('data-testid=editar_pdf-atualizar')
+                            botao("Verificar integridade", icone="verified",
+                                  on_click=_op_verificar, variante="primario",
+                                  chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-verificar')
+                            botao("Juntar selecionados", icone="merge",
+                                  on_click=_op_juntar, variante="primario",
+                                  chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
+                                  tooltip="Segue a ordem de marcação dos checkboxes").props('data-testid=editar_pdf-juntar')
+                            ui.element("span").classes("hidden")  # separator removido para equalização
+                            botao("Excluir selecionados", icone="delete",
+                                  on_click=excluir_selecionados, variante="primario",
+                                  chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-excluir')
+                            botao("Baixar selecionados (ZIP)", icone="download",
+                                  on_click=baixar_zip, variante="primario",
+                                  chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-baixar-zip')
+                            botao("Baixar selecionados (PDFs)",
+                                  icone="file_download",
+                                  on_click=baixar_originais, variante="primario",
+                                  chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
+                                  tooltip="Baixa cada PDF marcado individualmente, sem ZIP").props('data-testid=editar_pdf-baixar-pdfs')
+                            botao("Enviar agora", icone="upload",
+                                  on_click=lambda: up.run_method("upload"),
+                                  variante="primario", chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]",
+                                  tooltip="Reenvia arquivos que ficaram pendentes").props('data-testid=editar_pdf-enviar')
+                            # compat: antigo data-testid sem underscore
+                            ui.element("span").props('data-testid=editpdf-upload').classes("hidden")
 
-    _app_tema()
-    atualizar_tabela()
-    ui.timer(5.0, atualizar_tabela)  # contagem de vida ao vivo + expiração
+                # Operações
+                with ui.grid(columns=2).classes("w-full max-lg:grid-cols-2 max-sm:grid-cols-1").style("gap: 1rem; min-width: 0"):
+                    with ui.card().classes("w-full").style("min-width: 0"):
+                        with ui.card_section().classes("gap-2 w-full").style("min-width: 0"):
+                            ui.label("2. Reduzir tamanho").classes("font-bold")
+                            with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
+                                modo_red = ui.toggle({"leve": "Leve", "agressivo": "Agressivo"},
+                                                     value="leve").props("dense spread unelevated").classes("w-full max-w-[360px]").style("min-width: 0")
+                                modo_red.props('data-testid=editar_pdf-modo-reduzir')
+                            qual = ui.slider(min=10, max=100, value=50, step=10).props("label")
+                            with ui.row().classes("items-center w-full"):
+                                ui.label("Qualidade:").classes("text-caption")
+                                lbl_q = ui.badge(f"{qual.value}%")
+                                qual.on("update:model-value",
+                                        lambda v: lbl_q.set_text(f"{v.args}%"))
+                            dpi_red = ui.slider(min=50, max=400, value=150, step=10) \
+                                .props("label").tooltip("DPI do raster no modo Agressivo (50–400)")
+                            with ui.row().classes("items-center w-full"):
+                                ui.label("DPI (agressivo):").classes("text-caption")
+                                lbl_dpi = ui.badge(f"{int(dpi_red.value)}")
+                                dpi_red.on("update:model-value",
+                                           lambda v: lbl_dpi.set_text(str(int(v.args))))
+                            bib_red = ui.select(
+                                {"auto": "Automático", "pymupdf": "pymupdf",
+                                 "pikepdf": "pikepdf", "pypdf": "pypdf"},
+                                value="auto", label="Biblioteca (modo Leve)",
+                            ).props("outlined dense").classes("w-full").style("min-width: 0") \
+                                .tooltip("Automático tenta pymupdf → pikepdf → pypdf. "
+                                         "No modo Agressivo o raster é sempre pymupdf.")
+                            with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
+                                botao("Reduzir selecionados", icone="compress",
+                                      on_click=_op_reduzir, variante="primario",
+                                      chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-reduzir')
+
+                    with ui.card().classes("w-full").style("min-width: 0"):
+                        with ui.card_section().classes("gap-2 w-full").style("min-width: 0"):
+                            ui.label("3. Páginas — cortar / dividir").classes("font-bold")
+                            bib_pg = ui.select(
+                                {"auto": "Automático", "pymupdf": "pymupdf",
+                                 "pikepdf": "pikepdf", "pypdf": "pypdf"},
+                                value="auto", label="Biblioteca",
+                            ).props("outlined dense").classes("w-full") \
+                                .tooltip("Usada no Cortar e no Dividir. "
+                                         "Automático tenta pymupdf → pikepdf → pypdf.")
+
+                            ui.label("CORTAR → um único PDF") \
+                                .classes("text-caption font-bold text-grey-7")
+                            modo_corte = ui.select(
+                                {"impares": "Ímpares", "pares": "Pares",
+                                 "lista": "Personalizado"},
+                                value="impares", label="Filtro",
+                            ).props("outlined dense").classes("w-full")
+                            paginas_corte = ui.input("Lista (ex.: 2-5,8)", value="1-3") \
+                                .props("outlined dense").classes("w-full")
+                            with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
+                                botao("Cortar selecionados", icone="content_cut",
+                                      on_click=lambda: _op_cortar_sel(bib_pg.value),
+                                      variante="primario", chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-cortar')
+
+                            ui.separator().style("min-width: 0")
+
+                            ui.label("DIVIDIR → vários PDFs") \
+                                .classes("text-caption font-bold text-grey-7")
+                            modo_div = ui.select(
+                                {"pagina": "Página a página",
+                                 "parimpar": "Pares × Ímpares",
+                                 "cortes": "Cortes múltiplos",
+                                 "intervalos": "Intervalos"},
+                                value="pagina", label="Modo de divisão",
+                            ).props("outlined dense").classes("w-full")
+                            paginas_in = ui.input("Páginas (ex.: 1,3-5 ou 'todas')",
+                                                  value="todas") \
+                                .props("outlined dense").classes("w-full")
+                            corte_in = ui.input("Cortar após a página (ex.: 5 ou 5,12)",
+                                                value="5") \
+                                .props("outlined dense").classes("w-full")
+                            intervalos_in = ui.input("Intervalos (ex.: 1-4,5-9)",
+                                                     value="1-4,5-9") \
+                                .props("outlined dense").classes("w-full")
+                            paginas_in.bind_visibility_from(
+                                modo_div, "value", backward=lambda v: v == "pagina")
+                            corte_in.bind_visibility_from(
+                                modo_div, "value", backward=lambda v: v == "cortes")
+                            intervalos_in.bind_visibility_from(
+                                modo_div, "value", backward=lambda v: v == "intervalos")
+                            with ui.row().classes("w-full flex-wrap items-center justify-center").style("gap: 0.75rem; min-width: 0"):
+                                botao("Dividir selecionados", icone="call_split",
+                                      on_click=_op_dividir, variante="primario",
+                                      chave_modulo="editar_pdf", extra_classes="!w-[260px] !min-w-[260px]").props('data-testid=editar_pdf-dividir')
+
+        _app_tema()
+        atualizar_tabela()
+        ui.timer(5.0, atualizar_tabela)  # contagem de vida ao vivo + expiração
+    except Exception as e:
+        try:
+            log.exception(f"mostrar_tela falhou: {e}")
+        except Exception:
+            pass
+        try:
+            notificar(f"Erro em mostrar_tela: {e}", tipo="error")
+        except Exception:
+            try:
+                ui.notify(f"Erro em mostrar_tela", type="negative")
+            except Exception:
+                pass
+        return None

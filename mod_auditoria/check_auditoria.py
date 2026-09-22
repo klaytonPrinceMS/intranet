@@ -17,9 +17,10 @@ def _log():
     return observabilidade.get_logger("auditoria")
 
 
-conn = sqlite3.connect(os.path.join(BASE_DIR, 'db_mod_intranet.db'))
-cur = conn.cursor()
+conn = None
 try:
+    conn = sqlite3.connect(os.path.join(BASE_DIR, 'db_mod_intranet.db'))
+    cur = conn.cursor()
     cur.execute("SELECT * FROM tb_config WHERE chave LIKE 'auditoria%'")
     for r in cur.fetchall():
         print(r)
@@ -27,4 +28,8 @@ try:
 except Exception:
     _log().exception("falha ao ler configs de auditoria")
 finally:
-    conn.close()
+    if conn is not None:
+        try:
+            conn.close()
+        except Exception:
+            pass

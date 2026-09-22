@@ -43,6 +43,15 @@ def mostrar_administracao(ator: str):
     callbacks de salvar/restaurar para que o novo tema entre em vigor sem
     reiniciar o servidor — todo o ajuste é live.
     """
+    try:
+        _mostrar_administracao_segura(ator)
+    except Exception:
+        log.exception("mostrar_administracao: falha ao montar a aba Administração")
+        notificar("Erro ao carregar a aba Administração", type="error")
+
+
+def _mostrar_administracao_segura(ator: str):
+    """Body of `mostrar_administracao` (see docstring above)."""
     from mod_intranet.bd_conexao import set_config
 
     tema = ler_tema("usuarios", cor_botao="#000000", cor_texto_botao="#FFFFFF",
@@ -77,30 +86,38 @@ def mostrar_administracao(ator: str):
 
             Grava `usuarios_senha_min` (clamp 4–32), audita, notifica e
             recarrega após 1 segundo — aplicação sem restart."""
-            set_config("usuarios_senha_min",
-                       max(4, int(inp_senha.value or gest.senha_minima())))
             try:
-                audit_log(ator, "gest_cad_usuario", "configuracao",
-                          "tamanho mínimo de senha alterado")
-            except Exception as e:
-                log.warning(f"audit_log falhou em gest_cad_usuario config: {e}")
-            notificar("Configuração aplicada (vale sem reiniciar)",
-                      type="positive")
-            ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
+                set_config("usuarios_senha_min",
+                           max(4, int(inp_senha.value or gest.senha_minima())))
+                try:
+                    audit_log(ator, "gest_cad_usuario", "configuracao",
+                              "tamanho mínimo de senha alterado")
+                except Exception as e:
+                    log.warning(f"audit_log falhou em gest_cad_usuario config: {e}")
+                notificar("Configuração aplicada (vale sem reiniciar)",
+                          type="positive")
+                ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
+            except Exception:
+                log.exception("gest_cad_usuario: falha ao salvar tamanho mínimo de senha")
+                notificar("Erro inesperado ao salvar configuração", type="error")
 
         def resetar():
             """Restores the default minimum password length (6) and reloads.
 
             Restaura `usuarios_senha_min` para 6, audita, notifica e
             recarrega após 1 segundo."""
-            set_config("usuarios_senha_min", 6)
             try:
-                audit_log(ator, "gest_cad_usuario", "configuracao",
-                          "tamanho mínimo de senha restaurado ao padrão")
-            except Exception as e:
-                log.warning(f"audit_log falhou em gest_cad_usuario reset: {e}")
-            notificar("Padrões restaurados", type="positive")
-            ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
+                set_config("usuarios_senha_min", 6)
+                try:
+                    audit_log(ator, "gest_cad_usuario", "configuracao",
+                              "tamanho mínimo de senha restaurado ao padrão")
+                except Exception as e:
+                    log.warning(f"audit_log falhou em gest_cad_usuario reset: {e}")
+                notificar("Padrões restaurados", type="positive")
+                ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
+            except Exception:
+                log.exception("gest_cad_usuario: falha ao restaurar tamanho mínimo de senha")
+                notificar("Erro inesperado ao restaurar configuração", type="error")
 
         rodape_salvar_restaurar(salvar, restaurar=resetar, chave_modulo="usuarios")
 

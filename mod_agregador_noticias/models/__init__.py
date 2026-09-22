@@ -5,13 +5,4 @@ from dataclasses import dataclass
 
 @dataclass
 class Noticia:
-    id: int
-    titulo: str
-    fonte: str
-    tema: str
-    url: str
-    imagem_url: str
-    fonte_icon_url: str
-    descricao: str
-    data_publicacao: str
-    data_coleta: str
+    

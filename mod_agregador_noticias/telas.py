@@ -216,7 +216,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             else:
                 total = ag.contar_noticias(tema=tema_f)
             por_pagina = 12
-            total_pag = max(1, (total + por_pagina - 1) // por_pagina)
+            total_pag = max(1, (total + por_pagina) // por_pagina)
             if estado["pagina"] > total_pag:
                 estado["pagina"] = total_pag
             if estado["pagina"] < 1:

@@ -22,8 +22,12 @@ MOD_DIR = os.path.join(BASE_DIR, "mod_renomear_empenho")
 
 def _log():
     """Logger do módulo (loguru) — arquivo dedicado logs/renomear_empenho_<data>.log."""
-    from mod_intranet import observabilidade
-    return observabilidade.get_logger("renomear_empenho")
+    try:
+        from mod_intranet import observabilidade
+        return observabilidade.get_logger("renomear_empenho")
+    except Exception as e:
+        _log().exception(f"_log falhou: {e}")
+        return None
 DB_EMPENHO_PATH = os.path.join(BASE_DIR, "db_mod_renomear_empenho.db")
 PASTA_ORGANIZADOR = os.path.join(MOD_DIR, "organizadorPasta")
 PASTA_QUARENTENA = os.path.join(MOD_DIR, "quarentena")
@@ -71,15 +75,19 @@ def pastas_monitoradas():
 
 def _normalizar_pasta(v):
     """Normaliza um caminho de pasta (local ou UNC/rede) para uso com os.path."""
-    v = (v or "").strip()
-    if not v:
-        return PASTA_MONITORADA
-    # caminho UNC (\\host\share ou //host/share): preservar separadores
-    if v.startswith("\\\\") or v.startswith("//"):
-        return os.path.normpath(v.replace("/", "\\"))
-    if os.path.isabs(v):
-        return os.path.normpath(v)
-    return os.path.normpath(os.path.join(MOD_DIR, v))
+    try:
+        v = (v or "").strip()
+        if not v:
+            return PASTA_MONITORADA
+        # caminho UNC (\\host\share ou //host/share): preservar separadores
+        if v.startswith("\\\\") or v.startswith("//"):
+            return os.path.normpath(v.replace("/", "\\"))
+        if os.path.isabs(v):
+            return os.path.normpath(v)
+        return os.path.normpath(os.path.join(MOD_DIR, v))
+    except Exception as e:
+        _log().exception(f"_normalizar_pasta falhou: {e}")
+        return None
 
 
 def pasta_monitorada():
@@ -101,14 +109,18 @@ def pasta_acessivel(pasta):
 
 def salvar_pastas_monitoradas(lista):
     """Grava a lista de pastas monitoradas (uma por linha) em tb_config."""
-    from mod_intranet.bd_conexao import set_config
-    limpos = []
-    for v in (lista or []):
-        v = _normalizar_pasta(v)
-        if v not in limpos:
-            limpos.append(v)
-    set_config("empenhos_pastas_monitoradas", "\n".join(limpos))
-    return limpos
+    try:
+        from mod_intranet.bd_conexao import set_config
+        limpos = []
+        for v in (lista or []):
+            v = _normalizar_pasta(v)
+            if v not in limpos:
+                limpos.append(v)
+        set_config("empenhos_pastas_monitoradas", "\n".join(limpos))
+        return limpos
+    except Exception as e:
+        _log().exception(f"salvar_pastas_monitoradas falhou: {e}")
+        return None
 
 REGEX_PADRAO = r"(?:empenho|emp|ne)[\s\.: nº]*(\d{4,10})(?:[-/](\d{1,3}))?"
 NOME_FINAL_PADRAO = "doc_{contador:04d}_{empenho}_{parcela:03d}.pdf"
@@ -159,36 +171,44 @@ def arquivo_ja_processado(nome_arquivo):
     processado (EE_9570.pdf) e zero-à-esquerda não discrimina de forma confiável.
     Para eles, use `_arquivo_registrado_no_bd` (autoritativo via tb_empenhos).
     """
-    nome = (nome_arquivo or "").strip().lower()
-    if not nome:
+    try:
+        nome = (nome_arquivo or "").strip().lower()
+        if not nome:
+            return False
+        # padrão DOC vigente: doc_0001_345_001.pdf (contador, empenho, parcela)
+        if re.match(r"^doc_\d+_\d+_\d+\.pdf$", nome):
+            return True
+        # padrão DOC legado: doc_0001_numEmpenho_345_p001.pdf (mantido p/ retrocompatibilidade)
+        if re.match(r"^doc_\d+_numempenho_\d+_p\d+\.pdf$", nome):
+            return True
+        # padrão DOC com ano: doc_0001_0000331_0000345_(1)_2026.pdf (projeto de origem)
+        if re.match(r"^doc_\d+_\d+_\d+_(\(\d+\))?_?\d{4}\.pdf$", nome):
+            return True
         return False
-    # padrão DOC vigente: doc_0001_345_001.pdf (contador, empenho, parcela)
-    if re.match(r"^doc_\d+_\d+_\d+\.pdf$", nome):
-        return True
-    # padrão DOC legado: doc_0001_numEmpenho_345_p001.pdf (mantido p/ retrocompatibilidade)
-    if re.match(r"^doc_\d+_numempenho_\d+_p\d+\.pdf$", nome):
-        return True
-    # padrão DOC com ano: doc_0001_0000331_0000345_(1)_2026.pdf (projeto de origem)
-    if re.match(r"^doc_\d+_\d+_\d+_(\(\d+\))?_?\d{4}\.pdf$", nome):
-        return True
-    return False
+    except Exception as e:
+        _log().exception(f"arquivo_ja_processado falhou: {e}")
+        return None
 
 
 def arquivo_pendente(nome_arquivo, padroes=()):
     """True se o arquivo ainda aguarda processamento (bate algum padrão pendente
     e ainda não foi renomeado). `padroes` é uma lista de regex de pendência."""
-    nome = (nome_arquivo or "").strip()
-    if not nome:
+    try:
+        nome = (nome_arquivo or "").strip()
+        if not nome:
+            return False
+        if arquivo_ja_processado(nome):
+            return False
+        for p in (padroes or ()):
+            try:
+                if re.search(p, nome, re.IGNORECASE):
+                    return True
+            except re.error:
+                continue
         return False
-    if arquivo_ja_processado(nome):
-        return False
-    for p in (padroes or ()):
-        try:
-            if re.search(p, nome, re.IGNORECASE):
-                return True
-        except re.error:
-            continue
-    return False
+    except Exception as e:
+        _log().exception(f"arquivo_pendente falhou: {e}")
+        return None
 
 
 def detectar_tipo_especial(texto):
@@ -202,20 +222,24 @@ def detectar_tipo_especial(texto):
       5. 'NOTA DE EMPENHO'     -> EE/EG conforme o campo Tipo
     Retorna a chave (EC/EE/EG/AE) ou None.
     """
-    t = texto or ""
-    if re.search(_PADRAO_TIPO_A, t, re.IGNORECASE | re.UNICODE):
-        return TIPO_AE
-    if re.search(_PADRAO_TIPO_C, t, re.IGNORECASE | re.UNICODE):
-        return TIPO_EC
-    if re.search(r"EMPENHO\s*PARCELA", t, re.IGNORECASE | re.UNICODE):
+    try:
+        t = texto or ""
+        if re.search(_PADRAO_TIPO_A, t, re.IGNORECASE | re.UNICODE):
+            return TIPO_AE
+        if re.search(_PADRAO_TIPO_C, t, re.IGNORECASE | re.UNICODE):
+            return TIPO_EC
+        if re.search(r"EMPENHO\s*PARCELA", t, re.IGNORECASE | re.UNICODE):
+            return None
+        m_tipo = re.search(_PADRAO_TIPO_T, t, re.IGNORECASE | re.UNICODE)
+        if m_tipo:
+            return TIPO_EG if m_tipo.group(1).lower() == "global" else TIPO_EE
+        if re.search(_PADRAO_NOTA_EMP, t, re.IGNORECASE | re.UNICODE):
+            # nota de empenho sem 'Tipo' explícito: assume Estimativo
+            return TIPO_EE
         return None
-    m_tipo = re.search(_PADRAO_TIPO_T, t, re.IGNORECASE | re.UNICODE)
-    if m_tipo:
-        return TIPO_EG if m_tipo.group(1).lower() == "global" else TIPO_EE
-    if re.search(_PADRAO_NOTA_EMP, t, re.IGNORECASE | re.UNICODE):
-        # nota de empenho sem 'Tipo' explícito: assume Estimativo
-        return TIPO_EE
-    return None
+    except Exception as e:
+        _log().exception(f"detectar_tipo_especial falhou: {e}")
+        return None
 
 
 def extrair_dados_tipo_especial(texto, tipo):
@@ -224,30 +248,34 @@ def extrair_dados_tipo_especial(texto, tipo):
     Retorna dict com chaves: tipo, numero, ano, ficha (quando presente),
     empenho_original (a que o documento se refere), rotulos.
     """
-    t = texto or ""
-    dados = {"tipo": tipo}
-    padrao = None
-    if tipo == TIPO_EC:
-        padrao = _PADRAO_NUM_EC
-    elif tipo == TIPO_AE:
-        padrao = _PADRAO_NUM_AE
-    else:  # EE ou EG
-        padrao = _PADRAO_NUM_NOTAS
-    m = re.search(padrao, t, re.IGNORECASE | re.UNICODE)
-    dados["numero"] = int(m.group(1)) if m and m.group(1) else None
-    dados["ano"] = m.group(2) if m and m.lastindex and m.lastindex >= 2 and m.group(2) else None
-    # ficha / empenho original (referenciados pelo documento)
-    mf = re.search(r"Ficha\s*[:]?\s*(\d+)", t, re.IGNORECASE | re.UNICODE)
-    dados["ficha"] = mf.group(1) if mf else None
-    me = re.search(r"[Ee]mpenho\s*[:]?\s*(\d{4,})", t, re.IGNORECASE | re.UNICODE)
-    dados["empenho_original"] = me.group(1) if me else None
-    if dados.get("numero") is None:
-        # fallback: qualquer número longo no texto
-        mn = re.search(r"(\d{4,10})", t)
-        dados["numero"] = int(mn.group(1)) if mn else None
-    dados["rotulos"] = {"numero": "Nº do documento", "ano": "Exercício",
-                        "ficha": "Ficha", "empenho_original": "Empenho original"}
-    return dados
+    try:
+        t = texto or ""
+        dados = {"tipo": tipo}
+        padrao = None
+        if tipo == TIPO_EC:
+            padrao = _PADRAO_NUM_EC
+        elif tipo == TIPO_AE:
+            padrao = _PADRAO_NUM_AE
+        else:  # EE ou EG
+            padrao = _PADRAO_NUM_NOTAS
+        m = re.search(padrao, t, re.IGNORECASE | re.UNICODE)
+        dados["numero"] = int(m.group(1)) if m and m.group(1) else None
+        dados["ano"] = m.group(2) if m and m.lastindex and m.lastindex >= 2 and m.group(2) else None
+        # ficha / empenho original (referenciados pelo documento)
+        mf = re.search(r"Ficha\s*[:]?\s*(\d+)", t, re.IGNORECASE | re.UNICODE)
+        dados["ficha"] = mf.group(1) if mf else None
+        me = re.search(r"[Ee]mpenho\s*[:]?\s*(\d{4,})", t, re.IGNORECASE | re.UNICODE)
+        dados["empenho_original"] = me.group(1) if me else None
+        if dados.get("numero") is None:
+            # fallback: qualquer número longo no texto
+            mn = re.search(r"(\d{4,10})", t)
+            dados["numero"] = int(mn.group(1)) if mn else None
+        dados["rotulos"] = {"numero": "Nº do documento", "ano": "Exercício",
+                            "ficha": "Ficha", "empenho_original": "Empenho original"}
+        return dados
+    except Exception as e:
+        _log().exception(f"extrair_dados_tipo_especial falhou: {e}")
+        return None
 
 # Padrões padrão de extração dos campos do cabeçalho do empenho (editáveis
 # via tb_campos_busca, sem tocar no código). Cada entrada: campo -> (rótulo, regex).
@@ -482,12 +510,16 @@ def _conn():
 
     Conexão via `banco_conexao.conexao` — SQLite (db_mod_renomear_empenho.db,
     WAL) ou PostgreSQL (schema `empenhos`)."""
-    from mod_intranet.banco_conexao import conexao
-    conn = conexao("empenhos")
-    if conn is None:
-        raise RuntimeError("Falha ao abrir conexão do módulo Renomear Empenhos")
-    conn.execute("PRAGMA journal_mode=WAL")
-    return conn
+    try:
+        from mod_intranet.banco_conexao import conexao
+        conn = conexao("empenhos")
+        if conn is None:
+            raise RuntimeError("Falha ao abrir conexão do módulo Renomear Empenhos")
+        conn.execute("PRAGMA journal_mode=WAL")
+        return conn
+    except Exception as e:
+        _log().exception(f"_conn falhou: {e}")
+        return None
 
 
 def _migrar_coluna(conn, tabela, coluna, tipo):
@@ -848,18 +880,22 @@ def _inicio_documento(texto_pagina):
 
     Sinais fortes: NOTA DE EMPENHO/COMPLEMENTAÇÃO/ANULAÇÃO, EMPENHO PARCELA,
     PREFEITURA + CNPJ. Anexo de transferência/FROTA não é início."""
-    t = texto_pagina or ""
-    # TED e FROTA são anexos, não novos empenhos
-    if re.search(r"COMPROVANTE\s*DE\s*TRANSFERENCIA|AGENDAMENTO\s*DE\s*VIAGENS", t, re.I):
+    try:
+        t = texto_pagina or ""
+        # TED e FROTA são anexos, não novos empenhos
+        if re.search(r"COMPROVANTE\s*DE\s*TRANSFERENCIA|AGENDAMENTO\s*DE\s*VIAGENS", t, re.I):
+            return False
+        if re.search(r"NOTA\s*DE\s*(EMPENHO|COMPLEMENTA|ANULA)", t, re.I):
+            return True
+        if re.search(r"EMPENHO\s*PARCELA", t, re.I):
+            return True
+        # fallback: cabeçalho da prefeitura + número de ficha/empenho na mesma página
+        if re.search(r"PREFEITURA\s*MUNICIPAL", t, re.I) and re.search(r"N['°o]?\s*da\s*Ficha|N['°o]?\s*do\s*Empenho", t, re.I):
+            return True
         return False
-    if re.search(r"NOTA\s*DE\s*(EMPENHO|COMPLEMENTA|ANULA)", t, re.I):
-        return True
-    if re.search(r"EMPENHO\s*PARCELA", t, re.I):
-        return True
-    # fallback: cabeçalho da prefeitura + número de ficha/empenho na mesma página
-    if re.search(r"PREFEITURA\s*MUNICIPAL", t, re.I) and re.search(r"N['°o]?\s*da\s*Ficha|N['°o]?\s*do\s*Empenho", t, re.I):
-        return True
-    return False
+    except Exception as e:
+        _log().exception(f"_inicio_documento falhou: {e}")
+        return None
 
 
 def detectar_documentos_no_pdf(caminho):
@@ -927,20 +963,24 @@ def eh_multiplo_documento(caminho):
     Critério: `detectar_documentos_no_pdf` retorna >=2 segmentos E
     os nº de empenho distintos são >=2 (evita falso-positivo de
     empenho 345 + anexos/FROTA/TED do mesmo empenho)."""
-    segs = detectar_documentos_no_pdf(caminho)
-    if len(segs) < 2:
-        return False, segs
-    nums = set()
-    for s in segs:
-        n = s.get("empenho")
-        if n:
-            # normaliza: remove zeros e não-dígitos
-            nums.add(re.sub(r"\D", "", str(n)).lstrip("0") or "0")
-    # também verifica nº via regex direta por segmento (fallback)
-    if len(nums) < 2:
-        # pode ser EC/EE/EG com números em `numero` em vez de `empenho`
-        return False, segs
-    return True, segs
+    try:
+        segs = detectar_documentos_no_pdf(caminho)
+        if len(segs) < 2:
+            return False, segs
+        nums = set()
+        for s in segs:
+            n = s.get("empenho")
+            if n:
+                # normaliza: remove zeros e não-dígitos
+                nums.add(re.sub(r"\D", "", str(n)).lstrip("0") or "0")
+        # também verifica nº via regex direta por segmento (fallback)
+        if len(nums) < 2:
+            # pode ser EC/EE/EG com números em `numero` em vez de `empenho`
+            return False, segs
+        return True, segs
+    except Exception as e:
+        _log().exception(f"eh_multiplo_documento falhou: {e}")
+        return (False, "Erro interno")
 
 
 def separar_pdf_por_documentos(caminho, destino_dir=None, usuario="sistema"):
@@ -1122,41 +1162,45 @@ def extrair_dados_empenho(texto):
     capturado da regex (ou None se não achou). O campo 'ano' recebe o valor do
     2º grupo das regex que o carregam junto (ex.: 'N do Empenho: 0000345/2026').
     """
-    texto = texto or ""
-    campos = set(_campos_busca_ativos().keys()) or set(CAMPOS_BUSCA_PADRAO.keys())
-    out = {c: None for c in campos}
-    # backup das regex padrão caso a tabela esteja vazia
-    regras = _campos_busca_ativos() or {c: v for c, v in CAMPOS_BUSCA_PADRAO.items()}
-    for campo, (rotulo, padrao) in regras.items():
-        try:
-            m = re.search(padrao, texto, re.IGNORECASE)
-        except re.error:
-            continue
-        if m:
-            # parcela: usa o 2º grupo (nº da parcela), quando houver
-            if campo == "parcela" and (m.lastindex or 0) >= 2 and m.group(2) and m.group(2).strip().isdigit():
-                out[campo] = m.group(2).strip()
-                # guarda também o ano se a regex de parcela o trouxer como 3º grupo
-                if (m.lastindex or 0) >= 3 and m.group(3) and out.get("ano") is None:
-                    out["ano"] = m.group(3).strip()
-            else:
-                out[campo] = m.group(1).strip() if m.group(1) else None
-            # captura o ano do 2º grupo quando presente (ex.: X/2026) e ainda não definido
-            if campo != "ano" and campo != "parcela" and (m.lastindex or 0) >= 2 and m.group(2):
-                if out.get("ano") is None and m.group(2).strip().isdigit() and len(m.group(2).strip()) == 4:
-                    out["ano"] = m.group(2).strip()
-    # normaliza: limpa espaços duplos e remove quebras residuais nos valores
-    _num_fields = {"ficha", "empenho", "processo", "valor_bruto", "valor_liquido",
-                   "saldo_anterior", "saldo_disponivel", "banco", "agencia", "conta",
-                   "conta_pagamento", "conta_recebimento", "favorecido_codigo",
-                   "favorecido_cpf", "contador_cpf", "pix", "diarias_numero", "decreto"}
-    for k in list(out.keys()):
-        if out[k] and isinstance(out[k], str):
-            out[k] = re.sub(r"\s+", " ", out[k]).strip()
-            if k in _num_fields:
-                # remove espaços internos em números (ex.: "1 .000,00" -> "1.000,00", "00003 17" -> "0000317")
-                out[k] = re.sub(r"\s+", "", out[k])
-    return out
+    try:
+        texto = texto or ""
+        campos = set(_campos_busca_ativos().keys()) or set(CAMPOS_BUSCA_PADRAO.keys())
+        out = {c: None for c in campos}
+        # backup das regex padrão caso a tabela esteja vazia
+        regras = _campos_busca_ativos() or {c: v for c, v in CAMPOS_BUSCA_PADRAO.items()}
+        for campo, (rotulo, padrao) in regras.items():
+            try:
+                m = re.search(padrao, texto, re.IGNORECASE)
+            except re.error:
+                continue
+            if m:
+                # parcela: usa o 2º grupo (nº da parcela), quando houver
+                if campo == "parcela" and (m.lastindex or 0) >= 2 and m.group(2) and m.group(2).strip().isdigit():
+                    out[campo] = m.group(2).strip()
+                    # guarda também o ano se a regex de parcela o trouxer como 3º grupo
+                    if (m.lastindex or 0) >= 3 and m.group(3) and out.get("ano") is None:
+                        out["ano"] = m.group(3).strip()
+                else:
+                    out[campo] = m.group(1).strip() if m.group(1) else None
+                # captura o ano do 2º grupo quando presente (ex.: X/2026) e ainda não definido
+                if campo != "ano" and campo != "parcela" and (m.lastindex or 0) >= 2 and m.group(2):
+                    if out.get("ano") is None and m.group(2).strip().isdigit() and len(m.group(2).strip()) == 4:
+                        out["ano"] = m.group(2).strip()
+        # normaliza: limpa espaços duplos e remove quebras residuais nos valores
+        _num_fields = {"ficha", "empenho", "processo", "valor_bruto", "valor_liquido",
+                       "saldo_anterior", "saldo_disponivel", "banco", "agencia", "conta",
+                       "conta_pagamento", "conta_recebimento", "favorecido_codigo",
+                       "favorecido_cpf", "contador_cpf", "pix", "diarias_numero", "decreto"}
+        for k in list(out.keys()):
+            if out[k] and isinstance(out[k], str):
+                out[k] = re.sub(r"\s+", " ", out[k]).strip()
+                if k in _num_fields:
+                    # remove espaços internos em números (ex.: "1 .000,00" -> "1.000,00", "00003 17" -> "0000317")
+                    out[k] = re.sub(r"\s+", "", out[k])
+        return out
+    except Exception as e:
+        _log().exception(f"extrair_dados_empenho falhou: {e}")
+        return None
 
 
 @lru_cache(maxsize=1)
@@ -1473,8 +1517,12 @@ def registrar_arquivo_renomeado(nome_original, nome_final, caminho_original, cam
 
 def registrar_arquivo_erro(nome_arquivo, caminho, usuario, motivo):
     """Registra falha de processamento e grava evento de erro."""
-    return registrar_arquivo_detectado(nome_arquivo, caminho, usuario,
-                                       status="erro", motivo=motivo)
+    try:
+        return registrar_arquivo_detectado(nome_arquivo, caminho, usuario,
+                                           status="erro", motivo=motivo)
+    except Exception as e:
+        _log().exception(f"registrar_arquivo_erro falhou: {e}")
+        return None
 
 
 def registrar_arquivo_removido(nome_arquivo, caminho, usuario="sistema"):
@@ -1870,14 +1918,22 @@ def listar_empenhos(status="ativo", limite=200):
 
 def _fts_insert_sql():
     """Builds the parameterized FTS5 INSERT for all index columns."""
-    cols = ", ".join(FTS_COLS)
-    placeholders = ", ".join("?" for _ in FTS_COLS)
-    return f"INSERT INTO tb_indexador_pesquisa_fts5 (rowid, {cols}) VALUES (?, {placeholders})"
+    try:
+        cols = ", ".join(FTS_COLS)
+        placeholders = ", ".join("?" for _ in FTS_COLS)
+        return f"INSERT INTO tb_indexador_pesquisa_fts5 (rowid, {cols}) VALUES (?, {placeholders})"
+    except Exception as e:
+        _log().exception(f"_fts_insert_sql falhou: {e}")
+        return None
 
 
 def _fts_escape(token):
     """Escapa aspas para uso seguro em frase FTS5 (aspas duplas duplicadas)."""
-    return (token or "").replace('"', '""').strip()
+    try:
+        return (token or "").replace('"', '""').strip()
+    except Exception as e:
+        _log().exception(f"_fts_escape falhou: {e}")
+        return None
 
 
 def _fts_query_prefixada(tokens):
@@ -1886,9 +1942,13 @@ def _fts_query_prefixada(tokens):
     Ex.: ["45"] → '"45"*'; ["joao","si"] → '"joao" AND "si"*'. Permite
     resultado já na 1ª letra e refino a cada tecla (LIKE cobre o fallback).
     """
-    partes = [f'"{_fts_escape(t)}"' for t in tokens[:-1]]
-    partes.append(f'"{_fts_escape(tokens[-1])}"*')
-    return " AND ".join(partes)
+    try:
+        partes = [f'"{_fts_escape(t)}"' for t in tokens[:-1]]
+        partes.append(f'"{_fts_escape(tokens[-1])}"*')
+        return " AND ".join(partes)
+    except Exception as e:
+        _log().exception(f"_fts_query_prefixada falhou: {e}")
+        return None
 
 
 def extrair_campos_regex(texto):
@@ -2097,7 +2157,11 @@ def promover_quarentena(usuario, caminho_arquivo, motivo):
     Promove um arquivo com falha para a quarentena — alias de `mover_quarentena`
     (nome previsto no PLANO 4b). Mantém compatibilidade com o roadmap sem
     duplicar lógica."""
-    return mover_quarentena(usuario, caminho_arquivo, motivo)
+    try:
+        return mover_quarentena(usuario, caminho_arquivo, motivo)
+    except Exception as e:
+        _log().exception(f"promover_quarentena falhou: {e}")
+        return None
 
 
 def reprocessar_fila(usuario="sistema", novo_padrao=None):
@@ -2109,33 +2173,37 @@ def reprocessar_fila(usuario="sistema", novo_padrao=None):
     `(ok, mensagem, detalhes)` onde detalhes = lista de (qid, ok, msg).
 
     Hardening: valida tamanho de regex e confina caminho à quarentena."""
-    if novo_padrao and len(novo_padrao) > REGEX_MAX_LEN:
-        return False, f"Regex deve ter 1-{REGEX_MAX_LEN} caracteres", []
-    if novo_padrao:
-        try:
-            re.compile(novo_padrao)
-        except re.error as e:
-            return False, f"Regex inválida: {e}", []
-    pendentes = [r for r in listar_quarentena(limite=500) if not r[4]]
-    if not pendentes:
-        return True, "Fila vazia — nada a reprocessar", []
-    detalhes = []
-    sucessos = 0
-    for qid, nome, motivo, data, proc, caminho in pendentes:
-        try:
-            ok, msg = reprocesse_quarentena(qid, novo_padrao=novo_padrao, usuario=usuario)
-            detalhes.append((qid, ok, msg))
-            if ok:
-                sucessos += 1
-        except Exception as e:
-            _log().warning(f"reprocessar_fila qid={qid}: {e}")
-            detalhes.append((qid, False, str(e)))
-    total = len(pendentes)
-    if sucessos == total:
-        return True, f"Fila reprocessada: {sucessos}/{total} com sucesso", detalhes
-    if sucessos > 0:
-        return True, f"Fila reprocessada: {sucessos}/{total} com sucesso ({total - sucessos} falha(s) permanecem na quarentena)", detalhes
-    return False, f"Nenhum item reprocessado ({total} falha(s)) — verifique as regex ativas", detalhes
+    try:
+        if novo_padrao and len(novo_padrao) > REGEX_MAX_LEN:
+            return False, f"Regex deve ter 1-{REGEX_MAX_LEN} caracteres", []
+        if novo_padrao:
+            try:
+                re.compile(novo_padrao)
+            except re.error as e:
+                return False, f"Regex inválida: {e}", []
+        pendentes = [r for r in listar_quarentena(limite=500) if not r[4]]
+        if not pendentes:
+            return True, "Fila vazia — nada a reprocessar", []
+        detalhes = []
+        sucessos = 0
+        for qid, nome, motivo, data, proc, caminho in pendentes:
+            try:
+                ok, msg = reprocesse_quarentena(qid, novo_padrao=novo_padrao, usuario=usuario)
+                detalhes.append((qid, ok, msg))
+                if ok:
+                    sucessos += 1
+            except Exception as e:
+                _log().warning(f"reprocessar_fila qid={qid}: {e}")
+                detalhes.append((qid, False, str(e)))
+        total = len(pendentes)
+        if sucessos == total:
+            return True, f"Fila reprocessada: {sucessos}/{total} com sucesso", detalhes
+        if sucessos > 0:
+            return True, f"Fila reprocessada: {sucessos}/{total} com sucesso ({total - sucessos} falha(s) permanecem na quarentena)", detalhes
+        return False, f"Nenhum item reprocessado ({total} falha(s)) — verifique as regex ativas", detalhes
+    except Exception as e:
+        _log().exception(f"reprocessar_fila falhou: {e}")
+        return None
 
 
 # ================= REGRAS =================
@@ -2424,32 +2492,40 @@ def organizar_pastas():
 # ================= ORGANIZADOR FÍSICO COMPLETO (RF-44) =================
 def _inventario_organizador():
     """Inventories the organizer: [(caixa, [(sub, [pdfs…])…])…] from disk."""
-    itens = []
-    if not os.path.isdir(PASTA_ORGANIZADOR):
-        return itens
-    for caixa in sorted(os.listdir(PASTA_ORGANIZADOR)):
-        dir_c = os.path.join(PASTA_ORGANIZADOR, caixa)
-        if not os.path.isdir(dir_c):
-            continue
-        subs = []
-        for sub in sorted(os.listdir(dir_c)):
-            dir_s = os.path.join(dir_c, sub)
-            if not os.path.isdir(dir_s):
+    try:
+        itens = []
+        if not os.path.isdir(PASTA_ORGANIZADOR):
+            return itens
+        for caixa in sorted(os.listdir(PASTA_ORGANIZADOR)):
+            dir_c = os.path.join(PASTA_ORGANIZADOR, caixa)
+            if not os.path.isdir(dir_c):
                 continue
-            docs = [f for f in sorted(os.listdir(dir_s)) if f.lower().endswith(".pdf")]
-            subs.append((sub, docs))
-        itens.append((caixa, subs))
-    return itens
+            subs = []
+            for sub in sorted(os.listdir(dir_c)):
+                dir_s = os.path.join(dir_c, sub)
+                if not os.path.isdir(dir_s):
+                    continue
+                docs = [f for f in sorted(os.listdir(dir_s)) if f.lower().endswith(".pdf")]
+                subs.append((sub, docs))
+            itens.append((caixa, subs))
+        return itens
+    except Exception as e:
+        _log().exception(f"_inventario_organizador falhou: {e}")
+        return None
 
 
 def _gerar_pdf_texto(conteudo, caminho):
     """Writes plain text into a single-page PDF (used by the matrix generator)."""
-    import pymupdf
-    doc = pymupdf.open()
-    pag = doc.new_page()
-    pag.insert_text((40, 40), conteudo, fontname="helv", fontsize=10)
-    doc.save(caminho, garbage=4, deflate=True)
-    doc.close()
+    try:
+        import pymupdf
+        doc = pymupdf.open()
+        pag = doc.new_page()
+        pag.insert_text((40, 40), conteudo, fontname="helv", fontsize=10)
+        doc.save(caminho, garbage=4, deflate=True)
+        doc.close()
+    except Exception as e:
+        _log().exception(f"_gerar_pdf_texto falhou: {e}")
+        return None
 
 
 def gerar_matriz_organizador():
@@ -2489,22 +2565,26 @@ def gerar_matriz_organizador():
 def validar_presenca_matriz():
     """Valida que todos os PDFs listados na matriz existem no disco (RF-44).
     Retorna (ok, faltando)."""
-    import re
-    path = os.path.join(PASTA_ORGANIZADOR, "matrizDeDocumentos.txt")
-    if not os.path.exists(path):
-        return False, ["matrizDeDocumentos.txt ausente - gere a matriz primeiro"]
-    with open(path, encoding="utf-8") as f:
-        txt = f.read()
-    faltando = []
-    for m in re.findall(r"(\S+\.pdf)", txt):
-        achou = False
-        for raiz, _, arq in os.walk(PASTA_ORGANIZADOR):
-            if m in arq:
-                achou = True
-                break
-        if not achou:
-            faltando.append(m)
-    return (len(faltando) == 0), faltando
+    try:
+        import re
+        path = os.path.join(PASTA_ORGANIZADOR, "matrizDeDocumentos.txt")
+        if not os.path.exists(path):
+            return False, ["matrizDeDocumentos.txt ausente - gere a matriz primeiro"]
+        with open(path, encoding="utf-8") as f:
+            txt = f.read()
+        faltando = []
+        for m in re.findall(r"(\S+\.pdf)", txt):
+            achou = False
+            for raiz, _, arq in os.walk(PASTA_ORGANIZADOR):
+                if m in arq:
+                    achou = True
+                    break
+            if not achou:
+                faltando.append(m)
+        return (len(faltando) == 0), faltando
+    except Exception as e:
+        _log().exception(f"validar_presenca_matriz falhou: {e}")
+        return (False, "Erro interno")
 
 
 # ================= FERRAMENTAS DE PDF (RF-45) =================
@@ -2518,8 +2598,12 @@ PASTA_TEMP_FERR = os.path.join(MOD_DIR, "tmp_ferramentas_pdf")
 
 def _ferramenta_nome(base, sufixo):
     """Builds a timestamped output name for the embedded PDF tools."""
-    from datetime import datetime as _dt
-    return f"{_dt.now():%Y%m%d%H%M%S}_{base}{sufixo}"
+    try:
+        from datetime import datetime as _dt
+        return f"{_dt.now():%Y%m%d%H%M%S}_{base}{sufixo}"
+    except Exception as e:
+        _log().exception(f"_ferramenta_nome falhou: {e}")
+        return None
 
 
 def ferramenta_cortar(caminho_in, filtro, usuario="sistema"):
@@ -2590,8 +2674,12 @@ def ferramenta_reduzir(caminho_in, usuario="sistema", qualidade=50, modo="leve",
 
 def ferramenta_fontes(usuario="sistema"):
     """Lista fontes disponíveis: empenhos processados (caminho_arquivo)."""
-    return [(r[0], r[2], r[7]) for r in listar_empenhos(status="ativo", limite=1000)
-            if r[7] and os.path.exists(r[7])]
+    try:
+        return [(r[0], r[2], r[7]) for r in listar_empenhos(status="ativo", limite=1000)
+                if r[7] and os.path.exists(r[7])]
+    except Exception as e:
+        _log().exception(f"ferramenta_fontes falhou: {e}")
+        return []
 
 
 def anonimizar_usuario(user_nome):
@@ -2651,20 +2739,28 @@ def _path_real(path):
 
 def raizes_navegacao():
     """Protected navigation roots: monitored folders + organizer folder."""
-    raizes = [os.path.realpath(os.path.abspath(p)) for p in pastas_monitoradas()]
-    if os.path.isdir(PASTA_ORGANIZADOR):
-        raizes.append(os.path.realpath(os.path.abspath(PASTA_ORGANIZADOR)))
-    return raizes
+    try:
+        raizes = [os.path.realpath(os.path.abspath(p)) for p in pastas_monitoradas()]
+        if os.path.isdir(PASTA_ORGANIZADOR):
+            raizes.append(os.path.realpath(os.path.abspath(PASTA_ORGANIZADOR)))
+        return raizes
+    except Exception as e:
+        _log().exception(f"raizes_navegacao falhou: {e}")
+        return []
 
 
 def pasta_navegavel(pasta):
     """True if `pasta` is inside one of the protected roots (anti-traversal)."""
-    p = _path_real(pasta)
-    for raiz in raizes_navegacao():
-        r = _path_real(raiz)
-        if p == r or p.startswith(r + os.sep):
-            return True
-    return False
+    try:
+        p = _path_real(pasta)
+        for raiz in raizes_navegacao():
+            r = _path_real(raiz)
+            if p == r or p.startswith(r + os.sep):
+                return True
+        return False
+    except Exception as e:
+        _log().exception(f"pasta_navegavel falhou: {e}")
+        return None
 
 
 def anotar_arquivos(pdfs):
@@ -2807,14 +2903,18 @@ def status_arquivo(caminho):
     Para tipos especiais o critério é o banco — o nome de entrada (ex.: EE_9570)
     pode ter o mesmo número de dígitos do nome processado.
     """
-    nome = os.path.basename(caminho or "")
-    if arquivo_ja_processado(nome):
-        return "processado"
-    if _arquivo_registrado_no_bd(caminho):
-        return "processado"
-    if nome.lower().endswith(".pdf"):
-        return "pendente"
-    return "outros"
+    try:
+        nome = os.path.basename(caminho or "")
+        if arquivo_ja_processado(nome):
+            return "processado"
+        if _arquivo_registrado_no_bd(caminho):
+            return "processado"
+        if nome.lower().endswith(".pdf"):
+            return "pendente"
+        return "outros"
+    except Exception as e:
+        _log().exception(f"status_arquivo falhou: {e}")
+        return None
 
 
 def _arquivo_registrado_no_bd(caminho):
@@ -2888,7 +2988,11 @@ def listar_pendentes(recursivo=False, limite=500):
 
 def _basename_sem_ext(path):
     """File name without extension (helper for manual rename)."""
-    return os.path.splitext(os.path.basename(path))[0]
+    try:
+        return os.path.splitext(os.path.basename(path))[0]
+    except Exception as e:
+        _log().exception(f"_basename_sem_ext falhou: {e}")
+        return None
 
 
 def renomear_manual(usuario, caminho_arquivo, novo_numero=None, novoTemplate=None,
@@ -2956,15 +3060,19 @@ def renomear_manual(usuario, caminho_arquivo, novo_numero=None, novoTemplate=Non
 
 def _evitar_colisao(destino):
     """Se o destino já existe, acrescenta _v2, _v3 etc. para não sobrescrever."""
-    if not os.path.exists(destino):
-        return destino
-    base, ext = os.path.splitext(destino)
-    i = 2
-    while True:
-        cand = f"{base}_v{i}{ext}"
-        if not os.path.exists(cand):
-            return cand
-        i += 1
+    try:
+        if not os.path.exists(destino):
+            return destino
+        base, ext = os.path.splitext(destino)
+        i = 2
+        while True:
+            cand = f"{base}_v{i}{ext}"
+            if not os.path.exists(cand):
+                return cand
+            i += 1
+    except Exception as e:
+        _log().exception(f"_evitar_colisao falhou: {e}")
+        return None
 
 
 def editar_campos_empenho(empenho_id, campos):
@@ -3142,14 +3250,18 @@ def marcar_solicitacao_recusada(solicitacao_id, motivo="", usuario="master"):
 def agrupar_solicitacoes_em_lote(itens):
     """Agrupa solicitações (dicts) por lote_id, mantendo as avulsas. Retorna
     (lotes, avulsas): lotes = {lote_id: [sol...]}, avulsas = [sol...]."""
-    lotes, avulsas = {}, []
-    for s in itens or []:
-        lid = s.get("lote_id")
-        if lid:
-            lotes.setdefault(lid, []).append(s)
-        else:
-            avulsas.append(s)
-    return lotes, avulsas
+    try:
+        lotes, avulsas = {}, []
+        for s in itens or []:
+            lid = s.get("lote_id")
+            if lid:
+                lotes.setdefault(lid, []).append(s)
+            else:
+                avulsas.append(s)
+        return lotes, avulsas
+    except Exception as e:
+        _log().exception(f"agrupar_solicitacoes_em_lote falhou: {e}")
+        return (False, "Erro interno")
 
 
 def gerar_zip_solicitacoes(itens, pasta_zip=None):
@@ -3180,24 +3292,28 @@ def enviar_solicitacao_por_email(itens, destinatario=None):
     """Envia por e-mail os arquivos de um grupo de solicitações via SMTP central.
 
     Retorna (ok, msg)."""
-    from mod_intranet.email_util import enviar_email as _enviar
-    if not destinatario:
-        destinatario = itens[0].get("solicitante_email") if itens else None
-    if not destinatario:
-        return False, "Solicitante sem e-mail"
-    caminhos = [s.get("arquivo_caminho") for s in itens
-                if s.get("arquivo_caminho") and os.path.exists(s.get("arquivo_caminho"))]
-    if not caminhos:
-        return False, "Nenhum arquivo existe mais"
-    nome = (itens[0].get("solicitante_nome") or "").strip() or "usuário"
-    ok, msg = _enviar(
-        destinatario,
-        f"Documentos solicitados ({len(caminhos)})",
-        f"Olá {nome},\n\nSegue(m) o(s) documento(s) solicitado(s) no sistema de empenhos.\n\n"
-        f"Total de arquivos: {len(caminhos)}.",
-        anexos=caminhos,
-    )
-    return ok, msg
+    try:
+        from mod_intranet.email_util import enviar_email as _enviar
+        if not destinatario:
+            destinatario = itens[0].get("solicitante_email") if itens else None
+        if not destinatario:
+            return False, "Solicitante sem e-mail"
+        caminhos = [s.get("arquivo_caminho") for s in itens
+                    if s.get("arquivo_caminho") and os.path.exists(s.get("arquivo_caminho"))]
+        if not caminhos:
+            return False, "Nenhum arquivo existe mais"
+        nome = (itens[0].get("solicitante_nome") or "").strip() or "usuário"
+        ok, msg = _enviar(
+            destinatario,
+            f"Documentos solicitados ({len(caminhos)})",
+            f"Olá {nome},\n\nSegue(m) o(s) documento(s) solicitado(s) no sistema de empenhos.\n\n"
+            f"Total de arquivos: {len(caminhos)}.",
+            anexos=caminhos,
+        )
+        return ok, msg
+    except Exception as e:
+        _log().exception(f"enviar_solicitacao_por_email falhou: {e}")
+        return (False, "Erro interno")
 
 
 from uuid import uuid4

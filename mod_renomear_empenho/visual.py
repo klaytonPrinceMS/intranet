@@ -15,6 +15,10 @@ import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
+from mod_intranet import observabilidade
+
+log = observabilidade.get_logger("renomear_empenho")
+
 CHAVE_CONFIG = "empenhos_modelo_visual"
 MODELO_PADRAO = "pic"
 # Pic nativo é o padrão; cada CSS novo tem tela dedicada /renomear-empenho-{nome}
@@ -74,19 +78,35 @@ def ler_modelo(get_config=None) -> str:
 
 
 def eh_bootstrap(get_config=None) -> bool:
-    return ler_modelo(get_config) == "bootstrap"
+    try:
+        return ler_modelo(get_config) == "bootstrap"
+    except Exception as e:
+        log.exception(f"eh_bootstrap falhou: {e}")
+        return None
 
 
 def eh_hibrido(get_config=None) -> bool:
-    return ler_modelo(get_config) == "hibrido"
+    try:
+        return ler_modelo(get_config) == "hibrido"
+    except Exception as e:
+        log.exception(f"eh_hibrido falhou: {e}")
+        return None
 
 
 def eh_pic(get_config=None) -> bool:
-    return ler_modelo(get_config) == "pic"
+    try:
+        return ler_modelo(get_config) == "pic"
+    except Exception as e:
+        log.exception(f"eh_pic falhou: {e}")
+        return None
 
 
 def eh_framework(nome: str, get_config=None) -> bool:
-    return ler_modelo(get_config) == (nome or "").strip().lower()
+    try:
+        return ler_modelo(get_config) == (nome or "").strip().lower()
+    except Exception as e:
+        log.exception(f"eh_framework falhou: {e}")
+        return None
 
 
 def salvar_modelo(valor: str, set_config=None) -> bool:
@@ -131,23 +151,27 @@ def aplicar_framework(nome_ou_flag=True) -> bool:
 
 def aplicar_modelo(modelo: str) -> bool:
     """Aplica o modelo completo (injetando framework/CSS correto)."""
-    m = (modelo or "").strip().lower()
-    if m == "hibrido":
-        injetar_hibrido()
-        return True
-    if m == "pic":
+    try:
+        m = (modelo or "").strip().lower()
+        if m == "hibrido":
+            injetar_hibrido()
+            return True
+        if m == "pic":
+            injetar_pic_suave()
+            return True
+        if m in FRAMEWORKS:
+            ok = aplicar_framework(m)
+            # css suave de convivência para não quebrar Quasar
+            try:
+                injetar_bootstrap_overrides()
+            except Exception:
+                pass
+            return ok
         injetar_pic_suave()
-        return True
-    if m in FRAMEWORKS:
-        ok = aplicar_framework(m)
-        # css suave de convivência para não quebrar Quasar
-        try:
-            injetar_bootstrap_overrides()
-        except Exception:
-            pass
-        return ok
-    injetar_pic_suave()
-    return False
+        return False
+    except Exception as e:
+        log.exception(f"aplicar_modelo falhou: {e}")
+        return None
 
 
 def injetar_pic_suave():
@@ -231,51 +255,83 @@ def injetar_bootstrap_overrides():
 # ===== Helpers de classes condicionais =====
 
 def classes_card_pdf(bootstrap: bool) -> str:
-    if bootstrap:
-        return "card shadow-sm border-0 rounded-3 w-full p-3 mt-1 empenho-bootstrap"
-    return "w-full p-3 mt-1 rounded-xl shadow-sm border border-grey-2 bg-white empenho-card-pic"
+    try:
+        if bootstrap:
+            return "card shadow-sm border-0 rounded-3 w-full p-3 mt-1 empenho-bootstrap"
+        return "w-full p-3 mt-1 rounded-xl shadow-sm border border-grey-2 bg-white empenho-card-pic"
+    except Exception as e:
+        log.exception(f"classes_card_pdf falhou: {e}")
+        return None
 
 
 def classes_card_pdf_hibrido() -> str:
-    return "w-full p-3 mt-1 bg-white empenho-card-hibrido empenho-hibrido"
+    try:
+        return "w-full p-3 mt-1 bg-white empenho-card-hibrido empenho-hibrido"
+    except Exception as e:
+        log.exception(f"classes_card_pdf_hibrido falhou: {e}")
+        return None
 
 
 def classes_card_lote(bootstrap: bool) -> str:
-    if bootstrap:
-        return "card shadow-sm border-0 rounded-3 w-full p-3 mt-2 empenho-bootstrap"
-    return "w-full p-3 mt-2 empenho-lote-pic shadow-sm"
+    try:
+        if bootstrap:
+            return "card shadow-sm border-0 rounded-3 w-full p-3 mt-2 empenho-bootstrap"
+        return "w-full p-3 mt-2 empenho-lote-pic shadow-sm"
+    except Exception as e:
+        log.exception(f"classes_card_lote falhou: {e}")
+        return None
 
 
 def classes_card_lote_hibrido() -> str:
-    return "w-full p-3 mt-2 empenho-lote-hibrido empenho-hibrido"
+    try:
+        return "w-full p-3 mt-2 empenho-lote-hibrido empenho-hibrido"
+    except Exception as e:
+        log.exception(f"classes_card_lote_hibrido falhou: {e}")
+        return None
 
 
 def classes_wrap_pesquisa(bootstrap: bool) -> str:
-    if bootstrap:
-        return "w-full sm:w-80"
-    return "w-full sm:w-80 empenho-input-soft"
+    try:
+        if bootstrap:
+            return "w-full sm:w-80"
+        return "w-full sm:w-80 empenho-input-soft"
+    except Exception as e:
+        log.exception(f"classes_wrap_pesquisa falhou: {e}")
+        return None
 
 
 def classes_input_pesquisa(bootstrap: bool) -> str:
-    # Mantém Quasar outlined; Bootstrap injeta form-control visual via CSS global quando ativo.
-    if bootstrap:
+    try:
+        # Mantém Quasar outlined; Bootstrap injeta form-control visual via CSS global quando ativo.
+        if bootstrap:
+            return "w-full sm:w-80"
         return "w-full sm:w-80"
-    return "w-full sm:w-80"
+    except Exception as e:
+        log.exception(f"classes_input_pesquisa falhou: {e}")
+        return None
 
 
 def classes_badge_bootstrap(tipo: str) -> str:
-    mapa = {
-        "processado": "badge bg-success",
-        "pendente": "badge bg-warning text-dark",
-        "presente": "badge bg-success",
-        "ausente": "badge bg-secondary",
-        "fora": "badge bg-secondary",
-        "zip_gerado": "badge bg-warning text-dark",
-        "pendente_lote": "badge bg-primary",
-    }
-    return mapa.get(tipo, "badge bg-secondary")
+    try:
+        mapa = {
+            "processado": "badge bg-success",
+            "pendente": "badge bg-warning text-dark",
+            "presente": "badge bg-success",
+            "ausente": "badge bg-secondary",
+            "fora": "badge bg-secondary",
+            "zip_gerado": "badge bg-warning text-dark",
+            "pendente_lote": "badge bg-primary",
+        }
+        return mapa.get(tipo, "badge bg-secondary")
+    except Exception as e:
+        log.exception(f"classes_badge_bootstrap falhou: {e}")
+        return None
 
 
 def cor_badge_pic(status: str) -> str:
-    mapa = {"processado": "green", "pendente": "orange", "zip_gerado": "orange"}
-    return mapa.get((status or "").lower(), "grey")
+    try:
+        mapa = {"processado": "green", "pendente": "orange", "zip_gerado": "orange"}
+        return mapa.get((status or "").lower(), "grey")
+    except Exception as e:
+        log.exception(f"cor_badge_pic falhou: {e}")
+        return None

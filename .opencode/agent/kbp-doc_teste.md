@@ -45,7 +45,8 @@ automatizados.
    Massa demo em `mod_renomear_empenho/doc/` já é ignorada pelo `.gitignore`.
 6. **Dependência:** `faker` vive em `requirements-dev.txt` (nunca mover para
    `requirements.txt`); usar `.venv/bin/python` do projeto.
-7. Nunca fazer `commit`/`push` dentro deste subagente (chame o `kbp-commit`).
+7. Comandos git (incl. `commit`/`push`) são liberados dentro deste subagente quando
+   solicitados via comando no terminal (AGENTS.md §7); em dúvida de padrão, chame o `kbp-commit`.
 
 ## Critérios de aceite (Retorno)
 

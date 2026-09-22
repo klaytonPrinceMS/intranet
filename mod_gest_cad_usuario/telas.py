@@ -40,8 +40,11 @@ _MAP_MODULOS = {}  # cache lazy: {chave: (nome, icone)}
 def _nomes_modulos():
     """Mapa chave → (nome, icone) dos módulos registrados — populado na primeira chamada."""
     if not _MAP_MODULOS:
-        for chave, nome, icone, _rota, _ativo in autenticacao.modulos_registrados():
-            _MAP_MODULOS[chave] = (nome, icone)
+        try:
+            for chave, nome, icone, _rota, _ativo in autenticacao.modulos_registrados():
+                _MAP_MODULOS[chave] = (nome, icone)
+        except Exception as e:
+            log.exception(f"_nomes_modulos: falha ao popular mapa de módulos | {e}")
     return _MAP_MODULOS
 
 
@@ -53,7 +56,16 @@ def _norm(s):
 
 
 def mostrar_tela(user_nome: str, perfil_global: str = ""):
-    """Renders the user management screen (admin-only).
+    """Renders the user management screen (admin-only)."""
+    try:
+        _mostrar_tela_segura(user_nome, perfil_global)
+    except Exception:
+        log.exception("mostrar_tela: falha ao montar a tela de usuários")
+        notificar("Erro ao carregar a tela de usuários", type="error")
+
+
+def _mostrar_tela_segura(user_nome: str, perfil_global: str = ""):
+    """Body of `mostrar_tela`, isolated so the entry point can protect it.
 
     Monta a tela completa: bloqueio de acesso para não administradores,
     tema/aparência do módulo `usuarios` via `ler_tema` (cor primária
@@ -81,17 +93,25 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
     refreshers = {}  # nome -> função de atualização (registrada por cada aba)
 
     def ao_digitar(e):
-        estado_busca["valor"] = e.value or ""
-        for chave in ("usuarios",):
-            if chave in refreshers:
-                try:
-                    refreshers[chave]()
-                except Exception as e:
-                    log.exception(f"ao_digitar: falha ao atualizar aba '{chave}' | {e}")
+        try:
+            estado_busca["valor"] = e.value or ""
+            for chave in ("usuarios",):
+                if chave in refreshers:
+                    try:
+                        refreshers[chave]()
+                    except Exception as ex:
+                        log.exception(f"ao_digitar: falha ao atualizar aba '{chave}' | {ex}")
+        except Exception:
+            log.exception("ao_digitar: falha ao processar busca")
+            notificar("Erro ao processar busca", type="negative")
 
     def novo_usuario():
-        _dlg_novo(user_nome, lambda: [refreshers[k]() for k in
-                                      ("usuarios",) if k in refreshers])
+        try:
+            _dlg_novo(user_nome, lambda: [refreshers[k]() for k in
+                                          ("usuarios",) if k in refreshers])
+        except Exception:
+            log.exception("novo_usuario: falha ao abrir diálogo de criação")
+            notificar("Erro ao abrir criação de usuário", type="negative")
 
     with ui.column().classes("w-full p-6 gap-4"):
         cabecalho("Gestão de Usuários",
@@ -140,50 +160,60 @@ def _seletores_de_acesso(container, nome_usuario=None):
     Novo usuário (nome_usuario=None): pré-seleciona o padrão de criação
     (`ACESSO_PADRAO_NOVO_USUARIO` com papel 'comum'; restritos nascem
     sem acesso)."""
-    atual = {c: "" for c, n, i, r, a in autenticacao.modulos_registrados()}
-    if nome_usuario is None:
-        for c in gest.ACESSO_PADRAO_NOVO_USUARIO:
-            if c in atual:
-                atual[c] = "comum"
-    meta = {}
-    if nome_usuario:
-        for chave, papel, liberado_por, data in gest.listar_acessos(nome_usuario):
-            atual[chave] = papel
-            meta[chave] = f"{liberado_por} · {(data or '')[:16]}"
-    desat = {c for c, n, i, r, a in autenticacao.modulos_registrados() if not a}
-    selecoes = {}
-    with container:
-        for chave, nome, icone, rota, ativo in autenticacao.modulos_registrados():
-            indisponivel = not ativo
-            with ui.row().classes("w-full items-center justify-between py-0.5 flex-wrap"):
-                with ui.row().classes("items-center gap-2 min-w-[190px]"):
-                    ui.icon(icone).classes("text-primary" if not indisponivel else "text-orange-9")
-                    ui.label(nome).classes("text-body2")
-                    if indisponivel:
-                        ui.badge("INDISPONÍVEL", color="orange-2").props(
-                            "text-color=orange-10 outline dense").tooltip(
-                            "Desativado ou ainda sem rota ativa — vínculo já pode ser definido agora")
-                s = ui.select(OPCOES_PAPEL, value=atual.get(chave, ""),
-                              on_change=None).props("outlined dense").classes("min-w-[220px]")
-                selecoes[chave] = s
-    return selecoes, meta
+    try:
+        atual = {c: "" for c, n, i, r, a in autenticacao.modulos_registrados()}
+        if nome_usuario is None:
+            for c in gest.ACESSO_PADRAO_NOVO_USUARIO:
+                if c in atual:
+                    atual[c] = "comum"
+        meta = {}
+        if nome_usuario:
+            for chave, papel, liberado_por, data in gest.listar_acessos(nome_usuario):
+                atual[chave] = papel
+                meta[chave] = f"{liberado_por} · {(data or '')[:16]}"
+        desat = {c for c, n, i, r, a in autenticacao.modulos_registrados() if not a}
+        selecoes = {}
+        with container:
+            for chave, nome, icone, rota, ativo in autenticacao.modulos_registrados():
+                indisponivel = not ativo
+                with ui.row().classes("w-full items-center justify-between py-0.5 flex-wrap"):
+                    with ui.row().classes("items-center gap-2 min-w-[190px]"):
+                        ui.icon(icone).classes("text-primary" if not indisponivel else "text-orange-9")
+                        ui.label(nome).classes("text-body2")
+                        if indisponivel:
+                            ui.badge("INDISPONÍVEL", color="orange-2").props(
+                                "text-color=orange-10 outline dense").tooltip(
+                                "Desativado ou ainda sem rota ativa — vínculo já pode ser definido agora")
+                    s = ui.select(OPCOES_PAPEL, value=atual.get(chave, ""),
+                                  on_change=None).props("outlined dense").classes("min-w-[220px]")
+                    selecoes[chave] = s
+        return selecoes, meta
+    except Exception:
+        log.exception(f"_seletores_de_acesso: falha ao montar seletores de {nome_usuario}")
+        notificar("Erro ao carregar acessos por módulo", type="negative")
+        return {}, {}
 
 
 def _aplicar_acessos(ator, nome_usuario, selecoes):
     """Compara seletores com o estado atual e aplica só as diferenças."""
-    atual_map = {c: None for c, n, i, r, a in autenticacao.modulos_registrados()}
-    for chave, papel, *_ in gest.listar_acessos(nome_usuario):
-        atual_map[chave] = papel
-    erros, mudou = [], 0
-    for chave, s in selecoes.items():
-        novo = s.value or None
-        if novo != atual_map.get(chave):
-            ok, msg = gest.definir_acesso(ator, nome_usuario, chave, novo)
-            if ok:
-                mudou += 1
-            else:
-                erros.append(msg)
-    return mudou, erros
+    try:
+        atual_map = {c: None for c, n, i, r, a in autenticacao.modulos_registrados()}
+        for chave, papel, *_ in gest.listar_acessos(nome_usuario):
+            atual_map[chave] = papel
+        erros, mudou = [], 0
+        for chave, s in selecoes.items():
+            novo = s.value or None
+            if novo != atual_map.get(chave):
+                ok, msg = gest.definir_acesso(ator, nome_usuario, chave, novo)
+                if ok:
+                    mudou += 1
+                else:
+                    erros.append(msg)
+        return mudou, erros
+    except Exception:
+        log.exception(f"_aplicar_acessos: falha ao aplicar acessos de {nome_usuario} por {ator}")
+        notificar("Erro inesperado ao aplicar acessos", type="negative")
+        return 0, ["Erro inesperado ao aplicar acessos"]
 
 
 # ==================== ABA 1: USUÁRIOS ====================
@@ -269,6 +299,13 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
         return linhas
 
     def render():
+        try:
+            _render_seguro()
+        except Exception:
+            log.exception("painel_usuarios: falha ao renderizar lista de usuários")
+            notificar("Erro ao atualizar a lista de usuários", type="error")
+
+    def _render_seguro():
         container.clear()
         pendentes = autenticacao.usuarios_com_troca_pendente()
         sessoes_cnt = gest.sessoes_ativas_por_usuario()
@@ -441,10 +478,14 @@ def _gest_bloq(ator, nome, bloquear):
     no loguru e notifica o resultado (positivo/negativo) com o timeout
     configurado (`notificacao_timeout`).
     """
-    ok, msg = gest.bloquear_usuario(ator, nome, bloquear)
-    if not ok:
-        log.error(f"_gest_bloq: falha ao {'bloquear' if bloquear else 'restaurar'} {nome} por {ator} | {msg}")
-    notificar(msg, type="positive" if ok else "negative")
+    try:
+        ok, msg = gest.bloquear_usuario(ator, nome, bloquear)
+        if not ok:
+            log.error(f"_gest_bloq: falha ao {'bloquear' if bloquear else 'restaurar'} {nome} por {ator} | {msg}")
+        notificar(msg, type="positive" if ok else "negative")
+    except Exception:
+        log.exception(f"_gest_bloq: falha ao {'bloquear' if bloquear else 'restaurar'} {nome}")
+        notificar("Erro inesperado ao operar a conta", type="error")
 
 
 def _dlg_sessoes(ator, nome):
@@ -455,6 +496,15 @@ def _dlg_sessoes(ator, nome):
     ações de encerramento padronizadas (`botao_icone` na grade, `botao`
     primário compacto no rodapé às extremidades).
     """
+    try:
+        _dlg_sessoes_seguro(ator, nome)
+    except Exception:
+        log.exception(f"_dlg_sessoes: falha ao abrir sessões de {nome}")
+        notificar("Erro ao abrir sessões do usuário", type="negative")
+
+
+def _dlg_sessoes_seguro(ator, nome):
+    """Body of `_dlg_sessoes`, isolated so the entry point can protect it."""
     from datetime import datetime
 
     def _duracao(entrada, saida):
@@ -485,6 +535,13 @@ def _dlg_sessoes(ator, nome):
             box_hist = ui.column().classes("w-full")
 
             def refresh_interno():
+                try:
+                    _pintar_sessoes()
+                except Exception:
+                    log.exception(f"_dlg_sessoes: falha ao atualizar sessões de {nome}")
+                    notificar("Erro ao atualizar sessões de usuário", type="error")
+
+            def _pintar_sessoes():
                 box_ativas.clear()
                 ativas = gest.listar_sessoes_ativas(nome)
                 with box_ativas:
@@ -553,6 +610,15 @@ def _dlg_novo(ator, refresh):
     `notificar` e rodapé padrão (`rodape_dialogo`) com "Criar usuário"
     (primário compacto do tema).
     """
+    try:
+        _dlg_novo_seguro(ator, refresh)
+    except Exception:
+        log.exception(f"_dlg_novo: falha ao abrir criação de usuário por {ator}")
+        notificar("Erro ao abrir criação de usuário", type="negative")
+
+
+def _dlg_novo_seguro(ator, refresh):
+    """Body of `_dlg_novo`, isolated so the entry point can protect it."""
     with dialogo_card(largura="w-full max-w-[560px] mx-4", chave_modulo="usuarios") as (dlg, card):
         with ui.card_section().classes("w-full overflow-auto gap-2"):
             ui.label("Novo usuário").classes("text-h6")
@@ -582,25 +648,29 @@ def _dlg_novo(ator, refresh):
             selecoes, _meta = _seletores_de_acesso(box)
 
             def salvar():
-                senha_padrao = (senha.value or "").strip() or "123456"
-                ok, msg = gest.criar_usuario(ator, nome.value or "", senha_padrao,
-                                             email=email.value.strip() or None,
-                                             fone=fone.value.strip() or None,
-                                             perfil=perfil.value,
-                                             nome_completo=completo.value)
-                if not ok:
-                    log.error(f"novo_usuario: falha ao criar '{nome.value}' por {ator} | {msg}")
-                    notificar(msg, type="negative")
-                    return
-                mudou, erros = _aplicar_acessos(ator, nome.value.strip(), selecoes)
-                if erros:
-                    notificar(f"Usuário criado, mas houve erros nos acessos: {' | '.join(erros)}",
-                              type="warning")
-                else:
-                    notificar(f"Usuário '{nome.value.strip()}' criado" +
-                              (f" com {mudou} acesso(s)" if mudou else ""), type="positive")
-                dlg.close()
-                refresh()
+                try:
+                    senha_padrao = (senha.value or "").strip() or "123456"
+                    ok, msg = gest.criar_usuario(ator, nome.value or "", senha_padrao,
+                                                 email=email.value.strip() or None,
+                                                 fone=fone.value.strip() or None,
+                                                 perfil=perfil.value,
+                                                 nome_completo=completo.value)
+                    if not ok:
+                        log.error(f"novo_usuario: falha ao criar '{nome.value}' por {ator} | {msg}")
+                        notificar(msg, type="negative")
+                        return
+                    mudou, erros = _aplicar_acessos(ator, nome.value.strip(), selecoes)
+                    if erros:
+                        notificar(f"Usuário criado, mas houve erros nos acessos: {' | '.join(erros)}",
+                                  type="warning")
+                    else:
+                        notificar(f"Usuário '{nome.value.strip()}' criado" +
+                                  (f" com {mudou} acesso(s)" if mudou else ""), type="positive")
+                    dlg.close()
+                    refresh()
+                except Exception:
+                    log.exception(f"novo_usuario: falha ao criar usuário por {ator}")
+                    notificar("Erro inesperado ao criar usuário", type="error")
 
             rodape_dialogo(dlg, acoes=[("Criar usuário", salvar)],
                            chave_modulo="usuarios", classes_extra="mt-3")
@@ -617,6 +687,15 @@ def _dlg_editar(ator, nome_atual, refresh):
     via `dialogo_card`, notificações via `notificar` e rodapé padrão com
     "Salvar alterações" (primário compacto do tema + ícone save).
     """
+    try:
+        _dlg_editar_seguro(ator, nome_atual, refresh)
+    except Exception:
+        log.exception(f"_dlg_editar: falha ao abrir edição de {nome_atual} por {ator}")
+        notificar("Erro ao abrir edição de usuário", type="negative")
+
+
+def _dlg_editar_seguro(ator, nome_atual, refresh):
+    """Body of `_dlg_editar`, isolated so the entry point can protect it."""
     row = gest.obter_usuario(nome_atual)
     if not row:
         notificar("Usuário não encontrado", type="negative")
@@ -650,29 +729,33 @@ def _dlg_editar(ator, nome_atual, refresh):
             selecoes, meta = _seletores_de_acesso(box, nome_atual)
 
             def salvar():
-                erros = []
-                alvo = nome_atual
-                if (novo_nome.value or "").strip() != nome_atual:
-                    ok_r, msg_r = gest.renomear_usuario(ator, nome_atual, novo_nome.value.strip())
-                    if not ok_r:
-                        erros.append(msg_r)
+                try:
+                    erros = []
+                    alvo = nome_atual
+                    if (novo_nome.value or "").strip() != nome_atual:
+                        ok_r, msg_r = gest.renomear_usuario(ator, nome_atual, novo_nome.value.strip())
+                        if not ok_r:
+                            erros.append(msg_r)
+                        else:
+                            alvo = novo_nome.value.strip()
+                    ok_e, msg_e = gest.editar_usuario(ator, alvo, email=email_i.value.strip(),
+                                                      fone=fone_i.value.strip(), perfil=perf_i.value,
+                                                      nome_completo=completo_i.value)
+                    if not ok_e:
+                        erros.append(msg_e)
+                    mudou, erros_a = _aplicar_acessos(ator, alvo, selecoes)
+                    erros.extend(erros_a)
+                    if erros:
+                        log.error(f"editar_usuario: falha ao atualizar {nome_atual} por {ator} | {' | '.join(erros)}")
+                        notificar(" | ".join(erros), type="negative")
                     else:
-                        alvo = novo_nome.value.strip()
-                ok_e, msg_e = gest.editar_usuario(ator, alvo, email=email_i.value.strip(),
-                                                  fone=fone_i.value.strip(), perfil=perf_i.value,
-                                                  nome_completo=completo_i.value)
-                if not ok_e:
-                    erros.append(msg_e)
-                mudou, erros_a = _aplicar_acessos(ator, alvo, selecoes)
-                erros.extend(erros_a)
-                if erros:
-                    log.error(f"editar_usuario: falha ao atualizar {nome_atual} por {ator} | {' | '.join(erros)}")
-                    notificar(" | ".join(erros), type="negative")
-                else:
-                    notificar("Usuário atualizado" +
-                              (f" ({mudou} acesso(s) alterado(s))" if mudou else ""), type="positive")
-                    dlg.close()
-                    refresh()
+                        notificar("Usuário atualizado" +
+                                  (f" ({mudou} acesso(s) alterado(s))" if mudou else ""), type="positive")
+                        dlg.close()
+                        refresh()
+                except Exception:
+                    log.exception(f"editar_usuario: falha ao atualizar {nome_atual} por {ator}")
+                    notificar("Erro inesperado ao atualizar usuário", type="error")
 
             rodape_dialogo(dlg, acoes=[("Salvar alterações", salvar, {"icone": "save"})],
                            chave_modulo="usuarios", classes_extra="mt-3")
@@ -690,6 +773,15 @@ def _dlg_senha(ator, nome):
     campo mostra o mínimo vigente via `gest.senha_minima()` (chave
     `usuarios_senha_min`).
     """
+    try:
+        _dlg_senha_seguro(ator, nome)
+    except Exception:
+        log.exception(f"_dlg_senha: falha ao abrir redefinição de senha de {nome} por {ator}")
+        notificar("Erro ao abrir redefinição de senha", type="negative")
+
+
+def _dlg_senha_seguro(ator, nome):
+    """Body of `_dlg_senha`, isolated so the entry point can protect it."""
     with dialogo_card(largura="w-[380px]", chave_modulo="usuarios",
                       max_altura=False) as (dlg, card):
         ui.label(f"Redefinir senha — {nome}").classes("text-h6")
@@ -699,12 +791,16 @@ def _dlg_senha(ator, nome):
                         password_toggle_button=True).props("outlined dense").classes("w-full")
 
         def salvar():
-            ok, msg = gest.alterar_senha_admin(ator, nome, nova.value or "")
-            if not ok:
-                log.error(f"redefinir_senha: falha para {nome} por {ator} | {msg}")
-            notificar(msg, type="positive" if ok else "negative")
-            if ok:
-                dlg.close()
+            try:
+                ok, msg = gest.alterar_senha_admin(ator, nome, nova.value or "")
+                if not ok:
+                    log.error(f"redefinir_senha: falha para {nome} por {ator} | {msg}")
+                notificar(msg, type="positive" if ok else "negative")
+                if ok:
+                    dlg.close()
+            except Exception:
+                log.exception(f"redefinir_senha: falha para {nome} por {ator}")
+                notificar("Erro inesperado ao redefinir senha", type="error")
 
         rodape_dialogo(dlg, acoes=[("Redefinir", salvar, {"cor": "amber-8"})],
                        chave_modulo="usuarios", classes_extra="mt-2")
@@ -721,6 +817,15 @@ def _dlg_excluir(ator, nome, refresh):
     (`justify-between` não é o padrão do `rodape_dialogo`), com a ação via
     `botao` primário compacto.
     """
+    try:
+        _dlg_excluir_seguro(ator, nome, refresh)
+    except Exception:
+        log.exception(f"_dlg_excluir: falha ao abrir exclusão lógica de {nome} por {ator}")
+        notificar("Erro ao abrir exclusão de usuário", type="negative")
+
+
+def _dlg_excluir_seguro(ator, nome, refresh):
+    """Body of `_dlg_excluir`, isolated so the entry point can protect it."""
     with dialogo_card(largura="w-[440px]", chave_modulo="usuarios",
                       max_altura=False) as (dlg, card):
         card.classes("border-2 border-orange-5")
@@ -738,13 +843,17 @@ def _dlg_excluir(ator, nome, refresh):
             .props("outlined dense autogrow").classes("w-full")
 
         def excluir():
-            ok, msg = gest.soft_delete_usuario(ator, nome, motivo.value)
-            if not ok:
-                log.error(f"excluir_usuario: falha na exclusão lógica de {nome} por {ator} | {msg}")
-            notificar(msg, type="positive" if ok else "negative")
-            if ok:
-                dlg.close()
-                refresh()
+            try:
+                ok, msg = gest.soft_delete_usuario(ator, nome, motivo.value)
+                if not ok:
+                    log.error(f"excluir_usuario: falha na exclusão lógica de {nome} por {ator} | {msg}")
+                notificar(msg, type="positive" if ok else "negative")
+                if ok:
+                    dlg.close()
+                    refresh()
+            except Exception:
+                log.exception(f"excluir_usuario: falha na exclusão lógica de {nome} por {ator}")
+                notificar("Erro inesperado ao excluir usuário", type="error")
 
         with ui.row().classes("w-full justify-between mt-2"):
             botao("Cancelar", on_click=dlg.close, variante="texto",
@@ -765,6 +874,15 @@ def _dlg_excluir_definitivo(ator, nome, refresh):
     vermelha (`dialogo_card` + classes extras); rodapé às extremidades
     mantido cru, ação via `botao` primário compacto.
     """
+    try:
+        _dlg_excluir_definitivo_seguro(ator, nome, refresh)
+    except Exception:
+        log.exception(f"_dlg_excluir_definitivo: falha ao abrir exclusão definitiva de {nome} por {ator}")
+        notificar("Erro ao abrir exclusão definitiva", type="negative")
+
+
+def _dlg_excluir_definitivo_seguro(ator, nome, refresh):
+    """Body of `_dlg_excluir_definitivo`, isolated so the entry point can protect it."""
     with dialogo_card(largura="w-[440px]", chave_modulo="usuarios",
                       max_altura=False) as (dlg, card):
         card.classes("border-2 border-red-6")
@@ -780,16 +898,20 @@ def _dlg_excluir_definitivo(ator, nome, refresh):
         confirmacao = ui.input(f'Digite "{nome}" para confirmar').props("outlined dense").classes("w-full")
 
         def excluir():
-            if confirmacao.value != nome:
-                notificar("Confirmação não corresponde", type="negative")
-                return
-            ok, msg = gest.excluir_usuario_definitivo(ator, nome)
-            if not ok:
-                log.error(f"excluir_definitivo: falha ao excluir {nome} por {ator} | {msg}")
-            notificar(msg, type="positive" if ok else "negative")
-            if ok:
-                dlg.close()
-                refresh()
+            try:
+                if confirmacao.value != nome:
+                    notificar("Confirmação não corresponde", type="negative")
+                    return
+                ok, msg = gest.excluir_usuario_definitivo(ator, nome)
+                if not ok:
+                    log.error(f"excluir_definitivo: falha ao excluir {nome} por {ator} | {msg}")
+                notificar(msg, type="positive" if ok else "negative")
+                if ok:
+                    dlg.close()
+                    refresh()
+            except Exception:
+                log.exception(f"excluir_definitivo: falha ao excluir {nome} por {ator}")
+                notificar("Erro inesperado ao excluir definitivamente", type="error")
 
         with ui.row().classes("w-full justify-between mt-2"):
             botao("Cancelar", on_click=dlg.close, variante="texto",
@@ -811,6 +933,15 @@ def _dlg_duplicar(ator, origem, refresh):
     "Duplicar usuário" (teal-8 + ícone content_copy). O label do campo de
     senha mostra o mínimo vigente via `gest.senha_minima()`.
     """
+    try:
+        _dlg_duplicar_seguro(ator, origem, refresh)
+    except Exception:
+        log.exception(f"_dlg_duplicar: falha ao abrir duplicação de {origem} por {ator}")
+        notificar("Erro ao abrir duplicação de usuário", type="negative")
+
+
+def _dlg_duplicar_seguro(ator, origem, refresh):
+    """Body of `_dlg_duplicar`, isolated so the entry point can protect it."""
     row = gest.obter_usuario(origem)
     if not row:
         notificar("Usuário origem não encontrado", type="negative")
@@ -847,25 +978,29 @@ def _dlg_duplicar(ator, origem, refresh):
             selecoes, _meta = _seletores_de_acesso(box, origem)
 
             def salvar():
-                senha_padrao = (senha.value or "").strip() or "123456"
-                ok, msg = gest.duplicar_usuario(ator, origem, nome.value or "",
-                                                senha_padrao,
-                                                email=email.value.strip() or None,
-                                                fone=fone.value.strip() or None,
-                                                nome_completo=completo.value)
-                if not ok:
-                    log.error(f"duplicar_usuario: falha ao duplicar '{nome.value}' por {ator} | {msg}")
-                    notificar(msg, type="negative")
-                    return
-                mudou, erros = _aplicar_acessos(ator, nome.value.strip(), selecoes)
-                if erros:
-                    notificar(f"Usuário duplicado, mas houve erros nos acessos: {' | '.join(erros)}",
-                              type="warning")
-                else:
-                    notificar(f"Usuário '{nome.value.strip()}' duplicado de @{origem}"
-                              + (f" · {mudou} acesso(s)" if mudou else ""), type="positive")
-                dlg.close()
-                refresh()
+                try:
+                    senha_padrao = (senha.value or "").strip() or "123456"
+                    ok, msg = gest.duplicar_usuario(ator, origem, nome.value or "",
+                                                    senha_padrao,
+                                                    email=email.value.strip() or None,
+                                                    fone=fone.value.strip() or None,
+                                                    nome_completo=completo.value)
+                    if not ok:
+                        log.error(f"duplicar_usuario: falha ao duplicar '{nome.value}' por {ator} | {msg}")
+                        notificar(msg, type="negative")
+                        return
+                    mudou, erros = _aplicar_acessos(ator, nome.value.strip(), selecoes)
+                    if erros:
+                        notificar(f"Usuário duplicado, mas houve erros nos acessos: {' | '.join(erros)}",
+                                  type="warning")
+                    else:
+                        notificar(f"Usuário '{nome.value.strip()}' duplicado de @{origem}"
+                                  + (f" · {mudou} acesso(s)" if mudou else ""), type="positive")
+                    dlg.close()
+                    refresh()
+                except Exception:
+                    log.exception(f"duplicar_usuario: falha ao duplicar '{nome.value}' por {ator}")
+                    notificar("Erro inesperado ao duplicar usuário", type="error")
 
             rodape_dialogo(dlg, acoes=[("Duplicar usuário", salvar,
                                         {"icone": "content_copy", "cor": "teal-8"})],
@@ -886,40 +1021,44 @@ def _painel_sessoes(ator: str, refreshers=None):
     box = ui.column().classes("w-full gap-2")
 
     def refresh():
-        box.clear()
-        sessoes = gest.listar_sessoes_ativas()
-        with box:
-            with ui.row().classes("w-full justify-between items-center flex-wrap"):
-                ui.label(f"{len(sessoes)} sessão(ões) ativa(s)").classes("text-subtitle1 font-bold")
-                botao("Atualizar", icone="refresh", on_click=refresh,
-                    variante="texto", chave_modulo="usuarios")
-            if not sessoes:
-                ui.label("Nenhuma sessão ativa no momento.").classes("text-grey-6")
-            with ui.grid(columns="auto 1fr 0.9fr 1.2fr 1fr auto auto").classes(
-                    "w-full bg-grey-1 rounded-lg px-3 py-2 text-caption font-bold text-grey-8"):
-                for c in ("#", "Usuário", "Origem", "Login", "IP", "Dispositivo", "", ""):
-                    ui.label(c)
-            for sid, usuario, modulo, login, cookie, ip, disp, mac in sessoes:
+        try:
+            box.clear()
+            sessoes = gest.listar_sessoes_ativas()
+            with box:
+                with ui.row().classes("w-full justify-between items-center flex-wrap"):
+                    ui.label(f"{len(sessoes)} sessão(ões) ativa(s)").classes("text-subtitle1 font-bold")
+                    botao("Atualizar", icone="refresh", on_click=refresh,
+                        variante="texto", chave_modulo="usuarios")
+                if not sessoes:
+                    ui.label("Nenhuma sessão ativa no momento.").classes("text-grey-6")
                 with ui.grid(columns="auto 1fr 0.9fr 1.2fr 1fr auto auto").classes(
-                        "w-full border-b border-grey-2 px-3 py-1.5 items-center"):
-                    with ui.column().classes("gap-0 leading-tight items-start"):
-                        ui.label(str(sid)).classes("text-caption text-grey-6")
-                        if mac and mac != "—":
-                            ui.icon("fingerprint").classes("text-grey-5 text-xs") \
-                                .tooltip(f"MAC: {mac}")
-                    ui.label(usuario).classes("font-medium")
-                    ui.label(modulo or "sistema").classes("text-caption")
-                    ui.label((login or "").replace("T", " ")[:19]).classes("text-caption")
-                    ui.label(ip).classes("text-caption font-mono")
-                    ui.label(disp).classes("text-caption")
-                    botao_icone("cancel_schedule_send", on_click=lambda _, u=usuario: (
-                        gest.encerrar_todas_sessoes(ator, u), refresh()),
-                        cor="deep-purple-8",
-                        tooltip=f"Encerrar TODAS as sessões de {usuario}",
-                        chave_modulo="usuarios")
-                    botao_icone("logout", on_click=lambda _, i=sid: (
-                        gest.encerrar_sessao(ator, i), refresh()),
-                        cor="red-8", tooltip="Encerrar esta sessão",
-                        chave_modulo="usuarios")
+                        "w-full bg-grey-1 rounded-lg px-3 py-2 text-caption font-bold text-grey-8"):
+                    for c in ("#", "Usuário", "Origem", "Login", "IP", "Dispositivo", "", ""):
+                        ui.label(c)
+                for sid, usuario, modulo, login, cookie, ip, disp, mac in sessoes:
+                    with ui.grid(columns="auto 1fr 0.9fr 1.2fr 1fr auto auto").classes(
+                            "w-full border-b border-grey-2 px-3 py-1.5 items-center"):
+                        with ui.column().classes("gap-0 leading-tight items-start"):
+                            ui.label(str(sid)).classes("text-caption text-grey-6")
+                            if mac and mac != "—":
+                                ui.icon("fingerprint").classes("text-grey-5 text-xs") \
+                                    .tooltip(f"MAC: {mac}")
+                        ui.label(usuario).classes("font-medium")
+                        ui.label(modulo or "sistema").classes("text-caption")
+                        ui.label((login or "").replace("T", " ")[:19]).classes("text-caption")
+                        ui.label(ip).classes("text-caption font-mono")
+                        ui.label(disp).classes("text-caption")
+                        botao_icone("cancel_schedule_send", on_click=lambda _, u=usuario: (
+                            gest.encerrar_todas_sessoes(ator, u), refresh()),
+                            cor="deep-purple-8",
+                            tooltip=f"Encerrar TODAS as sessões de {usuario}",
+                            chave_modulo="usuarios")
+                        botao_icone("logout", on_click=lambda _, i=sid: (
+                            gest.encerrar_sessao(ator, i), refresh()),
+                            cor="red-8", tooltip="Encerrar esta sessão",
+                            chave_modulo="usuarios")
+        except Exception:
+            log.exception("painel_sessoes: falha ao atualizar sessões ativas")
+            notificar("Erro ao atualizar sessões ativas", type="error")
 
     refresh()

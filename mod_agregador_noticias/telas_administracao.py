@@ -185,7 +185,7 @@ def mostrar_administracao(usuario_logado: str = ""):
         rodape_salvar_restaurar(salvar_temas, restaurar_temas, chave_modulo="agregador_noticias", rotulo_salvar="Salvar temas", data_testid="agregador-salvar-temas")
 
     # === Card Censura — palavras bloqueadas ===
-    with card_admin("Censura de conteúdo — palavras bloqueadas", icone="block", chave_modulo="agregador_noticias", grade=False):
+    with card_admin("Censura de conteúdo — palavras bloqueadas", icone="lock", chave_modulo="agregador_noticias", grade=False):
         ui.label("Títulos com estas palavras são descartados na coleta e ocultados na TV (ex: tinder, suicídio). Separe por vírgula, ponto e vírgula ou linha. Vale para Blog e Agregador.").classes("text-caption text-grey-6")
         from mod_intranet.censura import obter_palavras_bloqueadas, definir_palavras_bloqueadas
         palavras_atuais = ", ".join(obter_palavras_bloqueadas())

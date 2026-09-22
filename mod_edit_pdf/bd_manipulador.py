@@ -18,8 +18,12 @@ from mod_intranet.bd_manipulador import audit_log
 
 def _log():
     """Logger do módulo (loguru) — arquivo dedicado logs/edit_pdf_<data>.log."""
-    from mod_intranet import observabilidade
-    return observabilidade.get_logger("edit_pdf")
+    try:
+        from mod_intranet import observabilidade
+        return observabilidade.get_logger("edit_pdf")
+    except Exception as e:
+        _log().exception(f"_log falhou: {e}")
+        return None
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -91,12 +95,16 @@ def _conn():
 
     Conexão via `banco_conexao.conexao` — SQLite (db_mod_edit_pdf.db, WAL)
     ou PostgreSQL (schema `editar_pdf`)."""
-    from mod_intranet.banco_conexao import conexao
-    conn = conexao("editar_pdf")
-    if conn is None:
-        raise RuntimeError("Falha ao abrir conexão do módulo Editor de PDF")
-    conn.execute("PRAGMA journal_mode=WAL")
-    return conn
+    try:
+        from mod_intranet.banco_conexao import conexao
+        conn = conexao("editar_pdf")
+        if conn is None:
+            raise RuntimeError("Falha ao abrir conexão do módulo Editor de PDF")
+        conn.execute("PRAGMA journal_mode=WAL")
+        return conn
+    except Exception as e:
+        _log().exception(f"_conn falhou: {e}")
+        return None
 
 
 def init_db_pdf():
@@ -106,30 +114,34 @@ def init_db_pdf():
     data_operacao, ativo) e `tb_cota_disco` (usuario PK, total_usado_bytes,
     atualizado_em) em `db_mod_edit_pdf.db` (WAL), e semeia a versão individual
     do módulo na `tb_config` central. Executado no import e pelo bootstrap."""
-    conn = _conn()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS tb_arquivos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome_arquivo TEXT NOT NULL,
-            usuario TEXT NOT NULL,
-            tamanho_bytes INTEGER NOT NULL,
-            operacao TEXT NOT NULL,
-            data_operacao DATETIME DEFAULT CURRENT_TIMESTAMP,
-            ativo INTEGER NOT NULL DEFAULT 1
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS tb_cota_disco (
-            usuario TEXT PRIMARY KEY,
-            total_usado_bytes INTEGER NOT NULL DEFAULT 0,
-            atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
+    try:
+        conn = _conn()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS tb_arquivos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome_arquivo TEXT NOT NULL,
+                usuario TEXT NOT NULL,
+                tamanho_bytes INTEGER NOT NULL,
+                operacao TEXT NOT NULL,
+                data_operacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                ativo INTEGER NOT NULL DEFAULT 1
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS tb_cota_disco (
+                usuario TEXT PRIMARY KEY,
+                total_usado_bytes INTEGER NOT NULL DEFAULT 0,
+                atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        conn.close()
 
-    _semear_versao_modulo()
+        _semear_versao_modulo()
+    except Exception as e:
+        _log().exception(f"init_db_pdf falhou: {e}")
+        return None
 
 
 def _semear_versao_modulo():
@@ -152,22 +164,30 @@ def _semear_versao_modulo():
 
 def pasta_usuario(usuario):
     """Returns (and creates if missing) the user's folder inside editorPDF/."""
-    p = os.path.join(PASTA_EDITOR, usuario)
-    os.makedirs(p, exist_ok=True)
-    return p
+    try:
+        p = os.path.join(PASTA_EDITOR, usuario)
+        os.makedirs(p, exist_ok=True)
+        return p
+    except Exception as e:
+        _log().exception(f"pasta_usuario falhou: {e}")
+        return None
 
 
 def uso_global_bytes():
     """Real disk usage of the editorPDF directory (all users, walked on disk)."""
-    total = 0
-    if os.path.isdir(PASTA_EDITOR):
-        for root, _dirs, files in os.walk(PASTA_EDITOR):
-            for f in files:
-                try:
-                    total += os.path.getsize(os.path.join(root, f))
-                except OSError:
-                    pass
-    return total
+    try:
+        total = 0
+        if os.path.isdir(PASTA_EDITOR):
+            for root, _dirs, files in os.walk(PASTA_EDITOR):
+                for f in files:
+                    try:
+                        total += os.path.getsize(os.path.join(root, f))
+                    except OSError:
+                        pass
+        return total
+    except Exception as e:
+        _log().exception(f"uso_global_bytes falhou: {e}")
+        return None
 
 
 def nome_padronizado(usuario, operacao, nome_original):
@@ -175,9 +195,13 @@ def nome_padronizado(usuario, operacao, nome_original):
 
     O nome original é sanitizado (só alfanuméricos/._- e espaço, máx. 60
     chars) — cada usuário vê apenas os próprios arquivos."""
-    stamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    seguro = "".join(c for c in (nome_original or "arquivo") if c.isalnum() or c in "._- ")[:60].strip()
-    return f"{stamp}_{usuario}_{operacao}_{seguro}"
+    try:
+        stamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        seguro = "".join(c for c in (nome_original or "arquivo") if c.isalnum() or c in "._- ")[:60].strip()
+        return f"{stamp}_{usuario}_{operacao}_{seguro}"
+    except Exception as e:
+        _log().exception(f"nome_padronizado falhou: {e}")
+        return None
 
 
 def _cota_global_bytes():
@@ -259,8 +283,12 @@ def registrar_arquivo(usuario, caminho_fisico, operacao, tamanho_bytes=None):
 
 def ui_notify_erro(msg):  # isolado para não acoplar UI na lógica
     """Reports a quota error to console + loguru (UI kept out of the logic)."""
-    print(f"[quota] {msg}")
-    _log().error(f"[quota] {msg}")
+    try:
+        print(f"[quota] {msg}")
+        _log().error(f"[quota] {msg}")
+    except Exception as e:
+        _log().exception(f"ui_notify_erro falhou: {e}")
+        return None
 
 
 def obter_meus_arquivos(usuario):
@@ -327,8 +355,12 @@ from mod_intranet.pdf_operacoes import (
 
 def zip_do_usuario(usuario):
     """Zips ALL active files of the user. Returns the ZIP path."""
-    arquivos = obter_meus_arquivos(usuario)
-    return _zipar(usuario, arquivos)
+    try:
+        arquivos = obter_meus_arquivos(usuario)
+        return _zipar(usuario, arquivos)
+    except Exception as e:
+        _log().exception(f"zip_do_usuario falhou: {e}")
+        return None
 
 
 def zip_por_ids(usuario, ids):
@@ -352,25 +384,29 @@ def zip_por_ids(usuario, ids):
 
 def _zipar(usuario, arquivos):
     """Writes the ZIP into the user's folder; removes it if nothing was included."""
-    if not arquivos:
+    try:
+        if not arquivos:
+            return None
+        pasta = pasta_usuario(usuario)
+        stamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        zip_path = os.path.join(pasta, f"{usuario}_{stamp}_selecao.zip")
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+            incluidos = 0
+            for _id, nome, _tam, _op, _dt in arquivos:
+                caminho = os.path.join(pasta, nome)
+                if os.path.exists(caminho):
+                    z.write(caminho, nome)
+                    incluidos += 1
+        if not incluidos:
+            try:
+                os.remove(zip_path)
+            except OSError:
+                pass
+            return None
+        return zip_path
+    except Exception as e:
+        _log().exception(f"_zipar falhou: {e}")
         return None
-    pasta = pasta_usuario(usuario)
-    stamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    zip_path = os.path.join(pasta, f"{usuario}_{stamp}_selecao.zip")
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
-        incluidos = 0
-        for _id, nome, _tam, _op, _dt in arquivos:
-            caminho = os.path.join(pasta, nome)
-            if os.path.exists(caminho):
-                z.write(caminho, nome)
-                incluidos += 1
-    if not incluidos:
-        try:
-            os.remove(zip_path)
-        except OSError:
-            pass
-        return None
-    return zip_path
 
 
 def deletar_arquivo(usuario, arquivo_id):

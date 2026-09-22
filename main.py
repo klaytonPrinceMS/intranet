@@ -127,7 +127,12 @@ def iniciar_agendador():
     """Delega ao rotinas: um job de backup POR módulo (intervalo individual
     configurável em /configuracoes, aplicável sem restart) + limpeza do editorPDF."""
     from mod_intranet import rotinas
-    return rotinas.iniciar_agendador()
+    try:
+        return rotinas.iniciar_agendador()
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "iniciar_agendador: falha ao iniciar o agendador: %s", e)
+        raise
 
 
 # ================== CSS FRAMEWORKS EMBARCADOS (assets/css/frameworks) ==================
@@ -187,280 +192,305 @@ if not os.path.exists(FAVICON_ATUAL):
 # ================== PÁGINA DE LOGIN ==================
 @ui.page("/login")
 def page_login():
-    from mod_intranet.bd_conexao import get_config
-    cor = get_config("cor_principal", "#000000") or "#000000"
-    icone = (get_config("icone_sistema", "hub") or "hub").strip()
-    titulo_login = get_config("texto_login_titulo", "INTRANET Básica") or "INTRANET Básica"
-    subtitulo = get_config("texto_login_subtitulo", "Acesso restrito a usuários autorizados")
-    hint = get_config("texto_login_hint",
-                      "Novos usuários? Procure o DTI para realizar o seu cadastro.")
-    ui.colors(primary=cor)
-    fundo_login = get_config("cor_fundo", "#EEEEEE") or "#EEEEEE"
-    ui.query("body").style(f"background:{fundo_login}")
     try:
-        ui.query(".q-page").style(f"background-color:{fundo_login}")
-    except Exception:
-        pass
-    import json as _json
-    ui.run_javascript(f"document.title = {_json.dumps(titulo_login)}")
-    # favicon com cache-busting: ?v muda quando o .ico é trocado
-    from mod_intranet.bd_conexao import favicon_versao
-    ui.add_head_html(
-        f'<link rel="icon" type="image/x-icon" href="/favicon.ico?v={favicon_versao()}">')
+        from mod_intranet.bd_conexao import get_config
+        cor = get_config("cor_principal", "#000000") or "#000000"
+        icone = (get_config("icone_sistema", "hub") or "hub").strip()
+        titulo_login = get_config("texto_login_titulo", "INTRANET Básica") or "INTRANET Básica"
+        subtitulo = get_config("texto_login_subtitulo", "Acesso restrito a usuários autorizados")
+        hint = get_config("texto_login_hint",
+                          "Novos usuários? Procure o DTI para realizar o seu cadastro.")
+        ui.colors(primary=cor)
+        fundo_login = get_config("cor_fundo", "#EEEEEE") or "#EEEEEE"
+        ui.query("body").style(f"background:{fundo_login}")
+        try:
+            ui.query(".q-page").style(f"background-color:{fundo_login}")
+        except Exception:
+            pass
+        import json as _json
+        ui.run_javascript(f"document.title = {_json.dumps(titulo_login)}")
+        # favicon com cache-busting: ?v muda quando o .ico é trocado
+        from mod_intranet.bd_conexao import favicon_versao
+        ui.add_head_html(
+            f'<link rel="icon" type="image/x-icon" href="/favicon.ico?v={favicon_versao()}">')
 
-    # Se já logado, vai direto pro dashboard
-    if app.storage.user.get("usuario"):
-        ui.navigate.to("/")
-        return
+        # Se já logado, vai direto pro dashboard
+        if app.storage.user.get("usuario"):
+            ui.navigate.to("/")
+            return
 
-    with ui.row().classes("w-full h-screen items-center justify-center p-4").style("min-width: 0"):
-        from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn
-        with ui.card().classes("w-full max-w-[420px] p-6 sm:p-10 shadow-2xl mx-4").style(f"{_estilo_cartao_fn()}; min-width: 0"):
-            with ui.column().classes("items-center w-full gap-1"):
-                ui.icon(icone, size="64px").classes("text-primary")
-                ui.label(titulo_login).classes("text-h5 font-bold text-primary")
-            if subtitulo:
-                ui.label(subtitulo).classes("text-caption text-grey-6 mb-4")
+        with ui.row().classes("w-full h-screen items-center justify-center p-4").style("min-width: 0"):
+            from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn
+            with ui.card().classes("w-full max-w-[420px] p-6 sm:p-10 shadow-2xl mx-4").style(f"{_estilo_cartao_fn()}; min-width: 0"):
+                with ui.column().classes("items-center w-full gap-1"):
+                    ui.icon(icone, size="64px").classes("text-primary")
+                    ui.label(titulo_login).classes("text-h5 font-bold text-primary")
+                if subtitulo:
+                    ui.label(subtitulo).classes("text-caption text-grey-6 mb-4")
 
-            usuario = ui.input("Usuário", placeholder="master").props("outlined dense").classes("w-full") \
-                .props('data-testid=login-usuario')
-            senha = ui.input("Senha", password=True, password_toggle_button=True,
-                             placeholder="master").props(
-                "outlined dense"
-            ).classes("w-full") \
-                .props('data-testid=login-senha')
+                usuario = ui.input("Usuário", placeholder="master").props("outlined dense").classes("w-full") \
+                    .props('data-testid=login-usuario')
+                senha = ui.input("Senha", password=True, password_toggle_button=True,
+                                 placeholder="master").props(
+                    "outlined dense"
+                ).classes("w-full") \
+                    .props('data-testid=login-senha')
 
-            def tentar_login():
-                ok, msg = autenticacao.autenticar(usuario.value or "", senha.value or "")
-                # Observabilidade: registra a tentativa de login (métrica OTel)
-                try:
-                    from mod_intranet.otel_integracao import registrar_login_observabilidade
-                    registrar_login_observabilidade(usuario.value or "", ok)
-                except Exception:
-                    pass
-                if not ok:
-                    notificar(msg, type="negative", position="top")
-                    return
-                nome = (usuario.value or "").strip()
-                perfil = msg  # autenticar retorna o perfil na msg quando ok
-                # hash amarra o cookie do navegador à linha da sessão no banco:
-                # encerrar a sessão pelo admin derruba este navegador no próximo request
-                sessao = autenticacao.registrar_login(nome, "sistema")
-                # Contador padronizado — só logins, nunca navegações/refreshs
-                try:
-                    from mod_intranet.bd_conexao import incrementar_contador_acessos
-                    incrementar_contador_acessos()
-                except Exception:
-                    pass
-                app.storage.user["usuario"] = {"nome": nome, "perfil": perfil, "sessao": sessao}
-                notificar(f"Bem-vindo(a), {nome}!", type="positive")
-                ui.navigate.to("/")
+                def tentar_login():
+                    try:
+                        ok, msg = autenticacao.autenticar(usuario.value or "", senha.value or "")
+                        # Observabilidade: registra a tentativa de login (métrica OTel)
+                        try:
+                            from mod_intranet.otel_integracao import registrar_login_observabilidade
+                            registrar_login_observabilidade(usuario.value or "", ok)
+                        except Exception:
+                            pass
+                        if not ok:
+                            notificar(msg, type="negative", position="top")
+                            return
+                        nome = (usuario.value or "").strip()
+                        perfil = msg  # autenticar retorna o perfil na msg quando ok
+                        # hash amarra o cookie do navegador à linha da sessão no banco:
+                        # encerrar a sessão pelo admin derruba este navegador no próximo request
+                        sessao = autenticacao.registrar_login(nome, "sistema")
+                        # Contador padronizado — só logins, nunca navegações/refreshs
+                        try:
+                            from mod_intranet.bd_conexao import incrementar_contador_acessos
+                            incrementar_contador_acessos()
+                        except Exception:
+                            pass
+                        app.storage.user["usuario"] = {"nome": nome, "perfil": perfil, "sessao": sessao}
+                        notificar(f"Bem-vindo(a), {nome}!", type="positive")
+                        ui.navigate.to("/")
+                    except Exception as e:
+                        observabilidade.get_logger("intranet").exception(
+                            "tentar_login: falha ao autenticar: %s", e)
+                        notificar("Erro ao tentar entrar. Tente novamente.", tipo="error")
 
-            with ui.column().classes("w-full gap-2 mt-4"):
-                from mod_intranet.tema_modulo import botao as _botao_tema
-                _botao_tema("Entrar", on_click=tentar_login, extra_classes="w-full") \
-                    .props('data-testid=login-entrar')
-            ui.label(hint).classes(
-                "text-caption text-grey-6 text-center mt-3"
-            )
+                with ui.column().classes("w-full gap-2 mt-4"):
+                    from mod_intranet.tema_modulo import botao as _botao_tema
+                    _botao_tema("Entrar", on_click=tentar_login, extra_classes="w-full") \
+                        .props('data-testid=login-entrar')
+                ui.label(hint).classes(
+                    "text-caption text-grey-6 text-center mt-3"
+                )
 
-            senha.on("keydown.enter", tentar_login)
+                senha.on("keydown.enter", tentar_login)
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_login: erro ao renderizar a página de login: %s", e)
+        notificar("Erro ao carregar a página de login.", tipo="error")
 
 
 
 # ================== DASHBOARD ==================
 def _orquestrar_resumo_dados():
     """Coleta os 9 contadores do Resumo — 5 base + fila impressão, quarentena, pdf uso, auditoria 24h."""
-    from mod_gest_cad_usuario import bd_manipulador as gest
     try:
-        n_users = len(gest.listar_usuarios(filtro_ativo=None))
-    except Exception:
-        n_users = len(gest.listar_usuarios(filtro_ativo=True))
-    from mod_blog import bd_manipulador as blog
-    n_posts = blog.contar_postagens(ativo=True)
-    from mod_auditoria.bd_manipulador import contar_registros
-    n_logs = contar_registros()
-    # Sessões ativas
-    try:
-        from mod_intranet.bd_conexao import get_connection
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM tb_sessoes WHERE logout_timestamp IS NULL")
-        n_sessoes = cur.fetchone()[0]
-        conn.close()
-    except Exception:
-        n_sessoes = 0
-    # Acessos (logins desde inicio)
-    try:
-        from mod_intranet.bd_conexao import get_config
-        n_acessos = int((get_config("contador_acessos_total", "0") or "0").strip() or 0)
-    except Exception:
-        n_acessos = 0
-    # 1) Fila impressão pendente (status aberto) — via API pública do módulo
-    try:
-        from mod_solicita_impressao import bd_manipulador as _bd_sol
-        n_fila = _bd_sol.contar_solicitacoes_pendentes()
-    except Exception:
-        n_fila = 0
-    # 2) Quarentena empenhos pendente — via API pública do módulo
-    try:
-        from mod_renomear_empenho import bd_manipulador as _bd_emp
-        n_quar = _bd_emp.contar_quarentena_pendente()
-    except Exception:
-        n_quar = 0
-    # 4) Uso PDF global — arquivos ativos — via API pública do módulo
-    try:
-        from mod_edit_pdf import bd_manipulador as _bd_pdf
-        n_pdf = _bd_pdf.contar_arquivos_ativos()
-    except Exception:
-        n_pdf = 0
-    # 5) Auditoria 24h
-    try:
-        from mod_auditoria.bd_manipulador import get_tabelas_auditoria, get_auditoria_connection
-        conn_a = get_auditoria_connection()
-        cur_a = conn_a.cursor()
-        n_24h = 0
-        for tbl in get_tabelas_auditoria():
-            try:
-                # tbl vem do sqlite_master filtrado (tb_auditoria_*); revalida
-                # como identificador antes de interpolar (defesa em profundidade).
-                if not (tbl or "").startswith("tb_auditoria_"):
+        from mod_gest_cad_usuario import bd_manipulador as gest
+        try:
+            n_users = len(gest.listar_usuarios(filtro_ativo=None))
+        except Exception:
+            n_users = len(gest.listar_usuarios(filtro_ativo=True))
+        from mod_blog import bd_manipulador as blog
+        n_posts = blog.contar_postagens(ativo=True)
+        from mod_auditoria.bd_manipulador import contar_registros
+        n_logs = contar_registros()
+        # Sessões ativas
+        try:
+            from mod_intranet.bd_conexao import get_connection
+            conn = get_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_sessoes WHERE logout_timestamp IS NULL")
+            n_sessoes = cur.fetchone()[0]
+            conn.close()
+        except Exception:
+            n_sessoes = 0
+        # Acessos (logins desde inicio)
+        try:
+            from mod_intranet.bd_conexao import get_config
+            n_acessos = int((get_config("contador_acessos_total", "0") or "0").strip() or 0)
+        except Exception:
+            n_acessos = 0
+        # 1) Fila impressão pendente (status aberto) — via API pública do módulo
+        try:
+            from mod_solicita_impressao import bd_manipulador as _bd_sol
+            n_fila = _bd_sol.contar_solicitacoes_pendentes()
+        except Exception:
+            n_fila = 0
+        # 2) Quarentena empenhos pendente — via API pública do módulo
+        try:
+            from mod_renomear_empenho import bd_manipulador as _bd_emp
+            n_quar = _bd_emp.contar_quarentena_pendente()
+        except Exception:
+            n_quar = 0
+        # 4) Uso PDF global — arquivos ativos — via API pública do módulo
+        try:
+            from mod_edit_pdf import bd_manipulador as _bd_pdf
+            n_pdf = _bd_pdf.contar_arquivos_ativos()
+        except Exception:
+            n_pdf = 0
+        # 5) Auditoria 24h
+        try:
+            from mod_auditoria.bd_manipulador import get_tabelas_auditoria, get_auditoria_connection
+            conn_a = get_auditoria_connection()
+            cur_a = conn_a.cursor()
+            n_24h = 0
+            for tbl in get_tabelas_auditoria():
+                try:
+                    # tbl vem do sqlite_master filtrado (tb_auditoria_*); revalida
+                    # como identificador antes de interpolar (defesa em profundidade).
+                    if not (tbl or "").startswith("tb_auditoria_"):
+                        continue
+                    if not tbl.replace("_", "").isalnum():
+                        continue
+                    cur_a.execute(f"SELECT COUNT(*) FROM {tbl} WHERE timestamp >= datetime('now','localtime','-1 day')")  # nosec B608 — tbl validado acima (prefixo + identificador); valores fixos
+                    n_24h += cur_a.fetchone()[0]
+                except Exception:
                     continue
-                if not tbl.replace("_", "").isalnum():
-                    continue
-                cur_a.execute(f"SELECT COUNT(*) FROM {tbl} WHERE timestamp >= datetime('now','localtime','-1 day')")  # nosec B608 — tbl validado acima (prefixo + identificador); valores fixos
-                n_24h += cur_a.fetchone()[0]
-            except Exception:
-                continue
-        conn_a.close()
-    except Exception:
-        n_24h = 0
-    return n_users, n_posts, n_logs, n_sessoes, n_acessos, n_fila, n_quar, n_pdf, n_24h
+            conn_a.close()
+        except Exception:
+            n_24h = 0
+        return n_users, n_posts, n_logs, n_sessoes, n_acessos, n_fila, n_quar, n_pdf, n_24h
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "_orquestrar_resumo_dados: falha ao coletar o resumo: %s", e)
+        return 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 
 def _stat(rotulo, valor, icone, *, modelo="pic"):
     """Card de métrica do Resumo — ícone ampliado + número lateral (4 dígitos, >9999) — altura -25% + tooltip descritivo."""
-    from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn3
-    from mod_intranet import home_visual as _hv
-    classes = _hv.classes_stat(modelo)
-    # Tooltip simples — rótulo curto
-    _desc_base = {
-        "Usuários ativos": "Usuarios",
-        "Sessões ativas": "Sessões",
-        "Postagens": "Noticias",
-        "Registros de auditoria": "Logs",
-        "Acessos": "Visitas",
-        "Acessos ao sistema": "Visitas",
-        "Fila impressão": "Fila impressão",
-        "Fila geral": "Fila geral",
-        "Para autorizar": "Para autorizar",
-        "Quarentena": "Quarentena",
-        "PDFs": "PDFs",
-        "Auditoria 24h": "Auditoria 24h",
-    }.get(rotulo, rotulo)
-    # Formata 4 dígitos; acima de 9999 exibe ">9999" e alerta de backup da auditoria
     try:
-        v = int(valor)
-        texto_valor = str(v) if v <= 9999 else ">9999"
-        v_int = v
-    except Exception:
-        texto_valor = str(valor)
-        v_int = None
-    _desc = _desc_base
-    if v_int is not None and v_int > 9999:
-        # Alerta específico para auditoria; demais >9999 mostram total real no tooltip
-        if rotulo == "Registros de auditoria":
-            _desc = f"{_desc_base} Total real: {v_int}. ⚠️ Alerta: volume elevado — realize backup do banco de auditoria (db_mod_auditoria.db) e avalie retenção/poda."
-        else:
-            _desc = f"{_desc_base} Total real: {v_int}."
-    with ui.card().classes(classes).style(_estilo_cartao_fn3()).tooltip(_desc):
-        # Layout horizontal: ícone à esquerda + número à direita — exibe 4 dígitos (tooltip só no card)
-        with ui.row().classes("w-full items-center justify-center gap-2 px-2 py-1").style("min-width: 0"):
-            with ui.element("div").classes("home-stat-icon bg-primary/10 shrink-0"):
-                ui.icon(icone).classes("text-primary text-2xl")
-            ui.label(texto_valor).classes("text-h6 font-extrabold text-grey-9 leading-none min-w-[4ch] text-center").style("min-width: 0")
+        from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn3
+        from mod_intranet import home_visual as _hv
+        classes = _hv.classes_stat(modelo)
+        # Tooltip simples — rótulo curto
+        _desc_base = {
+            "Usuários ativos": "Usuarios",
+            "Sessões ativas": "Sessões",
+            "Postagens": "Noticias",
+            "Registros de auditoria": "Logs",
+            "Acessos": "Visitas",
+            "Acessos ao sistema": "Visitas",
+            "Fila impressão": "Fila impressão",
+            "Fila geral": "Fila geral",
+            "Para autorizar": "Para autorizar",
+            "Quarentena": "Quarentena",
+            "PDFs": "PDFs",
+            "Auditoria 24h": "Auditoria 24h",
+        }.get(rotulo, rotulo)
+        # Formata 4 dígitos; acima de 9999 exibe ">9999" e alerta de backup da auditoria
+        try:
+            v = int(valor)
+            texto_valor = str(v) if v <= 9999 else ">9999"
+            v_int = v
+        except Exception:
+            texto_valor = str(valor)
+            v_int = None
+        _desc = _desc_base
+        if v_int is not None and v_int > 9999:
+            # Alerta específico para auditoria; demais >9999 mostram total real no tooltip
+            if rotulo == "Registros de auditoria":
+                _desc = f"{_desc_base} Total real: {v_int}. ⚠️ Alerta: volume elevado — realize backup do banco de auditoria (db_mod_auditoria.db) e avalie retenção/poda."
+            else:
+                _desc = f"{_desc_base} Total real: {v_int}."
+        with ui.card().classes(classes).style(_estilo_cartao_fn3()).tooltip(_desc):
+            # Layout horizontal: ícone à esquerda + número à direita — exibe 4 dígitos (tooltip só no card)
+            with ui.row().classes("w-full items-center justify-center gap-2 px-2 py-1").style("min-width: 0"):
+                with ui.element("div").classes("home-stat-icon bg-primary/10 shrink-0"):
+                    ui.icon(icone).classes("text-primary text-2xl")
+                ui.label(texto_valor).classes("text-h6 font-extrabold text-grey-9 leading-none min-w-[4ch] text-center").style("min-width: 0")
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "_stat: falha ao renderizar card de métrica '%s': %s", rotulo, e)
+        notificar(f"Erro ao renderizar a métrica {rotulo}.", tipo="error")
 
 
 def _construir_dashboard(nome: str, perfil: str, eh_admin: bool, modelo: str = "pic"):
     """Constrói o conteúdo da Home (banner + resumo dinâmico + feed)."""
-    from mod_intranet import home_visual as _hv
-    _hv.aplicar_modelo(modelo)
-    with ui.column().classes("w-full p-6 gap-6"):
-        # Banner de boas-vindas
-        with ui.card().classes("w-full bg-primary text-white shadow-lg"):
-            with ui.row().classes("w-full items-center justify-between p-4 flex-wrap gap-4"):
-                with ui.column().classes("gap-0"):
-                    saudacao = get_config("texto_home_saudacao", "Olá") or "Olá"
-                    subtitulo_home = get_config("texto_home_subtitulo",
-                                                "Sua intranet corporativa — tudo em um só lugar.")
-                    ui.label(f"{saudacao}, {nome}!").classes("text-h4 font-bold")
-                    ui.label(subtitulo_home).classes("text-subtitle1 opacity-90")
-                ui.icon("diversity_3", size="80px").classes("opacity-30")
+    try:
+        from mod_intranet import home_visual as _hv
+        _hv.aplicar_modelo(modelo)
+        with ui.column().classes("w-full p-6 gap-6"):
+            # Banner de boas-vindas
+            with ui.card().classes("w-full bg-primary text-white shadow-lg"):
+                with ui.row().classes("w-full items-center justify-between p-4 flex-wrap gap-4"):
+                    with ui.column().classes("gap-0"):
+                        saudacao = get_config("texto_home_saudacao", "Olá") or "Olá"
+                        subtitulo_home = get_config("texto_home_subtitulo",
+                                                    "Sua intranet corporativa — tudo em um só lugar.")
+                        ui.label(f"{saudacao}, {nome}!").classes("text-h4 font-bold")
+                        ui.label(subtitulo_home).classes("text-subtitle1 opacity-90")
+                    ui.icon("diversity_3", size="80px").classes("opacity-30")
 
-        # Feedback de 2s no carregamento: toast de boas-vindas (desaparece sozinho)
-        ui.timer(0.1, lambda: notificar(f"Bem-vindo(a), {nome}!",
-                                        type="positive", position="top", timeout=2),
-                 once=True)
+            # Feedback de 2s no carregamento: toast de boas-vindas (desaparece sozinho)
+            ui.timer(0.1, lambda: notificar(f"Bem-vindo(a), {nome}!",
+                                            type="positive", position="top", timeout=2),
+                     once=True)
 
-        # ---- Resumo do sistema (somente administradores) ----
-        # Fica logo abaixo das boas-vindas e acima das postagens. Sem botão
-        # Atualizar — os dados são calculados automaticamente a cada acesso
-        # (dinâmico), sem ação manual.
-        # Dados para os Resumos — coletados uma vez (fail-soft 0)
-        n_users = n_posts = n_logs = n_sessoes = n_acessos = n_fila = n_quar = n_pdf = n_24h = 0
-        if eh_admin or _eh_autorizador_impressao(nome):
-            try:
-                n_users, n_posts, n_logs, n_sessoes, n_acessos, n_fila, n_quar, n_pdf, n_24h = _orquestrar_resumo_dados()
-            except Exception:
-                pass
-        if eh_admin:
-            from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2, ler_tema as _ler_tema_home
-            from mod_intranet import home_visual as _hv2
-            try:
-                _cor_modulo_home = (_ler_tema_home("intranet").get("cor_botao") or "#000000").strip() or "#000000"
-            except Exception:
-                _cor_modulo_home = "#000000"
-            with ui.card().classes(_hv2.classes_card_resumo(modelo)).style(
-                    f"border-left-color:{_cor_modulo_home};box-shadow:6px 0 16px rgba(0,0,0,0.07);{_estilo_cartao_fn2()}"):
-                with ui.card_section().classes("gap-3 w-full"):
-                    ui.label("Resumo do sistema").classes("text-h6 font-bold text-grey-9")
-                    with ui.row().classes(_hv2.classes_wrap_resumo(modelo)):
-                        _stat("Usuários ativos", n_users, "people", modelo=modelo)
-                        _stat("Sessões ativas", n_sessoes, "sensors", modelo=modelo)
-                        _stat("Acessos", n_acessos, "login", modelo=modelo)
-                        _stat("Postagens", n_posts, "article", modelo=modelo)
-                        _stat("Quarentena", n_quar, "warning", modelo=modelo)
-                        _stat("PDFs", n_pdf, "picture_as_pdf", modelo=modelo)
-                        _stat("Registros de auditoria", n_logs, "history", modelo=modelo)
-                        _stat("Auditoria 24h", n_24h, "schedule", modelo=modelo)
-        # Somente autorizador de impressão vê este card (admin geral também é autorizador implícito via perfil) — cor padronizada do módulo + sombra lateral direita
-        if _eh_autorizador_impressao(nome) or perfil == "administrador_geral":
-            from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2b, ler_tema as _ler_tema_home2
-            from mod_intranet import home_visual as _hv2b
-            n_para_autorizar = _contar_fila_para_autorizar(nome, eh_admin_geral=(perfil == "administrador_geral"))
-            try:
-                _cor_modulo_home2 = (_ler_tema_home2("intranet").get("cor_botao") or "#000000").strip() or "#000000"
-            except Exception:
-                _cor_modulo_home2 = "#000000"
-            with ui.card().classes(_hv2b.classes_card_resumo(modelo)).style(
-                    f"border-left-color:{_cor_modulo_home2};box-shadow:6px 0 16px rgba(0,0,0,0.07);{_estilo_cartao_fn2b()}"):
-                with ui.card_section().classes("gap-3 w-full"):
-                    ui.label("Resumo do sistema — Impressão").classes("text-h6 font-bold text-grey-9")
-                    with ui.row().classes(_hv2b.classes_wrap_resumo(modelo)):
-                        _stat("Fila geral", n_fila, "print", modelo=modelo)
-                        _stat("Para autorizar", n_para_autorizar, "rule", modelo=modelo)
+            # ---- Resumo do sistema (somente administradores) ----
+            # Fica logo abaixo das boas-vindas e acima das postagens. Sem botão
+            # Atualizar — os dados são calculados automaticamente a cada acesso
+            # (dinâmico), sem ação manual.
+            # Dados para os Resumos — coletados uma vez (fail-soft 0)
+            n_users = n_posts = n_logs = n_sessoes = n_acessos = n_fila = n_quar = n_pdf = n_24h = 0
+            if eh_admin or _eh_autorizador_impressao(nome):
+                try:
+                    n_users, n_posts, n_logs, n_sessoes, n_acessos, n_fila, n_quar, n_pdf, n_24h = _orquestrar_resumo_dados()
+                except Exception:
+                    pass
+            if eh_admin:
+                from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2, ler_tema as _ler_tema_home
+                from mod_intranet import home_visual as _hv2
+                try:
+                    _cor_modulo_home = (_ler_tema_home("intranet").get("cor_botao") or "#000000").strip() or "#000000"
+                except Exception:
+                    _cor_modulo_home = "#000000"
+                with ui.card().classes(_hv2.classes_card_resumo(modelo)).style(
+                        f"border-left-color:{_cor_modulo_home};box-shadow:6px 0 16px rgba(0,0,0,0.07);{_estilo_cartao_fn2()}"):
+                    with ui.card_section().classes("gap-3 w-full"):
+                        ui.label("Resumo do sistema").classes("text-h6 font-bold text-grey-9")
+                        with ui.row().classes(_hv2.classes_wrap_resumo(modelo)):
+                            _stat("Usuários ativos", n_users, "people", modelo=modelo)
+                            _stat("Sessões ativas", n_sessoes, "sensors", modelo=modelo)
+                            _stat("Acessos", n_acessos, "login", modelo=modelo)
+                            _stat("Postagens", n_posts, "article", modelo=modelo)
+                            _stat("Quarentena", n_quar, "warning", modelo=modelo)
+                            _stat("PDFs", n_pdf, "picture_as_pdf", modelo=modelo)
+                            _stat("Registros de auditoria", n_logs, "history", modelo=modelo)
+                            _stat("Auditoria 24h", n_24h, "schedule", modelo=modelo)
+            # Somente autorizador de impressão vê este card (admin geral também é autorizador implícito via perfil) — cor padronizada do módulo + sombra lateral direita
+            if _eh_autorizador_impressao(nome) or perfil == "administrador_geral":
+                from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2b, ler_tema as _ler_tema_home2
+                from mod_intranet import home_visual as _hv2b
+                n_para_autorizar = _contar_fila_para_autorizar(nome, eh_admin_geral=(perfil == "administrador_geral"))
+                try:
+                    _cor_modulo_home2 = (_ler_tema_home2("intranet").get("cor_botao") or "#000000").strip() or "#000000"
+                except Exception:
+                    _cor_modulo_home2 = "#000000"
+                with ui.card().classes(_hv2b.classes_card_resumo(modelo)).style(
+                        f"border-left-color:{_cor_modulo_home2};box-shadow:6px 0 16px rgba(0,0,0,0.07);{_estilo_cartao_fn2b()}"):
+                    with ui.card_section().classes("gap-3 w-full"):
+                        ui.label("Resumo do sistema — Impressão").classes("text-h6 font-bold text-grey-9")
+                        with ui.row().classes(_hv2b.classes_wrap_resumo(modelo)):
+                            _stat("Fila geral", n_fila, "print", modelo=modelo)
+                            _stat("Para autorizar", n_para_autorizar, "rule", modelo=modelo)
 
-        # ---- Feed do Blog (RF-09) — respeita o padrão de exibição ----
-        from mod_blog.telas import renderizar_postagens
-        pode_publicar_blog = (perfil == "administrador_geral"
-                              or autenticacao.eh_admin_do_modulo(nome, "blog"))
-        with ui.column().classes("w-full gap-4"):
-            with ui.row().classes("w-full items-center"):
-                ui.label("Publicações recentes").classes("text-h6 font-bold text-grey-9")
-            _feed_wrap = ui.column().classes("w-full gap-4")
-            renderizar_postagens(_feed_wrap, nome, perfil,
-                                 pode_publicar_blog,
-                                 lambda: ui.navigate.reload())
+            # ---- Feed do Blog (RF-09) — respeita o padrão de exibição ----
+            from mod_blog.telas import renderizar_postagens
+            pode_publicar_blog = (perfil == "administrador_geral"
+                                  or autenticacao.eh_admin_do_modulo(nome, "blog"))
+            with ui.column().classes("w-full gap-4"):
+                with ui.row().classes("w-full items-center"):
+                    ui.label("Publicações recentes").classes("text-h6 font-bold text-grey-9")
+                _feed_wrap = ui.column().classes("w-full gap-4")
+                renderizar_postagens(_feed_wrap, nome, perfil,
+                                     pode_publicar_blog,
+                                     lambda: ui.navigate.reload())
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "_construir_dashboard: erro ao renderizar a Home de '%s': %s", nome, e)
+        notificar("Erro ao carregar a página inicial.", tipo="error")
 
 
 def _eh_autorizador_impressao(nome: str) -> bool:
@@ -511,26 +541,36 @@ def _contar_fila_para_autorizar(nome: str, eh_admin_geral: bool = False) -> int:
 
 @ui.page("/")
 def page_dashboard():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Início")
-    if not user:
-        return
-    # Resumo do sistema: só admin geral/modulo; Impressão: só autorizador (admin geral implícito)
-    perfil = user.get("perfil", "")
-    nome = user["nome"]
-    eh_admin = perfil in ("administrador_geral", "administrador_modulo")
-    _construir_dashboard(nome, perfil, eh_admin, modelo="water")
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Início")
+        if not user:
+            return
+        # Resumo do sistema: só admin geral/modulo; Impressão: só autorizador (admin geral implícito)
+        perfil = user.get("perfil", "")
+        nome = user["nome"]
+        eh_admin = perfil in ("administrador_geral", "administrador_modulo")
+        _construir_dashboard(nome, perfil, eh_admin, modelo="water")
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_dashboard: erro ao renderizar o dashboard: %s", e)
+        notificar("Erro ao carregar a página inicial.", tipo="error")
 
 
 # ================== MÓDULOS ==================
 @ui.page("/blog")
 def page_blog():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Blog Corporativo", chave_modulo="blog")
-    if not user:
-        return
-    from mod_blog.telas import mostrar_tela
-    mostrar_tela(user["nome"], user.get("perfil", ""))
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Blog Corporativo", chave_modulo="blog")
+        if not user:
+            return
+        from mod_blog.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_blog: erro ao renderizar o Blog: %s", e)
+        notificar("Erro ao carregar o Blog Corporativo.", tipo="error")
 
 
 if rotas_modulos is not None:
@@ -539,12 +579,17 @@ if rotas_modulos is not None:
 
 @ui.page("/users")
 def page_users():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Gestão de Usuários", chave_modulo="usuarios")
-    if not user:
-        return
-    from mod_gest_cad_usuario.telas import mostrar_tela
-    mostrar_tela(user["nome"], user.get("perfil", ""))
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Gestão de Usuários", chave_modulo="usuarios")
+        if not user:
+            return
+        from mod_gest_cad_usuario.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_users: erro ao renderizar a Gestão de Usuários: %s", e)
+        notificar("Erro ao carregar a Gestão de Usuários.", tipo="error")
 
 
 if rotas_modulos is not None:
@@ -553,12 +598,17 @@ if rotas_modulos is not None:
 
 @ui.page("/auditoria")
 def page_auditoria():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Auditoria", chave_modulo="auditoria")
-    if not user:
-        return
-    from mod_auditoria.telas import mostrar_tela
-    mostrar_tela(user["nome"], user.get("perfil", ""))
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Auditoria", chave_modulo="auditoria")
+        if not user:
+            return
+        from mod_auditoria.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_auditoria: erro ao renderizar a Auditoria: %s", e)
+        notificar("Erro ao carregar a Auditoria.", tipo="error")
 
 
 if rotas_modulos is not None:
@@ -567,12 +617,17 @@ if rotas_modulos is not None:
 
 @ui.page("/edit-pdf")
 def page_edit_pdf():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Editor de PDF", chave_modulo="editar_pdf")
-    if not user:
-        return
-    from mod_edit_pdf.telas import mostrar_tela
-    mostrar_tela(user["nome"], user.get("perfil", ""))
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Editor de PDF", chave_modulo="editar_pdf")
+        if not user:
+            return
+        from mod_edit_pdf.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_edit_pdf: erro ao renderizar o Editor de PDF: %s", e)
+        notificar("Erro ao carregar o Editor de PDF.", tipo="error")
 
 
 if rotas_modulos is not None:
@@ -581,12 +636,17 @@ if rotas_modulos is not None:
 
 @ui.page("/renomear-empenho")
 def page_renomear_empenho():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Renomear Empenhos", chave_modulo="empenhos")
-    if not user:
-        return
-    from mod_renomear_empenho.telas import mostrar_tela
-    mostrar_tela(user["nome"], user.get("perfil", ""))
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Renomear Empenhos", chave_modulo="empenhos")
+        if not user:
+            return
+        from mod_renomear_empenho.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_renomear_empenho: erro ao renderizar Renomear Empenhos: %s", e)
+        notificar("Erro ao carregar Renomear Empenhos.", tipo="error")
 
 
 # Comparativo visual — pic padrão + uma tela por CSS novo (12)
@@ -601,6 +661,10 @@ def _page_empenho_forcado(modelo: str, titulo: str):
             return
         from mod_renomear_empenho.telas import mostrar_tela
         mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "_page_empenho_forcado: erro ao renderizar '%s': %s", titulo, e)
+        notificar(f"Erro ao carregar {titulo}.", tipo="error")
     finally:
         _visual_cmp.FORCAR_MODELO = _orig
 
@@ -668,56 +732,66 @@ def baixar_pdf_impressao(solicitacao_id: int):
     Protegida: exige autenticação e permissão sobre a solicitação (solicitante,
     responsável pelo vínculo da secretaria/setor ou administrador do módulo).
     """
-    from mod_solicita_impressao import bd_manipulador as bd
-    from mod_intranet.telas import usuario_logado
+    try:
+        from mod_solicita_impressao import bd_manipulador as bd
+        from mod_intranet.telas import usuario_logado
 
-    user = usuario_logado()
-    if not user:
-        return RedirectResponse("/login")
-    nome = user.get("nome", "")
+        user = usuario_logado()
+        if not user:
+            return RedirectResponse("/login")
+        nome = user.get("nome", "")
 
-    # Revalida sessão ativa (bloqueio/exclusão derrubam sessões vivas)
-    linha = autenticacao.usuario_existe(nome)
-    if not linha or not linha[2]:
-        return RedirectResponse("/login")
-    if not autenticacao.validar_acesso_modulo(nome, "solicita_impressao"):
-        return RedirectResponse("/solicita-impressao")
+        # Revalida sessão ativa (bloqueio/exclusão derrubam sessões vivas)
+        linha = autenticacao.usuario_existe(nome)
+        if not linha or not linha[2]:
+            return RedirectResponse("/login")
+        if not autenticacao.validar_acesso_modulo(nome, "solicita_impressao"):
+            return RedirectResponse("/solicita-impressao")
 
-    sol = bd.obter_solicitacao(solicitacao_id)
-    if not sol or not sol.get("caminho_arquivo") or not os.path.exists(sol["caminho_arquivo"]):
-        return RedirectResponse("/solicita-impressao")
+        sol = bd.obter_solicitacao(solicitacao_id)
+        if not sol or not sol.get("caminho_arquivo") or not os.path.exists(sol["caminho_arquivo"]):
+            return RedirectResponse("/solicita-impressao")
 
-    eh_admin = (autenticacao.perfil_global_de(nome) == "administrador_geral"
-                or autenticacao.eh_admin_do_modulo(nome, "solicita_impressao"))
-    eh_solicitante = (sol.get("usuario_solicitante") == nome)
-    eh_responsavel = False
-    if sol.get("secretaria_id"):
-        eh_responsavel = bd.eh_responsavel_autorizacao(
-            nome, sol["secretaria_id"], sol.get("setor_id"))
-    if not (eh_admin or eh_solicitante or eh_responsavel):
-        return RedirectResponse("/solicita-impressao")
+        eh_admin = (autenticacao.perfil_global_de(nome) == "administrador_geral"
+                    or autenticacao.eh_admin_do_modulo(nome, "solicita_impressao"))
+        eh_solicitante = (sol.get("usuario_solicitante") == nome)
+        eh_responsavel = False
+        if sol.get("secretaria_id"):
+            eh_responsavel = bd.eh_responsavel_autorizacao(
+                nome, sol["secretaria_id"], sol.get("setor_id"))
+        if not (eh_admin or eh_solicitante or eh_responsavel):
+            return RedirectResponse("/solicita-impressao")
 
-    sec = bd.obter_secretaria(sol.get("secretaria_id"))
-    st = bd.obter_setor(sol.get("setor_id")) if sol.get("setor_id") else None
-    sec_nome = (sec[2] or sec[1]) if sec else ""
-    st_nome = st[1] if st else "—"
-    caminho = bd.aplicar_marca_dagua(
-        sol["caminho_arquivo"], solicitacao_id, "sistema",
-        sec_nome, st_nome, sol.get("usuario_solicitante", ""))
-    return FileResponse(caminho, filename=sol.get("arquivo_servidor") or "documento.pdf",
-                        media_type="application/pdf")
+        sec = bd.obter_secretaria(sol.get("secretaria_id"))
+        st = bd.obter_setor(sol.get("setor_id")) if sol.get("setor_id") else None
+        sec_nome = (sec[2] or sec[1]) if sec else ""
+        st_nome = st[1] if st else "—"
+        caminho = bd.aplicar_marca_dagua(
+            sol["caminho_arquivo"], solicitacao_id, "sistema",
+            sec_nome, st_nome, sol.get("usuario_solicitante", ""))
+        return FileResponse(caminho, filename=sol.get("arquivo_servidor") or "documento.pdf",
+                            media_type="application/pdf")
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "baixar_pdf_impressao: falha ao servir o PDF %s: %s", solicitacao_id, e)
+        return Response(status_code=500)
 
 
 @ui.page("/solicita-impressao")
 def page_solicita_impressao():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Solicitação de Impressão", chave_modulo="solicita_impressao")
-    if not user:
-        return
-    from mod_solicita_impressao.telas import mostrar_tela
-    mostrar_tela(user["nome"], user.get("perfil", ""))
-    # Carrega o JS de impressão (listar/imprimir via cliente)
-    ui.add_head_html('<script src="/solicita-impressao/src/impressao.js"></script>')
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Solicitação de Impressão", chave_modulo="solicita_impressao")
+        if not user:
+            return
+        from mod_solicita_impressao.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+        # Carrega o JS de impressão (listar/imprimir via cliente)
+        ui.add_head_html('<script src="/solicita-impressao/src/impressao.js"></script>')
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_solicita_impressao: erro ao renderizar a Solicitação de Impressão: %s", e)
+        notificar("Erro ao carregar a Solicitação de Impressão.", tipo="error")
 
 
 if rotas_modulos is not None:
@@ -726,12 +800,17 @@ if rotas_modulos is not None:
 
 @ui.page("/tecnico")
 def page_tecnico():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Técnico", chave_modulo="tecnico")
-    if not user:
-        return
-    from mod_tecnico.telas import mostrar_tela
-    mostrar_tela(user["nome"], user.get("perfil", ""))
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Técnico", chave_modulo="tecnico")
+        if not user:
+            return
+        from mod_tecnico.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_tecnico: erro ao renderizar o módulo Técnico: %s", e)
+        notificar("Erro ao carregar o módulo Técnico.", tipo="error")
 
 
 if rotas_modulos is not None:
@@ -740,12 +819,17 @@ if rotas_modulos is not None:
 
 @ui.page("/filas")
 def page_filas():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Filas", chave_modulo="filas")
-    if not user:
-        return
-    from mod_filas.telas import mostrar_tela
-    mostrar_tela(user["nome"], user.get("perfil", ""))
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Filas", chave_modulo="filas")
+        if not user:
+            return
+        from mod_filas.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_filas: erro ao renderizar o módulo Filas: %s", e)
+        notificar("Erro ao carregar o módulo Filas.", tipo="error")
 
 
 if rotas_modulos is not None:
@@ -755,48 +839,64 @@ if rotas_modulos is not None:
 @ui.page("/tv")
 def page_tv():
     # TV de chamadas — acesso livre na rede (sem login), suporta ?grupo=xxx para TV compartilhada e /tv/{id} para isolada
-    from mod_filas.telas import mostrar_tv
-    # query param grupo para TV compartilhada
     try:
-        from nicegui import context as _ctx
-        grupo = None
-        etapa = None
+        from mod_filas.telas import mostrar_tv
+        # query param grupo para TV compartilhada
         try:
-            grupo = _ctx.client.request.query_params.get("grupo")
-            etapa = _ctx.client.request.query_params.get("etapa")
-        except Exception:
+            from nicegui import context as _ctx
             grupo = None
-        if grupo:
-            mostrar_tv(tv_grupo=grupo, etapa=etapa)
-            return
-        if etapa:
-            mostrar_tv(etapa=etapa)
-            return
-    except Exception:
-        pass
-    mostrar_tv()
+            etapa = None
+            try:
+                grupo = _ctx.client.request.query_params.get("grupo")
+                etapa = _ctx.client.request.query_params.get("etapa")
+            except Exception:
+                grupo = None
+            if grupo:
+                mostrar_tv(tv_grupo=grupo, etapa=etapa)
+                return
+            if etapa:
+                mostrar_tv(etapa=etapa)
+                return
+        except Exception as e:
+            observabilidade.get_logger("intranet").exception(
+                "page_tv: falha ao obter parâmetros da TV: %s", e)
+        mostrar_tv()
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_tv: erro ao renderizar a TV: %s", e)
+        notificar("Erro ao carregar a TV de chamadas.", tipo="error")
 
 
 @ui.page("/tv/{fila_id}")
 def page_tv_fila(fila_id: int):
     # TV isolada por fila (não interfere em outra) — também resolve grupo compartilhado se fila pertence a grupo
-    from mod_filas.telas import mostrar_tv
     try:
-        from nicegui import context as _ctx
-        etapa = _ctx.client.request.query_params.get("etapa")
-    except Exception:
-        etapa = None
-    mostrar_tv(fila_id=fila_id, etapa=etapa)
+        from mod_filas.telas import mostrar_tv
+        try:
+            from nicegui import context as _ctx
+            etapa = _ctx.client.request.query_params.get("etapa")
+        except Exception:
+            etapa = None
+        mostrar_tv(fila_id=fila_id, etapa=etapa)
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_tv_fila: erro ao renderizar a TV da fila %s: %s", fila_id, e)
+        notificar("Erro ao carregar a TV da fila.", tipo="error")
 
 
 @ui.page("/lista-telefonica")
 def page_lista_telefonica():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Lista Telefônica", chave_modulo="lista_telefonica")
-    if not user:
-        return
-    from mod_lista_telefonica.telas import mostrar_tela
-    mostrar_tela(user["nome"], user.get("perfil", ""))
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Lista Telefônica", chave_modulo="lista_telefonica")
+        if not user:
+            return
+        from mod_lista_telefonica.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_lista_telefonica: erro ao renderizar a Lista Telefônica: %s", e)
+        notificar("Erro ao carregar a Lista Telefônica.", tipo="error")
 
 
 if rotas_modulos is not None:
@@ -805,12 +905,17 @@ if rotas_modulos is not None:
 
 @ui.page("/agregador-noticias")
 def page_agregador_noticias():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Agregador de Notícias", chave_modulo="agregador_noticias")
-    if not user:
-        return
-    from mod_agregador_noticias.telas import mostrar_tela
-    mostrar_tela(user["nome"], user.get("perfil", ""))
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Agregador de Notícias", chave_modulo="agregador_noticias")
+        if not user:
+            return
+        from mod_agregador_noticias.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_agregador_noticias: erro ao renderizar o Agregador de Notícias: %s", e)
+        notificar("Erro ao carregar o Agregador de Notícias.", tipo="error")
 
 
 if rotas_modulos is not None:
@@ -819,12 +924,17 @@ if rotas_modulos is not None:
 
 @ui.page("/agregador-noticias-puro")
 def page_agregador_noticias_puro():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Agregador de Notícias — Puro", chave_modulo="agregador_noticias")
-    if not user:
-        return
-    from mod_agregador_noticias.telas_puro import mostrar_tela_pura
-    mostrar_tela_pura(user["nome"], user.get("perfil", ""))
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Agregador de Notícias — Puro", chave_modulo="agregador_noticias")
+        if not user:
+            return
+        from mod_agregador_noticias.telas_puro import mostrar_tela_pura
+        mostrar_tela_pura(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_agregador_noticias_puro: erro ao renderizar o Agregador puro: %s", e)
+        notificar("Erro ao carregar o Agregador de Notícias.", tipo="error")
 
 
 @app.get("/api/attachments/{caminho:path}")
@@ -836,39 +946,54 @@ def fallback_attachments(caminho: str):
 
     PT-BR: Fallback 404 para /api/attachments/* quebrado de export Trello/Notion no conteúdo do Blog/Agregador.
     Evita log spam de 'http://localhost:8080/api/attachments/CC8... not found' que aparecia no boot (NiceGUI ready) e serve placeholder visual favicon.png quando o caminho termina em -w280-h168-p-df/.png/.jpg/.jpeg; caso contrário 404. Inserido ANTES de /assets/noticia. Requisitos: TV e Blog não tentam carregar attachments externos quebrados; fallback silencioso, compatível, sem quebrar coleta, sem log spam, com placeholder visual."""
-    # opcional: placeholder transparente 1x1
-    # tenta servir assets/noticia/favicon.png como fallback visual se for imagem
-    if caminho.endswith(("-w280-h168-p-df", "-w280-h168", ".png", ".jpg", ".jpeg")):
-        base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "noticia")
-        placeholder = os.path.join(base, "favicon.png")
-        if os.path.isfile(placeholder):
-            return FileResponse(placeholder, media_type="image/png")
-    return Response(status_code=404)
+    try:
+        # opcional: placeholder transparente 1x1
+        # tenta servir assets/noticia/favicon.png como fallback visual se for imagem
+        if caminho.endswith(("-w280-h168-p-df", "-w280-h168", ".png", ".jpg", ".jpeg")):
+            base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "noticia")
+            placeholder = os.path.join(base, "favicon.png")
+            if os.path.isfile(placeholder):
+                return FileResponse(placeholder, media_type="image/png")
+        return Response(status_code=404)
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "fallback_attachments: erro ao servir attachment '%s': %s", caminho, e)
+        return Response(status_code=404)
 
 
 @app.get("/assets/noticia/{caminho:path}")
 def servir_assets_noticia(caminho: str):
-    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "noticia")
-    # segurança: normaliza e garante dentro da base
-    caminho_abs = os.path.normpath(os.path.join(base, caminho))
-    if not caminho_abs.startswith(os.path.abspath(base)):
+    try:
+        base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "noticia")
+        # segurança: normaliza e garante dentro da base
+        caminho_abs = os.path.normpath(os.path.join(base, caminho))
+        if not caminho_abs.startswith(os.path.abspath(base)):
+            return Response(status_code=404)
+        if not os.path.isfile(caminho_abs):
+            return Response(status_code=404)
+        # tipo MIME básico
+        import mimetypes
+        mime, _ = mimetypes.guess_type(caminho_abs)
+        mime = mime or "application/octet-stream"
+        return FileResponse(caminho_abs, media_type=mime)
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "servir_assets_noticia: erro ao servir asset '%s': %s", caminho, e)
         return Response(status_code=404)
-    if not os.path.isfile(caminho_abs):
-        return Response(status_code=404)
-    # tipo MIME básico
-    import mimetypes
-    mime, _ = mimetypes.guess_type(caminho_abs)
-    mime = mime or "application/octet-stream"
-    return FileResponse(caminho_abs, media_type=mime)
 
 
 @app.get("/solicita-impressao/src/impressao.js")
 def servir_js_impressao():
-    caminho = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "mod_solicita_impressao", "src", "impressao.js")
-    with open(caminho, "r", encoding="utf-8") as f:
-        conteudo = f.read()
-    return Response(content=conteudo, media_type="application/javascript")
+    try:
+        caminho = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "mod_solicita_impressao", "src", "impressao.js")
+        with open(caminho, "r", encoding="utf-8") as f:
+            conteudo = f.read()
+        return Response(content=conteudo, media_type="application/javascript")
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "servir_js_impressao: erro ao servir impressao.js: %s", e)
+        return Response(status_code=404)
 
 
 @ui.page("/admin/{chave_modulo}")
@@ -879,129 +1004,139 @@ def page_admin_modulo(chave_modulo: str):
     clica em 'Administração' no menu hambúrguer, é direcionado para
     `/admin/{chave_modulo}` que mostra apenas a tela de configuração
     daquele módulo, sem as abas de navegação normais."""
-    from mod_intranet.telas import pagina_restrita
-    from mod_intranet import autenticacao
+    try:
+        from mod_intranet.telas import pagina_restrita
+        from mod_intranet import autenticacao
 
-    nome_modulo = autenticacao.nome_do_modulo(chave_modulo) or "Administração"
-    user = pagina_restrita(nome_modulo, chave_modulo=chave_modulo)
-    if not user:
-        return
+        nome_modulo = autenticacao.nome_do_modulo(chave_modulo) or "Administração"
+        user = pagina_restrita(nome_modulo, chave_modulo=chave_modulo)
+        if not user:
+            return
 
-    perfil = user.get("perfil", "")
-    nome = user["nome"]
+        perfil = user.get("perfil", "")
+        nome = user["nome"]
 
-    if chave_modulo == "blog":
-        pode_pub = (perfil == "administrador_geral"
-                    or autenticacao.eh_admin_do_modulo(nome, "blog"))
-        from mod_blog.telas_administracao import mostrar_administracao
-        from mod_intranet.tema_modulo import ler_tema
-        tema = ler_tema("blog", cor_botao="#000000", cor_texto_botao="#FFFFFF",
-                        texto_header="Comunique novidades para toda a equipe.")
-        ui.colors(primary=tema["cor_botao"])
-        mostrar_administracao(nome, pode_pub)
+        if chave_modulo == "blog":
+            pode_pub = (perfil == "administrador_geral"
+                        or autenticacao.eh_admin_do_modulo(nome, "blog"))
+            from mod_blog.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            tema = ler_tema("blog", cor_botao="#000000", cor_texto_botao="#FFFFFF",
+                            texto_header="Comunique novidades para toda a equipe.")
+            ui.colors(primary=tema["cor_botao"])
+            mostrar_administracao(nome, pode_pub)
 
-    elif chave_modulo == "usuarios":
-        from mod_gest_cad_usuario.telas_administracao import mostrar_administracao
-        from mod_intranet.tema_modulo import ler_tema
-        tema = ler_tema("usuarios", cor_botao="#000000", cor_texto_botao="#FFFFFF")
-        ui.colors(primary=tema["cor_botao"])
-        with ui.column().classes("w-full p-6"):
+        elif chave_modulo == "usuarios":
+            from mod_gest_cad_usuario.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            tema = ler_tema("usuarios", cor_botao="#000000", cor_texto_botao="#FFFFFF")
+            ui.colors(primary=tema["cor_botao"])
+            with ui.column().classes("w-full p-6"):
+                mostrar_administracao(nome)
+
+        elif chave_modulo == "auditoria":
+            eh_admin = perfil == "administrador_geral"
+            from mod_auditoria.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            ui.colors(primary=ler_tema("auditoria", cor_botao="#000000")["cor_botao"])
+            mostrar_administracao(nome, eh_admin_geral=eh_admin)
+
+        elif chave_modulo == "editar_pdf":
+            eh_admin = perfil == "administrador_geral"
+            from mod_edit_pdf.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            ui.colors(primary=ler_tema("editar_pdf", cor_botao="#000000")["cor_botao"])
+            mostrar_administracao(nome, eh_admin)
+
+        elif chave_modulo == "empenhos":
+            eh_admin = perfil == "administrador_geral"
+            from mod_renomear_empenho.telas_administracao import mostrar_administracao
+            from mod_intranet.bd_conexao import get_config, set_config
+            t_cor_botao = get_config("empenhos_cor_botao", "#000000") or "#000000"
+            ui.colors(primary=t_cor_botao)
+            t_cor_txt_botao = get_config("empenhos_cor_texto_botao", "#FFFFFF") or "#FFFFFF"
+            t_cor_fundo = get_config("empenhos_cor_fundo", "") or ""
+            t_cor_titulo = get_config("empenhos_cor_titulo", "#212121") or "#212121"
+            t_tamanho = get_config("empenhos_btn_tamanho", "medium") or "medium"
+            texto_header = get_config("empenhos_texto_header",
+                                      "Monitora pastas, extrai nº de empenho e renomeia.") or ""
+            def _btn_cls(): return "text-white"
+            def _btn_style(): return f"background:{t_cor_botao};color:{t_cor_txt_botao};"
+            mostrar_administracao(nome, eh_admin, t_cor_botao, t_cor_txt_botao,
+                                  t_cor_fundo, t_cor_titulo, t_tamanho, texto_header,
+                                  _btn_cls, _btn_style, get_config, set_config)
+
+        elif chave_modulo == "solicita_impressao":
+            eh_admin = (perfil == "administrador_geral"
+                        or autenticacao.eh_admin_do_modulo(nome, "solicita_impressao"))
+            from mod_solicita_impressao.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            ui.colors(primary=ler_tema("solicita_impressao",
+                                       cor_botao="#000000")["cor_botao"])
+            mostrar_administracao(nome, eh_admin)
+
+        elif chave_modulo == "tecnico":
+            eh_admin = (perfil == "administrador_geral"
+                        or autenticacao.eh_admin_do_modulo(nome, "tecnico"))
+            from mod_tecnico.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            ui.colors(primary=ler_tema("tecnico", cor_botao="#000000")["cor_botao"])
             mostrar_administracao(nome)
 
-    elif chave_modulo == "auditoria":
-        eh_admin = perfil == "administrador_geral"
-        from mod_auditoria.telas_administracao import mostrar_administracao
-        from mod_intranet.tema_modulo import ler_tema
-        ui.colors(primary=ler_tema("auditoria", cor_botao="#000000")["cor_botao"])
-        mostrar_administracao(nome, eh_admin_geral=eh_admin)
+        elif chave_modulo == "filas":
+            eh_admin = (perfil == "administrador_geral"
+                        or autenticacao.eh_admin_do_modulo(nome, "filas"))
+            from mod_filas.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            ui.colors(primary=ler_tema("filas", cor_botao="#000000")["cor_botao"])
+            mostrar_administracao(nome)
 
-    elif chave_modulo == "editar_pdf":
-        eh_admin = perfil == "administrador_geral"
-        from mod_edit_pdf.telas_administracao import mostrar_administracao
-        from mod_intranet.tema_modulo import ler_tema
-        ui.colors(primary=ler_tema("editar_pdf", cor_botao="#000000")["cor_botao"])
-        mostrar_administracao(nome, eh_admin)
+        elif chave_modulo == "lista_telefonica":
+            eh_admin = (perfil == "administrador_geral"
+                        or autenticacao.eh_admin_do_modulo(nome, "lista_telefonica"))
+            from mod_lista_telefonica.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            ui.colors(primary=ler_tema("lista_telefonica", cor_botao="#000000")["cor_botao"])
+            # admin requer papel; se não for admin, mostra aviso e redireciona para visual
+            if not eh_admin:
+                ui.notify("Acesso restrito a administradores", type="negative")
+                ui.navigate.to("/lista-telefonica")
+            else:
+                mostrar_administracao(nome)
 
-    elif chave_modulo == "empenhos":
-        eh_admin = perfil == "administrador_geral"
-        from mod_renomear_empenho.telas_administracao import mostrar_administracao
-        from mod_intranet.bd_conexao import get_config, set_config
-        t_cor_botao = get_config("empenhos_cor_botao", "#000000") or "#000000"
-        ui.colors(primary=t_cor_botao)
-        t_cor_txt_botao = get_config("empenhos_cor_texto_botao", "#FFFFFF") or "#FFFFFF"
-        t_cor_fundo = get_config("empenhos_cor_fundo", "") or ""
-        t_cor_titulo = get_config("empenhos_cor_titulo", "#212121") or "#212121"
-        t_tamanho = get_config("empenhos_btn_tamanho", "medium") or "medium"
-        texto_header = get_config("empenhos_texto_header",
-                                  "Monitora pastas, extrai nº de empenho e renomeia.") or ""
-        def _btn_cls(): return "text-white"
-        def _btn_style(): return f"background:{t_cor_botao};color:{t_cor_txt_botao};"
-        mostrar_administracao(nome, eh_admin, t_cor_botao, t_cor_txt_botao,
-                              t_cor_fundo, t_cor_titulo, t_tamanho, texto_header,
-                              _btn_cls, _btn_style, get_config, set_config)
+        elif chave_modulo == "agregador_noticias":
+            eh_admin = (perfil == "administrador_geral"
+                        or autenticacao.eh_admin_do_modulo(nome, "agregador_noticias"))
+            from mod_agregador_noticias.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            ui.colors(primary=ler_tema("agregador_noticias", cor_botao="#000000")["cor_botao"])
+            if not eh_admin:
+                ui.notify("Acesso restrito a administradores", type="negative")
+                ui.navigate.to("/agregador-noticias")
+            else:
+                mostrar_administracao(nome)
 
-    elif chave_modulo == "solicita_impressao":
-        eh_admin = (perfil == "administrador_geral"
-                    or autenticacao.eh_admin_do_modulo(nome, "solicita_impressao"))
-        from mod_solicita_impressao.telas_administracao import mostrar_administracao
-        from mod_intranet.tema_modulo import ler_tema
-        ui.colors(primary=ler_tema("solicita_impressao",
-                                   cor_botao="#000000")["cor_botao"])
-        mostrar_administracao(nome, eh_admin)
-
-    elif chave_modulo == "tecnico":
-        eh_admin = (perfil == "administrador_geral"
-                    or autenticacao.eh_admin_do_modulo(nome, "tecnico"))
-        from mod_tecnico.telas_administracao import mostrar_administracao
-        from mod_intranet.tema_modulo import ler_tema
-        ui.colors(primary=ler_tema("tecnico", cor_botao="#000000")["cor_botao"])
-        mostrar_administracao(nome)
-
-    elif chave_modulo == "filas":
-        eh_admin = (perfil == "administrador_geral"
-                    or autenticacao.eh_admin_do_modulo(nome, "filas"))
-        from mod_filas.telas_administracao import mostrar_administracao
-        from mod_intranet.tema_modulo import ler_tema
-        ui.colors(primary=ler_tema("filas", cor_botao="#000000")["cor_botao"])
-        mostrar_administracao(nome)
-
-    elif chave_modulo == "lista_telefonica":
-        eh_admin = (perfil == "administrador_geral"
-                    or autenticacao.eh_admin_do_modulo(nome, "lista_telefonica"))
-        from mod_lista_telefonica.telas_administracao import mostrar_administracao
-        from mod_intranet.tema_modulo import ler_tema
-        ui.colors(primary=ler_tema("lista_telefonica", cor_botao="#000000")["cor_botao"])
-        # admin requer papel; se não for admin, mostra aviso e redireciona para visual
-        if not eh_admin:
-            ui.notify("Acesso restrito a administradores", type="negative")
-            ui.navigate.to("/lista-telefonica")
         else:
-            mostrar_administracao(nome)
-
-    elif chave_modulo == "agregador_noticias":
-        eh_admin = (perfil == "administrador_geral"
-                    or autenticacao.eh_admin_do_modulo(nome, "agregador_noticias"))
-        from mod_agregador_noticias.telas_administracao import mostrar_administracao
-        from mod_intranet.tema_modulo import ler_tema
-        ui.colors(primary=ler_tema("agregador_noticias", cor_botao="#000000")["cor_botao"])
-        if not eh_admin:
-            ui.notify("Acesso restrito a administradores", type="negative")
-            ui.navigate.to("/agregador-noticias")
-        else:
-            mostrar_administracao(nome)
-
-    else:
-        ui.navigate.to("/configuracoes")
+            ui.navigate.to("/configuracoes")
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_admin_modulo: erro ao renderizar a administração de '%s': %s", chave_modulo, e)
+        notificar("Erro ao carregar a administração do módulo.", tipo="error")
 
 
 @ui.page("/configuracoes")
 def page_configuracoes():
-    from mod_intranet.telas import pagina_restrita
-    user = pagina_restrita("Administração")
-    if not user:
-        return
-    from mod_intranet.tela_configuracoes import mostrar_tela
-    mostrar_tela(user["nome"], user.get("perfil", ""))
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Administração")
+        if not user:
+            return
+        from mod_intranet.tela_configuracoes import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_configuracoes: erro ao renderizar as Configurações: %s", e)
+        notificar("Erro ao carregar as Configurações.", tipo="error")
 
 
 # ================== START ==================
@@ -1021,16 +1156,21 @@ if __name__ in ("__main__", "__mp_main__"):
         return iniciar_agendador()
 
     def _passo_docs():
-        from mod_intranet.documentacao import (
-            construir_e_montar_documentacao,
-            iniciar_servidor, habilitada_no_boot,
-        )
-        if not habilitada_no_boot():
-            print("[documentacao] Desativada (docs_ativo=0) — pulando build/servidor no boot")
-            return True
-        construir_e_montar_documentacao(
-            porta=_cfg.get("porta_documentacao", 8000))
-        iniciar_servidor(_cfg.get("porta_documentacao", 8000))
+        try:
+            from mod_intranet.documentacao import (
+                construir_e_montar_documentacao,
+                iniciar_servidor, habilitada_no_boot,
+            )
+            if not habilitada_no_boot():
+                print("[documentacao] Desativada (docs_ativo=0) — pulando build/servidor no boot")
+                return True
+            construir_e_montar_documentacao(
+                porta=_cfg.get("porta_documentacao", 8000))
+            iniciar_servidor(_cfg.get("porta_documentacao", 8000))
+        except Exception as e:
+            observabilidade.get_logger("intranet").exception(
+                "_passo_docs: falha ao construir/iniciar a documentação: %s", e)
+            raise
 
     ativacao.progresso_boot([
         ("Agendadores (backup/limpeza/monitor)", _passo_agendador),
@@ -1069,7 +1209,11 @@ if __name__ in ("__main__", "__mp_main__"):
     _atexit.register(_encerrar)
 
     def _ao_sinal(*_args):
-        _encerrar()
+        try:
+            _encerrar()
+        except Exception as e:
+            observabilidade.get_logger("intranet").exception(
+                "_ao_sinal: falha ao encerrar a aplicação: %s", e)
         os._exit(0)
 
     for _s in (_signal.SIGINT, _signal.SIGTERM):

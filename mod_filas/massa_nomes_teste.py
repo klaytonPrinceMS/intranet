@@ -23,6 +23,10 @@ import os
 import random
 import sys
 
+from mod_intranet import observabilidade
+
+log = observabilidade.get_logger("filas")
+
 PASTA_MIDIA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "midia")
 ARQUIVO_PADRAO = "massa_nomes_teste_70.txt"
 SEMENTE_PADRAO = 42
@@ -76,14 +80,22 @@ class GeradorMassaNomes:
         (gestantes), primeiro nome obrigatoriamente feminino.
         """
         def _tem_sobrenome(nome: str) -> bool:
-            return len((nome or "").strip().split()) >= 2
+            try:
+                return len((nome or "").strip().split()) >= 2
+            except Exception as e:
+                log.exception(f"_tem_sobrenome falhou: {e}")
+                return None
 
         def _completar_sobrenome(nome: str, rnd=None) -> str:
-            nome = (nome or "").strip()
-            if _tem_sobrenome(nome):
-                return nome
-            extra = (rnd.choice(_SOBRENOMES) if rnd else "Silva")
-            return f"{nome} {extra}".strip()
+            try:
+                nome = (nome or "").strip()
+                if _tem_sobrenome(nome):
+                    return nome
+                extra = (rnd.choice(_SOBRENOMES) if rnd else "Silva")
+                return f"{nome} {extra}".strip()
+            except Exception as e:
+                log.exception(f"_completar_sobrenome falhou: {e}")
+                return None
         try:
             from faker import Faker
 
@@ -141,111 +153,135 @@ class GeradorMassaNomes:
 
     def montar_linhas(self) -> list:
         """Monta as 70 linhas (nome + tags) com distribuição exata e embaralhada."""
-        rnd = random.Random(self.semente)
-        nomes_gestante = self.gerar_nomes_base(TOTAL_GESTANTE, so_femininos=True)
-        # Semente distinta para cada grupo não repetir nomes entre grupos.
-        ger_idoso = GeradorMassaNomes(self.semente + 1000)
-        ger_comum = GeradorMassaNomes(self.semente + 2000)
-        nomes_idoso = ger_idoso.gerar_nomes_base(TOTAL_IDOSO)
-        nomes_comum = ger_comum.gerar_nomes_base(TOTAL_COMUM)
-        # Garante unicidade global entre os 3 grupos (língua ubíqua: fila sem duplicada).
-        vistos = set()
-        unicos_gest, unicos_idoso, unicos_comum = [], [], []
-        for nome in nomes_gestante + nomes_idoso + nomes_comum:
-            chave = nome.strip().lower()
-            if chave in vistos:
-                extra = _SOBRENOMES[len(vistos) % len(_SOBRENOMES)]
-                nome = f"{nome.strip()} {extra}"
+        try:
+            rnd = random.Random(self.semente)
+            nomes_gestante = self.gerar_nomes_base(TOTAL_GESTANTE, so_femininos=True)
+            # Semente distinta para cada grupo não repetir nomes entre grupos.
+            ger_idoso = GeradorMassaNomes(self.semente + 1000)
+            ger_comum = GeradorMassaNomes(self.semente + 2000)
+            nomes_idoso = ger_idoso.gerar_nomes_base(TOTAL_IDOSO)
+            nomes_comum = ger_comum.gerar_nomes_base(TOTAL_COMUM)
+            # Garante unicidade global entre os 3 grupos (língua ubíqua: fila sem duplicada).
+            vistos = set()
+            unicos_gest, unicos_idoso, unicos_comum = [], [], []
+            for nome in nomes_gestante + nomes_idoso + nomes_comum:
                 chave = nome.strip().lower()
-            vistos.add(chave)
-            if len(unicos_gest) < TOTAL_GESTANTE:
-                unicos_gest.append(nome)
-            elif len(unicos_idoso) < TOTAL_IDOSO:
-                unicos_idoso.append(nome)
-            else:
-                unicos_comum.append(nome)
+                if chave in vistos:
+                    extra = _SOBRENOMES[len(vistos) % len(_SOBRENOMES)]
+                    nome = f"{nome.strip()} {extra}"
+                    chave = nome.strip().lower()
+                vistos.add(chave)
+                if len(unicos_gest) < TOTAL_GESTANTE:
+                    unicos_gest.append(nome)
+                elif len(unicos_idoso) < TOTAL_IDOSO:
+                    unicos_idoso.append(nome)
+                else:
+                    unicos_comum.append(nome)
 
-        idx_gest = rnd.sample(range(TOTAL_GESTANTE), len(CORES_GESTANTE))
-        idx_idoso = rnd.sample(range(TOTAL_IDOSO), len(CORES_IDOSO))
-        idx_comum = rnd.sample(range(TOTAL_COMUM), len(CORES_COMUM))
-        cor_por_gest = dict(zip(idx_gest, CORES_GESTANTE))
-        cor_por_idoso = dict(zip(idx_idoso, CORES_IDOSO))
-        cor_por_comum = dict(zip(idx_comum, CORES_COMUM))
+            idx_gest = rnd.sample(range(TOTAL_GESTANTE), len(CORES_GESTANTE))
+            idx_idoso = rnd.sample(range(TOTAL_IDOSO), len(CORES_IDOSO))
+            idx_comum = rnd.sample(range(TOTAL_COMUM), len(CORES_COMUM))
+            cor_por_gest = dict(zip(idx_gest, CORES_GESTANTE))
+            cor_por_idoso = dict(zip(idx_idoso, CORES_IDOSO))
+            cor_por_comum = dict(zip(idx_comum, CORES_COMUM))
 
-        linhas = []
-        for i, nome in enumerate(unicos_gest):
-            cor = cor_por_gest.get(i, "")
-            linha = f"{nome} #gestante" + (f" #{cor}" if cor else "")
-            linhas.append(linha)
-        for i, nome in enumerate(unicos_idoso):
-            cor = cor_por_idoso.get(i, "")
-            linha = f"{nome} #idoso" + (f" #{cor}" if cor else "")
-            linhas.append(linha)
-        for i, nome in enumerate(unicos_comum):
-            cor = cor_por_comum.get(i, "")
-            linha = f"{nome}" + (f" #{cor}" if cor else "")
-            linhas.append(linha)
-        # Espalha os 3 grupos + cores ao longo do arquivo (ordem de chegada mista).
-        rnd.shuffle(linhas)
-        return linhas
+            linhas = []
+            for i, nome in enumerate(unicos_gest):
+                cor = cor_por_gest.get(i, "")
+                linha = f"{nome} #gestante" + (f" #{cor}" if cor else "")
+                linhas.append(linha)
+            for i, nome in enumerate(unicos_idoso):
+                cor = cor_por_idoso.get(i, "")
+                linha = f"{nome} #idoso" + (f" #{cor}" if cor else "")
+                linhas.append(linha)
+            for i, nome in enumerate(unicos_comum):
+                cor = cor_por_comum.get(i, "")
+                linha = f"{nome}" + (f" #{cor}" if cor else "")
+                linhas.append(linha)
+            # Espalha os 3 grupos + cores ao longo do arquivo (ordem de chegada mista).
+            rnd.shuffle(linhas)
+            return linhas
+        except Exception as e:
+            log.exception(f"montar_linhas falhou: {e}")
+            return None
 
     def salvar_massa(self, caminho_saida: str = "") -> str:
         """Salva a massa em mod_filas/midia/ e retorna o caminho final."""
-        os.makedirs(PASTA_MIDIA, exist_ok=True)
-        if not caminho_saida:
-            caminho_saida = os.path.join(PASTA_MIDIA, ARQUIVO_PADRAO)
-        linhas = self.montar_linhas()
-        with open(caminho_saida, "w", encoding="utf-8") as f:
-            f.write("\n".join(linhas) + "\n")
-        return caminho_saida
+        try:
+            os.makedirs(PASTA_MIDIA, exist_ok=True)
+            if not caminho_saida:
+                caminho_saida = os.path.join(PASTA_MIDIA, ARQUIVO_PADRAO)
+            linhas = self.montar_linhas()
+            with open(caminho_saida, "w", encoding="utf-8") as f:
+                f.write("\n".join(linhas) + "\n")
+            return caminho_saida
+        except Exception as e:
+            log.exception(f"salvar_massa falhou: {e}")
+            return None
 
 
 def contar_distribuicao(linhas: list) -> dict:
     """Conta gestante/idoso/comum + cores Manchester nas linhas geradas."""
-    baixa = [(l or "").lower() for l in linhas]
-    cont = {
-        "total": len(linhas),
-        "gestante": sum(1 for l in baixa if "#gestante" in l),
-        "idoso": sum(1 for l in baixa if "#idoso" in l),
-        "vermelho": sum(1 for l in baixa if "#vermelho" in l),
-        "laranja": sum(1 for l in baixa if "#laranja" in l),
-        "amarelo": sum(1 for l in baixa if "#amarelo" in l),
-        "verde": sum(1 for l in baixa if "#verde" in l),
-        "azul": sum(1 for l in baixa if "#azul" in l),
-    }
-    cont["manchester"] = (
-        cont["vermelho"] + cont["laranja"] + cont["amarelo"] + cont["verde"] + cont["azul"]
-    )
-    cont["comum"] = cont["total"] - cont["gestante"] - cont["idoso"]
-    return cont
+    try:
+        baixa = [(l or "").lower() for l in linhas]
+        cont = {
+            "total": len(linhas),
+            "gestante": sum(1 for l in baixa if "#gestante" in l),
+            "idoso": sum(1 for l in baixa if "#idoso" in l),
+            "vermelho": sum(1 for l in baixa if "#vermelho" in l),
+            "laranja": sum(1 for l in baixa if "#laranja" in l),
+            "amarelo": sum(1 for l in baixa if "#amarelo" in l),
+            "verde": sum(1 for l in baixa if "#verde" in l),
+            "azul": sum(1 for l in baixa if "#azul" in l),
+        }
+        cont["manchester"] = (
+            cont["vermelho"] + cont["laranja"] + cont["amarelo"] + cont["verde"] + cont["azul"]
+        )
+        cont["comum"] = cont["total"] - cont["gestante"] - cont["idoso"]
+        return cont
+    except Exception as e:
+        log.exception(f"contar_distribuicao falhou: {e}")
+        return 0
 
 
 def validar_massa(caminho: str) -> dict:
     """Lê o arquivo gerado e retorna a distribuição real (para o aceite)."""
-    with open(caminho, encoding="utf-8") as f:
-        linhas = [l.strip() for l in f if l.strip()]
-    return contar_distribuicao(linhas)
+    try:
+        with open(caminho, encoding="utf-8") as f:
+            linhas = [l.strip() for l in f if l.strip()]
+        return contar_distribuicao(linhas)
+    except Exception as e:
+        log.exception(f"validar_massa falhou: {e}")
+        return None
 
 
 def gerar_massa_teste(semente: int = SEMENTE_PADRAO, caminho_saida: str = "") -> str:
     """Atalho funcional: gera e salva a massa de 70 nomes; retorna o caminho."""
-    return GeradorMassaNomes(semente).salvar_massa(caminho_saida)
+    try:
+        return GeradorMassaNomes(semente).salvar_massa(caminho_saida)
+    except Exception as e:
+        log.exception(f"gerar_massa_teste falhou: {e}")
+        return None
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Gera massa de 70 nomes da fila em mod_filas/midia/")
-    parser.add_argument("--semente", type=int, default=SEMENTE_PADRAO, help="Semente determinística (padrão 42)")
-    parser.add_argument("--saida", type=str, default="", help="Arquivo de saída (padrão mod_filas/midia/massa_nomes_teste_70.txt)")
-    args = parser.parse_args()
-    caminho = gerar_massa_teste(semente=args.semente, caminho_saida=args.saida)
-    cont = validar_massa(caminho)
-    print(f"Massa salva em: {caminho}")
-    print(
-        "Distribuição: total={total} gestante={gestante} idoso={idoso} comum={comum} "
-        "manchester={manchester} (vermelho={vermelho} laranja={laranja} amarelo={amarelo} "
-        "verde={verde} azul={azul})".format(**cont)
-    )
-    return 0
+    try:
+        parser = argparse.ArgumentParser(description="Gera massa de 70 nomes da fila em mod_filas/midia/")
+        parser.add_argument("--semente", type=int, default=SEMENTE_PADRAO, help="Semente determinística (padrão 42)")
+        parser.add_argument("--saida", type=str, default="", help="Arquivo de saída (padrão mod_filas/midia/massa_nomes_teste_70.txt)")
+        args = parser.parse_args()
+        caminho = gerar_massa_teste(semente=args.semente, caminho_saida=args.saida)
+        cont = validar_massa(caminho)
+        print(f"Massa salva em: {caminho}")
+        print(
+            "Distribuição: total={total} gestante={gestante} idoso={idoso} comum={comum} "
+            "manchester={manchester} (vermelho={vermelho} laranja={laranja} amarelo={amarelo} "
+            "verde={verde} azul={azul})".format(**cont)
+        )
+        return 0
+    except Exception as e:
+        log.exception(f"main falhou: {e}")
+        return 1
 
 
 if __name__ == "__main__":

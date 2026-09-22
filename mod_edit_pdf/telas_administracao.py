@@ -38,11 +38,25 @@ PREFIXO_AUDITORIA = "edit-pdf"
 
 def _fmt_bytes(n):
     """Formats a byte count as KB/MB/GB for display."""
-    if n >= 1024**3:
-        return f"{n/1024**3:.1f} GB"
-    if n >= 1024**2:
-        return f"{n/1024**2:.1f} MB"
-    return f"{n/1024:.0f} KB"
+    try:
+        if n >= 1024**3:
+            return f"{n/1024**3:.1f} GB"
+        if n >= 1024**2:
+            return f"{n/1024**2:.1f} MB"
+        return f"{n/1024:.0f} KB"
+    except Exception as e:
+        try:
+            log.exception(f"_fmt_bytes falhou: {e}")
+        except Exception:
+            pass
+        try:
+            notificar(f"Erro em _fmt_bytes: {e}", tipo="error")
+        except Exception:
+            try:
+                ui.notify(f"Erro em _fmt_bytes", type="negative")
+            except Exception:
+                pass
+        return None
 
 
 def mostrar_administracao(usuario_logado: str, eh_admin: bool):

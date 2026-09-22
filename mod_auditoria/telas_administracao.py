@@ -103,8 +103,12 @@ def mostrar_administracao(
     }
 
     # ---- Card padrão "Configurações de cores" (prévia ao vivo) ----
-    bloco_aparencia(usuario_logado, "auditoria", tema,
-                    prefixo_auditoria="auditoria", com_texto_header=False)
+    try:
+        bloco_aparencia(usuario_logado, "auditoria", tema,
+                        prefixo_auditoria="auditoria", com_texto_header=False)
+    except Exception:
+        log.exception("mostrar_administracao: falha ao montar bloco de aparência")
+        notificar("Erro ao carregar configurações de cores", type="negative")
 
     # ---- Configurações específicas (LGPD) ----
     with card_admin("Configurações específicas", icone="tune",
@@ -176,5 +180,9 @@ def mostrar_administracao(
         rodape_salvar_restaurar(_salvar, restaurar=_resetar,
                                 chave_modulo="auditoria")
 
-    from mod_intranet.rotinas import painel_backup
-    painel_backup(usuario_logado, "auditoria")
+    try:
+        from mod_intranet.rotinas import painel_backup
+        painel_backup(usuario_logado, "auditoria")
+    except Exception:
+        log.exception("mostrar_administracao: falha ao montar painel de backup")
+        notificar("Erro ao carregar painel de backup", type="negative")

@@ -248,14 +248,13 @@ def mostrar_administracao(usuario_logado: str = ""):
                 midias = [m for m in filas.listar_midias() if not m[8]]
                 if not midias:
                     ui.label("Nenhuma mídia global. Faça upload abaixo ou envie por fila.").classes("text-caption text-grey-6 italic")
-                for mid, nome, tipo, caminho, orig, ordem, ativo, criado, f_id, volume, duracao, slot, real, fundo, *_resto in midias:
+                for mid, nome, tipo, caminho, orig, ordem, ativo, criado, f_id, volume, duracao, slot, real, fundo in midias:
                     src = f"/midia_filas/{os.path.basename(caminho)}"
                     _onde = "todas as TVs" if tipo == "audio" else "só TV geral"
-                    _mut_g = bool(_resto[0]) if _resto else False
                     with ui.card().classes("w-full p-3 gap-2").style("min-width: 0"):
                         with ui.row().classes("w-full items-center justify-between flex-wrap").style("gap: 0.5rem; min-width: 0"):
                             with ui.column().classes("gap-0 flex-1").style("min-width: 0"):
-                                ui.label(f"Exibição {slot} • [{tipo}] {nome} • vol {volume} • {_onde}" + (" • MUTADO" if _mut_g else "")).classes("font-bold text-caption")
+                                ui.label(f"Exibição {slot} • [{tipo}] {nome} • vol {volume} • {_onde}").classes("font-bold text-caption")
                                 ui.label(f"{orig or os.path.basename(caminho)} • {src} • {'ativo' if ativo else 'inativo'} • {criado[:16] if criado else ''}").classes("text-caption text-grey-6")
                                 if tipo == "audio":
                                     ui.html(f"<audio controls style='width:100%;max-width:400px'><source src='{src}' type='audio/mpeg'></audio>", sanitize=False)

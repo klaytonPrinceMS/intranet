@@ -25,7 +25,7 @@ from mod_intranet import docker_detector as _dd
 from mod_intranet.aba_modulo import cabecalho, abas
 from mod_intranet.ui_comum import botao, botao_icone
 from mod_intranet.bd_manipulador import audit_log
-from mod_intranet.tema_modulo import campo_modulo
+from mod_intranet.tema_modulo import campo_modulo, notificar
 from mod_auditoria.bd_manipulador import (
     buscar_logs as buscar_logs_auditoria,
     get_modulos_com_auditoria,
@@ -210,80 +210,82 @@ def mostrar_tela(usuario_logado: str, perfil: str):
     # ---------- Helpers ----------
     def _linha_bruta(r):
         """Dict 'chave -> valor' a partir da tupla do SELECT (antes da UI)."""
-        return {
-            "data": r[6],
-            "usuario": r[1],
-            "modulo": r[2],
-            "acao": r[3],
-            "descricao": r[4] or "",
-            "hash": r[5] or "",
-            "ip": r[7] or "",
-            "dispositivo": rotulo_dispositivo(r[8]) or "",
-        }
+        try:
+            return {
+                "data": r[6],
+                "usuario": r[1],
+                "modulo": r[2],
+                "acao": r[3],
+                "descricao": r[4] or "",
+                "hash": r[5] or "",
+                "ip": r[7] or "",
+                "dispositivo": rotulo_dispositivo(r[8]) or "",
+            }
+        except Exception:
+            log.exception("_linha_bruta: falha ao converter linha da auditoria")
+            return {"data": "", "usuario": "", "modulo": "", "acao": "",
+                    "descricao": "", "hash": "", "ip": "", "dispositivo": ""}
 
     def _buscar_logs(filtro_usuario="", filtro_modulo="", filtro_acao="",
                      data_inicio="", data_fim="", filtro_hora="", pagina=1):
-        log.info(f"[DIAG] _buscar_logs chamado com tabela_atual={tabela_atual!r}")
-        return buscar_logs_auditoria(
-            tabela=tabela_atual,
-            filtro_usuario=filtro_usuario,
-            filtro_modulo=filtro_modulo,
-            filtro_acao=filtro_acao,
-            filtro_hora=filtro_hora,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
-            pagina=pagina,
-            limite_sql=limite_sql,
-        )
+        try:
+            log.info(f"[DIAG] _buscar_logs chamado com tabela_atual={tabela_atual!r}")
+            return buscar_logs_auditoria(
+                tabela=tabela_atual,
+                filtro_usuario=filtro_usuario,
+                filtro_modulo=filtro_modulo,
+                filtro_acao=filtro_acao,
+                filtro_hora=filtro_hora,
+                data_inicio=data_inicio,
+                data_fim=data_fim,
+                pagina=pagina,
+                limite_sql=limite_sql,
+            )
+        except Exception:
+            log.exception("_buscar_logs: falha ao buscar logs da auditoria")
+            notificar("Erro ao buscar registros de auditoria", type="negative")
+            return [], 0
 
     def _render_tabela():
-        ativos = _campos_ativos()
-        conjunto = set(ativos)
-        colunas = []
-        for chave, label in CAMPOS:
-            if chave not in conjunto:
-                continue
-            col = {"name": chave, "label": label, "field": chave,
-                   "align": "center" if chave == "data" else "left"}
-            colunas.append(col)
-        tabela.columns = colunas
-        linhas = []
-        for r in _ultimos_logs:
-            raw = _linha_bruta(r)
-            linha = {k: raw[k] for k in ativos if k in raw}
-            linha["id"] = r[0]
-            if "acao" in conjunto:
-                cor = CORES_ACAO.get(raw["acao"])
-                linha["acao"] = (f'<span style="color:{cor};font-weight:600">'
-                                 f'{raw["acao"]}</span>' if cor else raw["acao"])
-            if "descricao" in conjunto:
-                d = raw["descricao"]
-                linha["descricao"] = d[:100] + ("..." if len(d) > 100 else "")
-            if "hash" in conjunto:
-                linha["hash"] = raw["hash"] or "-"
-            linhas.append(linha)
-        tabela.rows = linhas
-        tabela.update()
+        try:
+            ativos = _campos_ativos()
+            conjunto = set(ativos)
+            colunas = []
+            for chave, label in CAMPOS:
+                if chave not in conjunto:
+                    continue
+                col = {"name": chave, "label": label, "field": chave,
+                       "align": "center" if chave == "data" else "left"}
+                colunas.append(col)
+            tabela.columns = colunas
+            linhas = []
+            for r in _ultimos_logs:
+                raw = _linha_bruta(r)
+                linha = {k: raw[k] for k in ativos if k in raw}
+                linha["id"] = r[0]
+                if "acao" in conjunto:
+                    cor = CORES_ACAO.get(raw["acao"])
+                    linha["acao"] = (f'<span style="color:{cor};font-weight:600">'
+                                     f'{raw["acao"]}</span>' if cor else raw["acao"])
+                if "descricao" in conjunto:
+                    d = raw["descricao"]
+                    linha["descricao"] = d[:100] + ("..." if len(d) > 100 else "")
+                if "hash" in conjunto:
+                    linha["hash"] = raw["hash"] or "-"
+                linhas.append(linha)
+            tabela.rows = linhas
+            tabela.update()
+        except Exception:
+            log.exception("_render_tabela: falha ao renderizar tabela de auditoria")
+            notificar("Erro ao exibir registros de auditoria", type="negative")
 
     def _atualizar_tabela(pagina=1, reset=False):
         nonlocal pagina_atual, total_registros, total_paginas, _ultimos_logs
-        if reset or not pagina:
-            pagina = 1
-        pagina_atual = max(1, pagina)
-        rows, total = _buscar_logs(
-            filtro_usuario=filtro_usuario.value or "",
-            filtro_modulo="",
-            filtro_acao=filtro_acao.value or "",
-            data_inicio=holder_inicio["data"] or "",
-            data_fim=holder_fim["data"] or "",
-            filtro_hora=filtro_hora.value or "",
-            pagina=pagina_atual,
-        )
-        total_registros = total
-        total_paginas = max(1, -(-total // limite_sql)) if total else 1
-        if pagina_atual > total_paginas:
-            pagina_atual = total_paginas
-            rows, _ = _buscar_logs(
+        try:
+            if reset or not pagina:
+                pagina = 1
+            pagina_atual = max(1, pagina)
+            rows, total = _buscar_logs(
                 filtro_usuario=filtro_usuario.value or "",
                 filtro_modulo="",
                 filtro_acao=filtro_acao.value or "",
@@ -292,70 +294,110 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                 filtro_hora=filtro_hora.value or "",
                 pagina=pagina_atual,
             )
-        _ultimos_logs = rows
-        _render_tabela()
-        lbl_pagina.text = (f"{total_registros} registro(s) "
-                           f"· página {pagina_atual} de {total_paginas}")
-        btn_prev.disabled = pagina_atual <= 1
-        btn_next.disabled = pagina_atual >= total_paginas
-        log.info(f"busca de logs concluida | pagina={pagina_atual} total={total_registros}")
+            total_registros = total
+            total_paginas = max(1, -(-total // limite_sql)) if total else 1
+            if pagina_atual > total_paginas:
+                pagina_atual = total_paginas
+                rows, _ = _buscar_logs(
+                    filtro_usuario=filtro_usuario.value or "",
+                    filtro_modulo="",
+                    filtro_acao=filtro_acao.value or "",
+                    data_inicio=holder_inicio["data"] or "",
+                    data_fim=holder_fim["data"] or "",
+                    filtro_hora=filtro_hora.value or "",
+                    pagina=pagina_atual,
+                )
+            _ultimos_logs = rows
+            _render_tabela()
+            lbl_pagina.text = (f"{total_registros} registro(s) "
+                               f"· página {pagina_atual} de {total_paginas}")
+            btn_prev.disabled = pagina_atual <= 1
+            btn_next.disabled = pagina_atual >= total_paginas
+            log.info(f"busca de logs concluida | pagina={pagina_atual} total={total_registros}")
+        except Exception:
+            log.exception("_atualizar_tabela: falha ao atualizar tabela de auditoria")
+            notificar("Erro ao atualizar a tabela de auditoria", type="negative")
 
     def _exportar_csv():
-        ativos = _campos_ativos()
-        if not _ultimos_logs:
-            ui.notify("Nada a exportar — execute uma busca primeiro.", type="warning")
-            return
-        buf = io.StringIO()
-        w = csv.writer(buf)
-        w.writerow([_LABEL[c] for c in ativos])
-        for r in _ultimos_logs:
-            raw = _linha_bruta(r)
-            w.writerow([raw.get(c, "") for c in ativos])
-        nome = f"auditoria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        ui.download(buf.getvalue().encode("utf-8"), nome)
-        log.info(f"CSV exportado por {usuario_logado} | {len(_ultimos_logs)} linha(s)")
+        try:
+            ativos = _campos_ativos()
+            if not _ultimos_logs:
+                ui.notify("Nada a exportar — execute uma busca primeiro.", type="warning")
+                return
+            buf = io.StringIO()
+            w = csv.writer(buf)
+            w.writerow([_LABEL[c] for c in ativos])
+            for r in _ultimos_logs:
+                raw = _linha_bruta(r)
+                w.writerow([raw.get(c, "") for c in ativos])
+            nome = f"auditoria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            ui.download(buf.getvalue().encode("utf-8"), nome)
+            log.info(f"CSV exportado por {usuario_logado} | {len(_ultimos_logs)} linha(s)")
+        except Exception:
+            log.exception("_exportar_csv: falha ao exportar CSV da auditoria")
+            notificar("Erro ao exportar CSV", type="negative")
 
     def _limpar_filtros():
         nonlocal tabela_atual
-        filtro_usuario.value = ""
-        nav_tabela.value = ""
-        tabela_atual = None
-        filtro_acao.value = ""
-        filtro_hora.value = ""
-        _limpar_inicio()
-        _limpar_fim()
-        _atualizar_tabela(reset=True)
+        try:
+            filtro_usuario.value = ""
+            nav_tabela.value = ""
+            tabela_atual = None
+            filtro_acao.value = ""
+            filtro_hora.value = ""
+            _limpar_inicio()
+            _limpar_fim()
+            _atualizar_tabela(reset=True)
+        except Exception:
+            log.exception("_limpar_filtros: falha ao limpar filtros da auditoria")
+            notificar("Erro ao limpar filtros", type="negative")
 
     def _mover_campo(i, delta):
-        ativos = _campos_ativos()
-        j = i + delta
-        if i < 0 or j < 0 or j >= len(ativos):
-            return
-        ativos[i], ativos[j] = ativos[j], ativos[i]
-        _salvar_campos(ativos)
-        _rebuild_painel_campos()
-        _render_tabela()
+        try:
+            ativos = _campos_ativos()
+            j = i + delta
+            if i < 0 or j < 0 or j >= len(ativos):
+                return
+            ativos[i], ativos[j] = ativos[j], ativos[i]
+            _salvar_campos(ativos)
+            _rebuild_painel_campos()
+            _render_tabela()
+        except Exception:
+            log.exception("_mover_campo: falha ao reordenar campo da auditoria")
+            notificar("Erro ao reordenar campo", type="negative")
 
     def _remover_campo(chave):
-        ativos = [c for c in _campos_ativos() if c != chave]
-        _salvar_campos(ativos)
-        _rebuild_painel_campos()
-        _render_tabela()
+        try:
+            ativos = [c for c in _campos_ativos() if c != chave]
+            _salvar_campos(ativos)
+            _rebuild_painel_campos()
+            _render_tabela()
+        except Exception:
+            log.exception(f"_remover_campo: falha ao ocultar campo {chave}")
+            notificar("Erro ao ocultar campo", type="negative")
 
     def _adicionar_campo(chave):
-        if not chave:
-            return
-        ativos = _campos_ativos()
-        if chave not in ativos:
-            ativos.append(chave)
-            _salvar_campos(ativos)
-        _rebuild_painel_campos()
-        _render_tabela()
+        try:
+            if not chave:
+                return
+            ativos = _campos_ativos()
+            if chave not in ativos:
+                ativos.append(chave)
+                _salvar_campos(ativos)
+            _rebuild_painel_campos()
+            _render_tabela()
+        except Exception:
+            log.exception(f"_adicionar_campo: falha ao adicionar campo {chave}")
+            notificar("Erro ao adicionar campo", type="negative")
 
     def _restaurar_campos():
-        _salvar_campos([c for c, _ in CAMPOS])
-        _rebuild_painel_campos()
-        _render_tabela()
+        try:
+            _salvar_campos([c for c, _ in CAMPOS])
+            _rebuild_painel_campos()
+            _render_tabela()
+        except Exception:
+            log.exception("_restaurar_campos: falha ao restaurar campos da auditoria")
+            notificar("Erro ao restaurar campos", type="negative")
 
     # ---------- UI ----------
     cabecalho("Auditoria", texto_header, chave_modulo="auditoria",
@@ -378,9 +420,13 @@ def mostrar_tela(usuario_logado: str, perfil: str):
 
                 def _on_navegar():
                     nonlocal tabela_atual, pagina_atual
-                    tabela_atual = nav_tabela.value or None
-                    log.info(f"[DIAG] _on_navegar -> nav_tabela.value={nav_tabela.value!r} tabela_atual={tabela_atual!r}")
-                    _atualizar_tabela(reset=True)
+                    try:
+                        tabela_atual = nav_tabela.value or None
+                        log.info(f"[DIAG] _on_navegar -> nav_tabela.value={nav_tabela.value!r} tabela_atual={tabela_atual!r}")
+                        _atualizar_tabela(reset=True)
+                    except Exception:
+                        log.exception("_on_navegar: falha ao trocar tabela de auditoria")
+                        notificar("Erro ao trocar tabela de auditoria", type="negative")
 
                 nav_tabela.on_value_change(_on_navegar)
 
@@ -413,9 +459,12 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     holder = {"data": None, "cal": None}
 
                     def _abrir():
-                        if holder["cal"] is not None:
-                            holder["cal"].value = holder["data"]
-                        menu.open()
+                        try:
+                            if holder["cal"] is not None:
+                                holder["cal"].value = holder["data"]
+                            menu.open()
+                        except Exception:
+                            log.exception("_abrir: falha ao abrir calendário da auditoria")
 
                     campo.on('click', _abrir)
 
@@ -423,9 +472,13 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                         cal = ui.date(value=None).props("mask YYYY-MM-DD")
 
                         def _ao_escolher(e):
-                            holder["data"] = e.value
-                            campo.value = _fmt_data(e.value)
-                            menu.close()
+                            try:
+                                holder["data"] = e.value
+                                campo.value = _fmt_data(e.value)
+                                menu.close()
+                            except Exception:
+                                log.exception("_ao_escolher: falha ao aplicar data da auditoria")
+                                notificar("Erro ao aplicar data", type="negative")
 
                         cal.on_value_change(_ao_escolher)
                         holder["cal"] = cal
@@ -452,35 +505,39 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                 painel_campos = ui.column().classes("w-full gap-1")
 
                 def _rebuild_painel_campos():
-                    painel_campos.clear()
-                    ativos = _campos_ativos()
-                    ocultos = [c for c, _ in CAMPOS if c not in ativos]
-                    with painel_campos:
-                        ui.label("Ajuste quais campos aparecem e a ordem da tabela "
-                                 "(preferência salva para este auditor).") \
-                            .classes("text-caption text-grey-6")
-                        for i, chave in enumerate(ativos):
-                            with ui.row().classes("items-center gap-1 w-full"):
-                                ui.icon("drag_indicator").classes("text-grey-5")
-                                ui.label(_LABEL[chave]).classes("w-40")
-                                botao_icone("arrow_upward", on_click=lambda i=i: _mover_campo(i, -1),
-                                            chave_modulo="auditoria")
-                                botao_icone("arrow_downward", on_click=lambda i=i: _mover_campo(i, +1),
-                                            chave_modulo="auditoria")
-                                botao_icone("close", on_click=lambda c=chave: _remover_campo(c),
-                                            cor="negative",
-                                            chave_modulo="auditoria").tooltip("Ocultar campo")
-                        if ocultos:
-                            with ui.row().classes("items-center gap-2"):
-                                sel_adicionar = ui.select(
-                                    {c: _LABEL[c] for c in ocultos},
-                                    label="Adicionar campo", value=None) \
-                                    .props("outlined dense").classes("w-56")
-                                botao("Adicionar", on_click=lambda: _adicionar_campo(sel_adicionar.value),
-                                              variante="solido", compacto=True,
-                                              chave_modulo="auditoria")
-                        botao("Restaurar padrão", icone="restore", on_click=_restaurar_campos,
-                                  variante="restaurar", chave_modulo="auditoria")
+                    try:
+                        painel_campos.clear()
+                        ativos = _campos_ativos()
+                        ocultos = [c for c, _ in CAMPOS if c not in ativos]
+                        with painel_campos:
+                            ui.label("Ajuste quais campos aparecem e a ordem da tabela "
+                                     "(preferência salva para este auditor).") \
+                                .classes("text-caption text-grey-6")
+                            for i, chave in enumerate(ativos):
+                                with ui.row().classes("items-center gap-1 w-full"):
+                                    ui.icon("drag_indicator").classes("text-grey-5")
+                                    ui.label(_LABEL[chave]).classes("w-40")
+                                    botao_icone("arrow_upward", on_click=lambda i=i: _mover_campo(i, -1),
+                                                chave_modulo="auditoria")
+                                    botao_icone("arrow_downward", on_click=lambda i=i: _mover_campo(i, +1),
+                                                chave_modulo="auditoria")
+                                    botao_icone("close", on_click=lambda c=chave: _remover_campo(c),
+                                                cor="negative",
+                                                chave_modulo="auditoria").tooltip("Ocultar campo")
+                            if ocultos:
+                                with ui.row().classes("items-center gap-2"):
+                                    sel_adicionar = ui.select(
+                                        {c: _LABEL[c] for c in ocultos},
+                                        label="Adicionar campo", value=None) \
+                                        .props("outlined dense").classes("w-56")
+                                    botao("Adicionar", on_click=lambda: _adicionar_campo(sel_adicionar.value),
+                                                  variante="solido", compacto=True,
+                                                  chave_modulo="auditoria")
+                            botao("Restaurar padrão", icone="restore", on_click=_restaurar_campos,
+                                      variante="restaurar", chave_modulo="auditoria")
+                    except Exception:
+                        log.exception("_rebuild_painel_campos: falha ao montar painel de campos")
+                        notificar("Erro ao montar painel de campos", type="negative")
 
                 _rebuild_painel_campos()
 

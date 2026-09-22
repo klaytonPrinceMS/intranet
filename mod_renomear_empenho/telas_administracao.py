@@ -145,10 +145,24 @@ def mostrar_administracao(
 
             Grava as pastas monitoradas (uma por linha, local/UNC) e
             recarrega após 1 segundo — aplicação sem restart."""
-            linhas = [l.strip() for l in (inp_pastas.value or "").splitlines() if l.strip()]
-            salvar_pastas_monitoradas(linhas)
-            notificar("Pastas monitoradas aplicadas — recarregando…", type="positive")
-            ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
+            try:
+                linhas = [l.strip() for l in (inp_pastas.value or "").splitlines() if l.strip()]
+                salvar_pastas_monitoradas(linhas)
+                notificar("Pastas monitoradas aplicadas — recarregando…", type="positive")
+                ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
+            except Exception as e:
+                try:
+                    _log.exception(f"salvar_pastas falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em salvar_pastas: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em salvar_pastas", type="negative")
+                    except Exception:
+                        pass
+                return None
 
         def restaurar_pastas():
             """Restores the default monitored folders and reloads after 1s.
@@ -319,8 +333,22 @@ def mostrar_administracao(
             ui.notify("Template de nome salvo (vale sem reiniciar)", type="positive")
 
         def restaurar_template():
-            set_config("empenhos_template_nome", "")
-            ui.timer(0.1, lambda: ui.navigate.reload(), once=True)
+            try:
+                set_config("empenhos_template_nome", "")
+                ui.timer(0.1, lambda: ui.navigate.reload(), once=True)
+            except Exception as e:
+                try:
+                    _log.exception(f"restaurar_template falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em restaurar_template: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em restaurar_template", type="negative")
+                    except Exception:
+                        pass
+                return None
 
         with ui.row().classes("w-full justify-end gap-2 mt-2"):
             botao("Usar padrão", on_click=restaurar_template,
@@ -339,27 +367,55 @@ def mostrar_administracao(
         lista_campos = ui.column().classes("w-full mt-1")
 
         def _refresh_campos():
-            lista_campos.clear()
-            if not listar_campos_busca():
+            try:
+                lista_campos.clear()
+                if not listar_campos_busca():
+                    with lista_campos:
+                        ui.label("Sem campos cadastrados — clique em 'Restaurar padrão'.") \
+                            .classes("text-caption text-grey-5")
+                    return
                 with lista_campos:
-                    ui.label("Sem campos cadastrados — clique em 'Restaurar padrão'.") \
-                        .classes("text-caption text-grey-5")
-                return
-            with lista_campos:
-                for cid, campo, rotulo, padrao, ativo in listar_campos_busca():
-                    with ui.row().classes("w-full items-center gap-2 py-1"):
-                        ui.icon("bolt" if ativo else "block").classes(
-                            "text-green-7" if ativo else "text-grey-5")
-                        ui.label(f"{rotulo}").classes("font-medium w-28")
-                        ui.code(padrao).style("flex:1; overflow-x:auto")
-                        if not ativo:
-                            ui.badge("inativa", color="grey")
-                        botao_icone("delete", on_click=lambda c=cid: _del_campo(c),
-                                        chave_modulo="empenhos").tooltip("Excluir campo")
+                    for cid, campo, rotulo, padrao, ativo in listar_campos_busca():
+                        with ui.row().classes("w-full items-center gap-2 py-1"):
+                            ui.icon("bolt" if ativo else "block").classes(
+                                "text-green-7" if ativo else "text-grey-5")
+                            ui.label(f"{rotulo}").classes("font-medium w-28")
+                            ui.code(padrao).style("flex:1; overflow-x:auto")
+                            if not ativo:
+                                ui.badge("inativa", color="grey")
+                            botao_icone("delete", on_click=lambda c=cid: _del_campo(c),
+                                            chave_modulo="empenhos").tooltip("Excluir campo")
+            except Exception as e:
+                try:
+                    _log.exception(f"_refresh_campos falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _refresh_campos: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _refresh_campos", type="negative")
+                    except Exception:
+                        pass
+                return None
 
         def _del_campo(cid):
-            excluir_campo_busca(cid)
-            _refresh_campos()
+            try:
+                excluir_campo_busca(cid)
+                _refresh_campos()
+            except Exception as e:
+                try:
+                    _log.exception(f"_del_campo falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _del_campo: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _del_campo", type="negative")
+                    except Exception:
+                        pass
+                return None
 
         _refresh_campos()
 
@@ -372,25 +428,53 @@ def mostrar_administracao(
             f_ativo = ui.switch("Ativa", value=True).props("dense")
 
             def salvar_campo():
-                ok, msg = salvar_campo_busca(
-                    f_campo.value or "", f_rotulo.value or "",
-                    f_padrao.value or "", bool(f_ativo.value)
-                )
-                ui.notify(msg, type="positive" if ok else "negative")
-                if ok:
-                    f_campo.set_value(None)
-                    f_rotulo.set_value(None)
-                    f_padrao.set_value(None)
-                    _refresh_campos()
+                try:
+                    ok, msg = salvar_campo_busca(
+                        f_campo.value or "", f_rotulo.value or "",
+                        f_padrao.value or "", bool(f_ativo.value)
+                    )
+                    ui.notify(msg, type="positive" if ok else "negative")
+                    if ok:
+                        f_campo.set_value(None)
+                        f_rotulo.set_value(None)
+                        f_padrao.set_value(None)
+                        _refresh_campos()
+                except Exception as e:
+                    try:
+                        _log.exception(f"salvar_campo falhou: {e}")
+                    except Exception:
+                        pass
+                    try:
+                        notificar(f"Erro em salvar_campo: {e}", tipo="error")
+                    except Exception:
+                        try:
+                            ui.notify(f"Erro em salvar_campo", type="negative")
+                        except Exception:
+                            pass
+                    return None
 
             botao("Salvar campo", icone="save", on_click=salvar_campo,
                   variante="solido", chave_modulo="empenhos")
 
         with ui.row().classes("w-full justify-end gap-2 mt-2"):
             def restaurar_campos():
-                restaurar_campos_busca_padrao()
-                _refresh_campos()
-                ui.notify("Campos de busca restaurados ao padrão", type="positive")
+                try:
+                    restaurar_campos_busca_padrao()
+                    _refresh_campos()
+                    ui.notify("Campos de busca restaurados ao padrão", type="positive")
+                except Exception as e:
+                    try:
+                        _log.exception(f"restaurar_campos falhou: {e}")
+                    except Exception:
+                        pass
+                    try:
+                        notificar(f"Erro em restaurar_campos: {e}", tipo="error")
+                    except Exception:
+                        try:
+                            ui.notify(f"Erro em restaurar_campos", type="negative")
+                        except Exception:
+                            pass
+                    return None
 
             botao("Restaurar padrão", icone="restore", on_click=restaurar_campos,
                   variante="restaurar", chave_modulo="empenhos")
@@ -421,49 +505,77 @@ def mostrar_administracao(
         ).props("flat bordered dense").classes("w-full")
 
         def _refresh_q():
-            tabela_q.rows = [
-                {"qid": r[0], "arquivo": r[1], "motivo": (r[2] or "")[:80], "data": (r[3] or "")[:16]}
-                for r in listar_quarentena() if not r[4]
-            ]
-            tabela_q.update()
+            try:
+                tabela_q.rows = [
+                    {"qid": r[0], "arquivo": r[1], "motivo": (r[2] or "")[:80], "data": (r[3] or "")[:16]}
+                    for r in listar_quarentena() if not r[4]
+                ]
+                tabela_q.update()
+            except Exception as e:
+                try:
+                    _log.exception(f"_refresh_q falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _refresh_q: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _refresh_q", type="negative")
+                    except Exception:
+                        pass
+                return None
 
         def on_q_click(e):
-            linha = e.args[1]
-            eh_multi = "Múltiplos documentos" in (linha.get("motivo") or "")
-            with ui.dialog() as dlg, ui.card().classes("w-[520px]"):
-                ui.label("Múltiplos documentos — separar" if eh_multi else "Reprocessar com nova regex").classes("text-h6")
-                ui.label(linha["arquivo"]).classes("text-caption text-grey-6")
-                if eh_multi:
-                    ui.label("Este PDF contém 2+ empenhos (ex.: lote escaneado). Separe em um arquivo por documento e reprocesse.").classes("text-caption text-orange-8 mt-1")
-                    ui.label(linha.get("motivo") or "").classes("text-caption bg-yellow-50 p-2 rounded w-full")
-                padrao = ui.input("Regex alternativa (opcional)").props("outlined dense").classes("w-full") if not eh_multi else None
-
-                def tentar():
-                    try:
-                        ok, msg = reprocesse_quarentena(linha["qid"], (padrao.value if padrao else None) or None, usuario_logado)
-                        ui.notify(("Sucesso: " + msg) if ok else ("Falha: " + msg),
-                                  type="positive" if ok else "warning")
-                        dlg.close()
-                        _refresh_q()
-                    except Exception:
-                        _log.exception(f"erro ao reprocessar Quarentena qid={linha['qid']}")
-
-                def separar():
-                    try:
-                        ok, msg = separar_documentos_quarentena(linha["qid"], usuario_logado)
-                        ui.notify(msg, type="positive" if ok else "negative")
-                        dlg.close()
-                        _refresh_q()
-                    except Exception:
-                        _log.exception(f"erro ao separar quarentena qid={linha['qid']}")
-
-                with ui.row().classes("w-full justify-end gap-2 mt-2"):
-                    botao("Cancelar", on_click=dlg.close,
-                        variante="texto", chave_modulo="empenhos")
+            try:
+                linha = e.args[1]
+                eh_multi = "Múltiplos documentos" in (linha.get("motivo") or "")
+                with ui.dialog() as dlg, ui.card().classes("w-[520px]"):
+                    ui.label("Múltiplos documentos — separar" if eh_multi else "Reprocessar com nova regex").classes("text-h6")
+                    ui.label(linha["arquivo"]).classes("text-caption text-grey-6")
                     if eh_multi:
-                        botao("Separar documentos", icone="content_cut", on_click=separar, variante="solido", chave_modulo="empenhos")
-                    botao("Reprocessar", on_click=tentar, variante="solido" if not eh_multi else "texto", chave_modulo="empenhos")
-            dlg.open()
+                        ui.label("Este PDF contém 2+ empenhos (ex.: lote escaneado). Separe em um arquivo por documento e reprocesse.").classes("text-caption text-orange-8 mt-1")
+                        ui.label(linha.get("motivo") or "").classes("text-caption bg-yellow-50 p-2 rounded w-full")
+                    padrao = ui.input("Regex alternativa (opcional)").props("outlined dense").classes("w-full") if not eh_multi else None
+
+                    def tentar():
+                        try:
+                            ok, msg = reprocesse_quarentena(linha["qid"], (padrao.value if padrao else None) or None, usuario_logado)
+                            ui.notify(("Sucesso: " + msg) if ok else ("Falha: " + msg),
+                                      type="positive" if ok else "warning")
+                            dlg.close()
+                            _refresh_q()
+                        except Exception:
+                            _log.exception(f"erro ao reprocessar Quarentena qid={linha['qid']}")
+
+                    def separar():
+                        try:
+                            ok, msg = separar_documentos_quarentena(linha["qid"], usuario_logado)
+                            ui.notify(msg, type="positive" if ok else "negative")
+                            dlg.close()
+                            _refresh_q()
+                        except Exception:
+                            _log.exception(f"erro ao separar quarentena qid={linha['qid']}")
+
+                    with ui.row().classes("w-full justify-end gap-2 mt-2"):
+                        botao("Cancelar", on_click=dlg.close,
+                            variante="texto", chave_modulo="empenhos")
+                        if eh_multi:
+                            botao("Separar documentos", icone="content_cut", on_click=separar, variante="solido", chave_modulo="empenhos")
+                        botao("Reprocessar", on_click=tentar, variante="solido" if not eh_multi else "texto", chave_modulo="empenhos")
+                dlg.open()
+            except Exception as e:
+                try:
+                    _log.exception(f"on_q_click falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em on_q_click: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em on_q_click", type="negative")
+                    except Exception:
+                        pass
+                return None
 
         tabela_q.on("row-click", on_q_click)
         _refresh_q()
@@ -474,26 +586,54 @@ def mostrar_administracao(
         lista_regras = ui.column().classes("w-full")
 
         def _refresh_regras():
-            lista_regras.clear()
-            with lista_regras:
-                for rid, nome, padrao, ativo, destino in listar_regras():
-                    with ui.row().classes("w-full items-center gap-2 py-1"):
-                        ui.icon("bolt" if ativo else "block").classes(
-                            "text-orange-7" if ativo else "text-grey-5")
-                        ui.label(nome).classes("font-medium w-40")
-                        ui.code(padrao).style("flex:1; overflow-x:auto")
-                        if destino:
-                            ui.badge(f"→ {destino}", color="purple").props("outline")
-                        if not ativo:
-                            ui.badge("inativa", color="grey")
+            try:
+                lista_regras.clear()
+                with lista_regras:
+                    for rid, nome, padrao, ativo, destino in listar_regras():
+                        with ui.row().classes("w-full items-center gap-2 py-1"):
+                            ui.icon("bolt" if ativo else "block").classes(
+                                "text-orange-7" if ativo else "text-grey-5")
+                            ui.label(nome).classes("font-medium w-40")
+                            ui.code(padrao).style("flex:1; overflow-x:auto")
+                            if destino:
+                                ui.badge(f"→ {destino}", color="purple").props("outline")
+                            if not ativo:
+                                ui.badge("inativa", color="grey")
 
-                    def _toggle(r=rid, a=ativo):
-                        ok, msg = alternar_regra(r, not a)
-                        ui.notify(msg, type="positive" if ok else "negative")
-                        _refresh_regras()
+                        def _toggle(r=rid, a=ativo):
+                            try:
+                                ok, msg = alternar_regra(r, not a)
+                                ui.notify(msg, type="positive" if ok else "negative")
+                                _refresh_regras()
+                            except Exception as e:
+                                try:
+                                    _log.exception(f"_toggle falhou: {e}")
+                                except Exception:
+                                    pass
+                                try:
+                                    notificar(f"Erro em _toggle: {e}", tipo="error")
+                                except Exception:
+                                    try:
+                                        ui.notify(f"Erro em _toggle", type="negative")
+                                    except Exception:
+                                        pass
+                                return None
 
-                    botao("Inativar" if ativo else "Ativar", on_click=_toggle,
-                          variante="texto", compacto=True, chave_modulo="empenhos")
+                        botao("Inativar" if ativo else "Ativar", on_click=_toggle,
+                              variante="texto", compacto=True, chave_modulo="empenhos")
+            except Exception as e:
+                try:
+                    _log.exception(f"_refresh_regras falhou: {e}")
+                except Exception:
+                    pass
+                try:
+                    notificar(f"Erro em _refresh_regras: {e}", tipo="error")
+                except Exception:
+                    try:
+                        ui.notify(f"Erro em _refresh_regras", type="negative")
+                    except Exception:
+                        pass
+                return None
 
         _refresh_regras()
 
@@ -506,19 +646,33 @@ def mostrar_administracao(
                 .props("outlined dense").classes("w-56")
 
             def salvar_regra_handler():
-                if not n_nome.value or not n_padrao.value:
-                    ui.notify("Informe nome e padrão", type="warning")
-                    return
-                ok, msg = salvar_regra(
-                    n_nome.value.strip(), n_padrao.value.strip(),
-                    campo_destino=(n_destino.value or "").strip() or None
-                )
-                ui.notify(msg, type="positive" if ok else "negative")
-                if ok:
-                    n_nome.set_value(None)
-                    n_padrao.set_value(None)
-                    n_destino.set_value(None)
-                    _refresh_regras()
+                try:
+                    if not n_nome.value or not n_padrao.value:
+                        ui.notify("Informe nome e padrão", type="warning")
+                        return
+                    ok, msg = salvar_regra(
+                        n_nome.value.strip(), n_padrao.value.strip(),
+                        campo_destino=(n_destino.value or "").strip() or None
+                    )
+                    ui.notify(msg, type="positive" if ok else "negative")
+                    if ok:
+                        n_nome.set_value(None)
+                        n_padrao.set_value(None)
+                        n_destino.set_value(None)
+                        _refresh_regras()
+                except Exception as e:
+                    try:
+                        _log.exception(f"salvar_regra_handler falhou: {e}")
+                    except Exception:
+                        pass
+                    try:
+                        notificar(f"Erro em salvar_regra_handler: {e}", tipo="error")
+                    except Exception:
+                        try:
+                            ui.notify(f"Erro em salvar_regra_handler", type="negative")
+                        except Exception:
+                            pass
+                    return None
 
             botao("Salvar regra", icone="save", on_click=salvar_regra_handler,
                   variante="solido", chave_modulo="empenhos")

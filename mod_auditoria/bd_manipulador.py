@@ -9,8 +9,12 @@ A descoberta é automática: a tela lista todas as tabelas encontradas.
 import os
 import sqlite3
 
+from mod_intranet import observabilidade
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_AUDITORIA_PATH = os.path.join(BASE_DIR, "db_mod_auditoria.db")
+
+log = observabilidade.get_logger("auditoria")
 
 
 def _nome_tabela(modulo: str) -> str:
@@ -28,13 +32,17 @@ def get_auditoria_connection():
     Conexão com o banco de auditoria via `banco_conexao.conexao` — SQLite
     (db_mod_auditoria.db, WAL) ou PostgreSQL (schema `auditoria`). Todas as
     leituras/escritas da auditoria passam por aqui."""
-    from mod_intranet.banco_conexao import conexao
-    conn = conexao("auditoria")
-    if conn is None:
-        raise RuntimeError("Falha ao abrir conexão do módulo Auditoria")
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
-    return conn
+    try:
+        from mod_intranet.banco_conexao import conexao
+        conn = conexao("auditoria")
+        if conn is None:
+            raise RuntimeError("Falha ao abrir conexão do módulo Auditoria")
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        return conn
+    except Exception as e:
+        log.exception(f"get_auditoria_connection: falha ao abrir conexão | {e}")
+        raise
 
 
 def init_db_auditoria():
@@ -42,7 +50,11 @@ def init_db_auditoria():
 
     Cria `tb_auditoria_meta` (módulo → nome, data de criação). Executado no
     import do módulo e pelo bootstrap central; nunca apaga dados."""
-    conn = get_auditoria_connection()
+    try:
+        conn = get_auditoria_connection()
+    except Exception:
+        log.exception("init_db_auditoria: falha ao abrir conexão")
+        return
     try:
         cur = conn.cursor()
         cur.execute("""
@@ -53,8 +65,13 @@ def init_db_auditoria():
             )
         """)
         conn.commit()
+    except Exception:
+        log.exception("init_db_auditoria: falha ao criar tb_auditoria_meta")
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def _garantir_tabela_auditoria(conn, tabela: str, modulo: str = ""):
@@ -65,35 +82,39 @@ def _garantir_tabela_auditoria(conn, tabela: str, modulo: str = ""):
     timestamp, hash_arquivo, ip, user_agent, client_hostname), cria os índices
     (modulo, usuario, timestamp) e registra o módulo em `tb_auditoria_meta`.
     """
-    cur = conn.cursor()
-    cur.execute(f"""
-        CREATE TABLE IF NOT EXISTS {tabela} (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario TEXT NOT NULL,
-            modulo TEXT NOT NULL,
-            acao TEXT NOT NULL,
-            descricao TEXT,
-            timestamp DATETIME DEFAULT (datetime('now','localtime')),
-            hash_arquivo TEXT,
-            ip TEXT,
-            user_agent TEXT,
-            client_hostname TEXT
-        )
-    """)
-    cur.executescript(f"""
-        CREATE INDEX IF NOT EXISTS idx_aud_{tabela}_modulo ON {tabela} (modulo);
-        CREATE INDEX IF NOT EXISTS idx_aud_{tabela}_usuario ON {tabela} (usuario);
-        CREATE INDEX IF NOT EXISTS idx_aud_{tabela}_timestamp ON {tabela} (timestamp);
-    """)
-    if modulo:
-        try:
-            cur.execute(
-                "INSERT OR IGNORE INTO tb_auditoria_meta (modulo, nome) VALUES (?, ?)",
-                (modulo, modulo),
+    try:
+        cur = conn.cursor()
+        cur.execute(f"""
+            CREATE TABLE IF NOT EXISTS {tabela} (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario TEXT NOT NULL,
+                modulo TEXT NOT NULL,
+                acao TEXT NOT NULL,
+                descricao TEXT,
+                timestamp DATETIME DEFAULT (datetime('now','localtime')),
+                hash_arquivo TEXT,
+                ip TEXT,
+                user_agent TEXT,
+                client_hostname TEXT
             )
-        except Exception:
-            pass
-    conn.commit()
+        """)
+        cur.executescript(f"""
+            CREATE INDEX IF NOT EXISTS idx_aud_{tabela}_modulo ON {tabela} (modulo);
+            CREATE INDEX IF NOT EXISTS idx_aud_{tabela}_usuario ON {tabela} (usuario);
+            CREATE INDEX IF NOT EXISTS idx_aud_{tabela}_timestamp ON {tabela} (timestamp);
+        """)
+        if modulo:
+            try:
+                cur.execute(
+                    "INSERT OR IGNORE INTO tb_auditoria_meta (modulo, nome) VALUES (?, ?)",
+                    (modulo, modulo),
+                )
+            except Exception:
+                log.warning(f"_garantir_tabela_auditoria: falha ao registrar meta de {modulo}")
+        conn.commit()
+    except Exception as e:
+        log.exception(f"_garantir_tabela_auditoria: falha ao garantir {tabela} | {e}")
+        raise
 
 
 def get_tabelas_auditoria():
@@ -102,13 +123,23 @@ def get_tabelas_auditoria():
     Retorna os nomes de todas as tabelas `tb_auditoria_*` (exceto a de
     metadados) existentes em `db_mod_auditoria.db` — a descoberta é
     automática, então novos módulos aparecem sem edição neste módulo."""
-    conn = get_auditoria_connection()
+    try:
+        conn = get_auditoria_connection()
+    except Exception:
+        log.exception("get_tabelas_auditoria: falha ao abrir conexão")
+        return []
     try:
         cur = conn.cursor()
         cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'tb_auditoria_%' AND name != 'tb_auditoria_meta'")
         return [row[0] for row in cur.fetchall()]
+    except Exception:
+        log.exception("get_tabelas_auditoria: falha ao listar tabelas")
+        return []
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def get_modulos_com_auditoria():
@@ -117,15 +148,36 @@ def get_modulos_com_auditoria():
     Lê `tb_auditoria_meta` (ordem alfabética por nome). Em falha de leitura,
     faz fallback descobrindo as tabelas existentes via `get_tabelas_auditoria`
     e extraindo a chave do módulo do próprio nome da tabela."""
-    conn = get_auditoria_connection()
+    try:
+        conn = get_auditoria_connection()
+    except Exception:
+        log.exception("get_modulos_com_auditoria: falha ao abrir conexão; usando descoberta")
+        try:
+            tabelas = get_tabelas_auditoria()
+        except Exception:
+            log.exception("get_modulos_com_auditoria: falha na descoberta de tabelas")
+            return []
+        return [(_extrair_modulo(t), t) for t in tabelas]
     try:
         cur = conn.cursor()
         cur.execute("SELECT modulo, nome FROM tb_auditoria_meta ORDER BY nome")
-        return [(modulo, _nome_tabela(modulo)) for modulo, nome in cur.fetchall()]
+        saida = [(modulo, _nome_tabela(modulo)) for modulo, nome in cur.fetchall()]
     except Exception:
-        conn.close()
+        log.exception("get_modulos_com_auditoria: falha ao ler meta; usando descoberta")
+        saida = None
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+    if saida is not None:
+        return saida
+    try:
         tabelas = get_tabelas_auditoria()
-        return [(_extrair_modulo(t), t) for t in tabelas]
+    except Exception:
+        log.exception("get_modulos_com_auditoria: falha na descoberta de tabelas")
+        return []
+    return [(_extrair_modulo(t), t) for t in tabelas]
 
 
 def _extrair_modulo(tabela: str) -> str:
@@ -145,7 +197,11 @@ def registrar_auditoria(usuario, modulo, acao, descricao, hash_arquivo=None,
     if timestamp is None:
         import datetime as _dt
         timestamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    conn = get_auditoria_connection()
+    try:
+        conn = get_auditoria_connection()
+    except Exception:
+        log.exception(f"registrar_auditoria: falha ao abrir conexão ({modulo}/{acao})")
+        return
     try:
         tabela = _nome_tabela(modulo)
         _garantir_tabela_auditoria(conn, tabela, modulo)
@@ -157,8 +213,13 @@ def registrar_auditoria(usuario, modulo, acao, descricao, hash_arquivo=None,
              client_hostname, timestamp),
         )
         conn.commit()
+    except Exception:
+        log.exception(f"registrar_auditoria: falha ao gravar ({modulo}/{acao})")
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def contar_registros(tabela=None):
@@ -167,7 +228,11 @@ def contar_registros(tabela=None):
     Total de registros de auditoria: se `tabela` for informada, conta apenas
     nela; caso contrário soma o total de todas as tabelas por módulo (falhas
     individuais são ignoradas). Usada pelo resumo do dashboard."""
-    conn = get_auditoria_connection()
+    try:
+        conn = get_auditoria_connection()
+    except Exception:
+        log.exception("contar_registros: falha ao abrir conexão")
+        return 0
     try:
         cur = conn.cursor()
         if tabela:
@@ -179,10 +244,17 @@ def contar_registros(tabela=None):
                 cur.execute(f"SELECT COUNT(*) FROM {tbl}")
                 total += cur.fetchone()[0]
             except Exception:
+                log.warning(f"contar_registros: falha ao contar {tbl}")
                 continue
         return total
+    except Exception:
+        log.exception("contar_registros: falha ao contar registros")
+        return 0
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def podar_registros(dias):
@@ -193,7 +265,11 @@ def podar_registros(dias):
     """
     import datetime as _dt
     removidos = 0
-    conn = get_auditoria_connection()
+    try:
+        conn = get_auditoria_connection()
+    except Exception:
+        log.exception("podar_registros: falha ao abrir conexão")
+        return removidos
     try:
         cur = conn.cursor()
         for tbl in get_tabelas_auditoria():
@@ -205,10 +281,16 @@ def podar_registros(dias):
                 )
                 removidos += cur.rowcount
             except Exception:
+                log.warning(f"podar_registros: falha ao podar {tbl}")
                 continue
         conn.commit()
+    except Exception:
+        log.exception("podar_registros: falha ao podar registros")
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
     return removidos
 
 
@@ -223,7 +305,11 @@ def buscar_logs(tabela=None, filtro_usuario="", filtro_modulo="",
     módulo via `UNION ALL` (fallback quando `tb_auditoria_meta` falha).
     Retorna `(linhas, total)` — linhas com data já formatada `dd/mm/AAAA
     HH:MM:SS`."""
-    conn = get_auditoria_connection()
+    try:
+        conn = get_auditoria_connection()
+    except Exception:
+        log.exception("buscar_logs: falha ao abrir conexão")
+        return [], 0
     try:
         offset = max(0, (int(pagina) - 1) * limite_sql)
 
@@ -297,8 +383,14 @@ def buscar_logs(tabela=None, filtro_usuario="", filtro_modulo="",
             total = cur.fetchone()[0]
             cur.execute(data_sql, params + [limite_sql, offset])
             return cur.fetchall(), total
+    except Exception:
+        log.exception("buscar_logs: falha ao buscar registros")
+        return [], 0
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def _remover_legado_central():
@@ -314,9 +406,12 @@ def _remover_legado_central():
             conn.execute("DROP TABLE IF EXISTS tb_auditoria")
             conn.commit()
         finally:
-            conn.close()
+            try:
+                conn.close()
+            except Exception:
+                pass
     except Exception:
-        pass
+        log.exception("_remover_legado_central: falha ao remover tb_auditoria legada")
 
 
 def migrar_dados_existentes(forcar=False):
@@ -328,6 +423,15 @@ def migrar_dados_existentes(forcar=False):
     nova rodada (p.ex. em testes ou manutenção). Ao concluir, a tb_auditoria
     legada do banco central é removida.
     """
+    try:
+        return _migrar_dados_existentes_seguro(forcar)
+    except Exception:
+        log.exception("migrar_dados_existentes: falha na migração")
+        return 0
+
+
+def _migrar_dados_existentes_seguro(forcar=False):
+    """Body of `migrar_dados_existentes`, isolated so the entry point can protect it."""
     from mod_intranet.bd_conexao import get_config, set_config
     from mod_intranet.bd_conexao import get_connection as _get_central_conn
     if not forcar and get_config("auditoria_migracao_concluida", "") == "1":
@@ -375,12 +479,23 @@ def migrar_dados_existentes(forcar=False):
 
 def _semear_versao_modulo():
     """Seeds the module version key (`versao_modulo:auditoria`) in tb_config."""
-    from mod_intranet.bd_conexao import get_config, set_config
-    set_config("versao_modulo:auditoria", "1.0.260908")
+    try:
+        from mod_intranet.bd_conexao import get_config, set_config
+        set_config("versao_modulo:auditoria", "1.0.260908")
+    except Exception:
+        log.exception("_semear_versao_modulo: falha ao semear versão do módulo")
 
 
-from mod_intranet.bd_manipulador import registrar_hook_auditoria
-registrar_hook_auditoria(registrar_auditoria)
-
-init_db_auditoria()
-_semear_versao_modulo()
+try:
+    from mod_intranet.bd_manipulador import registrar_hook_auditoria
+    registrar_hook_auditoria(registrar_auditoria)
+except Exception:
+    log.exception("bootstrap: falha ao registrar hook de auditoria")
+try:
+    init_db_auditoria()
+except Exception:
+    log.exception("bootstrap: falha no init_db_auditoria")
+try:
+    _semear_versao_modulo()
+except Exception:
+    log.exception("bootstrap: falha ao semear versão do módulo")

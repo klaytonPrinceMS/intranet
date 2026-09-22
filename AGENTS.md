@@ -8,7 +8,8 @@ Este repositório contém uma aplicação Python com entry point na raiz (`main.
 
 **REGRA DE OURO - PROIBIDO FORA DA RAIZ:**
 É **expressamente proibido** criar, editar, mover ou manter arquivos fora da pasta raiz do projeto ou fora da pasta do seu respectivo módulo `mod_*`. Todo artefato usado por um módulo DEVE viver dentro de `mod_<nome>/`.
-É **expressamente proibido** rodar comando de git, como git commit em sistems operacionais win10.
+Comandos git (`git status`, `git diff`, `git log`, `git add`, `git commit`, `git push`, etc.) são **liberados para todo e qualquer agente e subagente** deste projeto, desde que solicitados via comando no terminal (ver §7 para regras e formato).
+**Shell ÚNICO — bash:** para editar/criar arquivos e documentos e executar comandos, use SEMPRE o shell **bash** (ferramenta bash do agente/opencode). NUNCA use `terminal`, `cmd`, `cmd.exe`, `PowerShell` ou `powershell.exe` para editar documentos.
 
 > Em caso de dúvida, reinicie o servidor de desenvolvimento em vez de executar a versão de produção.
 
@@ -99,6 +100,21 @@ Permitido na raiz apenas:
 Não use Declarative. Use mapeamento imperativo em `models/__init__.py`:
 `Table` + `dataclass` + `map_imperatively()`.
 
+### 3.2 Tratamento de Erros — try/except OBRIGATÓRIO em toda função
+
+- **Toda função do sistema DEVE ser envolvida em `try/except`.** Nunca deixe
+  exceção estourar até o topo — o objetivo é **nunca derrubar o sistema**.
+- No `except`, gere **notificação visível ao usuário** (na UI use
+  `tema_modulo.notificar()` com tipo erro; fora da UI, registre no log) e, se
+  aplicável, faça rollback parcial sem travar o fluxo.
+- Use `except Exception` (nunca `except:` cru) e evite engolir o erro em
+  silêncio: SEMPRE registre/logue a causa (`logger.exception(...)` ou
+  `traceback`) além da notificação.
+- Em handlers NiceGUI, todo `on_click`/acao async DEVE seguir esta regra para
+  não causar disconnect/crash do cliente.
+- Restaure/componha o estado (botões, spinner, `ocupado`) no `else`/`finally`
+  para não deixar a tela travada após erro.
+
 ## 4. Padrão de Acesso a Dados — CrudBase
 
 > **Atualização: Uso obrigatório**
@@ -180,9 +196,17 @@ fuser -k 8080/tcp || lsof -ti:8080 | xargs kill -9
 ```
 3. Porta padrão: `8080`
 
-## 7. Git — Commit e Push
+## 7. Git — Comandos Liberados
 
-**NUNCA execute `commit` ou `push` sem solicitação expressa do usuário.**
+Comandos git estão **liberados para todo e qualquer agente e subagente** deste projeto
+(`git status`, `git diff`, `git log`, `git add`, `git commit`, `git push`, etc.),
+desde que solicitados via comando no terminal pelo usuário.
+
+**Regras:**
+- `commit` e `push` somente com solicitação expressa do usuário no terminal.
+- Nunca `--force`, `--no-verify`, nem pular hooks. Se hooks barrarem, corrija a causa e faça um NOVO commit (não amend no rejeitado, salvo pedido).
+- Nunca commitar segredos, `db_mod_*.db`, `*.db-wal/shm`, `backup/`, `logs/`, `site/`, `estrutura.md`, `.venv/`, `node_modules/`.
+- Em dúvida de padrão, consulte o subagente de referência `kbp-commit`.
 
 Formato: `AAMMDD HHMM breve resumo`
 Exemplo: `260809 1200 Alterado padrão de exibição para o usuário`
@@ -195,7 +219,7 @@ Autorização exclusiva para criar/editar se não existirem:
 **kbp-doc:** Audita `/docs`, gera `estrutura.md` na raiz (NÃO commitar), padrão MkDocs tema readthedocs, docstring bilíngue EN no topo / PT-BR abaixo
 **kbp-qa:** QA Sênior, data-testid via `.props('data-testid=...')`, pytest-playwright, pirâmide testes
 **kbp-devSecOps:** Segurança, bandit 1.9.4, semgrep 1.176.1, pip-audit 2.10.1, safety 3.8.1, gitleaks 8.24.3, k6 — apenas localhost/staging
-**kbp-commit:** Commit e push padronizados, estuda o diff e as secoes ativas para comentar no formato AAMMDD HHMM
+**kbp-commit:** Referência em commit e push padronizados (estuda o diff e as secoes ativas, formato AAMMDD HHMM) — comandos git liberados para todo agente/subagente via terminal (§7)
 **kbp-doc_teste:** Gera massa fictícia de PDFs de empenho via `assets/test/fabrica_documentos.py` (faker, todos os campos monitorados); padrão 15 documentos quando sem quantidade
 
 ### 8.1 Criação de subagentes (padrão kbp-*)
@@ -215,9 +239,10 @@ Todo subagente do projeto segue este padrão (ver `.opencode/agent/kbp-qa.md` co
    `## Usuários pré-cadastrados (seed)` (mesma seção do §8.2 abaixo — TODO subagente
    DEVE conhecer os usuários de seed para logins de teste/QA). Texto em PT-BR,
    funções `snake_case`, classes `PascalCase`, língua ubíqua do DDD.
-4. **Responsabilidade única** por subagente; nunca `commit`/`push` dentro de outro
-   subagente (chame o `kbp-commit`); nunca segredos, `db_mod_*.db`, `backup/`, `logs/`,
-   `site/`, `estrutura.md` no stage.
+4. **Responsabilidade única** por subagente; comandos git (incl. `commit`/`push`) são
+   liberados para qualquer subagente quando solicitados via comando no terminal (§7),
+   consultando o `kbp-commit` em caso de dúvida de padrão; nunca segredos,
+   `db_mod_*.db`, `backup/`, `logs/`, `site/`, `estrutura.md` no stage.
 5. **Ativação e versionamento (decisão 2026-09-17 — .opencode 100% versionado):**
    `.opencode/` é commitado integralmente (agents, plugins, skills,
    `package.json`/`package-lock.json`, `opencode.json`) — nenhuma regra de
@@ -225,7 +250,8 @@ Todo subagente do projeto segue este padrão (ver `.opencode/agent/kbp-qa.md` co
    (`.env`, `*.db*`, `*.log`). O OpenCode carrega agentes no boot — após
    criar/editar, **saia e reinicie o OpenCode**. Codificação por IA autorizada
    neste repositório dentro de `AGENTS.md` (§§1, 2, 7, 8): raiz permitida e
-   `mod_*/` apenas; `commit`/`push` somente com solicitação expressa.
+   `mod_*/` apenas; `commit`/`push` somente com solicitação expressa via
+   comando no terminal.
 
 ### 8.2 Usuários pré-cadastrados (seed) — conhecimento OBRIGATÓRIO de todo subagente
 

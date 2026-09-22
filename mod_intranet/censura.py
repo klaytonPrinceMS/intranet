@@ -36,8 +36,7 @@ def obter_palavras_bloqueadas() -> list[str]:
                     return [str(p).strip().lower() for p in dados if str(p).strip()]
             except Exception:
                 pass
-        # split por vírgula, ponto e vírgula, linha
-        partes = re.split(r"[,\n;]+", raw)
+        partes = re.split(r"[,]+", raw)
         return [p.strip().lower() for p in partes if p.strip()]
     except Exception:
         return []
@@ -83,9 +82,7 @@ def titulo_bloqueado(titulo: str, palavras: list[str] = None) -> tuple[bool, str
         norm_pal = _normalizar(palavra)
         if not norm_pal:
             continue
-        # substring com fronteira opcional — bloqueia se contém a sequência
-        # ex: tinder bloqueia "tinder" em qualquer parte; suicidio bloqueia suicídio
-        if norm_pal in norm_titulo:
+        if norm_titulo.startswith(norm_pal):
             return True, palavra
     return False, ""
 
