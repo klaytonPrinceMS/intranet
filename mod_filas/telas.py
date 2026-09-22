@@ -52,7 +52,7 @@ def _rejeitado(e=None):
     notificar("Arquivo rejeitado pelo navegador", type="negative")
 
 
-async def _salvar_arquivo_midia(e, fila_id, user_nome, volume, duracao, slot, recarregar):
+async def _salvar_arquivo_midia(e, fila_id, user_nome, volume, duracao, slot, recarregar, mutado=False):
     """Upload AUTOMÁTICO ao selecionar: salva e renomeia no servidor (datahora_nomeFila.ext), só desta fila."""
     try:
         nome_arq, conteudo = await _ler_upload(e)
@@ -81,7 +81,11 @@ async def _salvar_arquivo_midia(e, fila_id, user_nome, volume, duracao, slot, re
             sl = int(float(slot or 0))
         except Exception:
             sl = 0
-        ok, msg = filas.adicionar_midia(nome_arq, tipo, f"/midia_filas/{nome_seguro}", arquivo_original=nome_arq, ator=user_nome, fila_id=fila_id, volume=vol, duracao=dur, slot=sl)
+        try:
+            mut = 1 if mutado and filas.tipo_por_extensao(nome_arq) == "video" else 0
+        except Exception:
+            mut = 0
+        ok, msg = filas.adicionar_midia(nome_arq, tipo, f"/midia_filas/{nome_seguro}", arquivo_original=nome_arq, ator=user_nome, fila_id=fila_id, volume=vol, duracao=dur, slot=sl, mutado=mut)
         notificar(msg, type="positive" if ok else "negative")
         if ok:
             recarregar()
@@ -89,8 +93,12 @@ async def _salvar_arquivo_midia(e, fila_id, user_nome, volume, duracao, slot, re
         notificar(f"Erro no upload: {ex}", type="negative")
 
 
-def bloco_midia_fila(fila_id: int, user_nome: str, recarregar):
-    """Mídias da fila: upload mp3/mp4/foto + sequência (exibição) + volume. Reuso em /filas e /admin/filas."""
+def bloco_midia_fila(fila_id: int, user_nome: str, recarregar, permitir_edicao: bool = True):
+    """Mídias da fila: upload mp3/mp4/foto + sequência (exibição) + volume. Reuso em /filas e /admin/filas.
+
+    permitir_edicao=False: somente leitura (fila criada) — sem upload, sem Salvar/Fundo/Ativar/Excluir,
+    sem reordenar. Edição completa só no Cadastro (dono via Editar) e na administração.
+    """
     with ui.expansion("Mídias desta fila — áudio, foto e vídeo (sequência + volume)", icon="perm_media").classes("w-full").style("min-width: 0"):
         with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
             _info_m = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: mídias"')
@@ -103,89 +111,114 @@ def bloco_midia_fila(fila_id: int, user_nome: str, recarregar):
             with box_lista:
                 proprias = filas.listar_midias(fila_id=fila_id)
                 if not proprias:
-                    ui.label("Nenhuma mídia desta fila. Selecione abaixo — sobe sozinho e fica só nesta fila.").classes("text-caption text-grey-6 italic")
+                    if permitir_edicao:
+                        ui.label("Nenhuma mídia desta fila. Selecione abaixo — sobe sozinho e fica só nesta fila.").classes("text-caption text-grey-6 italic")
+                    else:
+                        ui.label("Nenhuma mídia nesta fila.").classes("text-caption text-grey-6 italic")
+                        ui.label("Edição restrita ao dono da fila (Editar).").classes("text-caption text-grey-6 italic")
+                    return
+                if not permitir_edicao:
+                    ui.label("Somente leitura — edição restrita ao dono da fila (Editar).").classes("text-caption text-grey-6 italic")
                 _slot_atual = None
-                for mid, nome, tipo, caminho, orig, ordem, ativo, criado, f_id, volume, duracao, slot, real, fundo in proprias:
-                    if slot != _slot_atual:
+                _grade = None
+                for mid, nome, tipo, caminho, orig, ordem, ativo, criado, f_id, volume, duracao, slot, real, fundo, mutado in proprias:
+                    if slot != _slot_atual or (_grade is None and permitir_edicao is False):
                         _slot_atual = slot
-                        ui.label(f"— Exibição {slot} (juntos) —").classes("text-caption font-bold text-primary")
+                        ui.label(f"— Exibição {slot} (juntos) —").classes("text-caption font-bold text-primary").style("grid-column: 1 / -1; min-width: 0")
+                        _grade = ui.element("div").classes("w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2").style("min-width: 0")
+                    if _grade is None:
+                        _grade = ui.element("div").classes("w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2").style("min-width: 0")
                     src = f"/midia_filas/{os.path.basename(caminho)}"
-                    with ui.card().classes("w-full p-2 gap-1").style("min-width: 0"):
-                        _real_txt = f" • {real}s reais" if real else ""
-                        _fundo_txt = " • FUNDO" if fundo else ""
-                        ui.label(f"[{tipo}] {nome} • vol {volume} • {duracao}s{_real_txt}{_fundo_txt} • {'ativo' if ativo else 'inativo'}").classes("text-caption font-bold").style("min-width: 0; overflow-wrap: break-word")
-                        if tipo == "audio":
-                            ui.html(f"<audio controls style='width:100%;max-width:400px'><source src='{src}'></audio>", sanitize=False)
-                        elif tipo == "video":
-                            ui.html(f"<video controls style='width:100%;max-width:400px;max-height:180px;background:#111'><source src='{src}'></video>", sanitize=False)
-                        else:
-                            ui.image(src).classes("w-full max-w-[400px]")
-                        with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.25rem; min-width: 0"):
-                            inp_vol = ui.number("Volume", value=volume, min=0, max=100, step=1).props("outlined dense").classes("w-[90px]")
-                            with inp_vol:
-                                ui.tooltip("Altura do som desta reprodução (padrão 40; na chamada cai à metade).").props("delay=1000")
-                            inp_dur = ui.number("Duração(s)", value=duracao, min=3, max=120, step=1).props("outlined dense").classes("w-[100px]")
-                            with inp_dur:
-                                ui.tooltip("Só vale p/ foto SOZINHA (com áudio ela divide o tempo real).").props("delay=1000")
-                            inp_slot = ui.number("Exibição", value=slot, min=0, max=999, step=1).props("outlined dense").classes("w-[90px]")
-                            with inp_slot:
-                                ui.tooltip("Posição na sequência; mesmo número = juntos.").props("delay=1000")
-                            def _salvar(mid=mid, v=inp_vol, d=inp_dur, s=inp_slot):
-                                ok, msg = filas.atualizar_midia(mid, volume=v.value, duracao=d.value, slot=s.value)
-                                notificar(msg, type="positive" if ok else "negative")
-                                if ok:
+                    with _grade:
+                        with ui.card().classes("p-2 gap-1").style("min-width: 0; height: 100%"):
+                            _real_txt = f" • {real}s reais" if real else ""
+                            _fundo_txt = " • FUNDO" if fundo else ""
+                            _mut_txt = " • MUTADO" if mutado else ""
+                            ui.label(f"[{tipo}] {nome}").classes("text-caption font-bold").style("min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap")
+                            ui.label(f"vol {volume} • {duracao}s{_real_txt}{_fundo_txt}{_mut_txt} • {'ativo' if ativo else 'inativo'}").classes("text-caption text-grey-6").style("min-width: 0")
+                            with ui.element("div").classes("w-full flex justify-center items-center").style("width: 100%; height: 90px; min-width: 0; background: #111"):
+                                if tipo == "audio":
+                                    ui.html(f"<audio controls style='width:100%'><source src='{src}'></audio>", sanitize=False)
+                                elif tipo == "video":
+                                    ui.html(f"<video controls style='width:90px;height:90px;object-fit:cover;background:#000'><source src='{src}'></video>", sanitize=False)
+                                else:
+                                    ui.image(src).style("width: 90px; height: 90px; object-fit: cover")
+                            if fundo:
+                                ui.label("FIXO NO TOPO • exibição 0 • loop").classes("text-caption font-bold text-primary").style("min-width: 0")
+                            if not permitir_edicao:
+                                continue
+                            # linha 1: setas + mutar + volume + duração + exibição
+                            with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.25rem; min-width: 0"):
+                                if not fundo:
+                                    def _subir(mid=mid):
+                                        ok, msg = filas.mover_midia(mid, True, ator=user_nome)
+                                        if not ok:
+                                            notificar(msg, type="warning")
+                                        recarregar()
+                                    def _descer(mid=mid):
+                                        ok, msg = filas.mover_midia(mid, False, ator=user_nome)
+                                        if not ok:
+                                            notificar(msg, type="warning")
+                                        recarregar()
+                                    ui.button(icon="arrow_upward", on_click=_subir).props("dense flat").tooltip("Antecipar (assume a exibição da posição)")
+                                    ui.button(icon="arrow_downward", on_click=_descer).props("dense flat").tooltip("Adiar (assume a exibição da posição)")
+                                chk_mut = None
+                                if tipo == "video":
+                                    chk_mut = ui.checkbox("Mutar", value=bool(mutado)).props("dense").props('data-testid=filas-midia-mutar')
+                                    with chk_mut:
+                                        ui.tooltip("Sobe o vídeo sem áudio (troque o áudio por um MP3 junto na mesma exibição).").props("delay=1000")
+                                inp_vol = ui.number("Volume", value=volume, min=0, max=100, step=1).props("outlined dense").classes("w-[64px]")
+                                with inp_vol:
+                                    ui.tooltip("Altura do som desta reprodução (padrão 40; na chamada cai à metade).").props("delay=1000")
+                                inp_dur = ui.number("Duração", value=duracao, min=3, max=120, step=1).props("outlined dense").classes("w-[64px]")
+                                with inp_dur:
+                                    ui.tooltip("Só vale p/ foto SOZINHA (com áudio ela divide o tempo real).").props("delay=1000")
+                                inp_slot = ui.number("Exibição", value=slot, min=0, max=999, step=1).props("outlined dense").classes("w-[64px]")
+                                with inp_slot:
+                                    ui.tooltip("Posição na sequência; mesmo número = juntos. Posteriores se autonumeram.").props("delay=1000")
+                            # linha 2: aplicar + fundo + ativar + excluir
+                            with ui.row().classes("w-full flex-wrap").style("gap: 0.25rem; min-width: 0"):
+                                def _salvar(mid=mid, v=inp_vol, d=inp_dur, s=inp_slot, c=chk_mut):
+                                    ok, msg = filas.atualizar_midia(mid, volume=v.value, duracao=d.value, slot=s.value, mutado=(c.value if c is not None else None), ator=user_nome)
+                                    notificar(msg, type="positive" if ok else "negative")
+                                    if ok:
+                                        recarregar()
+                                ui.button("Aplicar", on_click=_salvar).props("dense color=primary").props('data-testid=filas-midia-salvar')
+                                if tipo == "imagem":
+                                    def _fundo(mid=mid, fundo=fundo):
+                                        ok, msg = filas.set_midia_fundo(mid, not fundo, ator=user_nome)
+                                        notificar(msg, type="positive" if ok else "negative")
+                                        recarregar()
+                                    ui.button("Fundo" if not fundo else "Tirar fundo", icon="wallpaper", on_click=_fundo).props("dense outline color=primary" if not fundo else "dense outline").tooltip("Fundo sobe ao topo, exibição 0, loop permanente").props('data-testid=filas-midia-fundo')
+                                def _toggle(mid=mid, ativo=ativo):
+                                    filas.set_midia_ativa(mid, not ativo)
+                                    notificar("Mídia " + ("ativada" if not ativo else "desativada"), type="positive")
                                     recarregar()
-                            ui.button("Salvar", on_click=_salvar).props("dense color=primary").props('data-testid=filas-midia-salvar')
-                            if tipo == "imagem":
-                                def _fundo(mid=mid, fundo=fundo):
-                                    ok, msg = filas.set_midia_fundo(mid, not fundo, ator=user_nome)
+                                def _excluir(mid=mid):
+                                    ok, msg = filas.excluir_midia(mid, ator=user_nome)
                                     notificar(msg, type="positive" if ok else "negative")
                                     recarregar()
-                                ui.button("Fundo" if not fundo else "Tirar fundo", icon="wallpaper", on_click=_fundo).props("dense outline color=primary" if not fundo else "dense outline").tooltip("Foto permanente atrás de tudo na TV").props('data-testid=filas-midia-fundo')
-                            def _toggle(mid=mid, ativo=ativo):
-                                filas.set_midia_ativa(mid, not ativo)
-                                notificar("Mídia " + ("ativada" if not ativo else "desativada"), type="positive")
-                                recarregar()
-                            def _excluir(mid=mid):
-                                ok, msg = filas.excluir_midia(mid, ator=user_nome)
-                                notificar(msg, type="positive" if ok else "negative")
-                                recarregar()
-                            ui.button("Ativar" if not ativo else "Desativar", on_click=_toggle).props("dense outline")
-                            ui.button("Excluir", on_click=_excluir).props("dense outline color=negative")
-                        with ui.row().classes("w-full flex-wrap").style("gap: 0.25rem; min-width: 0"):
-                            def _subir(mid=mid):
-                                ids = [m[0] for m in filas.listar_midias(fila_id=fila_id) if m[8] == fila_id]
-                                if mid in ids:
-                                    idx = ids.index(mid)
-                                    if idx > 0:
-                                        ids[idx], ids[idx - 1] = ids[idx - 1], ids[idx]
-                                        filas.reordenar_midias(ids)
-                                        recarregar()
-                            def _descer(mid=mid):
-                                ids = [m[0] for m in filas.listar_midias(fila_id=fila_id) if m[8] == fila_id]
-                                if mid in ids:
-                                    idx = ids.index(mid)
-                                    if idx < len(ids) - 1:
-                                        ids[idx], ids[idx + 1] = ids[idx + 1], ids[idx]
-                                        filas.reordenar_midias(ids)
-                                        recarregar()
-                            ui.button(icon="arrow_upward", on_click=_subir).props("dense flat").tooltip("Antecipar na sequência")
-                            ui.button(icon="arrow_downward", on_click=_descer).props("dense flat").tooltip("Adiar na sequência")
+                                ui.button("Ativar" if not ativo else "Desativar", on_click=_toggle).props("dense outline")
+                                ui.button("Excluir", on_click=_excluir).props("dense outline color=negative")
 
-        with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0"):
-            up_vol = ui.number("Volume (padrão 40)", value=filas.VOLUME_AMBIENTE_PADRAO, min=0, max=100, step=1).props("outlined dense").classes("w-[110px]")
-            with up_vol:
-                ui.tooltip("Altura do som (padrão 40; na chamada cai à metade).").props("delay=1000")
-            up_dur = ui.number("Duração foto (s)", value=8, min=3, max=120, step=1).props("outlined dense").classes("w-[130px]")
-            with up_dur:
-                ui.tooltip("Só vale p/ foto SOZINHA (com áudio ela divide o tempo real).").props("delay=1000")
-            up_slot = ui.number("Exibição", value=0, min=0, max=999, step=1).props("outlined dense").classes("w-[90px]")
-            with up_slot:
-                ui.tooltip("Posição na sequência; mesmo número = juntos.").props("delay=1000")
-        ui.upload(label="Selecionar MP3 / MP4 / fotos — envia sozinho para esta fila", auto_upload=True,
-                  on_upload=lambda e: _salvar_arquivo_midia(e, fila_id, user_nome, up_vol.value, up_dur.value, up_slot.value, recarregar),
-                  on_rejected=lambda e: _rejeitado(e),
-                  multiple=True).props("accept='.mp3,.wav,.ogg,.m4a,.mp4,.webm,.jpg,.jpeg,.png,.webp'").classes("w-full")
+        if permitir_edicao:
+            with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.5rem; min-width: 0"):
+                up_vol = ui.number("Volume (padrão 40)", value=filas.VOLUME_AMBIENTE_PADRAO, min=0, max=100, step=1).props("outlined dense").classes("w-[110px]")
+                with up_vol:
+                    ui.tooltip("Altura do som (padrão 40; na chamada cai à metade).").props("delay=1000")
+                up_dur = ui.number("Duração foto (s)", value=8, min=3, max=120, step=1).props("outlined dense").classes("w-[130px]")
+                with up_dur:
+                    ui.tooltip("Só vale p/ foto SOZINHA (com áudio ela divide o tempo real).").props("delay=1000")
+                up_slot = ui.number("Exibição", value=0, min=0, max=999, step=1).props("outlined dense").classes("w-[90px]")
+                with up_slot:
+                    ui.tooltip("Posição na sequência; mesmo número = juntos.").props("delay=1000")
+                up_mut = ui.checkbox("Mutar vídeos", value=False)
+                with up_mut:
+                    ui.tooltip("Sobe vídeos sem áudio (troque o áudio por um MP3 junto na mesma exibição).").props("delay=1000")
+            ui.upload(label="Selecionar MP3 / MP4 / fotos — envia sozinho para esta fila", auto_upload=True,
+                      on_upload=lambda e: _salvar_arquivo_midia(e, fila_id, user_nome, up_vol.value, up_dur.value, up_slot.value, recarregar, up_mut.value),
+                      on_rejected=lambda e: _rejeitado(e),
+                      multiple=True).props("accept='.mp3,.wav,.ogg,.m4a,.mp4,.webm,.jpg,.jpeg,.png,.webp'").classes("w-full")
         _render()
 
 
@@ -398,10 +431,38 @@ def bloco_etapas(fid: int, nome_fila: str, tv_grupo: str, user_nome: str, recarr
                         recarregar()
                     botao("Próximo", icone="campaign", on_click=_prox, variante="primario", chave_modulo="filas").props('data-testid=filas-etapa-proximo')
                     botao(f"TV {_enome}", icone="tv", on_click=lambda u=tv_url: ui.navigate.to(u, new_tab=True), variante="contorno", chave_modulo="filas")
+                with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                    _dests = [e for e in [x[3] for x in etapas] if e != _enome]
+                    sel_env = ui.select(_dests, label="Passar senha para").props("outlined dense").classes("w-[240px]").style("min-width: 0")
+                    with sel_env:
+                        ui.tooltip("Recepção passa para a triagem ou direto ao consultório; triagem atribui ao consultório 01/02; médico manda ao RaioX.").props("delay=1000")
                 for item in espera[:10]:
                     with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
                         ui.label(f"{item['senha']}").classes("font-bold").style(_estilo_manchester(item["manchester"]) or "")
                         ui.label(item["paciente"] or "sem nome").classes("text-caption flex-1").style(_estilo_manchester(item["manchester"]) or "")
+                        def _env_etapa(fn=fid, s=item["senha"], sel=sel_env, obs_atual=item.get("observacao", "")):
+                            if not sel.value:
+                                notificar("Escolha a etapa de destino acima", type="warning")
+                                return
+                            with ui.dialog() as _dlg, ui.card().classes("w-full max-w-[440px] p-4 gap-3"):
+                                ui.label(f"Passar {s} para {sel.value}").classes("font-bold")
+                                if obs_atual:
+                                    ui.label(f"Obs atual: {obs_atual}").classes("text-caption text-grey-6").style("min-width: 0")
+                                inp_obs = ui.textarea("Observação para o próximo atendimento (opcional)", value="", placeholder="ex: pressão 12x8").props("outlined dense").classes("w-full").style("min-width: 0")
+                                with inp_obs:
+                                    ui.tooltip("Recado que viaja com a senha (ex.: triagem escreve pressão 12x8 para o consultório).").props("delay=1000")
+                                with ui.row().classes("w-full justify-end flex-wrap").style("gap: 0.5rem; min-width: 0"):
+                                    ui.button("Cancelar", on_click=_dlg.close).props("flat")
+                                    def _conf(fn=fn, s=s, dest=sel.value, i=inp_obs):
+                                        ok, msg = filas.enviar_senha_para_etapa(fn, s, dest, ator=user_nome, observacao=i.value or "")
+                                        notificar(msg, type="positive" if ok else "negative")
+                                        _dlg.close()
+                                        recarregar()
+                                    ui.button("Passar", icon="forward", on_click=_conf).props("color=primary")
+                            _dlg.open()
+                        ui.button(icon="forward", on_click=_env_etapa).props("dense flat color=primary").tooltip("Passar senha para a etapa escolhida (com observação)").props('data-testid=filas-etapa-enviar')
+                        if item.get("observacao"):
+                            ui.label(f"Obs: {item['observacao']}").classes("text-caption italic text-grey-7").style("min-width: 0; overflow-wrap: break-word")
                         def _dlg_nome(senha=item["senha"], atual=item["paciente"]):
                             with ui.dialog() as dlg, ui.card():
                                 ui.label(f"Nome para a senha {senha}").classes("font-bold")
@@ -761,7 +822,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     with _info_seq:
                         ui.tooltip("Etapas viram subfilas de sala; lista inicial usa um nome por linha + tags. Detalhes em cada campo.").props("delay=1000")
                 with ui.row().classes("w-full flex-wrap items-start").style("gap: 0.5rem; min-width: 0"):
-                    txt_etapas = ui.textarea("Sequência de etapas (uma por linha: Etapa | Guichê/Sala)", value="Recepção | 01\nTriagem | 02\nConsultório 3 | 03").props("outlined dense").classes("flex-1 min-w-[220px]").props('data-testid=filas-campo-etapas')
+                    txt_etapas = ui.textarea("Sequência de etapas (uma por linha: Etapa | Guichê/Sala — altere o padrão e inclua outras)", value="\n".join(f"{_n} | {_g}" for _n, _g in filas.ETAPAS_PADRAO_ATENDIMENTO)).props("outlined dense").classes("flex-1 min-w-[220px]").props('data-testid=filas-campo-etapas')
                     with txt_etapas:
                         ui.tooltip("Cada etapa é uma subfila (ex: Recepção → Triagem → Consultório 3 cardiologista). Cada sala/etapa tem painel próprio de 'próximo' e TV replicada só dela.").props("delay=1000")
 
@@ -785,7 +846,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
                     _info_anex = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: anexos"')
                     with _info_anex:
-                        ui.tooltip("Anexos sobem na hora e entram na fila ao criar. Mesmo número de exibição = juntos.").props("delay=1000")
+                        ui.tooltip("Anexos sobem na hora e entram na fila ao criar. Mesmo número de exibição = juntos (foto + áudio). Ajuste volume, duração da foto, exibição e fundo por item abaixo — igual ao painel da fila.").props("delay=1000")
                 box_stage = ui.column().classes("w-full gap-1").style("min-width: 0")
                 midias_stage = []
 
@@ -800,27 +861,161 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         ui.tooltip("Ordem de exibição; mesmo número = juntos (foto + áudio).").props("delay=1000")
                     st_fundo = ui.checkbox("Papel de fundo (fotos)", value=False)
                     with st_fundo:
-                        ui.tooltip("Foto fixa atrás de tudo na TV (permanente).").props("delay=1000")
+                        ui.tooltip("Foto sobe ao topo, exibição 0, loop permanente atrás de tudo na TV.").props("delay=1000")
+                    st_mut = ui.checkbox("Mutar vídeos", value=False)
+                    with st_mut:
+                        ui.tooltip("Sobe vídeos sem áudio (troque o áudio por um MP3 junto na mesma exibição).").props("delay=1000")
                 with st_vol:
                     ui.tooltip("Altura do som (0-100, padrão 40) para os áudios e vídeos anexados. Duração vale só p/ foto sozinha; com áudio a foto divide o tempo real.").props("delay=1000")
+
+                def _foto_stage():
+                    return {id(it): it.get("slot", 0) for it in midias_stage}
+
+                def _autonumerar_stage(a_partir=None, foto_pre=None):
+                    for it in midias_stage:
+                        if it.get("fundo"):
+                            it["slot"] = 0
+                    _ini = 0
+                    if a_partir is not None and a_partir in midias_stage:
+                        _ini = midias_stage.index(a_partir)
+                    _prev = None
+                    _pre_prev = None
+                    for _i in range(_ini):
+                        if not midias_stage[_i].get("fundo"):
+                            _prev = midias_stage[_i].get("slot", 0)
+                            _pre_prev = (foto_pre.get(id(midias_stage[_i]), _prev) if foto_pre else _prev)
+                    for _i in range(_ini, len(midias_stage)):
+                        _it = midias_stage[_i]
+                        if _it.get("fundo"):
+                            continue
+                        _cur = _it.get("slot", 0)
+                        _pre = (foto_pre.get(id(_it), _cur) if foto_pre else _cur)
+                        if _prev is None:
+                            _prev, _pre_prev = _cur, _pre
+                            continue
+                        if _cur == _prev and _pre == _pre_prev:
+                            _pre_prev = _pre
+                            continue  # juntos de propósito — mantém
+                        _it["slot"] = _prev + 1
+                        _prev, _pre_prev = _prev + 1, _pre
 
                 def _render_stage():
                     box_stage.clear()
                     with box_stage:
                         if not midias_stage:
                             ui.label("Nenhuma mídia anexada. Selecione MP4/MP3/fotos abaixo — sobem na hora e entram na fila ao criar.").classes("text-caption text-grey-6 italic")
-                        for item in list(midias_stage):
-                            with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
-                                _fd = " • FUNDO" if item.get("fundo") else ""
-                                ui.label(f"[{item['tipo']}] {item['original']} • vol {item['volume']} • exibição {item['slot']}{_fd}").classes("text-caption flex-1")
-                                def _rm(item=item):
-                                    try:
-                                        os.remove(os.path.join(PASTA_MIDIA, item["temp"]))
-                                    except Exception:
-                                        pass
-                                    midias_stage.remove(item)
-                                    _render_stage()
-                                ui.button(icon="delete", on_click=_rm).props("dense flat color=negative").tooltip("Remover anexo")
+                            return
+                        _slot_stage = None
+                        _grade_stage = None
+                        for _idx, item in enumerate(list(midias_stage)):
+                            if item.get("slot") != _slot_stage:
+                                _slot_stage = item.get("slot")
+                                ui.label(f"— Exibição {_slot_stage} (juntos) —").classes("text-caption font-bold text-primary").style("grid-column: 1 / -1; min-width: 0")
+                                _grade_stage = ui.element("div").classes("w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2").style("min-width: 0")
+                            if _grade_stage is None:
+                                _grade_stage = ui.element("div").classes("w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2").style("min-width: 0")
+                            _src_stage = f"/midia_filas/{item['temp']}"
+                            with _grade_stage:
+                                with ui.card().classes("p-2 gap-1").style("min-width: 0; height: 100%"):
+                                    _fd = " • FUNDO" if item.get("fundo") else ""
+                                    _md = " • MUTADO" if item.get("mutado") else ""
+                                    ui.label(f"[{item['tipo']}] {item['original']}").classes("text-caption font-bold").style("min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap")
+                                    ui.label(f"vol {item['volume']} • {item['duracao']}s • exibição {item['slot']}{_fd}{_md}").classes("text-caption text-grey-6").style("min-width: 0")
+                                    with ui.element("div").classes("w-full flex justify-center items-center").style("width: 100%; height: 90px; min-width: 0; background: #111"):
+                                        if item["tipo"] == "audio":
+                                            ui.html(f"<audio controls style='width:100%'><source src='{_src_stage}'></audio>", sanitize=False)
+                                        elif item["tipo"] == "video":
+                                            ui.html(f"<video controls style='width:90px;height:90px;object-fit:cover;background:#000'><source src='{_src_stage}'></video>", sanitize=False)
+                                        else:
+                                            ui.image(_src_stage).style("width: 90px; height: 90px; object-fit: cover")
+                                    if item.get("fundo"):
+                                        ui.label("TOPO • exibição 0 • loop").classes("text-caption font-bold text-primary").style("min-width: 0")
+                                    # linha 1: setas + mutar + volume + duração + exibição
+                                    with ui.row().classes("w-full flex-wrap items-end").style("gap: 0.25rem; min-width: 0"):
+                                        if not item.get("fundo"):
+                                            def _subir_stage(item=item):
+                                                if item in midias_stage:
+                                                    _foto = _foto_stage()
+                                                    _i = midias_stage.index(item)
+                                                    if _i > 0:
+                                                        midias_stage[_i], midias_stage[_i - 1] = midias_stage[_i - 1], midias_stage[_i]
+                                                        item["slot"] = midias_stage.index(item)
+                                                        _autonumerar_stage(item, _foto)
+                                                        _render_stage()
+                                                    else:
+                                                        notificar("Já está no topo", type="warning")
+                                            def _descer_stage(item=item):
+                                                if item in midias_stage:
+                                                    _foto = _foto_stage()
+                                                    _i = midias_stage.index(item)
+                                                    if _i < len(midias_stage) - 1:
+                                                        midias_stage[_i], midias_stage[_i + 1] = midias_stage[_i + 1], midias_stage[_i]
+                                                        item["slot"] = midias_stage.index(item)
+                                                        _autonumerar_stage(item, _foto)
+                                                        _render_stage()
+                                                    else:
+                                                        notificar("Já está no fim", type="warning")
+                                            ui.button(icon="arrow_upward", on_click=_subir_stage).props("dense flat").tooltip("Antecipar (assume a exibição da posição)")
+                                            ui.button(icon="arrow_downward", on_click=_descer_stage).props("dense flat").tooltip("Adiar (assume a exibição da posição)")
+                                        _m = None
+                                        if item.get("tipo") == "video":
+                                            _m = ui.checkbox("Mutar", value=bool(item.get("mutado"))).props("dense")
+                                            with _m:
+                                                ui.tooltip("Sobe o vídeo sem áudio (troque o áudio por um MP3 junto).").props("delay=1000")
+                                        _v = ui.number("Volume", value=item.get("volume", filas.VOLUME_AMBIENTE_PADRAO), min=0, max=100, step=1).props("outlined dense").classes("w-[64px]")
+                                        with _v:
+                                            ui.tooltip("Altura do som desta reprodução (padrão 40; na chamada cai à metade).").props("delay=1000")
+                                        _d = ui.number("Duração", value=item.get("duracao", 8), min=3, max=120, step=1).props("outlined dense").classes("w-[64px]")
+                                        with _d:
+                                            ui.tooltip("Só vale p/ foto SOZINHA (com áudio ela divide o tempo real).").props("delay=1000")
+                                        _s = ui.number("Exibição", value=item.get("slot", 0), min=0, max=999, step=1).props("outlined dense").classes("w-[64px]")
+                                        with _s:
+                                            ui.tooltip("Posição na sequência; mesmo número = juntos. Posteriores se autonumeram.").props("delay=1000")
+                                    # linha 2: aplicar + fundo + excluir
+                                    with ui.row().classes("w-full flex-wrap").style("gap: 0.25rem; min-width: 0"):
+                                        def _aplicar(item=item, v=_v, d=_d, s=_s, c=_m):
+                                            _foto = _foto_stage()
+                                            try:
+                                                item["volume"] = max(0, min(int(float(v.value if v.value not in (None, "") else filas.VOLUME_AMBIENTE_PADRAO)), 100))
+                                            except Exception:
+                                                item["volume"] = filas.VOLUME_AMBIENTE_PADRAO
+                                            try:
+                                                item["duracao"] = int(float(d.value or 8))
+                                            except Exception:
+                                                item["duracao"] = 8
+                                            try:
+                                                item["slot"] = int(float(s.value or 0))
+                                            except Exception:
+                                                item["slot"] = 0
+                                            if c is not None:
+                                                item["mutado"] = 1 if c.value and item.get("tipo") == "video" else 0
+                                            _autonumerar_stage(item, _foto)
+                                            notificar("Anexo atualizado", type="positive")
+                                            _render_stage()
+                                        ui.button("Aplicar", on_click=_aplicar).props("dense color=primary")
+                                        if item.get("tipo") == "imagem":
+                                            def _fundo_stage(item=item):
+                                                _liga = not item.get("fundo")
+                                                for _it in midias_stage:
+                                                    _it["fundo"] = False
+                                                item["fundo"] = _liga
+                                                if _liga:
+                                                    midias_stage.remove(item)
+                                                    midias_stage.insert(0, item)
+                                                    item["slot"] = 0
+                                                _autonumerar_stage(item)
+                                                notificar("Fundo " + ("no topo, exibição 0, loop" if _liga else "desmarcado"), type="positive")
+                                                _render_stage()
+                                            ui.button("Tirar fundo" if item.get("fundo") else "Fundo", icon="wallpaper", on_click=_fundo_stage).props("dense outline color=primary" if not item.get("fundo") else "dense outline").tooltip("Fundo sobe ao topo, exibição 0, loop permanente")
+                                        def _rm(item=item):
+                                            try:
+                                                os.remove(os.path.join(PASTA_MIDIA, item["temp"]))
+                                            except Exception:
+                                                pass
+                                            midias_stage.remove(item)
+                                            _autonumerar_stage()
+                                            _render_stage()
+                                        ui.button("Excluir", on_click=_rm).props("dense outline color=negative").tooltip("Remover anexo")
 
                 async def _anexar_midia(e):
                     nome_arq, conteudo = await _ler_upload(e)
@@ -853,12 +1048,45 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     except Exception:
                         sl = 0
                     fundo = bool(st_fundo.value) and tipo == "imagem"
-                    midias_stage.append({"original": nome_arq, "temp": temp, "tipo": tipo, "volume": vol, "duracao": dur, "slot": sl, "fundo": fundo})
+                    mut = (1 if bool(st_mut.value) else 0) if tipo == "video" else 0
+                    midias_stage.append({"original": nome_arq, "temp": temp, "tipo": tipo, "volume": vol, "duracao": dur, "slot": sl, "fundo": fundo, "mutado": mut})
                     notificar(f"{nome_arq} anexado", type="positive")
                     _render_stage()
 
                 up_stage = ui.upload(label="Anexar vídeos MP4, áudios MP3 e fotos desta fila", auto_upload=True, on_upload=_anexar_midia, on_rejected=_rejeitado, multiple=True).props("accept='.mp3,.wav,.ogg,.m4a,.mp4,.webm,.jpg,.jpeg,.png,.webp'").classes("w-full")
                 _render_stage()
+            # Mídias da fila em edição — só dono/admin (mesclado do card; fila criada é somente leitura)
+            box_midia_edicao = ui.column().classes("w-full gap-2").style("min-width: 0")
+            box_midia_edicao.visible = False
+
+            def _render_midia_edicao():
+                box_midia_edicao.clear()
+                _fid_e = edicao.get("fid")
+                if not _fid_e:
+                    try:
+                        box_midia_edicao.visible = False
+                    except Exception:
+                        pass
+                    return
+                try:
+                    _f_e = filas.obter_fila(_fid_e)
+                    _dono_e = _f_e[9] if _f_e and len(_f_e) > 9 else ""
+                except Exception:
+                    _dono_e = ""
+                if not (eh_admin or _dono_e == user_nome):
+                    try:
+                        box_midia_edicao.visible = True
+                    except Exception:
+                        pass
+                    with box_midia_edicao:
+                        ui.label("Mídias: edição restrita ao dono da fila.").classes("text-caption text-grey-6 italic")
+                    return
+                try:
+                    box_midia_edicao.visible = True
+                except Exception:
+                    pass
+                with box_midia_edicao:
+                    bloco_midia_fila(_fid_e, user_nome, lambda: (_render_midia_edicao(), render_filas()), permitir_edicao=True)
             # Textos da TV editáveis pelo criador
             with ui.expansion("Personalizar textos da TV (opcional)", icon="tv").classes("w-full").style("min-width: 0") as exp_textos:
                 with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
@@ -904,7 +1132,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     _render_stage()
                 except Exception:
                     pass
-                txt_etapas.value = "Recepção | 01\nTriagem | 02\nConsultório 3 | 03"
+                txt_etapas.value = "\n".join(f"{_n} | {_g}" for _n, _g in filas.ETAPAS_PADRAO_ATENDIMENTO)
                 inp_tv_titulo.value = ""
                 inp_tv_sub.value = ""
                 inp_tv_ag.value = "AGUARDE CHAMADA"
@@ -921,6 +1149,11 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 lbl_modo.text = ""
                 exp_seq.visible = True
                 exp_anexo.visible = True
+                try:
+                    box_midia_edicao.clear()
+                    box_midia_edicao.visible = False
+                except Exception:
+                    pass
                 try:
                     exp_textos.visible = True
                 except Exception:
@@ -996,7 +1229,11 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     exp_textos.visible = True
                 except Exception:
                     pass
-                lbl_modo.text = f"Editando: {_nome} (etapas, lista e mídias se gerenciam no card/administração)"
+                lbl_modo.text = f"Editando: {_nome} (mídias abaixo — só dono; etapas e lista no card/administração)"
+                try:
+                    _render_midia_edicao()
+                except Exception:
+                    pass
                 btn_criar.visible = False
                 btn_salvar.visible = True
                 btn_cancelar.visible = True
@@ -1054,7 +1291,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                             try:
                                 final = filas.nome_arquivo_midia(fid, item["original"])
                                 os.rename(os.path.join(PASTA_MIDIA, item["temp"]), os.path.join(PASTA_MIDIA, final))
-                                ok_m, _ = filas.adicionar_midia(item["original"], item["tipo"], f"/midia_filas/{final}", arquivo_original=item["original"], ator=user_nome, fila_id=fid, volume=item["volume"], duracao=item["duracao"], slot=item["slot"])
+                                ok_m, _ = filas.adicionar_midia(item["original"], item["tipo"], f"/midia_filas/{final}", arquivo_original=item["original"], ator=user_nome, fila_id=fid, volume=item["volume"], duracao=item["duracao"], slot=item["slot"], mutado=item.get("mutado", 0))
                                 if ok_m:
                                     n_ok += 1
                                     if item.get("fundo"):
@@ -1202,7 +1439,13 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                             for cid, fid2, senha2, guiche2, data2, por2, pac2, etapa2, fn2, prio2, manch2 in filas.listar_chamadas(5, fila_id=fid):
                                 with ui.row().classes("w-full items-center justify-between flex-wrap").style("gap: 0.5rem; min-width: 0"):
                                     ui.label(f"{senha2} — {etapa2} — {pac2 or '—'} — guichê {guiche2} — {data2[:16] if data2 else ''}").classes("text-caption flex-1").style(_estilo_manchester(manch2) or "")
-                                    # qualquer atendente: cor a qualquer hora
+                                    # qualquer atendente: cor a qualquer hora + obs da fase anterior
+                                    try:
+                                        _obs_h = filas.observacao_atual(fid, senha2)
+                                    except Exception:
+                                        _obs_h = ""
+                                    if _obs_h:
+                                        ui.label(f"Obs: {_obs_h}").classes("text-caption italic text-grey-7 w-full").style("min-width: 0; overflow-wrap: break-word")
                                     selmh = ui.select(list(MANCHESTER_LABEL.values()), value=MANCHESTER_LABEL.get(manch2 or "", "—")).props("outlined dense").classes("w-[120px]")
                                     def _svmh(fn=fid, s=senha2, sel=selmh):
                                         invm = {v: k for k, v in MANCHESTER_LABEL.items()}
@@ -1223,10 +1466,11 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         # por etapa/sala: próximo, nome e Manchester — qualquer atendente
                         bloco_etapas(fid, nome, tv_grupo, user_nome, render_filas)
 
-                        # edição da fila: mídias, nomes e controle da TV (quem vê a fila pode editar)
+                        # edição da fila: nomes e controle da TV (quem vê a fila pode editar);
+                        # mídias no card são SOMENTE LEITURA — incluir/ordenar só dono via Editar
+                        bloco_midia_fila(fid, user_nome, render_filas, permitir_edicao=False)
                         if pode_editar:
                             bloco_nomes_fila(fid, user_nome, render_filas)
-                            bloco_midia_fila(fid, user_nome, render_filas)
                             try:
                                 _ids_tv = filas.ids_do_grupo(tv_grupo) if tv_grupo else [fid]
                             except Exception:
@@ -1527,7 +1771,8 @@ try {{
             _fundos = [m for m in midias if m[2] == "imagem" and len(m) > 13 and m[13]]
             if _fundos:
                 partes.append(f"<div style='position:absolute;inset:0;background:url({_src(_fundos[0][3])}) center/cover;opacity:0.22;pointer-events:none;z-index:0'></div>")
-            for (_id, _nome, _tipo, _caminho, _orig, _ordem, _ativo, _criado, _fid, _vol, _dur, _slot, _real, _fundo) in itens:
+            for (_id, _nome, _tipo, _caminho, _orig, _ordem, _ativo, _criado, _fid, _vol, _dur, _slot, _real, _fundo, *_resto) in itens:
+                _mut = bool(_resto[0]) if _resto else False
                 src = _src(_caminho)
                 vol = max(0, min(int(_vol if _vol not in (None, "") else filas.VOLUME_AMBIENTE_PADRAO), 100)) / 100
                 if _tipo == "imagem":
@@ -1535,7 +1780,8 @@ try {{
                         html_imgs.append(src)
                 elif _tipo == "video":
                     if not any("data-vid" in p for p in partes):
-                        partes.append(f"<video autoplay loop playsinline data-vol='{vol}' data-vid='1' style='width:100%;max-height:62vh;background:#000;pointer-events:none'><source src='{src}'></video>")
+                        _atrr_mut = " muted" if _mut else ""
+                        partes.append(f"<video autoplay loop playsinline{_atrr_mut} data-vol='{vol}' data-vid='1' style='width:100%;max-height:62vh;background:#000;pointer-events:none'><source src='{src}'></video>")
                 else:
                     partes.append(f"<audio autoplay loop data-vol='{vol}' style='display:none'><source src='{src}'></audio>")
             # tempo total = real do áudio/vídeo; fotos dividem (40s + 4 fotos = 10s cada)

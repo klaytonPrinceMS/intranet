@@ -56,13 +56,13 @@ IDS_CRITICOS = [
     "filas-tv-recem-criada",
     # operação por fila
     "filas-card-abrir-tv", "filas-card-tv-grupo", "filas-chamar-proximo",
-    "filas-avancar", "filas-etapa-proximo", "filas-excluir", "filas-editar",
+    "filas-avancar", "filas-etapa-proximo", "filas-etapa-enviar", "filas-excluir", "filas-editar",
     # lista/nomes + transferência mesma TV
     "filas-importar-texto", "filas-importar-submit", "filas-transferir-todos",
     # acesso liberado
     "filas-acesso-abrir", "filas-acesso-buscar", "filas-acesso-chamar",
-    # mídia por fila + fundo + volume
-    "filas-midia-salvar", "filas-midia-fundo",
+    # mídia por fila + fundo + volume + mutar vídeo
+    "filas-midia-salvar", "filas-midia-fundo", "filas-midia-mutar",
     # controle da TV (claim de voz)
     "filas-tv-pausar", "filas-tv-retomar", "filas-tv-retornar",
     "filas-tv-avancar",

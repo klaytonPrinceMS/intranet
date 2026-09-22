@@ -93,13 +93,14 @@ def _migrar_midia_para_imagem(cur):
                 duracao INTEGER NOT NULL DEFAULT 8,
                 slot INTEGER NOT NULL DEFAULT 0,
                 duracao_real REAL,
-                fundo INTEGER NOT NULL DEFAULT 0
+                fundo INTEGER NOT NULL DEFAULT 0,
+                mutado INTEGER NOT NULL DEFAULT 0
             )
         """)
         cur.execute("""
             INSERT INTO tb_midia_nova
-                (id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, fundo)
-            SELECT id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, 0
+                (id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, fundo, mutado)
+            SELECT id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, 0, 0
             FROM tb_midia
         """)
         cur.execute("DROP TABLE tb_midia")
@@ -180,6 +181,7 @@ def init_db():
     _garantir_coluna(cur, "tb_chamada", "fila_nome", "TEXT DEFAULT ''")
     _garantir_coluna(cur, "tb_chamada", "prioridade", "TEXT NOT NULL DEFAULT 'comum'")
     _garantir_coluna(cur, "tb_chamada", "manchester", "TEXT NOT NULL DEFAULT ''")
+    _garantir_coluna(cur, "tb_chamada", "observacao", "TEXT DEFAULT ''")
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS tb_midia (
@@ -195,7 +197,8 @@ def init_db():
             volume INTEGER NOT NULL DEFAULT 40,
             duracao INTEGER NOT NULL DEFAULT 8,
             slot INTEGER NOT NULL DEFAULT 0,
-            duracao_real REAL
+            duracao_real REAL,
+            mutado INTEGER NOT NULL DEFAULT 0
         )
     """)
     _garantir_coluna(cur, "tb_midia", "fila_id", "INTEGER REFERENCES tb_fila(id) ON DELETE CASCADE")
@@ -204,6 +207,7 @@ def init_db():
     _garantir_coluna(cur, "tb_midia", "slot", "INTEGER NOT NULL DEFAULT 0")
     _garantir_coluna(cur, "tb_midia", "duracao_real", "REAL")
     _garantir_coluna(cur, "tb_midia", "fundo", "INTEGER NOT NULL DEFAULT 0")
+    _garantir_coluna(cur, "tb_midia", "mutado", "INTEGER NOT NULL DEFAULT 0")
     _migrar_midia_para_imagem(cur)
     # preenche duração real de mídias antigas (melhor esforço)
     try:
@@ -274,6 +278,21 @@ def init_db():
         )
     """)
     cur.execute("CREATE INDEX IF NOT EXISTS idx_fila_acesso_user ON tb_fila_acesso(user_nome)")
+
+    # Fila padrão do atendimento (só quando o banco nasce vazio): Recepção 01/02,
+    # Triagem, Consultórios e RaioX. Idempotente — nunca duplica; o usuário pode
+    # alterar a sequência ao criar filas e editar etapas depois.
+    try:
+        _total_filas = cur.execute("SELECT COUNT(*) FROM tb_fila").fetchone()[0] or 0
+        if _total_filas == 0:
+            cur.execute("INSERT INTO tb_fila (nome, senha_atual, status, guiche, prefixo, criado_por, senha_inicio, senha_fim) VALUES (?, 'A000', 'ativa', '01', 'A', 'sistema', 1, 0)",
+                        (FILA_PADRAO_NOME,))
+            _fid_padrao = cur.lastrowid
+            for _i, (_et_nome, _et_guiche) in enumerate(ETAPAS_PADRAO_ATENDIMENTO, start=1):
+                cur.execute("INSERT INTO tb_fila_etapa (fila_id, ordem, nome, guiche) VALUES (?, ?, ?, ?)",
+                            (_fid_padrao, _i, _et_nome, _et_guiche))
+    except Exception:
+        pass
 
     os.makedirs(PASTA_MIDIA, exist_ok=True)
     # limpa staging órfão (stage_* com +24h sem vincular)
@@ -422,6 +441,21 @@ def listar_grupos_tv():
 VOZ_ORDEM_PADRAO = "fila,senha,nome,destino,guiche"
 VOZ_CAMPOS = ("fila", "senha", "nome", "destino", "guiche")
 
+# Fluxo padrão do atendimento: chega, pega senha ou passa o nome na recepção;
+# recepção chama, atende e passa para a sequência desejada (triagem ou direto
+# ao consultório); triagem atribui ao consultório 01/02; médico manda ao RaioX.
+# Duas recepções paralelas (01 e 02) alimentam a mesma sequência. Editável ao
+# criar a fila (outras sequências podem ser incluídas).
+FILA_PADRAO_NOME = "Atendimento"
+ETAPAS_PADRAO_ATENDIMENTO = [
+    ("Recepção 01", "01"),
+    ("Recepção 02", "02"),
+    ("Triagem", "03"),
+    ("Consultório 01 Dr. Antonio Carlos", "04"),
+    ("Consultório 02 Dra. Maria Alice", "05"),
+    ("RaioX", "06"),
+]
+
 
 def normalizar_voz_ordem(valor: str) -> tuple[bool, str]:
     """Valida ordem da fala: só fila|senha|nome|destino|guiche, sem repetir; completa faltantes no fim."""
@@ -521,7 +555,7 @@ def criar_fila(nome: str, endereco: str = "", descricao: str = "", prefixo: str 
             if en:
                 seq.append((en, (eg or "").strip()[:20]))
         if not seq:
-            seq = [("Atendimento", guiche), ("Triagem", ""), ("Consultório 3", "")]
+            seq = list(ETAPAS_PADRAO_ATENDIMENTO)
         for i, (et_nome, et_guiche) in enumerate(seq, start=1):
             cur.execute("INSERT INTO tb_fila_etapa (fila_id, ordem, nome, guiche) VALUES (?, ?, ?, ?)", (fid, i, et_nome, et_guiche))
         conn.commit()
@@ -828,8 +862,11 @@ def gerar_senha(fila_id: int, ator: str = "", paciente_nome: str = "", etapa_nom
         conn.close()
 
 
-def avancar_chamada(chamada_id: int, ator: str = "") -> tuple[bool, str]:
-    """Avança chamada para próxima etapa da mesma fila (sequencial)."""
+def avancar_chamada(chamada_id: int, ator: str = "", observacao: str = "") -> tuple[bool, str]:
+    """Avança chamada para próxima etapa da mesma fila (sequencial).
+
+    observacao (ex.: "pressão 12x8") viaja com a senha para o próximo atendimento.
+    """
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -859,13 +896,63 @@ def avancar_chamada(chamada_id: int, ator: str = "") -> tuple[bool, str]:
         cur.execute("SELECT guiche FROM tb_fila WHERE id=?", (fila_id,))
         guiche_fila = cur.fetchone()[0] or "01"
         guiche = prox_guiche or guiche_fila
-        cur.execute("INSERT INTO tb_chamada (fila_id, senha, guiche, chamado_por, paciente_nome, etapa_nome, fila_nome, prioridade, manchester) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (fila_id, senha, guiche, ator or "sistema", paciente_nome, prox_nome, fila_nome, prio, manch))
+        cur.execute("INSERT INTO tb_chamada (fila_id, senha, guiche, chamado_por, paciente_nome, etapa_nome, fila_nome, prioridade, manchester, observacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (fila_id, senha, guiche, ator or "sistema", paciente_nome, prox_nome, fila_nome, prio, manch, (observacao or "").strip()[:500]))
         conn.commit()
         _audit(ator or "sistema", "avancar_chamada", senha, f"fila={fila_nome} {etapa_atual} -> {prox_nome}")
         return True, f"Avançado para {prox_nome}"
     except Exception as e:
         _log().exception(f"avancar_chamada falhou: {e}")
+        return False, str(e)
+    finally:
+        conn.close()
+
+
+def enviar_senha_para_etapa(fila_id: int, senha: str, etapa_destino: str, ator: str = "", observacao: str = "") -> tuple[bool, str]:
+    """Passa a senha para qualquer etapa da mesma fila (ex.: recepção → triagem
+    ou direto ao consultório; triagem → consultório 01/02; médico → RaioX).
+
+    Diferente do avançar (sempre a próxima), aqui o atendente escolhe o destino.
+    observacao (ex.: "pressão 12x8") viaja com a senha para o próximo atendimento.
+    Registra nova chamada (histórico) com a mesma senha, paciente e prioridade.
+    """
+    senha = (senha or "").strip()
+    etapa_destino = (etapa_destino or "").strip()
+    if not senha or not etapa_destino:
+        return False, "Informe a senha e a etapa de destino"
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT nome, guiche FROM tb_fila WHERE id=?", (fila_id,))
+        _fila = cur.fetchone()
+        if not _fila:
+            return False, "Fila não encontrada"
+        fila_nome, guiche_fila = _fila
+        cur.execute("SELECT nome, guiche FROM tb_fila_etapa WHERE fila_id=? ORDER BY ordem", (fila_id,))
+        _etapas = cur.fetchall()
+        _mapa = { (n or ""): (n or "") for n, _ in _etapas }
+        if etapa_destino not in _mapa:
+            return False, f"Etapa '{etapa_destino}' não existe nesta fila"
+        cur.execute("SELECT id, paciente_nome, etapa_nome, prioridade, manchester FROM tb_chamada WHERE fila_id=? AND senha=? ORDER BY id DESC LIMIT 1",
+                    (fila_id, senha))
+        _ult = cur.fetchone()
+        if not _ult:
+            return False, f"Senha {senha} não encontrada nesta fila"
+        _, paciente_nome, etapa_atual, prio, manch = _ult
+        if (etapa_atual or "") == etapa_destino:
+            return False, f"{senha} já está em {etapa_destino}"
+        _guiche_dest = ""
+        for _n, _g in _etapas:
+            if _n == etapa_destino:
+                _guiche_dest = _g or ""
+                break
+        cur.execute("INSERT INTO tb_chamada (fila_id, senha, guiche, chamado_por, paciente_nome, etapa_nome, fila_nome, prioridade, manchester, observacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (fila_id, senha, _guiche_dest or guiche_fila or "01", ator or "sistema", paciente_nome or "", etapa_destino, fila_nome, prio or "comum", manch or "", (observacao or "").strip()[:500]))
+        conn.commit()
+        _audit(ator or "sistema", "enviar_senha_etapa", senha, f"fila={fila_nome} {etapa_atual} -> {etapa_destino}")
+        return True, f"{senha} enviado para {etapa_destino}"
+    except Exception as e:
+        _log().exception(f"enviar_senha_para_etapa falhou: {e}")
         return False, str(e)
     finally:
         conn.close()
@@ -967,7 +1054,9 @@ def listar_chamadas_tv(limite: int = 20, fila_id: int = None, tv_grupo: str = No
 def espera_etapa(fila_id: int, etapa_nome: str) -> list:
     """Senhas aguardando numa etapa/sala: última posição ainda é a etapa (não avançou).
 
-    Retorna dicts (senha, paciente, prioridade, manchester, chegada) por ordem de chegada.
+    Retorna dicts (senha, paciente, prioridade, manchester, observacao, chegada)
+    por ordem de chegada. observacao é o recado deixado pela fase anterior
+    (ex.: triagem escreve "pressão 12x8" ao passar ao consultório).
     """
     rows = listar_chamadas(limite=5000, fila_id=fila_id)
     ultima_etapa = {}
@@ -980,9 +1069,41 @@ def espera_etapa(fila_id: int, etapa_nome: str) -> list:
         ultima_etapa[senha] = etapa
         dados[senha] = {"senha": senha, "paciente": pac or "", "prioridade": prio or "comum",
                         "manchester": manch or "", "guiche": guiche or "", "chegada": chegada.get(senha, cid)}
+    try:
+        for _senha, _obs in observacoes_atuais(fila_id).items():
+            if _senha in dados:
+                dados[_senha]["observacao"] = _obs
+    except Exception:
+        pass
+    for _d in dados.values():
+        _d.setdefault("observacao", "")
     espera = [dados[s] for s in dados if ultima_etapa.get(s) == etapa_nome and s in chegada]
     espera.sort(key=lambda d: d["chegada"])
     return espera
+
+
+def observacoes_atuais(fila_id: int) -> dict:
+    """Última observação de cada senha da fila (recado da fase anterior)."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        try:
+            cur.execute("""SELECT senha, observacao FROM tb_chamada
+                           WHERE fila_id=? AND id IN (SELECT MAX(id) FROM tb_chamada WHERE fila_id=? GROUP BY senha)""",
+                        (fila_id, fila_id))
+            return {(s or ""): (o or "") for s, o in cur.fetchall() if s}
+        except Exception:
+            return {}
+    finally:
+        conn.close()
+
+
+def observacao_atual(fila_id: int, senha: str) -> str:
+    """Observação atual de uma senha ("" quando não há)."""
+    try:
+        return observacoes_atuais(fila_id).get((senha or "").strip(), "")
+    except Exception:
+        return ""
 
 
 def proximo_da_etapa(fila_id: int, etapa_nome: str, ator: str = "") -> tuple[bool, str]:
@@ -1543,7 +1664,7 @@ def listar_midias(somente_ativas=False, fila_id=None):
     conn = get_connection()
     try:
         cur = conn.cursor()
-        base = "SELECT id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, fundo FROM tb_midia"
+        base = "SELECT id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, fundo, mutado FROM tb_midia"
         conds = []
         vals = []
         if somente_ativas:
@@ -1608,7 +1729,7 @@ def ids_do_grupo(tv_grupo: str) -> list:
         conn.close()
 
 
-def adicionar_midia(nome: str, tipo: str, caminho: str, arquivo_original: str = "", ator: str = "", fila_id=None, volume: int = VOLUME_AMBIENTE_PADRAO, duracao: int = 8, slot: int = 0):
+def adicionar_midia(nome: str, tipo: str, caminho: str, arquivo_original: str = "", ator: str = "", fila_id=None, volume: int = VOLUME_AMBIENTE_PADRAO, duracao: int = 8, slot: int = 0, mutado: int = 0):
     if tipo not in TIPOS_MIDIA:
         return False, "Tipo deve ser audio, video ou imagem"
     try:
@@ -1623,13 +1744,17 @@ def adicionar_midia(nome: str, tipo: str, caminho: str, arquivo_original: str = 
         slot = max(0, min(int(slot or 0), 999))
     except Exception:
         slot = 0
+    try:
+        mutado = 1 if (int(mutado or 0) and tipo == "video") else 0
+    except Exception:
+        mutado = 0
     conn = get_connection()
     try:
         cur = conn.cursor()
         cur.execute("SELECT COALESCE(MAX(ordem),0)+1 FROM tb_midia WHERE (fila_id=? OR (fila_id IS NULL AND ? IS NULL))", (fila_id, fila_id))
         ordem = cur.fetchone()[0]
-        cur.execute("INSERT INTO tb_midia (nome, tipo, caminho, arquivo_original, ordem, fila_id, volume, duracao, slot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    ((nome or arquivo_original or tipo).strip(), tipo, caminho, arquivo_original, ordem, fila_id, volume, duracao, slot))
+        cur.execute("INSERT INTO tb_midia (nome, tipo, caminho, arquivo_original, ordem, fila_id, volume, duracao, slot, mutado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    ((nome or arquivo_original or tipo).strip(), tipo, caminho, arquivo_original, ordem, fila_id, volume, duracao, slot, mutado))
         mid_novo = cur.lastrowid
         try:
             real = duracao_real_arquivo(caminho)
@@ -1644,7 +1769,7 @@ def adicionar_midia(nome: str, tipo: str, caminho: str, arquivo_original: str = 
         conn.close()
 
 
-def atualizar_midia(midia_id: int, volume=None, duracao=None, slot=None, nome: str = None, ator: str = ""):
+def atualizar_midia(midia_id: int, volume=None, duracao=None, slot=None, nome: str = None, mutado=None, ator: str = ""):
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -1665,6 +1790,15 @@ def atualizar_midia(midia_id: int, volume=None, duracao=None, slot=None, nome: s
                 sets.append("slot=?"); vals.append(max(0, min(int(slot or 0), 999)))
             except Exception:
                 return False, "Exibição deve ser número"
+        if mutado is not None:
+            try:
+                cur.execute("SELECT tipo FROM tb_midia WHERE id=?", (midia_id,))
+                _r = cur.fetchone()
+                if _r and _r[0] != "video":
+                    return False, "Mutar vale só para vídeo"
+                sets.append("mutado=?"); vals.append(1 if int(bool(mutado)) else 0)
+            except Exception:
+                return False, "Mutar inválido"
         if nome is not None:
             if not (nome or "").strip():
                 return False, "Nome não pode ser vazio"
@@ -1674,6 +1808,13 @@ def atualizar_midia(midia_id: int, volume=None, duracao=None, slot=None, nome: s
         vals.append(midia_id)
         cur.execute(f"UPDATE tb_midia SET {', '.join(sets)} WHERE id=?", vals)
         conn.commit()
+        # Exibição editada à mão: posteriores se autonumeram (grupos intencionais com mesmo número são mantidos).
+        try:
+            _f = cur.execute("SELECT fila_id, ordem FROM tb_midia WHERE id=?", (midia_id,)).fetchone()
+            if _f:
+                normalizar_exibicao(_f[0], a_partir_ordem=_f[1])
+        except Exception:
+            pass
         return True, "Mídia atualizada"
     finally:
         conn.close()
@@ -1715,7 +1856,11 @@ def reordenar_midias(ordem_ids: list[int]):
 
 
 def set_midia_fundo(midia_id: int, fundo: bool, ator: str = ""):
-    """Marca foto como papel de fundo (uma por fila/global: as demais saem)."""
+    """Marca foto como papel de fundo (uma por fila/global: as demais saem).
+
+    Fundo sobe para o topo (ordem mínima), fica na exibição 0 e roda em loop
+    permanente atrás de tudo na TV (não entra na rotação de mídias).
+    """
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -1728,10 +1873,143 @@ def set_midia_fundo(midia_id: int, fundo: bool, ator: str = ""):
         if fundo:
             cur.execute("UPDATE tb_midia SET fundo=0 WHERE (fila_id=? OR (fila_id IS NULL AND ? IS NULL)) AND id<>?",
                         (row[0], row[0], midia_id))
-        cur.execute("UPDATE tb_midia SET fundo=? WHERE id=?", (1 if fundo else 0, midia_id))
+            cur.execute("SELECT COALESCE(MIN(ordem),1) FROM tb_midia WHERE (fila_id=? OR (fila_id IS NULL AND ? IS NULL))",
+                        (row[0], row[0]))
+            _topo = (cur.fetchone()[0] or 1) - 1
+            cur.execute("UPDATE tb_midia SET fundo=1, slot=0, ordem=? WHERE id=?", (_topo, midia_id))
+        else:
+            cur.execute("UPDATE tb_midia SET fundo=0 WHERE id=?", (midia_id,))
         conn.commit()
         _audit(ator or "sistema", "fundo_midia", str(midia_id), f"fundo={bool(fundo)}")
-        return True, ("Papel de fundo ativado" if fundo else "Papel de fundo removido")
+        return True, ("Papel de fundo ativado (topo, exibição 0, loop)" if fundo else "Papel de fundo removido")
+    finally:
+        conn.close()
+
+
+def set_midia_mutado(midia_id: int, mutado: bool, ator: str = ""):
+    """Muta/desmuta o áudio de um vídeo (ex.: subir vídeo trocando o áudio por MP3 junto na mesma exibição)."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT tipo FROM tb_midia WHERE id=?", (midia_id,))
+        row = cur.fetchone()
+        if not row:
+            return False, "Mídia não encontrada"
+        if row[0] != "video":
+            return False, "Mutar vale só para vídeo"
+        cur.execute("UPDATE tb_midia SET mutado=? WHERE id=?", (1 if mutado else 0, midia_id))
+        conn.commit()
+        _audit(ator or "sistema", "mutar_midia", str(midia_id), f"mutado={bool(mutado)}")
+        return True, ("Vídeo mutado" if mutado else "Vídeo com áudio")
+    finally:
+        conn.close()
+
+
+def normalizar_exibicao(fila_id, a_partir_ordem=None, foto_pre=None):
+    """Autonumera a exibição (slot) a partir de uma posição, preservando grupos intencionais.
+
+    Regras: papel de fundo fica fora da sequência (sempre slot 0, topo);
+    mesmo número do anterior = juntos (mantido); valor menor/igual quebrado
+    ou buraco na sequência vira anterior+1. Quem moveu com a seta já chega com
+    a posição como exibição; quem agrupou de propósito (igual ao anterior) não
+    é desfeito — só os posteriores se ajustam.
+    """
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        if fila_id is None:
+            cur.execute("SELECT id, ordem, slot, fundo FROM tb_midia WHERE fila_id IS NULL ORDER BY ordem, id")
+        else:
+            cur.execute("SELECT id, ordem, slot, fundo FROM tb_midia WHERE fila_id=? ORDER BY ordem, id", (fila_id,))
+        linhas = cur.fetchall()
+        if not linhas:
+            return True, "Nada a normalizar"
+        # Foto de fundo antes de tudo: slot 0, fora da cadeia.
+        for _mid, _ord, _slot, _fundo in linhas:
+            if _fundo:
+                cur.execute("UPDATE tb_midia SET slot=0 WHERE id=?", (_mid,))
+        inicio = 0
+        if a_partir_ordem is not None:
+            for _i, (_mid, _ord, _slot, _fundo) in enumerate(linhas):
+                if (_ord or 0) >= (a_partir_ordem or 0):
+                    inicio = _i
+                    break
+            else:
+                inicio = len(linhas)
+        _foto = dict(foto_pre) if foto_pre else { _mid: _slot for _mid, _ord, _slot, _fundo in linhas }
+        anterior = None
+        foto_anterior = None
+        for _i in range(inicio):
+            _mid, _ord, _slot, _fundo = linhas[_i]
+            if not _fundo:
+                anterior = _slot
+                foto_anterior = _foto.get(_mid)
+        for _i in range(inicio, len(linhas)):
+            _mid, _ord, _slot, _fundo = linhas[_i]
+            if _fundo:
+                continue
+            _snap = _foto.get(_mid)
+            if anterior is None:
+                anterior = _slot
+                foto_anterior = _snap
+                continue
+            if _slot == anterior and _snap == foto_anterior:
+                foto_anterior = _snap
+                continue  # juntos de propósito — mantém
+            _novo = anterior + 1
+            if _slot != _novo:
+                cur.execute("UPDATE tb_midia SET slot=? WHERE id=?", (_novo, _mid))
+                _slot = _novo
+            anterior = _slot
+            foto_anterior = _snap
+        conn.commit()
+        return True, "Exibição autonumerada"
+    finally:
+        conn.close()
+
+
+def mover_midia(midia_id: int, para_cima: bool, ator: str = ""):
+    """Move a mídia com a seta: troca de posição, assume a exibição da posição e autonumera os posteriores.
+
+    Papel de fundo é fixo no topo (não se move).
+    """
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT fila_id, ordem, slot, fundo FROM tb_midia WHERE id=?", (midia_id,))
+        atual = cur.fetchone()
+        if not atual:
+            return False, "Mídia não encontrada"
+        _fila, _ordem, _slot, _fundo = atual
+        if _fundo:
+            return False, "Papel de fundo fica fixo no topo"
+        if _fila is None:
+            cur.execute("SELECT id FROM tb_midia WHERE fila_id IS NULL ORDER BY ordem, id")
+        else:
+            cur.execute("SELECT id FROM tb_midia WHERE fila_id=? ORDER BY ordem, id", (_fila,))
+        ids = [r[0] for r in cur.fetchall()]
+        if midia_id not in ids:
+            return False, "Mídia não encontrada"
+        cur.execute("SELECT id, slot FROM tb_midia WHERE " + ("fila_id IS NULL" if _fila is None else "fila_id=?") , (() if _fila is None else (_fila,)))
+        _foto_pre = {r[0]: r[1] for r in cur.fetchall()}
+        idx = ids.index(midia_id)
+        viz = idx - 1 if para_cima else idx + 1
+        if viz < 0 or viz >= len(ids):
+            return False, "Já está no limite"
+        ids[idx], ids[viz] = ids[viz], ids[idx]
+        for _pos, _mid in enumerate(ids, start=1):
+            cur.execute("UPDATE tb_midia SET ordem=? WHERE id=?", (_pos, _mid))
+        # Assume a exibição da posição e autonumera os posteriores.
+        cur.execute("SELECT ordem FROM tb_midia WHERE id=?", (midia_id,))
+        _nova_ordem = (cur.fetchone()[0] or 0)
+        cur.execute("UPDATE tb_midia SET slot=? WHERE id=?", (ids.index(midia_id), midia_id))
+        conn.commit()
+        try:
+            normalizar_exibicao(_fila, a_partir_ordem=_nova_ordem, foto_pre=_foto_pre)
+        except Exception:
+            pass
+        _audit(ator or "sistema", "mover_midia", str(midia_id), f"para_cima={bool(para_cima)}")
+        return True, "Posição atualizada"
     finally:
         conn.close()
 
