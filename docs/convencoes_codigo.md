@@ -60,6 +60,16 @@ A Intranet Modular é um projeto **funcional/procedural** em Python: as regras d
 ```
 
 - Histórico de **caracteres corrompidos** em `main.py` (edição via PowerShell): evite ferramentas que reescrevam encoding por fora; confira imports (`get_config`, `get_connection`) ao mexer no topo dos arquivos.
+- **Corrupção sintática em `mod_filas/telas.py` (22/09/2026)**: placeholders (`nicegui_`, `ui_.`, `arqui_.o`, `gui_.he`, `exclui_.`, `.class(`, `validar.acesso_modulo`) impediram até o import — reparo sistemático validado contra o `bd_manipulador` (fonte de verdade), `COMPILE_OK` (`ast.parse`) + `IMPORT_OK`.
+
+### Tratamento de erros — try/except OBRIGATÓRIO em toda função (AGENTS.md §3.2, blindagem 22/09/2026)
+
+- **Toda função do sistema DEVE ser envolvida em `try/except`.** Nunca deixe exceção estourar até o topo — o objetivo é **nunca derrubar o sistema**.
+- No `except`, use **`except Exception`** (nunca `except:` cru), gere **notificação visível ao usuário** (na UI, `tema_modulo.notificar()` com tipo erro; fora da UI, registre no log) e faça rollback parcial sem travar o fluxo quando aplicável.
+- **Nunca engula o erro em silêncio**: SEMPRE registre/logue a causa (`logger.exception(...)` via `observabilidade.get_logger("<modulo>")` ou `traceback`) além da notificação.
+- Em handlers NiceGUI, todo `on_click`/ação `async` DEVE seguir esta regra para não causar disconnect/crash do cliente.
+- Restaure/componha o estado (botões, spinner, `ocupado`) no `else`/`finally` para não deixar a tela travada após erro.
+- Detalhe aplicado: `main.py::page_tv` mantém o `mostrar_tv` **fora** do `try` de leitura dos query params; `mod_auditoria/bd_manipulador.py` fecha a conexão em `try/except` e retorna fail-soft quando a conexão falha (sem leak).
 
 ### Suíte de testes — pytest
 

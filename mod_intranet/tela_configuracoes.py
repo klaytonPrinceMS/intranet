@@ -444,9 +444,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             _sessao = 50
         set_config("sessao_retencao", str(_sessao))
         try:
-            _aviso_seg = int((_v("aviso_timeout", "notificacao_timeout", "10") or "10").strip() or 10)
+            _aviso_seg = int((_v("aviso_timeout", "notificacao_timeout", "4") or "4").strip() or 4)
         except (TypeError, ValueError):
-            _aviso_seg = 10
+            _aviso_seg = 4
         set_config("notificacao_timeout", str(min(30, max(1, _aviso_seg))))
         _reagendar_backups(horas)
 
@@ -892,7 +892,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 def _campo_aviso():
                     inp = ui_comum.campo_texto(
                         "Tempo de exibição dos avisos (segundos)",
-                        chave="notificacao_timeout", padrao="10",
+                        chave="notificacao_timeout", padrao="4",
                         tooltip="1 a 30 segundos. Vale para os avisos "
                                 "(toasts) das telas do módulo.",
                         ao_mudar=lambda e: estado_campos.update(
@@ -931,16 +931,16 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         restaurar=lambda: confirmar(
                             "configurações gerais",
                             lambda: restaurar_grupo(
-                                {"backup_interval_hours": "12",
-                                 "sessao_retencao": "50",
-                                 "notificacao_timeout": "10"},
-                                "configurações gerais",
-                                campos=[(inp_gerais["backup"],
-                                         "backup_interval_hours", "12"),
-                                        (inp_gerais["sessao"],
-                                         "sessao_retencao", "50"),
-                                        (inp_gerais["aviso"],
-                                         "aviso_timeout", "10")],
+                                 {"backup_interval_hours": "12",
+                                  "sessao_retencao": "50",
+                                  "notificacao_timeout": "4"},
+                                 "configurações gerais",
+                                 campos=[(inp_gerais["backup"],
+                                          "backup_interval_hours", "12"),
+                                         (inp_gerais["sessao"],
+                                          "sessao_retencao", "50"),
+                                         (inp_gerais["aviso"],
+                                          "aviso_timeout", "4")],
                                 pos_acao=lambda: _reagendar_backups(12))),
                         chave_modulo="intranet",
                         data_testid="config-aplicar-gerais")

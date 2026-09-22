@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 from nicegui import ui
 from mod_intranet import observabilidade
 from mod_intranet.aba_modulo import cabecalho, abas, campo_busca
-from mod_intranet.tema_modulo import ler_tema
+from mod_intranet.tema_modulo import ler_tema, notificar
 from mod_intranet.ui_comum import (campo_selecao, campo_texto, botao,
                                    botao_icone)
 from mod_intranet.decoradores import tela_modulo
@@ -35,30 +35,36 @@ def _renderizar_conteudo_postagem(conteudo):
         extrair_segmentos_mermaid, formatar_conteudo_para_exibicao,
         obter_habilitar_mermaid,
     )
-    if not obter_habilitar_mermaid():
-        html_seguro = formatar_conteudo_para_exibicao(conteudo or "")
-        if html_seguro:
-            ui.html(html_seguro).classes("text-body2 text-grey-8")
-        return
-    for tipo, trecho in extrair_segmentos_mermaid(conteudo or ""):
-        if tipo == "mermaid":
-            try:
-                # Diagrama centralizado: coluna de largura limitada no centro
-                with ui.element("div").classes("w-full flex justify-center") \
-                        .style("min-width: 0"):
-                    with ui.element("div").classes("w-full") \
-                            .style("max-width: 680px; min-width: 0"):
-                        ui.mermaid(trecho).classes("w-full my-2") \
-                            .style("overflow-x: auto")
-            except Exception:
-                observabilidade.get_logger("blog").exception(
-                    "mermaid: falha ao renderizar diagrama")
-                ui.label("(diagrama inválido)").classes(
-                    "text-caption text-grey-5 italic")
-        else:
-            html_seguro = formatar_conteudo_para_exibicao(trecho or "")
+    try:
+        if not obter_habilitar_mermaid():
+            html_seguro = formatar_conteudo_para_exibicao(conteudo or "")
             if html_seguro:
                 ui.html(html_seguro).classes("text-body2 text-grey-8")
+            return
+        for tipo, trecho in extrair_segmentos_mermaid(conteudo or ""):
+            if tipo == "mermaid":
+                try:
+                    # Diagrama centralizado: coluna de largura limitada no centro
+                    with ui.element("div").classes("w-full flex justify-center") \
+                            .style("min-width: 0"):
+                        with ui.element("div").classes("w-full") \
+                                .style("max-width: 680px; min-width: 0"):
+                            ui.mermaid(trecho).classes("w-full my-2") \
+                                .style("overflow-x: auto")
+                except Exception:
+                    observabilidade.get_logger("blog").exception(
+                        "mermaid: falha ao renderizar diagrama")
+                    ui.label("(diagrama inválido)").classes(
+                        "text-caption text-grey-5 italic")
+            else:
+                html_seguro = formatar_conteudo_para_exibicao(trecho or "")
+                if html_seguro:
+                    ui.html(html_seguro).classes("text-body2 text-grey-8")
+    except Exception:
+        observabilidade.get_logger("blog").exception(
+            "_renderizar_conteudo_postagem: falha ao renderizar conteúdo")
+        ui.label("(conteúdo indisponível)").classes(
+            "text-caption text-grey-5 italic")
 
 
 def _card_postagem(post, usuario_logado, perfil, ao_atualizar, pode_publicar=False,
@@ -72,13 +78,26 @@ def _card_postagem(post, usuario_logado, perfil, ao_atualizar, pode_publicar=Fal
     e campo de comentário (só para quem pode publicar). Ações de admin:
     editar (via `ao_editar`), despublicar e excluir (soft delete) — todas com
     try/except + loguru e notificação do resultado."""
+    try:
+        _card_postagem_seguro(post, usuario_logado, perfil, ao_atualizar,
+                              pode_publicar=pode_publicar, ao_editar=ao_editar,
+                              selecionados=selecionados,
+                              ao_toggle_selecao=ao_toggle_selecao)
+    except Exception:
+        observabilidade.get_logger("blog").exception(
+            "_card_postagem: falha ao montar card de postagem")
+        notificar("Erro ao exibir postagem", type="negative")
+
+
+def _card_postagem_seguro(post, usuario_logado, perfil, ao_atualizar, pode_publicar=False,
+                          ao_editar=None, selecionados=None, ao_toggle_selecao=None):
+    """Body of `_card_postagem`, isolated so the entry point can protect it."""
     from mod_blog.bd_manipulador import (
         listar_comentarios, excluir_postagem, despublicar_postagem,
     )
 
     pid, titulo, conteudo, autor, data = post[0], post[1], post[2], post[3], (post[4] or "")[:16]
 
-    from mod_intranet.tema_modulo import ler_tema
     tema = ler_tema("blog", cor_botao="#000000", cor_texto_botao="#FFFFFF")
     cor_borda = tema["cor_botao"] or "#000000"
 
@@ -202,39 +221,57 @@ def _painel_despublicadas(usuario_logado):
     lista as postagens com `ativo=0` e oferece o botão Republicar
     (`publicar_postagem` com auditoria) por linha. Recarrega a lista após
     republicar (a postagem volta ao feed público)."""
-    from mod_blog.bd_manipulador import listar_postagens, publicar_postagem
-    wrap = ui.column().classes("w-full gap-2")
+    try:
+        from mod_blog.bd_manipulador import listar_postagens, publicar_postagem
+        wrap = ui.column().classes("w-full gap-2")
 
-    @ui.refreshable
-    def _lista_despublicadas():
-        inativos = listar_postagens(ativo=False, ordem="DESC")
-        if not inativos:
-            ui.label("Nenhuma postagem despublicada.").classes(
-                "text-caption text-grey-5 italic")
-            return
-        for ipost in inativos:
-            iid, itit, _, iautor, idata = ipost[:5]
-            with ui.row().classes(
-                    "w-full items-center justify-between border-b py-1"):
-                ui.label(
-                    f"#{iid} — {itit or '(sem título)'} "
-                    f"({iautor}, {(idata or '')[:10]})").classes(
-                    "text-body2 text-grey-8")
+        @ui.refreshable
+        def _lista_despublicadas():
+            try:
+                inativos = listar_postagens(ativo=False, ordem="DESC")
+            except Exception:
+                observabilidade.get_logger("blog").exception(
+                    "_lista_despublicadas: falha ao listar despublicadas")
+                ui.label("Não foi possível carregar as despublicadas.").classes(
+                    "text-caption text-grey-5 italic")
+                return
+            if not inativos:
+                ui.label("Nenhuma postagem despublicada.").classes(
+                    "text-caption text-grey-5 italic")
+                return
+            for ipost in inativos:
+                iid, itit, _, iautor, idata = ipost[:5]
+                with ui.row().classes(
+                        "w-full items-center justify-between border-b py-1"):
+                    ui.label(
+                        f"#{iid} — {itit or '(sem título)'} "
+                        f"({iautor}, {(idata or '')[:10]})").classes(
+                        "text-body2 text-grey-8")
 
-                def republicar(iid=iid):
-                    if publicar_postagem(iid, usuario_logado):
-                        ui.notify(f"Postagem #{iid} republicada",
-                                  type="positive")
-                        _lista_despublicadas.refresh()
-                    else:
-                        ui.notify("Erro ao republicar", type="negative")
+                    def republicar(iid=iid):
+                        try:
+                            if publicar_postagem(iid, usuario_logado):
+                                ui.notify(f"Postagem #{iid} republicada",
+                                          type="positive")
+                                _lista_despublicadas.refresh()
+                            else:
+                                ui.notify("Erro ao republicar", type="negative")
+                        except Exception:
+                            observabilidade.get_logger("blog").exception(
+                                f"republicar: falha ao republicar #{iid}")
+                            notificar("Erro ao republicar postagem",
+                                      type="negative")
 
-                botao("Republicar", icone="visibility",
-                      on_click=republicar, variante="texto",
-                      chave_modulo="blog")
+                    botao("Republicar", icone="visibility",
+                          on_click=republicar, variante="texto",
+                          chave_modulo="blog")
 
-    with wrap:
-        _lista_despublicadas()
+        with wrap:
+            _lista_despublicadas()
+    except Exception:
+        observabilidade.get_logger("blog").exception(
+            "_painel_despublicadas: falha ao montar painel de despublicadas")
+        notificar("Erro ao carregar despublicadas", type="negative")
 
 
 def _resumo_conteudo(conteudo, limite=220):
@@ -253,7 +290,7 @@ def _resumo_conteudo(conteudo, limite=220):
         texto = _re.sub(r"[#*`_\[\]]", " ", texto)
         texto = _re.sub(r"\s+", " ", texto).strip()
         if len(texto) > limite:
-            texto = texto[:limite - 1].rstrip() + "…"
+            texto = texto[:limite].rstrip() + "…"
         return texto
     except Exception:
         observabilidade.get_logger("blog").exception(
@@ -288,6 +325,15 @@ def _renderizar_carrossel(wrap, posts, tempo_seg, usuario_logado, perfil,
 
     @ui.refreshable
     def montar():
+        try:
+            _montar_slide()
+        except Exception:
+            observabilidade.get_logger("blog").exception(
+                "carrossel: falha ao montar slide")
+            notificar("Erro ao exibir slide do carrossel", type="negative")
+
+    @ui.refreshable
+    def _montar_slide():
         if n == 0:
             with wrap:
                 ui.label("Nenhuma postagem selecionada para o carrossel. "
@@ -380,6 +426,9 @@ def _renderizar_carrossel(wrap, posts, tempo_seg, usuario_logado, perfil,
                 montar.refresh()
         except RuntimeError:
             pass  # página navegada/fechada — timer já será encerrado
+        except Exception:
+            observabilidade.get_logger("blog").exception(
+                "carrossel: falha ao avançar slide")
 
     try:
         with wrap:
@@ -422,46 +471,53 @@ def _renderizar_conteudo_blog(usuario_logado, perfil, pode_publicar,
         obter_carrossel_postagens_ids, obter_carrossel_tempo,
         listar_postagens_por_ids,
     )
-    modo = obter_modo_exibicao()
-    posts = listar_postagens(ativo=True, ordem="DESC")
-    termo = (termo or "").strip().lower()
-    data_f = (data_f or "").strip()
-    if termo:
-        posts = [p for p in posts if
-                 termo in ((p[1] or "").lower())
-                 or termo in ((p[2] or "").lower())
-                 or termo in ((p[3] or "").lower())]
-    if data_f:
-        posts = [p for p in posts if (p[4] or "").startswith(data_f)]
-    if modo == "carrossel":
-        posts = listar_postagens_por_ids(
-            obter_carrossel_postagens_ids(), ativo=True)
-        wrap_car = ui.column().classes("w-full gap-4").style("min-width: 0")
-        _renderizar_carrossel(wrap_car, posts, obter_carrossel_tempo(),
-                              usuario_logado, perfil, pode_publicar,
-                              ao_editar, ao_atualizar,
-                              selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
-        return
-    if modo == "unica":
-        fixada = obter_postagem_unica_id()
-        if fixada is not None:
-            fixadas = [p for p in posts if str(p[0]) == str(fixada)]
-            if fixadas:
-                posts = fixadas
-        posts = posts[:1]
-    if not posts:
-        with ui.card().classes("w-full items-center p-8"):
-            ui.icon("article", size="48px").classes("text-grey-4")
-            if termo or data_f:
-                msg = "Nenhuma publicação encontrada."
-            else:
-                msg = "Nenhuma publicação ainda." + (
-                    " Crie a primeira!" if pode_publicar else "")
-            ui.label(msg).classes("text-grey-6")
-    for post in posts:
-        _card_postagem(post, usuario_logado, perfil, ao_atualizar,
-                       pode_publicar=pode_publicar, ao_editar=ao_editar,
-                       selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
+    try:
+        modo = obter_modo_exibicao()
+        posts = listar_postagens(ativo=True, ordem="DESC")
+        termo = (termo or "").strip().lower()
+        data_f = (data_f or "").strip()
+        if termo:
+            posts = [p for p in posts if
+                     termo in ((p[1] or "").lower())
+                     or termo in ((p[2] or "").lower())
+                     or termo in ((p[3] or "").lower())]
+        if data_f:
+            posts = [p for p in posts if (p[4] or "").startswith(data_f)]
+        if modo == "carrossel":
+            posts = listar_postagens_por_ids(
+                obter_carrossel_postagens_ids(), ativo=True)
+            wrap_car = ui.column().classes("w-full gap-4").style("min-width: 0")
+            _renderizar_carrossel(wrap_car, posts, obter_carrossel_tempo(),
+                                  usuario_logado, perfil, pode_publicar,
+                                  ao_editar, ao_atualizar,
+                                  selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
+            return
+        if modo == "unica":
+            fixada = obter_postagem_unica_id()
+            if fixada is not None:
+                fixadas = [p for p in posts if str(p[0]) == str(fixada)]
+                if fixadas:
+                    posts = fixadas
+            posts = posts[:1]
+        if not posts:
+            with ui.card().classes("w-full items-center p-8"):
+                ui.icon("article", size="48px").classes("text-grey-4")
+                if termo or data_f:
+                    msg = "Nenhuma publicação encontrada."
+                else:
+                    msg = "Nenhuma publicação ainda." + (
+                        " Crie a primeira!" if pode_publicar else "")
+                ui.label(msg).classes("text-grey-6")
+        for post in posts:
+            _card_postagem(post, usuario_logado, perfil, ao_atualizar,
+                           pode_publicar=pode_publicar, ao_editar=ao_editar,
+                           selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
+    except Exception:
+        observabilidade.get_logger("blog").exception(
+            "_renderizar_conteudo_blog: falha ao montar feed")
+        notificar("Erro ao carregar publicações", type="negative")
+        ui.label("Não foi possível carregar as publicações.").classes(
+            "text-body2 text-grey-6 italic")
 
 
 def renderizar_postagens(wrap, usuario_logado, perfil, pode_publicar,
@@ -478,12 +534,17 @@ def renderizar_postagens(wrap, usuario_logado, perfil, pode_publicar,
 
     Compatibilidade: limpa `wrap` e delega a `_renderizar_conteudo_blog`
     (a tela usa o `@ui.refreshable` `_feed_blog` direto no conteúdo)."""
-    wrap.clear()
-    with wrap:
-        _renderizar_conteudo_blog(
-            usuario_logado, perfil, pode_publicar, ao_atualizar,
-            ao_editar=ao_editar, termo=termo, data_f=data_f,
-            selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
+    try:
+        wrap.clear()
+        with wrap:
+            _renderizar_conteudo_blog(
+                usuario_logado, perfil, pode_publicar, ao_atualizar,
+                ao_editar=ao_editar, termo=termo, data_f=data_f,
+                selecionados=selecionados, ao_toggle_selecao=ao_toggle_selecao)
+    except Exception:
+        observabilidade.get_logger("blog").exception(
+            "renderizar_postagens: falha ao renderizar feed")
+        notificar("Erro ao renderizar publicações", type="negative")
 
 
 @tela_modulo(chave="blog", titulo="Blog")
@@ -751,16 +812,21 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                             ui.notify("Edição cancelada", type="info")
 
                         def ao_editar(pid, titulo, conteudo):
-                            _edit_id["id"] = pid
-                            titulo_edit.set_text(f"Editar publicação #{pid}")
-                            inp_titulo.set_value(titulo)
-                            inp_conteudo.set_value(conteudo)
-                            # Exceção intencional de "sem JS direto": scroll via
-                            # `ui.run_javascript` (API oficial) — `ui.scroll_to`
-                            # com selector=None falha no NiceGUI 3.15.
-                            ui.run_javascript(
-                                "window.scrollTo({top:0, behavior:'smooth'})")
-                            atualizar_preview()
+                            try:
+                                _edit_id["id"] = pid
+                                titulo_edit.set_text(f"Editar publicação #{pid}")
+                                inp_titulo.set_value(titulo)
+                                inp_conteudo.set_value(conteudo)
+                                # Exceção intencional de "sem JS direto": scroll via
+                                # `ui.run_javascript` (API oficial) — `ui.scroll_to`
+                                # com selector=None falha no NiceGUI 3.15.
+                                ui.run_javascript(
+                                    "window.scrollTo({top:0, behavior:'smooth'})")
+                                atualizar_preview()
+                            except Exception:
+                                observabilidade.get_logger("blog").exception(
+                                    f"ao_editar: falha ao carregar edição #{pid}")
+                                notificar("Erro ao carregar edição", type="negative")
 
                         with ui.row().classes("w-full flex-wrap justify-center") \
                                 .style("gap: 1rem; align-items: stretch"):
@@ -902,25 +968,30 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     listar_postagens as _lst, obter_modo_exibicao as _modo,
                     obter_postagem_unica_id as _fix, obter_carrossel_postagens_ids as _car_ids,
                     listar_postagens_por_ids as _por_ids)
-                modo = _modo()
-                if modo == "carrossel":
-                    por = _por_ids(_car_ids(), ativo=True)
-                else:
-                    por = _lst(ativo=True, ordem="DESC")
-                    termo = (busca_termo.value or "").strip().lower()
-                    dataf = (busca_data.value or "").strip()
-                    if termo:
-                        por = [p for p in por if termo in ((p[1] or "").lower()) or termo in ((p[2] or "").lower()) or termo in ((p[3] or "").lower())]
-                    if dataf:
-                        por = [p for p in por if (p[4] or "").startswith(dataf)]
-                    if modo == "unica":
-                        fix = _fix()
-                        if fix is not None:
-                            fixadas = [p for p in por if str(p[0]) == str(fix)]
-                            if fixadas:
-                                por = fixadas
-                        por = por[:1]
-                return [p[0] for p in por]
+                try:
+                    modo = _modo()
+                    if modo == "carrossel":
+                        por = _por_ids(_car_ids(), ativo=True)
+                    else:
+                        por = _lst(ativo=True, ordem="DESC")
+                        termo = (busca_termo.value or "").strip().lower()
+                        dataf = (busca_data.value or "").strip()
+                        if termo:
+                            por = [p for p in por if termo in ((p[1] or "").lower()) or termo in ((p[2] or "").lower()) or termo in ((p[3] or "").lower())]
+                        if dataf:
+                            por = [p for p in por if (p[4] or "").startswith(dataf)]
+                        if modo == "unica":
+                            fix = _fix()
+                            if fix is not None:
+                                fixadas = [p for p in por if str(p[0]) == str(fix)]
+                                if fixadas:
+                                    por = fixadas
+                            por = por[:1]
+                    return [p[0] for p in por]
+                except Exception:
+                    observabilidade.get_logger("blog").exception(
+                        "_visiveis_ids: falha ao listar visíveis da seleção")
+                    return []
 
             def ao_toggle_selecao(pid, valor):
                 if valor:
@@ -952,33 +1023,38 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                 atualizar()
 
             def excluir_selecionados():
-                if not selecionados:
-                    ui.notify("Nenhuma postagem selecionada", type="warning")
-                    return
-                ids = sorted(selecionados)
-                def confirmar():
-                    from mod_blog.bd_manipulador import excluir_postagens_em_lote
-                    try:
-                        ok, falha = excluir_postagens_em_lote(ids, usuario_logado)
-                    except Exception:
-                        observabilidade.get_logger("blog").exception("Erro ao excluir em lote")
-                        ui.notify("Erro ao excluir selecionados", type="negative")
+                try:
+                    if not selecionados:
+                        ui.notify("Nenhuma postagem selecionada", type="warning")
                         return
-                    if ok:
-                        ui.notify(f"{ok} postagem(ns) excluída(s)" + (f" ({falha} falha(s))" if falha else ""), type="positive" if not falha else "warning")
-                        selecionados.clear()
-                        _atualizar_contador()
-                        atualizar()
-                    else:
-                        ui.notify("Nenhuma postagem excluída (permissão?)", type="negative")
-                    dlg.close()
-                with ui.dialog() as dlg, ui.card().classes("w-[420px]"):
-                    ui.label(f"Excluir {len(ids)} postagem(ns)?").classes("text-h6")
-                    ui.label("As postagens serão ocultadas (soft delete) e poderão ser restabelecidas em Despublicadas.").classes("text-caption text-grey-6")
-                    with ui.row().classes("w-full justify-end").style("gap: 0.5rem"):
-                        botao("Cancelar", on_click=dlg.close, variante="texto", chave_modulo="blog")
-                        botao("Excluir", icone="delete", on_click=confirmar, variante="perigo", chave_modulo="blog").props('data-testid=blog-confirmar-excluir-lote')
-                dlg.open()
+                    ids = sorted(selecionados)
+                    def confirmar():
+                        from mod_blog.bd_manipulador import excluir_postagens_em_lote
+                        try:
+                            ok, falha = excluir_postagens_em_lote(ids, usuario_logado)
+                        except Exception:
+                            observabilidade.get_logger("blog").exception("Erro ao excluir em lote")
+                            ui.notify("Erro ao excluir selecionados", type="negative")
+                            return
+                        if ok:
+                            ui.notify(f"{ok} postagem(ns) excluída(s)" + (f" ({falha} falha(s))" if falha else ""), type="positive" if not falha else "warning")
+                            selecionados.clear()
+                            _atualizar_contador()
+                            atualizar()
+                        else:
+                            ui.notify("Nenhuma postagem excluída (permissão?)", type="negative")
+                        dlg.close()
+                    with ui.dialog() as dlg, ui.card().classes("w-[420px]"):
+                        ui.label(f"Excluir {len(ids)} postagem(ns)?").classes("text-h6")
+                        ui.label("As postagens serão ocultadas (soft delete) e poderão ser restabelecidas em Despublicadas.").classes("text-caption text-grey-6")
+                        with ui.row().classes("w-full justify-end").style("gap: 0.5rem"):
+                            botao("Cancelar", on_click=dlg.close, variante="texto", chave_modulo="blog")
+                            botao("Excluir", icone="delete", on_click=confirmar, variante="perigo", chave_modulo="blog").props('data-testid=blog-confirmar-excluir-lote')
+                    dlg.open()
+                except Exception:
+                    observabilidade.get_logger("blog").exception(
+                        "excluir_selecionados: falha ao abrir confirmação em lote")
+                    notificar("Erro ao excluir selecionados", type="negative")
 
             bulk_wrap = ui.column().classes("w-full") if pode_publicar else None
             if pode_publicar:
@@ -1017,13 +1093,18 @@ def mostrar_tela(usuario_logado: str, perfil: str):
 
             @ui.refreshable
             def _feed_blog():
-                _renderizar_conteudo_blog(
-                    usuario_logado, perfil, pode_publicar, atualizar,
-                    ao_editar if pode_publicar else None,
-                    termo=(busca_termo.value or ""),
-                    data_f=(busca_data.value or ""),
-                    selecionados=selecionados,
-                    ao_toggle_selecao=ao_toggle_selecao if pode_publicar else None)
+                try:
+                    _renderizar_conteudo_blog(
+                        usuario_logado, perfil, pode_publicar, atualizar,
+                        ao_editar if pode_publicar else None,
+                        termo=(busca_termo.value or ""),
+                        data_f=(busca_data.value or ""),
+                        selecionados=selecionados,
+                        ao_toggle_selecao=ao_toggle_selecao if pode_publicar else None)
+                except Exception:
+                    observabilidade.get_logger("blog").exception(
+                        "_feed_blog: falha ao atualizar feed")
+                    notificar("Erro ao atualizar feed", type="negative")
 
             with posts_wrap:
                 _feed_blog()

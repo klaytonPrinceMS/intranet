@@ -22,6 +22,10 @@ Você é o subagente **kbp-doc**, especialista em documentação MkDocs.
 
 Documentação e código em Português BR.
 
+## Graphify — atualização obrigatória
+
+Ao final de TODA tarefa de documentação, atualizar o grafo de conhecimento a partir da raiz do projeto com `graphify update .` (no Windows: `.venv/Scripts/graphify.exe update .`). O comando é AST-only, sem custo de API. O plugin `graphify.js` apenas injeta o lembrete na sessão e não atualiza o grafo sozinho; sem essa execução, `graph.json` e `GRAPH_REPORT.md` em `graphify-out/` ficam defasados em relação a `/docs` e aos módulos `mod_*`. Se a tarefa alterou `/docs` de forma relevante, executar ainda a extração semântica via `/graphify --update` (com LLM) ou, quando não for possível, sinalizar a pendência no retorno. Validar o sucesso conferindo a data/hora nova de `graphify-out/graph.json` e a contagem de nós/arestas exibida na saída, e reportar o resultado no retorno.
+
 ## Usuários pré-cadastrados (seed) — AGENTS.md §8.2
 
 | Usuário | Senha | Perfil | Observações |

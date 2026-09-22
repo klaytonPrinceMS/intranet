@@ -50,7 +50,7 @@ O sistema é composto por um **núcleo** (`mod_intranet`) e **10 módulos de neg
 flowchart TD
     U[Usuário] -->|/login| L[Autenticação bcrypt]
     L -->|ok| S[Sessão revogável<br/>tb_sessoes + cookie_hash<br/>+ Visitas ++contador_acessos_total]
-    S --> D[Dashboard /<br/>boas-vindas + Resumo dinâmico Water + feed do Blog<br/>sem botão Abrir Blog (18/09/2026)]
+    S --> D[Dashboard /<br/>boas-vindas + feed do Blog + Resumo dinâmico Water<br/>sem botão Abrir Blog (18/09/2026)]
     D --> M[Drawer lateral<br/>módulos liberados]
     M --> R1[/blog] & R2[/users] & R3[/edit-pdf] & R4[/renomear-empenho] & R5[/solicita-impressao] & R6[/auditoria] & R7[/tecnico] & R8[/filas] & R9[/lista-telefonica] & R10[/agregador-noticias]
     R1 & R2 & R3 & R4 & R5 & R6 & R7 & R8 & R9 & R10 --> G[pagina_restrita<br/>autenticação + permissão + layout<br/>/tv sem guarda]
@@ -74,8 +74,8 @@ flowchart TD
 
 > Home visual **Water escopado só no card** (`home_visual.injetar_water_card()` → `.home-resumo-water/.home-stat-water` border `#dfe8f0` bg `#fafcfd`, ícone 36px, `modelo="water"` fixo em `page_dashboard` — **18/09/2026**: sombra lateral direita `box-shadow:6px 0 16px rgba(0,0,0,.07)` + `border-left-color` = **cor do módulo `intranet`** via `ler_tema("intranet")["cor_botao"]` (antes `#000000`/`#EF6C00` fixos) + `classes_card_resumo` com `shadow-md`).
 
+- **Feed do Blog acima do Resumo, sem título (22/09/2026)**: o feed (`renderizar_postagens`, mesmo padrão do módulo) é renderizado **logo abaixo do banner, acima dos cards de Resumo** (`main.py::_construir_dashboard`) — o rótulo "Publicações recentes" foi **removido** (antes header `row items-center` com o label, desde 18/09/2026 sem botão "Abrir Blog completo"). O acesso ao Blog permanece pelo drawer (`/blog`).
 - **Sem botão Atualizar**: `_orquestrar_resumo_dados()` (`main.py:250`) recalcula **a cada acesso** (9 contadores: usuários `filtro_ativo=None`, sessões `WHERE logout IS NULL`, visitas `contador_acessos_total`, postagens, quarentena `processado=0`, PDFs `ativo=1`, auditoria 24h `SUM WHERE timestamp >= -1 day`, fila impressão pendente, logs totais).
-- **Sem botão "Abrir Blog completo" (removido 18/09/2026)**: o header do feed em `main.py:448-453` é agora só `row items-center` com `label "Publicações recentes"` — o acesso ao Blog permanece pelo drawer (`/blog`); a Home usa `renderizar_postagens` (mesmo padrão do módulo) sem navegação dedicada.
 - **2 cards, altura -50%+25% com sombra lateral direita e cor do módulo**: `gap-1 px-2 py-1`, ícone 36px `text-2xl`, número `text-h6` 4 dígitos (`>9999` com total real no tooltip único do card; `Logs>9999` com alerta `⚠️ realize backup do banco de auditoria (db_mod_auditoria.db)`), layout horizontal ícone esq + número, tooltip simples (`Usuarios/Sessões/Noticias/Logs/Visitas/Fila geral/Para autorizar/Quarentena/PDFs/Auditoria 24h`). Estilo: `.home-resumo-water` + `.home-resumo-pic` com `border-left-width:4px` + `box-shadow:6px 0 16px` + `shadow-md` em `classes_card_resumo`.
 - **Visibilidade por papel**:
     - **"Resumo do sistema"** (8 métricas: Usuários, Sessões, Visitas, Postagens, Quarentena, PDFs, Logs, Logs 24h) — **só `administrador_geral`/`administrador_modulo`** (`eh_admin` `main.py:500`, `main.py:406-426` com `_cor_modulo_home` via `ler_tema("intranet")`).

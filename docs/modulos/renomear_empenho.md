@@ -176,6 +176,7 @@ Antes o incremento era inline em `main`; agora a função documentada é a **ún
 ## Pontos de atenção
 
 - `bd_criador.py` **morto** — não confiar; o esquema real está em `bd_manipulador.py`.
+- **Módulo indisponível — causa e reativação (22/09/2026)**: se o menu/rota `/renomear-empenho` sumir, a causa é `tb_modulos.ativo=0` para a chave `empenhos` no banco central (`db_mod_intranet.db`) — o seed de `_garantir_tb_modulos` (`mod_intranet/autenticacao.py`) usa `INSERT OR IGNORE` e **nunca religa** um módulo já desativado. Para reativar: `/configuracoes` → aba **Módulo** → linha `empenhos` → ligar o switch **Ativo** → Aplicar; ou via SQL `UPDATE tb_modulos SET ativo=1 WHERE chave='empenhos';` (com o servidor parado). Os módulos `auditoria` e `usuarios` são indispensáveis e não podem ser desativados (tentativa recusada no backend).
 - Monitor automático é **não recursivo** (apenas a raiz das pastas monitoradas); levantamento e navegação/fila manuais são recursivas; levantamento anota recursivamente mas o processamento automático continua só na raiz.
 - O intervalo do monitor (padrão **600 s = 10 min**) e a lista de pastas são lidos de `tb_config` e aplicados **sem reiniciar**; o switch `empenhos_renomeacao_automatica` também vale sem reiniciar (gate no job).
 - `tb_levantamento_fts` é **VIRTUAL TABLE FTS5 exclusiva do SQLite** — no Postgres o `CREATE VIRTUAL TABLE` é ignorado e `pesquisar_levantamento` usa `LIKE`; comportamento esperado via `banco_conexao`.

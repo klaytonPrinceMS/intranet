@@ -118,6 +118,8 @@ Conexão WAL + `foreign_keys=ON` via `banco_conexao.conexao("filas")`. Criador: 
 - `/tv` pública — adicionar `ACL` se expor fora da rede.
 - `tb_chamada.guiche` snapshot — não retroage.
 - `tb_tv_estado.fala_ate` usa relógio do servidor — múltiplas TVs sincronizam pelo banco.
+- **Reparo sintático de `telas.py` (22/09/2026)**: o arquivo chegou com corrupção sintática (placeholders `nicegui_`, `ui_.`, `arqui_.o`, `gui_.he`, `exclui_.`, `.class(`, `validar.acesso_modulo`) e nem importava — reparo sistemático validado contra o `bd_manipulador` (fonte de verdade), `COMPILE_OK` (`ast.parse`) + `IMPORT_OK`. Evidência do estado anterior preservada em `/tmp/telas_filas_pre_reparo.py` (fora do repo).
+- **Volume com slider (22/09/2026)**: botão speaker `filas-midia-som` alterna slider 0–100 sincronizado ao campo `Volume`; Salvar persiste (`atualizar_midia`); `with inp.slot:` corrigido para `with inp_slot:`.
 
 ## Status
 
@@ -134,3 +136,4 @@ Conexão WAL + `foreign_keys=ON` via `banco_conexao.conexao("filas")`. Criador: 
 | Admin `/admin/filas` via hambúrguer (filas + voz/ordem/textos + nomes + mídia/fundo + controle + áudio global + backup) | Implementado |
 | LGPD + auditoria `tb_auditoria_filas` (inclui `fundo_midia`) | Implementado |
 | Testes `assets/test/test_seg_novos_modulos.py` seções D–D8 | Implementado |
+| Reparo sintático de `telas.py` + slider de volume `filas-midia-som` (22/09/2026) | Implementado |

@@ -137,7 +137,7 @@ As principais chaves, agrupadas por dono:
 | Logs | `log_ativo`, `log_nivel`, `log_rotacao` (`1 month`), `log_retencao` (`4 months`), `log_console` (`auto`), `log_otel_envio` (`1`), `log_otel_nivel` (`DEBUG`) | — | observabilidade loguru (console e envio ao Loki configuráveis) |
 | Telemetria OTel | `otel_ativo` (`1`/`0`), `otel_endpoint` (`localhost:4317`, env `OTEL_ENDPOINT` tem prioridade), `otel_auto_start_stack` (`1`) | — | stack local (Docker) ou servidor dedicado; troca exige restart. Desde 11/09 a escolha `0`/`1` também é **persistida pelo assistente de ativação do boot** (`set_config("otel_ativo", ...)`) — a opção "não" sobrevive ao restart |
 | Grafana | `grafana_url` (`http://localhost:3000`, env `GRAFANA_URL` tem prioridade) | — | URL base do Grafana (health-check/API/status) |
-| Avisos | `notificacao_timeout` (`10`, 1–30 s) | — | tempo de exibição dos toasts via `tema_modulo.notificar()` |
+| Avisos | `notificacao_timeout` (`4`, 1–30 s) | — | tempo de exibição dos toasts via `tema_modulo.notificar()` |
 | Hora do servidor | `hora_ntp_ativa` (`1`) | — | sincronização NTP.br da hora do servidor (`mod_intranet/hora_servidor.py`): `1` = ativa (default), `0` = usa o relógio local; aplicada sem restart |
 | Contador de visitas (Home) | `contador_acessos_total` (`0`), `contador_acessos_inicio` (`YYYY-MM-DD`) | `PADRAO_CONFIG` (`bd_conexao.py:70-72`) + seed `init_db()` `bd_conexao.py:188-196` | contador **padronizado de visitas**: incrementado **só em login bem-sucedido** (`bd_conexao.incrementar_contador_acessos()` `bd_conexao.py:200` chamada em `main.py:tentar_login()` `main.py:229` — nunca em navegação/refresh/troca de aba); `contador_acessos_inicio` semeado na primeira execução em `YYYY-MM-DD` (tooltip Dashboard `Visitas` simplificado para `"Visitas"`; data início `DD/MM/YYYY` como referência); exibido como `Acessos/Visitas` no Resumo Water (`main.py:_stat` `gap-1 px-2 py-1`, ícone 36px, 4 dígitos `>9999` com total real no tooltip único do card) |
 | Banco | `banco_tipo` (`sqlite`), `postgres_url` (`postgresql+psycopg2://intranet:intranet@localhost:5432/intranet`) | `PADRAO_CONFIG` (`bd_conexao.py:40-41`) | seleção do SGBD: `sqlite` (padrão, zero dependências extras) ou `postgres` (backend duplo via `banco_conexao` — conexão DBAPI por módulo, **um DATABASE `db_mod_<chave>` por módulo**, espelhando o arquivo SQLite); lidos no boot via `banco_conexao._ler_config_sqlite`; troca exige **reiniciar o servidor** — ver [Card "Banco de dados" (SQLite ou PostgreSQL)](#card-banco-de-dados-sqlite-ou-postgresql-0809) |
@@ -283,22 +283,22 @@ Os três campos numéricos do card **"Configurações gerais do sistema"** (aba 
 |:---|:---|:---:|:---|
 | Intervalo de backup (horas) | `backup_interval_hours` | `12` | mín. 1 |
 | Retenção de sessão (dias) | `sessao_retencao` | `50` | mín. 1 |
-| Tempo de exibição dos avisos (segundos) | `notificacao_timeout` | `10` | 1–30 |
+| Tempo de exibição dos avisos (segundos) | `notificacao_timeout` | `4` | 1–30 |
 
 !!! note "APLICAR nunca mais aborta por entrada inválida"
     Antes, um `ValueError` (ex.: `"abc"` no intervalo de backup) derrubava o APLICAR no meio — sem toast nem recarregamento, com salvamento parcial. Agora o valor inválido cai no **padrão codificado** (mesmo contrato já aplicado ao `aviso_timeout`) e o salvamento segue até o fim. Coberto por `test/teste_aba_config_intranet.py` (seção "VALIDAÇÕES").
 
-### Tempo de exibição dos avisos — padrão 10 s (06/09)
+### Tempo de exibição dos avisos — padrão 4 s (06/09, atualizado 22/09/2026)
 
-O padrão do `notificacao_timeout` mudou de **2 s para 10 s** — os toasts ficam visíveis por mais tempo por padrão, sem perder a configurabilidade (1–30 s, campo "Tempo de exibição dos avisos (segundos)" do card **Gerais**):
+O padrão do `notificacao_timeout` é **4 s** (antes 10 s, antes 2 s) — os toasts ficam visíveis por tempo curto sem perder a configurabilidade (1–30 s, campo "Tempo de exibição dos avisos (segundos)" do card **Gerais**). O toast de boas-vindas da Home (`main.py::_construir_dashboard`) obedece o valor configurado via `tema_modulo.notificar()`:
 
 | Ponto | Local |
 |:---|:---|
-| Seed em `PADRAO_CONFIG` | `mod_intranet/bd_conexao.py:67` |
-| Helper `notificacao_timeout()` — default/fallback 10, clamp 1–30 | `mod_intranet/tema_modulo.py:234-243` |
-| Campo do card Gerais (`padrao="10"`) | `mod_intranet/tela_configuracoes.py:713` |
-| Fallback do APLICAR do card Gerais (`aplicar_gerais`) | `mod_intranet/tela_configuracoes.py:353-367` |
-| "Restaurar padrão" do card Gerais grava `10` | `mod_intranet/tela_configuracoes.py:740,747` |
+| Seed em `PADRAO_CONFIG` | `mod_intranet/bd_conexao.py:96` (`"4"`) |
+| Helper `notificacao_timeout()` — default/fallback 4, clamp 1–30 | `mod_intranet/tema_modulo.py:290-297` |
+| Campo do card Gerais (`padrao="4"`) | `mod_intranet/tela_configuracoes.py:895` |
+| Fallback do APLICAR do card Gerais (`aplicar_gerais`) | `mod_intranet/tela_configuracoes.py:447-450` |
+| "Restaurar padrão" do card Gerais grava `4` | `mod_intranet/tela_configuracoes.py:936` |
 | Testes atualizados | `test/teste_config_intranet.py` (50 OK), `test/teste_aba_config_intranet.py` (164 OK) |
 
 !!! note "Instalações existentes"

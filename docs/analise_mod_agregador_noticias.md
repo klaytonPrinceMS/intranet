@@ -111,6 +111,7 @@ Importa `autenticacao.validar_acesso_modulo`/`perfil_global_de`/`eh_admin_do_mod
 
 ## Pontos de atenção
 
+- **PENDÊNCIA — `models/__init__.py` é stub com `IndentationError` (22/09/2026, código morto)**: o arquivo contém só a docstring + `from dataclasses import dataclass` + `@dataclass class Noticia:` vazia (corpo ausente) — não compila e **não é importado por nenhum módulo** (o acesso a dados passa pelo `bd_manipulador`, não por `models`). Registrar como pendência honesta: migrar para o padrão imperativo (`Table` + `dataclass` + `map_imperatively()`, AGENTS.md §3.1) ou remover o pacote se o módulo seguir sem ORM.
 - Habilitado default `0` — sem coleta até admin habilitar; `reconfigurar_agregador_noticias()` (`rotinas.py:256`) `pause` quando desabilitado, `resume+reschedule` quando habilitado + `CronTrigger` hora (sem restart).
 - Intervalo `clamp 10–360` — `intervalo_min()` e `definir_intervalo` garantem faixa; admin select limita a 6 opções, API aceita qualquer `10–360`.
 - **Hora `06:00` configurável + reinício diário `CronTrigger` + sem backup**: `obter_hora_reinicio()`/`definir_hora_reinicio(HH:MM)` validam `00–23:00–59`, normalizam `06:00`, auditam, `reconfigurar_agregador_noticias()` reaplica `CronTrigger(hour=H, minute=M)` sem restart; `reiniciar_banco(ator)` `DELETE` + `audit` + `Zerar agora` `data-testid=agregador-reiniciar-agora`; `MAPA_BACKUPS` sem `agregador_noticias`, `telas_administracao` sem `painel_backup` — banco reciclado.
