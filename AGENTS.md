@@ -8,6 +8,7 @@ Este repositório contém uma aplicação Python com entry point na raiz (`main.
 
 **REGRA DE OURO - PROIBIDO FORA DA RAIZ:**
 É **expressamente proibido** criar, editar, mover ou manter arquivos fora da pasta raiz do projeto ou fora da pasta do seu respectivo módulo `mod_*`. Todo artefato usado por um módulo DEVE viver dentro de `mod_<nome>/`.
+É **expressamente proibido** rodar comando de git, como git commit em sistems operacionais win10.
 
 > Em caso de dúvida, reinicie o servidor de desenvolvimento em vez de executar a versão de produção.
 
