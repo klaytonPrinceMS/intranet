@@ -604,9 +604,11 @@ def _dialogo_troca_credenciais_completo(nome_usuario: str):
             with ui.column().classes("w-full gap-1 p-2 rounded bg-blue-1"):
                 ui.label("Analista de Sistemas Atual: Klayton Prince").classes(
                     "text-caption font-bold text-blue-10")
-                ui.label("Analista de Sistema Inicial: Klayton Prince").classes(
+                ui.label("Analista de Sistemas Inicial: Klayton Prince").classes(
                     "text-caption text-blue-9")
-                ui.label("E-mail: klayton.prince.ms@gmail.com · +55 (35) 98818-3288").classes(
+                ui.label("klayton.prince.ms@gmail.com").classes(
+                    "text-caption text-blue-9")
+                ui.label("+55 (35) 98818-3288").classes(
                     "text-caption text-blue-9")
         except Exception:
             pass
