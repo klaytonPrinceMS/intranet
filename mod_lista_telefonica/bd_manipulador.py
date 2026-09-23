@@ -360,7 +360,7 @@ def editar_unidade(uid, nome=None, telefone=None, ator="sistema"):
             if not sets:
                 return True, "Nada a alterar"
             params.append(uid)
-            cur.execute(f"UPDATE tb_unidade SET {', '.join(sets)} WHERE id=?", tuple(params))
+            cur.execute(f"UPDATE tb_unidade SET {', '.join(sets)} WHERE id=?", tuple(params))  # nosec B608 — sets com literais fixos, valores via ?
             conn.commit()
             _audit(ator, "editar_unidade", str(uid), ",".join(sets))
             return True, "Unidade atualizada"
@@ -394,8 +394,8 @@ def excluir_ramo(uid, ator="sistema"):
             # coleta via recursão simples
             ids = _coletar_ramo_ids(cur, uid)
             ids.append(uid)
-            # devido a FK CASCADE, deletar o pai já apaga filhos, mas garantimos
-            cur.execute(f"DELETE FROM tb_unidade WHERE id=?", (uid,))
+             # devido a FK CASCADE, deletar o pai já apaga filhos, mas garantimos
+            cur.execute(f"DELETE FROM tb_unidade WHERE id=?", (uid,))  # nosec B608 — id parametrizado via ?
             conn.commit()
             _audit(ator, "excluir_ramo", alvo[1], f"ids={ids}")
             return True, f"Ramo '{alvo[1]}' e {len(ids)-1} filho(s) excluído(s)"
@@ -754,7 +754,7 @@ def editar_contato(cid, nome=None, telefone=None, ator="sistema"):
             if not sets:
                 return True, "Nada a alterar"
             params.append(cid)
-            cur.execute(f"UPDATE tb_contato SET {', '.join(sets)} WHERE id=?", tuple(params))
+            cur.execute(f"UPDATE tb_contato SET {', '.join(sets)} WHERE id=?", tuple(params))  # nosec B608 — sets com literais fixos, valores via ?
             conn.commit()
             _audit(ator, "editar_contato", str(cid), ",".join(sets))
             return True, "Contato atualizado"

@@ -50,6 +50,7 @@ nav:
       - Auditoria do Menu (12/09/2026): seguranca/auditoria_menu_2026-09-12.md
   - Ferramentas (dev):
       - Graphify (grafo, dev-only): ferramentas/graphify.md
+      - requirements.py (dev-only): ferramentas/requirements_py.md
   - Testes:
       - Casos: testes_casos/index.md
       - Plano: testes_plano/index.md

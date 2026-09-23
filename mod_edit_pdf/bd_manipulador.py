@@ -373,7 +373,7 @@ def zip_por_ids(usuario, ids):
         marks = ",".join("?" for _ in ids)
         cur.execute(
             f"""SELECT id, nome_arquivo, tamanho_bytes, operacao, data_operacao
-                FROM tb_arquivos WHERE usuario=? AND ativo=1 AND id IN ({marks})""",
+                FROM tb_arquivos WHERE usuario=? AND ativo=1 AND id IN ({marks})""",  # nosec B608 — marks de lista de IDs, não input usuário
             (usuario, *ids),
         )
         arquivos = cur.fetchall()
@@ -538,7 +538,7 @@ def expirar_antigos(minutos=None):
             if not ids:
                 continue
             marks = ",".join("?" for _ in ids)
-            cur.execute(f"UPDATE tb_arquivos SET ativo=0 WHERE id IN ({marks})", ids)
+            cur.execute(f"UPDATE tb_arquivos SET ativo=0 WHERE id IN ({marks})", ids)  # nosec B608 — marks de lista de IDs, não input usuário
             cur.execute(
                 """UPDATE tb_cota_disco SET total_usado_bytes = MAX(0, total_usado_bytes - ?),
                    atualizado_em = datetime('now') WHERE usuario=?""",

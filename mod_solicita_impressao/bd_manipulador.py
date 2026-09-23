@@ -357,7 +357,7 @@ def init_db():
         # antigo do _atualizar_status_grupo) para o valor real de agora.
         for col in ("data_impressao", "data_autorizacao"):
             try:
-                cur.execute(f"UPDATE tb_solicitacoes SET {col}=datetime('now','localtime') "
+                cur.execute(f"UPDATE tb_solicitacoes SET {col}=datetime('now','localtime') "  # nosec B608 — col de tupla literal fixa, valores parametrizados
                             f"WHERE {col} IN (\"datetime('now')\", \"datetime('now','localtime')\")")
             except Exception:
                 pass
@@ -901,7 +901,7 @@ def editar_secretaria(secretaria_id, nome=None, sigla=None, cota_paginas_mensal=
             if not sets:
                 return True, "Nada a alterar"
             params.append(secretaria_id)
-            cur.execute(f"UPDATE tb_secretarias SET {', '.join(sets)} WHERE id=?", tuple(params))
+            cur.execute(f"UPDATE tb_secretarias SET {', '.join(sets)} WHERE id=?", tuple(params))  # nosec B608 — sets de allowlist literal, valores parametrizados
             conn.commit()
             _audit(ator, "editar_secretaria", f"ID {secretaria_id}")
             return True, "Secretaria atualizada"
@@ -1087,7 +1087,7 @@ def editar_setor(setor_id, nome=None, secretaria_id=None, cota_paginas_mensal=No
             if not sets:
                 return True, "Nada a alterar"
             params.append(setor_id)
-            cur.execute(f"UPDATE tb_setores SET {', '.join(sets)} WHERE id=?", tuple(params))
+            cur.execute(f"UPDATE tb_setores SET {', '.join(sets)} WHERE id=?", tuple(params))  # nosec B608 — sets de allowlist literal, valores parametrizados
             conn.commit()
             _audit(ator, "editar_setor", f"ID {setor_id}")
             return True, "Setor atualizado"
@@ -2829,7 +2829,7 @@ def listar_pedidos_responsavel(user_nome, status=None, limite=200, busca=None,
                    "FROM tb_solicitacoes s "
                    "LEFT JOIN tb_secretarias sec ON sec.id = s.secretaria_id "
                    "LEFT JOIN tb_setores st ON st.id = s.setor_id "
-                   f"WHERE 1=1 AND s.grupo_id IS NOT NULL AND {where_escopo}")
+                    f"WHERE 1=1 AND s.grupo_id IS NOT NULL AND {where_escopo}")  # nosec B608 — where_escopo de condições literais
             if status:
                 sql += " AND s.status=?"
                 params.append(status)
@@ -2881,7 +2881,7 @@ def _atualizar_status_grupo(grupo_id, status, campos=None, cond_status=None):
             else:
                 sets.append(f"{col}=?")
                 params.append(val)
-        sql = f"UPDATE tb_solicitacoes SET {', '.join(sets)}, data_atualizacao=datetime('now','localtime') "
+        sql = f"UPDATE tb_solicitacoes SET {', '.join(sets)}, data_atualizacao=datetime('now','localtime') "  # nosec B608 — col/sets de allowlist literal, valores parametrizados
         sql += "WHERE grupo_id=?"
         params.append(int(grupo_id))
         if cond_status:
@@ -3348,8 +3348,8 @@ def _agregar_impressao(data_inicio, data_fim, agrupar_por):
             FROM tb_solicitacoes s
             {join}
             WHERE s.status = 'impresso'
-              AND s.data_impressao IS NOT NULL
-        """
+               AND s.data_impressao IS NOT NULL
+        """  # nosec B608 — rotulo de whitelist, join de whitelist
         params = []
         if data_inicio:
             sql += " AND date(s.data_impressao) >= ?"

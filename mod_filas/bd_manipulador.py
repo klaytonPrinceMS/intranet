@@ -606,7 +606,7 @@ def atualizar_fila(fila_id: int, nome: str = None, endereco: str = None, descric
         if not sets:
             return True, "Nada a atualizar"
         vals.append(fila_id)
-        cur.execute(f"UPDATE tb_fila SET {', '.join(sets)} WHERE id=?", vals)
+        cur.execute(f"UPDATE tb_fila SET {', '.join(sets)} WHERE id=?", vals)  # nosec B608 — sets com literais fixos, valores via ?
         conn.commit()
         # nome mudou → reaplica datahora_nomeFila nos arquivos (padrão sempre vale)
         if any(s.startswith("nome=") for s in sets):
@@ -714,7 +714,7 @@ def atualizar_etapa(etapa_id: int, nome: str = None, guiche: str = None, ator: s
         if not sets:
             return True, "Nada a atualizar"
         vals.append(etapa_id)
-        cur.execute(f"UPDATE tb_fila_etapa SET {', '.join(sets)} WHERE id=?", vals)
+        cur.execute(f"UPDATE tb_fila_etapa SET {', '.join(sets)} WHERE id=?", vals)  # nosec B608 — sets com literais fixos, valores via ?
         conn.commit()
         return True, "Etapa atualizada"
     finally:
@@ -904,7 +904,7 @@ def ultima_chamada_tv(fila_id: int = None, tv_grupo: str = None, etapa_nome: str
             if not ids:
                 return None
             placeholders = ",".join("?" for _ in ids)
-            sql = f"SELECT id, senha, guiche, chamado_em, paciente_nome, etapa_nome, fila_nome, prioridade, manchester FROM tb_chamada WHERE fila_id IN ({placeholders})"
+            sql = f"SELECT id, senha, guiche, chamado_em, paciente_nome, etapa_nome, fila_nome, prioridade, manchester FROM tb_chamada WHERE fila_id IN ({placeholders})"  # nosec B608 — placeholders de IDs internos, valores via ?
             params = list(ids)
             if etapa_nome:
                 sql += " AND etapa_nome=?"
@@ -950,7 +950,7 @@ def listar_chamadas_tv(limite: int = 20, fila_id: int = None, tv_grupo: str = No
             if not ids:
                 return []
             placeholders = ",".join("?" for _ in ids)
-            sql = f"SELECT id, fila_id, senha, guiche, chamado_em, chamado_por, paciente_nome, etapa_nome, fila_nome, prioridade, manchester FROM tb_chamada WHERE fila_id IN ({placeholders})"
+            sql = f"SELECT id, fila_id, senha, guiche, chamado_em, chamado_por, paciente_nome, etapa_nome, fila_nome, prioridade, manchester FROM tb_chamada WHERE fila_id IN ({placeholders})"  # nosec B608 — placeholders de IDs internos, valores via ?
             params = list(ids)
             if etapa_nome:
                 sql += " AND etapa_nome=?"
@@ -1401,22 +1401,22 @@ def _escolher_proximo_nome(cur, fila_id: int, etapa_filtro: str = None):
         etapa_filtro = _primeira_etapa(cur, fila_id)
     cond = "AND (etapa='' OR etapa=?)"
     params = [fila_id, etapa_filtro]
-    cur.execute(f"SELECT COUNT(*) FROM tb_fila_nomes WHERE fila_id=? AND usado=0 {cond}", params)
+    cur.execute(f"SELECT COUNT(*) FROM tb_fila_nomes WHERE fila_id=? AND usado=0 {cond}", params)  # nosec B608 — cols são literais fixos, valores via ?
     total = cur.fetchone()[0]
     if total == 0:
         return None
     cols = "id, nome, prioridade, manchester, etapa"
-    cur.execute(f"SELECT COUNT(*) FROM tb_fila_nomes WHERE fila_id=? AND usado=0 AND manchester<>'' {cond}", params)
+    cur.execute(f"SELECT COUNT(*) FROM tb_fila_nomes WHERE fila_id=? AND usado=0 AND manchester<>'' {cond}", params)  # nosec B608 — cols são literais fixos, valores via ?
     with_manchester = cur.fetchone()[0]
     if with_manchester:
-        cur.execute(f"SELECT {cols} FROM tb_fila_nomes WHERE fila_id=? AND usado=0 {cond}", params)
+        cur.execute(f"SELECT {cols} FROM tb_fila_nomes WHERE fila_id=? AND usado=0 {cond}", params)  # nosec B608 — cols são literais fixos, valores via ?
         cand = cur.fetchall()
         def _chave(r):
             return (_RANK_MANCHESTER.get(r[3] or "", 9), _RANK_DEMOGRAFICA.get(r[2] or "comum", 3), r[0])
         cand.sort(key=_chave)
         return cand[0]
     if total <= 3:
-        cur.execute(f"SELECT {cols} FROM tb_fila_nomes WHERE fila_id=? AND usado=0 {cond} ORDER BY ordem LIMIT 1", params)
+        cur.execute(f"SELECT {cols} FROM tb_fila_nomes WHERE fila_id=? AND usado=0 {cond} ORDER BY ordem LIMIT 1", params)  # nosec B608 — cols são literais fixos, valores via ?
         return cur.fetchone()
     cur.execute("SELECT prio_turno FROM tb_fila WHERE id=?", (fila_id,))
     row = cur.fetchone()
@@ -1424,12 +1424,12 @@ def _escolher_proximo_nome(cur, fila_id: int, etapa_filtro: str = None):
     for k in range(len(CICLO_PRIORIDADE)):
         passo = (turno + k) % len(CICLO_PRIORIDADE)
         prio = CICLO_PRIORIDADE[passo]
-        cur.execute(f"SELECT {cols} FROM tb_fila_nomes WHERE fila_id=? AND usado=0 AND prioridade=? {cond} ORDER BY ordem LIMIT 1", [fila_id, prio, etapa_filtro])
+        cur.execute(f"SELECT {cols} FROM tb_fila_nomes WHERE fila_id=? AND usado=0 AND prioridade=? {cond} ORDER BY ordem LIMIT 1", [fila_id, prio, etapa_filtro])  # nosec B608 — cols são literais fixos, valores via ?
         achado = cur.fetchone()
         if achado:
             cur.execute("UPDATE tb_fila SET prio_turno=? WHERE id=?", ((passo + 1) % len(CICLO_PRIORIDADE), fila_id))
             return achado
-    cur.execute(f"SELECT {cols} FROM tb_fila_nomes WHERE fila_id=? AND usado=0 {cond} ORDER BY ordem LIMIT 1", params)
+    cur.execute(f"SELECT {cols} FROM tb_fila_nomes WHERE fila_id=? AND usado=0 {cond} ORDER BY ordem LIMIT 1", params)  # nosec B608 — cols são literais fixos, valores via ?
     return cur.fetchone()
 
 
@@ -1672,7 +1672,7 @@ def atualizar_midia(midia_id: int, volume=None, duracao=None, slot=None, nome: s
         if not sets:
             return True, "Nada a atualizar"
         vals.append(midia_id)
-        cur.execute(f"UPDATE tb_midia SET {', '.join(sets)} WHERE id=?", vals)
+        cur.execute(f"UPDATE tb_midia SET {', '.join(sets)} WHERE id=?", vals)  # nosec B608 — sets com literais fixos, valores via ?
         conn.commit()
         return True, "Mídia atualizada"
     finally:
@@ -1933,7 +1933,7 @@ def definir_estado_tv(chave: str, slot_atual: int = None, pausado: int = None):
             vals.append(1 if pausado else 0)
         if sets:
             vals.append(chave)
-            cur.execute(f"UPDATE tb_tv_estado SET {', '.join(sets)} WHERE chave=?", vals)
+            cur.execute(f"UPDATE tb_tv_estado SET {', '.join(sets)} WHERE chave=?", vals)  # nosec B608 — sets com literais fixos, valores via ?
             conn.commit()
     finally:
         conn.close()

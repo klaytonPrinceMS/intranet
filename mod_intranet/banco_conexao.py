@@ -452,7 +452,7 @@ class _CursorPostgres:
         if s.upper().startswith("PRAGMA"):
             m = re.match(r"(?is)^\s*PRAGMA\s+TABLE_INFO\(\s*['\"]?([a-zA-Z_0-9]+)['\"]?\s*\)", s)
             if m:
-                s = (f"SELECT 0, column_name FROM information_schema.columns "
+                s = (f"SELECT 0, column_name FROM information_schema.columns "  # nosec B608 — m.group(1) do regex [a-zA-Z_0-9]+, nunca input cru
                      f"WHERE table_schema = current_schema() "
                      f"AND table_name = '{m.group(1)}'")
             else:

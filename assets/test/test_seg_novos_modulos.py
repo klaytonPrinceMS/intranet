@@ -609,11 +609,11 @@ check(tot2 == 12.0 and per2 == [5.0, 7.0], "fotos sozinhas somam duração confi
 tot3, _ = filas.calcular_passo([("video", 8, 30.0), ("imagem", 8, None), ("imagem", 8, None)])
 check(tot3 == 30.0, "vídeo 30s dita o passo")
 import wave as _wv
-with _wv.open("/tmp/qa40.wav", "wb") as _w:
+with _wv.open(os.path.join(tempfile.gettempdir(), "qa40.wav"), "wb") as _w:
     _w.setnchannels(1); _w.setsampwidth(2); _w.setframerate(8000)
     _w.writeframes(b"\x00\x00" * 8000 * 40)
 import shutil as _sh
-_sh.copy("/tmp/qa40.wav", filas.PASTA_MIDIA + "/qa40.wav")
+_sh.copy(os.path.join(tempfile.gettempdir(), "qa40.wav"), filas.PASTA_MIDIA + "/qa40.wav")
 check(filas.duracao_real_arquivo("/midia_filas/qa40.wav") == 40.0, "extração duração real wav 40s")
 import os as _os
 _os.remove(filas.PASTA_MIDIA + "/qa40.wav")

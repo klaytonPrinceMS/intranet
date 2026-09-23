@@ -525,9 +525,9 @@ def _conn():
 def _migrar_coluna(conn, tabela, coluna, tipo):
     """Adds a column to a table if it does not exist yet (idempotent migration)."""
     try:
-        cols = [r[1] for r in conn.execute(f"PRAGMA table_info({tabela})").fetchall()]
-        if coluna not in cols:
-            conn.execute(f"ALTER TABLE {tabela} ADD COLUMN {coluna} {tipo}")
+         cols = [r[1] for r in conn.execute(f"PRAGMA table_info({tabela})").fetchall()]  # nosec B608 — tabela interna de migração
+         if coluna not in cols:
+             conn.execute(f"ALTER TABLE {tabela} ADD COLUMN {coluna} {tipo}")  # nosec B608 — coluna e tabela internas de migração
     except Exception as e:
         _log().warning(f"_migrar_coluna: falha ao adicionar {tabela}.{coluna}: {e}")
 
@@ -1379,7 +1379,7 @@ def processar_pdf(usuario, caminho_arquivo, numero=None, parcela=None, regex_cus
         _ph = ", ".join("?" for _ in _cols)
         _col_sql = ", ".join(_cols)
         try:
-            cur.execute(f"INSERT INTO tb_empenhos ({_col_sql}) VALUES ({_ph})", _vals)
+             cur.execute(f"INSERT INTO tb_empenhos ({_col_sql}) VALUES ({_ph})", _vals)  # nosec B608 — colunas de whitelist interna
         except Exception as e:
             # fallback: inserção mínima se alguma coluna ainda não existe (migração pendente)
             _log().warning(f"processar_pdf: insert dinâmico falhou ({e}), fallback mínimo")
@@ -1917,12 +1917,12 @@ def listar_empenhos(status="ativo", limite=200):
 
 
 def _fts_insert_sql():
-    """Builds the parameterized FTS5 INSERT for all index columns."""
-    try:
-        cols = ", ".join(FTS_COLS)
-        placeholders = ", ".join("?" for _ in FTS_COLS)
-        return f"INSERT INTO tb_indexador_pesquisa_fts5 (rowid, {cols}) VALUES (?, {placeholders})"
-    except Exception as e:
+     """Builds the parameterized FTS5 INSERT for all index columns."""
+     try:
+         cols = ", ".join(FTS_COLS)
+         placeholders = ", ".join("?" for _ in FTS_COLS)
+         return f"INSERT INTO tb_indexador_pesquisa_fts5 (rowid, {cols}) VALUES (?, {placeholders})"  # nosec B608 — colunas de whitelist interna
+     except Exception as e:
         _log().exception(f"_fts_insert_sql falhou: {e}")
         return None
 
@@ -2793,9 +2793,9 @@ def anotar_arquivos(pdfs):
             try:
                 cur.execute(
                     f"SELECT caminho_atual, numero_empenho, parcela, usuario, "
-                    f"data_deteccao FROM tb_levantamento WHERE caminho_atual IN ({ph})",
-                    lote,
-                )
+                     f"data_deteccao FROM tb_levantamento WHERE caminho_atual IN ({ph})",  # nosec B608 — ph de lista de IDs interna
+                     lote,
+                 )
                 for cam, num, parc, usr, dt in cur.fetchall():
                     lev[cam] = (num, parc, usr, dt)
             except Exception:
@@ -2809,8 +2809,8 @@ def anotar_arquivos(pdfs):
             cur.execute(
                 f"SELECT caminho_arquivo, nome_arquivo_final, numero_empenho, parcela, "
                 f"usuario, data_criacao FROM tb_empenhos WHERE caminho_arquivo IN ({ph_c}) "
-                f"OR nome_arquivo_final IN ({ph_n})",
-                cams + nomes,
+                 f"OR nome_arquivo_final IN ({ph_n})",  # nosec B608 — ph de listas de IDs internas
+                 cams + nomes,
             )
             for cam, final, num, parc, usr, dt in cur.fetchall():
                 if cam:
