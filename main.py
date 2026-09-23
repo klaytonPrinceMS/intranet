@@ -1148,6 +1148,10 @@ if __name__ in ("__main__", "__mp_main__"):
     from mod_intranet import observabilidade
     observabilidade.configurar()
     observabilidade.instalar_excepthook()
+    try:
+        observabilidade.registrar_excecoes_nicegui(app)
+    except Exception as _e_nice:
+        print(f"[observabilidade] falha ao registrar rede NiceGUI: {_e_nice}")
 
     # Passos de boot com barra de progresso no terminal
     def _passo_agendador():
@@ -1185,6 +1189,14 @@ if __name__ in ("__main__", "__mp_main__"):
     # subir o servidor); os handlers abaixo valem como melhor esforço.
     def _encerrar():
         try:
+            print("[shutdown] atexit: encerrando processo", flush=True)
+        except Exception:
+            pass
+        try:
+            observabilidade.get_logger("intranet").info("atexit: encerrando processo")
+        except Exception:
+            pass
+        try:
             from mod_intranet import rotinas
             if rotinas.encerrar_agendador():
                 print("[shutdown] Agendador encerrado")
@@ -1207,6 +1219,15 @@ if __name__ in ("__main__", "__mp_main__"):
     _atexit.register(_encerrar)
 
     def _ao_sinal(*_args):
+        try:
+            print(f"[sinal] sinal recebido ({_args[0] if _args else '?'}) — encerrando", flush=True)
+        except Exception:
+            pass
+        try:
+            observabilidade.get_logger("intranet").warning(
+                f"sinal recebido ({_args[0] if _args else '?'}) — encerrando")
+        except Exception:
+            pass
         try:
             _encerrar()
         except Exception as e:

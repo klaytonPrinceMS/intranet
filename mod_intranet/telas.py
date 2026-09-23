@@ -84,10 +84,21 @@ def pagina_restrita(titulo_modulo: str, chave_modulo: str = None):
 
     _montar_layout(user["nome"], rotulo_perfil, titulo_modulo, chave_modulo)
 
-    if autenticacao.precisa_trocar_credenciais(user["nome"]):
-        _dialogo_troca_credenciais(user["nome"])
-    elif autenticacao.precisa_trocar_senha(user["nome"]):
-        _dialogo_troca_senha(user["nome"])
+    try:
+        if autenticacao.precisa_trocar_credenciais(user["nome"]):
+            _dialogo_troca_credenciais(user["nome"])
+        elif autenticacao.precisa_trocar_senha(user["nome"]):
+            _dialogo_troca_senha(user["nome"])
+    except Exception as _e_troca:
+        try:
+            _login_erro_log().exception(
+                f"pagina_restrita: falha ao abrir troca obrigatória de '{user.get('nome','')}': {_e_troca}")
+        except Exception:
+            pass
+        try:
+            notificar("Erro ao abrir a troca obrigatória — recarregue a página.", tipo="error")
+        except Exception:
+            pass
 
     return user
 
@@ -164,13 +175,8 @@ body.intranet-dark .q-chip {{ background-color: var(--fundo-card) !important; co
 
 def _alternar_tema(user_nome: str):
     """Toggles the current user's dark/light theme preference (individual)."""
-    try:
-        novo = not autenticacao.tema_escuro(user_nome)
-        autenticacao.definir_tema_escuro(user_nome, novo)
-    except Exception as e:
-        _login_erro_log().exception(f"falha ao alternar tema de '{user_nome}': {e}")
-        notificar("Erro ao alternar tema", type="negative")
-        return
+    novo = not autenticacao.tema_escuro(user_nome)
+    autenticacao.definir_tema_escuro(user_nome, novo)
     ui.timer(0.1, lambda: ui.navigate.reload(), once=True)
 
 
@@ -405,19 +411,11 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
                     else f"Sistema: v{versao}")
 
 
-def _login_erro_log():
-    from mod_intranet import observabilidade
-    return observabilidade.get_logger("intranet")
-
-
 def _logout():
-    try:
-        user = usuario_logado()
-        if user:
-            autenticacao.registrar_logout(user["nome"], user.get("sessao"))
-        app.storage.user.clear()
-    except Exception as e:
-        _login_erro_log().exception(f"falha ao encerrar sessão: {e}")
+    user = usuario_logado()
+    if user:
+        autenticacao.registrar_logout(user["nome"], user.get("sessao"))
+    app.storage.user.clear()
     ui.navigate.to("/login")
 
 
@@ -441,18 +439,25 @@ def _dialogo_meu_perfil(nome_usuario: str):
             tooltip="Nome pelo qual você será tratado no sistema. "
                     "Pode ser seu nome social (Decreto 8.727/2016)")
         email = ui_comum.campo_texto("E-mail", valor=email_atual)
-        fone = ui_comum.campo_texto("Telefone", valor=fone_atual)
+        try:
+            from mod_intranet import telefone as _tel_perfil
+            _campo_fone_perfil = _tel_perfil.criar_campo_telefone(valor=fone_atual)
+        except Exception:
+            _campo_fone_perfil = None
+            fone = ui_comum.campo_texto("Telefone", valor=fone_atual)
+
+        def _fone_perfil_valor():
+            try:
+                if _campo_fone_perfil is not None:
+                    return _campo_fone_perfil["obter"]() or ""
+                return fone.value.strip()
+            except Exception:
+                return ""
 
         def salvar_dados():
-            try:
-                ok, msg = autenticacao.editar_meu_perfil(
-                    nome_usuario, email=email.value.strip(), fone=fone.value.strip(),
-                    nome_completo=completo.value.strip())
-            except Exception as _e_dados:
-                _login_erro_log().exception(
-                    f"falha ao salvar dados de '{nome_usuario}': {_e_dados}")
-                notificar("Erro ao salvar dados", type="negative")
-                return
+            ok, msg = autenticacao.editar_meu_perfil(
+                nome_usuario, email=email.value.strip(), fone=_fone_perfil_valor(),
+                nome_completo=completo.value.strip())
             notificar(msg, type="positive" if ok else "negative")
             if ok:
                 ui.timer(0.1, lambda: ui.navigate.reload(), once=True)
@@ -483,52 +488,223 @@ def _dialogo_meu_perfil(nome_usuario: str):
 
 
 def _dialogo_troca_credenciais(nome_usuario: str):
-    """Forces master's first-access combined change (username + password + dados).
+    """Opens the mandatory first-access dialog with a safe minimal fallback.
 
-    Diálogo persistente do primeiro acesso do `master` nativo: exige definir
-    um NOVO nome de usuário E uma nova senha, e permite informar nome
-    completo/social, e-mail e telefone. `persistent` (não fecha com ESC/clique
-    fora) e fechamento somente após a troca bem-sucedida."""
+    Abre o diálogo de troca obrigatória completo (pré-preenchido); se a
+    montagem falhar por qualquer motivo, abre o diálogo mínimo (campos
+    simples, sem pré-preenchimento) para nunca derrubar a página. Nenhum
+    caminho propaga exceção ao chamador."""
+    try:
+        _dialogo_troca_credenciais_completo(nome_usuario)
+    except Exception as _e_full:
+        try:
+            _login_erro_log().exception(
+                f"troca_credenciais completo falhou para '{nome_usuario}': {_e_full}")
+        except Exception:
+            pass
+        try:
+            _dialogo_troca_credenciais_minimo(nome_usuario)
+        except Exception as _e_min:
+            try:
+                _login_erro_log().exception(
+                    f"troca_credenciais mínimo falhou para '{nome_usuario}': {_e_min}")
+            except Exception:
+                pass
+            try:
+                notificar("Erro ao abrir a troca de credenciais.", tipo="error")
+            except Exception:
+                pass
+
+
+def _dialogo_troca_credenciais_minimo(nome_usuario: str):
+    """Minimal first-access dialog (plain fields, no prefill, no DDI select).
+
+    Diálogo mínimo de primeiro acesso: campos simples vazios, sem
+    pré-preenchimento e sem combobox de DDI. Fallback para garantir que o
+    master sempre consiga trocar as credenciais mesmo se o diálogo completo
+    falhar."""
     with ui_comum.dialogo_card(largura="w-96", max_altura=False) as (dlg, card):
         ui.label("Credenciais obrigatórias").classes("text-h6")
-        ui.label(f"Bem-vindo(a), {autenticacao.nome_de_tratamento(nome_usuario)}. "
-                 "Por segurança, defina um novo nome de usuário e uma nova "
+        ui.label("Por segurança, defina um novo nome de usuário e uma nova "
                  "senha antes de continuar.").classes("text-body2 text-grey-7")
         novo_nome = ui_comum.campo_texto("Novo nome de usuário", props="")
-        nome_completo = ui_comum.campo_texto(
-            "Nome completo (ou social)", props="",
-            tooltip="Nome pelo qual você será tratado no sistema. "
-                    "Pode ser seu nome social (Decreto 8.727/2016)")
+        nome_completo = ui_comum.campo_texto("Nome completo (ou social)", props="")
         email = ui_comum.campo_texto("E-mail", props="")
         fone = ui_comum.campo_texto("Telefone", props="")
         atual = ui_comum.campo_texto("Senha atual", senha=True, props="")
         nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True, props="")
         conf = ui_comum.campo_texto("Confirmar nova senha", senha=True, props="")
 
-        def confirmar():
-            if (novo_nome.value or "").strip().lower() == "master":
-                notificar("O novo nome de usuário deve ser diferente de 'master'.",
-                          type="negative")
-                return
-            if nova.value != conf.value:
-                notificar("As senhas não conferem", type="negative")
-                return
+        def _v(campo):
             try:
-                ok, msg, novo = autenticacao.trocar_credenciais_master(
-                    nome_usuario, novo_nome.value or "", atual.value or "",
-                    nova.value or "",
-                    nome_completo=nome_completo.value or "",
-                    email=email.value or "", fone=fone.value or "")
-            except Exception as _e_cred:
-                _login_erro_log().exception(
-                    f"falha ao trocar credenciais de '{nome_usuario}': {_e_cred}")
-                notificar("Erro ao trocar credenciais", type="negative")
-                return
-            notificar(msg, type="positive" if ok else "negative")
-            if ok:
-                app.storage.user["usuario"]["nome"] = novo
-                dlg.close()
-                ui.timer(0.2, lambda: ui.navigate.to("/"))
+                return getattr(campo, "value", "") or ""
+            except Exception:
+                return ""
+
+        def confirmar():
+            try:
+                if not _v(novo_nome).strip() or _v(novo_nome).strip().lower() == "master":
+                    notificar("Informe um novo nome de usuário diferente de 'master'.",
+                              type="negative")
+                    return
+                if _v(nova) != _v(conf):
+                    notificar("As senhas não conferem", type="negative")
+                    return
+                try:
+                    ok, msg, novo = autenticacao.trocar_credenciais_master(
+                        nome_usuario, _v(novo_nome), _v(atual), _v(nova),
+                        nome_completo=_v(nome_completo),
+                        email=_v(email), fone=_v(fone))
+                except Exception as _e_cred:
+                    _login_erro_log().exception(
+                        f"falha ao trocar credenciais de '{nome_usuario}': {_e_cred}")
+                    notificar("Erro ao trocar credenciais", type="negative")
+                    return
+                notificar(msg, type="positive" if ok else "negative")
+                if ok:
+                    try:
+                        app.storage.user["usuario"]["nome"] = novo
+                    except Exception:
+                        pass
+                    try:
+                        dlg.close()
+                    except Exception:
+                        pass
+                    ui.timer(0.2, lambda: ui.navigate.to("/"))
+            except Exception as _e_conf:
+                try:
+                    _login_erro_log().exception(
+                        f"confirmar mínimo falhou para '{nome_usuario}': {_e_conf}")
+                except Exception:
+                    pass
+                try:
+                    notificar("Erro ao salvar credenciais.", tipo="error")
+                except Exception:
+                    pass
+
+        _botao_tema("Salvar credenciais", on_click=confirmar,
+                    extra_classes="w-full mt-2")
+    dlg.props("persistent")
+    dlg.open()
+
+
+def _dialogo_troca_credenciais_completo(nome_usuario: str):
+    """Full first-access dialog (prefilled + DDI phone field).
+
+    Diálogo completo do primeiro acesso do `master` nativo: vem
+    pré-preenchido com os dados do responsável pelo sistema para o futuro
+    administrador conferir/ajustar antes de salvar. `persistent` (não fecha
+    com ESC/clique fora) e fechamento somente após a troca bem-sucedida."""
+    with ui_comum.dialogo_card(largura="w-96", max_altura=False) as (dlg, card):
+        ui.label("Credenciais obrigatórias").classes("text-h6")
+        ui.label(f"Bem-vindo(a), {autenticacao.nome_de_tratamento(nome_usuario)}. "
+                 "Por segurança, defina um novo nome de usuário e uma nova "
+                 "senha antes de continuar.").classes("text-body2 text-grey-7")
+        try:
+            with ui.column().classes("w-full gap-1 p-2 rounded bg-blue-1"):
+                ui.label("Analista de Sistemas Atual: Klayton Prince").classes(
+                    "text-caption font-bold text-blue-10")
+                ui.label("Analista de Sistema Inicial: Klayton Prince").classes(
+                    "text-caption text-blue-9")
+                ui.label("E-mail: klayton.prince.ms@gmail.com · +55 (35) 98818-3288").classes(
+                    "text-caption text-blue-9")
+        except Exception:
+            pass
+        novo_nome = ui_comum.campo_texto("Novo nome de usuário", valor="klayton", props="")
+        nome_completo = ui_comum.campo_texto(
+            "Nome completo (ou social)", valor="PRINCE,K.B", props="",
+            tooltip="Nome pelo qual você será tratado no sistema. "
+                    "Pode ser seu nome social (Decreto 8.727/2016)")
+        email = ui_comum.campo_texto("E-mail", valor="klayton.prince.ms@gmail.com", props="")
+        _campo_fone = None
+        fone = None
+        try:
+            from mod_intranet import telefone as _tel
+            _campo_fone = _tel.criar_campo_telefone(valor="+5535988183288")
+        except Exception:
+            _campo_fone = None
+        if _campo_fone is None:
+            try:
+                fone = ui_comum.campo_texto("Telefone", valor="35988183288", props="")
+            except Exception:
+                fone = None
+        atual = ui_comum.campo_texto("Senha atual", senha=True, valor="master", props="")
+        nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True, valor="klayton", props="")
+        conf = ui_comum.campo_texto("Confirmar nova senha", senha=True, valor="klayton", props="")
+
+        def _v(campo):
+            try:
+                return getattr(campo, "value", "") or ""
+            except Exception:
+                return ""
+
+        def _fone_valor():
+            try:
+                if _campo_fone is not None:
+                    return _campo_fone["obter"]() or ""
+                return _v(fone)
+            except Exception:
+                return ""
+
+        def confirmar():
+            try:
+                if not _v(novo_nome).strip() or _v(novo_nome).strip().lower() == "master":
+                    notificar("Informe um novo nome de usuário diferente de 'master'.",
+                              type="negative")
+                    return
+                if _v(nova) != _v(conf):
+                    notificar("As senhas não conferem", type="negative")
+                    return
+                try:
+                    ok, msg, novo = autenticacao.trocar_credenciais_master(
+                        nome_usuario, _v(novo_nome), _v(atual), _v(nova),
+                        nome_completo=_v(nome_completo),
+                        email=_v(email), fone=_fone_valor())
+                except Exception as _e_cred:
+                    _login_erro_log().exception(
+                        f"falha ao trocar credenciais de '{nome_usuario}': {_e_cred}")
+                    notificar("Erro ao trocar credenciais", type="negative")
+                    return
+                notificar(msg, type="positive" if ok else "negative")
+                if ok:
+                    try:
+                        _login_erro_log().info(
+                            f"credenciais ok: '{nome_usuario}' -> '{novo}' — "
+                            "atualizando sessão")
+                    except Exception:
+                        pass
+                    try:
+                        app.storage.user["usuario"]["nome"] = novo
+                    except Exception as _e_sess:
+                        try:
+                            _login_erro_log().exception(
+                                f"falha ao atualizar sessão para '{novo}': {_e_sess}")
+                        except Exception:
+                            pass
+                    try:
+                        dlg.close()
+                    except Exception as _e_close:
+                        try:
+                            _login_erro_log().exception(
+                                f"falha ao fechar diálogo de '{novo}': {_e_close}")
+                        except Exception:
+                            pass
+                    try:
+                        _login_erro_log().info(
+                            f"credenciais ok: '{novo}' — agendando navegação para /")
+                    except Exception:
+                        pass
+                    ui.timer(0.2, lambda: ui.navigate.to("/"))
+            except Exception as _e_conf:
+                try:
+                    _login_erro_log().exception(
+                        f"confirmar completo falhou para '{nome_usuario}': {_e_conf}")
+                except Exception:
+                    pass
+                try:
+                    notificar("Erro ao salvar credenciais.", tipo="error")
+                except Exception:
+                    pass
 
         _botao_tema("Salvar credenciais", on_click=confirmar,
                     extra_classes="w-full mt-2")

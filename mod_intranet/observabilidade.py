@@ -253,11 +253,108 @@ def gerar_logs_teste_niveis():
         print(f"[observabilidade] falha ao gerar logs de teste por nível: {e}")
 
 
+def _mostrar_no_terminal(titulo, tipo=None, valor=None, tb=None):
+    """EN: Prints the traceback to the terminal (dev visibility).
+    PT-BR: Imprime o traceback no terminal (visibilidade em desenvolvimento).
+    Nunca levanta exceção."""
+    try:
+        import traceback
+        print(f"\n[ERRO] {titulo}", file=sys.stderr, flush=True)
+        try:
+            if tipo is not None or valor is not None or tb is not None:
+                traceback.print_exception(tipo, valor, tb)
+            else:
+                traceback.print_exc()
+        except Exception:
+            pass
+        try:
+            sys.stderr.flush()
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+
 def instalar_excepthook():
-    """Captura exceções não tratadas (thread principal e loop assíncrono)."""
+    """Captures EVERY unhandled exception: log file + terminal.
+
+    Rede global de segurança (última linha após os try/except por função
+    do §3.2): thread principal (`sys.excepthook`), threads filhas
+    (`threading.excepthook`) e loop assíncrono. Tudo é registrado no log
+    (loguru, com traceback) E impresso no terminal (stderr) — em
+    desenvolvimento nenhuma exceção passa silenciosa. Nunca levanta exceção."""
+    try:
+        import threading as _th
+        import traceback as _tb_mod  # noqa: F401 (garante stderr formatado)
+    except Exception:
+        _th = None
+
     def hook(tipo, valor, tb):
-        logger.opt(exception=(tipo, valor, tb)).error("Exceção não tratada")
-    sys.excepthook = hook
+        try:
+            logger.opt(exception=(tipo, valor, tb)).error("Exceção não tratada")
+        except Exception as _e_log:
+            try:
+                print(f"[observabilidade] falha ao logar exceção: {_e_log}")
+            except Exception:
+                pass
+        _mostrar_no_terminal("Exceção não tratada (thread principal)", tipo, valor, tb)
+
+    def hook_thread(args):
+        try:
+            logger.opt(exception=(args.exc_type, args.exc_value,
+                                  args.exc_traceback)).error(
+                f"Exceção não tratada em thread ({args.thread})")
+        except Exception as _e_log:
+            try:
+                print(f"[observabilidade] falha ao logar exceção de thread: {_e_log}")
+            except Exception:
+                pass
+        _mostrar_no_terminal(
+            f"Exceção não tratada em thread ({getattr(args, 'thread', '?')})",
+            getattr(args, "exc_type", None),
+            getattr(args, "exc_value", None),
+            getattr(args, "exc_traceback", None))
+
+    def hook_async(loop, contexto):
+        try:
+            exc = contexto.get("exception")
+            if exc is not None:
+                logger.opt(exception=exc).error(
+                    f"Exceção em loop assíncrono: {contexto.get('message')}")
+            else:
+                logger.error(
+                    f"Exceção em loop assíncrono: {contexto.get('message')}")
+        except Exception as _e_log:
+            try:
+                print(f"[observabilidade] falha ao logar exceção assíncrona: {_e_log}")
+            except Exception:
+                pass
+        try:
+            print(f"\n[ERRO] Exceção em loop assíncrono: "
+                  f"{contexto.get('message')}", file=sys.stderr, flush=True)
+            exc = contexto.get("exception")
+            if exc is not None:
+                import traceback
+                traceback.print_exception(type(exc), exc, exc.__traceback__)
+                sys.stderr.flush()
+        except Exception:
+            pass
+
+    try:
+        sys.excepthook = hook
+    except Exception as _e:
+        try:
+            print(f"[observabilidade] falha ao instalar sys.excepthook: {_e}")
+        except Exception:
+            pass
+    try:
+        if _th is not None and hasattr(_th, "excepthook"):
+            _th.excepthook = hook_thread
+    except Exception as _e:
+        try:
+            print(f"[observabilidade] falha ao instalar threading.excepthook: {_e}")
+        except Exception:
+            pass
     try:
         import asyncio
         try:
@@ -265,11 +362,64 @@ def instalar_excepthook():
         except RuntimeError:
             loop = None
         if loop is not None:
-            loop.set_exception_handler(
-                lambda lp, ctx: logger.opt(exception=ctx.get("exception")).error(
-                    f"Exceção em loop assíncrono: {ctx.get('message')}"))
+            try:
+                loop.set_exception_handler(hook_async)
+            except Exception:
+                pass
     except Exception:
         pass
+    try:
+        print("[observabilidade] rede global de exceções ativa "
+              "(log + terminal: principal, threads, asyncio)")
+    except Exception:
+        pass
+
+
+def registrar_excecoes_nicegui(app):
+    """Logs NiceGUI page-handler exceptions to file + terminal.
+
+    Registra o handler global do NiceGUI (`app.on_exception`): exceções em
+    handlers de página (ex.: diálogos, on_click) são logadas com traceback
+    e impressas no terminal. Sem isso, o navegador só mostra "disconnected"
+    sem causa visível. Fail-soft: sem NiceGUI/app válido, só avisa."""
+    try:
+        if app is None or not hasattr(app, "on_exception"):
+            try:
+                print("[observabilidade] app NiceGUI sem on_exception — "
+                      "exceções de página sem rede global")
+            except Exception:
+                pass
+            return False
+
+        def _ao_erro_nicegui(exc):
+            try:
+                logger.opt(exception=exc).error("Exceção em handler NiceGUI")
+            except Exception as _e_log:
+                try:
+                    print(f"[observabilidade] falha ao logar exceção NiceGUI: {_e_log}")
+                except Exception:
+                    pass
+            try:
+                _mostrar_no_terminal(
+                    "Exceção em handler NiceGUI (página/diálogo)",
+                    type(exc), exc,
+                    getattr(exc, "__traceback__", None))
+            except Exception:
+                pass
+
+        app.on_exception(_ao_erro_nicegui)
+        try:
+            print("[observabilidade] rede NiceGUI ativa "
+                  "(handlers de página: log + terminal)")
+        except Exception:
+            pass
+        return True
+    except Exception as _e:
+        try:
+            print(f"[observabilidade] falha ao registrar exceções NiceGUI: {_e}")
+        except Exception:
+            pass
+        return False
 
 
 def get_logger(modulo=None):

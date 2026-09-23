@@ -183,23 +183,16 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         (input, chave_estado, valor) cujos `.value` e `estado_campos`
         são atualizados; `pos_acao` (opcional) roda após a gravação
         (ex.: reagendar backups, reconfigurar observabilidade)."""
-        try:
-            for k, v in defaults.items():
-                set_config(k, v)
-            if campos:
-                for inp, chave_estado, valor in campos:
-                    inp.set_value(valor)
-                    estado_campos[chave_estado] = valor
-            audit_log(user_nome, "intranet", "config_restaurada",
-                      f"padrões restaurados: {rotulo}")
-            if pos_acao:
-                pos_acao()
-        except Exception as _e_rest:
-            from mod_intranet import observabilidade as _obs_rest
-            _obs_rest.get_logger("intranet").exception(
-                f"falha ao restaurar padrões ({rotulo}): {_e_rest}")
-            notificar(f"Erro ao restaurar padrão ({rotulo})", type="negative")
-            return
+        for k, v in defaults.items():
+            set_config(k, v)
+        if campos:
+            for inp, chave_estado, valor in campos:
+                inp.set_value(valor)
+                estado_campos[chave_estado] = valor
+        audit_log(user_nome, "intranet", "config_restaurada",
+                  f"padrões restaurados: {rotulo}")
+        if pos_acao:
+            pos_acao()
         notificar(f"Padrão restaurado ({rotulo})", type="positive")
 
     def _reagendar_backups(horas):
@@ -451,9 +444,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             _sessao = 50
         set_config("sessao_retencao", str(_sessao))
         try:
-            _aviso_seg = int((_v("aviso_timeout", "notificacao_timeout", "4") or "4").strip() or 4)
+            _aviso_seg = int((_v("aviso_timeout", "notificacao_timeout", "5") or "5").strip() or 5)
         except (TypeError, ValueError):
-            _aviso_seg = 4
+            _aviso_seg = 5
         set_config("notificacao_timeout", str(min(30, max(1, _aviso_seg))))
         _reagendar_backups(horas)
 
@@ -899,9 +892,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 def _campo_aviso():
                     inp = ui_comum.campo_texto(
                         "Tempo de exibição dos avisos (segundos)",
-                        chave="notificacao_timeout", padrao="4",
-                        tooltip="1 a 30 segundos. Vale para os avisos "
-                                "(toasts) das telas do módulo.",
+                        chave="notificacao_timeout", padrao="5",
+                        tooltip="1 a 30 segundos (padrão 5). Vale para os avisos "
+                                "(toasts) de todo o sistema, incluindo boas-vindas.",
                         ao_mudar=lambda e: estado_campos.update(
                             aviso_timeout=e.value))
                     inp_gerais["aviso"] = inp
@@ -938,16 +931,16 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         restaurar=lambda: confirmar(
                             "configurações gerais",
                             lambda: restaurar_grupo(
-                                 {"backup_interval_hours": "12",
-                                  "sessao_retencao": "50",
-                                  "notificacao_timeout": "4"},
-                                 "configurações gerais",
-                                 campos=[(inp_gerais["backup"],
-                                          "backup_interval_hours", "12"),
-                                         (inp_gerais["sessao"],
-                                          "sessao_retencao", "50"),
-                                         (inp_gerais["aviso"],
-                                          "aviso_timeout", "4")],
+                                  {"backup_interval_hours": "12",
+                                   "sessao_retencao": "50",
+                                   "notificacao_timeout": "5"},
+                                  "configurações gerais",
+                                  campos=[(inp_gerais["backup"],
+                                           "backup_interval_hours", "12"),
+                                          (inp_gerais["sessao"],
+                                           "sessao_retencao", "50"),
+                                          (inp_gerais["aviso"],
+                                           "aviso_timeout", "5")],
                                 pos_acao=lambda: _reagendar_backups(12))),
                         chave_modulo="intranet",
                         data_testid="config-aplicar-gerais")
@@ -973,26 +966,19 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         em `tb_config`, registra auditoria `config_alterada` e notifica
                         o usuário (Ctrl+F5 para vencer o cache da aba).
                         """
-                        try:
-                            nome = (e.file.name or "").lower()
-                            if not nome.endswith(".ico"):
-                                notificar("Envie um arquivo .ico", type="negative")
-                                return
-                            conteudo = await e.file.read()
-                            if not conteudo or len(conteudo) > 1 * 1024 * 1024:
-                                notificar("Arquivo vazio ou maior que 1 MB", type="negative")
-                                return
-                            with open(fav_path, "wb") as fh:
-                                fh.write(conteudo)
-                            set_config("favicon_custom", "1")
-                            audit_log(user_nome, "intranet", "config_alterada",
-                                      f"favicon enviado ({nome}, {len(conteudo)} bytes)")
-                        except Exception as _e_ico:
-                            from mod_intranet import observabilidade as _obs_ico
-                            _obs_ico.get_logger("intranet").exception(
-                                f"falha ao aplicar favicon: {_e_ico}")
-                            notificar("Erro ao aplicar favicon", type="negative")
+                        nome = (e.file.name or "").lower()
+                        if not nome.endswith(".ico"):
+                            notificar("Envie um arquivo .ico", type="negative")
                             return
+                        conteudo = await e.file.read()
+                        if not conteudo or len(conteudo) > 1 * 1024 * 1024:
+                            notificar("Arquivo vazio ou maior que 1 MB", type="negative")
+                            return
+                        with open(fav_path, "wb") as fh:
+                            fh.write(conteudo)
+                        set_config("favicon_custom", "1")
+                        audit_log(user_nome, "intranet", "config_alterada",
+                                  f"favicon enviado ({nome}, {len(conteudo)} bytes)")
                         notificar("Favicon aplicado — recarregue a aba com Ctrl+F5",
                                   type="positive")
 
@@ -1005,18 +991,10 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         `tb_config`, registra auditoria `config_restaurada` e notifica
                         o usuário (Ctrl+F5 na aba).
                         """
-                        try:
-                            shutil.copy2(fav_padrao, fav_path)
-                            set_config("favicon_custom", "0")
-                            audit_log(user_nome, "intranet", "config_restaurada",
-                                      "favicon voltou ao padrão NiceGUI")
-                        except Exception as _e_fav:
-                            from mod_intranet import observabilidade as _obs_fav
-                            _obs_fav.get_logger("intranet").exception(
-                                f"falha ao restaurar favicon: {_e_fav}")
-                            notificar("Erro ao restaurar o ícone padrão",
-                                      type="negative")
-                            return
+                        shutil.copy2(fav_padrao, fav_path)
+                        set_config("favicon_custom", "0")
+                        audit_log(user_nome, "intranet", "config_restaurada",
+                                  "favicon voltou ao padrão NiceGUI")
                         notificar("Ícone padrão restaurado — Ctrl+F5 na aba", type="positive")
 
                     with ui.grid().classes(

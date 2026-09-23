@@ -57,39 +57,23 @@ def abrir_dialogo(usuario, chave_modulo):
                          color="blue-2").props("outline dense text-color=blue-9")
 
             def salvar_intervalo():
-                try:
-                    set_config(f"backup_horas:{chave_modulo}",
-                               int(horas.value) or 12)
-                    reagendar_backup(chave_modulo, int(horas.value) or 12)
-                    audit_log(usuario, "intranet", "config_alterada",
-                              f"backup_horas:{chave_modulo}={int(horas.value) or 12}h")
-                except Exception as _e_int:
-                    _log_backup().exception(
-                        f"falha ao salvar intervalo de backup "
-                        f"'{chave_modulo}': {_e_int}")
-                    notificar("Erro ao salvar intervalo", type="negative")
-                    return
+                set_config(f"backup_horas:{chave_modulo}",
+                           int(horas.value) or 12)
+                reagendar_backup(chave_modulo, int(horas.value) or 12)
+                audit_log(usuario, "intranet", "config_alterada",
+                          f"backup_horas:{chave_modulo}={int(horas.value) or 12}h")
                 notificar(f"Intervalo salvo: {int(horas.value) or 12}h (aplicado sem reiniciar)",
                           type="positive")
 
             _botao_tema("Salvar intervalo", on_click=salvar_intervalo)
 
             def rodar_agora():
-                try:
-                    gerado = backup_modulo(chave_modulo)
-                except Exception as _e_backup:
-                    _log_backup().exception(
-                        f"falha ao gerar backup de '{chave_modulo}': {_e_backup}")
-                    notificar("Falha ao gerar a cópia", type="negative")
-                    return
+                gerado = backup_modulo(chave_modulo)
                 if gerado:
-                    try:
-                        audit_log(usuario, "intranet", "backup_manual",
-                                  f"módulo={chave_modulo} arquivo={gerado}")
-                        grade.refresh()
-                    except Exception:
-                        pass
+                    audit_log(usuario, "intranet", "backup_manual",
+                              f"módulo={chave_modulo} arquivo={gerado}")
                     notificar(f"Cópia gerada: {gerado}", type="positive")
+                    grade.refresh()
                 else:
                     notificar("Falha ao gerar a cópia", type="negative")
 

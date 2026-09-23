@@ -392,7 +392,12 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
                                 ui.label(f"Perfil global: {perfil_rot}").classes("text-caption")
                                 ui.label(f"Situação: {sit}").classes("text-caption")
                                 ui.label(f"E-mail: {email or '—'}").classes("text-caption")
-                                ui.label(f"Telefone: {fone or '—'}").classes("text-caption")
+                                try:
+                                    from mod_intranet import telefone as _tel_fmt
+                                    _fone_fmt = _tel_fmt.formatar_para_exibicao(fone) or "—"
+                                except Exception:
+                                    _fone_fmt = fone or "—"
+                                ui.label(f"Telefone: {_fone_fmt}").classes("text-caption")
                                 ui.label(f"Cadastro: {cadastro or '—'}").classes("text-caption")
                                 ui.separator()
                                 ui.label("Acesso aos módulos").classes("text-caption font-bold")
@@ -637,7 +642,12 @@ def _dlg_novo_seguro(ator, refresh):
                 .props("outlined dense").classes("w-full")
             with ui.grid(columns=2).classes("w-full gap-2"):
                 email = ui.input("E-mail").props("outlined dense")
-                fone = ui.input("Telefone").props("outlined dense")
+                try:
+                    from mod_intranet import telefone as _tel
+                    _campo_fone_novo = _tel.criar_campo_telefone(valor="")
+                except Exception:
+                    _campo_fone_novo = None
+                    fone = ui.input("Telefone").props("outlined dense")
             perfil = ui.select(gest.PERFIS_GLOBAIS, value="comum", label="Perfil global",
                                with_input=True).props("outlined dense").classes("w-full")
 
@@ -647,12 +657,20 @@ def _dlg_novo_seguro(ator, refresh):
             box = ui.column().classes("w-full gap-0")
             selecoes, _meta = _seletores_de_acesso(box)
 
+            def _fone_novo_valor():
+                try:
+                    if _campo_fone_novo is not None:
+                        return _campo_fone_novo["obter"]() or None
+                    return fone.value.strip() or None
+                except Exception:
+                    return None
+
             def salvar():
                 try:
                     senha_padrao = (senha.value or "").strip() or "123456"
                     ok, msg = gest.criar_usuario(ator, nome.value or "", senha_padrao,
                                                  email=email.value.strip() or None,
-                                                 fone=fone.value.strip() or None,
+                                                 fone=_fone_novo_valor(),
                                                  perfil=perfil.value,
                                                  nome_completo=completo.value)
                     if not ok:
@@ -719,7 +737,14 @@ def _dlg_editar_seguro(ator, nome_atual, refresh):
 
             with ui.grid(columns=2).classes("w-full gap-2"):
                 email_i = ui.input("E-mail", value=email or "").props("outlined dense")
-                fone_i = ui.input("Telefone", value=fone or "").props("outlined dense")
+                try:
+                    from mod_intranet import telefone as _tel_edit
+                    _campo_fone_edit = _tel_edit.criar_campo_telefone(valor=fone or "")
+                    _fone_edit_input = None
+                except Exception:
+                    _campo_fone_edit = None
+                    fone_i = ui.input("Telefone", value=fone or "").props("outlined dense")
+                    _fone_edit_input = fone_i
             perf_i = ui.select(gest.PERFIS_GLOBAIS, value=perfil, label="Perfil global",
                                with_input=True).props("outlined dense").classes("w-full")
 
@@ -727,6 +752,14 @@ def _dlg_editar_seguro(ator, nome_atual, refresh):
             ui.label("Acesso aos módulos — papel em cada um").classes("text-subtitle2 text-grey-8")
             box = ui.column().classes("w-full gap-0")
             selecoes, meta = _seletores_de_acesso(box, nome_atual)
+
+            def _fone_edit_valor():
+                try:
+                    if _campo_fone_edit is not None:
+                        return _campo_fone_edit["obter"]() or ""
+                    return _fone_edit_input.value.strip()
+                except Exception:
+                    return ""
 
             def salvar():
                 try:
@@ -739,7 +772,7 @@ def _dlg_editar_seguro(ator, nome_atual, refresh):
                         else:
                             alvo = novo_nome.value.strip()
                     ok_e, msg_e = gest.editar_usuario(ator, alvo, email=email_i.value.strip(),
-                                                      fone=fone_i.value.strip(), perfil=perf_i.value,
+                                                      fone=_fone_edit_valor(), perfil=perf_i.value,
                                                       nome_completo=completo_i.value)
                     if not ok_e:
                         erros.append(msg_e)
@@ -969,7 +1002,13 @@ def _dlg_duplicar_seguro(ator, origem, refresh):
                              password_toggle_button=True,
                              value="123456").props("outlined dense").classes("w-full")
             email = ui.input("E-mail").props("outlined dense").classes("w-full")
-            fone = ui.input("Telefone (opcional)").props("outlined dense").classes("w-full")
+            try:
+                from mod_intranet import telefone as _tel_dup
+                _campo_fone_dup = _tel_dup.criar_campo_telefone(
+                    rotulo="Telefone (opcional)", valor="")
+            except Exception:
+                _campo_fone_dup = None
+                fone = ui.input("Telefone (opcional)").props("outlined dense").classes("w-full")
 
             ui.separator()
             ui.label(f"Acessos por módulo (copiados de @{origem})").classes(
@@ -977,13 +1016,21 @@ def _dlg_duplicar_seguro(ator, origem, refresh):
             box = ui.column().classes("w-full gap-0")
             selecoes, _meta = _seletores_de_acesso(box, origem)
 
+            def _fone_dup_valor():
+                try:
+                    if _campo_fone_dup is not None:
+                        return _campo_fone_dup["obter"]() or None
+                    return fone.value.strip() or None
+                except Exception:
+                    return None
+
             def salvar():
                 try:
                     senha_padrao = (senha.value or "").strip() or "123456"
                     ok, msg = gest.duplicar_usuario(ator, origem, nome.value or "",
                                                     senha_padrao,
                                                     email=email.value.strip() or None,
-                                                    fone=fone.value.strip() or None,
+                                                    fone=_fone_dup_valor(),
                                                     nome_completo=completo.value)
                     if not ok:
                         log.error(f"duplicar_usuario: falha ao duplicar '{nome.value}' por {ator} | {msg}")

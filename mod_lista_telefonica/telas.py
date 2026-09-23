@@ -138,7 +138,12 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         with wrap_contatos:
                             ui.label(f"Contatos — {uni[1]} ({uni[2]})" if uni else "Contatos").classes("text-subtitle2 font-bold")
                             if uni and uni[5]:
-                                ui.label(f"Telefone da unidade: {uni[5]}").classes("text-caption text-grey-7")
+                                try:
+                                    from mod_intranet import telefone as _tel_fmt_u
+                                    _tel_u = _tel_fmt_u.formatar_para_exibicao(uni[5])
+                                except Exception:
+                                    _tel_u = uni[5]
+                                ui.label(f"Telefone da unidade: {_tel_u}").classes("text-caption text-grey-7")
                             if not contatos:
                                 ui.label("Nenhum contato nesta unidade.").classes("text-grey-6 italic")
                                 return
@@ -154,14 +159,23 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                                             # Detecta mobile via CSS, mas sempre oferece ação
                                             with ui.element("div").classes("flex flex-col"):
                                                 # Nome como link tel
-                                                tel_limpo = re.sub(r"[^0-9+]", "", tel or "")
+                                                try:
+                                                    from mod_intranet import telefone as _tel_fmt_c
+                                                    tel_limpo = _tel_fmt_c.normalizar_telefone(
+                                                        _tel_fmt_c.obter_ddi(tel), tel)
+                                                    if not tel_limpo:
+                                                        tel_limpo = re.sub(r"[^0-9+]", "", tel or "")
+                                                    tel_exib = _tel_fmt_c.formatar_para_exibicao(tel) or "—"
+                                                except Exception:
+                                                    tel_limpo = re.sub(r"[^0-9+]", "", tel or "")
+                                                    tel_exib = tel or "—"
                                                 if tel_limpo:
                                                     # NiceGUI link com href tel:
                                                     ui.link(nome, target=f"tel:{tel_limpo}").classes("font-medium text-primary").tooltip("Toque para ligar (celular)")
-                                                    ui.label(tel).classes("text-caption text-grey-6 font-mono")
+                                                    ui.label(tel_exib).classes("text-caption text-grey-6 font-mono")
                                                 else:
                                                     ui.label(nome).classes("font-medium")
-                                                    ui.label(tel or "—").classes("text-caption text-grey-6")
+                                                    ui.label(tel_exib).classes("text-caption text-grey-6")
                                                 if user_n:
                                                     ui.label(f"@{user_n}").classes("text-caption text-grey-5")
                                         # Botão alternativo para mobile: oferece escolha ligar
@@ -209,9 +223,18 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 def _dlg_ligar(nome, telefone):
                     try:
                         from mod_intranet.ui_comum import dialogo_card
-                        tel = re.sub(r"[^0-9+]", "", telefone or "")
+                        try:
+                            from mod_intranet import telefone as _tel_lig
+                            tel = _tel_lig.normalizar_telefone(
+                                _tel_lig.obter_ddi(telefone), telefone)
+                            if not tel:
+                                tel = re.sub(r"[^0-9+]", "", telefone or "")
+                            tel_exib = _tel_lig.formatar_para_exibicao(telefone) or "—"
+                        except Exception:
+                            tel = re.sub(r"[^0-9+]", "", telefone or "")
+                            tel_exib = telefone or "—"
                         with dialogo_card(titulo=f"Contato — {nome}", largura="w-[380px]", chave_modulo="lista_telefonica", max_altura=False) as (dlg, card):
-                            ui.label(f"Telefone: {telefone or '—'}").classes("text-body1 font-mono")
+                            ui.label(f"Telefone: {tel_exib}").classes("text-body1 font-mono")
                             ui.label("No celular, escolha Ligar. No desktop, o discador pode não estar configurado.").classes("text-caption text-grey-6")
                             with ui.row().classes("w-full justify-between mt-2"):
                                 ui.button("Fechar", on_click=dlg.close).props("flat")

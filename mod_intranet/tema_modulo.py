@@ -291,12 +291,12 @@ def notificacao_timeout() -> int:
     """System toast display time in seconds (admin-configurable).
 
     Tempo de exibição dos avisos do sistema em segundos, configurável
-    pelo administrador (`notificacao_timeout`, 1–30, padrão 4)."""
+    pelo administrador (`notificacao_timeout`, 1–30, padrão 5)."""
     try:
         from mod_intranet.bd_conexao import get_config
-        v = int((get_config("notificacao_timeout", "4") or "4").strip() or 4)
+        v = int((get_config("notificacao_timeout", "5") or "5").strip() or 5)
     except Exception:
-        return 4
+        return 5
     return min(30, max(1, v))
 
 

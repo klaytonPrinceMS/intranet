@@ -34,7 +34,14 @@ def mostrar_administracao(usuario_logado: str = ""):
                 inp_nome = ui.input("Nome da unidade *").props("outlined dense").classes("flex-1 min-w-[220px]").props('data-testid=admin-unidade-nome')
                 sel_tipo = ui.select({"secretaria": "Secretaria", "setor": "Setor", "subsetor": "Subsetor"}, value="secretaria", label="Tipo").props("outlined dense").classes("w-[180px]").props('data-testid=admin-unidade-tipo')
                 sel_pai = ui.select({}, label="Unidade pai (quando setor/subsetor)").props("outlined dense clearable").classes("flex-1 min-w-[220px]").props('data-testid=admin-unidade-pai')
-                inp_tel = ui.input("Telefone").props("outlined dense").classes("flex-1 min-w-[180px]").props('data-testid=admin-unidade-tel')
+                try:
+                    from mod_intranet import telefone as _tel_un
+                    _campo_tel_un = _tel_un.criar_campo_telefone(
+                        valor="", testid_ddi="admin-unidade-ddi",
+                        testid_numero="admin-unidade-tel")
+                except Exception:
+                    _campo_tel_un = None
+                    inp_tel = ui.input("Telefone").props("outlined dense").classes("flex-1 min-w-[180px]").props('data-testid=admin-unidade-tel')
 
             # Popular pai conforme tipo
             def refresh_pai():
@@ -77,9 +84,17 @@ def mostrar_administracao(usuario_logado: str = ""):
             sel_tipo.on_value_change(lambda e: refresh_pai())
             refresh_pai()
 
+            def _tel_un_valor():
+                try:
+                    if _campo_tel_un is not None:
+                        return _campo_tel_un["obter"]() or ""
+                    return inp_tel.value or ""
+                except Exception:
+                    return ""
+
             def criar():
                 try:
-                    ok, msg = lista.criar_unidade(inp_nome.value or "", sel_tipo.value, sel_pai.value, inp_tel.value or "", ator=usuario_logado)
+                    ok, msg = lista.criar_unidade(inp_nome.value or "", sel_tipo.value, sel_pai.value, _tel_un_valor(), ator=usuario_logado)
                     notificar(msg, type="positive" if ok else "negative")
                     if ok:
                         refresh_pai()
@@ -171,10 +186,22 @@ def mostrar_administracao(usuario_logado: str = ""):
                         return
                     with dialogo_card(titulo=f"Editar — {uni[1]}", largura="w-[420px]", chave_modulo="lista_telefonica") as (dlg, card):
                         inp_n = ui.input("Nome", value=uni[1]).props("outlined dense").classes("w-full")
-                        inp_t = ui.input("Telefone", value=uni[5] or "").props("outlined dense").classes("w-full")
+                        try:
+                            from mod_intranet import telefone as _tel_une
+                            _campo_t_une = _tel_une.criar_campo_telefone(valor=uni[5] or "")
+                        except Exception:
+                            _campo_t_une = None
+                            inp_t = ui.input("Telefone", value=uni[5] or "").props("outlined dense").classes("w-full")
+                        def _tel_une_valor():
+                            try:
+                                if _campo_t_une is not None:
+                                    return _campo_t_une["obter"]() or ""
+                                return inp_t.value
+                            except Exception:
+                                return ""
                         def salvar():
                             try:
-                                ok, msg = lista.editar_unidade(uid, nome=inp_n.value, telefone=inp_t.value, ator=usuario_logado)
+                                ok, msg = lista.editar_unidade(uid, nome=inp_n.value, telefone=_tel_une_valor(), ator=usuario_logado)
                                 notificar(msg, type="positive" if ok else "negative")
                                 if ok:
                                     dlg.close()
@@ -626,7 +653,22 @@ def mostrar_administracao(usuario_logado: str = ""):
 
             with ui.row().classes("w-full gap-3 flex-wrap"):
                 inp_nome = ui.input("Nome *").props("outlined dense").classes("flex-1 min-w-[220px]").props('data-testid=admin-contato-nome')
-                inp_tel = ui.input("Telefone *", placeholder="(38) 99999-9999").props("outlined dense").classes("flex-1 min-w-[180px]").props('data-testid=admin-contato-tel')
+                try:
+                    from mod_intranet import telefone as _tel_ct
+                    _campo_tel_ct = _tel_ct.criar_campo_telefone(
+                        valor="", testid_ddi="admin-contato-ddi",
+                        testid_numero="admin-contato-tel")
+                except Exception:
+                    _campo_tel_ct = None
+                    inp_tel = ui.input("Telefone *", placeholder="(38) 99999-9999").props("outlined dense").classes("flex-1 min-w-[180px]").props('data-testid=admin-contato-tel')
+
+            def _tel_ct_valor():
+                try:
+                    if _campo_tel_ct is not None:
+                        return _campo_tel_ct["obter"]() or ""
+                    return inp_tel.value or ""
+                except Exception:
+                    return ""
             # Busca usuário — campo de pesquisa + select de resultados (corrige listagem do mod_gest_cad_usuario)
             with ui.row().classes("w-full gap-2 flex-wrap items-end"):
                 inp_busca_user = ui.input("Buscar usuário na base", placeholder="digite nome, login ou e-mail").props("outlined dense clearable").classes("flex-1 min-w-[260px]").props('data-testid=admin-contato-busca')
@@ -692,12 +734,21 @@ def mostrar_administracao(usuario_logado: str = ""):
                                 from mod_gest_cad_usuario import bd_manipulador as gest
                                 row = gest.obter_usuario(sel_user.value)
                                 if row:
-                                    # row[9] é nome completo
+                                    # row[9] é nome completo, row[4] é o telefone
                                     inp_nome.value = row[9] or sel_user.value
-                                    # fone se houver
-                                    if row[4] and not inp_tel.value:
-                                        inp_tel.value = row[5] or ""
-                                    inp_nome.update(); inp_tel.update()
+                                    try:
+                                        inp_nome.update()
+                                    except Exception:
+                                        pass
+                                    if row[4]:
+                                        try:
+                                            if _campo_tel_ct is not None:
+                                                _campo_tel_ct["definir"](row[4])
+                                            elif not inp_tel.value:
+                                                inp_tel.value = row[4]
+                                                inp_tel.update()
+                                        except Exception:
+                                            pass
                             except Exception:
                                 pass
                     except Exception:
@@ -725,7 +776,7 @@ def mostrar_administracao(usuario_logado: str = ""):
                     if not sel_unidade.value:
                         notificar("Escolha a unidade", type="warning")
                         return
-                    ok, msg = lista.criar_contato(sel_unidade.value, inp_nome.value or "", inp_tel.value or "", user_nome=sel_user.value, ator=usuario_logado)
+                    ok, msg = lista.criar_contato(sel_unidade.value, inp_nome.value or "", _tel_ct_valor(), user_nome=sel_user.value, ator=usuario_logado)
                     notificar(msg, type="positive" if ok else "negative")
                     if ok:
                         render_contatos.refresh()
@@ -763,19 +814,36 @@ def mostrar_administracao(usuario_logado: str = ""):
                             ui.label("Nenhum contato.").classes("text-grey-6 italic")
                             return
                         for cid, uid_c, nome, tel, user_n, tipo, data in contatos:
+                            try:
+                                from mod_intranet import telefone as _tel_fmt_adm
+                                _tel_exib_adm = _tel_fmt_adm.formatar_para_exibicao(tel) or "—"
+                            except Exception:
+                                _tel_exib_adm = tel or "—"
                             with ui.row().classes("w-full items-center gap-2 border rounded px-2 py-1"):
                                 ui.label(nome).classes("font-medium flex-1")
-                                ui.label(tel).classes("text-caption font-mono")
+                                ui.label(_tel_exib_adm).classes("text-caption font-mono")
                                 if user_n:
                                     ui.badge(f"@{user_n}", color="blue-grey-2").props("outline dense")
                                 def _editar(cid=cid, n=nome, t=tel):
                                     try:
                                         with dialogo_card(titulo=f"Editar — {n}", largura="w-[380px]", chave_modulo="lista_telefonica") as (dlg, card):
                                             inp_n2 = ui.input("Nome", value=n).props("outlined dense").classes("w-full")
-                                            inp_t2 = ui.input("Telefone", value=t).props("outlined dense").classes("w-full")
+                                            try:
+                                                from mod_intranet import telefone as _tel_ce
+                                                _campo_t_ce = _tel_ce.criar_campo_telefone(valor=t or "")
+                                            except Exception:
+                                                _campo_t_ce = None
+                                                inp_t2 = ui.input("Telefone", value=t).props("outlined dense").classes("w-full")
+                                            def _tel_ce_valor():
+                                                try:
+                                                    if _campo_t_ce is not None:
+                                                        return _campo_t_ce["obter"]() or ""
+                                                    return inp_t2.value
+                                                except Exception:
+                                                    return ""
                                             def salvar():
                                                 try:
-                                                    ok, msg = lista.editar_contato(cid, nome=inp_n2.value, telefone=inp_t2.value, ator=usuario_logado)
+                                                    ok, msg = lista.editar_contato(cid, nome=inp_n2.value, telefone=_tel_ce_valor(), ator=usuario_logado)
                                                     notificar(msg, type="positive" if ok else "negative")
                                                     if ok:
                                                         dlg.close()

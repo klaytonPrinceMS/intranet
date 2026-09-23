@@ -209,29 +209,16 @@ def alterar_rota_modulo(ator, chave, nova_rota):
         return False, "A URL da página não pode ficar vazia"
     if not re.fullmatch(r"[a-z0-9_\-/]+", nova_rota):
         return False, "URL inválida: use apenas letras, números, hífen, sublinhado e barra"
-    try:
-        _garantir_tb_modulos()
-        with Repositorio() as repo:
-            conflitante = repo.listar_modulos()
-            if any(m.rota == nova_rota for m in conflitante if m.chave != chave):
-                return False, f"A URL '{nova_rota}' já está em uso por outro módulo"
-            ok = repo.atualizar_modulo(chave, rota=nova_rota)
-    except Exception as _e_rota:
-        from mod_intranet import observabilidade as _obs_rota
-        _obs_rota.get_logger("intranet").exception(
-            f"falha ao alterar a rota do módulo '{chave}': {_e_rota}")
-        return False, f"Erro ao alterar a URL do módulo (veja o log)"
+    _garantir_tb_modulos()
+    with Repositorio() as repo:
+        conflitante = repo.listar_modulos()
+        if any(m.rota == nova_rota for m in conflitante if m.chave != chave):
+            return False, f"A URL '{nova_rota}' já está em uso por outro módulo"
+        ok = repo.atualizar_modulo(chave, rota=nova_rota)
     if ok:
-        try:
-            from mod_intranet import rotas_modulos
-            rotas_modulos.registrar_modulo(chave, nova_rota)
-        except Exception:
-            pass
-        try:
-            audit_log(ator, "intranet", "modulo_rota_alterada",
-                      f"{chave}: {nova_rota}")
-        except Exception:
-            pass
+        from mod_intranet import rotas_modulos
+        rotas_modulos.registrar_modulo(chave, nova_rota)
+        audit_log(ator, "intranet", "modulo_rota_alterada", f"{chave}: {nova_rota}")
         return True, f"URL da página '{chave}' alterada para {nova_rota}"
     return False, f"Erro ao alterar a URL do módulo '{chave}'"
 
@@ -373,36 +360,30 @@ def registrar_login(user_nome, modulo=""):
 
     Usa `Repositorio` (SQLAlchemy ORM) para operações no banco central.
     """
-    try:
-        from .bd_manipulador import garantir_rastreabilidade
-        from .contexto import contexto_atual, rotulo_dispositivo, mac_best_effort
-        garantir_rastreabilidade()
-        ctx = contexto_atual()
-        ip = ctx.get("ip")
-        ua = ctx.get("ua")
-        dispositivo = rotulo_dispositivo(ua) if ua else None
-        mac = mac_best_effort(ip)
-        timestamp = __import__("datetime").datetime.now()
-        cookie_hash = hashlib.sha256(
-            f"{user_nome}|{timestamp.strftime('%Y%m%d%H%M%S')}|{__import__('secrets').token_hex(16)}".encode()
-        ).hexdigest()[:16]
-        with Repositorio() as repo:
-            repo.registrar_sessao(
-                usuario=user_nome, modulo=modulo,
-                cookie_hash=cookie_hash,
-                login_timestamp=timestamp,
-                ip=ip, user_agent=ua,
-                dispositivo=dispositivo, mac=mac,
-            )
-        audit_log(user_nome, "intranet", "login",
-                  f"Login realizado ({modulo or 'sistema'})"
-                  + (f" de {ip}" if ip else ""))
-        _podar_sessoes(user_nome)
-    except Exception as _e_login_reg:
-        from mod_intranet import observabilidade as _obs_login_reg
-        _obs_login_reg.get_logger("intranet").exception(
-            f"falha ao registrar o login de '{user_nome}': {_e_login_reg}")
-        return ""
+    from .bd_manipulador import garantir_rastreabilidade
+    from .contexto import contexto_atual, rotulo_dispositivo, mac_best_effort
+    garantir_rastreabilidade()
+    ctx = contexto_atual()
+    ip = ctx.get("ip")
+    ua = ctx.get("ua")
+    dispositivo = rotulo_dispositivo(ua) if ua else None
+    mac = mac_best_effort(ip)
+    timestamp = __import__("datetime").datetime.now()
+    cookie_hash = hashlib.sha256(
+        f"{user_nome}|{timestamp.strftime('%Y%m%d%H%M%S')}|{__import__('secrets').token_hex(16)}".encode()
+    ).hexdigest()[:16]
+    with Repositorio() as repo:
+        repo.registrar_sessao(
+            usuario=user_nome, modulo=modulo,
+            cookie_hash=cookie_hash,
+            login_timestamp=timestamp,
+            ip=ip, user_agent=ua,
+            dispositivo=dispositivo, mac=mac,
+        )
+    audit_log(user_nome, "intranet", "login",
+              f"Login realizado ({modulo or 'sistema'})"
+              + (f" de {ip}" if ip else ""))
+    _podar_sessoes(user_nome)
     return cookie_hash
 
 

@@ -92,8 +92,8 @@ PADRAO_CONFIG = {
     # Aparência dos cards do módulo Intranet (fundo + texto base)
     "intranet_cor_fundo_card": "#FFFFFF",
     "intranet_cor_texto_card": "",
-    # Avisos do sistema (toasts): tempo de exibição em segundos (1-30)
-    "notificacao_timeout": "4",
+    # Avisos do sistema (toasts): tempo de exibição em segundos (1-30, padrão 5)
+    "notificacao_timeout": "5",
     # Contador de acessos ao sistema (incrementado a cada login bem-sucedido)
     "contador_acessos_total": "0",
     "contador_acessos_inicio": "",

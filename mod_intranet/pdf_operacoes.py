@@ -21,17 +21,13 @@ def _log():
 # ================= OPERAÇÕES =================
 
 def hash_sha256(caminho):
-    """SHA-256 de um arquivo (leitura em blocos). Retorna "" em caso de falha."""
+    """SHA-256 de um arquivo (leitura em blocos)."""
     import hashlib
-    try:
-        h = hashlib.sha256()
-        with open(caminho, "rb") as f:
-            for chunk in iter(lambda: f.read(1024 * 1024), b""):
-                h.update(chunk)
-        return h.hexdigest()
-    except Exception as _e_hash:
-        _log().exception(f"falha ao calcular SHA-256 de '{caminho}': {_e_hash}")
-        return ""
+    h = hashlib.sha256()
+    with open(caminho, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def op_reduzir(caminho_in, caminho_out, qualidade=50, dpi=None, modo="leve", biblioteca="auto"):
