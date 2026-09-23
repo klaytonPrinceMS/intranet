@@ -164,8 +164,13 @@ body.intranet-dark .q-chip {{ background-color: var(--fundo-card) !important; co
 
 def _alternar_tema(user_nome: str):
     """Toggles the current user's dark/light theme preference (individual)."""
-    novo = not autenticacao.tema_escuro(user_nome)
-    autenticacao.definir_tema_escuro(user_nome, novo)
+    try:
+        novo = not autenticacao.tema_escuro(user_nome)
+        autenticacao.definir_tema_escuro(user_nome, novo)
+    except Exception as e:
+        _login_erro_log().exception(f"falha ao alternar tema de '{user_nome}': {e}")
+        notificar("Erro ao alternar tema", type="negative")
+        return
     ui.timer(0.1, lambda: ui.navigate.reload(), once=True)
 
 
@@ -400,11 +405,19 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
                     else f"Sistema: v{versao}")
 
 
+def _login_erro_log():
+    from mod_intranet import observabilidade
+    return observabilidade.get_logger("intranet")
+
+
 def _logout():
-    user = usuario_logado()
-    if user:
-        autenticacao.registrar_logout(user["nome"], user.get("sessao"))
-    app.storage.user.clear()
+    try:
+        user = usuario_logado()
+        if user:
+            autenticacao.registrar_logout(user["nome"], user.get("sessao"))
+        app.storage.user.clear()
+    except Exception as e:
+        _login_erro_log().exception(f"falha ao encerrar sessão: {e}")
     ui.navigate.to("/login")
 
 
@@ -431,9 +444,15 @@ def _dialogo_meu_perfil(nome_usuario: str):
         fone = ui_comum.campo_texto("Telefone", valor=fone_atual)
 
         def salvar_dados():
-            ok, msg = autenticacao.editar_meu_perfil(
-                nome_usuario, email=email.value.strip(), fone=fone.value.strip(),
-                nome_completo=completo.value.strip())
+            try:
+                ok, msg = autenticacao.editar_meu_perfil(
+                    nome_usuario, email=email.value.strip(), fone=fone.value.strip(),
+                    nome_completo=completo.value.strip())
+            except Exception as _e_dados:
+                _login_erro_log().exception(
+                    f"falha ao salvar dados de '{nome_usuario}': {_e_dados}")
+                notificar("Erro ao salvar dados", type="negative")
+                return
             notificar(msg, type="positive" if ok else "negative")
             if ok:
                 ui.timer(0.1, lambda: ui.navigate.reload(), once=True)
@@ -494,11 +513,17 @@ def _dialogo_troca_credenciais(nome_usuario: str):
             if nova.value != conf.value:
                 notificar("As senhas não conferem", type="negative")
                 return
-            ok, msg, novo = autenticacao.trocar_credenciais_master(
-                nome_usuario, novo_nome.value or "", atual.value or "",
-                nova.value or "",
-                nome_completo=nome_completo.value or "",
-                email=email.value or "", fone=fone.value or "")
+            try:
+                ok, msg, novo = autenticacao.trocar_credenciais_master(
+                    nome_usuario, novo_nome.value or "", atual.value or "",
+                    nova.value or "",
+                    nome_completo=nome_completo.value or "",
+                    email=email.value or "", fone=fone.value or "")
+            except Exception as _e_cred:
+                _login_erro_log().exception(
+                    f"falha ao trocar credenciais de '{nome_usuario}': {_e_cred}")
+                notificar("Erro ao trocar credenciais", type="negative")
+                return
             notificar(msg, type="positive" if ok else "negative")
             if ok:
                 app.storage.user["usuario"]["nome"] = novo

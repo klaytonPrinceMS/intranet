@@ -152,7 +152,13 @@ def mostrar_administracao(usuario_logado: str = ""):
         botao("Adicionar fonte", icone="add", on_click=adicionar, variante="texto", chave_modulo="agregador_noticias").props('data-testid=agregador-add-fonte')
 
         def salvar_fontes():
-            ok, msg = ag.definir_fontes(estado_fontes["lista"], ator=usuario_logado)
+            try:
+                ok, msg = ag.definir_fontes(estado_fontes["lista"], ator=usuario_logado)
+            except Exception as _e_fontes:
+                log.exception(
+                    f"falha ao salvar fontes do agº: {_e_fontes}")
+                notificar("Erro ao salvar fontes", type="negative")
+                return
             notificar(msg, type="positive" if ok else "negative")
             if ok:
                 ui.timer(0.5, lambda: ui.navigate.reload(), once=True)
@@ -160,7 +166,13 @@ def mostrar_administracao(usuario_logado: str = ""):
             from mod_agregador_noticias.bd_manipulador import FONTES_PADRAO
             estado_fontes["lista"] = list(FONTES_PADRAO)
             render_fontes.refresh()
-            ag.definir_fontes(FONTES_PADRAO, ator=usuario_logado)
+            try:
+                ag.definir_fontes(FONTES_PADRAO, ator=usuario_logado)
+            except Exception as _e_rest_f:
+                log.exception(
+                    f"falha ao restaurar fontes do agº: {_e_rest_f}")
+                notificar("Erro ao restaurar fontes", type="negative")
+                return
             ui.timer(0.5, lambda: ui.navigate.reload(), once=True)
 
         rodape_salvar_restaurar(salvar_fontes, restaurar_fontes, chave_modulo="agregador_noticias", rotulo_salvar="Salvar fontes", data_testid="agregador-salvar-fontes")
