@@ -6,7 +6,7 @@
 
 # Manual de Uso — Renomeador de Empenho — Intranet Modular
 
-> Guia operacional do módulo Renomeador de Empenho (`/renomear-empenho`), que monitora pastas, extrai, renomeia, indexa e organiza documentos de empenho, e atende ao fluxo de solicitação de cópia (comum → administrador). A tela é dividida em **6 abas**: Navegar, Fila Renomeação, Pesquisar, Organizador (admin), Solicitação e Configurações (admin). Quarentena com reprocessamento **individual e em lote sem reiniciar** (botão "Reprocessar fila") + separação de múltiplos documentos; organizador físico com **capas `capa.txt`/`capa.pdf` por caixa** e `matrizDeDocumentos.txt/.pdf`.
+> Guia operacional do módulo Renomeador de Empenho (`/renomear-empenho`), que monitora pastas, extrai, renomeia, indexa e organiza documentos de empenho, e atende ao fluxo de solicitação de cópia (comum → administrador). A tela tem **4 abas**: Navegar (com busca FTS5 integrada), Fila Renomeação, Organizador (admin) e Solicitação (admin gerencia); as Configurações ficam no painel admin standalone (`/admin/empenhos`). Quarentena com reprocessamento **individual e em lote sem reiniciar** (botão "Reprocessar fila") + separação de múltiplos documentos; organizador físico com **capas `capa.txt`/`capa.pdf` por caixa** e `matrizDeDocumentos.txt/.pdf`.
 
 ## Contexto
 
@@ -28,10 +28,9 @@ O módulo atende à função de almoxarifado/gestão de empenhos. Usuários `com
 - Lista recursiva de PDFs ainda **pendentes** de renomeação, com as colunas **Arquivo, Empenho, Parcela, Usuário, Data, Status** — mesma leitura do reconhecimento/processamento do Navegar (zeros à esquerda normalizados só na exibição).
 - **Processar** individualmente ou **Processar todos**. Pastas inacessíveis (ex.: rede fora do ar) são puladas.
 
-### 3. Pesquisar
+### 3. Pesquisar (integrada ao Navegar — sem aba própria)
 
-- **Busca textual** via índice FTS5 (nome final, empenho, parcela, usuário e campos do cabeçalho indexado), com fallback `LIKE`.
-- Tabela "Empenhos renomeados" com nome final, empenho, parcela, tipo, usuário e data (a coluna **Usuário** já existia e foi mantida).
+- **Busca textual** no campo de pesquisa do Navegar via índice FTS5 (nome final, empenho, parcela, usuário e campos do cabeçalho indexado, `pesquisar` + `pesquisar_levantamento` com prefixo `'"tok"*'`), com fallback `LIKE`; resultados mostram nome + badge na pasta/fora + colunas Empenho/Parcela/Usuário/Data.
 
 ### 4. Organizador *(admin — PLANO 4c)*
 
@@ -49,7 +48,7 @@ O módulo atende à função de almoxarifado/gestão de empenhos. Usuários `com
 - **Administrador**: para cada solicitação (agrupada por lote) pode **Enviar por e-mail** (via SMTP central), **Gerar ZIP** (pega para envio manual e baixa o arquivo) ou **Recusar** (com motivo). ZIP gerado pode ser **Confirmar envio manual** ou **Cancelar ZIP** (volta a pendente).
 - Expansão **Histórico completo**: todas as solicitações, com status e método de envio.
 
-### 6. Configurações *(admin — inclui PLANO 4b)*
+### 6. Configurações *(admin, painel `/admin/empenhos` — inclui PLANO 4b)*
 
 - **Pastas monitoradas** (uma por linha, local ou rede/UNC, ex.: `\\servidor\empenhos` ou `E:\scan`) — aplicado sem reiniciar.
 - **Aparência**: cor dos botões, texto, fundo, título e tamanho.

@@ -32,7 +32,11 @@ Conexão com WAL + `foreign_keys=ON`. Criador vigente: `init_db()` em `bd_manipu
 | `user_nome_completo` | nome social/tratamento (Decreto 8.727/2016) |
 | `user_motivo_exclusao` | motivo da exclusão lógica |
 
-**`tb_acesso_usuario`** — vínculo usuário×módulo×papel (`UNIQUE(user_nome, modulo_chave)`, FK CASCADE para `tb_usuarios`); `modulo_chave` é texto livre — origem dos vínculos órfãos.
+**`tb_acesso_usuario`** — vínculo usuário×módulo×papel (`UNIQUE(user_nome, modulo_chave)`, FK CASCADE para `tb_usuarios`); `modulo_chave` é texto livre — origem dos vínculos órfãos (helper `listar_vinculos_orfaos(chaves_ativas)`; tela marca como badge `INDISPONÍVEL`). Coluna `flags` (JSON TEXT, default `'{}'`) para permissões finas.
+
+**Flags finas** — catálogo `FLAGS_PERMISSAO` (`blog.publicar`, `blog.comentar`, `blog.configurar`): `obter_flags` (fail-soft `{}`), `definir_flags` (allowlist, exige vínculo) e `tem_flag` (admin passa pelo papel). `duplicar_usuario` replica papéis + flags da origem.
+
+**Sessões (banco central `tb_sessoes`)** — `id, usuario, modulo, login_timestamp, cookie_hash, ip, dispositivo, mac, logout_timestamp`; abertas = `logout_timestamp IS NULL`. Helpers: `listar_sessoes_ativas`, `contar_sessoes_ativas`, `sessoes_ativas_por_usuario`, `listar_historico_sessoes` (10 últimas encerradas), `encerrar_sessao` / `encerrar_todas_sessoes` / `_fechar_sessoes_central` (invocado em bloqueio, soft/hard delete e reset de senha). Renomear reflete nas sessões centrais abertas.
 
 ⚠️ `tb_modulo_perfil` existe apenas no `bd_criador.py`, que é **código legado/morto**: usa a conexão do banco **central** (criaria as tabelas em `db_mod_intranet.db`) e não é importado por ninguém.
 
@@ -61,7 +65,10 @@ Importa `autenticacao` (hash/verificação de senha, papéis, troca pendente), `
 
 - `bd_criador.py` é morto e aponta para o banco central — não executar.
 - `listar_vinculos_orfaos()` existe mas não é chamada pela tela (órfãos aparecem apenas como badge INDISPONÍVEL nos seletores).
-- Renomear usuário replica o nome nas tabelas dependentes e nas sessões centrais.
+- Renomear usuário replica o nome nas tabelas dependentes (`tb_acesso_usuario`), nas sessões centrais abertas e nas autorias dos demais módulos (`_vinculos_cruzados_renomear`).
+- **Duplicar usuário** (`duplicar_usuario` + `_dlg_duplicar` em `telas.py`): clona perfil global, papéis por módulo e flags finas da origem (ajustáveis nos seletores antes de salvar).
+- **Seed idempotente (fonte única do módulo, `init_db`)**: conta nativa `master` (`administrador_geral`) + contas QA (`qacomum` `comum`, `qamaster` `administrador_geral`); todas com troca forçada no 1º login e auto-cura do `master` a cada boot; `qacomum` reconcilia `ACESSO_PADRAO_NOVO_USUARIO` (`editar_pdf`, `empenhos`, `solicita_impressao` como `comum`; sem `blog`/`usuarios`/`auditoria`). Valores das senhas provisórias não publicados nesta doc (contexto interno em `bd_manipulador.py`).
+- **Administração (`/admin/usuarios`, `telas_administracao.py:mostrar_administracao`, só admin geral)**: cupê de cores `bloco_aparencia` (chaves `usuarios_*`) + `usuarios_senha_min` (4–32, padrão 6, via `senha_minima()`, vale sem restart) + `painel_backup`.
 
 ## Status — Fases 2 e 2.5 do PLANO.md
 

@@ -111,3 +111,4 @@ curl -I http://localhost:8080/assets/noticia/js/jquery-2.1.3.min.js  # 200 appli
 - **Cards com `fonte_icon 16×16` + `imagem 30×30` + tempo relativo**: mesmos `fonte_icon_url` `faviconV2` `16×16` `contain` + `imagem_url` `30×30` `cover` do `tb_noticia` (extraídos via `//img[contains(@src,'faviconV2')]` vs `/api/attachments` ancestral `div[1..3]`), `badge tema` + `ui.link(new_tab=True)` + `descricao[:160]` + `tempo relativo` `_tempo_relativo` (`agora`/minutos/horas/dias/semanas).
 - **`bd_criador.py` morto**: schema real `bd_manipulador.py:209-250` `init_db()` (`fonte_icon_url` `faviconV2`).
 - **Dependências**: `httpx` + `parsel` (`requirements.txt`); `assets/noticia/` 4.9M não adiciona dependência Python.
+- **Auditoria Lote 4 (23/09/2026)**: docstring de `telas_puro.py` padronizada EN topo / PT-BR abaixo; `mostrar_tela_pura` sem paginação (12 fixas) confirmado no código; nav `mkdocs.yml` ativo (`modulos/agregador_noticias_puro.md`).

@@ -10,7 +10,7 @@
 
 ## Acesso
 
-- O `comum` vê apenas os módulos expressamente liberados (ex.: `qacomum` → blog, editar_pdf, empenhos).
+- O `comum` vê apenas os módulos expressamente liberados (ex.: `qacomum` → editar_pdf, empenhos, solicita_impressao — SEM blog, removido do seed vigente).
 - Login em `/login`; sessão via cookie; logout encerra apenas o dispositivo atual.
 
 ## Blog (`/blog`)

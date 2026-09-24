@@ -14,7 +14,7 @@ Módulo de apoio à T.I. para formatação de PCs: disponibiliza executáveis em
 
 ## Banco próprio
 
-Conexão WAL + `foreign_keys=ON` via `mod_intranet/banco_conexao.conexao("tecnico")`. Criador vigente: `init_db()` em `bd_manipulador.py:71-116`, executado no import e pelo bootstrap central (`mod_intranet_inicializacao_bd.py`).
+Conexão WAL + `foreign_keys=ON` via `mod_intranet/banco_conexao.conexao("tecnico")`. Criador vigente: `init_db()` em `bd_manipulador.py`, executado no import e pelo bootstrap central (`mod_intranet_inicializacao_bd.py`).
 
 **`tb_backup`** (pastas nomeadas):
 
@@ -41,14 +41,19 @@ Conexão WAL + `foreign_keys=ON` via `mod_intranet/banco_conexao.conexao("tecnic
 
 **`tb_config_tecnico`** (local do módulo): `tecnico_pasta_software`, `tecnico_pasta_backup`, `tecnico_max_zip_mb` (1024), `tecnico_quota_gb` (10) — seeds `INSERT OR IGNORE`.
 
+**`models/__init__.py`** (dataclasses tipadas, padrão imperativo): `Backup` (`id`, `pasta_nome`, `owner`, `ip`, `hostname`, `tamanho_total`, `status`, `data_criacao`) e `BackupArquivo` (`id`, `backup_id`, `nome`, `caminho_relativo`, `tamanho`, `hash_sha256`) — espelham `tb_backup`/`tb_backup_arquivo` para uso tipado futuro (hoje o acesso real é via `bd_manipulador` + `banco_conexao`).
+
+Helpers internos: `_log()` (logger escopado `tecnico`), `_audit(ator, acao, alvo, detalhe)` (encaminha ao `audit_log` central → `tb_auditoria_tecnico`), `_hash_sha256(caminho)` (utilitário de arquivo; o envio atual calcula `hashlib.sha256(conteudo)` inline em `salvar_arquivos_backup`), `_pasta_backup_path(pasta_nome)` (canoniza com `basename` + regex + `commonpath`, nunca escapa de `PASTA_BACKUP`), `obter_backup(pasta_nome)` (busca uma linha de `tb_backup`), `listar_backups` ordena por `data_criacao ASC`.
+
 ⚠️ `bd_criador.py` é **código legado/morto**: não é importado; não executar.
 
 ## Fluxo da tela
 
-- Gate `_pode_acessar` (`telas.py:24-30`): `administrador_geral` ou `validar_acesso_modulo(user,"tecnico")`; sem acesso → "Acesso restrito".
-- `mostrar_tela(nome, perfil)` (`telas.py:33-65`): `ler_tema("tecnico")` + `ui.colors(primary)` + `cabecalho(chave_modulo="tecnico")` + `ui.tabs` `Software` (`apps`) | `Backup` (`backup`) → `_painel_software` / `_painel_backup`.
-- **Software** (`telas.py:69-151`): lista `software/` recursiva com checkbox + `Baixar selecionados` → `criar_zip_selecionados` (zip recursivo, limite `tecnico_max_zip_mb`).
-- **Backup** (`telas.py:172-310`): cria pasta `YYYYMMDD_HHMM_*` + `ui.upload(multiple, auto_upload, on_multi_upload)` com JS `webkitdirectory` + lista owner-isolated + `Baixar pasta (zip)` + `_dlg_listar` (dialogo com até 200 arquivos).
+- Gate `_pode_acessar` (`telas.py`): `administrador_geral` ou `validar_acesso_modulo(user,"tecnico")`; sem acesso → "Acesso restrito".
+- `mostrar_tela(nome, perfil)` (`telas.py`): `ler_tema("tecnico")` + `ui.colors(primary)` + `cabecalho(chave_modulo="tecnico")` + `ui.tabs` `Software` (`apps`) | `Backup` (`backup`) → `_painel_software` / `_painel_backup`.
+- **Software** (`_painel_software` em `telas.py`): lista `software/` recursiva com checkbox + `Baixar selecionados` → `criar_zip_selecionados` (zip recursivo, limite `tecnico_max_zip_mb`). Helpers `_fmt_bytes` (B/KB/MB/GB/TB) e `_safe_id` (sanitiza relativo para `data-testid`, máx. 40).
+- **Backup** (`_painel_backup` em `telas.py`): cria pasta `YYYYMMDD_HHMM_*` + `ui.upload(multiple, auto_upload, on_multi_upload)` com JS `webkitdirectory` + lista owner-isolated + `Baixar pasta (zip)` + `_dlg_listar(pasta_nome, user)` (diálogo com até 200 arquivos).
+- **Admin** (`mostrar_administracao` em `telas_administracao.py`, rota `/admin/tecnico`): `bloco_aparencia` + card "Configurações do Técnico" (`tecnico_max_zip_mb` via `get_config`/`set_config` + `rodape_salvar_restaurar`) + card "Backups recentes (todos os usuários)" (até 30, `listar_backups(apenas_owner=False)`) + `painel_backup(usuario, "tecnico")`.
 - Responsividade: `w-full p-6`, `flex-wrap`, `min-w` nos inputs, `data-testid` para QA.
 
 ## Regras de negócio relevantes
@@ -67,7 +72,8 @@ Importa `autenticacao.validar_acesso_modulo`/`perfil_global_de`, `banco_conexao.
 
 ## Pontos de atenção
 
-- `mod_tecnico/backup/*` é runtime (não commitado além do `.gitkeep`); `mod_tecnico/software/*` é conteúdo opcional versionável.
+- `mod_tecnico/backup/*` é runtime (não commitado além do `.gitkeep`); `mod_tecnico/software/*` é conteúdo opcional versionável. Estado auditado: `software/` contém `.gitkeep` + `instalador/` (exemplo concreto de conteúdo); `backup/` está vazio (sem `.gitkeep` — garantido em runtime por `os.makedirs` em `init_db()`).
+- `data-testid` para QA: `tecnico-soft-*`, `tecnico-baixar`, `tecnico-backup-nomepc`, `tecnico-backup-ip`, `tecnico-criar-pasta`, `tecnico-backup-select`, `tecnico-upload`, `tecnico-baixar-{safe_id}`.
 - `webkitdirectory` é não-padrão — JS fail-soft; fallback Ctrl+A múltiplo.
 - Zips temporários via `tempfile.NamedTemporaryFile(delete=False)` — limpeza SO; `cleanup_pdf` não afeta este módulo.
 - `tb_backup.pasta_nome` UNIQUE impede colisão mesmo com clocks iguais (segunda tentativa no mesmo minuto falha com "Pasta já existe").

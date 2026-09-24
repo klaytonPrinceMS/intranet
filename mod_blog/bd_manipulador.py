@@ -408,7 +408,9 @@ def listar_config_local():
 
 
 def _ordem_sql(ordem):
-    """Converte ordem ('ASC'/'DESC') para SQL seguro."""
+    """Maps ordering to safe SQL (ASC/DESC only).
+
+    Converte ordem ('ASC'/'DESC') para SQL seguro."""
     try:
         ordem = (ordem or "DESC").strip().upper()
         if ordem in ("ASC", "DESC"):
@@ -562,7 +564,9 @@ IMAGEM_EXPIRACAO_MIN = 5
 
 
 def _nome_usuario_seguro(usuario):
-    """Normaliza o login para uso no nome do arquivo (só [a-z0-9_-])."""
+    """Normalizes login for filenames ([a-z0-9_-] only).
+
+    Normaliza o login para uso no nome do arquivo (só [a-z0-9_-])."""
     base = re.sub(r"[^a-zA-Z0-9_-]", "_", (usuario or "anonimo").strip() or "anonimo")
     return base[:40].lower() or "anonimo"
 
@@ -804,7 +808,9 @@ def excluir_postagens_em_lote(ids, autor):
 @requer_pode_publicar(arg_usuario="autor")
 @auditado(modulo="blog", acao="despublicar_postagem")
 def despublicar_postagem(id_post, autor):
-    """Remove uma postagem da exibição pública (ativo=0, despublicar).
+    """Hides a post from the public feed (ativo=0, unpublish).
+
+    Remove uma postagem da exibição pública (ativo=0, despublicar).
 
     Equivale a ocultar do histórico sem a remover do banco. Permite republicar
     posteriormente via publicar_postagem.
@@ -819,7 +825,9 @@ def despublicar_postagem(id_post, autor):
 @requer_pode_publicar(arg_usuario="autor")
 @auditado(modulo="blog", acao="publicar_postagem")
 def publicar_postagem(id_post, autor):
-    """Reativa/publica uma postagem despublicada (ativo=1)."""
+    """Re-publishes a hidden post (ativo=1).
+
+    Reativa/publica uma postagem despublicada (ativo=1)."""
     afetadas = _crud.atualizar(
         "UPDATE tb_postagens SET ativo=1 WHERE id=?", (id_post,))
     _log().info(f"postagem republicada (ativo=1) #{id_post} por {autor}")
@@ -960,7 +968,9 @@ def ajustar_imagem_html(html_texto, alinhamento=None, largura=None):
 
 
 def _merge_style(base, extra):
-    """Concatena estilos CSS sem duplicar o separador ';'."""
+    """Merges CSS declarations without duplicating ';'.
+
+    Concatena estilos CSS sem duplicar o separador ';'."""
     base = (base or "").strip()
     if not base:
         return extra
@@ -1031,7 +1041,9 @@ class _FormatadorBlog(HTMLParser):
 
 
 def _markdown_leve(texto):
-    """Conversão mínima de Markdown para HTML (sobre texto já escapado):
+    """Minimal Markdown to HTML (on already-escaped text).
+
+    Conversão mínima de Markdown para HTML (sobre texto já escapado):
     - '#'/'##'/'###' -> h1/h2/h3
     - '- ' ou '* ' -> itens de lista
     - '**texto**' -> negrito
@@ -1183,7 +1195,9 @@ def obter_modo_exibicao():
 
 
 def obter_postagem_unica_id():
-    """Retorna o id da postagem fixada no modo 'unica' (None = mais recente).
+    """Returns the pinned post id for 'unica' mode (None = latest).
+
+    Retorna o id da postagem fixada no modo 'unica' (None = mais recente).
 
     Lê `blog_postagem_unica_id` da config local; valor ausente/inválido
     devolve `None` — o feed exibe a publicação mais recente (comportamento
@@ -1197,7 +1211,9 @@ def obter_postagem_unica_id():
 
 
 def definir_postagem_unica_id(pid):
-    """Fixa o id da postagem exibida no modo 'unica' (None/'' = mais recente).
+    """Pins the post id shown in 'unica' mode (None/'' = latest).
+
+    Fixa o id da postagem exibida no modo 'unica' (None/'' = mais recente).
 
     Grava `blog_postagem_unica_id` na config local (upsert); `None`/'' limpa
     a fixação, voltando a exibir a mais recente. Retorna `True` em sucesso

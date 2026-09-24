@@ -14,11 +14,11 @@ Banco e visualizador da trilha de auditoria LGPD. A **escrita** é feita pelos d
 
 ## Banco de dados
 
-Criador vigente: `init_db_auditoria()` em `bd_manipulador.py:25-38` (executado no import e pelo bootstrap central).
+Criador vigente: `init_db_auditoria()` em `bd_manipulador.py` (executado no import e pelo bootstrap central).
 
 | Tabela | Conteúdo |
 |:---|:---|
-| `tb_auditoria_<modulo>` | UMA POR MÓDULO produtor: `usuario`, `modulo`, `acao`, `descricao`, `timestamp` (local — RF-08), `hash_arquivo`, `ip`, `user_agent`, `client_hostname`; índices por módulo/usuário/timestamp |
+| `tb_auditoria_<modulo>` | UMA POR MÓDULO produtor: `usuario`, `modulo`, `acao`, `descricao`, `timestamp` (local — RF-08), `hash_arquivo`, `ip`, `user_agent`, `client_hostname`; índices por módulo/usuário/timestamp. O `hash_arquivo` é opaco: o cálculo (ex. SHA-256) é feito pelo módulo produtor e repassado via `audit_log` → `registrar_auditoria` |
 | `tb_auditoria_meta` | registro dos módulos produtores (`modulo` PK, `nome`, `criada_em`) |
 
 - **Migração idempotente** do legado central (`migrar_dados_existentes`) + remoção da antiga `tb_auditoria` do banco central.
@@ -34,7 +34,7 @@ Criador vigente: `init_db_auditoria()` em `bd_manipulador.py:25-38` (executado n
 - **Exportação CSV**: página corrente respeitando campos/ordem do auditor.
 - **Colunas padrão**: Data/Hora, Usuário, Módulo, Ação (cores por tipo — `CORES_ACAO`), Descrição (100 chars), Hash, IP, dispositivo.
 - **Aba Observabilidade** (quando a stack OTel está no ar): atalhos para os dashboards Grafana (Visão Geral, Traces, Logs) + aviso LGPD sobre a senha do Grafana.
-- **Painel Administração**: `auditoria_limite`, `auditoria_retencao_dias`, `auditoria_texto_header` + card padrão **"Configurações de cores"** (`auditoria_*` — vazios usam o padrão do PRÓPRIO módulo via `PADROES_TEMA["auditoria"]` = `#000000`, sem herança do tema do sistema); salvar audita a si mesmo. O cabeçalho usa `chave_modulo="auditoria"` (`telas.py:345`): a borda de destaque é a **mesma cor dos botões do módulo**.
+- **Painel Administração standalone** (`telas_administracao.py`, rota `/admin/auditoria`): `auditoria_limite`, `auditoria_retencao_dias`, `auditoria_texto_header` + card padrão **"Configurações de cores"** (`auditoria_*` — vazios usam o padrão do PRÓPRIO módulo via `PADROES_TEMA["auditoria"]` = `#000000`, sem herança do tema do sistema); salvar audita a si mesmo. O cabeçalho usa `chave_modulo="auditoria"` (`telas.py:345`): a borda de destaque é a **mesma cor dos botões do módulo**.
 - **Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 `kbp-web-design`)**: `overflow-x-auto` em tabs/filtros/tabela, barra de filtros `flex-wrap` `gap` via `.style`, `truncate` em colunas longas, dialogs `w-full max-w`; proposta P0/P1/P2 por `container`/`row`/`grid` (header `flex-wrap` `min-width:0`).
 - **Versionamento**: `versao_modulo:auditoria = 1.0.260908`.
 
@@ -47,7 +47,7 @@ Criador vigente: `init_db_auditoria()` em `bd_manipulador.py:25-38` (executado n
 
 ## Rota e integrações
 
-- Rota: `/auditoria` (chave `auditoria`) — `main.py:325`.
+- Rota: `/auditoria` (chave `auditoria`) — `main.py`. Administração: `/admin/auditoria` (`telas_administracao.mostrar_administracao`).
 - **Escrita**: `audit_log` (núcleo) → `registrar_auditoria` — produtores: todos os módulos + o núcleo (login/logout/falhas/config/backups).
 - **Leitura**: `buscar_logs`/`get_modulos_com_auditoria`/`contar_registros` (usado pelo resumo do dashboard).
 - **Poda**: job diário `poda_auditoria` (`mod_intranet/rotinas.py:74-103`).

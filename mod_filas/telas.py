@@ -1,6 +1,6 @@
-"""Tela do módulo Filas — gestor de chamadas + TV com voz e mídia.
+"""EN: Filas screens — call manager + TV with voice and media playlist.
 
-EN: Queue screen — multi-queue manager, sequential steps, TV with voice and media playlist.
+Tela do módulo Filas — gestor de chamadas + TV com voz e mídia.
 """
 
 import sys
@@ -90,7 +90,9 @@ async def _salvar_arquivo_midia(e, fila_id, user_nome, volume, duracao, slot, re
 
 
 def bloco_midia_fila(fila_id: int, user_nome: str, recarregar):
-    """Mídias da fila: upload mp3/mp4/foto + sequência (exibição) + volume. Reuso em /filas e /admin/filas."""
+    """EN: Queue media block (upload + order + volume + backdrop). Reused in /filas and /admin/filas.
+
+    PT-BR: Mídias da fila: upload mp3/mp4/foto + sequência (exibição) + volume. Reuso em /filas e /admin/filas."""
     with ui.expansion("Mídias desta fila — áudio, foto e vídeo (sequência + volume)", icon="perm_media").classes("w-full").style("min-width: 0"):
         with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
             _info_m = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: mídias"')
@@ -236,9 +238,9 @@ def _estilo_manchester(cor: str) -> str:
 
 
 def _fundo_rodape_escuro(cor_botao: str) -> str:
-    """Fundo escuro do rodapé de notícias da TV a partir da cor do tema.
+    """EN: Dark TV news footer background derived from the module theme color.
 
-    EN: Dark TV news footer background derived from the module theme color.
+    PT-BR: Fundo escuro do rodapé de notícias da TV a partir da cor do tema.
     Usa a cor do tema quando ela já é escura (luminância < 0,45); quando o
     tema está claro, cai em #1b1b1b para manter o contraste com o texto claro.
     """
@@ -262,7 +264,9 @@ def _fundo_rodape_escuro(cor_botao: str) -> str:
 
 
 def bloco_nomes_fila(fila_id: int, user_nome: str, recarregar):
-    """Lista ÚNICA da fila (só visível nela): importa, ajusta prioridade e envia p/ outra fila da mesma TV."""
+    """EN: Single name list of the queue (import, priority, transfer within same TV).
+
+    PT-BR: Lista ÚNICA da fila (só visível nela): importa, ajusta prioridade e envia p/ outra fila da mesma TV."""
     with ui.expansion("Nomes para chamar (lista única desta fila)", icon="format_list_numbered").classes("w-full").style("min-width: 0"):
         _info_n = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: nomes"')
         with _info_n:
@@ -395,8 +399,9 @@ def bloco_nomes_fila(fila_id: int, user_nome: str, recarregar):
 
 
 def bloco_etapas(fid: int, nome_fila: str, tv_grupo: str, user_nome: str, recarregar):
-    """Painel por etapa/sala: quem está na sala pede o próximo, vincula nome e ajusta Manchester.
+    """EN: Per-step/room panel (next call, name link, Manchester). Any attendant with access.
 
+    PT-BR: Painel por etapa/sala: quem está na sala pede o próximo, vincula nome e ajusta Manchester.
     Qualquer atendente com acesso pode usar (não só dono/admin). Reuso em /filas e /admin/filas.
     """
     from urllib.parse import quote as _q
@@ -457,7 +462,9 @@ def bloco_etapas(fid: int, nome_fila: str, tv_grupo: str, user_nome: str, recarr
 
 
 def dialogo_editar_fila(fid: int, user_nome: str, pode_liberar: bool, recarregar, atualizar_grupos=None):
-    """Editar fila: volta e altera tudo que foi definido na criação. Reuso em /filas e /admin/filas."""
+    """EN: Edit queue dialog (all creation fields). Reused in /filas and /admin/filas.
+
+    PT-BR: Editar fila: volta e altera tudo que foi definido na criação. Reuso em /filas e /admin/filas."""
     fila = filas.obter_fila(fid)
     if not fila:
         notificar("Fila não encontrada", type="negative")
@@ -588,7 +595,9 @@ def dialogo_editar_fila(fid: int, user_nome: str, pode_liberar: bool, recarregar
 
 
 def bloco_liberar_acesso(fid: int, user_nome: str, recarregar):
-    """Buscar usuários cadastrados (ativos) e chamá-los para a fila + lista de liberados. Reuso no Editar e no Acesso."""
+    """EN: Search registered users and grant queue access. Reused in Edit and Access dialogs.
+
+    PT-BR: Buscar usuários cadastrados (ativos) e chamá-los para a fila + lista de liberados. Reuso no Editar e no Acesso."""
     ui.label("Liberar acesso a esta fila — pesquise quem já usa o sistema e chame").classes("text-caption font-bold")
     box_lib = ui.column().classes("w-full gap-1")
 
@@ -641,7 +650,9 @@ def bloco_liberar_acesso(fid: int, user_nome: str, recarregar):
 
 
 def dialogo_acesso_fila(fid: int, user_nome: str, recarregar):
-    """Diálogo focado: chamar usuários para a fila. Atalho do botão Acesso no card."""
+    """EN: Focused dialog: invite users to the queue. Shortcut of the card Access button.
+
+    PT-BR: Diálogo focado: chamar usuários para a fila. Atalho do botão Acesso no card."""
     fila = filas.obter_fila(fid)
     with ui.dialog() as dlg, ui.card().classes("w-full max-w-[560px] p-4 gap-3"):
         ui.label(f"Acesso — {fila[1] if fila else ''}").classes("font-bold text-h6")
@@ -652,7 +663,9 @@ def dialogo_acesso_fila(fid: int, user_nome: str, recarregar):
 
 
 def bloco_controle_tv(chave: str, rotulo: str, fila_ids=None):
-    """Edição: vê o que está reproduzindo + pausa/avança/retorna. Na TV não há controles."""
+    """EN: TV remote control (pause/resume/previous/next). Controls live only in edit, never on TV.
+
+    PT-BR: Edição: vê o que está reproduzindo + pausa/avança/retorna. Na TV não há controles."""
     with ui.expansion(f"Controle da TV — {rotulo} (o que está tocando + pausar/avançar/retornar)", icon="tune").classes("w-full").style("min-width: 0"):
         with ui.row().classes("w-full items-center flex-wrap").style("gap: 0.5rem; min-width: 0"):
             _info_tv = ui.icon("info_outline", size="16px").classes("text-grey-5").props('aria-label="Ajuda: controle da TV"')
@@ -685,6 +698,9 @@ def bloco_controle_tv(chave: str, rotulo: str, fila_ids=None):
 
 
 def mostrar_tela(user_nome: str, perfil_global: str = ""):
+    """EN: Multi-queue panel /filas (own + granted queues; create, call, steps, names, media, TV control).
+
+    PT-BR: Painel /filas (filas próprias + liberadas; criar, chamar, etapas, nomes, mídias, controle da TV)."""
     if not _pode_acessar(user_nome, perfil_global):
         with ui.column().classes("w-full items-center p-12 gap-3"):
             ui.icon("block", size="64px").classes("text-red-8")
@@ -1287,7 +1303,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
 
 
 def mostrar_tv(fila_id: int = None, tv_grupo: str = None, etapa: str = None):
-    """TV — mídia ocupa a tela (>90%) + faixa lateral com senhas e 3 últimos. Sem controles na TV (só na edição)."""
+    """EN: Public TV display (media fullscreen + side ticket strip + news footer; serialized voice, no on-TV controls).
+
+    PT-BR: TV — mídia ocupa a tela (>90%) + faixa lateral com senhas e 3 últimos. Sem controles na TV (só na edição)."""
     from mod_intranet.tema_modulo import ler_tema as _ler
     from mod_intranet.bd_conexao import get_config as _get_cfg
     tema = _ler("filas")

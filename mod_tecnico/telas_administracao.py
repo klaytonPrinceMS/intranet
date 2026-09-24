@@ -1,4 +1,7 @@
-"""Painel de administração do módulo Técnico (rota /admin/tecnico)."""
+"""EN: Technical module admin panel (route /admin/tecnico).
+
+PT-BR: Painel de administração do módulo Técnico (rota /admin/tecnico).
+"""
 
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -12,6 +15,10 @@ log = observabilidade.get_logger("tecnico")
 
 
 def mostrar_administracao(usuario_logado: str = ""):
+    """EN: Render /admin/tecnico (appearance + tecnico_max_zip_mb + recent backups).
+
+    PT-BR: Renderiza /admin/tecnico (aparência + tecnico_max_zip_mb + backups recentes).
+    """
     tema = ler_tema("tecnico", cor_botao="#000000", cor_texto_botao="#FFFFFF",
                     texto_header="Ferramentas e backup (admin).")
     tema["_defaults"] = {

@@ -1,6 +1,6 @@
-"""Tela do módulo Técnico — software e backup (rota /tecnico).
+"""EN: Technical screen — software download + PC backup (route /tecnico).
 
-EN: Technical screen — software download + PC backup (route /tecnico).
+PT-BR: Tela do módulo Técnico — software e backup (rota /tecnico).
 """
 
 import os
@@ -22,6 +22,10 @@ log = observabilidade.get_logger("tecnico")
 
 
 def _pode_acessar(user_nome: str, perfil_global: str) -> bool:
+    """EN: Check technical module access (admin or per-module grant).
+
+    PT-BR: Verifica acesso ao módulo Técnico (admin ou liberação por módulo).
+    """
     if perfil_global == "administrador_geral":
         return True
     try:
@@ -31,7 +35,9 @@ def _pode_acessar(user_nome: str, perfil_global: str) -> bool:
 
 
 def mostrar_tela(user_nome: str, perfil_global: str = ""):
-    """Renderiza a tela do Técnico (acesso por módulo).
+    """EN: Render Technical screen (module-gated Software | Backup tabs).
+
+    PT-BR: Renderiza a tela do Técnico (acesso por módulo).
 
     Monta: cabeçalho + abas Software | Backup + listagens.
     """
@@ -67,7 +73,10 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
 # ==================== ABA SOFTWARE ====================
 
 def _painel_software(user_nome: str):
-    """Lista recursiva de software/ com checkbox + download zip."""
+    """EN: Recursive software/ list with checkbox + zip download.
+
+    PT-BR: Lista recursiva de software/ com checkbox + download zip.
+    """
     wrap = ui.column().classes("w-full gap-3")
 
     def render():
@@ -152,6 +161,10 @@ def _painel_software(user_nome: str):
 
 
 def _fmt_bytes(n: int) -> str:
+    """EN: Format bytes as B/KB/MB/GB/TB.
+
+    PT-BR: Formata bytes como B/KB/MB/GB/TB.
+    """
     try:
         n = int(n)
     except Exception:
@@ -164,13 +177,20 @@ def _fmt_bytes(n: int) -> str:
 
 
 def _safe_id(s: str) -> str:
+    """EN: Sanitize string for data-testid use (max 40 chars).
+
+    PT-BR: Sanitiza string para uso em data-testid (máx. 40 chars).
+    """
     return re.sub(r"[^a-zA-Z0-9_-]", "_", s)[:40]
 
 
 # ==================== ABA BACKUP ====================
 
 def _painel_backup(user_nome: str):
-    """Fluxo: Criar pasta YYYYMMDD_HHMM_nomePc_ip + upload (webkitdirectory) + lista por owner."""
+    """EN: YYYYMMDD_HHMM_nomePc_ip folder flow + upload (webkitdirectory) + owner list.
+
+    PT-BR: Fluxo: Criar pasta YYYYMMDD_HHMM_nomePc_ip + upload (webkitdirectory) + lista por owner.
+    """
     wrap = ui.column().classes("w-full gap-3")
 
     # Sugerir IP do cliente via header (fail-soft)
@@ -311,6 +331,10 @@ def _painel_backup(user_nome: str):
 
 
 def _dlg_listar(pasta_nome: str, user_nome: str):
+    """EN: Preview dialog listing up to 200 files of a backup folder.
+
+    PT-BR: Diálogo de prévia listando até 200 arquivos da pasta de backup.
+    """
     from nicegui import ui as _ui
     from mod_intranet.ui_comum import dialogo_card
     row = tec.obter_backup(pasta_nome)

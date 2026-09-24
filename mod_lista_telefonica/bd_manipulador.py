@@ -1,9 +1,13 @@
-"""Lista Telefônica — BD próprio (organograma expansível).
+"""EN: Phone Directory — own database (expandable organogram).
+DB: db_mod_lista_telefonica.db (WAL). Tables: tb_unidade (secretaria|setor|subsetor
+hierarchical), tb_contato (alphabetical). No cross-query. Phones as free text
+with display via mod_intranet.telefone (DDI +55). Search via normalized LIKE in memory.
 
+PT-BR: Lista Telefônica — BD próprio (organograma expansível).
 BD: db_mod_lista_telefonica.db (WAL)
-Tabelas: tb_unidade (secretaria|setor|subsetor hierárquico), tb_contato (alfabético),
-         tb_config_lista (prefixo lista_telefonica)
-Sem cross-query. Telefones como texto livre. Busca via LIKE.
+Tabelas: tb_unidade (secretaria|setor|subsetor hierárquico), tb_contato (alfabético).
+Sem cross-query. Telefones como texto livre com exibição via mod_intranet.telefone
+(DDI +55). Busca via LIKE normalizado em memória.
 """
 
 import os

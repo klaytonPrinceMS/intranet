@@ -55,9 +55,9 @@ Coberto por `test/verifica_ui_comum.py` (190 verificações — seção "edit_pd
 
 - **Cotas em 4 níveis**, todas lidas de `tb_config` central a cada uso:
   - global: uso real em disco de `mod_edit_pdf/editorPDF/` ≤ `cotadisco_global_gb` (default 10 GB);
-  - por usuário: `editpdf_usuario_gb` (default 1 GB);
-  - lote: `editpdf_lote_arquivos` arquivos / `editpdf_lote_mb` MB numa janela deslizante de 60 s (o valor de MB é teto **por envio/lote**, não acumulado por usuário);
-  - estoque: máximo simultâneo de arquivos tipo `upload` por usuário (= limite do lote).
+  - por usuário: `editar_pdf_usuario_gb` (default 1 GB);
+  - lote: `editar_pdf_lote_arquivos` arquivos / `editar_pdf_lote_mb` MB numa janela deslizante de 60 s (`JANELA_LOTE_S` em `telas.py`, não configurável — o valor de MB é teto **por envio/lote**, não acumulado por usuário);
+  - estoque: máximo simultâneo de arquivos tipo `upload` por usuário (= limite do lote, via `contar_uploads_ativos()` — conta só arquivos `upload`/`ativo=1` ainda presentes em disco).
 - **Limite de MB é por ENVIO, não acumulado**: `_receber_lote` faz **pré-checagem** de `ativos_upload+len(pdfs) > lote_max` e `sum(f.size()) > lote_bytes_max` **antes** de gravar qualquer arquivo (rejeita nominalmente o lote inteiro), depois valida por-arquivo na janela de 60 s. Um envio único de 350 MB com limite 200 MB é recusado de imediato.
 - **Expiração**: executada pelo scheduler do núcleo a cada 1 min (sem login), critério mtime; remove do disco, inativa registro, devolve cota e audita como ator `sistema`.
 - **Prefixo obrigatório**: `dataHora_usuario_operacao_nomeArquivo.pdf` — cada usuário vê apenas os próprios arquivos.
@@ -65,13 +65,18 @@ Coberto por `test/verifica_ui_comum.py` (190 verificações — seção "edit_pd
 
 ## Integrações com o núcleo
 
-Usa `get_connection`/`get_config`/`set_config` centrais e `audit_log`. Chaves de configuração: `cotadisco_global_gb`, `editpdf_lote_arquivos`, `editpdf_lote_mb`, `editpdf_usuario_gb`, `editpdf_expiracao_min`; tema: `editpdf_cor_botao`, `editpdf_cor_texto_botao`, `editpdf_cor_fundo`, `editpdf_cor_titulo`, `editpdf_btn_tamanho`. O scheduler central chama `expirar_antigos()` diretamente.
+Usa `get_connection`/`get_config`/`set_config` centrais e `audit_log`. Chaves de configuração: `cotadisco_global_gb`, `editar_pdf_lote_arquivos`, `editar_pdf_lote_mb`, `editar_pdf_usuario_gb`, `editar_pdf_expiracao_min` (lidas via `cfg_*` em `bd_manipulador.py`); textos da tela: `editar_pdf_texto_upload_titulo`, `editar_pdf_texto_upload_hint`, `editar_pdf_texto_upload_label`, `editar_pdf_texto_header_sub`; tema: `editpdf_cor_botao`, `editpdf_cor_texto_botao`, `editpdf_cor_fundo`, `editpdf_cor_titulo`, `editpdf_btn_tamanho` (prefixo `editpdf_*` — distinto do prefixo `editar_pdf_*` das cotas). O scheduler central (`mod_intranet/rotinas.py`, job `cleanup_pdf` a cada 1 min) chama `expirar_antigos(minutos=cfg_expiracao_min())` diretamente.
 
 **Versão individual do módulo**: `versao_modulo:editar_pdf = 1.0.260908` (em `tb_config` central — seed principal idempotente em `bd_conexao.init_db()`; o `bd_manipulador.py::_semear_versao_modulo` é duplicado inofensivo). Exibida no rodapé ao lado da versão global quando o usuário navega em `/edit-pdf`. Atualizar manualmente a cada alteração do `mod_edit_pdf` — não mexer na versão global nem na dos demais módulos.
 
 ## Pontos de atenção
 
 - `bd_criador.py` morto/divergente — não executar.
+- Motor de PDF mora em `mod_intranet/pdf_operacoes.py` (re-exportado por `bd_manipulador.py`): `hash_sha256`, `op_reduzir` (leve/agressivo), `op_juntar`, `op_cortar`, `op_dividir` (legado 1 filtro), `op_dividir_partes` (vigente: modos `pagina`/`parimpar`/`cortes`/`intervalos`), `op_verificar`, mais helpers `partes_*`. A tela usa `op_dividir_partes`.
+- ZIP tem duas entradas: `zip_do_usuario()` (todos os ativos) e `zip_por_ids()` (só ids marcados — usada pela tela); `deletar_arquivo()` faz disco + soft delete + estorno de cota com auditoria `deletar`.
+- Ganchos LGPD/usuário: `remover_vinculos_usuario()` (remove disco + registros + cota) e `renomear_usuario()` (propaga renomeio em `tb_arquivos`/`tb_cota_disco`); `contar_arquivos_ativos()` alimenta o Resumo do `main.py`.
+- `data-testid` da tela (`telas.py`): `editar_pdf-atualizar`, `editar_pdf-verificar`, `editar_pdf-juntar`, `editar_pdf-excluir`, `editar_pdf-baixar-zip`, `editar_pdf-baixar-pdfs`, `editar_pdf-enviar`, `editar_pdf-modo-reduzir`, `editar_pdf-reduzir`, `editar_pdf-cortar`, `editar_pdf-dividir` (+ compat legada `editpdf-upload`).
+- Expiração manual "Expirar agora" (`telas_administracao._expirar_agora`) chama `expirar_antigos(minutos=cfg_expiracao_min())`; a automática roda via job `cleanup_pdf` (1 min, sem login) com critério mtime, inativando registros e devolvendo cota como ator `sistema`.
 - **`_cfg` depende de `get_config` importado** no topo de `bd_manipulador.py`. Se faltar `get_config` no `from mod_intranet.bd_conexao import …`, cada leitura cai em `NameError`→`except`→ retorna **sempre o default** (bug real: MB configurado em 200 e o sistema usava 1024; arquivos configurados em 100 e usava 10). Conferir o import ao mexer no topo do arquivo.
 - Limite de "estoque de uploads" reaproveita o valor do limite de lote (não é configurável separadamente).
 - Redução Agressivo transforma texto em imagem (perde seleção/busca no PDF).

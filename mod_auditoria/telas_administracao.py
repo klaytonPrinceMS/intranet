@@ -18,7 +18,9 @@ log = observabilidade.get_logger("auditoria")
 
 
 def _cfg(chave, default):
-    """Fetch an auditoria config value, returning default on failure."""
+    """Fetch an auditoria config value, returning default on failure.
+
+    Lê um valor de configuração `auditoria_<chave>`; retorna o padrão em falha."""
     try:
         return get_config(f"auditoria_{chave}", str(default))
     except Exception:
@@ -27,7 +29,9 @@ def _cfg(chave, default):
 
 
 def _tema(chave, default):
-    """Fetch a theme config value, returning default on failure."""
+    """Fetch a theme config value, returning default on failure.
+
+    Lê um valor de tema `auditoria_<chave>`; retorna o padrão em falha."""
     try:
         return (get_config(f"auditoria_{chave}", default) or "").strip() or default
     except Exception:
@@ -35,7 +39,9 @@ def _tema(chave, default):
 
 
 def _btn_cls(tamanho):
-    """Return CSS classes for button size."""
+    """Return CSS classes for button size.
+
+    Retorna as classes CSS correspondentes ao tamanho do botão."""
     if tamanho == "small":
         return "min-w-[140px] text-sm"
     if tamanho == "large":
@@ -44,7 +50,9 @@ def _btn_cls(tamanho):
 
 
 def _btn_style(cor_botao, cor_txt_botao):
-    """Build inline style dict for button colour."""
+    """Build inline style dict for button colour.
+
+    Monta o estilo inline com as cores do botão e do texto."""
     st = ""
     if cor_botao:
         st += f"background-color:{cor_botao};"

@@ -1,4 +1,6 @@
-"""Models package for mod_lista_telefonica — dataclasses + SQLAlchemy imperativo."""
+"""EN: Models package for mod_lista_telefonica — dataclasses mirroring tb_unidade/tb_contato.
+PT-BR: Pacote de modelos do mod_lista_telefonica — dataclasses espelhando tb_unidade/tb_contato.
+"""
 
 from dataclasses import dataclass
 

@@ -1,3 +1,13 @@
+"""Central authentication, sessions and module registry (LGPD traceable).
+
+Autenticação central, sessões revogáveis e cadastro de módulos (rastreável LGPD).
+
+EN: bcrypt login, revocable sessions (cookie_hash via secrets), per-module
+role checks delegating user data to mod_gest_cad_usuario, tb_modulos registry
+with order/route editing and indispensable-module guard.
+PT: login bcrypt, sessões revogáveis (cookie_hash via secrets), checagem de
+papel por módulo delegando dados ao mod_gest_cad_usuario, cadastro tb_modulos
+com edição de ordem/roda e guarda de módulos indispensáveis."""
 import bcrypt
 import os
 import hashlib

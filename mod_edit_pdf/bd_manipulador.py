@@ -17,7 +17,9 @@ from mod_intranet.bd_manipulador import audit_log
 
 
 def _log():
-    """Logger do módulo (loguru) — arquivo dedicado logs/edit_pdf_<data>.log."""
+    """Module logger (loguru) — dedicated file logs/edit_pdf_<data>.log.
+
+    Logger do módulo (loguru) — arquivo dedicado logs/edit_pdf_<data>.log."""
     try:
         from mod_intranet import observabilidade
         return observabilidade.get_logger("edit_pdf")
@@ -38,7 +40,9 @@ QUOTA_USUARIO_BYTES = 1 * 1024**3           # 1 GB por usuário (legado; usar cf
 # ============ CONFIGURAÇÕES DINÂMICAS (tb_config central, prefixo editar_pdf_) ============
 
 def _cfg(chave, default):
-    """Reads an `editar_pdf_<chave>` key from the central tb_config (fail-soft)."""
+    """Reads an `editar_pdf_<chave>` key from the central tb_config (fail-soft).
+
+    Lê a chave `editar_pdf_<chave>` da tb_config central (fail-soft)."""
     try:
         return get_config(f"editar_pdf_{chave}", str(default))
     except Exception:
@@ -46,7 +50,9 @@ def _cfg(chave, default):
 
 
 def cfg_lote_arquivos():
-    """Maximum number of files per upload batch (`editar_pdf_lote_arquivos`, min 1)."""
+    """Maximum number of files per upload batch (`editar_pdf_lote_arquivos`, min 1).
+
+    Máximo de arquivos por lote de upload (`editar_pdf_lote_arquivos`, mín. 1)."""
     try:
         return max(1, int(_cfg("lote_arquivos", 10)))
     except ValueError:
@@ -54,7 +60,9 @@ def cfg_lote_arquivos():
 
 
 def cfg_lote_mb():
-    """Maximum MB per upload batch (`editar_pdf_lote_mb`, min 1)."""
+    """Maximum MB per upload batch (`editar_pdf_lote_mb`, min 1).
+
+    Máximo de MB por lote de upload (`editar_pdf_lote_mb`, mín. 1)."""
     try:
         return max(1, int(_cfg("lote_mb", 1024)))
     except ValueError:
@@ -62,7 +70,9 @@ def cfg_lote_mb():
 
 
 def cfg_usuario_gb():
-    """Per-user disk quota in GB (`editar_pdf_usuario_gb`, min 1)."""
+    """Per-user disk quota in GB (`editar_pdf_usuario_gb`, min 1).
+
+    Cota de disco por usuário em GB (`editar_pdf_usuario_gb`, mín. 1)."""
     try:
         return max(1, int(_cfg("usuario_gb", 1)))
     except ValueError:
@@ -70,7 +80,9 @@ def cfg_usuario_gb():
 
 
 def cfg_expiracao_min():
-    """File lifetime in minutes inside editorPDF (`editar_pdf_expiracao_min`, min 1)."""
+    """File lifetime in minutes inside editorPDF (`editar_pdf_expiracao_min`, min 1).
+
+    Tempo de vida do arquivo em minutos dentro de editorPDF (`editar_pdf_expiracao_min`, mín. 1)."""
     try:
         return max(1, int(_cfg("expiracao_min", 10)))
     except ValueError:
@@ -163,7 +175,9 @@ def _semear_versao_modulo():
         _log().exception("falha ao semear versão do módulo editar_pdf")
 
 def pasta_usuario(usuario):
-    """Returns (and creates if missing) the user's folder inside editorPDF/."""
+    """Returns (and creates if missing) the user's folder inside editorPDF/.
+
+    Retorna (criando se inexistente) a pasta do usuário dentro de editorPDF/."""
     try:
         p = os.path.join(PASTA_EDITOR, usuario)
         os.makedirs(p, exist_ok=True)
@@ -174,7 +188,9 @@ def pasta_usuario(usuario):
 
 
 def uso_global_bytes():
-    """Real disk usage of the editorPDF directory (all users, walked on disk)."""
+    """Real disk usage of the editorPDF directory (all users, walked on disk).
+
+    Uso real em disco do diretório editorPDF (todos os usuários, varredura em disco)."""
     try:
         total = 0
         if os.path.isdir(PASTA_EDITOR):
@@ -205,7 +221,9 @@ def nome_padronizado(usuario, operacao, nome_original):
 
 
 def _cota_global_bytes():
-    """Global disk quota in bytes (`cotadisco_global_gb`); fallback 10 GB."""
+    """Global disk quota in bytes (`cotadisco_global_gb`); fallback 10 GB.
+
+    Cota global de disco em bytes (`cotadisco_global_gb`); padrão 10 GB."""
     try:
         conn = get_connection()
         cur = conn.cursor()
@@ -220,7 +238,9 @@ def _cota_global_bytes():
 
 
 def verificar_quota(usuario, tamanho_bytes):
-    """Checks global and per-user quotas before saving. Returns (ok, msg)."""
+    """Checks global and per-user quotas before saving. Returns (ok, msg).
+
+    Verifica as cotas global e por usuário antes de gravar. Retorna (ok, msg)."""
     conn = _conn()
     try:
         cur = conn.cursor()
@@ -242,7 +262,9 @@ def verificar_quota(usuario, tamanho_bytes):
 
 
 def registrar_arquivo(usuario, caminho_fisico, operacao, tamanho_bytes=None):
-    """Registra arquivo existente no disco e atualiza cota. Retorna id ou None."""
+    """Registers a file already on disk and updates quota. Returns id or None.
+
+    Registra arquivo existente no disco e atualiza cota. Retorna id ou None."""
     if not os.path.isfile(caminho_fisico):
         return None
     if tamanho_bytes is None:
@@ -282,7 +304,9 @@ def registrar_arquivo(usuario, caminho_fisico, operacao, tamanho_bytes=None):
 
 
 def ui_notify_erro(msg):  # isolado para não acoplar UI na lógica
-    """Reports a quota error to console + loguru (UI kept out of the logic)."""
+    """Reports a quota error to console + loguru (UI kept out of the logic).
+
+    Reporta erro de cota no console + loguru (sem acoplar UI à lógica)."""
     try:
         print(f"[quota] {msg}")
         _log().error(f"[quota] {msg}")
@@ -316,7 +340,9 @@ def obter_meus_arquivos(usuario):
 
 
 def contar_uploads_ativos(usuario):
-    """Counts 'upload' files REALLY present in the user's space (stock limit)."""
+    """Counts 'upload' files REALLY present in the user's space (stock limit).
+
+    Conta os arquivos 'upload' REALMENTE presentes no espaço do usuário (limite de estoque)."""
     conn = _conn()
     try:
         cur = conn.cursor()
@@ -354,7 +380,9 @@ from mod_intranet.pdf_operacoes import (
 
 
 def zip_do_usuario(usuario):
-    """Zips ALL active files of the user. Returns the ZIP path."""
+    """Zips ALL active files of the user. Returns the ZIP path.
+
+    Compacta TODOS os arquivos ativos do usuário. Retorna o caminho do ZIP."""
     try:
         arquivos = obter_meus_arquivos(usuario)
         return _zipar(usuario, arquivos)
@@ -364,7 +392,9 @@ def zip_do_usuario(usuario):
 
 
 def zip_por_ids(usuario, ids):
-    """Zips only the given files (tb_arquivos ids). Returns path or None."""
+    """Zips only the given files (tb_arquivos ids). Returns path or None.
+
+    Compacta apenas os arquivos informados (ids de tb_arquivos). Retorna caminho ou None."""
     if not ids:
         return None
     conn = _conn()
@@ -383,7 +413,9 @@ def zip_por_ids(usuario, ids):
 
 
 def _zipar(usuario, arquivos):
-    """Writes the ZIP into the user's folder; removes it if nothing was included."""
+    """Writes the ZIP into the user's folder; removes it if nothing was included.
+
+    Grava o ZIP na pasta do usuário; remove se nada foi incluído."""
     try:
         if not arquivos:
             return None
@@ -410,7 +442,9 @@ def _zipar(usuario, arquivos):
 
 
 def deletar_arquivo(usuario, arquivo_id):
-    """Deletes a file (disk + soft delete + quota refund) and audits it."""
+    """Deletes a file (disk + soft delete + quota refund) and audits it.
+
+    Exclui um arquivo (disco + soft delete + estorno da cota) com auditoria."""
     conn = _conn()
     try:
         cur = conn.cursor()
@@ -482,7 +516,9 @@ def renomear_usuario(nome_atual, novo_nome):
 
 
 def contar_arquivos_ativos():
-    """Conta arquivos ativos do módulo (usado no Resumo do main.py)."""
+    """Counts the module's active files (used in main.py summary).
+
+    Conta arquivos ativos do módulo (usado no Resumo do main.py)."""
     conn = _conn()
     try:
         cur = conn.cursor()

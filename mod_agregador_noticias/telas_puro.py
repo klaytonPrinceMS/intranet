@@ -1,6 +1,6 @@
-"""Tela pura do Agregador — estilo original Noticia (gerarSite) com cards atuais.
+"""EN: Pure Aggregator display — original Noticia style (gerarSite) with current cards.
 
-EN: Pure display — original Noticia style with current cards.
+PT-BR: Tela pura do Agregador — estilo original Noticia (gerarSite) com cards atuais.
 Copia o padrão de exibição do repositório https://github.com/klaytonPrinceMS/Noticia
 (intro overlay, about section com tema, info-list) porém com os cards em uso
 (tema badge + tempo relativo, título link, descrição, miniatura 30×30 + ícone fonte 16×16).

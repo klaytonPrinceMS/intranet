@@ -22,6 +22,9 @@ PASTA_MIDIA = filas.PASTA_MIDIA
 
 
 def mostrar_administracao(usuario_logado: str = ""):
+    """EN: Admin panel /admin/filas (all queues, steps, voice/texts, names, media, global ambient audio, backup).
+
+    PT-BR: Painel /admin/filas (todas as filas, etapas, voz/textos, nomes, mídias, áudio global, backup)."""
     tema = ler_tema("filas", cor_botao="#000000", cor_texto_botao="#FFFFFF",
                     texto_header="Gestor de filas — multi-filas por local, fluxo sequencial e mídia da TV.")
     tema["_defaults"] = {

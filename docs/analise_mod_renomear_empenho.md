@@ -14,16 +14,15 @@ Extrai o nº do empenho/parcela (ou tipo especial EC/EE/EG/AE) do texto dos PDFs
 
 ### Tela — 6 abas internas
 
-A tela `/renomear-empenho` é organizada em abas manuais (padrão `mod_solicita_impressao/telas.py`), sem alterar o menu lateral global:
+A tela `/renomear-empenho` (`telas.py:mostrar_tela`) tem **4 abas** (admin: Navegar, Fila, Organizador, Solicitação; comum: só Navegar). A busca FTS5 vive no campo de pesquisa do Navegar e as Configurações no painel standalone (`telas_administracao.py`, `/admin/empenhos`):
 
 | Aba | Acesso | Conteúdo |
 |:---|:---|:---|
-| Navegar | todos | navegação recursiva/protegida (só PDFs), breadcrumb, baixar, revisar/renomear manual, solicitar envio, "Processar pasta agora" |
+| Navegar | todos | navegação recursiva/protegida (só PDFs), breadcrumb, baixar, revisar/renomear manual (`renomear_manual` com gate + edição ficha/parcela/ano), solicitar envio, "Processar pasta agora" |
 | Fila Renomeação | todos | pendentes recursivos, "Processar" individual e "Processar todos" |
-| Pesquisar | todos | busca FTS5 + tabela de empenhos renomeados |
-| Organizador | **admin** | organizar caixas, capas/matriz, validar matriz, inventário, ferramentas de PDF |
+| Organizador | **admin** | organizar caixas, capas/matriz (`gerar_matriz_organizador`/`validar_presenca_matriz`), inventário, ferramentas de PDF |
 | Solicitação | todos (admin gerencia) | fluxo comum→admin: e-mail/ZIP/recusa, lotes, histórico |
-| Configurações | **admin** | pastas monitoradas, aparência, template, campos, auditoria, quarentena, regras |
+| Configurações | **admin, painel `/admin/empenhos`** | pastas monitoradas, aparência, template, campos, quarentena (4b), regras com `valida_regex` anti-ReDoS |
 
 Admin = `administrador_geral` ou `eh_admin_do_modulo(usuario, "empenhos")` (`telas.py:76`).
 
@@ -35,7 +34,7 @@ Criador vigente: `init_db_empenho()` em `bd_manipulador.py:289`.
 |:---|:---|
 | `tb_empenhos` | nome original/final, numero_empenho, parcela, **tipo_especial**, ficha, ano, usuario, data, status ('ativo'), caminho; índice por número |
 | `tb_indexador_pesquisa` | fallback comum (`empenho_id`, `conteudo_texto`) |
-| `tb_indexador_pesquisa_fts5` | **VIRTUAL TABLE FTS5 com 32 colunas** do cabeçalho (RF-41); alimentada por trigger de exclusão + `reindexar_empenho()` |
+| `tb_indexador_pesquisa_fts5` | **VIRTUAL TABLE FTS5 (59 colunas de `FTS_COLS`, RF-41)**; alimentada por `reindexar_empenho()` + trigger de exclusão + `campo_destino` nas regras |
 | `tb_quarentena` | nome_arquivo, motivo, caminho_atual, data_insercao, processado |
 | `tb_levantamento` | **inventário vivo** — `nome_arquivo`, `caminho_atual UNIQUE`, `presente` (1/0), `status` (detectado/renomeado), `numero_empenho`, `parcela`, `ficha`, `ano`, `tipo_especial`, **`usuario` (ator do reconhecimento, `TEXT`, CREATE + `_migrar_coluna` idempotente)**, `conteudo_texto` (≤20k), `tamanho`, `mtime`, `data_deteccao`, `data_visto` |
 | `tb_regex_regras` | nome_regra UNIQUE, padrao_regra, substituicao, ativo, **campo_destino** (FTS customizado) |
@@ -62,14 +61,14 @@ Acesso pela chave do módulo `empenhos`; perfil define o que é visível (abas a
 | RF-002 | Consulta avançada com seleção por conteúdo (FTS5 + fallback LIKE) | ✅ Implementado (FTS5, máx. 50) |
 | RF-003 | Envio/exportação de cópia em ZIP (fluxo solicitação → ZIP/e-mail) | ✅ Implementado |
 | RF-004 | Gestão granular de permissão para download (`renomear_autorizar_download`) | ✅ Implementado |
-| RF-005 | Índice de busca textual (FTS) e extração preditiva | ✅ Implementado (`tb_indexador_pesquisa_fts5`, 32 colunas) |
+| RF-005 | Índice de busca textual (FTS) e extração preditiva | ✅ Implementado (`tb_indexador_pesquisa_fts5`, 59 colunas) |
 | RF-006 | Renomeação automática opcional (monitor `sistema`) | ✅ Implementado (job + manual) |
 | RF-007 | Biblioteca de leitura de PDF configurável (fallback) | ✅ Implementado (pipeline de extração) |
 | RF-008 | Tipos especiais de documento (EC/EE/EG/AE) | ✅ Implementado (`detectar_tipo_especial`/`extrair_dados_tipo_especial`) |
 | RF-009 | Organizador de documentos físicos | ✅ Implementado (caixas/subpastas + capas/matriz) |
 | RF-39 | Ações de usuário comum (e-mail/ZIP/download) | ✅ Implementado |
 | RF-40 | Monitor de pasta automático | ✅ Implementado (APScheduler, intervalo 60 s) |
-| RF-41 | Indexação FTS5 do cabeçalho | ✅ Implementado (32 colunas + campos customizados) |
+| RF-41 | Indexação FTS5 do cabeçalho | ✅ Implementado (59 colunas + campos customizados) |
 | RF-44 | Organizador completo com capas e matriz | ✅ Implementado (`gerar_matriz_organizador`, `validar_presenca_matriz`) |
 | RF-45 | Ferramentas de PDF embutidas (cortar/juntar/reduzir) | ✅ Implementado |
 
@@ -140,7 +139,7 @@ Mapeamento para esta implementação:
 | App standalone (login próprio + gestão de usuários + perfil) | Intranet modular reutiliza `mod_gest_cad_usuario`/`mod_intranet` (login, perfis, troca de senha) — **não duplicado** |
 | Editor de PDF (abas ENVIAR/auditoria PDF/scanner) | Já existe como módulo próprio `/edit-pdf` — **não duplicado** |
 | Auditoria em `auditoria.db`/`indice.db` separados | Banco exclusivo de auditoria (`db_mod_auditoria.db`, tabela `tb_auditoria_renomear_empenho`) + banco próprio do módulo (`tb_arquivos_auditoria`/`tb_eventos_arquivos`) |
-| Índice FTS5 (30 campos) | `tb_indexador_pesquisa_fts5` com **32 colunas** + campos customizados |
+| Índice FTS5 (30 campos) | `tb_indexador_pesquisa_fts5` com **59 colunas (`FTS_COLS`)** + campos customizados |
 | Tipos EC/EE/EG/AE/EX | EC/EE/EG/AE implementados; a desambiguação pelo conteúdo foi **corrigida** (nº do documento, não do empenho complementado) |
 | Monitor de pasta único (intervalo ~4 s) | Monitor **multi-pasta** (local/UNC, um por linha), intervalo padrão **60 s** |
 | Renomeação mesmo sem validação total | **Gate de validação** adicionado (renomeia só com nº identificado) |

@@ -22,9 +22,15 @@ Você é o subagente **kbp-doc**, especialista em documentação MkDocs.
 
 Documentação e código em Português BR.
 
-## Graphify — atualização obrigatória
+## Graphify — atualização obrigatória (infalível, à prova de falsa alegação)
 
-Ao final de TODA tarefa de documentação, atualizar o grafo de conhecimento a partir da raiz do projeto com `graphify update .` (no Windows: `.venv/Scripts/graphify.exe update .`). O comando é AST-only, sem custo de API. O plugin `graphify.js` apenas injeta o lembrete na sessão e não atualiza o grafo sozinho; sem essa execução, `graph.json` e `GRAPH_REPORT.md` em `graphify-out/` ficam defasados em relação a `/docs` e aos módulos `mod_*`. Se a tarefa alterou `/docs` de forma relevante, executar ainda a extração semântica via `/graphify --update` (com LLM) ou, quando não for possível, sinalizar a pendência no retorno. Validar o sucesso conferindo a data/hora nova de `graphify-out/graph.json` e a contagem de nós/arestas exibida na saída, e reportar o resultado no retorno.
+Toda tarefa de documentação TERMINA com `graphify update` executado DE VERDADE + verificação obrigatória. O plugin `graphify.js` apenas injeta o lembrete na sessão e NÃO atualiza o grafo sozinho; sem execução real, `graph.json` e `GRAPH_REPORT.md` em `graphify-out/` ficam defasados em relação a `/docs` e aos módulos `mod_*`.
+
+1. **Comando (a partir da raiz `C:\opencode`, UMA vez):** `.venv/Scripts/graphify.exe update .` (AST-only, sem custo de API). Se o `.exe` falhar com `can't open file '...graphify'` (shim quebrado), usar o fallback equivalente `.venv/Scripts/python.exe -m graphify update .` e registrar no retorno qual comando foi usado.
+2. **Verificação obrigatória (nunca pular):** antes de rodar, anotar o `LastWriteTime` de `graphify-out/graph.json`; após rodar, capturar a saída (`Rebuilt: N nodes, M edges, K communities`) e confirmar `LastWriteTime` NOVO de `graph.json` (posterior a qualquer edição em `docs/`, `mod_*/` ou `estrutura.md`). Incluir no retorno final: saída com nós/arestas + timestamp ANTES x DEPOIS + sucesso ou diagnóstico.
+3. **Regra batch-safe:** fases paralelas (várias instâncias simultâneas) PROÍBEM `update` (risco de conflito/corrupção do `graph.json`). Apenas a instância de consolidação ÚNICA e SEQUENCIAL executa o `update` uma vez ao final.
+4. **Proibido falsa alegação:** É PROIBIDO retornar "update executado" sem evidência de `mtime` novo. Falha silenciosa (exe quebrado, `.graphify_root` ausente, `stderr`, `manifest` desatualizado) deve ser diagnosticada e reportada, nunca mascarada.
+5. **Extração semântica LLM (`/graphify --update`):** permanece etapa separada com custo de API. Se a tarefa alterou `/docs` de forma relevante e a extração semântica não foi executada, sinalizar `extração semântica pendente` no retorno.
 
 ## Usuários pré-cadastrados (seed) — AGENTS.md §8.2
 

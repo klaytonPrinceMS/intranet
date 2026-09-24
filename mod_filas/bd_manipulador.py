@@ -30,6 +30,9 @@ def _log():
 
 
 def get_connection():
+    """EN: Open the module database connection (own DB db_mod_filas.db, WAL).
+
+    PT-BR: Abre a conexao do banco proprio (db_mod_filas.db, WAL)."""
     from mod_intranet.banco_conexao import conexao
     conn = conexao("filas")
     if conn is None:
@@ -350,7 +353,9 @@ def listar_acessos(fila_id: int) -> list:
 
 
 def liberar_acesso(fila_id: int, user_nome: str, ator: str = ""):
-    """Libera fila para usuário cadastrado (busca via gestão de usuários). Dono/admin."""
+    """EN: Grant queue access to a registered user (owner/admin only).
+
+    PT-BR: Libera fila para usuário cadastrado (busca via gestão de usuários). Dono/admin."""
     user_nome = (user_nome or "").strip()
     if not user_nome:
         return False, "Usuário é obrigatório"
@@ -424,7 +429,9 @@ VOZ_CAMPOS = ("fila", "senha", "nome", "destino", "guiche")
 
 
 def normalizar_voz_ordem(valor: str) -> tuple[bool, str]:
-    """Valida ordem da fala: só fila|senha|nome|destino|guiche, sem repetir; completa faltantes no fim."""
+    """EN: Validate the speech order (only fila|senha|nome|destino|guiche, no repeats; append missing at end).
+
+    PT-BR: Valida ordem da fala: só fila|senha|nome|destino|guiche, sem repetir; completa faltantes no fim."""
     vistos = []
     for tok in (valor or "").split(","):
         t = tok.strip().lower()
@@ -439,7 +446,9 @@ def normalizar_voz_ordem(valor: str) -> tuple[bool, str]:
 
 
 def obter_extras_fila(fila_id: int) -> dict:
-    """Config extras da fila: voz (quais campos + repetição) e textos da TV."""
+    """EN: Extra queue config: voice flags/order/repeat plus editable TV texts.
+
+    PT-BR: Config extras da fila: voz (quais campos + repetição) e textos da TV."""
     padrao = {"voz_nome": 1, "voz_senha": 1, "voz_destino": 1, "voz_guiche": 1,
               "voz_fila": 1, "voz_hora": 1, "voz_ordem": VOZ_ORDEM_PADRAO,
               "voz_repetir": 0, "voz_intervalo": 2, "tv_titulo": "",
@@ -461,7 +470,10 @@ def obter_extras_fila(fila_id: int) -> dict:
         conn.close()
 
 
-def criar_fila(nome: str, endereco: str = "", descricao: str = "", prefixo: str = "A", guiche: str = "01", ator: str = "", senha_inicio: int = 1, senha_fim: int = 0, tv_grupo: str = "", voz_nome: int = 1, voz_senha: int = 1, voz_destino: int = 1, voz_guiche: int = 1, voz_fila: int = 1, voz_hora: int = 1, voz_ordem: str = VOZ_ORDEM_PADRAO, voz_repetir: int = 0, voz_intervalo: int = 2, tv_titulo: str = "", tv_subtitulo: str = "", tv_aguardando: str = "AGUARDE CHAMADA", tv_midia_legenda: str = "", tv_noticias_titulo: str = "Notícias", etapas=None):
+def criar_fila(nome: str, endereco: str = "", descricao: str = "", prefixo: str = "A", guiche: str = "01", ator: str = "", senha_inicio: int = 1, senha_fim: int = 0, tv_grupo: str = "", voz_nome: int = 1, voz_senha: int = 1, voz_destino: int = 1, voz_guiche: int = 1, voz_fila: int = 1, voz_hora: int = 1, voz_ordem: str = VOZ_ORDEM_PADRAO, voz_repetir: int = 0, voz_intervalo: int = 2, tv_titulo: str = "", tv_subtitulo: str = "", tv_aguardando: str = "AGUARDE CHAMADA", tv_midia_legenda: str = "",     tv_noticias_titulo: str = "Notícias", etapas=None):
+    """EN: Create a queue with numbering, voice/TV texts and sequential steps.
+
+    PT-BR: Cria fila (nome/prefixo/inicio/fim/tv_grupo/voz/textos/etapas)."""
     nome = (nome or "").strip()
     if not nome:
         return False, "Nome da fila é obrigatório"
@@ -747,7 +759,9 @@ def reordenar_etapas(fila_id: int, ordem_ids: list[int]):
 # ============ CHAMADAS ============
 
 def _proxima_senha(atual: str, prefixo: str, inicio: int, fim: int):
-    """Calcula próxima senha respeitando inicio/fim (0=infinito) com padding dinâmico."""
+    """EN: Compute next ticket honoring inicio/fim (0=infinite) with dynamic padding.
+
+    PT-BR: Calcula próxima senha respeitando inicio/fim (0=infinito) com padding dinâmico."""
     prefixo = (prefixo or "A").strip() or "A"
     inicio = int(inicio) if inicio else 1
     fim = int(fim) if fim else 0
@@ -788,7 +802,9 @@ def _emitir_senha(cur, fila_id: int, etapa_nome: str, paciente_nome: str, priori
 
 
 def gerar_senha(fila_id: int, ator: str = "", paciente_nome: str = "", etapa_nome: str = "", prioridade: str = "comum", manchester: str = "") -> tuple[bool, str]:
-    """Gera próxima senha da fila e registra chamada na etapa informada (ou primeira).
+    """EN: Issue the next ticket and log the call at the given step (or first one).
+
+    PT-BR: Gera próxima senha da fila e registra chamada na etapa informada (ou primeira).
 
     Se paciente_nome vazio, consome o próximo elegível (etapa '' ou primeira):
     Manchester domina; sem Manchester: chegada até 3, revezamento acima disso.
@@ -1038,7 +1054,9 @@ def _norm_etapa(texto: str) -> str:
 
 
 def csv_para_tags(texto: str):
-    """Converte CSV (nome,grupo,cor,etapa com , ou ;) para linhas de tags. Retorna None se não for CSV."""
+    """EN: Convert CSV (name,group,color,step with , or ;) to tag lines; None if not CSV.
+
+    PT-BR: Converte CSV (nome,grupo,cor,etapa com , ou ;) para linhas de tags. Retorna None se não for CSV."""
     linhas = [l.strip() for l in (texto or "").splitlines() if l.strip()]
     if not linhas:
         return None
@@ -1139,7 +1157,9 @@ def _parse_nome_prioridade(linha: str) -> tuple[str, str]:
 
 
 def importar_nomes(fila_id: int, texto: str, ator: str = "", substituir: bool = False):
-    """Importa nomes (um por linha: 'Maria #gestante #vermelho').
+    """EN: Import names (one per line: 'Maria #gestante #vermelho'); one list per queue.
+
+    PT-BR: Importa nomes (um por linha: 'Maria #gestante #vermelho').
 
     Cada fila aceita UMA lista: se já houver nomes e substituir=False, recusa.
     Com substituir=True apaga a lista atual e importa a nova.
@@ -1390,7 +1410,9 @@ def _primeira_etapa(cur, fila_id: int) -> str:
 
 
 def _escolher_proximo_nome(cur, fila_id: int, etapa_filtro: str = None):
-    """Escolhe próximo nome da recepção (chamar geral) ou de uma etapa específica.
+    """EN: Pick next name (Manchester color dominates; else arrival up to 3, round-robin above).
+
+    PT-BR: Escolhe próximo nome da recepção (chamar geral) ou de uma etapa específica.
 
     Elegíveis: etapa '' (geral) ou igual à etapa pedida (None = primeira etapa).
     - Se há Manchester entre elegíveis: cor domina tudo, desempate demografia/chegada.
@@ -1455,7 +1477,9 @@ def tipo_por_extensao(nome_arquivo: str):
 
 
 def duracao_real_arquivo(caminho_registrado: str):
-    """Duração real (segundos) de áudio/vídeo — mutagen, com fallback WAV nativo."""
+    """EN: Real audio/video duration in seconds (mutagen, WAV fallback).
+
+    PT-BR: Duração real (segundos) de áudio/vídeo — mutagen, com fallback WAV nativo."""
     base = os.path.basename(caminho_registrado or "")
     if not base:
         return None
@@ -1484,7 +1508,9 @@ def duracao_real_arquivo(caminho_registrado: str):
 
 
 def calcular_passo(itens: list) -> tuple:
-    """Tempo da exibição: itens = [(tipo, duracao_cfg, duracao_real)].
+    """EN: Slot timing: real audio/video time; photos split it (else sum of photo configs).
+
+    PT-BR: Tempo da exibição: itens = [(tipo, duracao_cfg, duracao_real)].
 
     Áudio/vídeo valem o tempo REAL; fotos dividem esse tempo
     (áudio 40s + 4 fotos = 10s cada). Sem tempo real, fotos somam a duração
@@ -1579,7 +1605,9 @@ def salvar_lista_nomes(fila_id, conteudo) -> tuple[bool, str]:
 
 
 def midias_para_tv(fila_ids=None) -> list:
-    """Playlist da TV: mídias próprias (fila isolada ou do grupo) + áudios globais do admin.
+    """EN: TV playlist: own media plus global ambient audios (global video/photo only on general TV).
+
+    PT-BR: Playlist da TV: mídias próprias (fila isolada ou do grupo) + áudios globais do admin.
 
     Áudio ambiente global (fila_id NULL) toca em TODAS as TVs, após as mídias
     próprias. Vídeo/foto global fica só na TV geral (/tv).
@@ -1715,7 +1743,9 @@ def reordenar_midias(ordem_ids: list[int]):
 
 
 def set_midia_fundo(midia_id: int, fundo: bool, ator: str = ""):
-    """Marca foto como papel de fundo (uma por fila/global: as demais saem)."""
+    """EN: Mark a photo as backdrop (one per queue/global; others cleared).
+
+    PT-BR: Marca foto como papel de fundo (uma por fila/global: as demais saem)."""
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -1782,7 +1812,9 @@ TV_GRUPO_RESERVADOS = frozenset({
 
 
 def normalizar_tv_grupo(valor: str) -> tuple[bool, str]:
-    """Normaliza tv_grupo para slug seguro de URL.
+    """EN: Normalize tv_grupo to a URL-safe slug (empty = isolated TV).
+
+    PT-BR: Normaliza tv_grupo para slug seguro de URL.
 
     Vazio = TV isolada (permitido). Não-vazio vira slug minúsculo
     `a-z0-9` com hífens: remove acentos, troca espaço/_ por hífen,
@@ -1864,7 +1896,9 @@ def tv_bloquear(chave: str, dur_seg: float):
 
 
 def tv_claim_fala(chave: str, chamada_id: int, dur_seg: float) -> bool:
-    """Tenta assumir o próximo anúncio (compare-and-swap): um anuncia por vez, sem cortar.
+    """EN: Claim the next announcement (compare-and-swap): one TV speaks at a time.
+
+    PT-BR: Tenta assumir o próximo anúncio (compare-and-swap): um anuncia por vez, sem cortar.
 
     Retorna True se esta TV assumiu (deve falar); False se outra assumiu ou voz ocupada.
     """

@@ -1,4 +1,11 @@
-"""Painel de administração da Lista Telefônica (rota /admin/lista_telefonica)."""
+"""EN: Phone Directory administration panel (route /admin/lista_telefonica).
+Manage units (create/move/elevate/reorder/delete branch) and contacts
+(create/edit/transfer/delete) plus appearance and backup.
+
+PT-BR: Painel de administração da Lista Telefônica (rota /admin/lista_telefonica).
+Gerencia unidades (criar/mover/elevar/reordenar/excluir ramo) e contatos
+(criar/editar/transferir/excluir), além de aparência e backup.
+"""
 
 import sys, os, re
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))

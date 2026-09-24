@@ -1,6 +1,8 @@
-"""Lista Telefônica — organograma expansível (rota /lista-telefonica).
+"""EN: Phone Directory — expandable organogram (route /lista-telefonica).
+Secretary -> Sector -> Subsector, alphabetical contacts, search by name/phone,
+transfer and reorder. No mention of municipality or legislation.
 
-EN: Phone Directory — expandable organogram (route /lista-telefonica).
+PT-BR: Lista Telefônica — organograma expansível (rota /lista-telefonica).
 Secretaria → Setor → Subsetor, contatos alfabéticos, busca por nome/telefone,
 transferência e reordenação. Sem menção a município ou legislação.
 """

@@ -758,7 +758,12 @@ def contar_paginas_pdf(caminho):
 
 
 def calcular_paginas_contabilizadas(qtd_paginas, qtd_copias, tamanho_papel, frente_verso):
-    """Fórmula exata (regra do projeto):
+    """Computes billable pages (exact project rule):
+    paginas = qtd_paginas * qtd_copias * fator_papel * fator_frente_verso
+      fator_papel: A4=1, A3=2
+      fator_frente_verso: nao=1, sim=2.
+
+    Fórmula exata (regra do projeto):
     paginas = qtd_paginas * qtd_copias * fator_papel * fator_frente_verso
       fator_papel: A4=1, A3=2
       fator_frente_verso: não=1, sim=2
@@ -1301,8 +1306,11 @@ def mes_atual():
 
 
 def obter_ou_criar_cota(secretaria_id, setor_id, mes=None):
-    """Retorna (cota_paginas, existe). Cria registro se não existir.
-    setor_id=None (sem setor) é normalizado para 0 (sentinelas)."""
+    """Gets or creates the monthly quota row; returns (cota_paginas, exists).
+
+    Retorna (cota_paginas, existe). Cria registro se não existir.
+    setor_id=None (sem setor) é normalizado para 0 (sentinela, pois SQLite trata
+    NULL como distinto em UNIQUE e quebraria o único por secretaria/setor/mês)."""
     try:
         setor_id = int(setor_id or 0)
         mes = mes or mes_atual()
@@ -1459,7 +1467,9 @@ def _incrementar_consumo(secretaria_id, setor_id, paginas, mes=None):
 
 
 def verificar_excedente(secretaria_id, setor_id, paginas_contabilizadas):
-    """Verifica se a impressão excederá alguma cota (secretaria OU setor).
+    """Checks whether printing would exceed any quota (department OR unit).
+
+    Verifica se a impressão excederá alguma cota (secretaria OU setor).
     Retorna (excedente: bool, detalhe: str)."""
     try:
         setor_id = int(setor_id or 0)
@@ -3223,7 +3233,9 @@ def expirar_rascunhos_e_impressos():
 
 
 def solicitar_solicitacoes_responsavel(user_nome, limite=200):
-    """Retorna solicitações pendentes das secretarias/setores onde o user é responsável.
+    """Lists pending requests of the departments/units the user authorizes.
+
+    Retorna solicitações pendentes das secretarias/setores onde o user é responsável.
 
     Escopo: um responsável vinculado à secretaria inteira (setor_id IS NULL) vê
     todas as solicitações da secretaria; um responsável vinculado a um setor vê
@@ -3276,7 +3288,9 @@ def solicitar_solicitacoes_responsavel(user_nome, limite=200):
 # ================= RELATÓRIO DE COTAS =================
 
 def relatorio_cotas(mes=None):
-    """Retorna lista de (secretaria_id, secretaria_nome, setor_id, setor_nome,
+    """Builds the monthly quota report for all active departments/units.
+
+    Retorna lista de (secretaria_id, secretaria_nome, setor_id, setor_nome,
     cota, usado, percentual) para todas as secretarias/setores ativas."""
     try:
         mes = mes or mes_atual()

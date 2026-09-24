@@ -52,7 +52,7 @@ com outros módulos).
 - **`tb_secretarias`**: id, nome, sigla, cota_paginas_mensal (**1000 padrão via `ORGANOGRAMA_BASE` do `mod_lista_telefonica`**), limite_pedidos_abertos (20 padrão), ativo.
 - **`tb_setores`**: id, nome, secretaria_id FK, cota_paginas_mensal (**200 padrão via `ORGANOGRAMA_BASE` — subsetores achatados como setores**), limite_pedidos_abertos (10 padrão), ativo.
 - **`tb_responsaveis_autorizacao`**: id, user_nome, secretaria_id FK, setor_id FK (opcional), ativo.
-- **`tb_cotas_impressao`**: id, secretaria_id, setor_id (NULL=secretaria), cota_paginas,
+- **`tb_cotas_impressao`**: id, secretaria_id, setor_id (`0` sentinela para "sem setor" — SQLite trata NULL como distinto em UNIQUE, sem FK em `setor_id` por isso), cota_paginas,
   mes_referencia (YYYY-MM, único por vínculo), ativo.
 - **`tb_consumo_cota`**: id, secretaria_id, setor_id, mes_referencia, paginas_usadas, atualizado_em.
 - **`tb_configuracoes_modulo`**: chave/valor (pasta, max MB, **alertas da nova solicitação**,
@@ -173,7 +173,12 @@ por coluna. Desde a reformulação de 07/09, a contagem de **pedidos** usa
   `bd_manipulador.py:1923`) com Autorizar / Recusar (motivo obrigatório) — ações em **todo o grupo**.
 - **Administração** (admin do módulo): tabela mestra + sub-abas Secretarias, Setores,
   Responsáveis, Cotas, Relatórios, Configurações. Ações: Imprimir (seletor de impressora), Baixar (sempre),
-  Recuar (cancelar), Autorizar, Recusar.
+  Recuar (cancelar), Autorizar, Recusar. Painel standalone em `telas_administracao.py::mostrar_administracao`
+  (rota `/admin/solicita_impressao`); `_admin_solicitacoes` delega para `telas.py` (pedidos agrupados por
+  secretaria→setor); `_admin_relatorio` gera cobrança/repasse por período (prazos fixos + calendário).
+- **Legado**: `bd_criador.py` é MORTO (tabela `tb_solicitacoes_impressao_legacy` no banco central) — fonte de verdade é `bd_manipulador.init_db()` em `db_mod_solicita_impressao.db`.
+- **Upload assíncrono anti-disconnect**: `_tela_nova.ao_upload` é `async` (`on_multi_upload`, `await f.read()` por PDF, máx. 10 por envio via `MAX_ARQ`); contagem regressiva de expiração via `ui.timer(1.0, tick)`.
+- **QA**: `data-testid` estáveis — `solicita-enviar` (envio), `solicita-busca` (Minhas Solicitações), `solicita-admin-salvar` (Configurações).
 - **Administração → Secretarias / Setores**: campo **"Limite pedidos abertos (0=ilimitado)"**
   no criar/editar e exibição do limite na listagem (`telas_administracao.py:100,150,190,245`).
 - **Administração → Solicitações** (`_admin_solicitacoes`, `telas.py:700`; `telas_administracao.py:77`
@@ -273,7 +278,7 @@ páginas — gerada por `gerar_nome_arquivo` (`bd_manipulador.py:1038-1070`), qu
 
 - NiceGUI roda no servidor; a lista real de impressoras do cliente depende de API experimental
   (`navigator.getPrinters`). O fallback é sempre o diálogo nativo do SO via `window.print()`.
-- Contagem de páginas usa PyMuPDF; PDFs corrompidos/imagem podem retornar 0 (bloqueia envio).
+- Contagem de páginas usa PyMuPDF com fallback `pdfplumber`; PDFs corrompidos/imagem podem retornar 0 (bloqueia envio).
 - Cotas são mensais; reset manual ou automático (dia 1) — não há notificação por e-mail (sem SMTP).
 
 ## Hora do servidor (fonte da verdade de data/hora)

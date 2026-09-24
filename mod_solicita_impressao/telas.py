@@ -26,6 +26,9 @@ MOD_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def _log():
+    """Central logger (loguru) for execution observability.
+
+    Logger central (loguru) para observabilidade de execução."""
     from mod_intranet import observabilidade
     return observabilidade.get_logger("solicita_impressao")
 

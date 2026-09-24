@@ -186,14 +186,19 @@ def get_modulos_com_auditoria():
 
 
 def _extrair_modulo(tabela: str) -> str:
-    """Extracts the module key from an audit table name (reverse of _nome_tabela)."""
+    """Extracts the module key from an audit table name (reverse of _nome_tabela).
+
+    Extrai a chave do módulo a partir do nome da tabela de auditoria
+    (inverso de `_nome_tabela`)."""
     return tabela.replace("tb_auditoria_", "").replace("_", "-")
 
 
 def registrar_auditoria(usuario, modulo, acao, descricao, hash_arquivo=None,
                         ip=None, user_agent=None, client_hostname=None,
                         timestamp=None):
-    """Grava a ação na tabela exclusiva do módulo em db_mod_auditoria.db.
+    """Appends one action to the module's exclusive table in db_mod_auditoria.db.
+
+    Grava a ação na tabela exclusiva do módulo em db_mod_auditoria.db.
 
     A tabela é criada automaticamente (e registrada em tb_auditoria_meta)
     caso ainda não exista, de modo que novos módulos passam a auditar
@@ -399,7 +404,9 @@ def buscar_logs(tabela=None, filtro_usuario="", filtro_modulo="",
 
 
 def _remover_legado_central():
-    """Remove a tabela tb_auditoria legada do banco central.
+    """Drops the legacy central tb_auditoria table after migration.
+
+    Remove a tabela tb_auditoria legada do banco central.
 
     Após a auditoria migrar para o banco exclusivo (db_mod_auditoria.db, uma
     tabela por módulo), a tb_auditoria central virou resíduo e é descartada.
@@ -420,7 +427,9 @@ def _remover_legado_central():
 
 
 def migrar_dados_existentes(forcar=False):
-    """Migra dados da antiga tb_auditoria em db_mod_intranet.db para as novas
+    """Migrates rows from the legacy central tb_auditoria to per-module tables.
+
+    Migra dados da antiga tb_auditoria em db_mod_intranet.db para as novas
     tabelas por módulo.
 
     Idempotente: só roda uma única vez (marcador persistido na central,
@@ -436,7 +445,10 @@ def migrar_dados_existentes(forcar=False):
 
 
 def _migrar_dados_existentes_seguro(forcar=False):
-    """Body of `migrar_dados_existentes`, isolated so the entry point can protect it."""
+    """Body of `migrar_dados_existentes`, isolated so the entry point can protect it.
+
+    Corpo de `migrar_dados_existentes`, isolado para que o ponto de entrada
+    possa protegê-lo com try/except sem derrubar o bootstrap."""
     from mod_intranet.bd_conexao import get_config, set_config
     from mod_intranet.bd_conexao import get_connection as _get_central_conn
     if not forcar and get_config("auditoria_migracao_concluida", "") == "1":
@@ -483,7 +495,9 @@ def _migrar_dados_existentes_seguro(forcar=False):
 
 
 def _semear_versao_modulo():
-    """Seeds the module version key (`versao_modulo:auditoria`) in tb_config."""
+    """Seeds the module version key (`versao_modulo:auditoria`) in tb_config.
+
+    Semeia a chave de versão do módulo (`versao_modulo:auditoria`) na tb_config."""
     try:
         from mod_intranet.bd_conexao import get_config, set_config
         set_config("versao_modulo:auditoria", "1.0.260908")

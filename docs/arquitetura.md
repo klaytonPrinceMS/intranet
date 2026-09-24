@@ -1,12 +1,12 @@
 # Intranet Modular — Architecture
 
-> Technical architecture of the Intranet Modular: single entry point (`main.py`), modular packages (`mod_*`), the `bd_manipulador.py` / `telas.py` / `telas_administracao.py` pattern (with `models/` SQLAlchemy as the pattern to propagate and `bd_criador.py` kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor, audit pruning, aggregator coleta 10–360 min + daily recycle `reiniciar_banco` at `06:00` configurable `CronTrigger`, no backup for aggregator).
+> Technical architecture of the Intranet Modular: single entry point (`main.py`), modular packages (`mod_*`), the `bd_manipulador.py` / `telas.py` / `telas_administracao.py` pattern (with `models/` SQLAlchemy as the pattern to propagate and `bd_criador.py` kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor, audit pruning, aggregator coleta 10–9360 min na API (select do admin 10–360) + daily recycle `reiniciar_banco` at `09:00` backend default (rótulos UI legados `06:00`) configurable `CronTrigger`, no backup for aggregator).
 
 ---
 
 # Intranet Modular — Arquitetura
 
-> Arquitetura técnica da Intranet Modular: entry point único (`main.py`), pacotes modulares (`mod_*`), padrão `bd_manipulador.py` / `telas.py` / `telas_administracao.py` (com `models/` SQLAlchemy como padrão a propagar e `bd_criador.py` mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta, poda da auditoria, coleta do agregador 10–360 min + reinício diário `reiniciar_banco` às `06:00` configurável `CronTrigger`, sem backup para o agregador).
+> Arquitetura técnica da Intranet Modular: entry point único (`main.py`), pacotes modulares (`mod_*`), padrão `bd_manipulador.py` / `telas.py` / `telas_administracao.py` (com `models/` SQLAlchemy como padrão a propagar e `bd_criador.py` mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta, poda da auditoria, coleta do agregador 10–9360 min na API (select do admin 10–360) + reinício diário `reiniciar_banco` às `09:00` default do backend (rótulos UI legados `06:00`) configurável `CronTrigger`, sem backup para o agregador).
 
 ## Sumário
 
@@ -53,7 +53,7 @@ flowchart LR
         BOOT[inicializar_bancos] --> CHECK[verifica telas.py] --> AG[iniciar_agendador] --> RUN[ui.run :8080]
     end
     subgraph Nucleo["mod_intranet — núcleo"]
-        AUTH[autenticacao] --- LAY[layout_tela<br/>pagina_restrita]
+        AUTH[autenticacao] --- LAY[telas<br/>pagina_restrita]
         CONN[bd_conexao<br/>get_config/set_config]
         CONN --> REPO[repositorio.py<br/>Repositorio + engine]
         REPO --> MODELS[models/<br/>Configuracao<br/>Sessao<br/>Modulo]
@@ -256,7 +256,7 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 
 ## Guarda de página e layout
 
-`pagina_restrita(titulo_modulo, chave_modulo)` (`layout_tela.py:32`) é usada por **todas** as rotas de módulos do `main.py`:
+`pagina_restrita(titulo_modulo, chave_modulo)` (`mod_intranet/telas.py:35`) é usada por **todas** as rotas de módulos do `main.py`:
 
 1. Sem usuário → redireciona `/login`.
 2. Revalida existência/situação ativa do usuário no banco.
@@ -297,7 +297,7 @@ Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configu
 | `cleanup_solicita` | **1 min** | remove rascunhos de impressão não confirmados e impressos vencidos do servidor |
 | `poda_auditoria` | **24 h** | remove registros das tabelas por módulo de `db_mod_auditoria.db` mais antigos que `auditoria_retencao_dias` (default 90) |
 | `monitor_empenho` | `empenhos_monitor_intervalo_seg` (default **60 s**) | varredura automática das pastas monitoradas de empenhos (`rodar_monitor("sistema")`) |
-| `agregador_coleta` | `agregador_noticias_intervalo_min` (**10–360 min**, default **60 min**, `habilitado` flag) | coleta scrapy-like `httpx+parsel` (Google/BBC/JFP/RSS + pesquisa termo) via `coletar_todas()` — `reconfigurar_agregador_noticias()` sem restart |
+| `agregador_coleta` | `agregador_noticias_intervalo_min` (**10–9360 min** na API — select do admin 10–360, default **60 min**, `habilitado` flag) | coleta scrapy-like `httpx+parsel` (Google/BBC/JFP/RSS + pesquisa termo) via `coletar_todas()` — `reconfigurar_agregador_noticias()` sem restart |
 | `agregador_reinicio` | **diário `CronTrigger` às `06:00` configurável** (`agregador_noticias_hora_reinicio` `HH:MM`, default `06:00`, `obter_hora_reinicio`/`definir_hora_reinicio` + audit) | **reinício diário** `reiniciar_banco(ator)` — `DELETE FROM tb_noticia` (zera todas, banco reciclado, **sem backup**) + `audit reiniciar_banco`; reagendável sem restart via `reconfigurar_agregador_noticias()` `CronTrigger(hour, minute)` |
 
 > **Ajuste fino:** o `MAPA_BACKUPS` (`rotinas.py:19-30`) controla quais bancos são copiados em cada job de backup (intranet, usuarios, blog, editar_pdf, auditoria, empenhos, solicita — expandido em 06/09 com auditoria e solicita_impressao — **18/09/2026** `+ tecnico: db_mod_tecnico.db` + `filas: db_mod_filas.db` — **19/09/2026** `+ lista_telefonica: db_mod_lista_telefonica.db` — **20/09/2026 sem `agregador_noticias: db_mod_agregador_noticias.db`**, agregador **sem backup**, banco reciclado diariamente `reiniciar_banco` às `06:00` configurável `CronTrigger`).

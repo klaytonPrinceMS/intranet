@@ -16,7 +16,7 @@ O organograma base é **genérico** e desacoplado de vínculo territorial, servi
 
 ## Banco de dados
 
-Criador vigente: `init_db()` em `bd_manipulador.py:106-157` (bootstrap central `mod_intranet/bd_criador.py:64` + chamada no import `bd_manipulador.py:603`).
+Criador vigente: `init_db()` em `bd_manipulador.py:134-199` (bootstrap central `mod_intranet/bd_criador.py` + chamada no import `bd_manipulador.py:925` `init_db()`).
 
 Conexão via `mod_intranet/banco_conexao.conexao("lista_telefonica")` (backend duplo SQLite/PostgreSQL, `PRAGMA journal_mode=WAL` + `foreign_keys=ON`). Índices `idx_unidade_parent`, `idx_contato_unidade`, `idx_contato_nome`.
 
@@ -25,13 +25,21 @@ Conexão via `mod_intranet/banco_conexao.conexao("lista_telefonica")` (backend d
 | `tb_unidade` | `id` PK, `nome`, `tipo` (`secretaria`\|`setor`\|`subsetor` `CHECK`), `parent_id` FK CASCADE → `tb_unidade.id`, `ordem`, `telefone`, `ativo` (default 1) |
 | `tb_contato` | `id` PK, `unidade_id` FK CASCADE → `tb_unidade.id`, `nome`, `telefone`, `user_nome` (vínculo opcional à base de usuários), `tipo` (`vinculado`\|`externo` default `externo`), `data_criacao` |
 
-Semente idempotente (`bd_manipulador.py:135-155`): só semeia quando `COUNT(tb_unidade)==0`. Constante `ORGANOGRAMA_BASE` (`bd_manipulador.py:21-75`) com 12 secretarias e respectivos setores/subsetores:
+Semente idempotente (`bd_manipulador.py:164-185`): só semeia quando `COUNT(tb_unidade)==0`. Constante `ORGANOGRAMA_BASE` (`bd_manipulador.py:21-75`) com 12 secretarias e respectivos setores/subsetores:
 
 - Gabinete, Administração, Finanças, Saúde, Educação, Obras e Infraestrutura, Agricultura, Meio Ambiente, Assistência Social, Cultura, Esporte e Lazer, Planejamento — cada uma com setores e subsetores (ex.: Administração → Recursos Humanos → Folha/Capacitação, Patrimônio → Compras/Licitações, T.I. → Suporte/Redes, etc.). Ordem semeada via `ordem` sequencial por nível.
 
 ⚠️ `bd_criador.py` é **legado/morto** — não executar (schema real em `bd_manipulador.py`).
 
-Modelos tipados: ainda sem `models/__init__.py` com `map_imperatively` — acesso via `CrudBase`/SQL direto (padrão a propagar).
+Modelos tipados: `models/__init__.py` com dataclasses `Unidade` (`id`, `nome`, `tipo`, `parent_id`, `ordem`, `telefone`, `ativo`) e `Contato` (`id`, `unidade_id`, `nome`, `telefone`, `user_nome`, `tipo`) espelhando `tb_unidade`/`tb_contato` (sem `map_imperatively`; acesso ao banco segue via `banco_conexao.conexao("lista_telefonica")` + SQL direto no `bd_manipulador`).
+
+## Telefones — DDI +55 via `mod_intranet.telefone`
+
+Telefones são gravados como texto livre (validação mínima: ≥8 caracteres) e normalizados só na exibição/ligação via `mod_intranet.telefone` (não há `formatar_br`/`apenas_digitos` dentro do `mod_lista_telefonica`):
+
+- Leitura: `obter_ddi(tel)` + `normalizar_telefone(ddi, tel)` (preserva `+`, DDI padrão `+55`) e `formatar_para_exibicao(tel)` para o formato BR (`telas.py:141-171`, `_dlg_ligar`, `telas_administracao.py:818-821`).
+- Escrita/admin: `criar_campo_telefone(valor, testid_ddi, testid_numero)` com seletor de DDI + campo numérico (`telas_administracao.py:37-44` unidade `admin-unidade-ddi`/`admin-unidade-tel`, `telas_administracao.py:656-663` contato `admin-contato-ddi`/`admin-contato-tel`, edição via `_campo["obter"]()`/`_campo["definir"]()` com fallback para `ui.input` simples).
+- Fallback sem o helper: `re.sub(r"[^0-9+]", "", tel or "")` para montar `tel:` (`ui.link(target="tel:...")` + `window.location.href='tel:...'` no diálogo "Ligar agora").
 
 ## Funcionalidades
 
@@ -110,3 +118,5 @@ Ver [Análise do Módulo](../analise_mod_lista_telefonica.md) e [Arquitetura](..
 - `tel:` é suportado nativamente em mobile; em desktop o diálogo avisa que discador pode não estar configurado — `ui.run_javascript` é `try/except` (fail-soft).
 - Busca normalizada sem acentos: `João` encontra `joao`; telefone busca também por `user_nome` vinculado.
 - Nunca commitar `db_mod_lista_telefonica.db`; `bd_criador.py` morto — nunca executar.
+- API real do `bd_manipulador` (todas com `try/except` + `notificar`/log): `get_connection` (WAL + `foreign_keys=ON` via `banco_conexao.conexao`), `_log`/`_audit` (auditoria via `audit_log`), `_norm` (NFKD sem acentos), `init_db`, `listar_unidades(parent_id, tipo, ativo)`, `listar_todas_unidades`, `obter_unidade(uid)`, `criar_unidade`, `editar_unidade`, `excluir_ramo` (+ `_coletar_ramo_ids` recursivo), `mover_unidade` (anti-ciclo), `elevar_rebaixar`, `reordenar_unidades`, `buscar_unidades`, `listar_contatos` (alfabético `COLLATE NOCASE`), `buscar_contatos`, `criar_contato`, `editar_contato`, `excluir_contato`, `transferir_contato`, `contar_unidades` (contagem de `tb_unidade`), `remover_vinculos_usuario`/`renomear_usuario` (LGPD).
+- Tela pública (`telas.py`): API real é `mostrar_tela(user_nome, perfil_global)` + helpers `_pode_ver`/`_eh_admin`/`_caminho_unidade` + internos `render_contatos`/`render_busca`/`_dlg_ligar`; **não existe** `_mostrar_tela_segura` nem diálogo `duplicar` — edição/duplicação de unidades e contatos ocorre só nos diálogos do admin (`_dlg_editar`, `_dlg_excluir_ramo`, `_dlg_mover`, `_dlg_elevar`, `_dlg_reordenar`, `_editar`/`_transferir` de contato).

@@ -10,7 +10,7 @@
 
 ## Propósito
 
-Módulo para solicitação de impressão de PDFs. Usuários **comuns** anexam um PDF por solicitação (upload automático), informam cópias, papel (A4/A3), cor (PB/Color), frente/verso, sulfite, observações e a secretaria/setor de crédito. O sistema conta as páginas, renomeia o arquivo no padrão definido, aplica regras de cota mensal hierárquica e fluxo de autorização quando exigido. Apenas administradores do módulo imprimem; responsáveis cadastrados autorizam.
+Módulo para solicitação de impressão de PDFs. Usuários **comuns** anexam até 10 PDFs por envio (upload automático assíncrono `on_multi_upload`, um único pedido/grupo), informam cópias, papel (A4/A3), cor (PB/Color), frente/verso, sulfite, observações e a secretaria/setor de crédito. O sistema conta as páginas (PyMuPDF com fallback `pdfplumber`), renomeia o arquivo no padrão definido, aplica regras de cota mensal hierárquica e fluxo de autorização quando exigido. Apenas administradores do módulo imprimem; responsáveis cadastrados autorizam. Rascunhos têm contagem regressiva visível (`ui.timer` 1 s) e expiram em `tempo_expira_rascunho_min` (padrão 10 min).
 
 **Versionamento**: `versao_modulo:solicita_impressao = 1.0.260913`.
 
@@ -26,7 +26,7 @@ Criador vigente: `init_db()` em `bd_manipulador.py:121-472` (bootstrap central).
 | `tb_secretarias` | nome, sigla, cota mensal (**1000 padrão do organograma**), limite de pedidos abertos (20 padrão) |
 | `tb_setores` | nome, secretaria FK, cota mensal (**200 padrão do organograma**, subsetores achatados), limite de pedidos abertos (10 padrão) |
 | `tb_responsaveis_autorizacao` | user_nome, secretaria/setor, ativo |
-| `tb_cotas_impressao` | secretaria/setor, cota, `mes_referencia` (YYYY-MM único) |
+| `tb_cotas_impressao` | secretaria/setor (`setor_id=0` sentinela para "sem setor", pois SQLite trata NULL como distinto em UNIQUE), cota, `mes_referencia` (YYYY-MM único) |
 | `tb_consumo_cota` | páginas usadas por mês |
 | `tb_configuracoes_modulo` | chave/valor (pasta, MB, alertas, impressoras, tipo de papel padrão, marca d'água, prazos) |
 | `tb_impressoras` | nome (UNIQUE), papel, cor, frente/verso, sulfite, driver (PCL6), ativo |
@@ -43,14 +43,17 @@ Criador vigente: `init_db()` em `bd_manipulador.py:121-472` (bootstrap central).
 - **Alertas da nova solicitação** (`alertas_nova_solicitacao`): frases configuráveis (uma por linha) exibidas abaixo do card de envio — substitui os antigos avisos fixos de presença/páginas múltiplas.
 - **Autorização por responsável cadastrado** (pode ser usuário `comum` — a checagem usa `tb_responsaveis_autorizacao`, independente do perfil); sem responsável → pedido fica `pendente` e o **admin autoriza e imprime**.
 - **Reenvio de pedido recusado**: botão "Reenviar" reabre o pedido para nova autorização (limpa motivo e dados de autorização); "Cancelar" também vale para recusados.
-- **Impressão dual**: "Imprimir direto" (`window.printSolicitacao(id)` via `impressao.js`) ou "Baixar para impressão" (Ctrl+P); decota cota ao imprimir e agenda exclusão em `tempo_exclui_impresso_min` (default 10 min); recusar/recuar/cancelar removem o arquivo na hora.
+- **Impressão dual**: "Imprimir" abre o seletor de impressoras (`tb_impressoras`) e dispara `window.imprimirPdf(url, nome)` via `src/impressao.js` (diálogo nativo do SO; `window.printSolicitacao(id)` é apenas atalho que monta `/solicita-impressao/pdf/{id}`) ou "Baixar para impressão" (Ctrl+P); decota cota ao imprimir e agenda exclusão em `tempo_exclui_impresso_min` (default 10 min); recusar/recuar/cancelar removem o arquivo na hora.
 - **Marca d'água** opcional e personalizável (texto `{data}`, `{usuario}`, `{id}`, `{secretaria}`, `{setor}`, `{solicitante}`; posição, opacidade, fonte, cor, rotação).
 - **Padrões pré-selecionados e editáveis** (A4, Colorido, somente frente, sulfite, tipo de papel) na Administração.
 - **Datas do servidor**: todas as datas (criação, autorização, impressão, expiração) usam `hora_servidor()`/`datetime('now','localtime')` — fonte da verdade é o servidor (NTP.br opcional via `hora_ntp_ativa`).
 - **Aparência** (card padrão "Configurações de cores" — `bloco_aparencia` com `com_card=False`, card próprio do módulo, prévia ao vivo e rodapé 2 botões): `solicita_impressao_cor_botao`, `solicita_impressao_cor_texto_botao`, `solicita_impressao_cor_fundo`, `solicita_impressao_cor_titulo`, `solicita_impressao_btn_tamanho`, `solicita_impressao_texto_header` em `tb_config` central, na sub-aba Configurações da Administração; tela em área cheia (`w-full`). O cabeçalho usa `chave_modulo="solicita_impressao"` (`telas.py:49`): a borda de destaque é a **mesma cor dos botões do módulo** (`solicita_impressao_cor_botao`, vazia = padrão via `PADROES_TEMA` — todos os módulos em `#000000`, a cor do intranet), título/fundo seguem o tema — sem hex hardcoded.
 - **Auditoria central** (`solicita_impressao`): quem solicitou/autorizou/imprimiu/recusou (quantidades, motivo, hash).
 - **Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 `kbp-web-design`)**: proposta P0/P1/P2 por `container`/`row`/`grid` — abas `overflow-x-auto`, formulário `grid-cols-1 sm:grid-cols-2`, lista de solicitações `overflow-x-auto`, dialogs `w-full max-w`, barra de ações `flex-wrap` `gap` via `.style`.
-- **Job `cleanup_solicita`** (1 min) remove rascunhos não confirmados e impressos vencidos.
+- **Job `cleanup_solicita`** (1 min) remove rascunhos não confirmados e impressos vencidos (`expirar_rascunhos_e_impressos` em `bd_manipulador.py`).
+- **Administração standalone** (`telas_administracao.py::mostrar_administracao`, rota `/admin/solicita_impressao`): 7 sub-abas (Solicitações, Secretarias, Setores, Responsáveis, Cotas, Relatórios, Configurações) — `_admin_solicitacoes` delega para `telas.py` (pedidos agrupados por secretaria→setor); `_admin_relatorio` gera cobrança/repasse por período.
+- **Legado**: `bd_criador.py` é MORTO (criador antigo no banco central, tabela `tb_solicitacoes_impressao_legacy`) — fonte de verdade é `bd_manipulador.init_db()` em `db_mod_solicita_impressao.db`.
+- **QA**: `data-testid` estáveis — `solicita-enviar`, `solicita-busca`, `solicita-admin-salvar`.
 
 ### Cotas padrão do organograma (1000/200)
 

@@ -95,7 +95,7 @@ Usada em `criar_fila(..., voz_ordem)`, `atualizar_fila(..., voz_ordem=None)`, `o
 
 **Card "Áudio ambiente global — toca em todas as filas"** (`queue_music`, `grade=False`): áudios aqui tocam em **TODAS** as TVs após as mídias de cada fila (vídeos/fotos globais só na TV geral); volume por áudio (padrão 40); botão **Fundo**/**Tirar fundo** nas fotos; upload automático (`datahora_global.ext`); `Recarregar mídia` + `Preview TV` (`/tv`).
 
-- **Versionamento**: `versao_modulo:filas` no rodapé de `/filas`.
+- **Versionamento**: sem `versao_modulo:filas` próprio — o rodapé central exibe só a versão global em `/filas` (ver Gaps conhecidos abaixo).
 
 ## Permissões
 
@@ -134,6 +134,20 @@ Gate `/filas`: `_pode_acessar` (admin geral ou `validar_acesso_modulo(user,"fila
 Seções D–D8 em `assets/test/test_seg_novos_modulos.py`: D (incremento + slug + sem seed), D2 (lista única + prioridades + revezamento + transferência mesma TV), D3 (Manchester domina + etapas + espera + nome/Manchester na senha + voz extras), D4 (duração real + fotos dividem + wav 40s), D5 (liberar acesso + visibilidade), D6 (claim de voz + etapa vinculada `[maria #... #recepção]`, tag desconhecida ignorada), D7 (ordem da fala: `normalizar_voz_ordem` válida/inválida + `criar_fila(voz_ordem)` completa faltantes + `atualizar_fila(voz_ordem)` troca), D8 (papel de fundo + volume 40: `VOLUME_AMBIENTE_PADRAO == 40`, só foto vira fundo, só um fundo por fila, renomear reaplica `datahora_nomeFila`).
 
 Ver [Análise do Módulo](../analise_mod_filas.md) e [Arquitetura](../arquitetura.md).
+
+## Complementos auditados (lote 3)
+
+- **Rodapé escuro da TV** (`_fundo_rodape_escuro` — `telas.py`): deriva o fundo do rodapé de notícias da `cor_botao` do tema quando ela já é escura (luminância < 0,45); com tema claro cai em `#1b1b1b` para manter contraste com o texto claro.
+- **Primitivas de voz da TV** (`bd_manipulador.py`): `tv_livre(chave)` (voz sem anúncio em andamento), `tv_bloquear(chave, dur_seg)` (reserva a voz), `definir_estado_tv(chave, slot_atual, pausado)` (persiste slot/pausa), `obter_estado_tv(chave)` (cria a linha se inexistir), `buscar_proxima_fala(...)` (anúncio mais antigo com `id > apos_id` no escopo TV/etapa). Chaves: `chave_tv(fila_id/tv_grupo)` (`grupo:<slug>`/`fila:<id>`/`geral`) e `chave_tv_etapa(...)` (`<base>+<etapa>`, voz independente por sala); `ids_do_grupo(tv_grupo)` lista as filas da TV compartilhada; `montar_rotas_static()` serve `mod_filas/midia/` em `/midia_filas/*`.
+- **Lista de nomes — persistência** (`bd_manipulador.py`): `listar_nomes(fila_id, somente_pendentes)`, `salvar_lista_nomes(fila_id, conteudo)` (grava `datahora_nomeFila.txt` em `mod_filas/midia/`), `remover_nome`/`limpar_nomes`/`definir_prioridade_nome`/`definir_etapa_nome`/`definir_manchester_nome`.
+- **LGPD** (`bd_manipulador.py`): `remover_vinculos_usuario(user_nome)` (limpa `tb_fila_acesso`) e `renomear_usuario(nome_atual, novo_nome)` (`tb_chamada`/`tb_fila`/`tb_fila_acesso`).
+- **Massa de teste — 70 nomes** (`mod_filas/massa_nomes_teste.py`, classe `GeradorMassaNomes`): gera sob demanda `mod_filas/midia/massa_nomes_teste_70.txt` com 10 `#gestante` + 10 `#idoso` + 50 comuns e exatamente 12 linhas com cor Manchester (`vermelho 3/laranja 3/amarelo 2/verde 2/azul 2`); helpers `contar_distribuicao`/`validar_massa`/`gerar_massa_teste` + CLI `--semente/--saida`; usa `faker pt_BR` quando disponível, senão lista determinística (semente 42).
+
+## Gaps conhecidos (código ↔ docs)
+
+- `dialogo_editar_fila` existe em `telas.py` mas está **legado** (o Editar atual carrega no `Cadastro de fila`); no `/admin/filas` a edição é inline — docs citam o legado apenas como referência.
+- `telas_administracao.py` **não tem função de relatório** — o card final é `painel_backup` (job `backup:filas`); "relatório" do lote refere-se ao histórico isolado por fila + auditoria `tb_auditoria_filas`.
+- Rodapé `versao_modulo:filas` citado em versões anteriores **não existe no código atual** (`telas.py`/`telas_administracao.py` sem footer de versão).
 
 ## Pontos de atenção
 

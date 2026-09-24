@@ -4,7 +4,7 @@ Layout de 4 partes do sistema: header, drawer, conteúdo e footer.
 
 Uso dentro de uma função @ui.page:
 
-    from mod_intranet.layout_tela import pagina_restrita
+    from mod_intranet.telas import pagina_restrita
 
     @ui.page("/blog")
     def page_blog():
@@ -26,7 +26,9 @@ from mod_intranet.tema_modulo import notificar
 
 
 def usuario_logado():
-    """Retorna dict do usuário da sessão ou None."""
+    """Returns the session user dict or None.
+
+    Retorna o dict do usuário da sessão ou None."""
     return app.storage.user.get("usuario")
 
 

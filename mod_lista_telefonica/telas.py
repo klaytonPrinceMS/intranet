@@ -1,6 +1,8 @@
-"""Lista Telefônica — organograma expansível (rota /lista-telefonica).
+"""EN: Phone directory with expandable Secretary->Sector->Subsector + search + mobile tel.
+Route /lista-telefonica. Cascade selects, alphabetical contacts, tel: link and call dialog.
 
-EN: Phone directory with expandable Secretary→Sector→Subsetor + search + mobile tel.
+PT-BR: Lista Telefônica — organograma expansível (rota /lista-telefonica).
+Secretaria → Setor → Subsetor em cascata, contatos alfabéticos, tel: clicável e diálogo de ligação.
 """
 
 import sys, os, re

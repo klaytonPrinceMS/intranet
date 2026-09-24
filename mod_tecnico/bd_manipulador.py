@@ -1,6 +1,7 @@
-"""Módulo Técnico — BD próprio, arquivos e backups.
+"""EN: Technical module — own DB, files and backups (db_mod_tecnico.db, WAL).
 
-Módulo Técnico — acesso ao db_mod_tecnico.db (WAL) e regras de negócio.
+PT-BR: Módulo Técnico — BD próprio, arquivos e backups.
+Acesso ao db_mod_tecnico.db (WAL) e regras de negócio.
 Pastas físicas dentro do módulo:
   software/ → executáveis disponibilizados (download)
   backup/   → pastas YYYYMMDD_HHMM_nomePc_ip por técnico/PC (isolamento por owner)
@@ -27,12 +28,19 @@ DB_TECNICO_PATH = os.path.join(BASE_DIR, "db_mod_tecnico.db")
 
 
 def _log():
+    """EN: Technical scoped logger (observabilidade.get_logger('tecnico')).
+
+    PT-BR: Logger escopado do técnico (observabilidade.get_logger('tecnico')).
+    """
     from mod_intranet import observabilidade
     return observabilidade.get_logger("tecnico")
 
 
 def get_connection():
-    """Abre conexão do módulo (WAL) via banco_conexao.conexao('tecnico')."""
+    """EN: Open module connection (WAL) via banco_conexao.conexao('tecnico').
+
+    PT-BR: Abre conexão do módulo (WAL) via banco_conexao.conexao('tecnico').
+    """
     from mod_intranet.banco_conexao import conexao
     conn = conexao("tecnico")
     if conn is None:
@@ -46,18 +54,29 @@ def get_connection():
 
 
 def _audit(ator, acao, alvo, detalhe=""):
+    """EN: Forward technical event to central audit_log (tb_auditoria_tecnico).
+
+    PT-BR: Encaminha evento do técnico ao audit_log central (tb_auditoria_tecnico).
+    """
     from mod_intranet.bd_manipulador import audit_log
     audit_log(ator or "sistema", "tecnico", acao, f"Alvo: {alvo}" + (f" | {detalhe}" if detalhe else ""))
 
 
 def _sanitizar_nome(nome: str) -> str:
-    """Sanitiza nomePc/ip para uso em pasta (só [a-zA-Z0-9_-])."""
+    """EN: Sanitize nomePc/ip for folder use (only [a-zA-Z0-9_-]).
+
+    PT-BR: Sanitiza nomePc/ip para uso em pasta (só [a-zA-Z0-9_-]).
+    """
     base = re.sub(r"[^a-zA-Z0-9_-]", "_", (nome or "").strip() or "pc")
     base = re.sub(r"_+", "_", base).strip("_")
     return base[:40] or "pc"
 
 
 def _hash_sha256(caminho: str) -> str:
+    """EN: Compute SHA-256 of a file path (empty string on failure).
+
+    PT-BR: Calcula SHA-256 de um caminho de arquivo (string vazia em falha).
+    """
     try:
         h = hashlib.sha256()
         with open(caminho, "rb") as f:
@@ -69,7 +88,10 @@ def _hash_sha256(caminho: str) -> str:
 
 
 def init_db():
-    """Cria/migra schema do técnico (idempotente)."""
+    """EN: Create/migrate technical schema (idempotent).
+
+    PT-BR: Cria/migra schema do técnico (idempotente).
+    """
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
@@ -119,7 +141,9 @@ def init_db():
 # ============ SOFTWARE ============
 
 def listar_software(relativo: str = ""):
-    """Lista recursiva de arquivos/pastas em software/ (relativo ao software/).
+    """EN: Recursive listing of files/folders in software/ (relative to software/).
+
+    PT-BR: Lista recursiva de arquivos/pastas em software/ (relativo ao software/).
 
     Blindagem path traversal: relativo nunca escapa de PASTA_SOFTWARE
     (AGENTS.md §1 — todo artefato dentro de mod_tecnico/).
@@ -163,7 +187,10 @@ def listar_software(relativo: str = ""):
 
 
 def listar_software_recursivo():
-    """Lista todos os arquivos (folhas) em software/ recursivamente (ignora .gitkeep)."""
+    """EN: List all leaf files in software/ recursively (ignore .gitkeep).
+
+    PT-BR: Lista todos os arquivos (folhas) em software/ recursivamente (ignora .gitkeep).
+    """
     arquivos = []
     for root, dirs, files in os.walk(PASTA_SOFTWARE):
         for f in files:
@@ -176,7 +203,9 @@ def listar_software_recursivo():
 
 
 def criar_zip_selecionados(relativos: list[str], owner: str = "") -> str:
-    """Cria zip temporário com arquivos/pastas selecionados (relativos a software/).
+    """EN: Create temporary zip with selected files/folders (relative to software/).
+
+    PT-BR: Cria zip temporário com arquivos/pastas selecionados (relativos a software/).
 
     Blindagem path traversal: verifica commonpath para cada abs_path.
     """
@@ -243,7 +272,10 @@ def criar_zip_selecionados(relativos: list[str], owner: str = "") -> str:
 # ============ BACKUP ============
 
 def nome_pasta_backup(nome_pc: str, ip: str) -> str:
-    """Gera nome padrão YYYYMMDD_HHMM_nomePc_ip."""
+    """EN: Generate default YYYYMMDD_HHMM_nomePc_ip folder name.
+
+    PT-BR: Gera nome padrão YYYYMMDD_HHMM_nomePc_ip.
+    """
     data = datetime.now().strftime("%Y%m%d_%H%M")
     pc = _sanitizar_nome(nome_pc)
     ip_s = _sanitizar_nome(ip).replace(".", "_") if ip else "sem_ip"
@@ -254,7 +286,10 @@ def nome_pasta_backup(nome_pc: str, ip: str) -> str:
 
 
 def criar_pasta_backup(owner: str, nome_pc: str, ip: str) -> tuple[bool, str]:
-    """Cria pasta de backup nomeada automaticamente. Retorna (ok, pasta_nome|caminho|msg)."""
+    """EN: Create auto-named backup folder. Returns (ok, folder_name|message).
+
+    PT-BR: Cria pasta de backup nomeada automaticamente. Retorna (ok, pasta_nome|caminho|msg).
+    """
     if not owner:
         return False, "Usuário não identificado"
     pc = (nome_pc or "").strip()
@@ -295,7 +330,10 @@ def criar_pasta_backup(owner: str, nome_pc: str, ip: str) -> tuple[bool, str]:
 
 
 def listar_backups(owner: str = None, apenas_owner: bool = True) -> list[tuple]:
-    """Lista backups. Se apenas_owner e owner informado, filtra por dono (LGPD)."""
+    """EN: List backups. If apenas_owner and owner given, filter by owner (LGPD).
+
+    PT-BR: Lista backups. Se apenas_owner e owner informado, filtra por dono (LGPD).
+    """
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -309,6 +347,10 @@ def listar_backups(owner: str = None, apenas_owner: bool = True) -> list[tuple]:
 
 
 def obter_backup(pasta_nome: str):
+    """EN: Fetch one backup row by pasta_nome (None when absent).
+
+    PT-BR: Busca uma linha de backup por pasta_nome (None quando ausente).
+    """
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -319,7 +361,9 @@ def obter_backup(pasta_nome: str):
 
 
 def _pasta_backup_path(pasta_nome: str) -> str:
-    """Retorna caminho canônico da pasta de backup (blindagem path traversal).
+    """EN: Canonical backup folder path (path traversal shield).
+
+    PT-BR: Retorna caminho canônico da pasta de backup (blindagem path traversal).
 
     AGENTS.md §1 — tudo dentro de mod_tecnico/backup; nunca escapa.
     Usa basename + sanitização + commonpath.
@@ -343,7 +387,10 @@ def _pasta_backup_path(pasta_nome: str) -> str:
 
 
 def salvar_arquivos_backup(pasta_nome: str, arquivos: list, owner: str) -> tuple[bool, str]:
-    """Salva arquivos enviados (lista de (nome, bytes)) na pasta de backup do owner."""
+    """EN: Save uploaded files ((name, bytes) list) into the owner backup folder.
+
+    PT-BR: Salva arquivos enviados (lista de (nome, bytes)) na pasta de backup do owner.
+    """
     row = obter_backup(pasta_nome)
     if not row:
         return False, "Pasta de backup não encontrada"
@@ -410,7 +457,10 @@ def salvar_arquivos_backup(pasta_nome: str, arquivos: list, owner: str) -> tuple
 
 
 def criar_zip_backup(pasta_nome: str, owner: str) -> str:
-    """Gera zip temporário de toda a pasta de backup (para restaurar no PC formatado)."""
+    """EN: Build temporary zip of the whole backup folder (restore on formatted PC).
+
+    PT-BR: Gera zip temporário de toda a pasta de backup (para restaurar no PC formatado).
+    """
     row = obter_backup(pasta_nome)
     if not row:
         raise FileNotFoundError("Backup não encontrado")
@@ -435,7 +485,10 @@ def criar_zip_backup(pasta_nome: str, owner: str) -> str:
 
 
 def remover_vinculos_usuario(user_nome: str) -> int:
-    """LGPD: remove backups e arquivos físicos do usuário."""
+    """EN: LGPD — remove user backups and physical files. Returns count.
+
+    PT-BR: LGPD: remove backups e arquivos físicos do usuário.
+    """
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -459,7 +512,10 @@ def remover_vinculos_usuario(user_nome: str) -> int:
 
 
 def renomear_usuario(nome_atual: str, novo_nome: str):
-    """Propaga renomeio para tb_backup.owner."""
+    """EN: Propagate rename to tb_backup.owner.
+
+    PT-BR: Propaga renomeio para tb_backup.owner.
+    """
     conn = get_connection()
     try:
         cur = conn.cursor()

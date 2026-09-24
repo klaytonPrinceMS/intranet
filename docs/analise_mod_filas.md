@@ -101,6 +101,19 @@ Conexão WAL + `foreign_keys=ON` via `banco_conexao.conexao("filas")`. Criador: 
 | RNF-RESP-01 | Responsividade | `w-full flex-wrap` `min-w` nos cards; TV mídia `max-height:62vh` + lateral 240px + rodapé `min-height:22vh`; fundo absoluto só na área de mídia |
 | RNF-DISC-01 | Discrição (sem termos sensíveis) | Telas exibem só cor de fundo (`_estilo_manchester`); palavras de grupo/cor só nos controles de edição |
 
+## Complementos auditados (lote 3)
+
+- `_fundo_rodape_escuro` (`telas.py`): fundo do rodapé de notícias deriva da `cor_botao` do tema se escura (luminância < 0,45), senão `#1b1b1b`.
+- Primitivas de voz: `tv_livre`/`tv_bloquear`/`definir_estado_tv`/`obter_estado_tv`/`buscar_proxima_fala` + chaves `chave_tv`/`chave_tv_etapa` + `ids_do_grupo` + `montar_rotas_static` (`/midia_filas`).
+- Nomes: `listar_nomes`/`salvar_lista_nomes` (`datahora_nomeFila.txt`) + `remover_nome`/`limpar_nomes`; LGPD `remover_vinculos_usuario`/`renomear_usuario`.
+- Massa 70 nomes (`massa_nomes_teste.py`, `GeradorMassaNomes`): 10 `#gestante` + 10 `#idoso` + 50 comuns, 12 com Manchester; `contar_distribuicao`/`validar_massa`/`gerar_massa_teste` + CLI `--semente/--saida` em `mod_filas/midia/`.
+
+## Gaps conhecidos (código ↔ docs)
+
+- `dialogo_editar_fila` (`telas.py`) legado — Editar atual carrega no `Cadastro de fila`; admin usa edição inline.
+- Sem função de relatório em `telas_administracao.py` — "relatório" = histórico isolado + auditoria `tb_auditoria_filas` + `painel_backup`.
+- Footer `versao_modulo:filas` citado antes não existe no código atual.
+
 ## Pontos de atenção
 
 - Projeto nasce SEM filas — `init_db` sem seed; `excluir_todas` pode zerar tudo.

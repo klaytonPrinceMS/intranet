@@ -10,7 +10,7 @@
 
 ## Propósito
 
-Pacote núcleo que centraliza tudo o que os módulos compartilham: banco central (auditoria unificada LGPD, configurações, sessões e cadastro de módulos), autenticação com sessões revogáveis, layout padrão de 4 partes com guarda de página, rotinas agendadas (backup por módulo + expiração do editorPDF) e a tela de personalização `/configuracoes`. Não possui `telas.py` próprio — suas telas (`layout_tela`, `tela_configuracoes`, `dialogo_backup`) são montadas pelas rotas de `main.py`.
+Pacote núcleo que centraliza tudo o que os módulos compartilham: banco central (auditoria unificada LGPD, configurações, sessões e cadastro de módulos), autenticação com sessões revogáveis, layout padrão de 4 partes com guarda de página, rotinas agendadas (backup por módulo + expiração do editorPDF) e a tela de personalização `/configuracoes`. Seu layout vive em `telas.py` (`pagina_restrita`, 4 partes) — as telas de configuração (`tela_configuracoes`) e backup (`rotinas.painel_backup`, legado `dialogo_backup`) são montadas pelas rotas de `main.py`.
 
 ## Banco central `db_mod_intranet.db`
 
@@ -36,7 +36,7 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` (`bd_cone
 - `validar_acesso_modulo()` (`autenticacao.py:421`) delega ao manipulador do módulo de usuários — o núcleo nunca lê `tb_usuarios` diretamente.
 - Autoatendimento: flag `forcar_troca:<user>` em `tb_config` + diálogo persistent de troca obrigatória no layout.
 
-## Guarda de página — `layout_tela.pagina_restrita()`
+## Guarda de página — `telas.pagina_restrita()`
 
 1. Sem usuário → redireciona `/login`.
 2. Revalida existência/situação ativa contra o BD → aviso "Sua sessão foi encerrada pelo administrador."
@@ -86,7 +86,7 @@ Não há mais um botão único "APLICAR" geral: cada card é recolhível (`card_
 
 `dialogo_backup.abrir_dialogo()` (botão no header do módulo, para quem pode gerenciar): intervalo em horas salvo + reagendado ao vivo, "Fazer backup agora" e grade das cópias retidas.
 
-## Versionamento no rodapé — `layout_tela._montar_layout`
+## Versionamento no rodapé — `telas._montar_layout`
 
 O rodapé mostra as versões **da esquerda para a direita**: 1ª a versão global do sistema (`v{versao_sistema}`), e quando o usuário está dentro de um módulo (`chave_modulo`), 2ª a versão **individual do módulo atual** (`v{versao_modulo:<chave>}`). Sem módulo específico (Dashboard/Configurações) aparece só a global. A versão individual é lida de `tb_config` (chave `versao_modulo:<chave>`, mesmo estilo `1.0.AAMMDD`) com fallback `1.0` quando o módulo ainda não versionou. Ex.: `/edit-pdf` mostra `v1.0.260913` (sistema — bump 13/09/2026) + `v1.0.260913` (mod intranet/empenhos/solicita — ver `bd_conexao.py:130-201`).
 
@@ -98,7 +98,7 @@ O rodapé mostra as versões **da esquerda para a direita**: 1ª a versão globa
 
 | Função | Consumidores |
 |:---|:---|
-| `layout_tela.pagina_restrita` | todas as rotas de `main.py` |
+| `telas.pagina_restrita` (`telas.py:35`) | todas as rotas de `main.py` |
 | `get_connection` / `DB_PATH` / `audit_log` | manipuladores de todos os módulos |
 | `get_config` / `set_config` | mod_edit_pdf (cotas/expiração), telas de login/home |
 | `gerar_hash_senha`, `marcar_trocar_senha` | mod_gest_cad_usuario |
@@ -226,7 +226,7 @@ Documentação de uso: [Manual de Instalação — Inicialização por linha de 
 - Visibilidade de módulos por permissão (drawer lateral com alerta de módulo inativo/removido).
 - Login com sessão registrada em banco (`registrar_login`) + **sessões revogáveis**: `cookie_hash` via `secrets`, revalidação a cada request (`sessao_ativa`), logout próprio preserva as demais sessões do usuário.
 - Gestão de Sessões (ativas + histórico + encerrar) no módulo de usuários; **retenção** do histórico implementada no mecanismo (poda por `sessao_retencao`, default 50/usuário).
-- Layout de 4 partes (`layout_tela.pagina_restrita`) com versão no rodapé; área principal carrega o **Blog por padrão** (feed de publicações recentes) — RF-09 **REALIZADO**; a navegação por módulos permanece no drawer lateral.
+- Layout de 4 partes (`telas.pagina_restrita`) com versão no rodapé; área principal carrega o **Blog por padrão** (feed de publicações recentes) — RF-09 **REALIZADO**; a navegação por módulos permanece no drawer lateral.
 - Personalização de cor primária/fundo, ícone, título, textos e favicon via `/configuracoes` (gravação única, vale sem restart).
 - Edição de Perfil ("Meu Perfil") e troca obrigatória de senha do `master` no 1º login (auto-cura idempotente em boot — `mod_gest_cad_usuario/bd_manipulador.py:136-156`).
 - Backup automático configurável por módulo (12 h default, sem restart) + expiração do editorPDF agendada.
@@ -661,3 +661,11 @@ Pilotos migrados:
 - **Conteúdo, tamanho, labels e cores inalterados** (`"{titulo} Básica — {texto_rodape}"` + rótulo único de versão global/módulo com tooltip detalhado — ver "Versionamento no rodapé" acima); sem JS, sem `hidden`.
 - **Validação Playwright real** (sistema reiniciado, `/login` 200): opacity inicial `0`, após hover `1` + transform `none`, screenshots desktop; texto preservado (`"INTRANET Básica — uso interno"`, `"v1.0.260913"`).
 - **Ressalvas:** no touch o reveal ocorre no toque na faixa (rodapé só informativo, sem focáveis); se o CSS falhar, degrada para sempre visível (fail-soft visual).
+
+## Auditoria kbp-doc — lote núcleo 23/09/2026
+
+Inventário real: `__init__`, `banco_conexao` (dual SQLite/PostgreSQL, `conexao(chave)`, `conexao_central`, `_CursorPostgres`), `bd_conexao` (`get_config`/`set_config` via `Repositorio`), `crud_base` (`CrudBase` + `audit_reg`), `repositorio` (`Repositorio`, `MODULOS_BD`, `engine`/`sessaodb`), `models/__init__` (imperativo `Table` + `dataclass` + `map_imperatively`: `Configuracao`/`Sessao`/`Modulo`), `autenticacao` (bcrypt, sessões revogáveis, `tb_modulos`), `tema_modulo`, `ui_comum`, `aba_modulo`, `telas` (layout 4 partes), `tela_configuracoes` (5 abas), `ativacao` (Opção C Typer), `rotinas` (APScheduler: `backup:<chave>`, `cleanup_pdf`, `poda_auditoria`, `monitor_empenho`; `painel_backup`, anti-disconnect `run.io_bound` + spinner + trava `ocupado`), `documentacao` (`_build`/`montar`/`iniciar_servidor`), `observabilidade` (loguru `get_logger`, `configurar`, `limpar_logs`).
+
+Correções aplicadas: docstring bilíngue EN/PT-BR em `autenticacao.py` (estava sem cabeçalho), `telas.usuario_logado` e `documentacao._build`/`montar` (estavam PT-only).
+
+Helpers do núcleo já cobertos acima e mantidos: `contexto` (ContextVar IP/UA LGPD), `censura` (palavras bloqueadas), `hora_servidor` (NTP.br), `rotas_modulos` (slugs custom), `tema_css` (frameworks locais), `email_util` (SMTP RF-58), `port_scanner` (`--scan-ports`), `home_visual` (modelo Water). Arquivos auxiliares sem seção própria (intencionais, sem docs dedicadas): `decoradores`, `dialogo_backup` (legado, substituído por `rotinas.painel_backup`), `docker_detector`, `grafana_sync`, `instrumentacao_app`, `otel_integracao`, `pdf_operacoes`, `nicegui_patch`, `telefone`, `ui_form`, `ui_painel`, `hora_servidor` detalhada em `modulos/intranet.md`.

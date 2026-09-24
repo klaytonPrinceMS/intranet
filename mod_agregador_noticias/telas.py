@@ -1,19 +1,11 @@
-"""Aggregator screen — 3-column masonry, tema filter + busca, fonte_icon + 30x30 thumbnail, TV integration.
+"""EN: Aggregator screen — 3-column masonry, tema filter + busca, fonte_icon + 30x30 thumbnail, TV integration.
 
-EN: Aggregator screen with 3-column masonry (column-count:3), tema select
-    + busca input (debounced, NFKD normalized) side-by-side, card with
-    fonte_icon (faviconV2 16×16) + imagem 30×30 thumbnail before title
-    (both optional, fail-soft), badge tema + title ui.link new_tab + descricao
-    + tempo relativo, pagination 10 (Primeira/Anterior/Próxima/Última),
-    Coleta badge removed, async Coletar via run.io_bound, integration TV via
-    listar_para_tv.
-
-Tela do Agregador de Notícias — 3 colunas, filtro tema + busca, ícone fonte + miniatura 30×30, integração TV.
+PT-BR: Tela do Agregador de Notícias — 3 colunas, filtro tema + busca, ícone fonte + miniatura 30×30, integração TV.
 
 Barra com filtro tema e busca lado a lado (sem badge Coleta), card com
 ícone da fonte (fonte_icon_url faviconV2 16×16) + miniatura 30×30
 (imagem_url 30×30 object-cover) antes do título quando presentes, badge
-tema + título link externo + descrição + tempo relativo, paginação 10
+tema + título link externo + descrição + tempo relativo, paginação 12
 com busca em memória (500 limite, NFKD lower).
 """
 

@@ -88,10 +88,10 @@ Os bancos já vêm com usuários de teste cadastrados (banco `db_mod_gest_cad_us
 
 | Usuário | Senha | Perfil | Acesso a módulos |
 |:---|:---|:---|:---|
-| `qacomum` | `123456` | `comum` | blog, editar_pdf (Edição de PDF), empenhos (Renomear Empenho) |
+| `qacomum` | `123456` | `comum` | editar_pdf (Edição de PDF), empenhos (Renomear Empenho), solicita_impressao (Solicitação de Impressão) — SEM blog |
 | `qamaster` | `123456` | `administrador_geral` | todos |
 
-- Use **`qacomum`** para validar fluxos de usuário comum (permissões restritas, somente leitura no Blog, etc.).
+- Use **`qacomum`** para validar fluxos de usuário comum (permissões restritas nos módulos liberados; SEM acesso ao Blog — a leitura restrita no Blog vale para `comum` com vínculo `blog`).
 - Use **`qamaster`** para validar fluxos de administrador geral (vê tudo, acesso à Auditoria e Configurações).
 
 ## Smoke test

@@ -21,7 +21,9 @@ _porta_atual = None
 
 
 def _build() -> tuple:
-    """Gera site/ com o mkdocs do próprio venv. Retorna (ok, erro_curto)."""
+    """Builds site/ with the venv mkdocs. Returns (ok, short_error).
+
+    Gera site/ com o mkdocs do próprio venv. Retorna (ok, erro_curto)."""
     try:
         r = subprocess.run(
             [sys.executable, "-m", "mkdocs", "build"],
@@ -34,7 +36,9 @@ def _build() -> tuple:
 
 
 def montar() -> bool:
-    """Serve site/ como rota estática (idempotente; arquivos novos valem sem remount)."""
+    """Serves site/ as static route (idempotent; new files apply without remount).
+
+    Serve site/ como rota estática (idempotente; arquivos novos valem sem remount)."""
     global _montado
     if _montado:
         return True

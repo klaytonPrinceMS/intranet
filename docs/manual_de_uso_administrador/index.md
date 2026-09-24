@@ -49,7 +49,7 @@ O sistema possui exatamente **três perfis globais** (campo `user_perfil` em `tb
 - Perfis por módulo (`administrador_geral`, `administrador do módulo`, `comum`); controle granular.
 - Senha provisória para novos usuários + troca no 1º acesso.
 - Proteções: não bloquear/rebaixar a própria conta; último `administrador_geral` protegido; `master` não pode ser excluído/renomeado.
-- Exclusão em dois estágios (LGPD): lógica (reversível) → permanente (aba `Excluídos`, só geral).
+- Exclusão em dois estágios (LGPD): lógica (reversível) → permanente (via busca por "excluído" ou filtro Situação = Excluídos na aba Usuários — a aba `Excluídos` foi removida por redundância; só geral).
 
 ## Auditoria (`/auditoria`, apenas geral)
 

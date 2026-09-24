@@ -362,8 +362,11 @@ def obter_usuario(user_nome):
 
 
 def nome_de_tratamento(user_nome):
-    """Nome usado para tratamento nas telas — nome completo ou social.
-    Cai para o login se o campo ainda não foi preenchido."""
+    """Display name for greetings/screens — full or social name.
+
+    Nome usado para tratamento nas telas — nome completo ou social
+    (Decreto 8.727/2016). Cai para o login se o campo ainda não foi
+    preenchido."""
     try:
         row = obter_usuario(user_nome)
         return (row[9] or "").strip() if row and row[9] else user_nome
@@ -465,7 +468,11 @@ def criar_usuario(ator, user_nome, senha, email=None, fone=None, perfil="comum",
 def editar_usuario(ator, user_nome, email="__NULO__", fone="__NULO__",
                    perfil=None, ativo=None, deletado=None, nome_completo="__NULO__",
                    auditar=True):
-    """Edita dados pessoais/perfil global. Use '__NULO__' p/ manter campo."""
+    """Edits personal data/global profile (RF-26 last-admin guard).
+
+    Edita dados pessoais/perfil global. Use '__NULO__' p/ manter campo.
+    Protege o último `administrador_geral` ativo (RF-26) e veda
+    auto-rebaixamento/auto-desativação."""
     conn = _conexao_segura()
     if conn is None:
         return False, "Falha ao conectar no banco de usuários"
@@ -535,10 +542,13 @@ def editar_usuario(ator, user_nome, email="__NULO__", fone="__NULO__",
 
 
 def renomear_usuario(ator, nome_atual, novo_nome, permitir_master=False):
-    """Renomeia mantendo o ID (chave primária), replicando nas tabelas dependentes.
+    """Renames the login keeping the PK id, propagating to dependents.
 
-    `permitir_master=True` libera a renomeação do `master` nativo — usado
-    EXCLUSIVAMENTE no primeiro acesso (troca de credenciais obrigatória)."""
+    Renomeia mantendo o ID (chave primária), replicando nas tabelas
+    dependentes (`tb_acesso_usuario`, sessões centrais e autorias nos
+    demais módulos). `permitir_master=True` libera a renomeação do
+    `master` nativo — usado EXCLUSIVAMENTE no primeiro acesso (troca de
+    credenciais obrigatória)."""
     novo_nome = (novo_nome or "").strip()
     if not novo_nome:
         return False, "Novo nome vazio"
@@ -581,7 +591,10 @@ def renomear_usuario(ator, nome_atual, novo_nome, permitir_master=False):
 
 
 def alterar_senha_admin(ator, user_nome, nova_senha):
-    """Troca administrativa de senha (reenvio provisório)."""
+    """Admin password reset (provisional, forces change, drops sessions).
+
+    Troca administrativa de senha (reenvio provisório): valida o mínimo
+    (`senha_minima`), marca `forcar_troca` e encerra todas as sessões."""
     if len(nova_senha or "") < senha_minima():
         return False, f"Mínimo {senha_minima()} caracteres"
     from mod_intranet.autenticacao import gerar_hash_senha, marcar_trocar_senha
@@ -608,7 +621,11 @@ def alterar_senha_admin(ator, user_nome, nova_senha):
 
 
 def bloquear_usuario(ator, user_nome, bloquear=True):
-    """Bloqueia (ativo=0). Desbloquear também restaura soft-delete."""
+    """Blocks/unblocks an account (unblock also clears soft-delete).
+
+    Bloqueia (ativo=0). Desbloquear também restaura soft-delete (limpa
+    `user_motivo_exclusao`) e ganha trilha dedicada (`bloquear_usuario` /
+    `desbloquear_usuario`)."""
     if ator == user_nome and bloquear:
         return False, "Você não pode bloquear a si mesmo"
     try:
@@ -638,10 +655,12 @@ def bloquear_usuario(ator, user_nome, bloquear=True):
 
 
 def soft_delete_usuario(ator, user_nome, motivo=None):
-    """Exclusão LÓGICA com motivo obrigatório — vai para a lista de excluídos.
+    """Logical delete with mandatory reason — moves to the deleted list.
 
-    Não apaga nada: reversível via 'Restaurar'. A exclusão permanente
-    (LGPD) é ação separada, disponível apenas na lista de excluídos."""
+    Exclusão LÓGICA com motivo obrigatório — vai para a lista de
+    excluídos. Não apaga nada: reversível via 'Restaurar'. A exclusão
+    permanente (LGPD) é ação separada, disponível apenas na lista de
+    excluídos."""
     if user_nome == "master":
         return False, "A conta master nativa não pode ser excluída"
     if ator == user_nome:
@@ -671,7 +690,9 @@ def soft_delete_usuario(ator, user_nome, motivo=None):
 
 
 def _vinculos_cruzados_excluir(user_nome):
-    """Remove/anonimiza referências do usuário nos demais módulos (LGPD).
+    """Removes/anonymizes the user's references in other modules (LGPD).
+
+    Remove/anonimiza referências do usuário nos demais módulos (LGPD).
     Blog: postagens e comentários apagados. EditorPDF: arquivos físicos,
     registros e cota apagados. Empenhos: registros públicos preservados
     com autoria anonimizada.
@@ -707,7 +728,10 @@ def _vinculos_cruzados_excluir(user_nome):
 
 
 def _vinculos_cruzados_renomear(nome_atual, novo_nome):
-    """Propaga o renomeio para colunas de autoria nos demais módulos.
+    """Propagates a rename to authorship columns in other modules.
+
+    Propaga o renomeio para colunas de autoria nos demais módulos
+    (Blog, EditorPDF, Empenhos).
 
     Isolamento total: cada módulo atualiza o PRÓPRIO banco através de
     sua API pública — nunca há cross-query entre bancos."""
@@ -776,12 +800,14 @@ def excluir_usuario_definitivo(ator, user_nome):
 
 def duplicar_usuario(ator, usuario_origem, novo_nome, senha, email=None,
                      fone=None, nome_completo=""):
-    """Duplica um usuário existente e todas as suas configurações de acesso.
+    """Duplicates a user with all per-module access (profile + flags).
 
+    Duplica um usuário existente e todas as suas configurações de acesso.
     Copia o perfil global e o papel do usuário origem em cada módulo
-    (tb_acesso_usuario). O novo usuário é criado exigindo apenas os dados
-    essenciais (login, nome, senha e email) — as permissões vêm da origem.
-    Senha vazia/None cai no padrão inicial ``123456``.
+    (tb_acesso_usuario, incluindo flags finas). O novo usuário é criado
+    exigindo apenas os dados essenciais (login, nome, senha e email) —
+    as permissões vêm da origem. Senha vazia/None cai no padrão inicial
+    ``123456``.
     """
     try:
         senha = (senha or "").strip() or "123456"
@@ -818,7 +844,11 @@ def duplicar_usuario(ator, usuario_origem, novo_nome, senha, email=None,
 # ================= PERFIS POR MÓDULO =================
 
 def definir_acesso(ator, user_nome, modulo_chave, papel):
-    """Atribui papel do usuário num módulo ('comum'|'administrador'). None remove."""
+    """Grants a per-module role ('comum'|'administrador'). None removes it.
+
+    Atribui papel do usuário num módulo ('comum'|'administrador'). None
+    remove (delega a `remover_acesso`). Upsert idempotente com auditoria
+    `definir_acesso`."""
     if papel is None:
         return remover_acesso(ator, user_nome, modulo_chave)
     if papel not in PAPEIS_MODULO:
@@ -868,7 +898,10 @@ def remover_acesso(ator, user_nome, modulo_chave):
 
 
 def obter_papel_no_modulo(user_nome, modulo_chave):
-    """Retorna 'administrador', 'comum' ou None."""
+    """Effective role in a module ('administrador'|'comum'|None).
+
+    Retorna 'administrador', 'comum' ou None. O `administrador_geral`
+    ativo sempre resolve como 'administrador' em qualquer módulo."""
     conn = _conexao_segura()
     if conn is None:
         return None
@@ -917,7 +950,10 @@ FLAGS_PERMISSAO = {
 
 
 def _flags_validas(flags):
-    """Valida o dicionário de flags contra o catálogo (allowlist)."""
+    """Validates a flags dict against the allowlist catalog.
+
+    Valida o dicionário de flags contra o catálogo (allowlist
+    `FLAGS_PERMISSAO`): chaves conhecidas e valores booleanos."""
     if not isinstance(flags, dict):
         return False, "flags deve ser um dicionário {flag: bool}"
     desconhecidas = [k for k in flags if k not in FLAGS_PERMISSAO]
@@ -929,7 +965,10 @@ def _flags_validas(flags):
 
 
 def obter_flags(user_nome, modulo_chave):
-    """Lê as flags finas do vínculo (dict). Fail-soft: ausente/erro/JSON inválido = {}."""
+    """Reads the fine-grained flags of a grant (dict, fail-soft {}).
+
+    Lê as flags finas do vínculo (dict). Fail-soft: ausente/erro/JSON
+    inválido devolve {}."""
     try:
         conn = get_connection()
     except Exception as e:
@@ -956,7 +995,11 @@ def obter_flags(user_nome, modulo_chave):
 
 
 def definir_flags(ator, user_nome, modulo_chave, flags):
-    """Substitui as flags finas do vínculo (validadas pelo catálogo)."""
+    """Replaces the fine-grained flags of a grant (catalog-validated).
+
+    Substitui as flags finas do vínculo (validadas pelo catálogo
+    `FLAGS_PERMISSAO`). Exige vínculo pré-existente em
+    `tb_acesso_usuario`."""
     ok, msg = _flags_validas(flags)
     if not ok:
         return False, msg
@@ -984,7 +1027,10 @@ def definir_flags(ator, user_nome, modulo_chave, flags):
 
 
 def tem_flag(user_nome, modulo_chave, flag):
-    """True se o usuário tem a flag (admin global/modular passam pelo papel)."""
+    """True when the user holds a fine-grained flag (admins pass by role).
+
+    True se o usuário tem a flag (admin global/modular passam pelo papel
+    'administrador' sem precisar da flag explícita)."""
     try:
         if obter_papel_no_modulo(user_nome, modulo_chave) == "administrador":
             return True
@@ -1007,7 +1053,10 @@ def _fechar_sessoes_central(user_nome):
 
 
 def listar_sessoes_ativas(usuario=None):
-    """Sessões abertas (sem logout), agora com rastreabilidade IP/dispositivo/MAC."""
+    """Open sessions (no logout) with IP/device/MAC traceability.
+
+    Sessões abertas (sem logout), agora com rastreabilidade
+    IP/dispositivo/MAC (colunas do `tb_sessoes` central)."""
     try:
         c = _central()
     except Exception as e:
@@ -1071,7 +1120,10 @@ def sessoes_ativas_por_usuario():
 
 
 def listar_historico_sessoes(usuario, limite=10):
-    """Últimas sessões ENCERRADAS do usuário (rastreabilidade LGPD)."""
+    """Last CLOSED sessions of a user (LGPD traceability).
+
+    Últimas sessões ENCERRADAS do usuário (rastreabilidade LGPD: entrada,
+    saída, duração calculada na tela, IP/dispositivo/MAC)."""
     try:
         c = _central()
     except Exception as e:
@@ -1134,7 +1186,11 @@ def encerrar_todas_sessoes(ator, user_nome):
 # ================= VÍNCULOS ÓRFÃOS =================
 
 def listar_vinculos_orfaos(chaves_ativas):
-    """Acessos apontando para módulos que não existem mais no sistema."""
+    """Grants pointing at modules no longer registered (orphan links).
+
+    Acessos em `tb_acesso_usuario` apontando para módulos que não existem
+    mais no sistema (chave fora de `chaves_ativas`). Na tela aparecem como
+    badge INDISPONÍVEL nos seletores."""
     conn = _conexao_segura()
     if conn is None:
         return []

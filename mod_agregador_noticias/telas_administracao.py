@@ -1,4 +1,8 @@
-"""Painel de administração do Agregador de Notícias (rota /admin/agregador_noticias)."""
+"""EN: News Aggregator admin panel (route /admin/agregador_noticias) — coleta, fontes, temas, censura, reinicio.
+
+PT-BR: Painel de administração do Agregador de Notícias (rota /admin/agregador_noticias).
+Cards: Coleta (habilitado/intervalo/termo/hora reinício), Fontes, Temas, Censura, Reinício diário.
+"""
 
 import sys, os, json, re
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))

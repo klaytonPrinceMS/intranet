@@ -14,26 +14,27 @@ Banco e visualizador da trilha de auditoria LGPD. A **escrita** é feita pelos d
 
 ## Banco exclusivo (`db_mod_auditoria.db`, WAL)
 
-Criador vigente: `init_db_auditoria()` em `bd_manipulador.py:25-38` (executado no import e pelo bootstrap central).
+Criador vigente: `init_db_auditoria()` em `bd_manipulador.py` (executado no import e pelo bootstrap central).
 
-- **`tb_auditoria_<modulo>`** — UMA TABELA POR MÓDULO (nome sanitizado: hífen vira `_`, ex. `edit-pdf` → `tb_auditoria_edit_pdf`). Colunas: `id`, `usuario`, `modulo`, `acao`, `descricao`, `timestamp` (horário local — RF-08), `hash_arquivo`, `ip`, `user_agent`, `client_hostname`; índices por `modulo`, `usuario` e `timestamp`.
+- **`tb_auditoria_<modulo>`** — UMA TABELA POR MÓDULO (nome sanitizado: hífen vira `_`, ex. `edit-pdf` → `tb_auditoria_edit_pdf`). Colunas: `id`, `usuario`, `modulo`, `acao`, `descricao`, `timestamp` (horário local — RF-08), `hash_arquivo`, `ip`, `user_agent`, `client_hostname`; índices por `modulo`, `usuario` e `timestamp`. O `hash_arquivo` é opaco para este módulo: quem calcula (ex. SHA-256 no Editor de PDF) é o produtor, que repassa via `audit_log` → `registrar_auditoria`.
 - **`tb_auditoria_meta`** — registro dos módulos produtores (`modulo` PK, `nome`, `criada_em`).
-- **Migração idempotente** do legado: `migrar_dados_existentes()` (`bd_manipulador.py:273-324`) copia a antiga `tb_auditoria` do banco central para as tabelas por módulo, marca `auditoria_migracao_concluida=1` na `tb_config` e **remove a tabela legada** do central.
-- **Poda LGPD**: `podar_registros(dias)` (`bd_manipulador.py:147-171`) remove registros mais antigos que o prazo em TODAS as tabelas — chamada diariamente pelo job `poda_auditoria` (`mod_intranet/rotinas.py:74-103`, `auditoria_retencao_dias`, default 90).
+- **Migração idempotente** do legado: `migrar_dados_existentes()` (`bd_manipulador.py`) copia a antiga `tb_auditoria` do banco central para as tabelas por módulo, marca `auditoria_migracao_concluida=1` na `tb_config` e **remove a tabela legada** do central.
+- **Poda LGPD**: `podar_registros(dias)` (`bd_manipulador.py`) remove registros mais antigos que o prazo em TODAS as tabelas — chamada diariamente pelo job `poda_auditoria` (`mod_intranet/rotinas.py`, `auditoria_retencao_dias`, default 90).
 
 !!! note "Escrita automática por novos módulos"
-    `registrar_auditoria` (`bd_manipulador.py:99-124`) cria a tabela do módulo e o registro em `tb_auditoria_meta` na primeira gravação — um módulo novo passa a auditar **sem nenhuma edição** neste módulo.
+    `registrar_auditoria` (`bd_manipulador.py`) cria a tabela do módulo e o registro em `tb_auditoria_meta` na primeira gravação — um módulo novo passa a auditar **sem nenhuma edição** neste módulo.
 
 ## Estrutura do pacote
 
 - `bd_manipulador.py` — conexão WAL, criação/garantia de tabelas, `registrar_auditoria`, `contar_registros`, `podar_registros`, `buscar_logs` (filtros + paginação), descoberta de módulos (`get_modulos_com_auditoria`/`get_tabelas_auditoria`) e migração do legado.
-- `telas.py` — visualizador (`mostrar_tela(usuario_logado, perfil)`).
+- `telas.py` — visualizador somente-leitura (`mostrar_tela(usuario_logado, perfil)`): abas Logs + Observabilidade (sem aba de administração interna).
+- `telas_administracao.py` — painel standalone `mostrar_administracao` (rota `/admin/auditoria`): cores + configurações específicas (limite, retenção, cabeçalho) + backup; exclusivo do `administrador_geral`.
 - `bd_criador.py` — **legado** (cria apenas `tb_auditoria_meta`; o esquema real é o de `bd_manipulador.py`).
 - `check_auditoria.py` — script diagnóstico standalone (lista chaves `auditoria%` da `tb_config` central).
 
 ## Fluxo da tela
 
-- **Acesso exclusivo ao `administrador_geral`** — dupla camada: bloqueio interno + exigência da chave `auditoria` em `pagina_restrita`. Tentativa sem permissão gera `acesso_negado` na trilha (choke point único em `layout_tela.pagina_restrita`).
+- **Acesso exclusivo ao `administrador_geral`** — dupla camada: bloqueio interno + exigência da chave `auditoria` em `pagina_restrita`. Tentativa sem permissão gera `acesso_negado` na trilha (choke point único em `telas.pagina_restrita`).
 - **Navegação dinâmica por tabela**: select "Visualizar auditoria de" montado a partir do banco (`get_modulos_com_auditoria`) — "Todas as auditorias" (UNION ALL) ou a tabela de um módulo específico; rótulos amigáveis por chave (`DEFS_NAV`).
 - **Filtros**: Usuário (LIKE), Ação (select com **categorias prontas** coloridas `CORES_ACAO` + texto livre via `with_input`), Hora (`strftime('%H:%M')`), intervalo de datas (campos com calendário em popup).
 - **Paginação server-side**: `LIMIT ? OFFSET ?` (`auditoria_limite` como tamanho de página, default 1000) com contador e botões Anterior/Próxima; auto-atualização a cada 30 s.
@@ -41,7 +42,7 @@ Criador vigente: `init_db_auditoria()` em `bd_manipulador.py:25-38` (executado n
 - **Exportação CSV**: baixa o resultado filtrado da página corrente respeitando os **campos e a ordem** selecionados pelo auditor.
 - **Colunas padrão**: Data/Hora, Usuário, Módulo, Ação, Descrição (truncada a 100 chars), Hash, IP e rótulo de dispositivo (`rotulo_dispositivo`).
 - **Aba Observabilidade** (só quando a stack OTel está no ar — `docker_detector.otel_stack_rodando()`): cards de atalho para os dashboards Grafana (Visão Geral, Traces, Logs) com aviso LGPD sobre a senha padrão do Grafana.
-- **Aba Administração** (expansão, exclusiva do admin geral): `auditoria_limite`, `auditoria_retencao_dias`, `auditoria_texto_header` + card padrão **"Configurações de cores"** (`auditoria_cor_botao`, `auditoria_cor_texto_botao`, `auditoria_cor_fundo`, `auditoria_cor_titulo`, `auditoria_btn_tamanho` — vazios usam o padrão do PRÓPRIO módulo via `PADROES_TEMA["auditoria"]` = `#000000`, sem herança do tema do sistema). Salvar também **audita a si mesmo** (`auditoria`, `configuracao`).
+- **Administração separada** (`telas_administracao.py`, rota `/admin/auditoria`): `auditoria_limite`, `auditoria_retencao_dias`, `auditoria_texto_header` + card padrão **"Configurações de cores"** (`auditoria_cor_botao`, `auditoria_cor_texto_botao`, `auditoria_cor_fundo`, `auditoria_cor_titulo`, `auditoria_btn_tamanho` — vazios usam o padrão do PRÓPRIO módulo via `PADROES_TEMA["auditoria"]` = `#000000`, sem herança do tema do sistema). Salvar também **audita a si mesmo** (`auditoria`, `configuracao`).
 
 ## Integrações com o núcleo
 

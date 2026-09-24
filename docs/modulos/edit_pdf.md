@@ -37,11 +37,12 @@ Criador vigente: `init_db_pdf()` em `bd_manipulador.py:92-123`.
 
 ## Regras de negócio
 
-- **Cotas em 4 níveis** (global, por usuário, por lote, estoque) lidas de `tb_config` central a cada uso.
+- **Cotas em 4 níveis** (global `cotadisco_global_gb` default 10 GB, por usuário `editar_pdf_usuario_gb` default 1 GB, por lote `editar_pdf_lote_arquivos`/`editar_pdf_lote_mb` em janela de 60 s `JANELA_LOTE_S`, estoque via `contar_uploads_ativos()`) lidas de `tb_config` central a cada uso.
 - **Limite de MB é por envio, não acumulado**: `_receber_lote` faz pré-checagem do lote inteiro antes de gravar.
-- **Expiração**: job `cleanup_pdf` (1 min) remove do disco, inativa registro, devolve cota e audita como ator `sistema`.
+- **Expiração**: job `cleanup_pdf` (`mod_intranet/rotinas.py`, 1 min) chama `expirar_antigos(minutos=cfg_expiracao_min())` — remove do disco por mtime, inativa registro, devolve cota e audita como ator `sistema`; "Expirar agora" força a mesma limpeza.
 - **Prefixo obrigatório**: `dataHora_usuario_operacao_nomeArquivo.pdf` — cada usuário vê apenas os próprios arquivos.
 - **Auditoria SHA-256**: `upload_hash` no upload; hashes das origens/resposta nas operações.
+- **Motor PDF**: `mod_intranet/pdf_operacoes.py` re-exportado (`hash_sha256`, `op_reduzir`/`op_juntar`/`op_cortar`/`op_dividir`/`op_dividir_partes`/`op_verificar`); ZIP via `zip_por_ids()` (seleção) / `zip_do_usuario()` (todos); exclusão com estorno de cota; ganchos `remover_vinculos_usuario()`/`renomear_usuario()`; `contar_arquivos_ativos()` no Resumo.
 
 ## Permissões
 
@@ -53,14 +54,17 @@ Criador vigente: `init_db_pdf()` em `bd_manipulador.py:92-123`.
 ## Rota e integrações
 
 - Rota: `/edit-pdf` (chave `editar_pdf`) — `main.py:218`.
-- Integra com o núcleo via `get_connection`/`get_config`/`set_config`/`audit_log`; scheduler central chama `expirar_antigos()`.
+- Integra com o núcleo via `get_connection`/`get_config`/`set_config`/`audit_log`; scheduler central (`mod_intranet/rotinas.py`, job `cleanup_pdf` 1 min) chama `expirar_antigos()`.
+- Configs: `cotadisco_global_gb`, `editar_pdf_lote_arquivos`, `editar_pdf_lote_mb`, `editar_pdf_usuario_gb`, `editar_pdf_expiracao_min` (+ textos `editar_pdf_texto_*`); tema usa prefixo distinto `editpdf_*`.
 - Reutilizado pelo módulo Renomear Empenho: `op_cortar`/`op_juntar`/`op_reduzir` (RF-45).
 
 ## Testes
 
 ```bash
-.venv/bin/python test/test_editor_pdf.py
+.venv/bin/python assets/test/test_editor_pdf.py
 ```
+
+`data-testid` (QA/playwright): `editar_pdf-atualizar`, `editar_pdf-verificar`, `editar_pdf-juntar`, `editar_pdf-excluir`, `editar_pdf-baixar-zip`, `editar_pdf-baixar-pdfs`, `editar_pdf-enviar`, `editar_pdf-modo-reduzir`, `editar_pdf-reduzir`, `editar_pdf-cortar`, `editar_pdf-dividir`.
 
 ## Pontos de atenção
 

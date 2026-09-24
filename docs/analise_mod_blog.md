@@ -60,6 +60,14 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na tr
 - O `bd_criador.py` do blog é **legado/morto**: conecta no banco central e duplica os CRUDs com sanitização sem whitelist — não executar.
 - Comentários só são removidos fisicamente por cascade quando a postagem é deletada fisicamente (fluxo da limpeza cruzada do módulo de usuários).
 
+## Cobertura 23/09/2026 — seleção em lote, quebras Word, timer único e LGPD
+
+- **Seleção em lote (só admin, `telas.py:mostrar_tela`)**: card com checkbox por post (`blog-selecionar-<id>`), `blog-selecionar-todos`, contador `blog-selecionados-contador`, `blog-selecionar-10` / `blog-selecionar-5` / `blog-limpar-selecao` e `blog-excluir-selecionados` + diálogo (`blog-confirmar-excluir-lote`, soft delete restaurável em Despublicadas). Backend `excluir_postagens_em_lote(ids, autor)` → `(ok, falha)`, `requer_pode_publicar` + `auditado`, ids inválidos viram falha sem abortar. A seleção também define o modo: **Aplicar à única** (`blog-aplicar-unica`, exatamente 1), **Exibir todas** (`blog-aplicar-historico`) e **Aplicar ao carrossel** (`blog-aplicar-carrossel`, mín. 2 + `Tempo (s)` 1–60). Substitui o antigo `ui.select` múltiplo citado em versões anteriores desta análise.
+- **Quebras de imagem estilo Word**: `ajustar_imagem_html` cobre `esquerda/direita/centro` + `em_linha/quadrado/justo/atraves/sup_inf/atras/frente` (só layout do `style` da última `<img>`, `ValueError` sem imagem); botões `blog-quebra-*` na linha "Quebra:" + `blog-img-esq/-centro/-dir` e `blog-img-largura` na linha "Imagem:".
+- **Timer único do carrossel**: `_carrossel_timers` por `id(wrap)` — timer criado uma vez fora do `@ui.refreshable`, anterior cancelado (`cancel` + `delete`) a cada re-render; `expandido` pausa o avanço; barra de ações duplicada topo/rodapé.
+- **LGPD**: `remover_vinculos_usuario` (limpa banco próprio, fallback legado central) e `renomear_autor` (propaga `autor` em postagens + comentários); `_ordem_sql` blinda `ORDER BY`; `listar_postagens(ativo=None)` serve à gestão de despublicadas.
+- **Regra comum só lê + seed + censura**: `comum` só lê (UI oculta e backend `pode_publicar_no_blog` bloqueia criar/editar/comentar/excluir); seed idempotente das 3 postagens-guia `Como usar` (`POSTAGENS_PADRAO`, autor `master`, `data_criacao` = momento do bootstrap, `mermaid` ao fim via `mover_mermaid_para_fim`); censura central (`titulo_bloqueado` antes do `nh3`, `None`/`False` + `warning`, card `blog-palavras-bloqueadas` + `blog-salvar-censura` com `limpar_censuradas` do agregador).
+
 ## Status — Fase 3 do PLANO.md
 
 | Item | Situação |

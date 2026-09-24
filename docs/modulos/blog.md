@@ -64,6 +64,24 @@ A página inicial (`main.py:443`, `page_dashboard`) exibe a seção **"Publicaç
 - Consumido pelo núcleo: bootstrap cria o banco, scheduler faz backup e o dashboard usa `contar_postagens(ativo=True)`.
 - Testes: `test/teste_fluxo_blog.py` (46/46 OK — sanitização XSS, conversores HTML/Markdown **inclusive dentro do WYSIWYG**, CRUD, publicar/despublicar, soft delete, config local, modo única/histórico, largura de imagem, modo carrossel, controles de imagem e auditoria), `test/teste_viabilidade_mermaid.py` (5/5 OK — renderização de `ui.mermaid` sem CDN e caminho real do blog), `test/teste_carrossel_blog.py` (headless — valida o DOM do modo carrossel: indicador de posição, botão Leitura completa, select de postagens, tempo e expansão) e `assets/test/test_blog_mermaid_fim.py` (7/7 OK — `mover_mermaid_para_fim` ao salvar, seeds no padrão único, render centralizado 680px).
 
+## Seleção em lote e exclusão em lote (só admin)
+
+- Card **"Seleção em lote"** (`mostrar_tela`, só quando `pode_publicar`): checkbox por card (`data-testid=blog-selecionar-<id>`), **Selecionar todos** (`blog-selecionar-todos`), contador (`blog-selecionados-contador`), atalhos **Selecionar 10 / 5 próximas / Limpar** (`blog-selecionar-10`, `blog-selecionar-5`, `blog-limpar-selecao`) e **Excluir selecionados** (`blog-excluir-selecionados`) com diálogo de confirmação (`blog-confirmar-excluir-lote`, soft delete com aviso de restauro em Despublicadas).
+- Backend: `excluir_postagens_em_lote(ids, autor)` — soft delete (`ativo=0`) um a um, com permissão (`requer_pode_publicar`), auditoria e retorno `(ok, falha)`; ids inválidos contam como falha sem derrubar o lote.
+- A mesma seleção alimenta os botões **Aplicar à única** (exige exatamente 1 selecionada → fixa `blog_postagem_unica_id` e modo `unica`), **Exibir todas** (modo `historico`) e **Aplicar ao carrossel** (exige ao menos 2 → grava `blog_carrossel_postagens_ids` + `blog_carrossel_tempo` e modo `carrossel`); **Tempo (s)** (`ui.number` 1–60) define o intervalo da rotação; **Restaurar padrão** volta a `carrossel` com as 3 básicas. O `comum` não vê o card (`selecionados=None`).
+
+## Quebras de imagem estilo Word + timer único do carrossel
+
+- `ajustar_imagem_html(html, alinhamento, largura)` (pura, testável): reescreve só o layout do `style` da **última `<img>`** (`float`, `margin*`, `display`, `clear`, `shape-outside`, `position`, `z-index`, `opacity`, `max/min/width`), preserva o CSS do autor e levanta `ValueError` sem imagem. Alinhamentos: `esquerda`, `direita`, `centro` + quebras `em_linha`, `quadrado`, `justo`, `atraves`, `sup_inf`, `atras` (marca d'água `opacity:0.45`), `frente` (sobreposta); `largura="original"` remove o `max-width`.
+- Linha **"Quebra:"** no editor (`blog-quebra-emlinha`, `-quadrado`, `-justo`, `-atraves`, `-supinf`, `-atras`, `-frente`) + linha **"Imagem:"** (`blog-img-esq`, `-centro`, `-dir`, `blog-img-largura` 25%/50%/75%/100%/Original).
+- Carrossel: `ui.timer` **único por wrap** (`_carrossel_timers`), criado fora do `@ui.refreshable` e com cancelamento do timer anterior a cada re-render — evita acúmulo/aceleração e a corrida `parent slot of Timer has been deleted`; `expandido` pausa a rotação; barra de ações (Anterior, `atual/total`, Próxima, Leitura completa/Voltar) no topo **e** no rodapé.
+
+## LGPD e integrações com usuários
+
+- `remover_vinculos_usuario(user_nome)`: apaga postagens + comentários do usuário **no banco próprio** (`db_mod_blog.db`; fallback na cópia legada central quando o arquivo não existe); retorna nº de postagens removidas.
+- `renomear_autor(nome_atual, novo_nome)`: propaga o renomeio em `tb_postagens.autor` e `tb_comentarios.autor` (fail-loud, o chamador registra).
+- Ordem do feed imune a injeção (`_ordem_sql` só aceita `ASC`/`DESC`); `listar_postagens(ativo=None)` retorna ativas + inativas (gestão de despublicadas); `listar_postagens_por_ids` preserva a ordem da seleção via placeholders `?`.
+
 ## Testes
 
 ```bash

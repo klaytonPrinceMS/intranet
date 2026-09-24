@@ -174,6 +174,9 @@ def _card_postagem_seguro(post, usuario_logado, perfil, ao_atualizar, pode_publi
 
 
 def _despublicar(pid, usuario_logado, ao_atualizar):
+    """Hides a post via backend and refreshes the feed.
+
+    Despublica via backend (`despublicar_postagem`) e atualiza o feed, com notify + loguru em falha."""
     from mod_blog.bd_manipulador import despublicar_postagem
     try:
         if despublicar_postagem(pid, usuario_logado):
@@ -188,6 +191,9 @@ def _despublicar(pid, usuario_logado, ao_atualizar):
 
 
 def _excluir(pid, usuario_logado, ao_atualizar):
+    """Soft-deletes a post via backend and refreshes the feed.
+
+    Exclui (soft delete `ativo=0`) via backend e atualiza o feed, com notify + loguru em falha."""
     from mod_blog.bd_manipulador import excluir_postagem
     try:
         if excluir_postagem(pid, usuario_logado):
@@ -201,10 +207,16 @@ def _excluir(pid, usuario_logado, ao_atualizar):
 
 
 def _esc(s):
+    """Escapes &, <, > for safe inline HTML.
+
+    Escapa `&`, `<`, `>` para HTML inline seguro."""
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 def _sanitizar(texto):
+    """Sanitizes comment HTML with the module whitelist (nh3).
+
+    Sanitiza HTML de comentário com a whitelist do módulo (`tags_permitidas` + `_ATTRS`); fallback em escape."""
     from mod_blog.bd_manipulador import tags_permitidas, _URL_SCHEMES, _ATTRS
     from nh3 import clean
     try:

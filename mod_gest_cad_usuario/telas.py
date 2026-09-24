@@ -49,14 +49,20 @@ def _nomes_modulos():
 
 
 def _norm(s):
-    """Minúsculas, sem acentos e com pontuação vira espaço —
+    """Accents/punctuation-insensitive lowercase for search matching.
+
+    Minúsculas, sem acentos e com pontuação vira espaço —
     buscar 'jose' acha 'José'; 'silva social' acha 'Silva-Social'."""
     s = unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower()
     return " ".join(re.findall(r"[a-z0-9]+", s))
 
 
 def mostrar_tela(user_nome: str, perfil_global: str = ""):
-    """Renders the user management screen (admin-only)."""
+    """Renders the user management screen (admin-only entry point).
+
+    Renderiza a tela de gestão de usuários (somente administradores).
+    Entry point protegido: delega a `_mostrar_tela_segura` com
+    try/except + notificação."""
     try:
         _mostrar_tela_segura(user_nome, perfil_global)
     except Exception:
@@ -65,7 +71,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
 
 
 def _mostrar_tela_segura(user_nome: str, perfil_global: str = ""):
-    """Body of `mostrar_tela`, isolated so the entry point can protect it.
+    """Safe body of `mostrar_tela` (access gate + full layout).
+
+    Corpo de `mostrar_tela`, isolado para o entry point proteger.
 
     Monta a tela completa: bloqueio de acesso para não administradores,
     tema/aparência do módulo `usuarios` via `ler_tema` (cor primária
@@ -155,7 +163,9 @@ def _acesso_negado():
 # ==================== COMPONENTES COMPARTILHADOS DE ACESSO ====================
 
 def _seletores_de_acesso(container, nome_usuario=None):
-    """Monta um seletor de papel por módulo dentro de `container`.
+    """Per-module role selectors inside `container` (all registered modules).
+
+    Monta um seletor de papel por módulo dentro de `container`.
     Itera TODOS os módulos registrados no banco — existentes e futuros.
     Novo usuário (nome_usuario=None): pré-seleciona o padrão de criação
     (`ACESSO_PADRAO_NOVO_USUARIO` com papel 'comum'; restritos nascem
@@ -195,7 +205,9 @@ def _seletores_de_acesso(container, nome_usuario=None):
 
 
 def _aplicar_acessos(ator, nome_usuario, selecoes):
-    """Compara seletores com o estado atual e aplica só as diferenças."""
+    """Diffs selectors vs current grants and applies only changes.
+
+    Compara seletores com o estado atual e aplica só as diferenças."""
     try:
         atual_map = {c: None for c, n, i, r, a in autenticacao.modulos_registrados()}
         for chave, papel, *_ in gest.listar_acessos(nome_usuario):
@@ -219,7 +231,9 @@ def _aplicar_acessos(ator, nome_usuario, selecoes):
 # ==================== ABA 1: USUÁRIOS ====================
 
 def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
-    """Lista paginada com filtros. Busca/botão vivem na BARRA SUPERIOR (mostrar_tela).
+    """Paginated user list with filters (renders only the visible page).
+
+    Lista paginada com filtros. Busca/botão vivem na BARRA SUPERIOR (mostrar_tela).
     Renderiza só a página visível — suporta milhares de usuários sem travar."""
     estado = termo_compartilhado if termo_compartilhado is not None else {"valor": ""}
     local = {"pagina": 1, "por_pagina": 20, "situacao": "", "perfil": "", "ordem": "nome"}

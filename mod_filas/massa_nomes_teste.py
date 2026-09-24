@@ -68,7 +68,9 @@ _SOBRENOMES = [
 
 
 class GeradorMassaNomes:
-    """Gerador determinístico da massa de nomes da fila (70 pessoas)."""
+    """EN: Deterministic queue name-mass generator (70 people).
+
+    PT-BR: Gerador determinístico da massa de nomes da fila (70 pessoas)."""
 
     def __init__(self, semente: int = SEMENTE_PADRAO):
         self.semente = int(semente)
