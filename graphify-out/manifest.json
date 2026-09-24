@@ -486,10 +486,10 @@
     "semantic_hash": "a5fa884777db8f0e28d54fcb6a5a0c41"
   },
   "mod_auditoria/check_auditoria.py": {
-    "mtime": 1790163176.8865879,
-    "seen": 1790251750.8083568,
-    "ast_hash": "12224ad3e2e34711ddd43f19f2388f60",
-    "semantic_hash": "12224ad3e2e34711ddd43f19f2388f60"
+    "mtime": 1790254936.1625931,
+    "seen": 1790255077.4354353,
+    "ast_hash": "34c97d4234f4351cbbb587c8d53d35b0",
+    "semantic_hash": ""
   },
   "mod_auditoria/telas.py": {
     "mtime": 1790163176.8865879,
@@ -546,10 +546,10 @@
     "semantic_hash": "dccfc7d067e46dba4a037a21435c9798"
   },
   "mod_gest_cad_usuario/bd_manipulador.py": {
-    "mtime": 1790188463.8807719,
-    "seen": 1790251750.8083901,
-    "ast_hash": "562a278817c84c2dca7f5f92152de4c1",
-    "semantic_hash": "562a278817c84c2dca7f5f92152de4c1"
+    "mtime": 1790254329.0333278,
+    "seen": 1790254629.8256888,
+    "ast_hash": "ef63fb08e0e907b16af848e8f4461a47",
+    "semantic_hash": ""
   },
   "mod_gest_cad_usuario/telas.py": {
     "mtime": 1790188475.5816622,
@@ -576,10 +576,10 @@
     "semantic_hash": "9bb4e52fd2f7b49982bcd2f8538fc386"
   },
   "mod_intranet/ativacao.py": {
-    "mtime": 1790001043.7577622,
-    "seen": 1790251750.808397,
-    "ast_hash": "5f956019185425ac6dfa18f3434ca49c",
-    "semantic_hash": "5f956019185425ac6dfa18f3434ca49c"
+    "mtime": 1790253507.9956653,
+    "seen": 1790254629.8256974,
+    "ast_hash": "cd27025a35d6ae8cfb4d9e158e7aee9a",
+    "semantic_hash": ""
   },
   "mod_intranet/autenticacao.py": {
     "mtime": 1790188433.5691426,
@@ -588,10 +588,10 @@
     "semantic_hash": "22b964a3d4d7d68f50e3980928cc9bf4"
   },
   "mod_intranet/banco_conexao.py": {
-    "mtime": 1790182436.098621,
-    "seen": 1790251750.8084,
-    "ast_hash": "304f623378c805879d2ca620e8afc640",
-    "semantic_hash": "304f623378c805879d2ca620e8afc640"
+    "mtime": 1790253472.8281872,
+    "seen": 1790254629.8257005,
+    "ast_hash": "a70ba013d0cbf355a09702888cffbdf7",
+    "semantic_hash": ""
   },
   "mod_intranet/bd_conexao.py": {
     "mtime": 1790167693.8581457,
@@ -618,10 +618,10 @@
     "semantic_hash": "19cef43e76e41d786f300ab4945f3437"
   },
   "mod_intranet/crud_base.py": {
-    "mtime": 1790001043.7597568,
-    "seen": 1790251750.8084085,
-    "ast_hash": "7821a3f55dde10c9077d65c09914cb38",
-    "semantic_hash": "7821a3f55dde10c9077d65c09914cb38"
+    "mtime": 1790253480.2015452,
+    "seen": 1790254629.8257093,
+    "ast_hash": "619500790589d648d8acc42979f192b8",
+    "semantic_hash": ""
   },
   "mod_intranet/decoradores.py": {
     "mtime": 1790001043.760754,
@@ -708,10 +708,10 @@
     "semantic_hash": "a9942e217637f7b1d68478be5cb45876"
   },
   "mod_intranet/repositorio.py": {
-    "mtime": 1790001043.7637336,
-    "seen": 1790251750.8084326,
-    "ast_hash": "bbd37cb13070c0a8ea2d687ab9b2f363",
-    "semantic_hash": "bbd37cb13070c0a8ea2d687ab9b2f363"
+    "mtime": 1790253493.4426744,
+    "seen": 1790254629.825733,
+    "ast_hash": "ff36b6733117c9accc7fe6078bf90836",
+    "semantic_hash": ""
   },
   "mod_intranet/rotas_modulos.py": {
     "mtime": 1790001043.7637336,
@@ -1038,46 +1038,46 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_auditoria.md": {
-    "mtime": 1790189048.4589016,
-    "seen": 1790251750.8085306,
-    "ast_hash": "e12138129b73ef7c795b28d84abb189c",
-    "semantic_hash": "e12138129b73ef7c795b28d84abb189c"
+    "mtime": 1790255039.5406873,
+    "seen": 1790255077.4356189,
+    "ast_hash": "f306b88bcde8148e3c83feb069e7babd",
+    "semantic_hash": ""
   },
   "docs/analise_mod_blog.md": {
-    "mtime": 1790188586.8154464,
-    "seen": 1790251750.808532,
-    "ast_hash": "7999380bfc09748d3a9b665c29c82106",
-    "semantic_hash": "7999380bfc09748d3a9b665c29c82106"
+    "mtime": 1790253420.526295,
+    "seen": 1790253456.329493,
+    "ast_hash": "135330537973f0d7c5386bd41cacf04a",
+    "semantic_hash": ""
   },
   "docs/analise_mod_edit_pdf.md": {
-    "mtime": 1790188604.3214934,
-    "seen": 1790251750.8085334,
-    "ast_hash": "8281a6e83422e14d7bba3df1621c68a0",
-    "semantic_hash": "8281a6e83422e14d7bba3df1621c68a0"
+    "mtime": 1790253383.6173308,
+    "seen": 1790253456.3294952,
+    "ast_hash": "e13fb35bc0a903fc7fc16d3647a88be9",
+    "semantic_hash": ""
   },
   "docs/analise_mod_gest_cad_usuario.md": {
-    "mtime": 1790188498.6971667,
-    "seen": 1790251750.8085363,
-    "ast_hash": "c8d16426c5dfb55d1263c13cefcea4ed",
-    "semantic_hash": "c8d16426c5dfb55d1263c13cefcea4ed"
+    "mtime": 1790254593.1903372,
+    "seen": 1790254629.825845,
+    "ast_hash": "ec5d05a368ef16d6c103f103976785f0",
+    "semantic_hash": ""
   },
   "docs/analise_mod_intranet.md": {
-    "mtime": 1790189048.5158732,
-    "seen": 1790251750.808538,
-    "ast_hash": "c6df6f0a0c9315dbc67ce0989563ef9d",
-    "semantic_hash": "c6df6f0a0c9315dbc67ce0989563ef9d"
+    "mtime": 1790253378.8746254,
+    "seen": 1790253456.3295026,
+    "ast_hash": "dd2bbc64d6f776822ec37fd6a587f7f5",
+    "semantic_hash": ""
   },
   "docs/analise_mod_renomear_empenho.md": {
-    "mtime": 1790188699.789635,
-    "seen": 1790251750.8085406,
-    "ast_hash": "fcd6be4e6f530e117aa90453362c4b21",
-    "semantic_hash": "fcd6be4e6f530e117aa90453362c4b21"
+    "mtime": 1790253383.6173308,
+    "seen": 1790253456.3295057,
+    "ast_hash": "6876441742b5854a577d55d937d500fc",
+    "semantic_hash": ""
   },
   "docs/analise_mod_solicita_impressao.md": {
-    "mtime": 1790188590.6047318,
-    "seen": 1790251750.808542,
-    "ast_hash": "c526f134f773cdad29dee371ab13c32b",
-    "semantic_hash": "c526f134f773cdad29dee371ab13c32b"
+    "mtime": 1790253426.4364688,
+    "seen": 1790253456.329507,
+    "ast_hash": "52d308722b4e432b86fae17fab70a842",
+    "semantic_hash": ""
   },
   "docs/api_referencia.md": {
     "mtime": 1790163176.821587,
@@ -1404,10 +1404,10 @@
     "semantic_hash": "2b98e9ec40574b076eb997c73c986b9c"
   },
   "mod_auditoria/bd_manipulador.py": {
-    "mtime": 1790188427.8572614,
-    "seen": 1790251750.8083556,
-    "ast_hash": "2476d699d32a96c298a67af9d4fbcb32",
-    "semantic_hash": "2476d699d32a96c298a67af9d4fbcb32"
+    "mtime": 1790254818.5820243,
+    "seen": 1790255077.4354331,
+    "ast_hash": "cd0717b2f487f0276573df191ffb5e2c",
+    "semantic_hash": ""
   },
   "mod_intranet/pdf_operacoes.py": {
     "mtime": 1790001043.7637336,
@@ -1524,10 +1524,10 @@
     "semantic_hash": "980f60ed31a39290255b0b3c0188bd78"
   },
   "docs/analise_mod_filas.md": {
-    "mtime": 1790188753.6525178,
-    "seen": 1790251750.8085349,
-    "ast_hash": "dc3abe8836674317fae449c186e65b06",
-    "semantic_hash": "dc3abe8836674317fae449c186e65b06"
+    "mtime": 1790253426.438444,
+    "seen": 1790253456.3294978,
+    "ast_hash": "1a7ec7409f86068e3b88ef4bfad8a082",
+    "semantic_hash": ""
   },
   "docs/analise_mod_lista_telefonica.md": {
     "mtime": 1790163176.8205874,
@@ -1536,10 +1536,10 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_tecnico.md": {
-    "mtime": 1790188794.7189963,
-    "seen": 1790251750.8085432,
-    "ast_hash": "f71e2bcdddead75325d5d0f3d66ee46e",
-    "semantic_hash": "f71e2bcdddead75325d5d0f3d66ee46e"
+    "mtime": 1790253426.4374416,
+    "seen": 1790253456.3295083,
+    "ast_hash": "71e294039f322c1d79dcc6ff897bf15c",
+    "semantic_hash": ""
   },
   "docs/modulos/filas.md": {
     "mtime": 1790188989.462577,
@@ -1785,6 +1785,12 @@
     "mtime": 1790187429.253494,
     "seen": 1790251750.8086152,
     "ast_hash": "698dc19d489c4e4db73e28a713eab07b",
+    "semantic_hash": ""
+  },
+  "docs/registro_de_mudancas/wal_paridade_pendente_2026-09-24.md": {
+    "mtime": 1790255049.4219072,
+    "seen": 1790255077.4356866,
+    "ast_hash": "d551dec12c07549f52bb152070e94884",
     "semantic_hash": ""
   }
 }

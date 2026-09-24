@@ -101,7 +101,7 @@ def extrair_segmentos_mermaid(conteudo):
         return [("texto", conteudo or "")]
 
 
-_crud = CrudBase(DB_BLOG_PATH, "blog")
+_crud = CrudBase(DB_BLOG_PATH, "blog", foreign_keys=True)
 
 # Autor padrão usado no seed de postagens de guia "Como usar" (inseridas
 # quando o banco do blog é criado do zero).
@@ -471,6 +471,12 @@ def remover_vinculos_usuario(user_nome):
                 cc.execute("DELETE FROM tb_comentarios WHERE autor=?", (user_nome,))
                 cc.execute("DELETE FROM tb_postagens WHERE autor=?", (user_nome,))
             return len(ids)
+        # LEGADO cross-db isolado: fallback central só quando o DB próprio
+        # (DB_BLOG_PATH) ainda não existe. Não é cross-query em operação
+        # normal — apenas compat com banco central antigo. Mantém idempotência.
+        _log().warning(
+            f"remover_vinculos_usuario: DB próprio ausente, usando fallback "
+            f"central legado para {user_nome}")
         conn = get_connection()
         try:
             cc = conn.cursor()
@@ -506,6 +512,14 @@ def renomear_autor(nome_atual, novo_nome):
             cc.execute("UPDATE tb_postagens SET autor=? WHERE autor=?", (novo_nome, nome_atual))
             cc.execute("UPDATE tb_comentarios SET autor=? WHERE autor=?", (novo_nome, nome_atual))
         return
+    # LEGADO cross-db isolado: fallback central só quando o DB próprio
+    # (DB_BLOG_PATH) ainda não existe. Não é cross-query em operação normal.
+    try:
+        _log().warning(
+            f"renomear_autor: DB próprio ausente, usando fallback central "
+            f"legado para {nome_atual}->{novo_nome}")
+    except Exception:
+        pass
     try:
         conn = get_connection()
     except Exception:

@@ -34,24 +34,27 @@ def mostrar_administracao(usuario_logado: str = ""):
         sw_hab = ui.switch("Módulo habilitado — coletar notícias automaticamente", value=ag.habilitado()).props("color=primary").classes("mt-1").props('data-testid=agregador-habilitado')
         sw_hab.tooltip("Se desabilitado, nenhuma coleta automática ocorre (só manual via Coletar agora)")
 
-        # Intervalo 10 min – 6h
+        # Intervalo 10 min – 9360 min (teto 6,5 dias, mesmo clamp da API intervalo_min())
         val_intervalo = ag.intervalo_min()
-        sel_intervalo = ui.select({10: "10 min", 30: "30 min", 60: "1 hora", 120: "2 horas", 180: "3 horas", 360: "6 horas"}, value=val_intervalo, label="Intervalo de coleta").props("outlined dense").classes("w-full sm:w-64").props('data-testid=agregador-intervalo')
-        sel_intervalo.tooltip("Mínimo 10 minutos, máximo 6 horas (360 min)")
+        _opcoes = {10: "10 min", 30: "30 min", 60: "1 hora", 120: "2 horas", 180: "3 horas", 360: "6 horas", 720: "12 horas", 1440: "1 dia", 4320: "3 dias", 9360: "6,5 dias (teto)"}
+        if val_intervalo not in _opcoes:
+            _opcoes[val_intervalo] = f"{val_intervalo} min (atual)"
+        sel_intervalo = ui.select(_opcoes, value=val_intervalo, label="Intervalo de coleta (10 min – 9360 min)").props("outlined dense").classes("w-full sm:w-64").props('data-testid=agregador-intervalo')
+        sel_intervalo.tooltip("Mínimo 10 minutos, teto 9360 minutos (6,5 dias) — mesmo limite da API")
 
         inp_termo = ui.input("Conteúdo da pesquisa (termo livre, ex.: Brasil, Monte Santo, economia)", value=ag.termo_pesquisa()).props("outlined dense clearable").classes("w-full").props('data-testid=agregador-termo')
         inp_termo.tooltip("Termo usado na pesquisa Google News (search?q=termo). Deixe vazio para não pesquisar termo livre.")
 
-        # Hora do reinício diário (padrão 06:00 manhã, zera tudo)
+        # Hora do reinício diário (padrão 09:00 manhã, zera tudo — mesmo default do backend obter_hora_reinicio())
         val_hora = ag.obter_hora_reinicio()
-        inp_hora = ui.input("Hora do reinício diário (HH:MM, padrão 06:00 manhã)", value=val_hora, placeholder="06:00").props("outlined dense").classes("w-full sm:w-64").props('data-testid=agregador-hora-reinicio')
-        inp_hora.tooltip("Banco reciclado diariamente — zera todas as notícias na hora definida. Ex: 06:00")
+        inp_hora = ui.input("Hora do reinício diário (HH:MM, padrão 09:00 manhã)", value=val_hora, placeholder="09:00").props("outlined dense").classes("w-full sm:w-64").props('data-testid=agregador-hora-reinicio')
+        inp_hora.tooltip("Banco reciclado diariamente — zera todas as notícias na hora definida. Ex: 09:00")
 
         def salvar_coleta():
             ag.definir_habilitado(bool(sw_hab.value), ator=usuario_logado)
             ok, v = ag.definir_intervalo(int(sel_intervalo.value or 60), ator=usuario_logado)
             ag.definir_termo(inp_termo.value or "", ator=usuario_logado)
-            ok_h, msg_h = ag.definir_hora_reinicio(inp_hora.value or "06:00", ator=usuario_logado)
+            ok_h, msg_h = ag.definir_hora_reinicio(inp_hora.value or "09:00", ator=usuario_logado)
             if not ok_h:
                 notificar(msg_h, type="negative")
                 return
@@ -68,7 +71,7 @@ def mostrar_administracao(usuario_logado: str = ""):
             ag.definir_habilitado(False, ator=usuario_logado)
             ag.definir_intervalo(60, ator=usuario_logado)
             ag.definir_termo("", ator=usuario_logado)
-            ag.definir_hora_reinicio("06:00", ator=usuario_logado)
+            ag.definir_hora_reinicio("09:00", ator=usuario_logado)
             try:
                 from mod_intranet.rotinas import reconfigurar_agregador_noticias
                 reconfigurar_agregador_noticias()
@@ -249,7 +252,7 @@ def mostrar_administracao(usuario_logado: str = ""):
 
     # Backup removido — banco reciclado diariamente (reinício às horas da manhã, zera tudo)
     with card_admin("Reinício diário — banco reciclado", icone="restart_alt", chave_modulo="agregador_noticias", grade=False):
-        ui.label("Banco de notícias é reciclado diariamente às horas da manhã (padrão 06:00), zerando todas as notícias. Configure a hora acima em Coleta. Auditoria apenas de quem alterou o quê no módulo.").classes("text-caption text-grey-6")
+        ui.label("Banco de notícias é reciclado diariamente às horas da manhã (padrão 09:00), zerando todas as notícias. Configure a hora acima em Coleta. Auditoria apenas de quem alterou o quê no módulo.").classes("text-caption text-grey-6")
         with ui.row().classes("w-full gap-2 mt-2"):
             def _reiniciar_agora():
                 n = ag.reiniciar_banco(ator=usuario_logado)

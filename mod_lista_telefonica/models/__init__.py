@@ -1,5 +1,11 @@
 """EN: Models package for mod_lista_telefonica — dataclasses mirroring tb_unidade/tb_contato.
 PT-BR: Pacote de modelos do mod_lista_telefonica — dataclasses espelhando tb_unidade/tb_contato.
+
+DÍVIDA (AGENTS §3.1): hoje só dataclasses (sem Table + map_imperatively()).
+Padrão a propagar é o mapeamento imperativo SQLAlchemy em models/__init__.py
+(Table + dataclass + map_imperatively(), hoje só mod_intranet). Não migrar
+agora sem testes de paridade SQLite↔PostgreSQL; bd_manipulador segue via
+banco_conexao.conexao (portável) até a migração.
 """
 
 from dataclasses import dataclass

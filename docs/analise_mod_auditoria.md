@@ -79,3 +79,35 @@ Criador vigente: `init_db_auditoria()` em `bd_manipulador.py` (executado no impo
 | Acesso exclusivo do `administrador_geral` + `acesso_negado` (RF-35) | ✅ Implementado |
 | Aba Observabilidade (Grafana) condicionada à stack OTel | ✅ Implementado |
 | Cupê Aparência + auto-auditoria das configs | ✅ Implementado |
+
+## Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)
+
+> Documentação da correção pendente. Nenhum `.py` alterado neste lote.
+
+| Módulo | Achado | Arquivo:linha | Correção proposta contida no módulo | Risco regressão |
+|:---|:---|:---|:---|:---|
+| auditoria | Sem `CrudBase`; `sqlite_master` em 3 pontos; `strftime` em SQL sem tradução PG | `mod_auditoria/bd_manipulador.py:138`, `:460`, `:475` (`sqlite_master`) · `:339`, `:352`, `:372`, `:388` (`strftime`) | Migrar para `CrudBase` + `conexao("auditoria")`; helper `_tabela_existe()` interno; reescrever filtro hora/datas sem `strftime` SQL (Python ou `EXTRACT`/`TO_CHAR` isolado) | Médio-alto (LGPD/poda + UNION ALL + CSV) |
+
+Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+
+## Correção aplicada 24/09/2026 — WAL + paridade SQLite↔PostgreSQL
+
+> EN: Fix applied 24/09/2026 in `mod_auditoria/bd_manipulador.py` (code already patched, docs-only batch): meta-first discovery + `information_schema` fallback, `to_char` vs `strftime` helpers, write cache + 3x commit retry, portable migration, portable `check_auditoria.py`; tests 12/12 in `assets/test/test_auditoria.py`, verdict PASS.
+
+> Correção aplicada em 24/09/2026 em `mod_auditoria/bd_manipulador.py` (código já corrigido, lote só-documentação): descoberta via meta + fallback `information_schema`, helpers `to_char` vs `strftime`, cache de escrita + retry 3x, migração portável, `check_auditoria.py` portável; testes 12/12 em `assets/test/test_auditoria.py`, veredito APROVADO.
+
+| Tema | Antes (pendência 24/09) | Depois (correção aplicada) — arquivo:linha |
+|:---|:---|:---|
+| Descoberta via meta + `information_schema` | `sqlite_master` em 3 pontos, sem ramo PG | Fonte primária `tb_auditoria_meta` (`bd_manipulador.py:245`); fallback por backend (`:256-269`): `information_schema.tables` no PG (`:260-267`), `sqlite_master` só no SQLite (`:268`); `_tabela_existe()` portável (`:72-96`) com `_sgbd()` (`:27-34`) |
+| Filtros hora/data `to_char` | `strftime('%H:%M'/'%d/%m/%Y')` em SQL sem tradução no proxy (`:339`, `:352`, `:372`, `:388`) | `_sql_hora()` (`:99-107`): `to_char(col, 'HH24:MI')` no PG, `strftime('%H:%M')` no SQLite — usado em `buscar_logs` tabela única (`:515`) e `UNION ALL` (`:548`); `_sql_data_formatada()` (`:110-118`): `to_char(col, 'DD/MM/YYYY HH24:MI:SS')` vs `strftime('%d/%m/%Y %H:%M:%S')` — usado em (`:528`) e (`:564`) |
+| Cache de escrita + retry | DDL+commit por escrita (janela de lock); `database is locked` sem retry | `_TABELAS_GARANTIDAS` (`:21`) + `_TENTATIVAS_COMMIT = 3` (`:24`); `registrar_auditoria` só garante DDL se fora do cache (`:352-354`), invalida e regarante em `no such table`/`undefined_table` (`:367-375`); `_commit_com_retry()` (`:37-69`, backoff `0.05s × tentativa`, rollback seguro, fail-soft AGENTS §3.2); conexão via `conexao("auditoria")` + `PRAGMA journal_mode=WAL`/`synchronous=NORMAL` (`:130-146`) |
+| Migração portável | `sqlite_master` no legado central, sem ramo PG | `_migrar_dados_existentes_seguro()` (`:623`) usa `_tabela_existe(central_conn, "tb_auditoria")` (`:637`, `information_schema` no PG); garante `tb_auditoria_meta` (`:665-666`); grava por módulo + `_commit_com_retry` (`:679`); marca `auditoria_migracao_concluida=1` e remove legado (`:696-697`) |
+| `check` portável | Risco de `sqlite3` cru no diagnóstico | `check_auditoria.py` via `banco_conexao.conexao("intranet")` (`:31-33`), `SELECT chave, valor FROM tb_config WHERE chave LIKE 'auditoria%'` (`:35`) portável nos dois backends, log dedicado `logs/auditoria_*.log` — sem uso pela aplicação |
+
+### Testes e veredito
+
+| Suíte | Resultado |
+|:---|:---|
+| `assets/test/test_auditoria.py` — índices (3: `modulo`/`usuario`/`timestamp` em `tb_auditoria_intranet`) + `audit_log` rastreável (4: ação/IP/UA/timestamp local) + poda LGPD (2: remove velho/preserva novo) + acesso exclusivo (2: `qacomum` nega/`qamaster` permite) + prefs por usuário (1) | 12/12 OK |
+
+**Veredito: APROVADO — sem regressão.** Pendência WAL+paridade do `mod_auditoria` (linha da tabela acima) considerada **superada**; demais módulos do plano permanecem pendentes conforme o arquivo consolidado.

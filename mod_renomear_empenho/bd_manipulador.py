@@ -6,9 +6,10 @@ renomeação sequencial e organizador físico (~200 págs/pasta, 4 pastas/caixa)
 import sys, os, re, json
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
-import sqlite3
 import shutil
 import io
+import threading
+import time
 from datetime import datetime
 from functools import lru_cache
 
@@ -21,13 +22,126 @@ MOD_DIR = os.path.join(BASE_DIR, "mod_renomear_empenho")
 
 
 def _log():
-    """Logger do módulo (loguru) — arquivo dedicado logs/renomear_empenho_<data>.log."""
+    """Logger do módulo (loguru) — arquivo dedicado logs/renomear_empenho_<data>.log.
+
+    Nunca retorna None e nunca recursa: em falha do observabilidade usa o
+    logging padrão (evita AttributeError em `_log().exception/...` quando o
+    núcleo ainda não inicializou o loguru).
+    """
     try:
         from mod_intranet import observabilidade
-        return observabilidade.get_logger("renomear_empenho")
+        lg = observabilidade.get_logger("renomear_empenho")
+        if lg is not None:
+            return lg
+    except Exception:
+        pass
+    try:
+        import logging
+        return logging.getLogger("renomear_empenho")
+    except Exception:
+        pass
+    # último recurso: objeto com interface mínima (nunca None)
+    class _Nulo:
+        def __getattr__(self, _):
+            def _ignorar(*a, **k):
+                return None
+            return _ignorar
+    return _Nulo()
+
+
+# Lock intra-processo do contador sequencial (achado 2): serializa
+# _proximo_contador()+rename+INSERT dentro do processo. Entre processos usa
+# UNIQUE(nome_arquivo_final)+retry (ver processar_pdf).
+_LOCK_CONTADOR = threading.Lock()
+
+# Nº máximo de tentativas em colisão de nome/contador ou locked (achado 2/1).
+_TENTATIVAS_NOME = 5
+
+
+def _eh_erro_bloqueio(exc):
+    """True se a exceção é contenção transitória (retry seguro).
+
+    Cobre SQLite ("database is locked", "database table is locked", "busy")
+    e congêneres do proxy Postgres. Usado por levantar_arquivos e pelos
+    commits curtos para evitar `database is locked` sem derrubar o monitor.
+    """
+    try:
+        msg = str(exc or "").lower()
+        return any(k in msg for k in ("database is locked", "database table is locked",
+                                      "database is busy", " is locked", " busy", "timeout", "deadlock"))
+    except Exception:
+        return False
+
+
+def _commit_com_retry(conn, contexto="?", tentativas=5):
+    """Commit com retry em contenção + rollback em falha final.
+
+    Retorna True em sucesso; False após esgotar as tentativas (já com
+    rollback). Nunca levanta `database is locked` ao chamador do monitor.
+    """
+    try:
+        if conn is None:
+            _log().error(f"{contexto}: sem conexão — commit abortado")
+            return False
+        for tentativa in range(max(1, int(tentativas))):
+            try:
+                conn.commit()
+                return True
+            except Exception as e:
+                if _eh_erro_bloqueio(e) and tentativa < tentativas - 1:
+                    try:
+                        time.sleep(0.05 * (2 ** tentativa))
+                    except Exception:
+                        pass
+                    continue
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                _log().warning(f"{contexto}: commit falhou ({e}) — rollback aplicado")
+                return False
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return False
     except Exception as e:
-        _log().exception(f"_log falhou: {e}")
-        return None
+        _log().exception(f"_commit_com_retry falhou ({contexto}): {e}")
+        return False
+
+
+def _fechar_seguro(conn, contexto="?"):
+    """Fecha a conexão sem nunca levantar (best-effort, aceita None)."""
+    try:
+        if conn is not None:
+            conn.close()
+    except Exception as e:
+        _log().debug(f"{contexto}: falha ao fechar conexão: {e}")
+
+
+def _sem_conexao(contexto):
+    """Registra a ausência de conexão (guarda None padrão do módulo).
+
+    Fora da UI não há `notificar()` visual; registra no logger (erro visível
+    em logs/renomear_empenho_*.log) e o chamador retorna mensagem amigável
+    em vez de AttributeError.
+    """
+    try:
+        _log().error(f"{contexto}: sem conexão com o banco (conexao retornou None)")
+    except Exception:
+        pass
+# NOTA DE PARIDADE SQLite↔PostgreSQL (achado 4 — fonte: mod_intranet/banco_conexao):
+# - `busy_timeout=5000` é herdado de `banco_conexao.conexao()` (WAL+NORMAL+5000+FK);
+#   este módulo NÃO reconfigura timeout (evita database is locked por espera curta).
+# - DDL portátil: AUTOINCREMENT/INTEGER PRIMARY KEY/DATETIME/INSERT OR IGNORE
+#   são traduzidos pelo proxy `_CursorPostgres` — manter o SQL no dialeto
+#   SQLite (não usar `ADD COLUMN IF NOT EXISTS`, inexistente no SQLite).
+# - FTS5 (`CREATE VIRTUAL TABLE ... fts5` + trigger) é SQLite-only: o proxy
+#   ignora no PG e a busca usa fallback LIKE (degradação documentada).
+# LEGADO/MORTO (achado 4): caminho do SQLite direto; a conexão real é via
+# `banco_conexao.conexao("empenhos")` em `_conn()`. Mantido apenas como alias
+# para compatibilidade de testes que redirecionam o banco (`bd.DB_EMPENHO_PATH`).
+# Nunca usar para abrir conexão (quebraria a paridade Postgres).
 DB_EMPENHO_PATH = os.path.join(BASE_DIR, "db_mod_renomear_empenho.db")
 PASTA_ORGANIZADOR = os.path.join(MOD_DIR, "organizadorPasta")
 PASTA_QUARENTENA = os.path.join(MOD_DIR, "quarentena")
@@ -541,9 +655,21 @@ def init_db_empenho():
     `tb_eventos_arquivos` (trilha por arquivo), `tb_campos_busca` (semeada
     com ficha/empenho/parcela/ano), `tb_solicitacoes` (fluxo comum→admin) e
     a FTS5 virtual `tb_indexador_pesquisa_fts5` (32 colunas + trigger de
-    exclusão + coluna `campo_destino` nas regras). Executado no import."""
-    os.makedirs(_PASTA_MONITORADA_PADRAO, exist_ok=True)
+    exclusão + coluna `campo_destino` nas regras). Executado no import.
+
+    Degradação PG (achado 4): FTS5 + trigger são SQLite-only — o proxy
+    Postgres ignora `CREATE VIRTUAL TABLE`/`CREATE TRIGGER` e a busca usa
+    fallback LIKE portável (ver `pesquisar`/`pesquisar_levantamento`).
+    Guarda `_conn() is None`: loga e retorna False sem AttributeError.
+    """
+    try:
+        os.makedirs(_PASTA_MONITORADA_PADRAO, exist_ok=True)
+    except Exception as e:
+        _log().warning(f"init_db_empenho: falha ao criar pasta monitorada: {e}")
     conn = _conn()
+    if conn is None:
+        _sem_conexao("init_db_empenho")
+        return False
     cur = conn.cursor()
     cur.execute("""
         CREATE TABLE IF NOT EXISTS tb_empenhos (
@@ -586,6 +712,14 @@ def init_db_empenho():
         if _campo not in ("ficha", "empenho", "parcela", "ano"):
             _migrar_coluna(conn, "tb_empenhos", _campo, "TEXT")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_empenho_numero ON tb_empenhos(numero_empenho)")
+    # UNIQUE do nome final (achado 2): barreira entre processos contra race do
+    # contador (`_proximo_contador` em conn distinta do INSERT). Duplicata vira
+    # IntegrityError → processar_pdf faz retry com novo contador (portável PG).
+    try:
+        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_empenho_nomefinal "
+                    "ON tb_empenhos(nome_arquivo_final)")
+    except Exception as e:
+        _log().debug(f"init: índice UNIQUE nome_final indisponível: {e}")
     cur.execute("""
         CREATE TABLE IF NOT EXISTS tb_indexador_pesquisa (
             empenho_id INTEGER PRIMARY KEY,
@@ -769,6 +903,8 @@ def init_db_empenho():
     except Exception:
         pass
     # Se o FTS já existe com colunas antigas (32), recria para o novo conjunto (>=42).
+    # Isolado em try (achado 4): no PG `sqlite_master` devolve vazio no proxy e
+    # o CREATE VIRTUAL é ignorado — segue para o fallback LIKE sem derrubar o init.
     try:
         cur.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='tb_indexador_pesquisa_fts5'")
         _fts_row = cur.fetchone()
@@ -781,26 +917,33 @@ def init_db_empenho():
         if _precisa_recriar and _fts_row:
             cur.execute("DROP TABLE IF EXISTS tb_indexador_pesquisa_fts5")
     except Exception as e:
-        _log().debug(f"FTS check: {e}")
-    cur.execute(
-        "CREATE VIRTUAL TABLE IF NOT EXISTS tb_indexador_pesquisa_fts5 USING fts5("
-        + ", ".join(FTS_COLS) + ")"
-    )
+        _log().debug(f"FTS check indisponível (PG usa fallback LIKE): {e}")
+    try:
+        cur.execute(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS tb_indexador_pesquisa_fts5 USING fts5("
+            + ", ".join(FTS_COLS) + ")"
+        )
+    except Exception as e:
+        _log().debug(f"FTS5 indisponível ({e}) — busca usa fallback LIKE (degradação PG documentada)")
     # Campo de destino dinâmico nas regras regex (alimenta colunas FTS customizadas).
     try:
         cur.execute("ALTER TABLE tb_regex_regras ADD COLUMN campo_destino TEXT")
     except Exception:
         pass  # coluna já existe em bancos previamente criados
-    # Trigger: remove o índice FTS ao excluir o empenho.
-    cur.execute("""
-        CREATE TRIGGER IF NOT EXISTS tr_fts_del_empenho
-        AFTER DELETE ON tb_empenhos
-        BEGIN
-            DELETE FROM tb_indexador_pesquisa_fts5 WHERE rowid = old.id;
-        END
-    """)
-    conn.commit()
-    conn.close()
+    # Trigger SQLite-only (achado 4): no PG o proxy ignora CREATE TRIGGER e a
+    # limpeza do índice fica por conta do fallback (tb_indexador_pesquisa).
+    try:
+        cur.execute("""
+            CREATE TRIGGER IF NOT EXISTS tr_fts_del_empenho
+            AFTER DELETE ON tb_empenhos
+            BEGIN
+                DELETE FROM tb_indexador_pesquisa_fts5 WHERE rowid = old.id;
+            END
+        """)
+    except Exception as e:
+        _log().debug(f"trigger FTS indisponível ({e}) — fallback LIKE cobre o PG")
+    _commit_com_retry(conn, "init_db_empenho")
+    _fechar_seguro(conn, "init_db_empenho")
     try:
         _campos_busca_ativos.cache_clear()
     except Exception:
@@ -1106,6 +1249,12 @@ def separar_documentos_quarentena(qid, usuario="sistema"):
 def extrair_numero(texto):
     """Applies active regex rules. Returns (numero, parcela) — (None,1) if not found."""
     conn = _conn()
+    if conn is None:
+        _sem_conexao("extrair_numero")
+        m = re.search(r"(\d{6,})", texto or "")
+        if m:
+            return int(m.group(1)), 1
+        return None, 1
     try:
         cur = conn.cursor()
         cur.execute("SELECT padrao_regra FROM tb_regex_regras WHERE ativo=1 ORDER BY id")
@@ -1123,13 +1272,28 @@ def extrair_numero(texto):
         if m:
             return int(m.group(1)), 1
         return None, 1
+    except Exception as e:
+        _log().debug(f"extrair_numero falhou ({e}) — usa fallback")
+        m = re.search(r"(\d{6,})", texto or "")
+        if m:
+            return int(m.group(1)), 1
+        return None, 1
     finally:
-        conn.close()
+        _fechar_seguro(conn, "extrair_numero")
 
 
 def _proximo_contador():
-    """Next sequential counter (max of active count and highest used number + 1)."""
+    """Next sequential counter (max of active count and highest used number + 1).
+
+    Achado 2: DEVE ser chamado sob `_LOCK_CONTADOR` (ver processar_pdf/
+    renomear_manual). A barreira entre processos é o UNIQUE
+    `idx_empenho_nomefinal` + retry no INSERT. Guarda `_conn() is None`:
+    loga e retorna 1 sem AttributeError.
+    """
     conn = _conn()
+    if conn is None:
+        _sem_conexao("_proximo_contador")
+        return 1
     try:
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM tb_empenhos WHERE status='ativo'")
@@ -1138,20 +1302,33 @@ def _proximo_contador():
         cur.execute("SELECT MAX(CAST(SUBSTR(nome_arquivo_final, 5, 4) AS INTEGER)) FROM tb_empenhos")
         mx = cur.fetchone()[0] or 0
         return max(n + 1, mx + 1)
+    except Exception as e:
+        _log().warning(f"_proximo_contador falhou ({e}) — usa fallback 1")
+        return 1
     finally:
-        conn.close()
+        _fechar_seguro(conn, "_proximo_contador")
 
 
 @lru_cache(maxsize=1)
 def _campos_busca_ativos():
-    """Regex ativas de tb_campos_busca: {campo: (rotulo, padrao)}."""
+    """Regex ativas de tb_campos_busca: {campo: (rotulo, padrao)}.
+
+    Guarda None (achado 3): sem banco devolve {} e o chamador usa
+    `CAMPOS_BUSCA_PADRAO` como backup (sem AttributeError).
+    """
     conn = _conn()
+    if conn is None:
+        _sem_conexao("_campos_busca_ativos")
+        return {}
     try:
         cur = conn.cursor()
         cur.execute("SELECT campo, rotulo, padrao_regra FROM tb_campos_busca WHERE ativo=1")
         return {c: (r, p) for c, r, p in cur.fetchall()}
+    except Exception as e:
+        _log().debug(f"_campos_busca_ativos falhou ({e}) — usa backup padrão")
+        return {}
     finally:
-        conn.close()
+        _fechar_seguro(conn, "_campos_busca_ativos")
 
 
 def extrair_dados_empenho(texto):
@@ -1333,102 +1510,158 @@ def processar_pdf(usuario, caminho_arquivo, numero=None, parcela=None, regex_cus
         mover_quarentena(usuario, caminho_arquivo, "Número de empenho não encontrado no conteúdo")
         return {"ok": False, "motivo": "sem numero"}
 
-    contador = _proximo_contador()
-    if dados.get("tipo_especial"):
-        # tipos especiais usam nome próprio (EC_0024.pdf etc.), não o sequencial DOC
-        nome_final = montar_nome_tipo_especial(dados["tipo_especial"], numero, dados.get("ano"))
-    else:
-        nome_final = montar_nome_final(template_nome_atual(), contador, dados)
-
+    # Achado 2 — reserva atômica contador/nome (lock intra-processo + UNIQUE
+    # entre processos + colisão segura). Ordem: rename (POSIX sem sobrescrever
+    # via _evitar_colisao) → INSERT curto com retry. Em duplicata (UNIQUE),
+    # move o arquivo de novo para o próximo nome livre e reinsere.
     destino_dir = os.path.dirname(caminho_arquivo)
-    destino = os.path.join(destino_dir, nome_final)
-    try:
-        os.rename(caminho_arquivo, destino)
-    except OSError as e:
-        _log().error(f"processar_pdf: falha ao renomear {nome_original}: {e}")
-        registrar_arquivo_detectado(nome_original, caminho_arquivo, usuario, status="erro",
-                                    motivo=f"Falha ao renomear: {e}")
-        mover_quarentena(usuario, caminho_arquivo, f"Falha ao renomear: {e}")
-        return {"ok": False, "motivo": str(e)}
-
-    # --- grava os 40+ campos extraídos nas tabelas ---
-    # Normaliza: garante que todo campo de CAMPOS_BUSCA_PADRAO exista em `dados`
-    # (None se não extraído) e prepara o JSON com todos os campos para tabela/F.T.S.
-    _todos_campos = set(CAMPOS_BUSCA_PADRAO.keys()) | set(dados.keys())
-    # campos_json = snapshot completo dos dados extraídos (sem None vazios, para tabela)
+    # Guarda None antes de tocar no disco (achado 3): sem banco, não renomeia.
+    _sonda = _conn()
+    if _sonda is None:
+        _sem_conexao("processar_pdf")
+        return {"ok": False, "motivo": "sem conexão com o banco"}
+    _fechar_seguro(_sonda, "processar_pdf/sonda")
     try:
         _campos_json = json.dumps({k: v for k, v in dados.items() if v not in (None, "")}, ensure_ascii=False)
     except Exception:
         _campos_json = "{}"
-    # Colunas explicitas de tb_empenhos que espelham CAMPOS_BUSCA_PADRAO (além das 5 chaves)
     _cols_extras = [c for c in CAMPOS_BUSCA_PADRAO.keys() if c not in ("ficha", "empenho", "parcela", "ano")]
-    # Linha base: sempre grava numero/parcela/ficha/ano + usuario/caminho + tipo_especial
-    conn = _conn()
-    try:
-        cur = conn.cursor()
-        # Constrói INSERT dinâmico: base + 40+ colunas extras + campos_json
-        _base_cols = ["nome_arquivo_original", "nome_arquivo_final", "numero_empenho", "parcela",
-                      "tipo_especial", "ficha", "ano", "usuario", "caminho_arquivo", "campos_json"]
-        _base_vals = [nome_original, nome_final, numero, parcela,
-                      dados.get("tipo_especial"), dados.get("ficha"), dados.get("ano"), usuario, destino, _campos_json]
-        _cols = list(_base_cols)
-        _vals = list(_base_vals)
-        for _c in _cols_extras:
-            _cols.append(_c)
-            _vals.append(dados.get(_c))
-        _ph = ", ".join("?" for _ in _cols)
-        _col_sql = ", ".join(_cols)
+    origem_atual = caminho_arquivo
+    eid = None
+    nome_final = None
+    destino = None
+    for _tent in range(_TENTATIVAS_NOME):
         try:
-             cur.execute(f"INSERT INTO tb_empenhos ({_col_sql}) VALUES ({_ph})", _vals)  # nosec B608 — colunas de whitelist interna
-        except Exception as e:
-            # fallback: inserção mínima se alguma coluna ainda não existe (migração pendente)
-            _log().warning(f"processar_pdf: insert dinâmico falhou ({e}), fallback mínimo")
-            if dados.get("tipo_especial"):
-                cur.execute(
-                    """INSERT INTO tb_empenhos
-                       (nome_arquivo_original, nome_arquivo_final, tipo_especial, numero_empenho,
-                        ficha, ano, usuario, caminho_arquivo, campos_json)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (nome_original, nome_final, dados["tipo_especial"], numero,
-                     dados.get("ficha"), dados.get("ano"), usuario, destino, _campos_json),
-                )
-            else:
-                cur.execute(
-                    """INSERT INTO tb_empenhos
-                       (nome_arquivo_original, nome_arquivo_final, numero_empenho, parcela, usuario, caminho_arquivo, campos_json)
-                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                    (nome_original, nome_final, numero, parcela, usuario, destino, _campos_json),
-                )
-        eid = cur.lastrowid
-        cur.execute(
-            "INSERT INTO tb_indexador_pesquisa (empenho_id, conteudo_texto) "
-            "VALUES (?, ?) ON CONFLICT (empenho_id) "
-            "DO UPDATE SET conteudo_texto = EXCLUDED.conteudo_texto",
-            (eid, f"{nome_original} {nome_final} {texto[:4000]}"),
-        )
-        conn.commit()
-        reindexar_empenho(eid)  # mantém o índice FTS5 em sincronia (RF-41)
-        hash_src = hash_arquivo(caminho_arquivo) if os.path.exists(caminho_arquivo) else None
-        hash_dst = hash_arquivo(destino)
-        registrar_arquivo_renomeado(nome_original, nome_final, caminho_arquivo, destino,
-                                    dados, usuario, hash_src, hash_dst)
+            with _LOCK_CONTADOR:
+                contador = _proximo_contador()
+                if dados.get("tipo_especial"):
+                    _base_esp = montar_nome_tipo_especial(dados["tipo_especial"], numero, dados.get("ano"))
+                    if _tent:
+                        _b, _e = os.path.splitext(_base_esp)
+                        _base_esp = f"{_b}_v{_tent + 1}{_e}"
+                    nome_final = _base_esp
+                else:
+                    nome_final = montar_nome_final(template_nome_atual(), contador + _tent, dados)
+                destino = _evitar_colisao(os.path.join(os.path.dirname(origem_atual), nome_final))
+                if not destino:
+                    destino = os.path.join(os.path.dirname(origem_atual), nome_final)
+                nome_final = os.path.basename(destino)
+                if os.path.abspath(origem_atual) != os.path.abspath(destino):
+                    # POSIX-seguro: nunca sobrescreve — destino livre verificado
+                    # em _evitar_colisao; EEXIST (corrida) cai no retry abaixo.
+                    os.rename(origem_atual, destino)
+                    origem_atual = destino
+        except OSError as e:
+            _log().error(f"processar_pdf: falha ao renomear {nome_original}: {e}")
+            registrar_arquivo_detectado(nome_original, origem_atual, usuario, status="erro",
+                                        motivo=f"Falha ao renomear: {e}")
+            try:
+                mover_quarentena(usuario, origem_atual, f"Falha ao renomear: {e}")
+            except Exception:
+                pass
+            return {"ok": False, "motivo": str(e)}
+
+        # --- grava os 40+ campos extraídos nas tabelas (transação curta) ---
+        conn = _conn()
+        if conn is None:
+            _sem_conexao("processar_pdf/insert")
+            return {"ok": False, "motivo": "sem conexão com o banco"}
         try:
-            atualizar_levantamento_renomeado(nome_original, nome_final, destino, dados)
+            cur = conn.cursor()
+            # Constrói INSERT dinâmico: base + 40+ colunas extras + campos_json
+            _base_cols = ["nome_arquivo_original", "nome_arquivo_final", "numero_empenho", "parcela",
+                          "tipo_especial", "ficha", "ano", "usuario", "caminho_arquivo", "campos_json"]
+            _base_vals = [nome_original, nome_final, numero, parcela,
+                          dados.get("tipo_especial"), dados.get("ficha"), dados.get("ano"), usuario, destino, _campos_json]
+            _cols = list(_base_cols)
+            _vals = list(_base_vals)
+            for _c in _cols_extras:
+                _cols.append(_c)
+                _vals.append(dados.get(_c))
+            _ph = ", ".join("?" for _ in _cols)
+            _col_sql = ", ".join(_cols)
+            try:
+                cur.execute(f"INSERT INTO tb_empenhos ({_col_sql}) VALUES ({_ph})", _vals)  # nosec B608 — colunas de whitelist interna
+            except Exception as e:
+                # fallback: inserção mínima se alguma coluna ainda não existe (migração pendente)
+                _log().warning(f"processar_pdf: insert dinâmico falhou ({e}), fallback mínimo")
+                if dados.get("tipo_especial"):
+                    cur.execute(
+                        """INSERT INTO tb_empenhos
+                           (nome_arquivo_original, nome_arquivo_final, tipo_especial, numero_empenho,
+                            ficha, ano, usuario, caminho_arquivo, campos_json)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        (nome_original, nome_final, dados["tipo_especial"], numero,
+                         dados.get("ficha"), dados.get("ano"), usuario, destino, _campos_json),
+                    )
+                else:
+                    cur.execute(
+                        """INSERT INTO tb_empenhos
+                           (nome_arquivo_original, nome_arquivo_final, numero_empenho, parcela, usuario, caminho_arquivo, campos_json)
+                           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                        (nome_original, nome_final, numero, parcela, usuario, destino, _campos_json),
+                    )
+            eid = cur.lastrowid
+            cur.execute(
+                "INSERT INTO tb_indexador_pesquisa (empenho_id, conteudo_texto) "
+                "VALUES (?, ?) ON CONFLICT (empenho_id) "
+                "DO UPDATE SET conteudo_texto = EXCLUDED.conteudo_texto",
+                (eid, f"{nome_original} {nome_final} {texto[:4000]}"),
+            )
+            if not _commit_com_retry(conn, "processar_pdf/insert"):
+                raise RuntimeError("falha de commit (contenção de banco)")
+            _fechar_seguro(conn, "processar_pdf/insert")
+            conn = None
+            reindexar_empenho(eid)  # mantém o índice FTS5 em sincronia (RF-41)
+            hash_src = None  # origem já renomeada; destino é a prova (evita falso None)
+            hash_dst = hash_arquivo(destino)
+            registrar_arquivo_renomeado(nome_original, nome_final, caminho_arquivo, destino,
+                                        dados, usuario, hash_src, hash_dst)
+            try:
+                atualizar_levantamento_renomeado(nome_original, nome_final, destino, dados)
+            except Exception as e:
+                _log().debug(f"processar: levantamento pós-renomeação falhou: {e}")
+            tipo_log = f" tipo {dados['tipo_especial']}" if dados.get("tipo_especial") else ""
+            audit_log(usuario, "renomear-empenho", "processar",
+                      f"{nome_original} → {nome_final}{tipo_log} (nº {numero})",
+                      hash_arquivo=hash_dst)
+            _log().info(f"empenho {numero}{tipo_log} processado: {nome_final}")
+            return {"ok": True, "id": eid, "nome": nome_final, "numero": numero,
+                    "parcela": parcela, "tipo": dados.get("tipo_especial")}
         except Exception as e:
-            _log().debug(f"processar: levantamento pós-renomeação falhou: {e}")
-        tipo_log = f" tipo {dados['tipo_especial']}" if dados.get("tipo_especial") else ""
-        audit_log(usuario, "renomear-empenho", "processar",
-                  f"{nome_original} → {nome_final}{tipo_log} (nº {numero})",
-                  hash_arquivo=hash_dst)
-        _log().info(f"empenho {numero}{tipo_log} processado: {nome_final}")
-        return {"ok": True, "id": eid, "nome": nome_final, "numero": numero,
-                "parcela": parcela, "tipo": dados.get("tipo_especial")}
-    except Exception as e:
-        conn.rollback()
-        _log().exception(f"processar_pdf: erro ao gravar {nome_original}")
-        return {"ok": False, "motivo": str(e)}
-    finally:
-        conn.close()
+            _msg = str(e or "").lower()
+            _duplicado = any(k in _msg for k in ("unique", "duplicate", "already exists", "doublon"))
+            try:
+                if conn is not None:
+                    conn.rollback()
+            except Exception:
+                pass
+            _fechar_seguro(conn, "processar_pdf/insert-erro")
+            if _duplicado and _tent < _TENTATIVAS_NOME - 1:
+                # Race contador/nome_final (achado 2): outro processo reservou o
+                # mesmo nome — próxima tentativa usa novo contador + sufixo.
+                _log().warning(f"processar_pdf: colisão de nome_final ({nome_final}), retry {_tent + 2}/{_TENTATIVAS_NOME}")
+                try:
+                    time.sleep(0.05 * (2 ** _tent))
+                except Exception:
+                    pass
+                continue
+            if _eh_erro_bloqueio(e) and _tent < _TENTATIVAS_NOME - 1:
+                _log().warning(f"processar_pdf: banco ocupado, retry {_tent + 2}/{_TENTATIVAS_NOME}")
+                try:
+                    time.sleep(0.05 * (2 ** _tent))
+                except Exception:
+                    pass
+                continue
+            _log().exception(f"processar_pdf: erro ao gravar {nome_original}")
+            return {"ok": False, "motivo": str(e)}
+        finally:
+            try:
+                if conn is not None:
+                    conn.close()
+            except Exception:
+                pass
+    return {"ok": False, "motivo": "colisão de nome após retries (UNIQUE nome_arquivo_final)"}
 
 
 # ================= AUDITORIA DOS ARQUIVOS =================
@@ -1438,6 +1671,9 @@ def registrar_arquivo_detectado(nome_original, caminho_original, usuario="sistem
     """Registra (ou reativa) o arquivo em tb_arquivos_auditoria e grava o evento."""
     dados = dados or {}
     conn = _conn()
+    if conn is None:
+        _sem_conexao("registrar_arquivo_detectado")
+        return None
     try:
         cur = conn.cursor()
         cur.execute("SELECT id, status FROM tb_arquivos_auditoria WHERE nome_original=?", (nome_original,))
@@ -1589,14 +1825,33 @@ def listar_eventos_arquivo(arquivo_id, limite=100):
 
 def _registrar_removidos_monitor(usuario="sistema", pastas=None):
     """Marca como 'removido' os arquivos registrados como renomeados/detectados
-    cujo arquivo já não existe mais em nenhuma pasta monitorada (rastreio)."""
-    pastas = pastas or pastas_monitoradas()
+    cujo arquivo já não existe mais em nenhuma pasta monitorada (rastreio).
+
+    Achado 1: sem conexão aninhada — a leitura é curta (abre/fecha) e cada
+    baixa usa escrita curta com retry+rollback (nunca 2 conexões abertas
+    com transação pendente, evitando `database is locked`).
+    """
+    try:
+        pastas = pastas or pastas_monitoradas()
+    except Exception as e:
+        _log().debug(f"removidos_monitor: pastas falhou: {e}")
+        return
     conn = _conn()
+    if conn is None:
+        _sem_conexao("_registrar_removidos_monitor/leitura")
+        return
     try:
         cur = conn.cursor()
         cur.execute("SELECT id, nome_renomeado, nome_original FROM tb_arquivos_auditoria "
                     "WHERE status IN ('renomeado','detectado')")
-        for aid, nr, no in cur.fetchall():
+        pendentes = list(cur.fetchall() or [])
+    except Exception as e:
+        _log().debug(f"removidos_monitor leitura falhou: {e}")
+        pendentes = []
+    finally:
+        _fechar_seguro(conn, "_registrar_removidos_monitor/leitura")
+    for aid, nr, no in pendentes:
+        try:
             alvo = nr or no
             if not alvo:
                 continue
@@ -1614,21 +1869,18 @@ def _registrar_removidos_monitor(usuario="sistema", pastas=None):
                 except Exception:
                     continue
             if not achou:
-                _m = _conn()
-                try:
-                    c2 = _m.cursor()
-                    c2.execute("UPDATE tb_arquivos_auditoria SET status='removido', "
-                               "data_remocao=datetime('now','localtime'), "
-                               "data_ultimo_evento=datetime('now','localtime') WHERE id=?", (aid,))
-                    c2.execute("INSERT INTO tb_eventos_arquivos (arquivo_id, nome_arquivo, tipo, "
-                               "detalhe, usuario) VALUES (?, ?, 'removido', "
-                               "'Arquivo deixou de existir na pasta monitorada', ?)",
-                               (aid, alvo, usuario))
-                    _m.commit()
-                finally:
-                    _m.close()
-    finally:
-        conn.close()
+                def _op_baixa(cur, _aid=aid, _alvo=alvo, _usr=usuario):
+                    cur.execute("UPDATE tb_arquivos_auditoria SET status='removido', "
+                                "data_remocao=datetime('now','localtime'), "
+                                "data_ultimo_evento=datetime('now','localtime') WHERE id=?", (_aid,))
+                    cur.execute("INSERT INTO tb_eventos_arquivos (arquivo_id, nome_arquivo, tipo, "
+                                "detalhe, usuario) VALUES (?, ?, 'removido', "
+                                "'Arquivo deixou de existir na pasta monitorada', ?)",
+                                (_aid, _alvo, _usr))
+                _levantamento_gravar(_op_baixa, "removidos_monitor/baixa")
+        except Exception as e:
+            _log().debug(f"removidos_monitor item {aid} falhou: {e}")
+            continue
 
 
 def _nome_final_especial(nome_arquivo):
@@ -1659,6 +1911,62 @@ def _levantamento_fts_sincronizar(cur, lid, nome, numero, ficha, ano, tipo, cont
         _log().debug(f"levantamento FTS indisponível ({e}) — usa fallback LIKE")
 
 
+def _levantamento_consultar(caminho):
+    """Leitura curta do levantamento (abre/fecha; aceita banco fora do ar).
+
+    Retorna a linha (id, tamanho, mtime, usuario) ou None. Nunca levanta.
+    """
+    conn = _conn()
+    if conn is None:
+        return None
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id, tamanho, mtime, usuario FROM tb_levantamento "
+                    "WHERE caminho_atual=?", (caminho,))
+        return cur.fetchone()
+    except Exception as e:
+        _log().debug(f"levantamento consultar falhou: {e}")
+        return None
+    finally:
+        _fechar_seguro(conn, "levantamento/consultar")
+
+
+def _levantamento_gravar(operacao, contexto="levantamento/gravar", tentativas=5):
+    """Escrita curta do levantamento com retry em contenção + rollback.
+
+    `operacao(cur)` executa os INSERT/UPDATE/FTS dentro de UMA transação curta
+    (ms, sem OCR nem walk abertos). Retorna True em sucesso.
+    """
+    for _tent in range(max(1, int(tentativas))):
+        conn = _conn()
+        if conn is None:
+            _sem_conexao(contexto)
+            return False
+        try:
+            cur = conn.cursor()
+            operacao(cur)
+            if _commit_com_retry(conn, contexto):
+                return True
+            # commit falhou com rollback aplicado: retry só se foi contenção
+            return False
+        except Exception as e:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            if _eh_erro_bloqueio(e) and _tent < tentativas - 1:
+                try:
+                    time.sleep(0.05 * (2 ** _tent))
+                except Exception:
+                    pass
+                continue
+            _log().warning(f"{contexto} falhou ({e}) — rollback aplicado")
+            return False
+        finally:
+            _fechar_seguro(conn, contexto)
+    return False
+
+
 def levantar_arquivos(usuario="sistema"):
     """Inventaria os PDFs das pastas monitoradas (levantamento + anotação).
 
@@ -1666,13 +1974,23 @@ def levantar_arquivos(usuario="sistema"):
     parcela/ano/tipo) e conteúdo para busca; arquivos já anotados e sem
     alteração (tamanho/mtime) são só revisitados. Quem sumiu do disco
     fica com presente=0. Retorna (novos, revisitados, ausentes).
+
+    Achado 1 — transações curtas (anti `database is locked`):
+    o `os.walk` e o OCR (segundos/min) rodam SEM conexão aberta; cada
+    arquivo usa 1 leitura curta + (se preciso) 1 escrita curta com commit
+    imediato, retry em contenção e rollback. O `busy_timeout=5000` é
+    herdado de `banco_conexao.conexao` (ver nota de paridade no topo).
     """
-    pastas = pastas_monitoradas()
+    try:
+        pastas = pastas_monitoradas()
+    except Exception as e:
+        _log().exception(f"levantar_arquivos: falha ao listar pastas: {e}")
+        return 0, 0, 0
     novos, vistos, ausentes = 0, 0, 0
     caminhos_vivos = set()
-    conn = _conn()
+    # Fase 0 — coleta em disco SEM conexão (walk pode levar segundos em rede).
+    alvos = []
     try:
-        cur = conn.cursor()
         for pasta in pastas:
             if not pasta_acessivel(pasta):
                 continue
@@ -1693,91 +2011,136 @@ def levantar_arquivos(usuario="sistema"):
                         tamanho, mtime = est.st_size, est.st_mtime
                     except Exception:
                         tamanho, mtime = 0, 0
-                    cur.execute("SELECT id, tamanho, mtime, usuario FROM tb_levantamento "
-                                "WHERE caminho_atual=?", (caminho,))
-                    linha = cur.fetchone()
-                    if linha and linha[1] == tamanho and linha[2] == mtime:
-                        st = ("renomeado" if (arquivo_ja_processado(f)
-                                              or _nome_final_especial(f)
-                                              or _arquivo_registrado_no_bd(caminho))
-                              else "detectado")
-                        cur.execute("UPDATE tb_levantamento SET presente=1, status=?, "
-                                    "data_visto=datetime('now','localtime') WHERE id=?",
-                                    (st, linha[0]))
-                        # Adota o usuário logado (o agendador "sistema" nunca
-                        # sobrescreve um nome real já anotado).
-                        _dono = (linha[3] or "").strip() if len(linha) > 3 else ""
-                        _ator = (usuario or "").strip()
-                        if _ator and _ator != "sistema" and (not _dono or _dono == "sistema"):
-                            cur.execute("UPDATE tb_levantamento SET usuario=? WHERE id=?",
-                                        (_ator, linha[0]))
-                        vistos += 1
-                        continue
-                    # novo ou alterado: extrai campos + conteúdo (best-effort)
+                    alvos.append((f, caminho, tamanho, mtime))
+    except Exception as e:
+        _log().exception(f"levantar_arquivos: falha na varredura: {e}")
+    # Fase 1 — por arquivo: leitura curta → (OCR sem conn) → escrita curta.
+    for f, caminho, tamanho, mtime in alvos:
+        try:
+            linha = _levantamento_consultar(caminho)
+            if linha and linha[1] == tamanho and linha[2] == mtime:
+                st = ("renomeado" if (arquivo_ja_processado(f)
+                                      or _nome_final_especial(f)
+                                      or _arquivo_registrado_no_bd(caminho))
+                      else "detectado")
+                _dono = (linha[3] or "").strip() if len(linha) > 3 else ""
+                _ator = (usuario or "").strip()
+                _lid = linha[0]
+                def _op_revisita(cur, _lid=_lid, _st=st, _ator=_ator, _dono=_dono):
+                    cur.execute("UPDATE tb_levantamento SET presente=1, status=?, "
+                                "data_visto=datetime('now','localtime') WHERE id=?",
+                                (_st, _lid))
+                    # Adota o usuário logado (o agendador "sistema" nunca
+                    # sobrescreve um nome real já anotado).
+                    if _ator and _ator != "sistema" and (not _dono or _dono == "sistema"):
+                        cur.execute("UPDATE tb_levantamento SET usuario=? WHERE id=?",
+                                    (_ator, _lid))
+                if _levantamento_gravar(_op_revisita, "levantamento/revisita"):
+                    vistos += 1
+                continue
+            # novo ou alterado: extrai campos + conteúdo (best-effort, SEM conn)
+            try:
+                texto = extrair_texto_pdf(caminho) or ""
+            except Exception:
+                texto = ""
+            try:
+                tipo = detectar_tipo_especial(texto)
+            except Exception:
+                tipo = None
+            numero = ficha = ano = None
+            parcela = 1
+            try:
+                if tipo:
+                    de = extrair_dados_tipo_especial(texto, tipo) or {}
+                    numero, ficha, ano = de.get("numero"), de.get("ficha"), de.get("ano")
+                else:
+                    dd = extrair_dados_empenho(texto) or {}
+                    numero, ficha, ano = dd.get("empenho"), dd.get("ficha"), dd.get("ano")
                     try:
-                        texto = extrair_texto_pdf(caminho) or ""
-                    except Exception:
-                        texto = ""
+                        parcela = int(dd.get("parcela") or 1)
+                    except (TypeError, ValueError):
+                        parcela = 1
+            except Exception:
+                pass
+            status = "renomeado" if (arquivo_ja_processado(f)
+                                     or _nome_final_especial(f)
+                                     or _arquivo_registrado_no_bd(caminho)) else "detectado"
+            _dono_atual = (linha[3] or "").strip() if (linha and len(linha) > 3) else ""
+            _ator = (usuario or "").strip()
+            _dono = _ator if (_ator and _ator != "sistema") else (_dono_atual or _ator)
+            _texto_corto = (texto or "")[:20000]
+            _lid_existente = linha[0] if linha else None
+            def _op_detalhe(cur, _f=f, _cam=caminho, _st=status, _num=numero,
+                            _par=parcela, _fi=ficha, _an=ano, _ti=tipo,
+                            _do=_dono, _tx=_texto_corto, _tm=tamanho,
+                            _mt=mtime, _lid=_lid_existente):
+                if _lid:
+                    cur.execute(
+                        """UPDATE tb_levantamento SET nome_arquivo=?, presente=1, status=?,
+                           numero_empenho=?, parcela=?, ficha=?, ano=?, tipo_especial=?,
+                           usuario=?, conteudo_texto=?, tamanho=?, mtime=?,
+                           data_visto=datetime('now','localtime') WHERE id=?""",
+                        (_f, _st, _num, _par, _fi, _an, _ti, _do,
+                         _tx, _tm, _mt, _lid),
+                    )
+                    _levantamento_fts_sincronizar(cur, _lid, _f, _num, _fi,
+                                                  _an, _ti, _tx)
+                else:
+                    cur.execute(
+                        """INSERT INTO tb_levantamento
+                           (nome_arquivo, caminho_atual, presente, status, numero_empenho,
+                            parcela, ficha, ano, tipo_especial, usuario, conteudo_texto, tamanho, mtime)
+                           VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        (_f, _cam, _st, _num, _par, _fi, _an, _ti,
+                         _do, _tx, _tm, _mt),
+                    )
                     try:
-                        tipo = detectar_tipo_especial(texto)
+                        _lid_novo = cur.lastrowid
                     except Exception:
-                        tipo = None
-                    numero = ficha = ano = None
-                    parcela = 1
-                    try:
-                        if tipo:
-                            de = extrair_dados_tipo_especial(texto, tipo) or {}
-                            numero, ficha, ano = de.get("numero"), de.get("ficha"), de.get("ano")
-                        else:
-                            dd = extrair_dados_empenho(texto) or {}
-                            numero, ficha, ano = dd.get("empenho"), dd.get("ficha"), dd.get("ano")
-                            try:
-                                parcela = int(dd.get("parcela") or 1)
-                            except (TypeError, ValueError):
-                                parcela = 1
-                    except Exception:
-                        pass
-                    status = "renomeado" if (arquivo_ja_processado(f)
-                                             or _nome_final_especial(f)
-                                             or _arquivo_registrado_no_bd(caminho)) else "detectado"
-                    if linha:
-                        _dono_ant = (linha[3] or "").strip() if len(linha) > 3 else ""
-                        _ator = (usuario or "").strip()
-                        _dono = _ator if (_ator and _ator != "sistema") else (_dono_ant or _ator)
-                        cur.execute(
-                            """UPDATE tb_levantamento SET nome_arquivo=?, presente=1, status=?,
-                               numero_empenho=?, parcela=?, ficha=?, ano=?, tipo_especial=?,
-                               usuario=?, conteudo_texto=?, tamanho=?, mtime=?,
-                               data_visto=datetime('now','localtime') WHERE id=?""",
-                            (f, status, numero, parcela, ficha, ano, tipo, _dono,
-                             texto[:20000], tamanho, mtime, linha[0]),
-                        )
-                        _levantamento_fts_sincronizar(cur, linha[0], f, numero, ficha,
-                                                      ano, tipo, texto[:20000])
-                        vistos += 1
-                    else:
-                        cur.execute(
-                            """INSERT INTO tb_levantamento
-                               (nome_arquivo, caminho_atual, presente, status, numero_empenho,
-                                parcela, ficha, ano, tipo_especial, usuario, conteudo_texto, tamanho, mtime)
-                               VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                            (f, caminho, status, numero, parcela, ficha, ano, tipo,
-                             (usuario or "").strip(), texto[:20000], tamanho, mtime),
-                        )
-                        _levantamento_fts_sincronizar(cur, cur.lastrowid, f, numero,
-                                                      ficha, ano, tipo, texto[:20000])
-                        novos += 1
-        # presença: quem não foi visto e está marcado presente sai do ar
-        cur.execute("SELECT id, caminho_atual FROM tb_levantamento WHERE presente=1")
-        for lid, cam in cur.fetchall():
-            if cam not in caminhos_vivos and not os.path.isfile(cam or ""):
-                cur.execute("UPDATE tb_levantamento SET presente=0, "
-                            "data_visto=datetime('now','localtime') WHERE id=?", (lid,))
-                ausentes += 1
-        conn.commit()
-    finally:
-        conn.close()
-    _log().info(f"levantamento: {novos} novo(s), {vistos} revisitado(s), {ausentes} ausente(s)")
+                        _lid_novo = None
+                    if _lid_novo:
+                        _levantamento_fts_sincronizar(cur, _lid_novo, _f, _num,
+                                                      _fi, _an, _ti, _tx)
+            if _levantamento_gravar(_op_detalhe, "levantamento/detalhe"):
+                if _lid_existente:
+                    vistos += 1
+                else:
+                    novos += 1
+        except Exception as e:
+            _log().debug(f"levantar_arquivos: falha no arquivo {f}: {e}")
+            continue
+    # Fase 2 — presença: quem não foi visto e está marcado presente sai do ar
+    # (escrita curta única, só UPDATEs rápidos — sem OCR/walk abertos).
+    try:
+        _conn_pres = _conn()
+        if _conn_pres is None:
+            _sem_conexao("levantamento/presenca")
+        else:
+            try:
+                _cur = _conn_pres.cursor()
+                _cur.execute("SELECT id, caminho_atual FROM tb_levantamento WHERE presente=1")
+                _candidatos = list(_cur.fetchall() or [])
+            except Exception as e:
+                _log().debug(f"levantamento presenca leitura falhou: {e}")
+                _candidatos = []
+            finally:
+                _fechar_seguro(_conn_pres, "levantamento/presenca-leitura")
+            for lid, cam in _candidatos:
+                try:
+                    if cam not in caminhos_vivos and not os.path.isfile(cam or ""):
+                        def _op_ausente(cur, _lid=lid):
+                            cur.execute("UPDATE tb_levantamento SET presente=0, "
+                                        "data_visto=datetime('now','localtime') WHERE id=?", (_lid,))
+                        if _levantamento_gravar(_op_ausente, "levantamento/ausente"):
+                            ausentes += 1
+                except Exception:
+                    continue
+    except Exception as e:
+        _log().debug(f"levantar_arquivos: presença falhou: {e}")
+    try:
+        _log().info(f"levantamento: {novos} novo(s), {vistos} revisitado(s), {ausentes} ausente(s)")
+    except Exception:
+        pass
     return novos, vistos, ausentes
 
 
@@ -1874,15 +2237,24 @@ def mover_quarentena(usuario, caminho_arquivo, motivo):
         _log().error(f"mover_quarentena: falha ao mover {nome}: {e}")
         caminho_atual = ""
     conn = _conn()
-    try:
-        cur = conn.cursor()
-        cur.execute(
-            "INSERT INTO tb_quarentena (nome_arquivo, motivo, caminho_atual) VALUES (?, ?, ?)",
-            (nome, motivo[:300], caminho_atual),
-        )
-        conn.commit()
-    finally:
-        conn.close()
+    if conn is None:
+        _sem_conexao("mover_quarentena")
+    else:
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO tb_quarentena (nome_arquivo, motivo, caminho_atual) VALUES (?, ?, ?)",
+                (nome, motivo[:300], caminho_atual),
+            )
+            _commit_com_retry(conn, "mover_quarentena")
+        except Exception as e:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            _log().warning(f"mover_quarentena: falha ao gravar ({e}) — arquivo já movido para {caminho_atual}")
+        finally:
+            _fechar_seguro(conn, "mover_quarentena")
     hash_arq = hash_arquivo(destino) if destino and os.path.exists(destino) else None
     audit_log(usuario, "renomear-empenho", "quarentena", f"{nome}: {motivo[:120]}",
               hash_arquivo=hash_arq)
@@ -2304,6 +2676,9 @@ def salvar_campo_busca(campo, rotulo, padrao, ativo=True):
     if not re.match(r"^[a-z_][a-z0-9_]*$", campo_n):
         return False, "Nome do campo deve usar apenas letras minúsculas, números e _ (ex.: dotacao)"
     conn = _conn()
+    if conn is None:
+        _sem_conexao("salvar_campo_busca")
+        return False, "Sem conexão com o banco — tente novamente"
     try:
         cur = conn.cursor()
         cur.execute(
@@ -2312,21 +2687,32 @@ def salvar_campo_busca(campo, rotulo, padrao, ativo=True):
             (campo_n, (rotulo or "").strip() or campo_n, padrao.strip(), 1 if ativo else 0,
              (rotulo or "").strip() or campo_n, padrao.strip(), 1 if ativo else 0),
         )
-        conn.commit()
+        if not _commit_com_retry(conn, "salvar_campo_busca"):
+            return False, "Falha de banco (contenção) — tente novamente"
         try:
             _campos_busca_ativos.cache_clear()
         except Exception:
             pass
+    except Exception as e:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        _log().exception("salvar_campo_busca falhou")
+        return False, f"Falha ao salvar campo: {e}"
     finally:
-        conn.close()
+        _fechar_seguro(conn, "salvar_campo_busca")
     # inclusão futura: adiciona coluna dedicada em tb_empenhos para o novo campo
     try:
         _c = _conn()
-        try:
-            _migrar_coluna(_c, "tb_empenhos", campo_n, "TEXT")
-            _c.commit()
-        finally:
-            _c.close()
+        if _c is None:
+            _log().debug("salvar_campo_busca: sem conexão para migrar coluna (campo salvo mesmo assim)")
+        else:
+            try:
+                _migrar_coluna(_c, "tb_empenhos", campo_n, "TEXT")
+                _commit_com_retry(_c, "salvar_campo_busca/migra")
+            finally:
+                _fechar_seguro(_c, "salvar_campo_busca/migra")
     except Exception as e:
         _log().debug(f"salvar_campo_busca: migra coluna {campo_n}: {e}")
     audit_log("sistema", "renomear-empenho", "campo_cadastro",
@@ -3030,8 +3416,9 @@ def renomear_manual(usuario, caminho_arquivo, novo_numero=None, novoTemplate=Non
             return False, "Número do documento não identificado"
         nome_novo = montar_nome_tipo_especial(tipo_especial, num, de.get("ano"))
     else:
-        contador = _proximo_contador()
-        dados = extrair_dados_empenho(texto)
+        with _LOCK_CONTADOR:
+            contador = _proximo_contador()
+            dados = extrair_dados_empenho(texto)
         if novo_numero is not None:
             dados["empenho"] = str(novo_numero)
         if novo_parcela is not None:
@@ -3059,20 +3446,28 @@ def renomear_manual(usuario, caminho_arquivo, novo_numero=None, novoTemplate=Non
 
 
 def _evitar_colisao(destino):
-    """Se o destino já existe, acrescenta _v2, _v3 etc. para não sobrescrever."""
+    """Se o destino já existe, acrescenta _v2, _v3 etc. para não sobrescrever.
+
+    POSIX-seguro: nunca devolve um caminho existente (evita o `os.rename`
+    POSIX sobrescrever o arquivo alheio) e nunca devolve None — em falha
+    interna devolve o próprio `destino` (o `os.rename` decide; EEXIST cai
+    no retry do chamador). Limite de 10000 sufixos contra loop infinito.
+    """
     try:
+        if not destino:
+            return destino
         if not os.path.exists(destino):
             return destino
         base, ext = os.path.splitext(destino)
-        i = 2
-        while True:
+        for i in range(2, 10000):
             cand = f"{base}_v{i}{ext}"
             if not os.path.exists(cand):
                 return cand
-            i += 1
+        _log().warning(f"_evitar_colisao: sem sufixo livre para {destino}")
+        return destino
     except Exception as e:
         _log().exception(f"_evitar_colisao falhou: {e}")
-        return None
+        return destino
 
 
 def editar_campos_empenho(empenho_id, campos):

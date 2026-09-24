@@ -88,3 +88,13 @@ Importa `autenticacao.validar_acesso_modulo`/`perfil_global_de`, `banco_conexao.
 | Backup `YYYYMMDD_HHMM_nomePc_ip` + webkitdirectory | Implementado (`criar_pasta_backup` + `salvar_arquivos_backup`) |
 | LGPD (`remover/renomear`) + auditoria | Implementado |
 | Painel `/admin/tecnico` | Implementado (`bloco_aparencia` + `tecnico_max_zip_mb` + `painel_backup`) |
+
+## Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)
+
+> Documentação da correção pendente. Nenhum `.py` alterado neste lote.
+
+| Módulo | Achado | Arquivo:linha | Correção proposta contida no módulo | Risco regressão |
+|:---|:---|:---|:---|:---|
+| tecnico | Sem `CrudBase`; sem quebra PG localizada (varredura fina pendente) | `mod_tecnico/bd_manipulador.py` (sem `CrudBase` — verificado por busca) | Migrar para `CrudBase` + `conexao("tecnico")`; varredura `GROUP BY`/`COLLATE`/`strftime` SQL no módulo | Baixo-médio (ZIP + backup `YYYYMMDD_HHMM_nomePc_ip`) |
+
+Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

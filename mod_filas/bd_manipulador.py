@@ -29,6 +29,36 @@ def _log():
     return observabilidade.get_logger("filas")
 
 
+# Retry curto para "database is locked" (N TVs concorrendo na mesma fila).
+# Transação curta + busy_timeout herdado da conexão + log visível, sem except silencioso.
+TENTATIVAS_LOCKED = 5
+ESPERA_LOCKED_SEG = 0.15
+
+
+def _eh_erro_locked(exc: Exception) -> bool:
+    """EN: True when the error is a SQLite/PG lock contention (retryable).
+
+    PT-BR: Verdadeiro quando o erro é contenção de lock (passível de retry)."""
+    texto = str(exc or "").lower()
+    return ("locked" in texto or "database is locked" in texto
+            or "busy" in texto or "deadlock" in texto
+            or "could not obtain lock" in texto)
+
+
+def _esperar_retry(tentativa: int) -> None:
+    """EN: Short backoff between lock retries.
+
+    PT-BR: Espera curta (backoff) entre tentativas de lock."""
+    try:
+        import time as _t
+        _t.sleep(ESPERA_LOCKED_SEG * (tentativa + 1))
+    except Exception as e:
+        try:
+            _log().warning(f"espera retry lock ignorada: {e}")
+        except Exception:
+            pass
+
+
 def get_connection():
     """EN: Open the module database connection (own DB db_mod_filas.db, WAL).
 
@@ -39,9 +69,13 @@ def get_connection():
         raise RuntimeError("Falha ao abrir conexão mod_filas")
     try:
         conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
         conn.execute("PRAGMA foreign_keys=ON")
-    except Exception:
-        pass
+    except Exception as e:
+        try:
+            _log().warning(f"PRAGMA WAL/busy_timeout/foreign_keys ignorado: {e}")
+        except Exception:
+            pass
     return conn
 
 
@@ -67,20 +101,59 @@ def _garantir_coluna(cur, tabela, coluna, definicao):
 def _migrar_midia_para_imagem(cur):
     """Migra CHECK antigo de tb_midia (só audio/video) para aceitar imagem.
 
-    Recria a tabela preservando dados quando o CHECK ainda não inclui
-    'imagem'. Falha silenciosa no backend Postgres (tabela nova já nasce certa).
+    Portável SQLite↔PostgreSQL: NUNCA usa sqlite_master (não existe no PG).
+    Usa PRAGMA table_info (traduzido pelo banco_conexao) para confirmar que
+    a tabela existe + sonda SAVEPOINT com tipo 'imagem' (rollback sempre):
+    se a sonda falha por CHECK/constraint, recria a tabela com o CHECK novo
+    preservando dados. CREATE base já nasce com ('audio','video','imagem').
     """
     try:
-        row = cur.execute(
-            "SELECT sql FROM sqlite_master WHERE type='table' AND name='tb_midia'"
-        ).fetchone()
+        cols = _colunas_tabela(cur, "tb_midia")
+    except Exception as e:
+        try:
+            _log().warning(f"migracao tb_midia: sem colunas, pulo: {e}")
+        except Exception:
+            pass
+        return
+    if not cols:
+        return
+    # Sonda portável: 'imagem' deve ser aceito pelo CHECK atual.
+    precisa_migrar = False
+    try:
+        cur.execute("SAVEPOINT sonda_imagem")
     except Exception:
+        pass
+    try:
+        cur.execute(
+            "INSERT INTO tb_midia (nome, tipo, caminho) VALUES ('__sonda__', 'imagem', '__sonda__')")
+        cur.execute("DELETE FROM tb_midia WHERE nome='__sonda__'")
+        try:
+            cur.execute("RELEASE sonda_imagem")
+        except Exception:
+            pass
         return
-    if not row or not row[0]:
-        return
-    if "imagem" in (row[0] or ""):
+    except Exception as e:
+        try:
+            cur.execute("ROLLBACK TO SAVEPOINT sonda_imagem")
+        except Exception:
+            pass
+        try:
+            cur.execute("RELEASE sonda_imagem")
+        except Exception:
+            pass
+        texto = str(e).lower()
+        if "check" in texto or "constraint" in texto or "imagem" in texto:
+            precisa_migrar = True
+        else:
+            try:
+                _log().warning(f"sonda tb_midia imagem inconclusiva, pulo migracao: {e}")
+            except Exception:
+                pass
+            return
+    if not precisa_migrar:
         return
     try:
+        tem_fundo = "fundo" in (cols or set())
         cur.execute("""
             CREATE TABLE IF NOT EXISTS tb_midia_nova (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -99,12 +172,13 @@ def _migrar_midia_para_imagem(cur):
                 fundo INTEGER NOT NULL DEFAULT 0
             )
         """)
-        cur.execute("""
+        fundo_sel = "fundo" if tem_fundo else "0"
+        cur.execute(f"""
             INSERT INTO tb_midia_nova
                 (id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, fundo)
-            SELECT id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, 0
+            SELECT id, nome, tipo, caminho, arquivo_original, ordem, ativo, criado_em, fila_id, volume, duracao, slot, duracao_real, {fundo_sel}
             FROM tb_midia
-        """)
+        """)  # nosec B608 — fundo_sel é literal 'fundo' ou '0', valores via SELECT
         cur.execute("DROP TABLE tb_midia")
         cur.execute("ALTER TABLE tb_midia_nova RENAME TO tb_midia")
     except Exception as e:
@@ -352,6 +426,48 @@ def listar_acessos(fila_id: int) -> list:
         conn.close()
 
 
+def _ator_eh_dono_ou_admin(cur, fila_id: int, ator: str) -> tuple[bool, str]:
+    """EN: Check actor is queue owner or admin (DB-level, not only screen).
+
+    PT-BR: Valida no BD se o ator é dono (tb_fila.criado_por) ou admin geral.
+    TV pública (/tv) NÃO passa por aqui — segue sem guarda."""
+    ator_limpo = (ator or "").strip()
+    try:
+        cur.execute("SELECT criado_por FROM tb_fila WHERE id=?", (fila_id,))
+        linha = cur.fetchone()
+    except Exception as e:
+        try:
+            _log().warning(f"autorizacao fila={fila_id} ator={ator_limpo or '?'}: falha leitura dono: {e}")
+        except Exception:
+            pass
+        return False, ""
+    if not linha:
+        return False, ""
+    dono = (linha[0] or "").strip()
+    if ator_limpo and dono and ator_limpo == dono:
+        return True, dono
+    # Admin geral: melhor esforço via gestão de usuários (mesma fonte já usada abaixo).
+    if ator_limpo:
+        try:
+            from mod_gest_cad_usuario.bd_manipulador import obter_usuario as _obter_ator
+            info = _obter_ator(ator_limpo)
+            if info:
+                seq = info if isinstance(info, (list, tuple)) else [info]
+                texto = " ".join(str(c or "") for c in seq).lower()
+                if "administrador_geral" in texto:
+                    return True, dono
+        except Exception as e:
+            try:
+                _log().warning(f"autorizacao fila={fila_id} ator={ator_limpo}: falha checagem admin: {e}")
+            except Exception:
+                pass
+    try:
+        _log().warning(f"autorizacao negada fila={fila_id} ator={ator_limpo or '?'} dono={dono or '—'}")
+    except Exception:
+        pass
+    return False, dono
+
+
 def liberar_acesso(fila_id: int, user_nome: str, ator: str = ""):
     """EN: Grant queue access to a registered user (owner/admin only).
 
@@ -372,6 +488,13 @@ def liberar_acesso(fila_id: int, user_nome: str, ator: str = ""):
         row = cur.fetchone()
         if not row:
             return False, "Fila não encontrada"
+        permitido, _dono = _ator_eh_dono_ou_admin(cur, fila_id, ator)
+        if not permitido:
+            try:
+                _log().warning(f"liberar_acesso negado fila={fila_id} ator={(ator or '').strip() or '?'} alvo={user_nome}")
+            except Exception:
+                pass
+            return False, "Somente dono ou admin pode liberar acesso"
         if row[0] == user_nome:
             return False, "Usuário já é o dono da fila"
         cur.execute("INSERT OR IGNORE INTO tb_fila_acesso (fila_id, user_nome) VALUES (?, ?)", (fila_id, user_nome))
@@ -383,9 +506,22 @@ def liberar_acesso(fila_id: int, user_nome: str, ator: str = ""):
 
 
 def remover_acesso(fila_id: int, user_nome: str, ator: str = ""):
+    """EN: Revoke queue access (owner/admin only, DB-level check).
+
+    PT-BR: Remove acesso à fila (só dono/admin, checado no BD). TV pública segue sem guarda."""
     conn = get_connection()
     try:
         cur = conn.cursor()
+        cur.execute("SELECT 1 FROM tb_fila WHERE id=?", (fila_id,))
+        if not cur.fetchone():
+            return False, "Fila não encontrada"
+        permitido, _dono = _ator_eh_dono_ou_admin(cur, fila_id, ator)
+        if not permitido:
+            try:
+                _log().warning(f"remover_acesso negado fila={fila_id} ator={(ator or '').strip() or '?'} alvo={user_nome}")
+            except Exception:
+                pass
+            return False, "Somente dono ou admin pode remover acesso"
         cur.execute("DELETE FROM tb_fila_acesso WHERE fila_id=? AND user_nome=?", (fila_id, user_nome))
         conn.commit()
         _audit(ator or "sistema", "remover_acesso", str(fila_id), f"usuario={user_nome}")
@@ -809,39 +945,69 @@ def gerar_senha(fila_id: int, ator: str = "", paciente_nome: str = "", etapa_nom
     Se paciente_nome vazio, consome o próximo elegível (etapa '' ou primeira):
     Manchester domina; sem Manchester: chegada até 3, revezamento acima disso.
     Nome com etapa vinculada (#recepcao) nasce direto naquela etapa.
+
+    Transação curta + retry em "database is locked" (N TVs/atendentes
+    concorrendo): busy_timeout herdado da conexão, rollback + backoff,
+    log visível. Nunca congela a TV com except silencioso.
     """
-    conn = get_connection()
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT 1 FROM tb_fila WHERE id=?", (fila_id,))
-        if not cur.fetchone():
-            return False, "Fila não encontrada"
-        if not etapa_nome:
-            etapa_nome = _primeira_etapa(cur, fila_id) or "Atendimento"
-        paciente_nome = (paciente_nome or "").strip()
-        if (prioridade or "") not in PRIORIDADES:
-            prioridade = "comum"
-        manchester = (manchester or "").strip().lower()
-        if manchester not in MANCHESTER:
-            manchester = ""
-        if not paciente_nome:
-            escolhido = _escolher_proximo_nome(cur, fila_id)
-            if escolhido:
-                cur.execute("UPDATE tb_fila_nomes SET usado=1 WHERE id=?", (escolhido[0],))
-                paciente_nome = escolhido[1]
-                prioridade = escolhido[2] or "comum"
-                manchester = escolhido[3] or ""
-                if escolhido[4]:
-                    etapa_nome = escolhido[4]
-        nova, fila_nome, _ = _emitir_senha(cur, fila_id, etapa_nome, paciente_nome, prioridade, manchester, ator)
-        conn.commit()
-        _audit(ator or "sistema", "gerar_senha", nova, f"fila={fila_nome} etapa={etapa_nome} paciente={paciente_nome}")
-        return True, nova
-    except Exception as e:
-        _log().exception(f"gerar_senha falhou: {e}")
-        return False, str(e)
-    finally:
-        conn.close()
+    ultimo_erro = None
+    for tentativa in range(TENTATIVAS_LOCKED):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM tb_fila WHERE id=?", (fila_id,))
+            if not cur.fetchone():
+                return False, "Fila não encontrada"
+            if not etapa_nome:
+                etapa_nome = _primeira_etapa(cur, fila_id) or "Atendimento"
+            paciente_nome = (paciente_nome or "").strip()
+            if (prioridade or "") not in PRIORIDADES:
+                prioridade = "comum"
+            manchester = (manchester or "").strip().lower()
+            if manchester not in MANCHESTER:
+                manchester = ""
+            if not paciente_nome:
+                escolhido = _escolher_proximo_nome(cur, fila_id)
+                if escolhido:
+                    cur.execute("UPDATE tb_fila_nomes SET usado=1 WHERE id=?", (escolhido[0],))
+                    paciente_nome = escolhido[1]
+                    prioridade = escolhido[2] or "comum"
+                    manchester = escolhido[3] or ""
+                    if escolhido[4]:
+                        etapa_nome = escolhido[4]
+            nova, fila_nome, _ = _emitir_senha(cur, fila_id, etapa_nome, paciente_nome, prioridade, manchester, ator)
+            conn.commit()
+            _audit(ator or "sistema", "gerar_senha", nova, f"fila={fila_nome} etapa={etapa_nome} paciente={paciente_nome}")
+            return True, nova
+        except Exception as e:
+            ultimo_erro = e
+            try:
+                conn.rollback()
+            except Exception as rb_e:
+                try:
+                    _log().warning(f"gerar_senha rollback ignorado: {rb_e}")
+                except Exception:
+                    pass
+            if _eh_erro_locked(e) and tentativa < TENTATIVAS_LOCKED - 1:
+                try:
+                    _log().warning(f"gerar_senha lock fila={fila_id} tentativa={tentativa + 1}: retry")
+                except Exception:
+                    pass
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                _esperar_retry(tentativa)
+                continue
+            _log().exception(f"gerar_senha falhou: {e}")
+            return False, str(e)
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    _log().exception(f"gerar_senha falhou após retry: {ultimo_erro}")
+    return False, str(ultimo_erro or "database is locked")
 
 
 def avancar_chamada(chamada_id: int, ator: str = "") -> tuple[bool, str]:
@@ -1901,28 +2067,63 @@ def tv_claim_fala(chave: str, chamada_id: int, dur_seg: float) -> bool:
     PT-BR: Tenta assumir o próximo anúncio (compare-and-swap): um anuncia por vez, sem cortar.
 
     Retorna True se esta TV assumiu (deve falar); False se outra assumiu ou voz ocupada.
+    Transação curta + retry em lock (N TVs): busy_timeout herdado, rollback +
+    backoff, log visível. Nunca congela a TV com except silencioso.
     """
     import time as _t
-    agora = _t.time()
-    conn = get_connection()
+    for tentativa in range(TENTATIVAS_LOCKED):
+        agora = _t.time()
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("INSERT OR IGNORE INTO tb_tv_estado (chave) VALUES (?)", (chave,))
+            conn.commit()
+            cur.execute("SELECT fala_ate, ultima_falada FROM tb_tv_estado WHERE chave=?", (chave,))
+            row = cur.fetchone()
+            fala_ate = float((row[0] if row else 0) or 0)
+            ultima = int((row[1] if row else 0) or 0)
+            if chamada_id <= ultima:
+                return False
+            if fala_ate > agora:
+                return False
+            cur.execute("UPDATE tb_tv_estado SET fala_ate=?, ultima_falada=? WHERE chave=? AND ultima_falada=?",
+                        (agora + max(1.0, float(dur_seg or 5)), chamada_id, chave, ultima))
+            conn.commit()
+            return (cur.rowcount or 0) > 0
+        except Exception as e:
+            try:
+                conn.rollback()
+            except Exception as rb_e:
+                try:
+                    _log().warning(f"tv_claim_fala rollback ignorado: {rb_e}")
+                except Exception:
+                    pass
+            if _eh_erro_locked(e) and tentativa < TENTATIVAS_LOCKED - 1:
+                try:
+                    _log().warning(f"tv_claim_fala lock chave={chave} tentativa={tentativa + 1}: retry")
+                except Exception:
+                    pass
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                _esperar_retry(tentativa)
+                continue
+            try:
+                _log().exception(f"tv_claim_fala falhou chave={chave}: {e}")
+            except Exception:
+                pass
+            return False
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
     try:
-        cur = conn.cursor()
-        cur.execute("INSERT OR IGNORE INTO tb_tv_estado (chave) VALUES (?)", (chave,))
-        conn.commit()
-        cur.execute("SELECT fala_ate, ultima_falada FROM tb_tv_estado WHERE chave=?", (chave,))
-        row = cur.fetchone()
-        fala_ate = float((row[0] if row else 0) or 0)
-        ultima = int((row[1] if row else 0) or 0)
-        if chamada_id <= ultima:
-            return False
-        if fala_ate > agora:
-            return False
-        cur.execute("UPDATE tb_tv_estado SET fala_ate=?, ultima_falada=? WHERE chave=? AND ultima_falada=?",
-                    (agora + max(1.0, float(dur_seg or 5)), chamada_id, chave, ultima))
-        conn.commit()
-        return (cur.rowcount or 0) > 0
-    finally:
-        conn.close()
+        _log().warning(f"tv_claim_fala lock persistente chave={chave}: desisto após retry")
+    except Exception:
+        pass
+    return False
 
 
 def buscar_proxima_fala(fila_id: int = None, tv_grupo: str = None, etapa_nome: str = None, apos_id: int = 0):
@@ -1953,24 +2154,57 @@ def buscar_proxima_fala(fila_id: int = None, tv_grupo: str = None, etapa_nome: s
 
 
 def definir_estado_tv(chave: str, slot_atual: int = None, pausado: int = None):
-    conn = get_connection()
-    try:
-        cur = conn.cursor()
-        cur.execute("INSERT OR IGNORE INTO tb_tv_estado (chave) VALUES (?)", (chave,))
-        sets = []
-        vals = []
-        if slot_atual is not None:
-            sets.append("slot_atual=?")
-            vals.append(int(slot_atual))
-        if pausado is not None:
-            sets.append("pausado=?")
-            vals.append(1 if pausado else 0)
-        if sets:
-            vals.append(chave)
-            cur.execute(f"UPDATE tb_tv_estado SET {', '.join(sets)} WHERE chave=?", vals)  # nosec B608 — sets com literais fixos, valores via ?
-            conn.commit()
-    finally:
-        conn.close()
+    """EN: Update TV slot/pause state (short txn + lock retry, visible log).
+
+    PT-BR: Atualiza slot/pausa da TV (transação curta + retry em lock, log visível)."""
+    for tentativa in range(TENTATIVAS_LOCKED):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("INSERT OR IGNORE INTO tb_tv_estado (chave) VALUES (?)", (chave,))
+            sets = []
+            vals = []
+            if slot_atual is not None:
+                sets.append("slot_atual=?")
+                vals.append(int(slot_atual))
+            if pausado is not None:
+                sets.append("pausado=?")
+                vals.append(1 if pausado else 0)
+            if sets:
+                vals.append(chave)
+                cur.execute(f"UPDATE tb_tv_estado SET {', '.join(sets)} WHERE chave=?", vals)  # nosec B608 — sets com literais fixos, valores via ?
+                conn.commit()
+            return
+        except Exception as e:
+            try:
+                conn.rollback()
+            except Exception as rb_e:
+                try:
+                    _log().warning(f"definir_estado_tv rollback ignorado: {rb_e}")
+                except Exception:
+                    pass
+            if _eh_erro_locked(e) and tentativa < TENTATIVAS_LOCKED - 1:
+                try:
+                    _log().warning(f"definir_estado_tv lock chave={chave} tentativa={tentativa + 1}: retry")
+                except Exception:
+                    pass
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                _esperar_retry(tentativa)
+                continue
+            try:
+                _log().exception(f"definir_estado_tv falhou chave={chave}: {e}")
+            except Exception:
+                pass
+            return
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+        return
 
 
 def enviar_comando_tv(chave: str, comando: str):

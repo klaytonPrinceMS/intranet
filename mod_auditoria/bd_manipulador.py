@@ -7,7 +7,7 @@ Cada módulo que grava auditoria tem sua própria tabela:
 A descoberta é automática: a tela lista todas as tabelas encontradas.
 """
 import os
-import sqlite3
+import time
 
 from mod_intranet import observabilidade
 
@@ -15,6 +15,107 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_AUDITORIA_PATH = os.path.join(BASE_DIR, "db_mod_auditoria.db")
 
 log = observabilidade.get_logger("auditoria")
+
+# Cache de tabelas já garantidas nesta sessão: evita DDL+commit por escrita
+# (janela de lock). Invalidado se o INSERT falhar com "no such table".
+_TABELAS_GARANTIDAS: set = set()
+
+# Tentativas de commit em caso de contenção SQLite ("database is locked").
+_TENTATIVAS_COMMIT = 3
+
+
+def _sgbd() -> str:
+    """Devolve o SGBD ativo ('sqlite'|'postgres') com fallback seguro."""
+    try:
+        from mod_intranet.banco_conexao import sgbd_ativo
+        atual = sgbd_ativo()
+        return atual if atual in ("sqlite", "postgres") else "sqlite"
+    except Exception:
+        return "sqlite"
+
+
+def _commit_com_retry(conn, contexto: str = "") -> bool:
+    """Commit com retry 3x em 'database is locked'; rollback seguro."""
+    try:
+        ultimo_erro = None
+        for tentativa in range(1, _TENTATIVAS_COMMIT + 1):
+            try:
+                conn.commit()
+                return True
+            except Exception as e:
+                ultimo_erro = e
+                msg = str(e).lower()
+                travou = ("locked" in msg or "busy" in msg or "timeout" in msg)
+                if travou and tentativa < _TENTATIVAS_COMMIT:
+                    try:
+                        time.sleep(0.05 * tentativa)
+                    except Exception:
+                        pass
+                    continue
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                log.exception(f"_commit_com_retry: falha no commit ({contexto}) | {e}")
+                return False
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        log.exception(f"_commit_com_retry: esgotadas tentativas ({contexto}) | {ultimo_erro}")
+        return False
+    except Exception as e:
+        log.exception(f"_commit_com_retry: erro inesperado ({contexto}) | {e}")
+        return False
+
+
+def _tabela_existe(conn, nome: str) -> bool:
+    """Verifica existência de tabela de forma portável SQLite↔PostgreSQL."""
+    try:
+        cur = conn.cursor()
+        if _sgbd() == "postgres":
+            cur.execute(
+                "SELECT 1 FROM information_schema.tables "
+                "WHERE table_schema = current_schema() AND table_name = ?",
+                (nome,),
+            )
+            existe = cur.fetchone() is not None
+        else:
+            cur.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                (nome,),
+            )
+            existe = cur.fetchone() is not None
+        return existe
+    except Exception as e:
+        log.exception(f"_tabela_existe: falha ao verificar {nome} | {e}")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return False
+
+
+def _sql_hora(coluna: str) -> str:
+    """Expressão SQL portável para extrair 'HH:MI' de coluna timestamp."""
+    try:
+        if _sgbd() == "postgres":
+            return f"to_char({coluna}, 'HH24:MI')"
+        return f"strftime('%H:%M', {coluna})"
+    except Exception as e:
+        log.exception(f"_sql_hora: falha ao montar expressão | {e}")
+        return f"strftime('%H:%M', {coluna})"
+
+
+def _sql_data_formatada(coluna: str) -> str:
+    """Expressão SQL portável para formatar timestamp em 'dd/mm/AAAA HH:MM:SS'."""
+    try:
+        if _sgbd() == "postgres":
+            return f"to_char({coluna}, 'DD/MM/YYYY HH24:MI:SS')"
+        return f"strftime('%d/%m/%Y %H:%M:%S', {coluna})"
+    except Exception as e:
+        log.exception(f"_sql_data_formatada: falha ao montar expressão | {e}")
+        return f"strftime('%d/%m/%Y %H:%M:%S', {coluna})"
 
 
 def _nome_tabela(modulo: str) -> str:
@@ -116,9 +217,13 @@ def _garantir_tabela_auditoria(conn, tabela: str, modulo: str = ""):
                 )
             except Exception:
                 log.warning(f"_garantir_tabela_auditoria: falha ao registrar meta de {modulo}")
-        conn.commit()
+        _commit_com_retry(conn, f"garantir {tabela}")
     except Exception as e:
         log.exception(f"_garantir_tabela_auditoria: falha ao garantir {tabela} | {e}")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
         raise
 
 
@@ -135,8 +240,36 @@ def get_tabelas_auditoria():
         return []
     try:
         cur = conn.cursor()
-        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'tb_auditoria_%' AND name != 'tb_auditoria_meta'")
-        return [row[0] for row in cur.fetchall()]
+        # Fonte primária (portável nos dois backends): tb_auditoria_meta.
+        try:
+            cur.execute("SELECT modulo FROM tb_auditoria_meta ORDER BY nome")
+            linhas_meta = cur.fetchall()
+            tabelas_meta = [_nome_tabela(r[0]) for r in linhas_meta if r and r[0]]
+            if tabelas_meta:
+                return tabelas_meta
+        except Exception:
+            log.exception("get_tabelas_auditoria: falha ao ler tb_auditoria_meta; usando fallback")
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        # Fallback por backend: information_schema no PG, sqlite_master no SQLite.
+        # (SELECT em sqlite_master no PG via proxy retorna vazio — por isso o
+        # fallback explícito.)
+        try:
+            if _sgbd() == "postgres":
+                cur.execute(
+                    "SELECT table_name FROM information_schema.tables "
+                    "WHERE table_schema = current_schema() "
+                    "AND table_name LIKE 'tb_auditoria_%' "
+                    "AND table_name <> 'tb_auditoria_meta'"
+                )
+                return [row[0] for row in cur.fetchall()]
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'tb_auditoria_%' AND name != 'tb_auditoria_meta'")
+            return [row[0] for row in cur.fetchall()]
+        except Exception:
+            log.exception("get_tabelas_auditoria: falha no fallback por backend")
+            return []
     except Exception:
         log.exception("get_tabelas_auditoria: falha ao listar tabelas")
         return []
@@ -214,17 +347,48 @@ def registrar_auditoria(usuario, modulo, acao, descricao, hash_arquivo=None,
         return
     try:
         tabela = _nome_tabela(modulo)
-        _garantir_tabela_auditoria(conn, tabela, modulo)
+        # DDL só quando a tabela ainda não foi garantida nesta sessão
+        # (busy_timeout herdado de banco_conexao.conexao; transação curta).
+        if tabela not in _TABELAS_GARANTIDAS:
+            _garantir_tabela_auditoria(conn, tabela, modulo)
+            _TABELAS_GARANTIDAS.add(tabela)
         cur = conn.cursor()
-        cur.execute(
-            f"INSERT INTO {tabela} (usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent, client_hostname, timestamp)"
-            f" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",  # nosec B608 — tabela de _nome_tabela(), sanitizada
-            (usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent,
-             client_hostname, timestamp),
-        )
-        conn.commit()
+        try:
+            cur.execute(
+                f"INSERT INTO {tabela} (usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent, client_hostname, timestamp)"
+                f" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",  # nosec B608 — tabela de _nome_tabela(), sanitizada
+                (usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent,
+                 client_hostname, timestamp),
+            )
+        except Exception as e:
+            # Se a tabela sumiu no meio do caminho, invalida o cache e
+            # tenta garantir + reinserir uma vez (sem perder a trilha LGPD).
+            msg = str(e).lower()
+            if "no such table" in msg or "does not exist" in msg or "undefined_table" in msg:
+                log.warning(f"registrar_auditoria: tabela ausente, regarantindo {tabela}")
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                _TABELAS_GARANTIDAS.discard(tabela)
+                _garantir_tabela_auditoria(conn, tabela, modulo)
+                _TABELAS_GARANTIDAS.add(tabela)
+                cur = conn.cursor()
+                cur.execute(
+                    f"INSERT INTO {tabela} (usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent, client_hostname, timestamp)"
+                    f" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",  # nosec B608 — tabela de _nome_tabela(), sanitizada
+                    (usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent,
+                     client_hostname, timestamp),
+                )
+            else:
+                raise
+        _commit_com_retry(conn, f"registrar {modulo}/{acao}")
     except Exception:
         log.exception(f"registrar_auditoria: falha ao gravar ({modulo}/{acao})")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
     finally:
         try:
             conn.close()
@@ -254,7 +418,11 @@ def contar_registros(tabela=None):
                 cur.execute(f"SELECT COUNT(*) FROM {tbl}")  # nosec B608 — tabela de get_tabelas_auditoria(), whitelistada
                 total += cur.fetchone()[0]
             except Exception:
-                log.warning(f"contar_registros: falha ao contar {tbl}")
+                log.exception(f"contar_registros: falha ao contar {tbl}")
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
                 continue
         return total
     except Exception:
@@ -291,11 +459,19 @@ def podar_registros(dias):
                 )
                 removidos += cur.rowcount
             except Exception:
-                log.warning(f"podar_registros: falha ao podar {tbl}")
+                log.exception(f"podar_registros: falha ao podar {tbl}")
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
                 continue
-        conn.commit()
+        _commit_com_retry(conn, "podar_registros")
     except Exception:
         log.exception("podar_registros: falha ao podar registros")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
     finally:
         try:
             conn.close()
@@ -336,7 +512,7 @@ def buscar_logs(tabela=None, filtro_usuario="", filtro_modulo="",
                 where += " AND acao LIKE ?"
                 params.append(f"%{filtro_acao}%")
             if filtro_hora:
-                where += " AND strftime('%H:%M', timestamp) LIKE ?"
+                where += f" AND {_sql_hora('timestamp')} LIKE ?"
                 params.append(f"%{filtro_hora}%")
             if data_inicio:
                 where += " AND timestamp >= ?"
@@ -349,7 +525,7 @@ def buscar_logs(tabela=None, filtro_usuario="", filtro_modulo="",
             cur.execute(f"SELECT COUNT(*) FROM {tabela}{where}", params)  # nosec B608 — tabela sanitizada, where com params
             total = cur.fetchone()[0]
             sql = (f"SELECT id, usuario, modulo, acao, descricao, hash_arquivo,"
-                   f" strftime('%d/%m/%Y %H:%M:%S', timestamp), ip, user_agent, client_hostname"
+                   f" {_sql_data_formatada('timestamp')}, ip, user_agent, client_hostname"
                    f" FROM {tabela}{where} ORDER BY id DESC LIMIT ? OFFSET ?")  # nosec B608 — tabela sanitizada, where com params
             cur.execute(sql, params + [limite_sql, offset])
             return cur.fetchall(), total
@@ -369,7 +545,7 @@ def buscar_logs(tabela=None, filtro_usuario="", filtro_modulo="",
                 where += " AND sq.acao LIKE ?"
                 params.append(f"%{filtro_acao}%")
             if filtro_hora:
-                where += " AND strftime('%H:%M', sq.timestamp) LIKE ?"
+                where += f" AND {_sql_hora('sq.timestamp')} LIKE ?"
                 params.append(f"%{filtro_hora}%")
             if data_inicio:
                 where += " AND sq.timestamp >= ?"
@@ -385,7 +561,7 @@ def buscar_logs(tabela=None, filtro_usuario="", filtro_modulo="",
             inner_sql = " UNION ALL ".join(inner_parts)
             count_sql = f"SELECT COUNT(*) FROM ({inner_sql}) AS sq{where}"  # nosec B608 — tabelas de get_tabelas_auditoria(), whitelistadas
             data_sql = (f"SELECT id, usuario, modulo, acao, descricao, hash_arquivo,"  # nosec B608 — tabelas de get_tabelas_auditoria(), whitelistadas
-                        f" strftime('%d/%m/%Y %H:%M:%S', sq.timestamp), ip, user_agent, client_hostname"
+                        f" {_sql_data_formatada('sq.timestamp')}, ip, user_agent, client_hostname"
                         f" FROM ({inner_sql}) AS sq{where}"
                         f" ORDER BY sq.id DESC LIMIT ? OFFSET ?")
             cur = conn.cursor()
@@ -456,25 +632,39 @@ def _migrar_dados_existentes_seguro(forcar=False):
         return 0
     central_conn = _get_central_conn()
     try:
-        cur_central = central_conn.cursor()
-        cur_central.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tb_auditoria'")
-        if not cur_central.fetchone():
+        # Portável SQLite↔PG: information_schema no PG, sqlite_master no SQLite
+        # (SELECT em sqlite_master no PG via proxy retorna vazio).
+        if not _tabela_existe(central_conn, "tb_auditoria"):
             return 0
-        cur_central.execute("SELECT COUNT(*) FROM tb_auditoria")
-        total = cur_central.fetchone()[0]
+        cur_central = central_conn.cursor()
+        try:
+            cur_central.execute("SELECT COUNT(*) FROM tb_auditoria")
+            total = cur_central.fetchone()[0]
+        except Exception:
+            log.exception("_migrar_dados_existentes_seguro: falha ao contar legado")
+            try:
+                central_conn.rollback()
+            except Exception:
+                pass
+            return 0
         if total == 0:
             return 0
         cur_central.execute("SELECT usuario, modulo, acao, descricao, timestamp, hash_arquivo, ip, user_agent, client_hostname FROM tb_auditoria")
         rows = cur_central.fetchall()
+    except Exception:
+        log.exception("_migrar_dados_existentes_seguro: falha ao ler legado central")
+        return 0
     finally:
-        central_conn.close()
+        try:
+            central_conn.close()
+        except Exception:
+            pass
 
     audit_conn = get_auditoria_connection()
     try:
-        cur_audit = audit_conn.cursor()
-        cur_audit.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='tb_auditoria_meta'")
-        if not cur_audit.fetchone():
+        if not _tabela_existe(audit_conn, "tb_auditoria_meta"):
             init_db_auditoria()
+        cur_audit = audit_conn.cursor()
 
         modulos_por_tabela = {}
         for usuario, modulo, acao, descricao, timestamp, hash_arquivo, ip, user_agent, client_hostname in rows:
@@ -486,9 +676,23 @@ def _migrar_dados_existentes_seguro(forcar=False):
                  f"INSERT INTO {tabela} (usuario, modulo, acao, descricao, timestamp, hash_arquivo, ip, user_agent, client_hostname) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",  # nosec B608 — tabela de _nome_tabela(), sanitizada
                  (usuario, modulo, acao, descricao, timestamp, hash_arquivo, ip, user_agent, client_hostname),
              )
-        audit_conn.commit()
+        _commit_com_retry(audit_conn, "migrar_dados_existentes")
+    except Exception:
+        log.exception("_migrar_dados_existentes_seguro: falha ao gravar no banco de auditoria")
+        try:
+            audit_conn.rollback()
+        except Exception:
+            pass
+        try:
+            audit_conn.close()
+        except Exception:
+            pass
+        return 0
     finally:
-        audit_conn.close()
+        try:
+            audit_conn.close()
+        except Exception:
+            pass
     set_config("auditoria_migracao_concluida", "1")
     _remover_legado_central()
     return len(rows)

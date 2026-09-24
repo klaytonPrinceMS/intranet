@@ -139,3 +139,37 @@ Oito melhorias na tela de usuários (`mod_gest_cad_usuario/telas.py`), todas na 
 ### Adições recentes (09/2026) — responsividade global RNF-UI-01
 
 - **Barra superior** `flex-nowrap` → `flex-wrap`, tabs `overflow-x-auto`, busca `flex-1 min-w` (`campo_busca` `grow min-w-[220px]`), dialogs `w-full max-w` — validado 320/768/1024 (`kbp-web-design`). Tabelas com `overflow-x-auto` (parcial). Proposta P0/P1/P2 por `container`/`row`/`grid` (header `flex-wrap` `truncate`, filtros `sm:grid-cols-2`) registrada na auditoria.
+
+## Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)
+
+> Documentação da correção pendente. Nenhum `.py` alterado neste lote.
+
+| Módulo | Achado | Arquivo:linha | Correção proposta contida no módulo | Risco regressão |
+|:---|:---|:---|:---|:---|
+| gest_cad_usuario | Sem `CrudBase` completo; `sqlite_master` em seed/migração; `GROUP_CONCAT` agregado | `mod_gest_cad_usuario/bd_manipulador.py:146`, `:181` (`sqlite_master`) · `:301-315` (`GROUP_CONCAT`) | Migrar para `CrudBase` + `conexao("usuarios")`; `_tabela_existe()` interno; manter `GROUP_CONCAT` (proxy traduz para `STRING_AGG`, só teste paridade) | Médio (seed `master`/`qacomum`/`qamaster` + troca forçada) |
+
+Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+
+## Correção aplicada 24/09/2026 — WAL + paridade SQLite↔PostgreSQL
+
+> EN: Fix applied 24/09/2026 in `mod_gest_cad_usuario/bd_manipulador.py` (code already patched, docs-only batch): uniqueness/retry helpers, full GROUP BY, FK per active SGBD, orphan cleanup, preserved seeds; tests 19/19 + 13/13 + 20/20, verdict PASS.
+
+> Correção aplicada em 24/09/2026 em `mod_gest_cad_usuario/bd_manipulador.py` (código já corrigido, lote só-documentação): helpers de unicidade/retry, GROUP BY completo, FK por SGBD ativo, limpeza de órfãos, seeds preservados; testes 19/19 + 13/13 + 20/20, veredito APROVADO.
+
+| Tema | Antes (pendência 24/09) | Depois (correção aplicada) — arquivo:linha |
+|:---|:---|:---|
+| Helpers unicidade/retry | Sem `CrudBase` completo; `database is locked` sem retry; `IntegrityError` genérico | `_eh_violacao_unicidade` (`bd_manipulador.py:47`) — `UNIQUE`/`duplicate key`/`23505` SQLite↔PG sem importar `sqlite3`/`psycopg2`; `_eh_bloqueio_banco` (`:71`); `_rollback_seguro` (`:79`, fail-soft AGENTS §3.2); `_commit_com_retry` (`:91`, 3 tentativas c/ backoff, `busy_timeout=5000` herdado de `banco_conexao.conexao`); `_conexao_segura` (`:121`, fail-soft → `None`); uso em `criar_usuario` (`:596,602-608`), `renomear_usuario` (`:726,740-746`), `editar/definir/excluir` |
+| `GROUP BY` completo | `GROUP_CONCAT` agregado sem GROUP BY completo (quebra no PG) | `listar_usuarios` (`bd_manipulador.py:438`) — `GROUP_CONCAT(a.modulo_chave \|\| ':' \|\| a.papel)` (`:455`, proxy traduz → `STRING_AGG` no PG) + `GROUP BY` com todas as colunas não agregadas (`:464-466`) + `ORDER BY u.user_nome`; `_normalizar_data` (`:425`) normaliza `datetime` PG → string |
+| FK por `sgbd_ativo` | `sqlite_master` em seed/migração; `ON UPDATE CASCADE` assumido nos dois backends | `_init_db_seguro` (`bd_manipulador.py:189`); ramo `sgbd_ativo()` (`:238-264`): SQLite reinspeciona `sqlite_master` e faz rebuild p/ `ON DELETE/UPDATE CASCADE`; PG só marca `PRAGMA table_info` (proxy → `information_schema`) e delega integridade à aplicação (UPDATE manual nas duas tabelas em `renomear_usuario` `:718-719`); `flags` via check-then-add portável (`:268-272`) |
+| Limpeza de órfãos | Sem tratamento PG (FK removida pelo `_ddl_postgres` do núcleo) | `renomear_usuario` (`bd_manipulador.py:690`) — `DELETE FROM tb_acesso_usuario WHERE user_nome NOT IN (SELECT user_nome FROM tb_usuarios)` (`:723`, best-effort c/ `warning`); `definir_acesso` usa upsert `ON CONFLICT(user_nome, modulo_chave) DO UPDATE` (`:1037-1044`, portável PG) |
+| Seeds preservados | Risco regressão: seed `master`/`qacomum`/`qamaster` + troca forçada | Preservados idempotentes: `ACESSO_PADRAO_NOVO_USUARIO` (`:23` = `editar_pdf`, `empenhos`, `solicita_impressao`); auto-cura `master` (`:343-350`); seed `master` (`:353-373`); seed/reconciliação `qacomum` (`:382-404`, remove `blog@sistema` legado) + `qamaster` (`:405-411`); `marcar_trocar_senha/credenciais` mantidos (AGENTS §8.2) |
+
+### Testes e veredito
+
+| Suíte | Resultado |
+|:---|:---|
+| `assets/test/teste_fluxo_autenticacao.py` (login → troca 1º acesso → sessão/logout → auditoria → soft delete → restauração) | 19/19 OK |
+| `assets/test/teste_fluxo_permissoes.py` (concessão/atualização/revogação por módulo + auditoria exclusiva) | 13/13 OK |
+| `assets/test/teste_flags_permissao.py` (catálogo `FLAGS_PERMISSAO`, grant/revoke em `qacomum@blog`, bypass admin, decorador `requer_flag`) | 20/20 OK |
+
+**Veredito: APROVADO — sem regressão.** Pendência WAL+paridade do `gest_cad_usuario` (linha da tabela acima) considerada **superada**; demais módulos do plano permanecem pendentes conforme o arquivo consolidado.

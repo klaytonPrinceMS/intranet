@@ -9,7 +9,7 @@ Auditoria central com ATOR (quem fez) conforme LGPD.
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
-import sqlite3
+import time
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,7 +27,10 @@ def get_connection():
     """Opens a connection to the module's own database (FKs enabled).
 
     Conexão via `banco_conexao.conexao` — SQLite (db_mod_gest_cad_usuario.db,
-    WAL) ou PostgreSQL (DATABASE `db_mod_gest_cad_usuario`)."""
+    WAL) ou PostgreSQL (DATABASE `db_mod_gest_cad_usuario`). O
+    `busy_timeout=5000`+WAL+`foreign_keys=ON` já vêm herdados do núcleo
+    (`mod_intranet.banco_conexao.conexao`); os PRAGMAs abaixo são
+    reaplicação idempotente (no PG o proxy os neutraliza sem efeito)."""
     try:
         from mod_intranet.banco_conexao import conexao
         conn = conexao("usuarios")
@@ -38,6 +41,80 @@ def get_connection():
         return conn
     except Exception as e:
         _log().exception(f"get_connection: falha ao abrir conexão | {e}")
+        raise
+
+
+def _eh_violacao_unicidade(exc):
+    """True para violação de unicidade em SQLite e PostgreSQL.
+
+    SQLite: `sqlite3.IntegrityError: UNIQUE constraint failed`.
+    PostgreSQL (psycopg2): `UniqueViolation` / SQLSTATE 23505 /
+    `duplicate key value`. Fallback genérico por mensagem para não
+    importar `sqlite3`/`psycopg2` aqui (compatível com o proxy PG)."""
+    try:
+        nome = type(exc).__name__ or ""
+        if nome in ("IntegrityError", "UniqueViolation"):
+            texto = str(exc).lower()
+            if ("unique" in texto or "duplicate" in texto
+                    or "23505" in texto or "already exists" in texto):
+                return True
+            # IntegrityError sem mensagem clara: presume unicidade apenas
+            # se o nome for UniqueViolation; senão deixa o chamador decidir.
+            return nome == "UniqueViolation"
+        texto = str(exc).lower()
+        return ("unique constraint" in texto or "uniqueviolation" in texto
+                or "duplicate key" in texto or "23505" in texto)
+    except Exception:
+        return False
+
+
+def _eh_bloqueio_banco(exc):
+    """True quando o erro é contenção transitória do SQLite."""
+    try:
+        return "database is locked" in str(exc).lower()
+    except Exception:
+        return False
+
+
+def _rollback_seguro(conn, contexto=""):
+    """Rollback best-effort que nunca derruba o chamador (AGENTS §3.2)."""
+    try:
+        if conn is not None:
+            conn.rollback()
+    except Exception as e:
+        try:
+            _log().warning(f"_rollback_seguro[{contexto}]: {e}")
+        except Exception:
+            pass
+
+
+def _commit_com_retry(conn, contexto="", tentativas=3, espera_s=0.05):
+    """Commit com retry curto em `database is locked` (SQLite/WAL).
+
+    Tenta `conn.commit()` até `tentativas` vezes quando a falha for
+    contenção transitória; outra falha propaga ao chamador (que faz
+    rollback + `logger.exception`, AGENTS §3.2). `busy_timeout=5000`
+    já vem herdado de `banco_conexao.conexao` — o retry cobre apenas
+    a janela residual de contenção."""
+    try:
+        ultima = None
+        for tentativa in range(1, tentativas + 1):
+            try:
+                conn.commit()
+                return True
+            except Exception as e:
+                ultima = e
+                if _eh_bloqueio_banco(e) and tentativa < tentativas:
+                    try:
+                        time.sleep(espera_s * tentativa)
+                    except Exception:
+                        pass
+                    continue
+                raise
+        if ultima is not None:
+            raise ultima
+        return True
+    except Exception:
         raise
 
 
@@ -113,111 +190,151 @@ def _init_db_seguro():
     """Runs the real init_db bootstrap inside a protected wrapper.
 
     Executa o bootstrap de init_db isolado para receber o try/except do
-    entry point — falha nunca deve derrubar o import do módulo."""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS tb_usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_nome TEXT NOT NULL UNIQUE,
-            user_senha TEXT NOT NULL,
-            user_email TEXT,
-            user_fone TEXT,
-            user_perfil TEXT NOT NULL DEFAULT 'comum',
-            user_ativo INTEGER NOT NULL DEFAULT 1,
-            data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP,
-            modulo_acesso TEXT DEFAULT NULL
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS tb_acesso_usuario (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_nome TEXT NOT NULL REFERENCES tb_usuarios(user_nome) ON DELETE CASCADE,
-            modulo_chave TEXT NOT NULL,
-            papel TEXT NOT NULL DEFAULT 'comum',
-            liberado_por TEXT,
-            data_liberacao DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_nome, modulo_chave)
-        )
-    """)
-    conn.commit()
-
-    # Migração de esquema: garante FK com ON UPDATE CASCADE (renomeio de user_nome)
-    cur.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='tb_acesso_usuario'")
-    sql_row = cur.fetchone()
-    if sql_row and "ON UPDATE" not in (sql_row[0] or "").upper():
-        cur.executescript("""
-            ALTER TABLE tb_acesso_usuario RENAME TO tb_acesso_usuario_old;
-            CREATE TABLE tb_acesso_usuario (
+    entry point — falha nunca deve derrubar o import do módulo. Cada
+    bloco usa check-then-add idempotente (portável SQLite↔PG via proxy
+    `PRAGMA table_info`→`information_schema`; `INSERT OR IGNORE`→
+    `ON CONFLICT DO NOTHING`) com `_commit_com_retry` (busy_timeout
+    herdado + retry em `database is locked`) e rollback em falha
+    parcial. Seed `master`/`qacomum`/`qamaster` preservado idempotente
+    (AGENTS §8.2). Sem CrudBase aqui por risco no seed (fila futura)."""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS tb_usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_nome TEXT NOT NULL REFERENCES tb_usuarios(user_nome) ON DELETE CASCADE ON UPDATE CASCADE,
+                user_nome TEXT NOT NULL UNIQUE,
+                user_senha TEXT NOT NULL,
+                user_email TEXT,
+                user_fone TEXT,
+                user_perfil TEXT NOT NULL DEFAULT 'comum',
+                user_ativo INTEGER NOT NULL DEFAULT 1,
+                data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP,
+                modulo_acesso TEXT DEFAULT NULL
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS tb_acesso_usuario (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_nome TEXT NOT NULL REFERENCES tb_usuarios(user_nome) ON DELETE CASCADE,
                 modulo_chave TEXT NOT NULL,
                 papel TEXT NOT NULL DEFAULT 'comum',
                 liberado_por TEXT,
                 data_liberacao DATETIME DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(user_nome, modulo_chave)
-            );
-            INSERT INTO tb_acesso_usuario SELECT * FROM tb_acesso_usuario_old;
-            DROP TABLE tb_acesso_usuario_old;
+            )
         """)
-        conn.commit()
+        _commit_com_retry(conn, contexto="init_db:ddl_base")
 
-    # Migração: flags finas de permissão por módulo (JSON em tb_acesso_usuario).
-    cur.execute("PRAGMA table_info(tb_acesso_usuario)")
-    cols_acesso = {r[1] for r in cur.fetchall()}
-    if "flags" not in cols_acesso:
-        cur.execute("ALTER TABLE tb_acesso_usuario ADD COLUMN flags TEXT NOT NULL DEFAULT '{}'")
-        conn.commit()
-
-    # Migração única: usuários do BD central -> BD do módulo (legado).
-    # Só roda se o BD central AINDA tiver tb_usuarios; em instalação nova
-    # essa tabela não existe mais, então a migração é pulada com segurança
-    # (evita quebrar o bootstrap "criar do zero" do PLANO.md).
-    cur.execute("SELECT COUNT(*) FROM tb_usuarios")
-    if cur.fetchone()[0] == 0:
-        c = _central()
+        # Migração de esquema: garante FK com ON UPDATE CASCADE (renomeio).
+        # Portável: no SQLite inspeciona `sqlite_master`; no PG o proxy
+        # devolve vazio p/ `sqlite_master` (inalcançável) e o `_ddl_postgres`
+        # remove REFERENCES — integridade gerida na aplicação (UPDATE manual
+        # em `renomear_usuario` + limpeza de órfãos). Por isso a guarda usa
+        # `PRAGMA table_info` (traduzido p/ information_schema no PG) e só
+        # executa o rebuild no backend SQLite.
         try:
-            cc = c.cursor()
-            cc.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tb_usuarios'")
-            if cc.fetchone():
-                cc.execute("SELECT user_nome, user_senha, user_email, user_fone, user_perfil, user_ativo, data_cadastro, modulo_acesso FROM tb_usuarios")
-                for r in cc.fetchall():
-                    cur.execute(
-                        """INSERT INTO tb_usuarios
-                           (user_nome, user_senha, user_email, user_fone, user_perfil, user_ativo, data_cadastro, modulo_acesso)
-                           VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP), ?)""",
-                        r,
-                    )
-                    # converte legado CSV -> linhas de acesso com papel 'comum'
-                    for chave in [x.strip() for x in (r[7] or "").split(",") if x.strip()]:
-                        cur.execute(
-                            "INSERT OR IGNORE INTO tb_acesso_usuario (user_nome, modulo_chave, papel, liberado_por) VALUES (?, ?, 'comum', 'migracao')",
-                            (r[0], chave),
-                        )
-                conn.commit()
-        finally:
-            c.close()
+            from mod_intranet.banco_conexao import sgbd_ativo
+            _backend = sgbd_ativo()
+        except Exception:
+            _backend = "sqlite"
+        if _backend != "postgres":
+            cur.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='tb_acesso_usuario'")
+            sql_row = cur.fetchone()
+            if sql_row and "ON UPDATE" not in (sql_row[0] or "").upper():
+                cur.executescript("""
+                    ALTER TABLE tb_acesso_usuario RENAME TO tb_acesso_usuario_old;
+                    CREATE TABLE tb_acesso_usuario (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_nome TEXT NOT NULL REFERENCES tb_usuarios(user_nome) ON DELETE CASCADE ON UPDATE CASCADE,
+                        modulo_chave TEXT NOT NULL,
+                        papel TEXT NOT NULL DEFAULT 'comum',
+                        liberado_por TEXT,
+                        data_liberacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(user_nome, modulo_chave)
+                    );
+                    INSERT INTO tb_acesso_usuario SELECT * FROM tb_acesso_usuario_old;
+                    DROP TABLE tb_acesso_usuario_old;
+                """)
+                _commit_com_retry(conn, contexto="init_db:fk_update_cascade")
+        else:
+            # PG: apenas garante que a tabela existe (marcador portável).
+            cur.execute("PRAGMA table_info(tb_acesso_usuario)")
+            _ = cur.fetchall()
 
-    # Migração: coluna de soft-delete explícita (distingue bloqueado de excluído)
-    cur.execute("PRAGMA table_info(tb_usuarios)")
-    cols = [r[1] for r in cur.fetchall()]
-    if "user_deletado" not in cols:
-        cur.execute("ALTER TABLE tb_usuarios ADD COLUMN user_deletado INTEGER NOT NULL DEFAULT 0")
-        conn.commit()
-    # Migração: nome de exibição/tratamento (pode ser o nome social — Decreto 8.727/2016)
-    cur.execute("PRAGMA table_info(tb_usuarios)")
-    cols = [r[1] for r in cur.fetchall()]
-    if "user_nome_completo" not in cols:
-        cur.execute("ALTER TABLE tb_usuarios ADD COLUMN user_nome_completo TEXT")
-        cur.execute("UPDATE tb_usuarios SET user_nome_completo='Usuário Master' WHERE user_nome='master'")
-        conn.commit()
-    # Migração: motivo registrado no momento da exclusão lógica
-    cur.execute("PRAGMA table_info(tb_usuarios)")
-    cols = [r[1] for r in cur.fetchall()]
-    if "user_motivo_exclusao" not in cols:
-        cur.execute("ALTER TABLE tb_usuarios ADD COLUMN user_motivo_exclusao TEXT")
-        conn.commit()
-    conn.close()
+        # Migração: flags finas de permissão por módulo (JSON em tb_acesso_usuario).
+        # Padrão check-then-add (portável; duplicata concorrente tolerada no proxy).
+        cur.execute("PRAGMA table_info(tb_acesso_usuario)")
+        cols_acesso = {r[1] for r in cur.fetchall()}
+        if "flags" not in cols_acesso:
+            cur.execute("ALTER TABLE tb_acesso_usuario ADD COLUMN flags TEXT NOT NULL DEFAULT '{}'")
+            _commit_com_retry(conn, contexto="init_db:flags")
+
+        # Migração única: usuários do BD central -> BD do módulo (legado).
+        # Só roda se o BD central AINDA tiver tb_usuarios; em instalação nova
+        # essa tabela não existe mais, então a migração é pulada com segurança
+        # (evita quebrar o bootstrap "criar do zero" do PLANO.md).
+        cur.execute("SELECT COUNT(*) FROM tb_usuarios")
+        if cur.fetchone()[0] == 0:
+            c = _central()
+            try:
+                cc = c.cursor()
+                cc.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tb_usuarios'")
+                if cc.fetchone():
+                    cc.execute("SELECT user_nome, user_senha, user_email, user_fone, user_perfil, user_ativo, data_cadastro, modulo_acesso FROM tb_usuarios")
+                    for r in cc.fetchall():
+                        cur.execute(
+                            """INSERT INTO tb_usuarios
+                               (user_nome, user_senha, user_email, user_fone, user_perfil, user_ativo, data_cadastro, modulo_acesso)
+                               VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP), ?)""",
+                            r,
+                        )
+                        # converte legado CSV -> linhas de acesso com papel 'comum'
+                        for chave in [x.strip() for x in (r[7] or "").split(",") if x.strip()]:
+                            cur.execute(
+                                "INSERT OR IGNORE INTO tb_acesso_usuario (user_nome, modulo_chave, papel, liberado_por) VALUES (?, ?, 'comum', 'migracao')",
+                                (r[0], chave),
+                            )
+                    _commit_com_retry(conn, contexto="init_db:migracao_legado")
+            finally:
+                c.close()
+
+        # Migração: coluna de soft-delete explícita (check-then-add portável).
+        cur.execute("PRAGMA table_info(tb_usuarios)")
+        cols = [r[1] for r in cur.fetchall()]
+        if "user_deletado" not in cols:
+            cur.execute("ALTER TABLE tb_usuarios ADD COLUMN user_deletado INTEGER NOT NULL DEFAULT 0")
+            _commit_com_retry(conn, contexto="init_db:user_deletado")
+        # Migração: nome de exibição/tratamento (pode ser o nome social — Decreto 8.727/2016)
+        cur.execute("PRAGMA table_info(tb_usuarios)")
+        cols = [r[1] for r in cur.fetchall()]
+        if "user_nome_completo" not in cols:
+            cur.execute("ALTER TABLE tb_usuarios ADD COLUMN user_nome_completo TEXT")
+            cur.execute("UPDATE tb_usuarios SET user_nome_completo='Usuário Master' WHERE user_nome='master'")
+            _commit_com_retry(conn, contexto="init_db:nome_completo")
+        # Migração: motivo registrado no momento da exclusão lógica (check-then-add).
+        cur.execute("PRAGMA table_info(tb_usuarios)")
+        cols = [r[1] for r in cur.fetchall()]
+        if "user_motivo_exclusao" not in cols:
+            cur.execute("ALTER TABLE tb_usuarios ADD COLUMN user_motivo_exclusao TEXT")
+            _commit_com_retry(conn, contexto="init_db:motivo_exclusao")
+    except Exception as e:
+        try:
+            _rollback_seguro(conn, contexto="init_db_seguro")
+        except Exception:
+            pass
+        try:
+            _log().exception(f"_init_db_seguro: falha no bootstrap DDL | {e}")
+        except Exception:
+            pass
+        raise
+    finally:
+        try:
+            if conn is not None:
+                conn.close()
+        except Exception:
+            pass
 
     # Segurança: se o master AINDA usa a senha padrão 'master' (instalação nova
     # ou legado), força a troca no primeiro logon — idempotente e auto-cura:
@@ -232,54 +349,75 @@ def _init_db_seguro():
     except Exception as e:
         _log().exception(f"init_db: falha ao verificar senha padrão do master | {e}")
 
-    # Garante master
+    # Garante master (seed idempotente AGENTS §8.2 — sem CrudBase aqui).
     if not obter_usuario("master"):
         from mod_intranet.autenticacao import gerar_hash_senha, marcar_trocar_senha, marcar_trocar_credenciais
-        conn = get_connection(); cur = conn.cursor()
-        cur.execute(
-            "INSERT INTO tb_usuarios (user_nome, user_senha, user_perfil, user_ativo) VALUES (?, ?, 'administrador_geral', 1)",
-            ("master", gerar_hash_senha("master")),
-        )
-        conn.commit(); conn.close()
-        marcar_trocar_senha("master", True)
-        marcar_trocar_credenciais("master", True)
+        conn = None
+        try:
+            conn = get_connection(); cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO tb_usuarios (user_nome, user_senha, user_perfil, user_ativo) VALUES (?, ?, 'administrador_geral', 1)",
+                ("master", gerar_hash_senha("master")),
+            )
+            _commit_com_retry(conn, contexto="init_db:seed_master")
+            marcar_trocar_senha("master", True)
+            marcar_trocar_credenciais("master", True)
+        except Exception as e:
+            _rollback_seguro(conn, contexto="init_db:seed_master")
+            _log().exception(f"init_db: falha ao semear master | {e}")
+        finally:
+            try:
+                if conn is not None:
+                    conn.close()
+            except Exception:
+                pass
 
     # Garante usuários de teste de QA (docs) — qacomum (comum) e qamaster (administrador_geral).
     # qacomum segue o padrão de criação vigente (comum em editar_pdf,
     # empenhos e solicita_impressao; SEM acesso a blog/usuarios/auditoria).
     from mod_intranet.autenticacao import gerar_hash_senha, marcar_trocar_senha
-    conn = get_connection(); cur = conn.cursor()
-    if not obter_usuario("qacomum"):
-        cur.execute(
-            "INSERT INTO tb_usuarios (user_nome, user_senha, user_perfil, user_ativo, user_nome_completo) VALUES (?, ?, 'comum', 1, ?)",
-            ("qacomum", gerar_hash_senha("123456"), "Usuário de Teste QA Comum"),
-        )
-        for chave in ACESSO_PADRAO_NOVO_USUARIO:
+    conn = None
+    try:
+        conn = get_connection(); cur = conn.cursor()
+        if not obter_usuario("qacomum"):
             cur.execute(
-                "INSERT OR IGNORE INTO tb_acesso_usuario (user_nome, modulo_chave, papel, liberado_por) VALUES (?, ?, 'comum', 'sistema')",
-                ("qacomum", chave),
+                "INSERT INTO tb_usuarios (user_nome, user_senha, user_perfil, user_ativo, user_nome_completo) VALUES (?, ?, 'comum', 1, ?)",
+                ("qacomum", gerar_hash_senha("123456"), "Usuário de Teste QA Comum"),
             )
-        conn.commit()
-        marcar_trocar_senha("qacomum", True)
-    else:
-        # Reconcilia o qacomum existente com o padrão vigente (idempotente):
-        # garante os 3 acessos comuns e remove o legado 'blog' concedido
-        # pelo seed ('sistema') — concessões manuais do admin são mantidas.
-        for chave in ACESSO_PADRAO_NOVO_USUARIO:
+            for chave in ACESSO_PADRAO_NOVO_USUARIO:
+                cur.execute(
+                    "INSERT OR IGNORE INTO tb_acesso_usuario (user_nome, modulo_chave, papel, liberado_por) VALUES (?, ?, 'comum', 'sistema')",
+                    ("qacomum", chave),
+                )
+            _commit_com_retry(conn, contexto="init_db:seed_qacomum")
+            marcar_trocar_senha("qacomum", True)
+        else:
+            # Reconcilia o qacomum existente com o padrão vigente (idempotente):
+            # garante os 3 acessos comuns e remove o legado 'blog' concedido
+            # pelo seed ('sistema') — concessões manuais do admin são mantidas.
+            for chave in ACESSO_PADRAO_NOVO_USUARIO:
+                cur.execute(
+                    "INSERT OR IGNORE INTO tb_acesso_usuario (user_nome, modulo_chave, papel, liberado_por) VALUES (?, ?, 'comum', 'sistema')",
+                    ("qacomum", chave),
+                )
+            cur.execute("DELETE FROM tb_acesso_usuario WHERE user_nome='qacomum' AND modulo_chave='blog' AND liberado_por='sistema'")
+            _commit_com_retry(conn, contexto="init_db:reconcilia_qacomum")
+        if not obter_usuario("qamaster"):
             cur.execute(
-                "INSERT OR IGNORE INTO tb_acesso_usuario (user_nome, modulo_chave, papel, liberado_por) VALUES (?, ?, 'comum', 'sistema')",
-                ("qacomum", chave),
+                "INSERT INTO tb_usuarios (user_nome, user_senha, user_perfil, user_ativo, user_nome_completo) VALUES (?, ?, 'administrador_geral', 1, ?)",
+                ("qamaster", gerar_hash_senha("123456"), "Usuário de Teste QA Master"),
             )
-        cur.execute("DELETE FROM tb_acesso_usuario WHERE user_nome='qacomum' AND modulo_chave='blog' AND liberado_por='sistema'")
-        conn.commit()
-    if not obter_usuario("qamaster"):
-        cur.execute(
-            "INSERT INTO tb_usuarios (user_nome, user_senha, user_perfil, user_ativo, user_nome_completo) VALUES (?, ?, 'administrador_geral', 1, ?)",
-            ("qamaster", gerar_hash_senha("123456"), "Usuário de Teste QA Master"),
-        )
-        conn.commit()
-        marcar_trocar_senha("qamaster", True)
-    conn.close()
+            _commit_com_retry(conn, contexto="init_db:seed_qamaster")
+            marcar_trocar_senha("qamaster", True)
+    except Exception as e:
+        _rollback_seguro(conn, contexto="init_db:seed_qa")
+        _log().exception(f"init_db: falha ao semear QA | {e}")
+    finally:
+        try:
+            if conn is not None:
+                conn.close()
+        except Exception:
+            pass
 
 
 # ================= CONSULTAS =================
@@ -304,7 +442,9 @@ def listar_usuarios(filtro_ativo=None):
     user_fone, data_cadastro, acessos 'modulo:papel, …', user_deletado,
     user_nome_completo, user_motivo_exclusao). `filtro_ativo` filtra por
     `user_ativo` quando informado; ordenado por login. `data_cadastro` é
-    normalizada para string (backend-agnóstico)."""
+    normalizada para string (backend-agnóstico). GROUP BY completo
+    (portável SQLite↔PG — o PG exige todas as colunas não agregadas;
+    `GROUP_CONCAT`→`STRING_AGG` via proxy)."""
     conn = _conexao_segura()
     if conn is None:
         return []
@@ -321,7 +461,10 @@ def listar_usuarios(filtro_ativo=None):
         if filtro_ativo is not None:
             sql += " AND u.user_ativo=?"
             params.append(1 if filtro_ativo else 0)
-        sql += " GROUP BY u.id ORDER BY u.user_nome"
+        sql += (" GROUP BY u.id, u.user_nome, u.user_perfil, u.user_ativo,"
+                " u.user_email, u.user_fone, u.data_cadastro,"
+                " u.user_deletado, u.user_nome_completo, u.user_motivo_exclusao"
+                " ORDER BY u.user_nome")
         cur.execute(sql, params)
         linhas = []
         for r in cur.fetchall():
@@ -450,15 +593,17 @@ def criar_usuario(ator, user_nome, senha, email=None, fone=None, perfil="comum",
                 "INSERT INTO tb_acesso_usuario (user_nome, modulo_chave, papel, liberado_por) VALUES (?, ?, 'comum', ?)",
                 (user_nome.strip(), chave, ator),
             )
-        conn.commit()
+        _commit_com_retry(conn, contexto=f"criar_usuario:{user_nome}")
         marcar_trocar_senha(user_nome.strip(), True)
         _audit(ator, "criar_usuario", user_nome.strip(), f"perfil={perfil} | exibição: {nome_c}")
         _log().info(f"usuário criado: {user_nome.strip()} perfil={perfil} por {ator}")
         return True, "Usuário criado (senha provisória — troca obrigatória no 1º acesso)"
-    except sqlite3.IntegrityError:
-        _log().warning(f"criar_usuario: nome já existe: {user_nome}")
-        return False, "Nome de usuário já existe"
     except Exception as e:
+        if _eh_violacao_unicidade(e):
+            _rollback_seguro(conn, contexto=f"criar_usuario:{user_nome}")
+            _log().warning(f"criar_usuario: nome já existe: {user_nome}")
+            return False, "Nome de usuário já existe"
+        _rollback_seguro(conn, contexto=f"criar_usuario:{user_nome}")
         _log().exception(f"criar_usuario: falha ao criar usuário {user_nome} | {e}")
         return False, "Erro inesperado ao criar usuário"
     finally:
@@ -529,12 +674,13 @@ def editar_usuario(ator, user_nome, email="__NULO__", fone="__NULO__",
             return True, "Nada a alterar"
         params.append(user_nome)
         cur.execute(f"UPDATE tb_usuarios SET {', '.join(sets)} WHERE user_nome=?", tuple(params))  # nosec B608 — sets só literais fixos "col=?"; valores via ?
-        conn.commit()
+        _commit_com_retry(conn, contexto=f"editar_usuario:{user_nome}")
         if auditar:
             _audit(ator, "editar_usuario", user_nome, ", ".join(mudancas))
         _log().info(f"usuário editado: {user_nome} | {', '.join(mudancas)} por {ator}")
         return True, "Usuário atualizado"
     except Exception as e:
+        _rollback_seguro(conn, contexto=f"editar_usuario:{user_nome}")
         _log().exception(f"editar_usuario: falha ao editar {user_nome} | {e}")
         return False, "Erro inesperado ao editar usuário"
     finally:
@@ -548,7 +694,11 @@ def renomear_usuario(ator, nome_atual, novo_nome, permitir_master=False):
     dependentes (`tb_acesso_usuario`, sessões centrais e autorias nos
     demais módulos). `permitir_master=True` libera a renomeação do
     `master` nativo — usado EXCLUSIVAMENTE no primeiro acesso (troca de
-    credenciais obrigatória)."""
+    credenciais obrigatória). Paridade PG: o `_ddl_postgres` do núcleo
+    remove `REFERENCES ... ON DELETE/UPDATE CASCADE` — a integridade é
+    gerida na aplicação (UPDATE manual nas duas tabelas + limpeza de
+    órfãos abaixo); commit com retry em `database is locked` e rollback
+    em falha parcial (AGENTS §3.2)."""
     novo_nome = (novo_nome or "").strip()
     if not novo_nome:
         return False, "Novo nome vazio"
@@ -567,7 +717,13 @@ def renomear_usuario(ator, nome_atual, novo_nome, permitir_master=False):
             return False, "Usuário não existe"
         cur.execute("UPDATE tb_usuarios SET user_nome=? WHERE user_nome=?", (novo_nome, nome_atual))
         cur.execute("UPDATE tb_acesso_usuario SET user_nome=? WHERE user_nome=?", (novo_nome, nome_atual))
-        conn.commit()
+        # Limpeza manual de órfãos (PG sem FKs — ver docstring): remove
+        # vínculos cujo user_nome não existe mais em tb_usuarios.
+        try:
+            cur.execute("DELETE FROM tb_acesso_usuario WHERE user_nome NOT IN (SELECT user_nome FROM tb_usuarios)")
+        except Exception as e_orf:
+            _log().warning(f"renomear_usuario: falha na limpeza de órfãos | {e_orf}")
+        _commit_com_retry(conn, contexto=f"renomear_usuario:{nome_atual}->{novo_nome}")
         _audit(ator, "renomear_usuario", nome_atual, f"→ {novo_nome} (ID preservado)")
         # reflete também nas sessões do banco central
         try:
@@ -580,10 +736,12 @@ def renomear_usuario(ator, nome_atual, novo_nome, permitir_master=False):
         _vinculos_cruzados_renomear(nome_atual, novo_nome)
         _log().info(f"usuário renomeado: {nome_atual} -> {novo_nome} por {ator}")
         return True, f"Renomeado para '{novo_nome}'"
-    except sqlite3.IntegrityError:
-        _log().warning(f"renomear_usuario: conflito de unicidade para '{novo_nome}'")
-        return False, "Conflito de unicidade"
     except Exception as e:
+        if _eh_violacao_unicidade(e):
+            _rollback_seguro(conn, contexto=f"renomear_usuario:{nome_atual}")
+            _log().warning(f"renomear_usuario: conflito de unicidade para '{novo_nome}'")
+            return False, "Conflito de unicidade"
+        _rollback_seguro(conn, contexto=f"renomear_usuario:{nome_atual}")
         _log().exception(f"renomear_usuario: falha ao renomear {nome_atual} | {e}")
         return False, "Erro inesperado ao renomear usuário"
     finally:
@@ -607,13 +765,14 @@ def alterar_senha_admin(ator, user_nome, nova_senha):
                     (gerar_hash_senha(nova_senha), user_nome))
         if cur.rowcount == 0:
             return False, "Usuário não existe"
-        conn.commit()
+        _commit_com_retry(conn, contexto=f"alterar_senha_admin:{user_nome}")
         marcar_trocar_senha(user_nome, True)
         _fechar_sessoes_central(user_nome)  # senha redefinida -> todas as sessões caem
         _audit(ator, "alterar_senha", user_nome, "senha provisória definida pelo admin; sessões encerradas")
         _log().info(f"senha redefinida (admin): {user_nome} por {ator}")
         return True, "Senha redefinida — sessões encerradas e troca obrigatória no próximo acesso"
     except Exception as e:
+        _rollback_seguro(conn, contexto=f"alterar_senha_admin:{user_nome}")
         _log().exception(f"alterar_senha_admin: falha ao redefinir senha de {user_nome} | {e}")
         return False, "Erro inesperado ao redefinir senha"
     finally:
@@ -640,7 +799,10 @@ def bloquear_usuario(ator, user_nome, bloquear=True):
                     try:
                         conn.execute("UPDATE tb_usuarios SET user_motivo_exclusao=NULL WHERE user_nome=?",
                                      (user_nome,))
-                        conn.commit()
+                        _commit_com_retry(conn, contexto=f"bloquear_usuario:{user_nome}")
+                    except Exception as e2:
+                        _rollback_seguro(conn, contexto=f"bloquear_usuario:{user_nome}")
+                        _log().exception(f"bloquear_usuario: falha ao limpar motivo de {user_nome} | {e2}")
                     finally:
                         conn.close()
             if bloquear:
@@ -677,7 +839,10 @@ def soft_delete_usuario(ator, user_nome, motivo=None):
             try:
                 conn.execute("UPDATE tb_usuarios SET user_motivo_exclusao=? WHERE user_nome=?",
                              (motivo, user_nome))
-                conn.commit()
+                _commit_com_retry(conn, contexto=f"soft_delete:{user_nome}")
+            except Exception as e2:
+                _rollback_seguro(conn, contexto=f"soft_delete:{user_nome}")
+                _log().exception(f"soft_delete_usuario: falha ao gravar motivo de {user_nome} | {e2}")
             finally:
                 conn.close()
         _fechar_sessoes_central(user_nome)
@@ -761,6 +926,7 @@ def excluir_usuario_definitivo(ator, user_nome):
     usuário, encerra sessões e audita `excluir_definitivo`. `master` e a
     própria conta do ator são protegidos; o último admin geral ativo também.
     Retorna `(ok, msg)`."""
+    conn = None
     try:
         from mod_intranet import autenticacao  # import tardio: evita ciclo de imports
         if autenticacao.perfil_global_de(ator) != "administrador_geral":
@@ -784,7 +950,7 @@ def excluir_usuario_definitivo(ator, user_nome):
         detalhes = _vinculos_cruzados_excluir(user_nome)
         cur.execute("DELETE FROM tb_acesso_usuario WHERE user_nome=?", (user_nome,))
         cur.execute("DELETE FROM tb_usuarios WHERE user_nome=?", (user_nome,))
-        conn.commit()
+        _commit_com_retry(conn, contexto=f"excluir_definitivo:{user_nome}")
         _fechar_sessoes_central(user_nome)
         extra = f" | {', '.join(detalhes)}" if detalhes else ""
         _audit(ator, "excluir_definitivo", user_nome, f"DELETE físico (LGPD){extra}")
@@ -794,8 +960,18 @@ def excluir_usuario_definitivo(ator, user_nome):
             msg += f" ({', '.join(detalhes)})"
         return True, msg
     except Exception as e:
+        try:
+            _rollback_seguro(conn, contexto=f"excluir_definitivo:{user_nome}")
+        except Exception:
+            pass
         _log().exception(f"excluir_usuario_definitivo: falha ao excluir {user_nome} | {e}")
         return False, "Erro inesperado ao excluir definitivamente"
+    finally:
+        try:
+            if conn is not None:
+                conn.close()
+        except Exception:
+            pass
 
 
 def duplicar_usuario(ator, usuario_origem, novo_nome, senha, email=None,
@@ -866,11 +1042,12 @@ def definir_acesso(ator, user_nome, modulo_chave, papel):
                    data_liberacao=excluded.data_liberacao""",
             (user_nome, modulo_chave, papel, ator),
         )
-        conn.commit()
+        _commit_com_retry(conn, contexto=f"definir_acesso:{user_nome}@{modulo_chave}")
         _audit(ator, "definir_acesso", user_nome, f"{modulo_chave}={papel}")
         _log().info(f"acesso definido: {user_nome} {modulo_chave}={papel} por {ator}")
         return True, f"{modulo_chave}: {papel}"
     except Exception as e:
+        _rollback_seguro(conn, contexto=f"definir_acesso:{user_nome}")
         _log().exception(f"definir_acesso: falha ao definir acesso {user_nome}@{modulo_chave} | {e}")
         return False, "Erro inesperado ao definir acesso"
     finally:
@@ -886,11 +1063,12 @@ def remover_acesso(ator, user_nome, modulo_chave):
         cur = conn.cursor()
         cur.execute("DELETE FROM tb_acesso_usuario WHERE user_nome=? AND modulo_chave=?",
                     (user_nome, modulo_chave))
-        conn.commit()
+        _commit_com_retry(conn, contexto=f"remover_acesso:{user_nome}@{modulo_chave}")
         _audit(ator, "remover_acesso", user_nome, f"módulo {modulo_chave}")
         _log().info(f"acesso removido: {user_nome} módulo {modulo_chave} por {ator}")
         return True, f"Acesso a '{modulo_chave}' removido"
     except Exception as e:
+        _rollback_seguro(conn, contexto=f"remover_acesso:{user_nome}")
         _log().exception(f"remover_acesso: falha ao remover acesso {user_nome}@{modulo_chave} | {e}")
         return False, "Erro inesperado ao remover acesso"
     finally:
@@ -1015,11 +1193,12 @@ def definir_flags(ator, user_nome, modulo_chave, flags):
             return False, f"sem vínculo {user_nome}@{modulo_chave} (libere o acesso primeiro)"
         cur.execute("UPDATE tb_acesso_usuario SET flags=? WHERE user_nome=? AND modulo_chave=?",
                     (json.dumps(flags, sort_keys=True), user_nome, modulo_chave))
-        conn.commit()
+        _commit_com_retry(conn, contexto=f"definir_flags:{user_nome}@{modulo_chave}")
         _audit(ator, "definir_flags", user_nome, f"{modulo_chave}={sorted(flags)}")
         _log().info(f"flags definidas: {user_nome} {modulo_chave}={sorted(flags)} por {ator}")
         return True, f"{modulo_chave}: {len(flags)} flag(s)"
     except Exception as e:
+        _rollback_seguro(conn, contexto=f"definir_flags:{user_nome}")
         _log().exception(f"definir_flags: falha para {user_nome}@{modulo_chave} | {e}")
         return False, "Erro inesperado ao definir flags"
     finally:

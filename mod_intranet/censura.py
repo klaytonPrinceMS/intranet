@@ -4,20 +4,27 @@ EN: Content censorship — blocked words in titles (admin-configurable).
 PT: Lista central de palavras que não podem aparecer em títulos (blog, agregador)
     para evitar conteúdo indesejado (ex: tinder, suicídio). Config via tb_config.
 """
+import logging
 import re
 import unicodedata
+
+logger = logging.getLogger(__name__)
 
 CHAVE_CONFIG = "conteudo_palavras_bloqueadas"
 
 
 def _normalizar(texto: str) -> str:
     """Lower + sem acento para comparação insensível."""
-    if not texto:
+    try:
+        if not texto:
+            return ""
+        texto = texto.lower().strip()
+        # remove acentos
+        texto = "".join(c for c in unicodedata.normalize("NFD", texto) if unicodedata.category(c) != "Mn")
+        return texto
+    except Exception:
+        logger.exception("Falha ao normalizar texto para censura.")
         return ""
-    texto = texto.lower().strip()
-    # remove acentos
-    texto = "".join(c for c in unicodedata.normalize("NFD", texto) if unicodedata.category(c) != "Mn")
-    return texto
 
 
 def obter_palavras_bloqueadas() -> list[str]:
@@ -71,22 +78,30 @@ def definir_palavras_bloqueadas(palavras: list[str], ator: str = "sistema") -> b
 
 def titulo_bloqueado(titulo: str, palavras: list[str] = None) -> tuple[bool, str]:
     """Verifica se título contém palavra bloqueada. Retorna (bloqueado, palavra_encontrada)."""
-    if not titulo:
+    try:
+        if not titulo:
+            return False, ""
+        if palavras is None:
+            palavras = obter_palavras_bloqueadas()
+        if not palavras:
+            return False, ""
+        norm_titulo = _normalizar(titulo)
+        for palavra in palavras:
+            norm_pal = _normalizar(palavra)
+            if not norm_pal:
+                continue
+            if norm_pal in norm_titulo:
+                return True, palavra
         return False, ""
-    if palavras is None:
-        palavras = obter_palavras_bloqueadas()
-    if not palavras:
+    except Exception:
+        logger.exception("Falha ao verificar título bloqueado.")
         return False, ""
-    norm_titulo = _normalizar(titulo)
-    for palavra in palavras:
-        norm_pal = _normalizar(palavra)
-        if not norm_pal:
-            continue
-        if norm_titulo.startswith(norm_pal):
-            return True, palavra
-    return False, ""
 
 
 def filtrar_titulo(titulo: str) -> tuple[bool, str]:
     """Atalho para verificar título contra lista atual."""
-    return titulo_bloqueado(titulo)
+    try:
+        return titulo_bloqueado(titulo)
+    except Exception:
+        logger.exception("Falha ao filtrar título.")
+        return False, ""

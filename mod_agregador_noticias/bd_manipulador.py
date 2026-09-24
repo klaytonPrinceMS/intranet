@@ -11,8 +11,9 @@ Agregador de Notícias — BD próprio, coleta multi-fonte, limpeza 24h.
 BD: db_mod_agregador_noticias.db (WAL)
 Tabelas: tb_noticia (titulo, fonte, tema, url UNIQUE, imagem_url, descricao, data_publicacao, data_coleta)
 Fontes: Google News + BBC + JFP + RSS genérico, configuráveis pelo admin (conteúdo da pesquisa).
-Coleta via httpx+parsel (scrapy-like) com intervalo 10min–9h, habilitado por flag.
-Limpeza: DELETE WHERE data_coleta < now-24h (reiniciado 24/24h).
+Coleta via httpx+parsel (scrapy-like) com intervalo 10min–9360min (teto 6,5 dias), habilitado por flag.
+Limpeza: DELETE WHERE data_coleta < corte Python (portável SQLite/PG, sem datetime() com bind).
+Reinício diário padrão 09:00 (config hora_reinicio).
 Integração: API listar_para_tv() usada pelo mod_filas TV (filtra censura).
 """
 
@@ -24,9 +25,6 @@ import hashlib
 from datetime import datetime, timedelta
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "db_mod_agregador_noticias.db")
 
 # Temas padrão alinhados ao Noticia/main.py
 TEMAS_PADRAO = ["Brasil", "Internacional", "Economia", "Saúde", "Ciência e Tecnologia", "Entretenimento", "Esporte", "Monte Santo", "Geral"]
@@ -70,10 +68,27 @@ def get_connection():
         raise RuntimeError("Falha ao abrir conexão agregador_noticias")
     try:
         conn.execute("PRAGMA journal_mode=WAL")
+    except Exception:
+        pass
+    try:
+        # herdado por toda conexão do módulo: evita "database is locked" em coleta concorrente com TV
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception:
+        pass
+    try:
         conn.execute("PRAGMA foreign_keys=ON")
     except Exception:
         pass
     return conn
+
+
+def _eh_locked(e: Exception) -> bool:
+    """Detecta SQLITE_BUSY/locked para retry (portável: checa mensagem)."""
+    try:
+        s = str(e).lower()
+        return ("locked" in s) or ("busy" in s)
+    except Exception:
+        return False
 
 
 def _audit(ator, acao, alvo, detalhe=""):
@@ -114,6 +129,7 @@ def definir_habilitado(valor: bool, ator="sistema"):
 
 
 def intervalo_min() -> int:
+    """Intervalo de coleta em minutos, clamp 10–9360 (teto 9360min = 6,5 dias)."""
     try:
         v = int((_get_config("intervalo_min", "60") or "60").strip() or 60)
     except Exception:
@@ -272,9 +288,29 @@ def init_db():
             cur.execute("ALTER TABLE tb_noticia ADD COLUMN fonte_icon_url TEXT DEFAULT ''")
     except Exception:
         pass
+    # P0 dedup O(1): coluna titulo_norm (lower sem acentos, strip) — elimina full-scan por notícia
+    try:
+        cols = [c[1] for c in cur.execute("PRAGMA table_info(tb_noticia)").fetchall()]
+        if "titulo_norm" not in cols:
+            cur.execute("ALTER TABLE tb_noticia ADD COLUMN titulo_norm TEXT DEFAULT ''")
+    except Exception:
+        pass
     cur.execute("CREATE INDEX IF NOT EXISTS idx_noticia_tema ON tb_noticia(tema)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_noticia_fonte ON tb_noticia(fonte)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_noticia_data ON tb_noticia(data_coleta)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_noticia_titulo_norm ON tb_noticia(titulo_norm)")
+    # backfill titulo_norm para linhas antigas (idempotente, só onde vazio)
+    try:
+        import unicodedata as _ud
+        def _nn(s):
+            s = _ud.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower()
+            return " ".join(s.split())
+        cur.execute("SELECT id, titulo FROM tb_noticia WHERE titulo_norm IS NULL OR titulo_norm='' LIMIT 2000")
+        _pend = [( _nn(t), nid) for nid, t in cur.fetchall()]
+        if _pend:
+            cur.executemany("UPDATE tb_noticia SET titulo_norm=? WHERE id=?", _pend)
+    except Exception:
+        pass
     # seeds de config central (idempotente)
     for k, v in [
         ("agregador_noticias_habilitado", "0"),
@@ -433,60 +469,105 @@ def listar_para_tv(limite=10, por_tema=False, horas=None):
     horas=N prioriza notícias com COALESCE(data_publicacao, data_coleta) das
     últimas N horas — no modo por_tema cada categoria sem novidade usa a mais
     recente disponível (fallback por categoria).
+    Leitura curta: LIMIT*3 compensa descarte da censura (filtra até limite sem perder slots);
+    busy_timeout herdado de get_connection + retry locked; sem escrita (sem rollback salvo fechar).
     """
     try:
         limite = max(1, int(limite or 10))
     except Exception:
         limite = 10
     corte = _corte_horas(horas)
-    conn = get_connection()
-    try:
-        cur = conn.cursor()
-        if por_tema:
-            try:
-                temas = temas_config()
-            except Exception:
-                temas = []
-            if not temas:
-                temas = []
-            coletadas = []
-            for tema in temas:
-                if len(coletadas) >= limite:
-                    break
-                item = None
-                # 1ª tentativa: só recentes (quando horas pedido); 2ª: qualquer época
-                tentativas = [corte, None] if corte else [None]
-                for tentativa in tentativas:
-                    try:
-                        if tentativa:
-                            cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE tema=? AND COALESCE(data_publicacao, data_coleta) >= ? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (tema, tentativa, 5))
-                        else:
-                            cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE tema=? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (tema, 5))
-                        candidatas = cur.fetchall()
-                    except Exception:
-                        candidatas = []
-                    filtradas = _filtrar_censura_tv(candidatas, 1)
-                    if filtradas:
-                        item = _linha_tv_para_dict(filtradas[0])
-                        break
-                if item:
-                    coletadas.append(item)
-            return coletadas
-        # modo geral (legado): mais recentes primeiro, com filtro opcional de horas
+    import time as _t
+    ultimo_erro = None
+    for _tent in range(3):
+        conn = get_connection()
         try:
-            if corte:
-                cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE COALESCE(data_publicacao, data_coleta) >= ? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (corte, limite * 3))
-            else:
-                # pega mais que limite para filtrar censuradas sem perder slots, ordena por data real da postagem
-                cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (limite * 3,))
-            rows = cur.fetchall()
-        except Exception:
-            rows = []
-        # filtra censura
-        rows = _filtrar_censura_tv(rows, limite)
-        return [_linha_tv_para_dict(r) for r in rows[:limite]]
-    finally:
-        conn.close()
+            cur = conn.cursor()
+            if por_tema:
+                try:
+                    temas = temas_config()
+                except Exception:
+                    temas = []
+                if not temas:
+                    temas = []
+                coletadas = []
+                for tema in temas:
+                    if len(coletadas) >= limite:
+                        break
+                    item = None
+                    # 1ª tentativa: só recentes (quando horas pedido); 2ª: qualquer época
+                    tentativas = [corte, None] if corte else [None]
+                    for tentativa in tentativas:
+                        try:
+                            if tentativa:
+                                cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE tema=? AND COALESCE(data_publicacao, data_coleta) >= ? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (tema, tentativa, 5))
+                            else:
+                                cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE tema=? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (tema, 5))
+                            candidatas = cur.fetchall()
+                        except Exception as e:
+                            if _eh_locked(e) and _tent < 2:
+                                candidatas = None
+                                ultimo_erro = e
+                                break
+                            candidatas = []
+                        if candidatas is None:
+                            break
+                        filtradas = _filtrar_censura_tv(candidatas, 1)
+                        if filtradas:
+                            item = _linha_tv_para_dict(filtradas[0])
+                            break
+                    if candidatas is None:
+                        break
+                    if item:
+                        coletadas.append(item)
+                else:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+                    return coletadas
+                # locked no meio do loop por_tema: retry externo
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                if ultimo_erro is not None and _tent < 2:
+                    _t.sleep(0.05 * (_tent + 1))
+                    continue
+                return coletadas
+            # modo geral (legado): mais recentes primeiro, com filtro opcional de horas
+            try:
+                if corte:
+                    cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE COALESCE(data_publicacao, data_coleta) >= ? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (corte, limite * 3))
+                else:
+                    # pega mais que limite para filtrar censuradas sem perder slots, ordena por data real da postagem
+                    cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (limite * 3,))
+                rows = cur.fetchall()
+            except Exception as e:
+                ultimo_erro = e
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                if _eh_locked(e) and _tent < 2:
+                    _t.sleep(0.05 * (_tent + 1))
+                    continue
+                return []
+            # filtra censura
+            rows = _filtrar_censura_tv(rows, limite)
+            saida = [_linha_tv_para_dict(r) for r in rows[:limite]]
+            try:
+                conn.close()
+            except Exception:
+                pass
+            return saida
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    _log().warning(f"listar_para_tv falhou após retry: {ultimo_erro}")
+    return []
 
 
 def limpar_censuradas():
@@ -519,19 +600,59 @@ def limpar_censuradas():
         return 0
 
 
-def limpar_antigas(horas=24):
-    """Reinicia banco a cada 24h (DELETE antigas) — sem auditoria de postagens (só config audita)."""
-    conn = get_connection()
+def _normalizar_titulo(s: str) -> str:
+    """Normaliza título p/ dedup: sem acentos, lower, espaços colapsados (usado em titulo_norm indexado)."""
     try:
-        cur = conn.cursor()
-        cur.execute("DELETE FROM tb_noticia WHERE data_coleta < datetime('now', ?)", (f"-{int(horas)} hours",))
-        n = cur.rowcount
-        conn.commit()
-        if n:
-            _log().info(f"Limpeza 24h: {n} notícias removidas")
-        return n
-    finally:
-        conn.close()
+        import unicodedata
+        s = unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower()
+        return " ".join(s.split())
+    except Exception:
+        return (s or "").strip().lower()
+
+
+def limpar_antigas(horas=24):
+    """Reinicia banco a cada 24h (DELETE antigas) — sem auditoria de postagens (só config audita).
+
+    Portável SQLite/PG: corte calculado em Python (sem datetime('now', ?) com bind,
+    que o proxy PG não traduz e quebrava 100% da coleta no fim).
+    """
+    try:
+        horas_int = int(horas)
+    except Exception:
+        horas_int = 24
+    if horas_int <= 0:
+        return 0
+    corte = (datetime.now() - timedelta(hours=horas_int)).strftime("%Y-%m-%d %H:%M:%S")
+    import time as _t
+    ultimo_erro = None
+    for tentativa in range(3):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM tb_noticia WHERE data_coleta < ?", (corte,))
+            n = cur.rowcount
+            conn.commit()
+            if n:
+                _log().info(f"Limpeza {horas_int}h: {n} notícias removidas")
+            return n if n and n > 0 else 0
+        except Exception as e:
+            ultimo_erro = e
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            if _eh_locked(e) and tentativa < 2:
+                _t.sleep(0.05 * (tentativa + 1))
+                continue
+            _log().warning(f"limpar_antigas falhou: {e}")
+            return 0
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    _log().warning(f"limpar_antigas falhou após retry: {ultimo_erro}")
+    return 0
 
 
 def inserir_noticia(titulo, fonte, tema, url, imagem_url="", descricao="", data_publicacao=None, fonte_icon_url=""):
@@ -565,32 +686,169 @@ def inserir_noticia(titulo, fonte, tema, url, imagem_url="", descricao="", data_
                 else:
                     fonte_icon_url = ""
             # absoluto news.google.com/api/attachments → mantém (thumbnail real)
-    # normaliza título para deduplicação (sem acentos, lower, strip)
-    import unicodedata
-    def _norm_tit(s):
-        s = unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower()
-        return " ".join(s.split())
-    titulo_norm = _norm_tit(titulo)
-    conn = get_connection()
-    try:
-        cur = conn.cursor()
-        # impede duplicatas por URL (UNIQUE) e por título normalizado (mesma notícia já incluída)
-        cur.execute("SELECT 1 FROM tb_noticia WHERE url=? LIMIT 1", (url,))
-        if cur.fetchone():
-            return False
-        # verifica título duplicado (case-insensitive, sem acentos)
-        cur.execute("SELECT titulo FROM tb_noticia")
-        for (t_exist,) in cur.fetchall():
-            if _norm_tit(t_exist) == titulo_norm:
+    titulo_norm = _normalizar_titulo(titulo)
+    if not titulo_norm:
+        return False
+    # data_publicacao portável: COALESCE(?, datetime('now')) quebra no PG quando ? é NULL
+    # em alguns proxies; calcula agora em Python quando ausente.
+    if not data_publicacao:
+        data_publicacao = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    import time as _t
+    for tentativa in range(3):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            # dedup O(1) indexado por URL (UNIQUE) e titulo_norm (idx_noticia_titulo_norm) — sem full-scan
+            cur.execute("SELECT 1 FROM tb_noticia WHERE url=? OR titulo_norm=? LIMIT 1", (url, titulo_norm))
+            if cur.fetchone():
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
                 return False
-        cur.execute("""
-            INSERT OR IGNORE INTO tb_noticia (titulo, fonte, tema, url, imagem_url, fonte_icon_url, descricao, data_publicacao)
-            VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
-        """, (titulo, fonte[:100], tema[:50] or "Geral", url, imagem_url[:2000] or "", fonte_icon_url[:2000] or "", descricao[:1000] or "", data_publicacao))
-        conn.commit()
-        return cur.rowcount > 0
-    finally:
-        conn.close()
+            # transação curta: 1 INSERT por chamada
+            cur.execute("""
+                INSERT OR IGNORE INTO tb_noticia (titulo, titulo_norm, fonte, tema, url, imagem_url, fonte_icon_url, descricao, data_publicacao)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (titulo, titulo_norm, fonte[:100], tema[:50] or "Geral", url, imagem_url[:2000] or "", fonte_icon_url[:2000] or "", descricao[:1000] or "", data_publicacao))
+            conn.commit()
+            return cur.rowcount > 0
+        except Exception as e:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            if _eh_locked(e) and tentativa < 2:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                _t.sleep(0.05 * (tentativa + 1))
+                continue
+            _log().warning(f"inserir_noticia falhou: {e}")
+            return False
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    return False
+
+
+def inserir_noticias_lote(itens: list[dict]) -> int:
+    """Insere lote em 1 transação curta (executemany) com retry locked + rollback.
+
+    Cada item: {titulo, fonte, tema, url, imagem_url, descricao, data_publicacao, fonte_icon_url}.
+    Dedup O(1) via url/titulo_norm (censura aplicada antes). Retorna qtd inserida.
+    """
+    if not itens:
+        return 0
+    try:
+        from mod_intranet.censura import titulo_bloqueado as _tb
+    except Exception:
+        _tb = None
+    agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    vistos_url, vistos_norm, linhas = set(), set(), []
+    for it in itens:
+        try:
+            titulo = str(it.get("titulo") or "").strip()[:500]
+            url = str(it.get("url") or "").strip()[:2000]
+            if not titulo or not url:
+                continue
+            if url.startswith("/"):
+                url = "https://news.google.com" + url
+            if _tb:
+                try:
+                    bloqueado, _ = _tb(titulo)
+                    if bloqueado:
+                        continue
+                except Exception:
+                    pass
+            norm = _normalizar_titulo(titulo)
+            if not norm or url in vistos_url or norm in vistos_norm:
+                continue
+            vistos_url.add(url)
+            vistos_norm.add(norm)
+            linhas.append((
+                titulo, norm,
+                str(it.get("fonte") or "")[:100],
+                str(it.get("tema") or "Geral")[:50] or "Geral",
+                url,
+                str(it.get("imagem_url") or "")[:2000],
+                str(it.get("fonte_icon_url") or "")[:2000],
+                str(it.get("descricao") or "")[:1000],
+                it.get("data_publicacao") or agora,
+            ))
+        except Exception:
+            continue
+    if not linhas:
+        return 0
+    import time as _t
+    for tentativa in range(3):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            # filtra já-existentes em 1 SELECT por coluna (evita N roundtrips)
+            try:
+                exist_url = set()
+                for i in range(0, len(linhas), 500):
+                    bloco = [r[4] for r in linhas[i:i + 500]]
+                    ph = ",".join(["?"] * len(bloco))
+                    cur.execute(f"SELECT url FROM tb_noticia WHERE url IN ({ph})", bloco)
+                    exist_url.update(r[0] for r in cur.fetchall())
+                if exist_url:
+                    linhas[:] = [r for r in linhas if r[4] not in exist_url]
+                if not linhas:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                    return 0
+            except Exception:
+                pass
+            try:
+                exist_norm = set()
+                for i in range(0, len(linhas), 500):
+                    bloco = [r[1] for r in linhas[i:i + 500]]
+                    ph = ",".join(["?"] * len(bloco))
+                    cur.execute(f"SELECT titulo_norm FROM tb_noticia WHERE titulo_norm IN ({ph})", bloco)
+                    exist_norm.update(r[0] for r in cur.fetchall())
+                if exist_norm:
+                    linhas[:] = [r for r in linhas if r[1] not in exist_norm]
+                if not linhas:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                    return 0
+            except Exception:
+                pass
+            cur.executemany("""
+                INSERT OR IGNORE INTO tb_noticia (titulo, titulo_norm, fonte, tema, url, imagem_url, fonte_icon_url, descricao, data_publicacao)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, linhas)
+            conn.commit()
+            return cur.rowcount if cur.rowcount and cur.rowcount > 0 else 0
+        except Exception as e:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            if _eh_locked(e) and tentativa < 2:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                _t.sleep(0.1 * (tentativa + 1))
+                continue
+            _log().warning(f"inserir_noticias_lote falhou: {e}")
+            return 0
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    return 0
 
 
 # ============ COLETA (scrapy-like) ============
@@ -859,7 +1117,9 @@ def _coletar_jfp(url: str, tema: str) -> int:
 
 def _og_image(url: str, timeout=6) -> str:
     """Busca miniatura via og:image/twitter:image da página (RSS não traz imagem).
-    Fail-soft: qualquer falha retorna '' (notícia é salva mesmo sem imagem)."""
+    Fail-soft: qualquer falha retorna '' (notícia é salva mesmo sem imagem).
+    NOTA: httpx bloqueante por item, SEMPRE fora de transação (nunca segura lock do banco);
+    pré-checado via _url_ja_coletada para evitar requisição inútil em repetidas."""
     if not url or not url.startswith("http"):
         return ""
     try:
@@ -885,7 +1145,7 @@ def _coletar_rss(url: str, fonte_nome: str, tema: str) -> int:
     try:
         import parsel
         sel = parsel.Selector(text=xml, type="xml")
-        n = 0
+        candidatos: list[dict] = []
         for item in sel.css("item"):
             txt = (item.css("title::text").get() or "").strip()
             href = (item.css("link::text").get() or item.css("link::attr(href)").get() or "").strip()
@@ -956,14 +1216,16 @@ def _coletar_rss(url: str, fonte_nome: str, tema: str) -> int:
             # já coletada? pula ANTES do og:image (evita requisição inútil)
             if _url_ja_coletada(href):
                 continue
-            # RSS (Google) não traz imagem — enriquece via og:image do link (fail-soft)
+            # RSS (Google) não traz imagem — enriquece via og:image do link (fail-soft, fora de transação)
             if not img:
                 img = _og_image(href)
-            if inserir_noticia(txt, fonte_real, tema, href, img, (desc or txt)[:500], data_pub, fonte_icon):
-                n += 1
-            if n >= 15:
+            candidatos.append({"titulo": txt, "fonte": fonte_real, "tema": tema, "url": href,
+                               "imagem_url": img, "descricao": (desc or txt)[:500],
+                               "data_publicacao": data_pub, "fonte_icon_url": fonte_icon})
+            if len(candidatos) >= 15:
                 break
-        return n
+        # 1 transação curta em lote (executemany + retry locked + rollback) — sem N conexões
+        return inserir_noticias_lote(candidatos)
     except Exception as e:
         _log().warning(f"_coletar_rss {fonte_nome}: {e}")
         return 0

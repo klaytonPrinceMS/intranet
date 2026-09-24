@@ -179,3 +179,13 @@ Mapeamento para esta implementação:
 - A referência tinha **pesquisa ao vivo** com yield progressivo; aqui a busca FTS5 é por atualização do campo, com limite de resultados.
 - Editor de PDF e gestão **não** ficam dentro da tela dos empenhos — permanecem como módulos independentes (escopo definido na portabilidade).
 - Intervalo de varredura foi elevado (60 s) para reduzir I/O em ambiente de rede; ajustável sem reiniciar.
+
+## Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)
+
+> Documentação da correção pendente. Nenhum `.py` alterado neste lote.
+
+| Módulo | Achado | Arquivo:linha | Correção proposta contida no módulo | Risco regressão |
+|:---|:---|:---|:---|:---|
+| renomear_empenho | Sem `CrudBase`; FTS5 `VIRTUAL TABLE` + `sqlite_master` (degrada no PG por desenho) | `mod_renomear_empenho/bd_manipulador.py:687`, `:786` (FTS5) · `:773` (`sqlite_master`) · `:660` (fallback LIKE) | Manter fallback LIKE no PG; isolar FTS5 em ramo SQLite; migrar CRUD para `CrudBase`; `_tabela_existe()` interno | Médio (monitor 60 s + quarentena + organizador) |
+
+Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

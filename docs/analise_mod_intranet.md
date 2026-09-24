@@ -669,3 +669,13 @@ Inventário real: `__init__`, `banco_conexao` (dual SQLite/PostgreSQL, `conexao(
 Correções aplicadas: docstring bilíngue EN/PT-BR em `autenticacao.py` (estava sem cabeçalho), `telas.usuario_logado` e `documentacao._build`/`montar` (estavam PT-only).
 
 Helpers do núcleo já cobertos acima e mantidos: `contexto` (ContextVar IP/UA LGPD), `censura` (palavras bloqueadas), `hora_servidor` (NTP.br), `rotas_modulos` (slugs custom), `tema_css` (frameworks locais), `email_util` (SMTP RF-58), `port_scanner` (`--scan-ports`), `home_visual` (modelo Water). Arquivos auxiliares sem seção própria (intencionais, sem docs dedicadas): `decoradores`, `dialogo_backup` (legado, substituído por `rotinas.painel_backup`), `docker_detector`, `grafana_sync`, `instrumentacao_app`, `otel_integracao`, `pdf_operacoes`, `nicegui_patch`, `telefone`, `ui_form`, `ui_painel`, `hora_servidor` detalhada em `modulos/intranet.md`.
+
+## Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)
+
+> Documentação da correção pendente. Nenhum `.py` alterado neste lote.
+
+| Módulo | Achado | Arquivo:linha | Correção proposta contida no módulo | Risco regressão |
+|:---|:---|:---|:---|:---|
+| intranet | 3 connects crus sem WAL; zero `busy_timeout`; WAL OK no quente | `mod_intranet/banco_conexao.py:74`, `:90` (crus) · `mod_intranet/ativacao.py:502` (cru) · `mod_intranet/banco_conexao.py:619-620` (quente COM WAL) | Helper interno `_conectar_wal()` em `banco_conexao.py` + reuso em `ativacao.py:502`; `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` + `busy_timeout=5000` só nesses pontos | Baixo-médio (boot/assistente; validar fresh-install) |
+
+Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

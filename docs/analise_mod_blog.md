@@ -208,4 +208,14 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na tr
 - **Postagens atuais #1/#2/#3 atualizadas via `atualizar_postagem`** (autor `master`) para o mesmo padrão — bancos existentes não são re-semeados, só normalizados por edição.
 - **REGRA — `mover_mermaid_para_fim()` (`bd_manipulador.py:531-544`)**: ao salvar (criar em `:550-563` e editar em `:569-582`), blocos ```mermaid vão para o fim na ordem original (idempotente; sem fence completo o conteúdo segue intacto).
 - **Teste novo `assets/test/test_blog_mermaid_fim.py` (7 checks)** — meio→fim com ordem, sem fence/incompleto intacto, entradas vazias, seeds conformes + idempotência, 3 postagens, contrato do render (`justify-center` + `max-width: 680px`); linha correspondente no `assets/test/README.md`.
+
+## Pendencia QA — WAL + paridade SQLite-Postgres (24/09/2026, sem correcao aplicada)
+
+> Documentacao da correcao pendente. Nenhum `.py` alterado neste lote.
+
+| Modulo | Achado | Arquivo:linha | Correcao proposta contida no modulo | Risco regressao |
+|:---|:---|:---|:---|:---|
+| blog | Piloto `CrudBase` 100% — sem migracao; validar paridade datas | `mod_blog/bd_manipulador.py:24`, `:104` (`CrudBase` OK) | Sem migracao; so bateria paridade SQLite-PG | Baixo |
+
+Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
 - **Validação (sistema reiniciado, Playwright real — `/login` 200, screenshot das 3 postagens uniformes com diagramas estreitos centralizados)**: backend (move/ordem/idempotência/seeds), screenshot e suíte `assets/test/teste_fluxo_blog.py` **46/46**.

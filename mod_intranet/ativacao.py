@@ -495,19 +495,31 @@ def _garantir_tb_config():
     Idempotente: executa CREATE TABLE IF NOT EXISTS mesmo quando o arquivo
     já existe (ex.: arquivo vazio de um boot interrompido). Sem isso, o
     `aplicar_banco` falhava com "no such table: tb_config" nesses casos.
+    Conexão direta sqlite3 pré-boot (seletor de backend ainda não aplicado)
+    com pragmas WAL+`synchronous=NORMAL`+`busy_timeout=5000` (mesmo padrão
+    de `banco_conexao.conexao`). Fail-soft sem derrubar o wizard.
     """
     try:
         from mod_intranet.repositorio import DB_PATH
         import sqlite3
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=10.0)
         try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute("PRAGMA busy_timeout=5000")
             conn.execute("CREATE TABLE IF NOT EXISTS tb_config ("
                          "chave TEXT PRIMARY KEY, valor TEXT NOT NULL)")
             conn.commit()
         finally:
             conn.close()
         return True
-    except Exception:
+    except Exception as exc:
+        try:
+            from mod_intranet import observabilidade
+            observabilidade.get_logger("intranet").exception(
+                f"_garantir_tb_config: {exc}")
+        except Exception:
+            pass
         return False
 
 

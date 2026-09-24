@@ -150,3 +150,13 @@ Conexão WAL + `foreign_keys=ON` via `banco_conexao.conexao("filas")`. Criador: 
 | LGPD + auditoria `tb_auditoria_filas` (inclui `fundo_midia`) | Implementado |
 | Testes `assets/test/test_seg_novos_modulos.py` seções D–D8 | Implementado |
 | Reparo sintático de `telas.py` + slider de volume `filas-midia-som` (22/09/2026) | Implementado |
+
+## Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)
+
+> Documentação da correção pendente. Nenhum `.py` alterado neste lote.
+
+| Módulo | Achado | Arquivo:linha | Correção proposta contida no módulo | Risco regressão |
+|:---|:---|:---|:---|:---|
+| filas | Sem `CrudBase`; `sqlite_master` em migração de `tb_midia` | `mod_filas/bd_manipulador.py:75` (`sqlite_master`) · sem `CrudBase` (verificado por busca) | Migrar para `CrudBase`; `_tabela_existe()` interno; testar `/tv`, `/tv/{id}`, `/tv?grupo=` nos dois backends | Médio (voz claim + ducking + `/midia_filas`) |
+
+Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

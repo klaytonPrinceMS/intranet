@@ -13,13 +13,18 @@ Sem cross-query. Telefones como texto livre com exibição via mod_intranet.tele
 import os
 import sys
 import re
+import time
 import unicodedata
 from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_LISTA_PATH = os.path.join(BASE_DIR, "db_mod_lista_telefonica.db")
+# DB_LISTA_PATH removido (morto/isolado): este módulo NUNCA abre SQLite direto.
+# Conexão única via mod_intranet.banco_conexao.conexao("lista_telefonica")
+# (SQLite db_mod_lista_telefonica.db ou DATABASE db_mod_lista_telefonica no PG).
+# DÍVIDA: sem CrudBase — escritas usam transação curta + _commit_com_retry
+# (retry "database is locked") + _rollback_seguro; busy_timeout=5000 herdado
+# da conexão central (não reconfigurar aqui).
 
 # Organograma base municipal genérico (sem nome de prefeitura/lei)
 ORGANOGRAMA_BASE = [
@@ -84,6 +89,70 @@ def _log():
     return observabilidade.get_logger("lista_telefonica")
 
 
+# Transação curta + retry locked (SQLite WAL "database is locked" residual).
+# busy_timeout=5000 herdado de banco_conexao.conexao; não reconfigurar aqui.
+TENTATIVAS_LOCKED = 3
+ESPERA_LOCKED_SEG = 0.05
+
+
+def _eh_bloqueio_banco(exc):
+    """Verdadeiro quando o erro é contenção transitória (passível de retry)."""
+    try:
+        texto = str(exc or "").lower()
+        return ("database is locked" in texto or "database table is locked" in texto
+                or "locked" in texto or "busy" in texto or "deadlock" in texto
+                or "could not obtain lock" in texto)
+    except Exception:
+        return False
+
+
+def _rollback_seguro(conn, contexto=""):
+    """Rollback best-effort que nunca derruba o chamador (AGENTS §3.2)."""
+    try:
+        if conn is not None:
+            conn.rollback()
+    except Exception as exc:
+        try:
+            _log().warning(f"_rollback_seguro[{contexto}]: {exc}")
+        except Exception:
+            pass
+
+
+def _commit_com_retry(conn, contexto="", tentativas=None, espera_s=None):
+    """Commit com retry curto em contenção ("database is locked").
+
+    Tenta conn.commit() até N vezes quando a falha for bloqueio transitório;
+    outra falha propaga ao chamador (que faz rollback + logger.exception).
+    """
+    try:
+        tentativas = tentativas or TENTATIVAS_LOCKED
+        espera_s = espera_s if espera_s is not None else ESPERA_LOCKED_SEG
+        ultima = None
+        for tentativa in range(1, tentativas + 1):
+            try:
+                conn.commit()
+                return True
+            except Exception as exc:
+                ultima = exc
+                if _eh_bloqueio_banco(exc) and tentativa < tentativas:
+                    try:
+                        _log().warning(f"_commit_com_retry[{contexto}] locked "
+                                       f"tentativa {tentativa}/{tentativas}: {exc}")
+                    except Exception:
+                        pass
+                    try:
+                        time.sleep(espera_s * tentativa)
+                    except Exception:
+                        pass
+                    continue
+                raise
+        if ultima is not None:
+            raise ultima
+        return True
+    except Exception:
+        raise
+
+
 def get_connection():
     try:
         from mod_intranet.banco_conexao import conexao
@@ -136,6 +205,7 @@ def _norm(s):
 
 
 def init_db():
+    conn = None
     try:
         conn = get_connection()
         cur = conn.cursor()
@@ -186,9 +256,24 @@ def init_db():
                                     (sub_nome, set_id, ordem_sub))
                         ordem_sub += 1
             _log().info(f"Organograma base semeado: {len(ORGANOGRAMA_BASE)} secretarias")
-        conn.commit()
-        conn.close()
+        _commit_com_retry(conn, "init_db")
+        try:
+            conn.close()
+        except Exception:
+            pass
     except Exception:
+        try:
+            _rollback_seguro(conn, "init_db")
+        except Exception:
+            pass
+        try:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+        except Exception:
+            pass
         try:
             try:
                 _log().exception("init_db falhou")
@@ -328,9 +413,12 @@ def criar_unidade(nome, tipo, parent_id=None, telefone="", ator="sistema"):
             cur.execute("INSERT INTO tb_unidade (nome, tipo, parent_id, ordem, telefone) VALUES (?, ?, ?, ?, ?)",
                         (nome, tipo, parent_id, prox, (telefone or "").strip()))
             nid = cur.lastrowid
-            conn.commit()
+            _commit_com_retry(conn, "criar_unidade")
             _audit(ator, "criar_unidade", nome, f"{tipo} id={nid} pai={parent_id}")
             return True, f"Unidade '{nome}' criada (id {nid})"
+        except Exception:
+            _rollback_seguro(conn, "criar_unidade")
+            raise
         finally:
             conn.close()
     except Exception:
@@ -365,9 +453,12 @@ def editar_unidade(uid, nome=None, telefone=None, ator="sistema"):
                 return True, "Nada a alterar"
             params.append(uid)
             cur.execute(f"UPDATE tb_unidade SET {', '.join(sets)} WHERE id=?", tuple(params))  # nosec B608 — sets com literais fixos, valores via ?
-            conn.commit()
+            _commit_com_retry(conn, "editar_unidade")
             _audit(ator, "editar_unidade", str(uid), ",".join(sets))
             return True, "Unidade atualizada"
+        except Exception:
+            _rollback_seguro(conn, "editar_unidade")
+            raise
         finally:
             conn.close()
     except Exception:
@@ -386,23 +477,42 @@ def editar_unidade(uid, nome=None, telefone=None, ator="sistema"):
 
 
 def excluir_ramo(uid, ator="sistema"):
-    """Exclui unidade e todo o ramo (filhos + contatos) em cascata."""
+    """Exclui unidade e todo o ramo (filhos + contatos) — DELETE recursivo manual.
+
+    Portável SQLite↔PostgreSQL: o proxy PG (_CursorPostgres/_ddl_postgres)
+    remove REFERENCES/ON DELETE CASCADE do DDL, então NÃO confia em CASCADE
+    do banco. Coleta o ramo via _coletar_ramo_ids e apaga na ordem
+    contatos → unidades filhas → pai, em transação curta com retry locked.
+    """
     try:
         alvo = obter_unidade(uid)
         if not alvo:
             return False, "Unidade não encontrada"
-        # coleta ids do ramo recursivo
         conn = get_connection()
         try:
             cur = conn.cursor()
-            # coleta via recursão simples
-            ids = _coletar_ramo_ids(cur, uid)
+            # coleta via recursão simples (portável, sem CTE recursivo)
+            ids = _coletar_ramo_ids(cur, uid) or []
             ids.append(uid)
-             # devido a FK CASCADE, deletar o pai já apaga filhos, mas garantimos
-            cur.execute(f"DELETE FROM tb_unidade WHERE id=?", (uid,))  # nosec B608 — id parametrizado via ?
-            conn.commit()
+            # 1) contatos de todo o ramo (evita órfãos sem CASCADE no PG)
+            # 2) unidades filhas primeiro, pai por último (sem depender de FK)
+            try:
+                placeholders = ",".join(["?"] * len(ids))
+                cur.execute(f"DELETE FROM tb_contato WHERE unidade_id IN ({placeholders})", tuple(ids))  # nosec B608 — placeholders gerados, valores via ?
+                for ramo_id in reversed(ids):
+                    cur.execute("DELETE FROM tb_unidade WHERE id=?", (ramo_id,))
+            except Exception:
+                _rollback_seguro(conn, "excluir_ramo")
+                raise
+            _commit_com_retry(conn, "excluir_ramo")
             _audit(ator, "excluir_ramo", alvo[1], f"ids={ids}")
             return True, f"Ramo '{alvo[1]}' e {len(ids)-1} filho(s) excluído(s)"
+        except Exception:
+            try:
+                _rollback_seguro(conn, "excluir_ramo")
+            except Exception:
+                pass
+            raise
         finally:
             conn.close()
     except Exception:
@@ -421,13 +531,14 @@ def excluir_ramo(uid, ator="sistema"):
 
 
 def _coletar_ramo_ids(cur, parent_id):
+    """Coleta ids descendentes do ramo (portável; sem CTE/FK CASCADE)."""
     try:
         cur.execute("SELECT id FROM tb_unidade WHERE parent_id=?", (parent_id,))
         filhos = [r[0] for r in cur.fetchall()]
         todos = []
         for fid in filhos:
             todos.append(fid)
-            todos.extend(_coletar_ramo_ids(cur, fid))
+            todos.extend(_coletar_ramo_ids(cur, fid) or [])
         return todos
     except Exception:
         try:
@@ -441,7 +552,7 @@ def _coletar_ramo_ids(cur, parent_id):
                     _obs_fail.get_logger("lista_telefonica").exception("_coletar_ramo_ids falhou")
         except Exception:
             pass
-        return None
+        return []
 
 
 def mover_unidade(uid, novo_parent_id, ator="sistema"):
@@ -488,9 +599,12 @@ def mover_unidade(uid, novo_parent_id, ator="sistema"):
                 cur.execute("SELECT COALESCE(MAX(ordem),0) FROM tb_unidade WHERE parent_id=?", (novo_parent_id,))
             prox = (cur.fetchone()[0] or 0) + 1
             cur.execute("UPDATE tb_unidade SET parent_id=?, ordem=? WHERE id=?", (novo_parent_id, prox, uid))
-            conn.commit()
+            _commit_com_retry(conn, "mover_unidade")
             _audit(ator, "mover_unidade", alvo[1], f"→ pai {novo_parent_id}")
             return True, "Unidade movida"
+        except Exception:
+            _rollback_seguro(conn, "mover_unidade")
+            raise
         finally:
             conn.close()
     except Exception:
@@ -556,9 +670,12 @@ def elevar_rebaixar(uid, novo_tipo, ator="sistema"):
             if cur.fetchone():
                 return False, "Já existe unidade com esse nome no destino"
             cur.execute("UPDATE tb_unidade SET tipo=?, parent_id=? WHERE id=?", (novo_tipo, novo_parent, uid))
-            conn.commit()
+            _commit_com_retry(conn, "elevar_rebaixar")
             _audit(ator, "elevar_rebaixar", alvo[1], f"{tipo_atual}→{novo_tipo}")
             return True, f"Unidade elevada/rebaixada para {novo_tipo}"
+        except Exception:
+            _rollback_seguro(conn, "elevar_rebaixar")
+            raise
         finally:
             conn.close()
     except Exception:
@@ -587,9 +704,12 @@ def reordenar_unidades(parent_id, ordem_ids: list[int], ator="sistema"):
             for idx, uid in enumerate(ordem_ids, start=1):
                 cur.execute("UPDATE tb_unidade SET ordem=? WHERE id=? AND coalesce(parent_id,-1)=coalesce(?, -1)",
                             (idx, uid, parent_id if parent_id is not None else None))
-            conn.commit()
+            _commit_com_retry(conn, "reordenar_unidades")
             _audit(ator, "reordenar", str(parent_id), f"ordem={ordem_ids}")
             return True, "Ordem atualizada"
+        except Exception:
+            _rollback_seguro(conn, "reordenar_unidades")
+            raise
         finally:
             conn.close()
     except Exception:
@@ -641,13 +761,22 @@ def buscar_unidades(termo: str):
 # ============ CONTATOS ============
 
 def listar_contatos(unidade_id: int):
-    """Lista contatos da unidade sempre em ordem alfabética (nome)."""
+    """Lista contatos da unidade sempre em ordem alfabética (nome).
+
+    Portável SQLite↔PostgreSQL: sem COLLATE NOCASE (SQLite-only na forma usada;
+    quebra/falha no PG via proxy). Ordena em Python (casefold) — determinístico
+    nos dois backends.
+    """
     try:
         conn = get_connection()
         try:
             cur = conn.cursor()
-            cur.execute("SELECT id, unidade_id, nome, telefone, user_nome, tipo, data_criacao FROM tb_contato WHERE unidade_id=? ORDER BY nome COLLATE NOCASE ASC", (unidade_id,))
-            return cur.fetchall()
+            cur.execute("SELECT id, unidade_id, nome, telefone, user_nome, tipo, data_criacao FROM tb_contato WHERE unidade_id=?", (unidade_id,))
+            linhas = cur.fetchall()
+            try:
+                return sorted(linhas, key=lambda r: ((r[2] or "").casefold(), (r[2] or "")))
+            except Exception:
+                return linhas
         finally:
             conn.close()
     except Exception:
@@ -719,9 +848,12 @@ def criar_contato(unidade_id: int, nome: str, telefone: str, user_nome: str = No
             cur.execute("INSERT INTO tb_contato (unidade_id, nome, telefone, user_nome, tipo) VALUES (?, ?, ?, ?, ?)",
                         (unidade_id, nome, tel, user_nome, tipo))
             nid = cur.lastrowid
-            conn.commit()
+            _commit_com_retry(conn, "criar_contato")
             _audit(ator, "criar_contato", nome, f"unidade={unidade_id} tel={tel} tipo={tipo}")
             return True, f"Contato '{nome}' criado (id {nid})"
+        except Exception:
+            _rollback_seguro(conn, "criar_contato")
+            raise
         finally:
             conn.close()
     except Exception:
@@ -759,9 +891,12 @@ def editar_contato(cid, nome=None, telefone=None, ator="sistema"):
                 return True, "Nada a alterar"
             params.append(cid)
             cur.execute(f"UPDATE tb_contato SET {', '.join(sets)} WHERE id=?", tuple(params))  # nosec B608 — sets com literais fixos, valores via ?
-            conn.commit()
+            _commit_com_retry(conn, "editar_contato")
             _audit(ator, "editar_contato", str(cid), ",".join(sets))
             return True, "Contato atualizado"
+        except Exception:
+            _rollback_seguro(conn, "editar_contato")
+            raise
         finally:
             conn.close()
     except Exception:
@@ -789,9 +924,12 @@ def excluir_contato(cid, ator="sistema"):
             if not r:
                 return False, "Contato não encontrado"
             cur.execute("DELETE FROM tb_contato WHERE id=?", (cid,))
-            conn.commit()
+            _commit_com_retry(conn, "excluir_contato")
             _audit(ator, "excluir_contato", r[0], f"id={cid}")
             return True, "Contato excluído"
+        except Exception:
+            _rollback_seguro(conn, "excluir_contato")
+            raise
         finally:
             conn.close()
     except Exception:
@@ -829,9 +967,12 @@ def transferir_contato(cid, nova_unidade_id: int, ator="sistema"):
             if cur.fetchone():
                 return False, "Já existe contato com esse nome na unidade destino"
             cur.execute("UPDATE tb_contato SET unidade_id=? WHERE id=?", (nova_unidade_id, cid))
-            conn.commit()
+            _commit_com_retry(conn, "transferir_contato")
             _audit(ator, "transferir_contato", nome, f"{old_uid}→{nova_unidade_id}")
             return True, "Contato transferido"
+        except Exception:
+            _rollback_seguro(conn, "transferir_contato")
+            raise
         finally:
             conn.close()
     except Exception:
@@ -880,10 +1021,13 @@ def remover_vinculos_usuario(user_nome: str) -> int:
             cur = conn.cursor()
             cur.execute("DELETE FROM tb_contato WHERE user_nome=?", (user_nome,))
             n = cur.rowcount
-            conn.commit()
+            _commit_com_retry(conn, "remover_vinculos_usuario")
             if n:
                 _audit("sistema", "remover_vinculos_lista", user_nome, f"{n} contato(s)")
             return n
+        except Exception:
+            _rollback_seguro(conn, "remover_vinculos_usuario")
+            raise
         finally:
             conn.close()
     except Exception:
@@ -908,7 +1052,10 @@ def renomear_usuario(nome_atual: str, novo_nome: str):
             cur = conn.cursor()
             cur.execute("UPDATE tb_contato SET user_nome=? WHERE user_nome=?", (novo_nome, nome_atual))
             cur.execute("UPDATE tb_contato SET nome=? WHERE nome=? AND tipo='vinculado'", (novo_nome, nome_atual))
-            conn.commit()
+            _commit_com_retry(conn, "renomear_usuario")
+        except Exception:
+            _rollback_seguro(conn, "renomear_usuario")
+            raise
         finally:
             conn.close()
     except Exception:

@@ -416,3 +416,13 @@ passou a usar `bloco_aparencia` (o `campo_modulo` foi **removido em 06/09** — 
 exclusiva de `/configuracoes`); as variáveis `t_cor_fundo`, `t_cor_titulo` e
 `t_texto_header` (usadas no cabeçalho) permanecem em `mostrar_tela`. Código morto (`_btn_cls`,
 `_btn_style`) removido. Regra de uniformidade e prefixos cobertos por `test/test_tema.py`.
+
+## Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)
+
+> Documentação da correção pendente. Nenhum `.py` alterado neste lote.
+
+| Módulo | Achado | Arquivo:linha | Correção proposta contida no módulo | Risco regressão |
+|:---|:---|:---|:---|:---|
+| solicita_impressao | `CrudBase` parcial (só config local); `COLLATE NOCASE` em 3 buscas (quebra PG) | `mod_solicita_impressao/bd_manipulador.py:24`, `:31` (parcial) · `:1920-1926`, `:2737-2742`, `:2848-2851` (`COLLATE NOCASE`) | Completar migração `CrudBase`; trocar `LIKE ? COLLATE NOCASE` por helper interno portável (`LOWER(col) LIKE LOWER(?)`, contido no módulo) | Médio-alto (cotas 1000/200 + grupo + cobrança) |
+
+Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

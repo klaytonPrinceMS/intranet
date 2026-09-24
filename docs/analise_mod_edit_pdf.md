@@ -106,3 +106,13 @@ standalone).
 ### Adições recentes (09/2026) — responsividade global RNF-UI-01
 
 - **Já responsivo** — botões centralizados `w-full justify-center flex-wrap` `gap` via `.style` `min-width:0`, toggle `spread`, grids responsivos `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`; `overflow-x-auto` em tabelas, `scroll_area` altura explícita. Auditado 320/768/1024 (`kbp-web-design`) com checklist P0/P1/P2 por `container`/`row`/`grid` (sem pendências P0).
+
+## Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)
+
+> Documentação da correção pendente. Nenhum `.py` alterado neste lote.
+
+| Módulo | Achado | Arquivo:linha | Correção proposta contida no módulo | Risco regressão |
+|:---|:---|:---|:---|:---|
+| edit_pdf | Sem `CrudBase`; `strftime` só em Python (sem quebra); auditar `GROUP BY`/`COLLATE` | `mod_edit_pdf/bd_manipulador.py:215`, `:423` (`strftime` Python — OK) | Migrar para `CrudBase` + `conexao("editar_pdf")`; varredura `GROUP BY`/`COLLATE` interna | Médio (cotas 1 GB/10 GB + expiração 10 min + ZIP) |
+
+Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

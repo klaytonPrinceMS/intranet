@@ -130,6 +130,32 @@ def _log():
     return observabilidade.get_logger("solicita_impressao")
 
 
+def _eh_violacao_unicidade(exc):
+    """Detects UNIQUE violations on SQLite AND PostgreSQL (portable).
+
+    Detecta violação de unicidade no SQLite (`sqlite3.IntegrityError`) e no
+    PostgreSQL (`UniqueViolation`/`unique_violation`/SQLSTATE 23505), por nome
+    da classe OU por mensagem — o proxy `banco_conexao` pode re-embalar a
+    exceção. Loga em nível warning e devolve True/False (nunca levanta)."""
+    try:
+        nome = type(exc).__name__ or ""
+        modulo = type(exc).__module__ or ""
+        texto = f"{nome} {modulo} {exc}".lower()
+        nomes_pg = ("uniqueviolation", "unique_violation", "integrityerror")
+        if isinstance(exc, sqlite3.IntegrityError):
+            return True
+        if any(n in (nome + " " + modulo).lower() for n in nomes_pg):
+            return True
+        marcadores = ("unique constraint", "violates unique", "violação de unicidade",
+                      "unique violation", "duplicate key", "duplicat", "already exists",
+                      "23505", "unique failed", "not unique")
+        if any(m in texto for m in marcadores):
+            return True
+        return False
+    except Exception:
+        return False
+
+
 # ================= INIT DB =================
 
 def init_db():
@@ -413,20 +439,28 @@ def init_db():
             _sig = _sigla_sec(_sec_nome)
             _SECRETARIAS_PADRAO.append((_sec_nome, _sig, 1000, 20))
 
-        for _nome, _sigla, _cota, _lim in _SECRETARIAS_PADRAO:
-            try:
-                cur.execute(
-                    "SELECT id FROM tb_secretarias WHERE sigla=? OR nome=?",
-                    (_sigla.strip(), _nome.strip()),
-                )
-                if not cur.fetchone():
+        # Seeds organograma — secretarias 1000 impressões, setores/subsetores 200 cópias.
+        # REGRA devSecOps/PG: semear SOMENTE se a tabela estiver vazia (COUNT==0);
+        # NUNCA forçar UPDATE em cotas existentes (sobrescreveria ajuste do admin).
+        try:
+            _total_secr = cur.execute("SELECT COUNT(*) FROM tb_secretarias").fetchone()[0]
+        except Exception:
+            _total_secr = 1
+        if int(_total_secr or 0) == 0:
+            for _nome, _sigla, _cota, _lim in _SECRETARIAS_PADRAO:
+                try:
                     cur.execute(
-                        "INSERT INTO tb_secretarias (nome, sigla, cota_paginas_mensal, limite_pedidos_abertos) "
-                        "VALUES (?, ?, ?, ?)",
-                        (_nome.strip(), _sigla.strip(), int(_cota), int(_lim)),
+                        "SELECT id FROM tb_secretarias WHERE sigla=? OR nome=?",
+                        (_sigla.strip(), _nome.strip()),
                     )
-            except Exception:
-                pass
+                    if not cur.fetchone():
+                        cur.execute(
+                            "INSERT INTO tb_secretarias (nome, sigla, cota_paginas_mensal, limite_pedidos_abertos) "
+                            "VALUES (?, ?, ?, ?)",
+                            (_nome.strip(), _sigla.strip(), int(_cota), int(_lim)),
+                        )
+                except Exception:
+                    pass
         # Mapa nome secretaria -> id e sigla -> id
         _mapa_nome_id = {}
         _mapa_sigla_id = {}
@@ -438,7 +472,8 @@ def init_db():
         except Exception:
             pass
 
-        # Seedes setores (200 cópias padrão) — inclui subsetores achatados como setores
+        # Seedes setores (200 cópias padrão) — inclui subsetores achatados como setores.
+        # Também só semeia o que estiver ausente (INSERT se não existe); nunca UPDATE.
         _SETORES_PADRAO = []
         for _sec_nome, _setores in _ORG_BASE:
             for _set_nome, _subsetores in _setores:
@@ -446,56 +481,49 @@ def init_db():
                 for _sub in _subsetores:
                     _SETORES_PADRAO.append((_sub, _sec_nome, 200, 10))
 
-        for _nome_setor, _sec_nome, _cota_s, _lim_s in _SETORES_PADRAO:
-            try:
-                _sid = _mapa_nome_id.get(_sec_nome.strip())
-                if not _sid:
-                    _sid = _mapa_sigla_id.get(_sigla_sec(_sec_nome).strip())
-                if not _sid:
-                    cur.execute("SELECT id FROM tb_secretarias WHERE nome=?", (_sec_nome.strip(),))
-                    _r = cur.fetchone()
-                    _sid = _r[0] if _r else None
-                if not _sid:
-                    continue
-                cur.execute(
-                    "SELECT id FROM tb_setores WHERE nome=? AND secretaria_id=?",
-                    (_nome_setor.strip(), int(_sid)),
-                )
-                if not cur.fetchone():
-                    cur.execute(
-                        "INSERT INTO tb_setores (nome, secretaria_id, cota_paginas_mensal, limite_pedidos_abertos) "
-                        "VALUES (?, ?, ?, ?)",
-                        (_nome_setor.strip(), int(_sid), int(_cota_s), int(_lim_s)),
-                    )
-            except Exception:
-                pass
-
-        # Garante cotas padrão organograma (migração para bancos já existentes)
-        for _nome, _sigla, _cota, _lim in _SECRETARIAS_PADRAO:
-            try:
-                cur.execute("UPDATE tb_secretarias SET cota_paginas_mensal=1000 WHERE nome=? AND cota_paginas_mensal != 1000", (_nome,))
-            except Exception:
-                pass
-        for _nome_setor, _sec_nome, _cota_s, _lim_s in _SETORES_PADRAO:
-            try:
-                cur.execute("""
-                    UPDATE tb_setores SET cota_paginas_mensal=200
-                    WHERE nome=? AND secretaria_id IN (SELECT id FROM tb_secretarias WHERE nome=?)
-                    AND cota_paginas_mensal != 200
-                """, (_nome_setor, _sec_nome))
-            except Exception:
-                pass
-        # Também corrige setores legados com cota 0 (ex.: DTI) para 200 quando não estão no organograma mas são setores padrão
         try:
-            cur.execute("UPDATE tb_setores SET cota_paginas_mensal=200 WHERE cota_paginas_mensal=0")
+            _total_set = cur.execute("SELECT COUNT(*) FROM tb_setores").fetchone()[0]
         except Exception:
-            pass
+            _total_set = 1
+        if int(_total_set or 0) == 0:
+            for _nome_setor, _sec_nome, _cota_s, _lim_s in _SETORES_PADRAO:
+                try:
+                    _sid = _mapa_nome_id.get(_sec_nome.strip())
+                    if not _sid:
+                        _sid = _mapa_sigla_id.get(_sigla_sec(_sec_nome).strip())
+                    if not _sid:
+                        cur.execute("SELECT id FROM tb_secretarias WHERE nome=?", (_sec_nome.strip(),))
+                        _r = cur.fetchone()
+                        _sid = _r[0] if _r else None
+                    if not _sid:
+                        continue
+                    cur.execute(
+                        "SELECT id FROM tb_setores WHERE nome=? AND secretaria_id=?",
+                        (_nome_setor.strip(), int(_sid)),
+                    )
+                    if not cur.fetchone():
+                        cur.execute(
+                            "INSERT INTO tb_setores (nome, secretaria_id, cota_paginas_mensal, limite_pedidos_abertos) "
+                            "VALUES (?, ?, ?, ?)",
+                            (_nome_setor.strip(), int(_sid), int(_cota_s), int(_lim_s)),
+                        )
+                except Exception:
+                    pass
+
+        # NUNCA forçar cotas padrão via UPDATE (1000/200): ajuste do admin é soberano.
+        # Bancos já existentes mantêm seus valores; bancos novos recebem o seed acima.
 
         # Índices
         cur.execute("CREATE INDEX IF NOT EXISTS idx_sol_usuario ON tb_solicitacoes(usuario_solicitante)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_sol_status ON tb_solicitacoes(status)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_sol_secretaria ON tb_solicitacoes(secretaria_id)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_sol_data ON tb_solicitacoes(data_criacao)")
+        # Grupo NÃO é único por linha (vários arquivos partilham o grupo_id);
+        # reverte índice UNIQUE indevido se existir (migração) e garante índice simples.
+        try:
+            cur.execute("DROP INDEX IF EXISTS idx_sol_grupo_unico")
+        except Exception:
+            pass
 
         conn.commit()
         conn.close()
@@ -572,8 +600,15 @@ def criar_impressora(nome, tamanho_papel="A4", cor="Color", frente_verso=0,
             _audit(ator, "criar_impressora",
                    f"{nome.strip()} ({tamanho_papel}/{cor}/{driver})")
             return True, f"Impressora '{nome}' cadastrada (ID #{pid})"
-        except sqlite3.IntegrityError:
-            return False, "Impressora já cadastrada"
+        except Exception as _e_dup:
+            if _eh_violacao_unicidade(_e_dup):
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                _log().warning(f"criar_impressora duplicada: {nome} ({_e_dup})")
+                return False, "Impressora já cadastrada"
+            raise
         finally:
             conn.close()
     except Exception:
@@ -802,8 +837,15 @@ def criar_secretaria(nome, sigla="", cota_paginas_mensal=0, limite_pedidos_abert
             _audit(ator, "criar_secretaria",
                    f"Secretaria: {nome} (cota={cota_paginas_mensal}, limite_pedidos={limite_pedidos_abertos})")
             return True, f"Secretaria '{nome}' criada (ID #{sid})"
-        except sqlite3.IntegrityError:
-            return False, "Secretaria já existe"
+        except Exception as _e_dup:
+            if _eh_violacao_unicidade(_e_dup):
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                _log().warning(f"criar_secretaria duplicada: {nome} ({_e_dup})")
+                return False, "Secretaria já existe"
+            raise
         finally:
             conn.close()
     except Exception:
@@ -982,8 +1024,15 @@ def criar_setor(nome, secretaria_id, cota_paginas_mensal=0, limite_pedidos_abert
             _audit(ator, "criar_setor",
                    f"Setor: {nome} (secretaria={secretaria_id}, limite_pedidos={limite_pedidos_abertos})")
             return True, f"Setor '{nome}' criado (ID #{sid})"
-        except sqlite3.IntegrityError:
-            return False, "Setor já existe nesta secretaria"
+        except Exception as _e_dup:
+            if _eh_violacao_unicidade(_e_dup):
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                _log().warning(f"criar_setor duplicado: {nome} secr={secretaria_id} ({_e_dup})")
+                return False, "Setor já existe nesta secretaria"
+            raise
         finally:
             conn.close()
     except Exception:
@@ -1166,8 +1215,15 @@ def criar_responsavel(user_nome, secretaria_id, setor_id=None, ator="sistema"):
             conn.commit()
             _audit(ator, "criar_responsavel", f"{user_nome} (secr={secretaria_id}, setor={setor_id})")
             return True, f"Responsável '{user_nome}' cadastrado (ID #{rid})"
-        except sqlite3.IntegrityError:
-            return False, "Responsável já cadastrado para este vínculo"
+        except Exception as _e_dup:
+            if _eh_violacao_unicidade(_e_dup):
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                _log().warning(f"criar_responsavel duplicado: {user_nome} secr={secretaria_id} ({_e_dup})")
+                return False, "Responsável já cadastrado para este vínculo"
+            raise
         finally:
             conn.close()
     except Exception:
@@ -1917,13 +1973,14 @@ def listar_solicitacoes(usuario=None, status=None, secretaria_id=None, setor_id=
                 sql += " AND s.cota_excedida=1"
             if busca:
                 like = f"%{busca.strip()}%"
-                sql += (" AND (s.usuario_solicitante LIKE ? COLLATE NOCASE "
-                        "OR s.observacoes LIKE ? COLLATE NOCASE "
-                        "OR s.arquivo_servidor LIKE ? COLLATE NOCASE "
-                        "OR s.arquivo_original LIKE ? COLLATE NOCASE "
-                        "OR sec.nome LIKE ? COLLATE NOCASE "
-                        "OR sec.sigla LIKE ? COLLATE NOCASE "
-                        "OR st.nome LIKE ? COLLATE NOCASE)")
+                # Portável SQLite+PG: LOWER(col) LIKE LOWER(?) (COLLATE NOCASE é SQLite-only).
+                sql += (" AND (LOWER(s.usuario_solicitante) LIKE LOWER(?) "
+                        "OR LOWER(s.observacoes) LIKE LOWER(?) "
+                        "OR LOWER(s.arquivo_servidor) LIKE LOWER(?) "
+                        "OR LOWER(s.arquivo_original) LIKE LOWER(?) "
+                        "OR LOWER(sec.nome) LIKE LOWER(?) "
+                        "OR LOWER(sec.sigla) LIKE LOWER(?) "
+                        "OR LOWER(st.nome) LIKE LOWER(?))")
                 params += [like] * 7
             if data_inicio:
                 sql += " AND date(s.data_criacao) >= ?"
@@ -2527,10 +2584,17 @@ def confirmar_rascunho(rascunho_id, qtd_copias, tamanho_papel, cor, frente_verso
                 msg += " — autorizada, pronta para impressão"
             return True, msg, sid
         except Exception as e:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
             _log().exception(f"falha ao confirmar rascunho: {e}")
             return False, f"Erro ao criar solicitação: {e}", None
         finally:
-            conn.close()
+            try:
+                conn.close()
+            except Exception:
+                pass
     except Exception:
         try:
             try:
@@ -2548,11 +2612,19 @@ def confirmar_rascunho(rascunho_id, qtd_copias, tamanho_papel, cor, frente_verso
 
 # ================= AGRUPAMENTO (1 PEDIDO POR ENVIO) =================
 
-def _proximo_grupo_id():
+def _proximo_grupo_id(_cur=None):
     """Returns the next available grupo_id (max+1) in tb_solicitacoes.
 
-    Retorna o próximo grupo_id disponível (max+1) em tb_solicitacoes."""
+    Retorna o próximo grupo_id disponível (max+1) em tb_solicitacoes. Se
+    `_cur` for informado, usa o cursor da transação corrente (evita TOCTOU);
+    senão abre conexão própria (compat). LEGADO: `confirmar_lote` não usa
+    mais MAX+1 (corrida inerente) — deriva o grupo_id do id AUTOINCREMENT da
+    primeira linha inserida na transação (atômico, sem UNIQUE/retry). Mantida
+    para compatibilidade com chamadores externos."""
     try:
+        if _cur is not None:
+            _cur.execute("SELECT COALESCE(MAX(grupo_id), 0) FROM tb_solicitacoes")
+            return int(_cur.fetchone()[0]) + 1
         conn = get_connection()
         try:
             cur = conn.cursor()
@@ -2620,43 +2692,120 @@ def confirmar_lote(usuario, rascunho_ids, qtd_copias, tamanho_papel, cor, frente
             # Sem autorizador cadastrado -> fica PENDENTE (admin autoriza+imprime).
             status = "pendente"
 
-        grupo_id = _proximo_grupo_id()
+        grupo_id = None
         agora = hora_servidor()
         data_hora = agora.strftime("%Y%m%d_%H%M%S")
         os.makedirs(PASTA_SOLICITACOES, exist_ok=True)
 
-        conn = get_connection()
-        try:
-            cur = conn.cursor()
-            for idx, (r, qtd_pag, calc) in enumerate(detalhes, start=1):
-                nome_servidor = gerar_nome_arquivo(
-                    data_hora, usuario, qtd_copias, qtd_pag, secretaria_id, setor_id, cor,
-                    tipo_papel, ordem_envio=idx)
-                destino = os.path.join(PASTA_SOLICITACOES, nome_servidor)
-                import shutil
-                shutil.move(r["caminho_arquivo"], destino)
-                hash_arq = r["hash_arquivo"]
-                cur.execute(
-                    """INSERT INTO tb_solicitacoes
-                       (usuario_solicitante, arquivo_original, arquivo_servidor, caminho_arquivo,
-                        hash_arquivo, qtd_copias, tamanho_papel, cor, frente_verso, tipo_borda,
-                        papel_sulfite, tipo_papel, observacoes, secretaria_id, setor_id,
-                        qtd_paginas_arquivo, paginas_contabilizadas, status, cota_excedida,
-                        requer_autorizacao, grupo_id, data_atualizacao)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now','localtime'))""",
-                    (usuario, r["nome_original"], nome_servidor, destino, hash_arq,
-                     int(qtd_copias), tamanho_papel, cor, 1 if frente_verso else 0, tipo_borda,
-                     1 if papel_sulfite else 0, tipo_papel or "sulfite", observacoes,
-                     int(secretaria_id), setor_id, qtd_pag, calc, status, cota_excedida,
-                     requer_auth, grupo_id),
-                )
-                cur.execute("DELETE FROM tb_rascunhos_upload WHERE id=?", (r["id"],))
-            conn.commit()
-        except Exception as e:
-            conn.close()
-            _log().exception("falha ao gravar grupo")
-            return False, f"Erro ao criar pedido: {e}", None
-        conn.close()
+        # Concorrência: SEM MAX+1 (corrida inerente; grupo_id é partilhado por
+        # N linhas, logo UNIQUE por linha é inválido). O grupo_id deriva do id
+        # AUTOINCREMENT da 1ª linha inserida na transação (atômico, SQLite+PG),
+        # com retry SOMENTE em contenção de escrita (locked/busy). Transação
+        # única cobre verificar→INSERT (TOCTOU): o limite é revalidado antes do
+        # commit. busy_timeout/PRAGMAs herdados de get_connection (banco_conexao);
+        # UM único close (finally) + rollback em erro.
+        _TENTATIVAS = 3
+        _erro_final = None
+        for _tentativa in range(_TENTATIVAS):
+            conn = get_connection()
+            try:
+                cur = conn.cursor()
+                grupo_id = None
+                for idx, (r, qtd_pag, calc) in enumerate(detalhes, start=1):
+                    nome_servidor = gerar_nome_arquivo(
+                        data_hora, usuario, qtd_copias, qtd_pag, secretaria_id, setor_id, cor,
+                        tipo_papel, ordem_envio=idx)
+                    destino = os.path.join(PASTA_SOLICITACOES, nome_servidor)
+                    import shutil
+                    # Idempotente entre retries: origem pode já ter sido movida.
+                    _origem = r["caminho_arquivo"]
+                    if os.path.abspath(_origem) != os.path.abspath(destino):
+                        if os.path.exists(_origem):
+                            shutil.move(_origem, destino)
+                        elif not os.path.exists(destino):
+                            raise FileNotFoundError(
+                                f"Arquivo do rascunho {r['id']} sumiu do servidor")
+                    r["caminho_arquivo"] = destino
+                    hash_arq = r["hash_arquivo"]
+                    if grupo_id is None:
+                        cur.execute(
+                            """INSERT INTO tb_solicitacoes
+                               (usuario_solicitante, arquivo_original, arquivo_servidor, caminho_arquivo,
+                                hash_arquivo, qtd_copias, tamanho_papel, cor, frente_verso, tipo_borda,
+                                papel_sulfite, tipo_papel, observacoes, secretaria_id, setor_id,
+                                qtd_paginas_arquivo, paginas_contabilizadas, status, cota_excedida,
+                                requer_autorizacao, grupo_id, data_atualizacao)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, datetime('now','localtime'))""",
+                            (usuario, r["nome_original"], nome_servidor, destino, hash_arq,
+                             int(qtd_copias), tamanho_papel, cor, 1 if frente_verso else 0, tipo_borda,
+                             1 if papel_sulfite else 0, tipo_papel or "sulfite", observacoes,
+                             int(secretaria_id), setor_id, qtd_pag, calc, status, cota_excedida,
+                             requer_auth),
+                        )
+                        grupo_id = cur.lastrowid
+                        cur.execute("UPDATE tb_solicitacoes SET grupo_id=? WHERE id=?",
+                                    (grupo_id, grupo_id))
+                    else:
+                        cur.execute(
+                            """INSERT INTO tb_solicitacoes
+                               (usuario_solicitante, arquivo_original, arquivo_servidor, caminho_arquivo,
+                                hash_arquivo, qtd_copias, tamanho_papel, cor, frente_verso, tipo_borda,
+                                papel_sulfite, tipo_papel, observacoes, secretaria_id, setor_id,
+                                qtd_paginas_arquivo, paginas_contabilizadas, status, cota_excedida,
+                                requer_autorizacao, grupo_id, data_atualizacao)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now','localtime'))""",
+                            (usuario, r["nome_original"], nome_servidor, destino, hash_arq,
+                             int(qtd_copias), tamanho_papel, cor, 1 if frente_verso else 0, tipo_borda,
+                             1 if papel_sulfite else 0, tipo_papel or "sulfite", observacoes,
+                             int(secretaria_id), setor_id, qtd_pag, calc, status, cota_excedida,
+                             requer_auth, grupo_id),
+                        )
+                    cur.execute("DELETE FROM tb_rascunhos_upload WHERE id=?", (r["id"],))
+                # Revalida limite dentro da transação (TOCTOU): outra thread pode
+                # ter ocupado a vaga entre verificar_limite_pedidos e o INSERT.
+                _lim_ok_tx, _lim_msg_tx = verificar_limite_pedidos(secretaria_id, setor_id)
+                if not _lim_ok_tx:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                    return False, _lim_msg_tx, None
+                try:
+                    conn.commit()
+                except Exception as _e_commit:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                    raise _e_commit
+                _erro_final = None
+                break
+            except Exception as e:
+                _erro_final = e
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                _txt = f"{type(e).__name__} {e}".lower()
+                _contencao = any(m in _txt for m in (
+                    "locked", "busy", "deadlock", "could not serialize",
+                    "serialization", "40001", "timeout"))
+                if _eh_violacao_unicidade(e):
+                    _log().warning(f"confirmar_lote violação unicidade: {e}")
+                    return False, "Registro duplicado — tente novamente", None
+                if _contencao and _tentativa < _TENTATIVAS - 1:
+                    _log().warning(
+                        f"confirmar_lote contenção escrita (tentativa {_tentativa + 1}/{_TENTATIVAS}): {e}")
+                    continue
+                _log().exception("falha ao gravar grupo")
+                return False, f"Erro ao criar pedido: {e}", None
+            finally:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+        if _erro_final is not None and grupo_id is None:
+            return False, f"Erro ao criar pedido: {_erro_final}", None
 
         # Auditoria do grupo (com SHA256 dos arquivos)
         hashes = ",".join((d[0].get("hash_arquivo") or "") for d in detalhes)
@@ -2734,12 +2883,13 @@ def listar_pedidos(usuario=None, status=None, secretaria_id=None, setor_id=None,
                 sql += " AND s.cota_excedida=1"
             if busca:
                 like = f"%{busca.strip()}%"
-                sql += (" AND (s.usuario_solicitante LIKE ? COLLATE NOCASE "
-                        "OR s.observacoes LIKE ? COLLATE NOCASE "
-                        "OR s.arquivo_servidor LIKE ? COLLATE NOCASE "
-                        "OR s.arquivo_original LIKE ? COLLATE NOCASE "
-                        "OR sec.nome LIKE ? COLLATE NOCASE "
-                        "OR st.nome LIKE ? COLLATE NOCASE)")
+                # Portável SQLite+PG: LOWER(col) LIKE LOWER(?) (COLLATE NOCASE é SQLite-only).
+                sql += (" AND (LOWER(s.usuario_solicitante) LIKE LOWER(?) "
+                        "OR LOWER(s.observacoes) LIKE LOWER(?) "
+                        "OR LOWER(s.arquivo_servidor) LIKE LOWER(?) "
+                        "OR LOWER(s.arquivo_original) LIKE LOWER(?) "
+                        "OR LOWER(sec.nome) LIKE LOWER(?) "
+                        "OR LOWER(st.nome) LIKE LOWER(?))")
                 params += [like] * 6
             if data_inicio:
                 sql += " AND date(s.data_criacao) >= ?"
@@ -2845,10 +2995,11 @@ def listar_pedidos_responsavel(user_nome, status=None, limite=200, busca=None,
                 params.append(status)
             if busca:
                 like = f"%{busca.strip()}%"
-                sql += (" AND (s.usuario_solicitante LIKE ? COLLATE NOCASE "
-                        "OR s.observacoes LIKE ? COLLATE NOCASE "
-                        "OR s.arquivo_servidor LIKE ? COLLATE NOCASE "
-                        "OR s.arquivo_original LIKE ? COLLATE NOCASE)")
+                # Portável SQLite+PG: LOWER(col) LIKE LOWER(?) (COLLATE NOCASE é SQLite-only).
+                sql += (" AND (LOWER(s.usuario_solicitante) LIKE LOWER(?) "
+                        "OR LOWER(s.observacoes) LIKE LOWER(?) "
+                        "OR LOWER(s.arquivo_servidor) LIKE LOWER(?) "
+                        "OR LOWER(s.arquivo_original) LIKE LOWER(?))")
                 params += [like] * 4
             if data_inicio:
                 sql += " AND date(s.data_criacao) >= ?"; params.append(data_inicio)
@@ -3603,5 +3754,10 @@ def aplicar_marca_dagua(caminho_pdf, solicitacao_id, usuario, secretaria_nome,
         return None
 
 
-# Inicialização ao importar
-init_db()
+# Inicialização ao importar — mantida por compatibilidade (main.py não chama
+# init_db deste módulo). Agora idempotente e não-destrutiva: semeia organograma
+# SOMENTE com COUNT==0 e NUNCA força UPDATE de cotas do admin. Fail-soft interno.
+try:
+    init_db()
+except Exception:
+    pass

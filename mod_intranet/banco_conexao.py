@@ -66,29 +66,46 @@ def _ler_config_sqlite(chave, default=""):
     sem passar pelo `Repositorio`/engine — evita a recursão
     `sgbd_ativo → get_config → engine → sgbd_ativo`. Essas chaves são o
     "seletor de backend" e vivem no arquivo SQLite central (autoritativo
-    no boot). Fail-soft: devolve `default` em qualquer falha.
+    no boot). Conexão direta sqlite3 (não via `conexao()` para não
+    recursar) com pragmas WAL+`synchronous=NORMAL`+`busy_timeout=5000`.
+    Fail-soft: devolve `default` em qualquer falha.
     """
     try:
         from mod_intranet.repositorio import DB_PATH
         import sqlite3
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=10.0)
         try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute("PRAGMA busy_timeout=5000")
             row = conn.execute(
                 "SELECT valor FROM tb_config WHERE chave=?", (chave,)).fetchone()
             return (row[0] if row else default) or default
         finally:
             conn.close()
-    except Exception:
+    except Exception as exc:
+        try:
+            _log().exception(f"_ler_config_sqlite('{chave}'): {exc}")
+        except Exception:
+            pass
         return default
 
 
 def _gravar_config_sqlite(chave, valor):
-    """Upserts a selector config key directly in the central SQLite file."""
+    """Upserts a selector config key directly in the central SQLite file.
+
+    Escrita direta sqlite3 (não via `conexao()` para não recursar o
+    seletor de backend), com pragmas WAL+`synchronous=NORMAL`+
+    `busy_timeout=5000`. Idempotente via `ON CONFLICT DO UPDATE`.
+    """
     try:
         from mod_intranet.repositorio import DB_PATH
         import sqlite3
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=10.0)
         try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute("PRAGMA busy_timeout=5000")
             conn.execute(
                 "INSERT INTO tb_config (chave, valor) VALUES (?, ?) "
                 "ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor",
@@ -110,7 +127,10 @@ def _gravar_config_sqlite(chave, valor):
             pass
         return True
     except Exception as e:
-        _log().warning(f"_gravar_config_sqlite('{chave}'): {e}")
+        try:
+            _log().exception(f"_gravar_config_sqlite('{chave}'): {e}")
+        except Exception:
+            pass
         return False
 
 
@@ -389,28 +409,46 @@ def _ddl_postgres(ddl: str) -> str:
     `DATETIME` → `TIMESTAMP` e remove `FOREIGN KEY ... REFERENCES ...`
     (o Postgres exige a tabela referenciada pré-existente; os módulos criam
     na ordem do SQLite — a integridade é gerida no aplicativo). `IF NOT
-    EXISTS` é válido em ambos.
+    EXISTS` é válido em ambos para `CREATE TABLE`.
+
+    Paridade `ALTER TABLE ADD COLUMN`: padrão portável é check-then-add
+    idempotente (`PRAGMA table_info(t)` → traduzido para
+    `information_schema.columns` no proxy — ver `_CursorPostgres.execute`;
+    exemplo em `bd_manipulador.garantir_rastreabilidade`). `ADD COLUMN IF
+    NOT EXISTS` é nativo no Postgres mas NÃO existe no SQLite — não usar
+    em código portável (quebraria o SQLite, que não passa pelo proxy).
+
+    `CREATE OR REPLACE` NÃO implementado: não traduzido pelo proxy —
+    usar sempre `CREATE TABLE IF NOT EXISTS` / `CREATE INDEX IF NOT
+    EXISTS` (portável nos dois backends).
     """
-    d = (ddl or "").strip()
-    if not (d.upper().startswith("CREATE TABLE")
-            or d.upper().startswith("ALTER TABLE")):
+    try:
+        d = (ddl or "").strip()
+        if not (d.upper().startswith("CREATE TABLE")
+                or d.upper().startswith("ALTER TABLE")):
+            return d
+        d = re.sub(r"\bAUTOINCREMENT\b", "", d, flags=re.I)
+        d = re.sub(r"\bINTEGER\s+PRIMARY\s+KEY\b", "SERIAL PRIMARY KEY", d, flags=re.I)
+        d = re.sub(r"\bBLOB\b", "BYTEA", d, flags=re.I)
+        d = re.sub(r"\bDATETIME\b", "TIMESTAMP", d, flags=re.I)
+        if d.upper().startswith("ALTER TABLE"):
+            return d
+        # Colunas TEXT com DEFAULT de timestamp recebem cast ::text (Postgres não
+        # converte implicitamente no DEFAULT).
+        d = re.sub(r"(\bTEXT\b[^,()]*?DEFAULT\s*\((LOCALTIMESTAMP|CURRENT_TIMESTAMP)\))",
+                   r"\1::text", d, flags=re.I)
+        # Remove REFERENCES (inline e de tabela) + cláusulas ON DELETE/UPDATE.
+        ref = (r"\s+REFERENCES\s+[`\"]?[\w.]+[`\"]?\s*\([^)]*\)"
+               r"(?:\s+ON\s+(?:DELETE|UPDATE)\s+\w+(?:\s+\w+)?)*")
+        d = re.sub(ref, "", d, flags=re.I)
+        d = re.sub(r",\s*FOREIGN\s+KEY\s*\([^)]*\)", "", d, flags=re.I)
         return d
-    d = re.sub(r"\bAUTOINCREMENT\b", "", d, flags=re.I)
-    d = re.sub(r"\bINTEGER\s+PRIMARY\s+KEY\b", "SERIAL PRIMARY KEY", d, flags=re.I)
-    d = re.sub(r"\bBLOB\b", "BYTEA", d, flags=re.I)
-    d = re.sub(r"\bDATETIME\b", "TIMESTAMP", d, flags=re.I)
-    if d.upper().startswith("ALTER TABLE"):
-        return d
-    # Colunas TEXT com DEFAULT de timestamp recebem cast ::text (Postgres não
-    # converte implicitamente no DEFAULT).
-    d = re.sub(r"(\bTEXT\b[^,()]*?DEFAULT\s*\((LOCALTIMESTAMP|CURRENT_TIMESTAMP)\))",
-               r"\1::text", d, flags=re.I)
-    # Remove REFERENCES (inline e de tabela) + cláusulas ON DELETE/UPDATE.
-    ref = (r"\s+REFERENCES\s+[`\"]?[\w.]+[`\"]?\s*\([^)]*\)"
-           r"(?:\s+ON\s+(?:DELETE|UPDATE)\s+\w+(?:\s+\w+)?)*")
-    d = re.sub(ref, "", d, flags=re.I)
-    d = re.sub(r",\s*FOREIGN\s+KEY\s*\([^)]*\)", "", d, flags=re.I)
-    return d
+    except Exception as exc:
+        try:
+            _log().exception(f"_ddl_postgres: {exc}")
+        except Exception:
+            pass
+        return ddl or ""
 
 
 class _CursorPostgres:
@@ -506,10 +544,34 @@ class _CursorPostgres:
             else:
                 self._cur.execute(s, params)
             self._cur.execute("RELEASE SAVEPOINT ng_stmt")
-        except Exception:
+        except Exception as exc_stmt:
             try:
                 self._cur.execute("ROLLBACK TO SAVEPOINT ng_stmt")
                 self._cur.execute("RELEASE SAVEPOINT ng_stmt")
+            except Exception:
+                pass
+            # ALTER TABLE ADD COLUMN idempotente (paridade PG sem quebrar
+            # SQLite): padrão portável é check-then-add via PRAGMA
+            # table_info (traduzido p/ information_schema); se a guarda
+            # correr em concorrência ou o chamador repetir o ADD, o PG
+            # levanta duplicate column (42701/already exists) — engole e
+            # segue (migração idempotente), sem derrubar o handler.
+            try:
+                msg = str(exc_stmt).lower()
+                eh_alter_add = upper.startswith("ALTER TABLE") and "ADD COLUMN" in upper
+                eh_dup = ("already exists" in msg or "duplicate column" in msg
+                          or "duplicate_column" in msg or "42701" in msg)
+                if eh_alter_add and eh_dup:
+                    try:
+                        _log().warning(f"_CursorPostgres ALTER idempotente: {exc_stmt}")
+                    except Exception:
+                        pass
+                    self._lastrowid = None
+                    return self._cur
+            except Exception:
+                pass
+            try:
+                _log().exception(f"_CursorPostgres.execute: {exc_stmt}")
             except Exception:
                 pass
             raise
@@ -517,9 +579,27 @@ class _CursorPostgres:
         return self._cur
 
     def executemany(self, sql, seq):
-        s = _ddl_postgres((sql or "").strip())
-        s, _ = self._preparar(s, None)
-        return self._cur.executemany(s, seq)
+        """Batched writes with `?`→`%s` translation (portable SQLite→PG).
+
+        Corrige paridade PG: `executemany` traduz `?`→`%s` (o `_preparar`
+        só traduzia no `execute` com params list/tuple — aqui `seq` é a
+        lista de tuplas, então força a tradução), além de datetime()/
+        `INSERT OR IGNORE`/`_ddl_postgres`. Falha registra exception e
+        propaga (fail-loud — o chamador decide).
+        """
+        try:
+            s = _ddl_postgres((sql or "").strip())
+            # Força tradução ?→%s: _preparar só traduz com params list/tuple.
+            s, _ = self._preparar(s, [(None,)])
+            if "?" in s:
+                s = s.replace("?", "%s")
+            return self._cur.executemany(s, seq)
+        except Exception as exc:
+            try:
+                _log().exception(f"_CursorPostgres.executemany: {exc}")
+            except Exception:
+                pass
+            raise
 
     def executescript(self, script):
         """Splits a script on ';' and runs each statement (SQLite emulation)."""
@@ -596,11 +676,12 @@ class _ConexaoPostgres:
 def conexao(chave: str = "intranet"):
     """DBAPI-level connection for a module on the ACTIVE backend.
 
-    sqlite: conexão sqlite3 (WAL) para o arquivo do módulo. postgres:
+    sqlite: conexão sqlite3 (WAL+`synchronous=NORMAL`+`busy_timeout=5000`+
+    `foreign_keys=ON`) para o arquivo do módulo. postgres:
     conexão psycopg2 (via SQLAlchemy) para o DATABASE do módulo
     (`db_mod_<chave>`), envolvida num proxy que traduz `?`→`%s`, DDL
     SQLite e PRAGMA, e captura `lastrowid`. Devolve `None` em falha
-    (fail-soft).
+    (fail-soft). Assinatura inalterada.
     """
     if sgbd_ativo() == "postgres":
         eng = obter_engine_modulo(chave)
@@ -609,18 +690,33 @@ def conexao(chave: str = "intranet"):
         try:
             return _ConexaoPostgres(eng.raw_connection())
         except Exception as e:
-            _log().exception(f"conexao('{chave}'): falha ao obter conexão "
-                             f"PostgreSQL: {e}")
+            try:
+                _log().exception(f"conexao('{chave}'): falha ao obter conexão "
+                                 f"PostgreSQL: {e}")
+            except Exception:
+                pass
             return None
     # SQLite
     try:
         from mod_intranet.repositorio import caminho_db
         import sqlite3
-        conn = sqlite3.connect(caminho_db(chave))
-        conn.execute("PRAGMA journal_mode=WAL")
+        conn = sqlite3.connect(caminho_db(chave), timeout=10.0)
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute("PRAGMA busy_timeout=5000")
+            conn.execute("PRAGMA foreign_keys=ON")
+        except Exception as exc_pragma:
+            try:
+                _log().warning(f"conexao('{chave}'): pragma SQLite: {exc_pragma}")
+            except Exception:
+                pass
         return conn
     except Exception as e:
-        _log().exception(f"conexao('{chave}'): falha ao abrir SQLite: {e}")
+        try:
+            _log().exception(f"conexao('{chave}'): falha ao abrir SQLite: {e}")
+        except Exception:
+            pass
         return None
 
 

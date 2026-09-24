@@ -342,15 +342,35 @@ class Repositorio:
     def ultimo_id(self):
         """Returns the last autoincrement id inserted on the bound database.
 
-        Devolve `last_insert_rowid()` da Session atual (None em falha).
+        SQLite: `SELECT last_insert_rowid()` (sqlite-only — não existe no
+        PG). Postgres: `SELECT LASTVAL()` (último `SERIAL` da sessão;
+        `RETURNING id` já é capturado como `lastrowid` no proxy
+        `_CursorPostgres` para INSERTs diretos). Falha devolve None
+        (fail-soft, sem derrubar handler NiceGUI). Teste com
+        `INTRANET_FORCE_SQLITE=1` para o caminho sqlite-only.
         """
         if self.sessoes is None:
             return None
         try:
+            try:
+                from mod_intranet import banco_conexao
+                eh_pg = banco_conexao.sgbd_ativo() == "postgres"
+            except Exception:
+                eh_pg = False
+            if eh_pg:
+                try:
+                    return self.sessoes.execute(text("SELECT LASTVAL()")).scalar()
+                except Exception as exc_pg:
+                    try:
+                        self.sessoes.rollback()
+                    except Exception:
+                        pass
+                    _log().exception(f"ultimo_id({self.chave_db}) PG LASTVAL: {exc_pg}")
+                    return None
             return self.sessoes.execute(
                 text("SELECT last_insert_rowid()")).scalar()
         except Exception as ex:
-            _log().warning(f"ultimo_id({self.chave_db}): {ex}")
+            _log().exception(f"ultimo_id({self.chave_db}): {ex}")
             return None
 
     # ============ tb_config ============

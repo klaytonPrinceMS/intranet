@@ -1,7 +1,9 @@
-"""EN: Models package for mod_agregador_noticias — Noticia dataclass (imperative pattern pending).
+"""EN: Models package for mod_agregador_noticias — Noticia dataclass ONLY (no DB access here).
 
-PT-BR: Pacote de modelos do mod_agregador_noticias — dataclass Noticia (padrão imperativo pendente).
-Acesso real via bd_manipulador + banco_conexao.conexao; models não é importado em runtime.
+PT-BR: Pacote de modelos do mod_agregador_noticias — SOMENTE dataclass Noticia
+(espelho de leitura da tb_noticia, sem acesso a banco). Acesso real SEMPRE via
+bd_manipulador + banco_conexao.conexao; este models NÃO é importado em runtime
+e NÃO abre conexão (evita cross-query entre bancos).
 """
 
 from dataclasses import dataclass
