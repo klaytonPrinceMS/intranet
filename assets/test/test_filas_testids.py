@@ -62,7 +62,7 @@ IDS_CRITICOS = [
     # acesso liberado
     "filas-acesso-abrir", "filas-acesso-buscar", "filas-acesso-chamar",
     # mídia por fila + fundo + volume + mutar vídeo
-    "filas-midia-salvar", "filas-midia-fundo", "filas-midia-mutar",
+    "filas-midia-salvar", "filas-midia-fundo", "filas-midia-som",
     # controle da TV (claim de voz)
     "filas-tv-pausar", "filas-tv-retomar", "filas-tv-retornar",
     "filas-tv-avancar",

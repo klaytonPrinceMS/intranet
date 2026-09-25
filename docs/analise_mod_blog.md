@@ -217,5 +217,5 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na tr
 |:---|:---|:---|:---|:---|
 | blog | Piloto `CrudBase` 100% — sem migracao; validar paridade datas | `mod_blog/bd_manipulador.py:24`, `:104` (`CrudBase` OK) | Sem migracao; so bateria paridade SQLite-PG | Baixo |
 
-Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
 - **Validação (sistema reiniciado, Playwright real — `/login` 200, screenshot das 3 postagens uniformes com diagramas estreitos centralizados)**: backend (move/ordem/idempotência/seeds), screenshot e suíte `assets/test/teste_fluxo_blog.py` **46/46**.

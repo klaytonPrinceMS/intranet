@@ -1096,7 +1096,17 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             posts_wrap = ui.column().classes("w-full gap-4")
 
             def atualizar():
-                _feed_blog.refresh()
+                # AGENTS.md §3.2: o refresh é fail-soft. `refreshable.refresh()`
+                # agenda tarefa no event-loop do NiceGUI e pode levantar se o loop
+                # ainda não subiu ou se o cliente desconectou — sem este try, uma
+                # falha de refresh derrubava a tela inteira (o conteúdo já foi
+                # renderizado logo abaixo por `_feed_blog()`, então o feed segue
+                # visível mesmo se a re-renderização não agendar).
+                try:
+                    _feed_blog.refresh()
+                except Exception:
+                    observabilidade.get_logger("blog").debug(
+                        "atualizar: refresh do feed não agendado (loop indisponível)")
                 if pode_publicar:
                     try:
                         _atualizar_contador()

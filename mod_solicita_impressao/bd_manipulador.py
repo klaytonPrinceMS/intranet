@@ -402,8 +402,15 @@ def init_db():
         # Popula automaticamente no início do sistema (quando o banco é criado).
         # Idempotente: só insere se sigla/nome ainda não existe.
         try:
-            from mod_lista_telefonica.bd_manipulador import ORGANOGRAMA_BASE as _ORG_BASE
+            # Organograma via API pública do núcleo (AGENTS.md §2: Solicitação
+            # não importa a Lista Telefônica — quem costura é o mod_intranet).
+            from mod_intranet import integracoes
+            _ORG_BASE = integracoes.obter_organograma_base()
         except Exception:
+            _ORG_BASE = None
+        if not _ORG_BASE:
+            # Fallback local: módulo ausente ou organograma vazio — a semeadura
+            # das cotas continua funcionando com o mínimo de secretarias.
             _ORG_BASE = [
                 ("Gabinete", []),
                 ("Administração", []),

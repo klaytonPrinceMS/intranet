@@ -153,7 +153,7 @@ try:
     set_config("notificacao_timeout", "0")
     check(notificacao_timeout() == 1, "timeout mínimo 1s")
     set_config("notificacao_timeout", "abc")
-    check(notificacao_timeout() == 10, "timeout inválido volta ao padrão (10s)")
+    check(notificacao_timeout() == 5, "timeout inválido volta ao padrão (5s)")
 finally:
     set_config("notificacao_timeout", _orig_to)
 

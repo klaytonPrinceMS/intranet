@@ -346,7 +346,7 @@ def bloco_nomes_fila(fila_id: int, user_nome: str, recarregar):
                                 ok, msg = filas.transferir_nome(nid, destinos[sel.value], ator=user_nome)
                                 notificar(msg, type="positive" if ok else "negative")
                                 recarregar()
-                            ui.button(icon="forward", on_click=_env).props("dense flat color=primary").tooltip("Enviar este nome p/ fila de destino")
+                            ui.button(icon="forward", on_click=_env).props("dense flat color=primary").tooltip("Enviar este nome p/ fila de destino").props('data-testid=filas-etapa-enviar')
                         def _rm(nid=nid):
                             filas.remover_nome(nid, ator=user_nome)
                             recarregar()
@@ -628,8 +628,8 @@ def bloco_liberar_acesso(fid: int, user_nome: str, recarregar):
                     ui.label("Digite ao menos 2 letras.").classes("text-caption text-grey-6")
                 return
             try:
-                from mod_gest_cad_usuario.bd_manipulador import listar_usuarios as _lu
-                users = _lu(filtro_ativo=True) or []
+                from mod_intranet import integracoes
+                users = integracoes.listar_usuarios_gestao(filtro_ativo=True)
             except Exception:
                 users = []
             cand = [u for u in users if termo in (u[1] or "").lower() or termo in (u[9] or "").lower()][:10]
@@ -1734,19 +1734,17 @@ try {{
             """Curadoria: até 200 notícias, mais atuais primeiro (data_publicacao,
             fallback data_coleta); recarga traz as novas para a frente sem cortar a leitura."""
             try:
-                from mod_agregador_noticias.bd_manipulador import listar_para_tv, habilitado  # type: ignore
-                if not habilitado():
+                # Notícias via API pública do núcleo (AGENTS.md §2: Filas não
+                # importa o Agregador — quem costura é o mod_intranet).
+                from mod_intranet import integracoes
+                if not integracoes.agregador_habilitado():
                     noticias_tv["lista"] = []
                     noticias_tv["idx"] = 0
                     _fallback_noticias("Notícias pausadas",
                                        "Agregador desabilitado — ative em /admin/agregador_noticias para exibir manchetes aqui",
                                        "TV Filas • sem notícias")
                     return
-                lst = []
-                try:
-                    lst = listar_para_tv(limite=200)
-                except Exception:
-                    lst = []
+                lst = integracoes.listar_noticias_para_tv(limite=200)
                 if lst:
                     primeira_carga = not noticias_tv["lista"]
                     noticias_tv["lista"] = lst

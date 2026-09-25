@@ -1097,7 +1097,7 @@ def page_admin_modulo(chave_modulo: str):
             ui.colors(primary=ler_tema("lista_telefonica", cor_botao="#000000")["cor_botao"])
             # admin requer papel; se não for admin, mostra aviso e redireciona para visual
             if not eh_admin:
-                ui.notify("Acesso restrito a administradores", type="negative")
+                notificar("Acesso restrito a administradores", type="negative")
                 ui.navigate.to("/lista-telefonica")
             else:
                 mostrar_administracao(nome)
@@ -1109,7 +1109,7 @@ def page_admin_modulo(chave_modulo: str):
             from mod_intranet.tema_modulo import ler_tema
             ui.colors(primary=ler_tema("agregador_noticias", cor_botao="#000000")["cor_botao"])
             if not eh_admin:
-                ui.notify("Acesso restrito a administradores", type="negative")
+                notificar("Acesso restrito a administradores", type="negative")
                 ui.navigate.to("/agregador-noticias")
             else:
                 mostrar_administracao(nome)

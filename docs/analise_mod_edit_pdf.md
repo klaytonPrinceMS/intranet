@@ -115,4 +115,4 @@ standalone).
 |:---|:---|:---|:---|:---|
 | edit_pdf | Sem `CrudBase`; `strftime` só em Python (sem quebra); auditar `GROUP BY`/`COLLATE` | `mod_edit_pdf/bd_manipulador.py:215`, `:423` (`strftime` Python — OK) | Migrar para `CrudBase` + `conexao("editar_pdf")`; varredura `GROUP BY`/`COLLATE` interna | Médio (cotas 1 GB/10 GB + expiração 10 min + ZIP) |
 
-Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

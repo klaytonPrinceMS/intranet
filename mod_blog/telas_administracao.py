@@ -100,8 +100,10 @@ def mostrar_administracao(usuario_logado: str, pode_publicar: bool):
                 notificar("Lista de censura salva" if ok else "Falha ao salvar", type="positive" if ok else "negative")
                 if ok:
                     try:
-                        from mod_agregador_noticias.bd_manipulador import limpar_censuradas
-                        n = limpar_censuradas()
+                        # Purga no Agregador via API pública do núcleo (AGENTS.md §2:
+                        # o Blog não importa o Agregador — quem costura é o mod_intranet).
+                        from mod_intranet import integracoes
+                        n = integracoes.limpar_noticias_censuradas()
                         if n:
                             notificar(f"{n} notícias censuradas removidas do agregador", type="info")
                     except Exception:

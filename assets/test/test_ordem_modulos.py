@@ -46,8 +46,9 @@ print("INICIANDO TESTES — ordem do menu (padrão + persistência)")
 from mod_intranet import autenticacao  # noqa: E402
 from mod_intranet.repositorio import Repositorio  # noqa: E402
 
-DESEJADA = ["editar_pdf", "empenhos", "solicita_impressao",
-            "blog", "usuarios", "auditoria"]
+DESEJADA = ["editar_pdf", "empenhos", "solicita_impressao", "blog", "usuarios",
+            "auditoria", "tecnico", "filas", "lista_telefonica",
+            "agregador_noticias"]
 
 conn = autenticacao.get_connection()
 try:
@@ -62,8 +63,12 @@ try:
     check(atual == DESEJADA, f"ordem padrão vigente é a desejada (obteve {atual})")
 
     # ---------- reorder é 1-based (sem ordem=0) ----------
+    # cobre TODOS os módulos: `reordenar_modulos` só numera as chaves enviadas,
+    # então uma lista parcial deixaria os demais com a ordem anterior e a
+    # comparação com `ordens` (10 linhas) nunca casaria.
     prova = ["blog", "usuarios", "auditoria", "editar_pdf", "empenhos",
-             "solicita_impressao"]
+             "solicita_impressao", "tecnico", "filas", "lista_telefonica",
+             "agregador_noticias"]
     with Repositorio() as repo:
         check(repo.reordenar_modulos(prova), "reordenar persiste a ordem de prova")
     conn = autenticacao.get_connection()

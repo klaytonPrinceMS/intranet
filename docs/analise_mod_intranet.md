@@ -678,4 +678,4 @@ Helpers do núcleo já cobertos acima e mantidos: `contexto` (ContextVar IP/UA L
 |:---|:---|:---|:---|:---|
 | intranet | 3 connects crus sem WAL; zero `busy_timeout`; WAL OK no quente | `mod_intranet/banco_conexao.py:74`, `:90` (crus) · `mod_intranet/ativacao.py:502` (cru) · `mod_intranet/banco_conexao.py:619-620` (quente COM WAL) | Helper interno `_conectar_wal()` em `banco_conexao.py` + reuso em `ativacao.py:502`; `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` + `busy_timeout=5000` só nesses pontos | Baixo-médio (boot/assistente; validar fresh-install) |
 
-Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

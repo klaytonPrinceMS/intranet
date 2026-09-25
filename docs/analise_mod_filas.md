@@ -159,4 +159,4 @@ Conexão WAL + `foreign_keys=ON` via `banco_conexao.conexao("filas")`. Criador: 
 |:---|:---|:---|:---|:---|
 | filas | Sem `CrudBase`; `sqlite_master` em migração de `tb_midia` | `mod_filas/bd_manipulador.py:75` (`sqlite_master`) · sem `CrudBase` (verificado por busca) | Migrar para `CrudBase`; `_tabela_existe()` interno; testar `/tv`, `/tv/{id}`, `/tv?grupo=` nos dois backends | Médio (voz claim + ducking + `/midia_filas`) |
 
-Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

@@ -376,7 +376,7 @@ def _probe_http(porta, caminho, timeout=1.5):
     try:
         import urllib.request
         r = urllib.request.urlopen(f"http://localhost:{int(porta)}{caminho}",
-                                   timeout=timeout)
+                                   timeout=timeout)  # nosec B310 — esquema http:// literal + porta em int(); nunca file:// nem entrada do usuário
         return r.status == 200
     except Exception:
         return False
@@ -622,7 +622,7 @@ def _cmd(comando, timeout=600, entrada=None):
     print(c(f"\n$ {_mascarar_comando(comando)}", "azul"))
     try:
         r = subprocess.run(
-            comando, shell=usar_shell, timeout=timeout,
+            comando, shell=usar_shell, timeout=timeout,  # nosec B602 — `usar_shell` só é True para comandos ESTÁTICOS defined no próprio assistente (ver docstring); senha entra por stdin, nunca interpolada no argv
             input=(entrada.encode() if isinstance(entrada, str) else entrada))
         return r.returncode == 0
     except Exception as e:
@@ -751,7 +751,7 @@ def _servicos_otel_online(porta_grafana=3000):
     try:
         import urllib.request
         r = urllib.request.urlopen(
-            f"http://localhost:{porta_grafana}/api/health", timeout=3)
+            f"http://localhost:{porta_grafana}/api/health", timeout=3)  # nosec B310 — esquema http:// literal para localhost; nunca file://
         return r.status == 200
     except Exception:
         return False

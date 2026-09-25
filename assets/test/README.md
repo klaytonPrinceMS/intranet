@@ -49,15 +49,31 @@ e falha se algum sair ≠ 0. Exceções em `EXCLUIR` (`test_suite.py:23-32`): he
 
 ## Falhas preexistentes conhecidas (não causadas por esta sessão)
 
-Verificadas em 14/09/2026 — os checks referenciam código anterior à sessão:
+Verificadas em 14/09/2026 — os checks referenciam código anterior à sessão.
+**Atualização 25/09/2026: ambas foram RESOLVIDAS nesta sessão.**
 
-- `test_dashboard.py` (7 checks): espera o layout antigo do Resumo
-  (`"Atualizado ✓"`, `ui.timer(2.0)`, microinterações `transition`/`hover`
-  nos cards). O dashboard foi redesenhado (toast 2s via `notificar`, timer
-  0.1) sem atualizar o teste. Nenhum trecho tocado pela sessão.
-- `verifica_ui_comum.py` (1 check em 190): exige `ui.tabs()` ausente em
-  `mod_renomear_empenho/telas.py`, mas a barra do menu usa `ui.tabs()` desde
-  antes da sessão (`telas.py:153`, só reordenada com o botão TEMP).
+- ~~`test_dashboard.py` (7 checks)~~ — **resolvido em 25/09/2026** (7/7 OK):
+  esperava o layout antigo do Resumo (`"Atualizado ✓"`, `ui.timer(2.0)`,
+  microinterações `transition`/`hover`); o teste foi alinhado ao dashboard
+  redesenhado (toast via `notificar`, timer 0.1).
+- ~~`verifica_ui_comum.py` (1 check em 190)~~ — **resolvido em 25/09/2026**
+  (**190/190 OK**): exigia `ui.tabs()` ausente em `mod_renomear_empenho/telas.py`;
+  a barra do menu foi migrada para o helper padrão `aba_modulo.menu_modulo`
+  (importado e sem uso até então), e os demais checks obsoletos foram reparados
+  (`campo_texto` com contagem `>=`, `ui.notify` cru em `mod_edit_pdf`,
+  organização de `notificacao_timeout`).
+
+Além disso, em 25/09/2026 a suíte foi reparada de **10 scripts falhando → 0**:
+bugs reais de `mod_filas` (predicado invertido em `contar_nomes_pendentes`,
+`ORDER BY` invertido em `listar_nomes`), busca de 1 letra em
+`mod_renomear_empenho` (FTS prefixo sem fallback substring), `ui.notify` cru em
+`main.py` (guarda de admin), botão sem `data-testid` em `mod_filas`, e testes
+obsoletos em `test_ordem_modulos` (6 → 10 módulos),
+`test_tema_cache_trava`/`teste_config_intranet` (timeout padrão contraditório:
+4 e 10 → 5, o valor do código), `test_filas_testids`
+(`filas-midia-mutar` → `filas-midia-som`), `test_seg_novos_modulos` (gitleaks
+por `shutil.which`) e `teste_carrossel_blog` (carrossel migrou de select
+dedicado para seleção em lote por checkbox + campo `Tempo (s)`).
 
 ## Demais arquivos
 

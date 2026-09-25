@@ -425,4 +425,4 @@ exclusiva de `/configuracoes`); as variáveis `t_cor_fundo`, `t_cor_titulo` e
 |:---|:---|:---|:---|:---|
 | solicita_impressao | `CrudBase` parcial (só config local); `COLLATE NOCASE` em 3 buscas (quebra PG) | `mod_solicita_impressao/bd_manipulador.py:24`, `:31` (parcial) · `:1920-1926`, `:2737-2742`, `:2848-2851` (`COLLATE NOCASE`) | Completar migração `CrudBase`; trocar `LIKE ? COLLATE NOCASE` por helper interno portável (`LOWER(col) LIKE LOWER(?)`, contido no módulo) | Médio-alto (cotas 1000/200 + grupo + cobrança) |
 
-Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

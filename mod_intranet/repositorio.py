@@ -701,7 +701,7 @@ class Repositorio:
         campos["c"] = chave
         try:
             self.sessoes.execute(
-                text(f"UPDATE tb_modulos SET {set_sql} WHERE chave=:c"),
+                text(f"UPDATE tb_modulos SET {set_sql} WHERE chave=:c"),  # nosec B608 — `set_sql` é montado só das chaves literais do if-chain acima (nome/icone/rota/ativo/ordem); valores vão por bind `:nome` etc., nunca interpolados
                 campos,
             )
             self.sessoes.commit()

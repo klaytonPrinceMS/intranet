@@ -38,7 +38,9 @@ nav:
       - Usuário Comum: manual_de_uso_usuario_comum/index.md
       - Renomeador de Empenho: manual_de_uso_renomear_empenho/index.md
   - Plano de Projeto: plano_de_projeto/index.md
-  - Registro de Mudanças: registro_de_mudancas/index.md
+  - Registro de Mudanças:
+      - Índice: registro_de_mudancas/index.md
+      - "Plano WAL + Paridade (24/09/2026)": registro_de_mudancas/wal_paridade_pendente_2026-09-24.md
   - Versionamento: versionamento/index.md
   - Análise de Risco: analise_de_risco/index.md
   - Métricas de Software: metricas_software/index.md

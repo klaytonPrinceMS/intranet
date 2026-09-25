@@ -2180,17 +2180,23 @@ def atualizar_levantamento_renomeado(nome_original, nome_final, caminho_final, d
 def pesquisar_levantamento(termo, limite=100):
     """Busca no levantamento: FTS5 (nome+campos+conteúdo) com fallback LIKE.
 
-    Cobre também os pendentes (ainda sem índice de processados). Retorna
-    tuplas (id, nome, caminho, presente, status, numero, parcela, ficha, ano, usuario).
+    Cobre também os pendentes (ainda sem índice de processados). O FTS é
+    PREFIXO (`"4"*` casa com token `4abc`, não com `24`) — por isso, quando ele
+    volta vazio, ainda tentamos o LIKE por SUBSTRING (`%4%` casa com `EC_24`).
+    Sem essa segunda tentativa a busca de 1 letra não filtrava nada, porque o
+    FTS respondia vazio sem levantar exceção (e o fallback não era acionado).
+    Retorna tuplas (id, nome, caminho, presente, status, numero, parcela, ficha, ano, usuario).
     """
     if not termo or not str(termo).strip():
         return []
     tokens = [t for t in str(termo).strip().split() if t]
     if not tokens:
         return []
+    like = f"%{str(termo).strip()}%"
     conn = _conn()
     try:
         cur = conn.cursor()
+        # ---------- 1) FTS5 por prefixo ----------
         try:
             query = _fts_query_prefixada(tokens)
             cur.execute(
@@ -2202,20 +2208,22 @@ def pesquisar_levantamento(termo, limite=100):
                    ORDER BY rank LIMIT ?""",
                 (query, limite),
             )
-            return cur.fetchall()
+            achados = cur.fetchall()
+            if achados:
+                return achados
         except Exception as e:
             _log().debug(f"pesquisar_levantamento FTS indisponível, fallback LIKE: {e}")
-            like = f"%{str(termo).strip()}%"
-            cur.execute(
-                """SELECT id, nome_arquivo, caminho_atual, presente, status,
-                          numero_empenho, parcela, ficha, ano, usuario
-                   FROM tb_levantamento
-                   WHERE nome_arquivo LIKE ? OR numero_empenho LIKE ?
-                     OR ficha LIKE ? OR ano LIKE ? OR conteudo_texto LIKE ?
-                   ORDER BY id DESC LIMIT ?""",
-                (like, like, like, like, like, limite),
-            )
-            return cur.fetchall()
+        # ---------- 2) LIKE por substring (1 letra / termo no meio do nome) ----------
+        cur.execute(
+            """SELECT id, nome_arquivo, caminho_atual, presente, status,
+                      numero_empenho, parcela, ficha, ano, usuario
+               FROM tb_levantamento
+               WHERE nome_arquivo LIKE ? OR numero_empenho LIKE ?
+                 OR ficha LIKE ? OR ano LIKE ? OR conteudo_texto LIKE ?
+               ORDER BY id DESC LIMIT ?""",
+            (like, like, like, like, like, limite),
+        )
+        return cur.fetchall()
     finally:
         conn.close()
 

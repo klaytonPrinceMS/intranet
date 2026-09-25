@@ -188,4 +188,4 @@ Mapeamento para esta implementação:
 |:---|:---|:---|:---|:---|
 | renomear_empenho | Sem `CrudBase`; FTS5 `VIRTUAL TABLE` + `sqlite_master` (degrada no PG por desenho) | `mod_renomear_empenho/bd_manipulador.py:687`, `:786` (FTS5) · `:773` (`sqlite_master`) · `:660` (fallback LIKE) | Manter fallback LIKE no PG; isolar FTS5 em ramo SQLite; migrar CRUD para `CrudBase`; `_tabela_existe()` interno | Médio (monitor 60 s + quarentena + organizador) |
 
-Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

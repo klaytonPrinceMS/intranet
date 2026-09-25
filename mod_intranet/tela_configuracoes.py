@@ -874,7 +874,8 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 def _campo_backup():
                     inp = ui_comum.campo_texto(
                         "Intervalo de backup (horas)",
-                        chave="backup_interval_hours", padrao="12",
+                        chave="backup_interval_hours",
+                        padrao=PADRAO_CONFIG["backup_interval_hours"],
                         ao_mudar=lambda e: estado_campos.update(
                             backup_interval_hours=e.value))
                     inp_gerais["backup"] = inp
@@ -883,7 +884,8 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 def _campo_sessao():
                     inp = ui_comum.campo_texto(
                         "Retenção de sessão (dias)",
-                        chave="sessao_retencao", padrao="50",
+                        chave="sessao_retencao",
+                        padrao=PADRAO_CONFIG["sessao_retencao"],
                         ao_mudar=lambda e: estado_campos.update(
                             sessao_retencao=e.value))
                     inp_gerais["sessao"] = inp
@@ -892,8 +894,10 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 def _campo_aviso():
                     inp = ui_comum.campo_texto(
                         "Tempo de exibição dos avisos (segundos)",
-                        chave="notificacao_timeout", padrao="5",
-                        tooltip="1 a 30 segundos (padrão 5). Vale para os avisos "
+                        chave="notificacao_timeout",
+                        padrao=PADRAO_CONFIG["notificacao_timeout"],
+                        tooltip="1 a 30 segundos (padrão "
+                                f"{PADRAO_CONFIG['notificacao_timeout']}). Vale para os avisos "
                                 "(toasts) de todo o sistema, incluindo boas-vindas.",
                         ao_mudar=lambda e: estado_campos.update(
                             aviso_timeout=e.value))
@@ -931,17 +935,24 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         restaurar=lambda: confirmar(
                             "configurações gerais",
                             lambda: restaurar_grupo(
-                                  {"backup_interval_hours": "12",
-                                   "sessao_retencao": "50",
-                                   "notificacao_timeout": "5"},
+                                  {"backup_interval_hours":
+                                       PADRAO_CONFIG["backup_interval_hours"],
+                                   "sessao_retencao":
+                                       PADRAO_CONFIG["sessao_retencao"],
+                                   "notificacao_timeout":
+                                       PADRAO_CONFIG["notificacao_timeout"]},
                                   "configurações gerais",
                                   campos=[(inp_gerais["backup"],
-                                           "backup_interval_hours", "12"),
+                                           "backup_interval_hours",
+                                           PADRAO_CONFIG["backup_interval_hours"]),
                                           (inp_gerais["sessao"],
-                                           "sessao_retencao", "50"),
+                                           "sessao_retencao",
+                                           PADRAO_CONFIG["sessao_retencao"]),
                                           (inp_gerais["aviso"],
-                                           "aviso_timeout", "5")],
-                                pos_acao=lambda: _reagendar_backups(12))),
+                                           "aviso_timeout",
+                                           PADRAO_CONFIG["notificacao_timeout"])],
+                                pos_acao=lambda: _reagendar_backups(
+                                    int(PADRAO_CONFIG["backup_interval_hours"])))),
                         chave_modulo="intranet",
                         data_testid="config-aplicar-gerais")
 

@@ -365,11 +365,15 @@ async def main():
         check(get_config(k, None) == esperado,
               f"'{rotulo}' com {CLAMPS[rotulo][1]!r} grava {esperado!r}")
 
+    # Entrada não numérica deve gravar o padrão do sistema — lido de
+    # PADRAO_CONFIG (o aviso usava "10", valor antigo; o padrão é "5").
     CLAMPS2 = {
-        "Intervalo de backup (horas)": ("backup_interval_hours", "abc", "12"),
-        "Retenção de sessão (dias)": ("sessao_retencao", "abc", "50"),
-        "Tempo de exibição dos avisos (segundos)": ("notificacao_timeout",
-                                                    "abc", "10"),
+        "Intervalo de backup (horas)": (
+            "backup_interval_hours", "abc", PADRAO_CONFIG["backup_interval_hours"]),
+        "Retenção de sessão (dias)": (
+            "sessao_retencao", "abc", PADRAO_CONFIG["sessao_retencao"]),
+        "Tempo de exibição dos avisos (segundos)": (
+            "notificacao_timeout", "abc", PADRAO_CONFIG["notificacao_timeout"]),
     }
     for rotulo, (_k, invalido, _e) in CLAMPS2.items():
         achar_campos(rotulo)[0].set_value(invalido)
@@ -388,8 +392,10 @@ async def main():
 
     # ================== 6) RESTAURAR PADRÃO (4 cards + Módulo) ==================
     print("-- RESTAURAR PADRÃO (Cores, Textos, Gerais, Ícones, Módulo) --")
-    # Valores esperados após o restore: os codificados em cada card
-    # (PADRAO_CONFIG; os do card Gerais são literais "12"/"50"/"10" na tela).
+    # Valores esperados após o restore: os codificados em cada card, todos
+    # lidos de PADRAO_CONFIG — desde 25/09/2026 o card "Gerais" também usa
+    # PADRAO_CONFIG (antes os defaults eram literais "12"/"50"/"5" espalhados
+    # pela tela, sem fonte única de verdade; o teste ainda esperava "10").
     GRUPOS = [
         ("Cores", {k: PADRAO_CONFIG[k] for k in (
             "cor_principal", "cor_fundo", "intranet_cor_botao",
@@ -400,8 +406,9 @@ async def main():
             "titulo_sistema", "texto_login_titulo", "texto_login_subtitulo",
             "texto_login_hint", "texto_home_saudacao",
             "texto_home_subtitulo", "texto_rodape")}),
-        ("Gerais", {"backup_interval_hours": "12", "sessao_retencao": "50",
-                    "notificacao_timeout": "10"}),
+        ("Gerais", {k: PADRAO_CONFIG[k] for k in (
+            "backup_interval_hours", "sessao_retencao",
+            "notificacao_timeout")}),
         ("Ícones", {"icone_sistema": PADRAO_CONFIG["icone_sistema"]}),
     ]
     restaurar = achar_botoes("Restaurar padrão")

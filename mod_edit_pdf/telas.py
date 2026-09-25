@@ -54,7 +54,7 @@ def _fmt_bytes(n):
             notificar(f"Erro em _fmt_bytes: {e}", tipo="error")
         except Exception:
             try:
-                ui.notify(f"Erro em _fmt_bytes", type="negative")
+                notificar(f"Erro em _fmt_bytes", type="negative")
             except Exception:
                 pass
         return None
@@ -74,7 +74,7 @@ def _fmt_resta(seg):
             notificar(f"Erro em _fmt_resta: {e}", tipo="error")
         except Exception:
             try:
-                ui.notify(f"Erro em _fmt_resta", type="negative")
+                notificar(f"Erro em _fmt_resta", type="negative")
             except Exception:
                 pass
         return None
@@ -97,7 +97,7 @@ def _cor_resta(seg):
             notificar(f"Erro em _cor_resta: {e}", tipo="error")
         except Exception:
             try:
-                ui.notify(f"Erro em _cor_resta", type="negative")
+                notificar(f"Erro em _cor_resta", type="negative")
             except Exception:
                 pass
         return None
@@ -275,7 +275,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em _rows_do_evento: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em _rows_do_evento", type="negative")
+                        notificar(f"Erro em _rows_do_evento", type="negative")
                     except Exception:
                         pass
                 return None
@@ -323,7 +323,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em _ao_selecionar: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em _ao_selecionar", type="negative")
+                        notificar(f"Erro em _ao_selecionar", type="negative")
                     except Exception:
                         pass
                 return None
@@ -344,7 +344,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em _renumerar: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em _renumerar", type="negative")
+                        notificar(f"Erro em _renumerar", type="negative")
                     except Exception:
                         pass
                 return None
@@ -405,7 +405,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em atualizar_tabela: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em atualizar_tabela", type="negative")
+                        notificar(f"Erro em atualizar_tabela", type="negative")
                     except Exception:
                         pass
                 return None
@@ -428,7 +428,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em _alvos: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em _alvos", type="negative")
+                        notificar(f"Erro em _alvos", type="negative")
                     except Exception:
                         pass
                 return None
@@ -463,7 +463,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em _registrar_saida: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em _registrar_saida", type="negative")
+                        notificar(f"Erro em _registrar_saida", type="negative")
                     except Exception:
                         pass
                 return None
@@ -502,7 +502,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em _op_reduzir: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em _op_reduzir", type="negative")
+                        notificar(f"Erro em _op_reduzir", type="negative")
                     except Exception:
                         pass
                 return None
@@ -537,7 +537,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em _op_juntar: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em _op_juntar", type="negative")
+                        notificar(f"Erro em _op_juntar", type="negative")
                     except Exception:
                         pass
                 return None
@@ -574,7 +574,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em _op_cortar_sel: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em _op_cortar_sel", type="negative")
+                        notificar(f"Erro em _op_cortar_sel", type="negative")
                     except Exception:
                         pass
                 return None
@@ -625,7 +625,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em _op_dividir: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em _op_dividir", type="negative")
+                        notificar(f"Erro em _op_dividir", type="negative")
                     except Exception:
                         pass
                 return None
@@ -647,7 +647,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em _op_verificar: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em _op_verificar", type="negative")
+                        notificar(f"Erro em _op_verificar", type="negative")
                     except Exception:
                         pass
                 return None
@@ -679,7 +679,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em baixar_zip: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em baixar_zip", type="negative")
+                        notificar(f"Erro em baixar_zip", type="negative")
                     except Exception:
                         pass
                 return None
@@ -706,7 +706,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em excluir_selecionados: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em excluir_selecionados", type="negative")
+                        notificar(f"Erro em excluir_selecionados", type="negative")
                     except Exception:
                         pass
                 return None
@@ -741,7 +741,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em baixar_originais: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em baixar_originais", type="negative")
+                        notificar(f"Erro em baixar_originais", type="negative")
                     except Exception:
                         pass
                 return None
@@ -807,7 +807,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     notificar(f"Erro em expirar_agora: {e}", tipo="error")
                 except Exception:
                     try:
-                        ui.notify(f"Erro em expirar_agora", type="negative")
+                        notificar(f"Erro em expirar_agora", type="negative")
                     except Exception:
                         pass
                 return None
@@ -918,7 +918,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                                     notificar(f"Erro em _montar_hint: {e}", tipo="error")
                                 except Exception:
                                     try:
-                                        ui.notify(f"Erro em _montar_hint", type="negative")
+                                        notificar(f"Erro em _montar_hint", type="negative")
                                     except Exception:
                                         pass
                                 return None
@@ -982,7 +982,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                                     notificar(f"Erro em _baixar_linha: {e}", tipo="error")
                                 except Exception:
                                     try:
-                                        ui.notify(f"Erro em _baixar_linha", type="negative")
+                                        notificar(f"Erro em _baixar_linha", type="negative")
                                     except Exception:
                                         pass
                                 return None
@@ -1003,7 +1003,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                                     notificar(f"Erro em _excluir_linha: {e}", tipo="error")
                                 except Exception:
                                     try:
-                                        ui.notify(f"Erro em _excluir_linha", type="negative")
+                                        notificar(f"Erro em _excluir_linha", type="negative")
                                     except Exception:
                                         pass
                                 return None
@@ -1156,7 +1156,7 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             notificar(f"Erro em mostrar_tela: {e}", tipo="error")
         except Exception:
             try:
-                ui.notify(f"Erro em mostrar_tela", type="negative")
+                notificar(f"Erro em mostrar_tela", type="negative")
             except Exception:
                 pass
         return None

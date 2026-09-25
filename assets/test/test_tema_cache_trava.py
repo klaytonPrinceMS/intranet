@@ -100,8 +100,8 @@ try:
           "timeout 0 elevado a 1")
     set_config("notificacao_timeout", "lixo")
     tema._cfg.cache_clear()
-    check(tema.notificacao_timeout() == 4,
-          "timeout inválido cai no padrão 4")
+    check(tema.notificacao_timeout() == 5,
+          "timeout inválido cai no padrão 5 (padrão de tema_modulo)")
 
     # ---------- notificar (timeout configurado + fail-soft) ----------
     print("-- notificar --")

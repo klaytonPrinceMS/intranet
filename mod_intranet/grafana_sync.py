@@ -17,20 +17,34 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CFG_GRAFANA_URL = "grafana_url"
 DEFAULT_GRAFANA_URL = "http://localhost:3000"
 
+# Esquemas aceitos na URL do Grafana. Sem esta trava, `GRAFANA_URL=file://...`
+# faria `_url.urlopen()` abrir ARQUIVO LOCAL em vez de HTTP (alerta bandit B310).
+_SCHEMAS_GRAFANA = ("http://", "https://")
+
+
+def _url_grafana_valida(cand: str) -> bool:
+    """True se `cand` é uma URL http(s) absoluta (rejeita file:// e afins)."""
+    try:
+        return bool(cand) and cand.strip().lower().startswith(_SCHEMAS_GRAFANA)
+    except Exception:
+        return False
+
 
 def obter_grafana_url():
     """Resolves the Grafana base URL (env GRAFANA_URL wins over tb_config).
 
     Resolve a URL base do Grafana: env tem prioridade, depois `tb_config`
-    (`grafana_url`), depois o padrão local."""
+    (`grafana_url`), depois o padrão local. Valor fora de http(s) é
+    IGNORADO (cai no padrão) — nunca abrimos esquema `file://`/custom."""
     try:
         env = (os.getenv("GRAFANA_URL") or "").strip().rstrip("/")
         if env:
-            return env
+            return env if _url_grafana_valida(env) else DEFAULT_GRAFANA_URL
         from mod_intranet.bd_conexao import get_config
-        return ((get_config(CFG_GRAFANA_URL, DEFAULT_GRAFANA_URL)
-                 or DEFAULT_GRAFANA_URL).strip().rstrip("/")
-                or DEFAULT_GRAFANA_URL)
+        cfg = ((get_config(CFG_GRAFANA_URL, DEFAULT_GRAFANA_URL)
+                or DEFAULT_GRAFANA_URL).strip().rstrip("/")
+               or DEFAULT_GRAFANA_URL)
+        return cfg if _url_grafana_valida(cfg) else DEFAULT_GRAFANA_URL
     except Exception:
         return DEFAULT_GRAFANA_URL
 
@@ -126,7 +140,7 @@ def grafana_aguardar_pronto(limite: int = 150) -> bool:
     base = obter_grafana_url()
     while _time.time() - inicio < limite:
         try:
-            with _url.urlopen(f"{base}/api/health", timeout=3) as resp:
+            with _url.urlopen(f"{base}/api/health", timeout=3) as resp:  # nosec B310 — `base` vem de obter_grafana_url(), que só devolve http(s) (file:///custom caem no padrão)
                 if resp.status == 200:
                     return True
         except Exception:
@@ -150,7 +164,7 @@ def _api_autorizada(senha: str) -> Optional[bool]:
         headers={"Authorization": f"Basic {token}"},
     )
     try:
-        with _url.urlopen(requisicao, timeout=5) as resp:
+        with _url.urlopen(requisicao, timeout=5) as resp:  # nosec B310 — `requisicao` herda a base de obter_grafana_url(), validada como http(s)
             return resp.status == 200
     except _urlerr.HTTPError as e:
         return False if e.code == 401 else None

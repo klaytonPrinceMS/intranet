@@ -178,13 +178,12 @@ def mostrar_tela(usuario_logado: str, perfil: str):
             _abas = [
                 ("navegar", "Navegar", "folder_open"),
             ]
-        _icones = {"navegar": "folder_open", "fila": "move_to_inbox", "organizador": "inventory_2", "solicitacao": "mail"}
+        # Barra de abas no padrão do módulo (aba_modulo.menu_modulo): os ícones
+        # já vêm dentro de `_abas`, então o dict de ícones separado era redundante.
         with ui.row().classes("w-full items-center justify-between flex-nowrap bg-white rounded-lg shadow-sm px-3 py-1").style("gap: 1rem; min-width: 0"):
             # TEMPORARIO-25-ARQUIVOS-REMOVER-EM-PRODUCAO: botão totalmente à direita do menu_mod;
             # cada clique cria 25 arquivos na pasta doc do módulo via fábrica do sistema.
-            with ui.tabs().props("dense inline-label").classes("min-w-0 flex-1 overflow-x-auto") as tabs_el:
-                for key, label, _ico in _abas:
-                    ui.tab(key, label, icon=_icones.get(key))
+            tabs_el = menu_modulo(_abas)
             async def _gerar_25_temp():
                 from mod_intranet.tema_modulo import notificar as _notificar
                 try:

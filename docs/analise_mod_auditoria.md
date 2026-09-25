@@ -88,7 +88,7 @@ Criador vigente: `init_db_auditoria()` em `bd_manipulador.py` (executado no impo
 |:---|:---|:---|:---|:---|
 | auditoria | Sem `CrudBase`; `sqlite_master` em 3 pontos; `strftime` em SQL sem tradução PG | `mod_auditoria/bd_manipulador.py:138`, `:460`, `:475` (`sqlite_master`) · `:339`, `:352`, `:372`, `:388` (`strftime`) | Migrar para `CrudBase` + `conexao("auditoria")`; helper `_tabela_existe()` interno; reescrever filtro hora/datas sem `strftime` SQL (Python ou `EXTRACT`/`TO_CHAR` isolado) | Médio-alto (LGPD/poda + UNION ALL + CSV) |
 
-Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
 
 ## Correção aplicada 24/09/2026 — WAL + paridade SQLite↔PostgreSQL
 

@@ -97,4 +97,4 @@ Importa `autenticacao.validar_acesso_modulo`/`perfil_global_de`, `banco_conexao.
 |:---|:---|:---|:---|:---|
 | tecnico | Sem `CrudBase`; sem quebra PG localizada (varredura fina pendente) | `mod_tecnico/bd_manipulador.py` (sem `CrudBase` — verificado por busca) | Migrar para `CrudBase` + `conexao("tecnico")`; varredura `GROUP BY`/`COLLATE`/`strftime` SQL no módulo | Baixo-médio (ZIP + backup `YYYYMMDD_HHMM_nomePc_ip`) |
 
-Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).

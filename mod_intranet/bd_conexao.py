@@ -94,6 +94,13 @@ PADRAO_CONFIG = {
     "intranet_cor_texto_card": "",
     # Avisos do sistema (toasts): tempo de exibição em segundos (1-30, padrão 5)
     "notificacao_timeout": "5",
+    # Card "Configurações gerais": intervalo do backup em horas e retenção de
+    # sessão em dias. Viviam SÓ como literais espalhados (INSERT de banco novo
+    # + `padrao=` da tela + dicionário do "Restaurar padrão"), então o card não
+    # tinha fonte única de verdade e um padrão divergente quebrava a tela
+    # quando a chave faltava no tb_config. Aqui ficam canônicos.
+    "backup_interval_hours": "12",
+    "sessao_retencao": "50",
     # Contador de acessos ao sistema (incrementado a cada login bem-sucedido)
     "contador_acessos_total": "0",
     "contador_acessos_inicio": "",

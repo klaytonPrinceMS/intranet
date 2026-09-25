@@ -148,7 +148,7 @@ Oito melhorias na tela de usuários (`mod_gest_cad_usuario/telas.py`), todas na 
 |:---|:---|:---|:---|:---|
 | gest_cad_usuario | Sem `CrudBase` completo; `sqlite_master` em seed/migração; `GROUP_CONCAT` agregado | `mod_gest_cad_usuario/bd_manipulador.py:146`, `:181` (`sqlite_master`) · `:301-315` (`GROUP_CONCAT`) | Migrar para `CrudBase` + `conexao("usuarios")`; `_tabela_existe()` interno; manter `GROUP_CONCAT` (proxy traduz para `STRING_AGG`, só teste paridade) | Médio (seed `master`/`qacomum`/`qamaster` + troca forçada) |
 
-Detalhe consolidado em [Plano WAL + Paridade](../registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
 
 ## Correção aplicada 24/09/2026 — WAL + paridade SQLite↔PostgreSQL
 

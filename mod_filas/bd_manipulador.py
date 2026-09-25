@@ -449,8 +449,10 @@ def _ator_eh_dono_ou_admin(cur, fila_id: int, ator: str) -> tuple[bool, str]:
     # Admin geral: melhor esforço via gestão de usuários (mesma fonte já usada abaixo).
     if ator_limpo:
         try:
-            from mod_gest_cad_usuario.bd_manipulador import obter_usuario as _obter_ator
-            info = _obter_ator(ator_limpo)
+            # Admin geral via API pública do núcleo (AGENTS.md §2: Filas não
+            # importa a Gestão de Usuários — quem costura é o mod_intranet).
+            from mod_intranet import integracoes
+            info = integracoes.obter_usuario_gestao(ator_limpo)
             if info:
                 seq = info if isinstance(info, (list, tuple)) else [info]
                 texto = " ".join(str(c or "") for c in seq).lower()
@@ -476,8 +478,10 @@ def liberar_acesso(fila_id: int, user_nome: str, ator: str = ""):
     if not user_nome:
         return False, "Usuário é obrigatório"
     try:
-        from mod_gest_cad_usuario.bd_manipulador import obter_usuario as _obter
-        if not _obter(user_nome):
+        # Cadastro via API pública do núcleo (AGENTS.md §2: Filas não importa
+        # a Gestão de Usuários — quem costura é o mod_intranet).
+        from mod_intranet import integracoes
+        if not integracoes.obter_usuario_gestao(user_nome):
             return False, f"Usuário '{user_nome}' não cadastrado"
     except Exception:
         pass
@@ -1372,23 +1376,34 @@ def importar_nomes(fila_id: int, texto: str, ator: str = "", substituir: bool = 
 
 
 def listar_nomes(fila_id: int, somente_pendentes: bool = False):
+    """EN: Queue name list; `somente_pendentes` filters the not-yet-called.
+
+    PT-BR: Lista de nomes da fila; `somente_pendentes` filtra os ainda não
+    chamados. Ordena sempre por `ordem` CRESCENTE — é a ordem de fala exibida
+    ao usuário e a mesma que `proximo_da_etapa` respeita (antes vinha `DESC`,
+    invertendo a lista na tela)."""
     conn = get_connection()
     try:
         cur = conn.cursor()
         if somente_pendentes:
-            cur.execute("SELECT id, nome, ordem, usado, prioridade, manchester, etapa FROM tb_fila_nomes WHERE fila_id=? AND usado=0 ORDER BY ordem DESC", (fila_id,))
+            cur.execute("SELECT id, nome, ordem, usado, prioridade, manchester, etapa FROM tb_fila_nomes WHERE fila_id=? AND usado=0 ORDER BY ordem", (fila_id,))
         else:
-            cur.execute("SELECT id, nome, ordem, usado, prioridade, manchester, etapa FROM tb_fila_nomes WHERE fila_id=? ORDER BY ordem DESC", (fila_id,))
+            cur.execute("SELECT id, nome, ordem, usado, prioridade, manchester, etapa FROM tb_fila_nomes WHERE fila_id=? ORDER BY ordem", (fila_id,))
         return cur.fetchall()
     finally:
         conn.close()
 
 
 def contar_nomes_pendentes(fila_id: int) -> int:
+    """EN: Counts names still waiting in the queue (not yet called).
+
+    PT-BR: Conta os nomes AINDA NA FILA (não chamados). `usado=0` é pendente —
+    `gerar_senha` marca `usado=1` ao chamar (linhas 972/1196). Antes contava
+    `usado=1` (os já chamados), mostrando número errado na tela da fila."""
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM tb_fila_nomes WHERE fila_id=? AND usado=1", (fila_id,))
+        cur.execute("SELECT COUNT(*) FROM tb_fila_nomes WHERE fila_id=? AND usado=0", (fila_id,))
         return cur.fetchone()[0]
     finally:
         conn.close()

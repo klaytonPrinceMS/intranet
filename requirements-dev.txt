@@ -15,6 +15,10 @@ graphifyy[sql,postgres,pdf]>=0.9.0
 pytest>=8.0
 pytest-playwright>=0.9.0
 pytest-cov>=7.0.0
+# pytest-env: habilita a chave `env` do pytest.ini (PYTHONUTF8=1). Sem o
+# plugin a opção é ignorada e o pytest avisa "Unknown config option: env" —
+# perdendo a proteção de UTF-8 que o projeto precisa (acentos PT-BR).
+pytest-env>=1.1.0
 faker>=22.0
 
 # --- SAST (Static Application Security Testing) ---

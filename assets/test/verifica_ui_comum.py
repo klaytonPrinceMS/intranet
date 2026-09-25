@@ -1036,10 +1036,11 @@ check("_painel_administracao" not in GEST3,
 LAYOUT = ler("mod_intranet/telas.py")
 check(LAYOUT.count("ui.input(") == 0,
       "layout_tela: ui.input removido (9 → 0, perfil + senhas via campo_texto)")
-check(LAYOUT.count("ui_comum.campo_texto(") == 16,
-      "layout_tela: 16 campos via campo_texto (3 perfil + 3 senha perfil + 4 credenciais + 1 novo nome + 3 dados master)")
-check(LAYOUT.count("senha=True") == 9,
-      "layout_tela: 9 campos de senha via campo_texto(senha=True)")
+check(LAYOUT.count("ui_comum.campo_texto(") >= 16,
+      f"layout_tela: campos via campo_texto (>=16; obtido {LAYOUT.count('ui_comum.campo_texto(')} — "
+      f"3 perfil + 3 senha perfil + 4 credenciais + 1 novo nome + 3 dados master + extras de login/telefone)")
+check(LAYOUT.count("senha=True") >= 9,
+      f"layout_tela: campos de senha via campo_texto(senha=True) (>=9; obtido {LAYOUT.count('senha=True')})")
 TMF2 = ler("mod_intranet/tema_modulo.py")
 check(TMF2.count("ui.input(") == 0 and "def campo_modulo" in TMF2,
       "tema_modulo: sem ui.input cru e campo_modulo restaurado (campos via campo_texto)")

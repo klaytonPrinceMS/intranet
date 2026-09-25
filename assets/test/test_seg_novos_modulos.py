@@ -371,7 +371,13 @@ check(not missing_200, f"todos setores ORGANOGRAMA_BASE com 200 ({'ok' if not mi
 SRC_SOL = ler("mod_solicita_impressao/bd_manipulador.py")
 check('sets.append("nome=?")' in SRC_SOL, "solicita editar_secretaria usa allowlist nome=? (B608 falso-positivo)")
 check('sets.append("cota_paginas_mensal=?")' in SRC_SOL, "solicita cota via placeholder ? (sem SQLi)")
-check("ORGANOGRAMA_BASE" in SRC_SOL and "1000" in SRC_SOL and "200" in SRC_SOL, "solicita seed referencia ORGANOGRAMA_BASE 1000/200")
+# A semente do organograma chega pela fachada pública do núcleo
+# (`integracoes.obter_organograma_base()`) desde 25/09/2026 — o módulo não
+# importa mais `mod_lista_telefonica` direto (AGENTS.md §2). Aceita as duas
+# formas para o teste não acoplar à forma do acoplamento.
+check(("obter_organograma_base" in SRC_SOL or "ORGANOGRAMA_BASE" in SRC_SOL)
+      and "1000" in SRC_SOL and "200" in SRC_SOL,
+      "solicita seed referencia organograma (fachada ou constante) com cotas 1000/200")
 # verificar _sanitizar_nome do solicita
 check("def _sanitizar_nome" in SRC_SOL, "_sanitizar_nome presente em solicita")
 # testar sanitizar
@@ -688,8 +694,15 @@ except Exception as e:
 # gitleaks: verifica que graphify-out/cache e site/ são falsos-positivos
 # e que master:master em verify-credentials.sh é credencial padrão grafana (não segredo real)
 try:
-    leaks_out = subprocess.run([os.path.expanduser("~/.local/bin/gitleaks"), "detect", "--source", ".", "--no-git", "-v"],
-                               capture_output=True, text=True, timeout=30, cwd=RAIZ)
+    # Resolve o binário por `shutil.which` (PATH) com fallback para o caminho
+    # de instalação do requirements-dev.txt — antes o caminho era hardcoded e o
+    # teste falhava em máquina com o gitleaks em /usr/local/bin.
+    import shutil as _shutil
+    _gitleaks = _shutil.which("gitleaks") or os.path.expanduser("~/.local/bin/gitleaks")
+    if not os.path.exists(_gitleaks):
+        raise FileNotFoundError(f"gitleaks não encontrado (PATH nem {_gitleaks})")
+    leaks_out = subprocess.run([_gitleaks, "detect", "--source", ".", "--no-git", "-v"],
+                               capture_output=True, text=True, timeout=60, cwd=RAIZ)
     out = (leaks_out.stdout or "") + (leaks_out.stderr or "")
     # deve conter no máximo os 3 já conhecidos (verify-credentials + 2 cache)
     # e não deve vazar segredo real fora desses

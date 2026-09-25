@@ -648,10 +648,43 @@ if __name__ == "__main__":
     except Exception as ex:
         _check(False, f"_fts_query_prefixada falhou: {ex}", cont)
     try:
-        from mod_renomear_empenho.bd_manipulador import pesquisar_levantamento, levantar_arquivos
-        levantar_arquivos("tester")  # pré-condição: massa do levantamento
-        hits = pesquisar_levantamento("4", limite=10) or []
-        _check(len(hits) > 0, f"backend levantamento('4')={len(hits)} hits", cont)
+        import shutil as _sh, os as _os, tempfile as _tf
+        from mod_renomear_empenho import bd_manipulador as _bd
+        # Isola banco + pasta monitorada em temp (mesmo padrão do teste de
+        # renomear_manual acima): a pasta real `mod_renomear_empenho/doc` só tem
+        # .gitkeep, então `levantar_arquivos` não achava nada e o teste falhava
+        # por falta de massa, não por bug de código.
+        _tmp = _tf.mkdtemp(prefix="qa_levant_")
+        _orig_path = _bd.DB_EMPENHO_PATH
+        _orig_pasta = _bd.PASTA_MONITORADA
+        _orig_fn = _bd.pastas_monitoradas
+        try:
+            _bd.DB_EMPENHO_PATH = _os.path.join(_tmp, "db_mod_renomear_empenho.db")
+            import mod_intranet.repositorio as _repo
+            _repo.MODULOS_BD["empenhos"] = _bd.DB_EMPENHO_PATH
+            _bd.PASTA_MONITORADA = _os.path.join(_tmp, "doc")
+            _bd._PASTA_MONITORADA_PADRAO = _bd.PASTA_MONITORADA
+            _os.makedirs(_bd.PASTA_MONITORADA, exist_ok=True)
+            _bd.pastas_monitoradas = lambda: [_bd.PASTA_MONITORADA]
+            _bd.init_db_empenho()
+            # massa com "4" no nome (DOC_0201 / EC_24 / EE_9570 / EG_89)
+            _nomes = 0
+            for _arq in ("DOC_0201.pdf", "EC_24.pdf", "EE_9570.pdf", "EG_89.pdf"):
+                _src = _os.path.join(RAIZ, "assets", "test", "pdf", _arq)
+                if _os.path.exists(_src):
+                    _sh.copy(_src, _os.path.join(_bd.PASTA_MONITORADA, _arq))
+                    _nomes += 1
+            _bd.levantar_arquivos("tester")  # pré-condição: massa do levantamento
+            hits = _bd.pesquisar_levantamento("4", limite=10) or []
+            _check(_nomes > 0, f"massa semeada no levantamento ({_nomes} arquivo(s))", cont)
+            _check(len(hits) > 0, f"backend levantamento('4')={len(hits)} hits", cont)
+        finally:
+            _bd.DB_EMPENHO_PATH = _orig_path
+            _bd.PASTA_MONITORADA = _orig_pasta
+            _bd.pastas_monitoradas = _orig_fn
+            import mod_intranet.repositorio as _repo2
+            _repo2.MODULOS_BD["empenhos"] = _orig_path
+            _sh.rmtree(_tmp, ignore_errors=True)
     except Exception as ex:
         _check(False, f"backend levantamento: {ex}", cont)
     print(f"RESULTADO: {cont['ok']}/{cont['total']} verificações OK")

@@ -684,8 +684,10 @@ def mostrar_administracao(usuario_logado: str = ""):
                     try:
                         termo = (e.value or "").strip() if hasattr(e, 'value') else str(e or "").strip()
                         try:
-                            from mod_gest_cad_usuario import bd_manipulador as gest
-                            todos = gest.listar_usuarios()
+                            # Cadastro via API pública do núcleo (AGENTS.md §2: a
+                            # Lista Telefônica não importa a Gestão de Usuários).
+                            from mod_intranet import integracoes
+                            todos = integracoes.listar_usuarios_gestao()
                             # filtra por nome, login, e-mail, completo (sem acentos, case-insensitive)
                             import unicodedata, re
                             def _norm(s):
@@ -738,8 +740,10 @@ def mostrar_administracao(usuario_logado: str = ""):
                         if sel_user.value:
                             # busca nome completo
                             try:
-                                from mod_gest_cad_usuario import bd_manipulador as gest
-                                row = gest.obter_usuario(sel_user.value)
+                                # Cadastro via API pública do núcleo (AGENTS.md §2:
+                                # a Lista Telefônica não importa a Gestão de Usuários).
+                                from mod_intranet import integracoes
+                                row = integracoes.obter_usuario_gestao(sel_user.value)
                                 if row:
                                     # row[9] é nome completo, row[4] é o telefone
                                     inp_nome.value = row[9] or sel_user.value
