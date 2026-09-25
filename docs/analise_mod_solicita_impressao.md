@@ -6,7 +6,7 @@
 
 # Solicitação de Impressão — `mod_solicita_impressao`
 
-> Módulo de solicitação de impressão: rota `/solicita-impressao` (chave `solicita_impressao`) · banco próprio `db_mod_solicita_impressao.db` · envio de PDF, contagem de páginas, cotas mensais hierárquicas (1000/200 via `ORGANOGRAMA_BASE` do `mod_lista_telefonica`), impressão dual, auditoria central.
+> Módulo de solicitação de impressão: rota `/solicita-impressao` (chave `solicita_impressao`) · banco próprio `db_mod_solicita_impressao.db` · envio de PDF, contagem de páginas, cotas mensais hierárquicas (1000 secretaria / 200 setor, via organograma **compartilhado** obtido pela fachada `mod_intranet.integracoes.obter_organograma_base()`), impressão dual com marca d'água, auditoria central.
 >
 > **Versionamento**: `versao_modulo:solicita_impressao = 1.0.260913` (seed em `bd_conexao.init_db()` — chave `tb_config` central, formato `1.0.AAMMDD`, exibida no rodapé em `/solicita-impressao` junto à versão global). Duplicada também em `tb_configuracoes_modulo` (`versao_modulo`) do banco do módulo. Atualizar a cada alteração do módulo.
 
@@ -49,8 +49,8 @@ com outros módulos).
   **grupo_id** (agrupamento "1 pedido por envio"; criado via ALTER idempotente +
   backfill `grupo_id = id` para registros sem grupo + índice `idx_sol_grupo` —
   `bd_manipulador.py:278-287`).
-- **`tb_secretarias`**: id, nome, sigla, cota_paginas_mensal (**1000 padrão via `ORGANOGRAMA_BASE` do `mod_lista_telefonica`**), limite_pedidos_abertos (20 padrão), ativo.
-- **`tb_setores`**: id, nome, secretaria_id FK, cota_paginas_mensal (**200 padrão via `ORGANOGRAMA_BASE` — subsetores achatados como setores**), limite_pedidos_abertos (10 padrão), ativo.
+- **`tb_secretarias`**: id, nome, sigla, cota_paginas_mensal (**1000 padrão**, derivado do organograma compartilhado via `mod_intranet.integracoes.obter_organograma_base()` — ver "Isolamento modular"), limite_pedidos_abertos (20 padrão), ativo.
+- **`tb_setores`**: id, nome, secretaria_id FK, cota_paginas_mensal (**200 padrão** — subsetores achatados como setores), limite_pedidos_abertos (10 padrão), ativo.
 - **`tb_responsaveis_autorizacao`**: id, user_nome, secretaria_id FK, setor_id FK (opcional), ativo.
 - **`tb_cotas_impressao`**: id, secretaria_id, setor_id (`0` sentinela para "sem setor" — SQLite trata NULL como distinto em UNIQUE, sem FK em `setor_id` por isso), cota_paginas,
   mes_referencia (YYYY-MM, único por vínculo), ativo.
@@ -74,7 +74,9 @@ Exemplos: 10 pág × 3 cóp × A4 frente = 30; A4 frente/verso = 60; A3 frente =
 
 ## Cotas (mensal, hierárquicas)
 
-- Cada **secretaria** tem cota máxima mensal (total do mês) — **1000 cópias padrão do `ORGANOGRAMA_BASE` do `mod_lista_telefonica`** (semeada no `init_db` + migração `UPDATE` para bancos existentes — `bd_manipulador.py:382-463`).
+- Cada **secretaria** tem cota máxima mensal (total do mês) — **1000 cópias padrão**, derivadas
+  do **organograma compartilhado** obtido por `mod_intranet.integracoes.obter_organograma_base()`
+  (semeado no `init_db`; **nunca** sobrescrito por `UPDATE` depois de existir — `bd_manipulador.py:401-518`).
 - Cada **setor** pode ter cota própria (**200 cópias padrão** — subsetores achatados como setores); se não tiver, usa o **pool da secretaria**.
 - Ao **exceder**: o envio é **permitido**, porém a solicitação fica marcada como
   `excedente_cota` e a critério do autorizador/admin imprimir ou não.
@@ -263,13 +265,233 @@ páginas — gerada por `gerar_nome_arquivo` (`bd_manipulador.py:1038-1070`), qu
   (`autorizar_grupo`, `recusar_grupo`, `imprimir_grupo`, `recuar_grupo`, `cancelar_grupo`) são
   auditadas por `grupo_id`.
 
+## Isolamento modular — organograma pela fachada do núcleo (25/09/2026, commit `624c9d5`)
+
+### A violação
+
+`bd_manipulador.init_db()` semeava as cotas a partir do organograma **importando o outro módulo
+diretamente**:
+
+```python
+try:
+    from mod_lista_telefonica.bd_manipulador import ORGANOGRAMA_BASE as _ORG_BASE
+except Exception:
+    ...
+```
+
+Isso quebrava o AGENTS.md §2 ("**Isolamento total** … nunca faça cross-query entre bancos") de três
+maneiras, e todas são estruturais, não cosméticas:
+
+| Dimensão | Por que o import direto é errado |
+|:---|:---|
+| **Dependência** | `mod_solicita_impressao` passa a **não iniciar** (ou a iniciar com organograma vazio) se o `mod_lista_telefonica` falhar no import, sumir do disco ou for desativado. O módulo de impressão não deveria depender de lista telefônica para semear cota. |
+| **Ciclo de importação** | `main.py` carrega os módulos; um import de topo entre módulos fecha ciclo de import (`A → B → A`) e o sintoma é `ImportError` intermitente **dependente da ordem de carga** — a classe de bug mais difícil de diagnosticar. |
+| **Coerência de dados** | O organograma é **seed de um módulo, consumido por outro**: quem altera a estrutura do organograma (departamento novo) tem de lembrar de semear em dois lugares, e o `mod_lista_telefonica` não tem nenhuma visibilidade de quem consome — acoplamento invisível. |
+| **Portabilidade (PyInstaller)** | Na conversão `main.py → executável`, um import entre módulos passa a ser dependência de *hidden import* — falha só em produção. |
+
+### A correção — a fachada `mod_intranet.integracoes`
+
+A costura passou para o **núcleo**, que é quem pode conhecer todos os módulos:
+
+```python
+try:
+    # Organograma via API pública do núcleo (AGENTS.md §2: Solicitação
+    # não importa a Lista Telefônica — quem costura é o mod_intranet).
+    from mod_intranet import integracoes
+    _ORG_BASE = integracoes.obter_organograma_base()
+except Exception:
+    _ORG_BASE = None
+if not _ORG_BASE:
+    # Fallback local: módulo ausente ou organograma vazio — a semeadura
+    # das cotas continua funcionando com o mínimo de secretarias.
+    _ORG_BASE = [
+        ("Gabinete", []), ("Administração", []), ("Finanças", []),
+        ("Saúde", []), ("Educação", []), ("Obras e Infraestrutura", []),
+    ]
+```
+
+Três propriedades deliberadas:
+
+1. **Fachada, não reexport** — `mod_intranet/integracoes.py` é a **costura pública única**
+   (`obter_usuario_gestao`, `listar_usuarios_gestao`, `agregador_habilitado`,
+   `listar_noticias_para_tv`, `limpar_noticias_censuradas`, `obter_organograma_base`,
+   `modulo_habilitado`). O módulo de negócio **fala com o núcleo**; o núcleo possui o
+   acoplamento. Isso mantém a direção da dependência sempre apontando para `mod_intranet`.
+2. **Import lazy dentro da função** — proposital: um import de topo de módulo de negócio dentro
+   de `integracoes.py` fecharia ciclo com `main.py` (documentado na própria docstring do arquivo).
+3. **Fail-soft por construção** — `obter_organograma_base()` faz o import interno dentro de
+   `try/except`, e devolve `None` com `logger.warning` se o módulo de destino falhar. O chamador
+   **nunca** propaga exceção de terceiro.
+
+### O fallback local de 6 secretarias — e por que ele é necessário
+
+`|not _ORG_BASE|` (e não só `except`) é a guarda real: cobre os **dois** modos de falha — a
+importação que **lança** e o módulo que **responde vazio**. Sem o fallback, um
+`mod_lista_telefonica` ausente deixaria `tb_secretarias` **vazia**, e aí o módulo de impressão
+iniciaria sem nenhuma secretaria — a tela de nova solicitação apareceria sem crédito disponível
+para o usuário, sem erro visível.
+
+O mínimo semeado é **6 secretarias com lista de setores vazia** (`[]`):
+
+| Secretaria | Sigla derivada | Cota | Limite de pedidos abertos |
+|:---|:---|---:|---:|
+| Gabinete | `SEC_GABI` | **1000** | 20 |
+| Administração | `SEC_ADMI` | **1000** | 20 |
+| Finanças | `SEC_FINA` | **1000** | 20 |
+| Saúde | `SEC_SAUD` | **1000** | 20 |
+| Educação | `SEC_EDUC` | **1000** | 20 |
+| Obras e Infraestrutura | `SEC_OBRA` | **1000** | 20 |
+
+`_sigla_sec(nome)` normaliza em NFKD, tira acento, `lower()`, filtra alfanuméricos e corta em 4
+chars (`s[:4].upper()`, ou `ljust(3,"X")` se mais curto). Como **os setores ficam vazios**, o
+fallback garante o nível 1 da hierarquia de cotas (secretaria) e **deixa o nível 2 (setor) a
+cargo do admin**, que pode criá-los em Administração → Setores com cota própria. É
+deliberadamente o menor organograma que ainda permite o sistema funcionar.
+
+!!! warning "A fonte das cotas 1000 / 200 é o organograma **compartilhado**"
+    Com a fachada, quem manda no organograma é o **`mod_lista_telefonica`** — o mesmo
+    organograma que popula a lista telefônica. Isso é intencional (um organograma oficial, uma
+    fonte), mas significa que **cadastrar um departamento novo na Lista Telefônica não cria
+    automaticamente o setor de impressão correspondente**. Os dois bancos são independentes por
+    desenho (AGENTS.md §4.1, um database por módulo): o `mod_solicita_impressao` semeia uma cópia
+    da estrutura no **seu** `tb_setores` no `init_db`, e a partir daí o admin do módulo é
+    soberano.
+
+### Cotas 1000 (secretaria) / 200 (setor) — como a semeadura converte o organograma
+
+`ORGANOGRAMA_BASE` tem **3 níveis**; o banco de impressão tem **2**. A conversão acontece em
+`init_db()` (`bd_manipulador.py:443-518`):
+
+```python
+for _sec_nome, _setores in _ORG_BASE:                     # nível 1 → tb_secretarias
+    _SECRETARIAS_PADRAO.append((_sec_nome, _sigla_sec(_sec_nome), 1000, 20))
+
+for _sec_nome, _setores in _ORG_BASE:                     # níveis 2 e 3 → tb_setores
+    for _set_nome, _subsetores in _setores:
+        _SETORES_PADRAO.append((_set_nome, _sec_nome, 200, 10))
+        for _sub in _subsetores:                          # ← subsetor ACHATADO como setor
+            _SETORES_PADRAO.append((_sub, _sec_nome, 200, 10))
+```
+
+O **subsetor é achatado (flattened) no nível de setor** — não existe coluna de subsetor em
+`tb_setores`. Isso é a simplificação que o modelo de cota exige: a cota é sempre
+`secretaria → setor`, e um subsetor é, para fins de impressão, um setor. Todos os setores e
+subsetores recebem a **mesma cota de 200** e o **mesmo limite de 10 pedidos abertos**.
+
+!!! danger "O seed NUNCA faz `UPDATE` de cota — regra explícita de devSecOps/Postgres"
+    A semeadura é guardada por `COUNT(*) == 0` em `tb_secretarias` **e** em `tb_setores`, e cada
+    inserção é precedida de `SELECT id … WHERE sigla=? OR nome=?` (ou `nome=? AND secretaria_id=?`).
+    O comentário no código é literal: *"NUNCA forçar cotas padrão via `UPDATE` (1000/200): ajuste
+    do admin é soberano."* Sem isso, **todo restart do servidor sobrescreveria a cota que o admin
+    acabou de ajustar** — o sintoma seria o admin editar, o servidor reiniciar e a cota voltar
+    sozinha. Consequência: **bancos já existentes mantêm os valores**; só banco **novo** (ou
+    deliberadamente esvaziado) recebe 1000/200.
+
+## Referência funcional — envio, contagem, cotas, autorização, impressão e cobrança
+
+### Envio de PDF (rascunho → pedido)
+
+1. **Até 10 arquivos por envio** (`MAX_ARQ = 10`), só `.pdf`; qualquer outra extensão é recusada
+   com o nome na lista.
+2. Cada arquivo **sobe automaticamente** ao selecionar e vira **rascunho**:
+   `YYYYMMDD_HHMMSS_<usuario>_<uuid>_rascunho.pdf`, em
+   `mod_solicita_impressao/solicitacaoImpressao/`, com expiração
+   `tempo_expira_rascunho_min` (**padrão 10 min**, job `cleanup_solicita` a cada 1 min remove o
+   não-confirmado). Botão "Remover selecionados" descarta antes.
+3. Ao **"Enviar solicitação"**, os arquivos são renomeados para o padrão final
+   (ver "Nomenclatura do arquivo") e as linhas ganham `grupo_id` comum.
+
+### 1 pedido por envio (grupo)
+
+| Aspecto | Comportamento |
+|:---|:---|
+| Modelo | A reformulação de **07/09** eliminou o "1 pedido por arquivo": até 10 PDFs confirmados de uma vez = **um único pedido** com **status único** |
+| Coluna | `grupo_id` (ALTER idempotente + backfill `grupo_id = id` para registros antigos + índice `idx_sol_grupo`); o índice **não** é `UNIQUE` porque vários arquivos partilham o grupo |
+| Ciclo de vida | `autorizar_grupo` / `recusar_grupo` / `imprimir_grupo` / `recuar_grupo` / `cancelar_grupo` atuam **por `grupo_id`** — um clique, todos os arquivos |
+| Cota | Descontada **uma vez por grupo**, pelo total de páginas contabilizadas — na secretaria e no setor, se houver |
+| Arquivos | Apagados do servidor **imediatamente** após a confirmação da impressão |
+| Autorização | **Auto-autorização removida**: sem responsável cadastrado, o grupo fica `pendente` e o **admin autoriza e imprime** |
+| Contagem em relatório | `COUNT(DISTINCT s.grupo_id)` — "pedidos" no relatório é **grupo**, não linha de `tb_solicitacoes` |
+
+### Contagem de páginas e fórmula
+
+`contar_paginas_pdf` usa **PyMuPDF com fallback `pdfplumber`**; PDF corrompido ou digitalizado
+como imagem pode devolver **0**, e isso **bloqueia o envio** (falha barulhenta, não cota zerada
+silenciosa). A contabilização é:
+
+```
+paginas_contabilizadas = qtd_paginas × qtd_copias × fator_papel × fator_frente_verso
+  fator_papel:        A4 = 1,  A3 = 2
+  fator_frente_verso: não = 1, sim = 2
+```
+
+Ex.: 10 pág × 3 cóp × A4 frente = 30; A4 frente/verso = 60; A3 frente = 60; A3 frente/verso = 120.
+
+### Cotas mensais e limite de pedidos abertos
+
+- **Cota mensal** por secretaria (1000) e por setor (200); setor sem cota própria usa o **pool
+  da secretaria**. Ao exceder, o envio **é permitido** e o pedido fica `excedente_cota` — a
+  decisão de imprimir ou não é do autorizador/admin.
+- Consumo descontado **só na impressão efetiva**; `mes_referencia` (`YYYY-MM`) faz o reset
+  automático no dia 1º; admin pode editar cota e resetar consumo do mês.
+- Barra de progresso no painel é **sem numeral** (não expõe consumo entre secretarias): verde
+  <50%, amarelo 50–80%, laranja 80–100%, vermelho >100%.
+- **Limite de pedidos abertos** (`limite_pedidos_abertos`, 20 secretaria / 10 setor, **0 = sem
+  limite**): conta status `pendente`, `aguardando_autorizacao`, `autorizado` e `excedente_cota`.
+  Atingido o teto, `criar_solicitacao` e `confirmar_rascunho` **bloqueiam** com mensagem
+  orientando a imprimir/cancelar; imprimir, recusar ou cancelar **libera a vaga** (por isso
+  "elástico").
+
+### Autorização
+
+- **Responsáveis** (`tb_responsaveis_autorizacao`): admin vincula um usuário **cadastrado** (via
+  seletor buscável do `mod_gest_cad_usuario`) a uma secretaria/setor. A checagem é por
+  **tabela**, não por perfil — logo a permissão **pode ser concedida a `comum`**, que passa a ver
+  a aba **Autorização** ao logar.
+- `autorizar_solicitacao` grava `autorizado_por`/`data_autorizacao`; `recusar_solicitacao` grava
+  `motivo_recusa` (visível ao solicitante, que pode **Reenviar** — volta a
+  `aguardando_autorizacao`/`pendente` com os dados de autorização limpos).
+- `eh_responsavel_autorizacao` + `_pode_autorizar` + `tem_responsavel_para` formam o portão;
+  `_eh_admin_do_modulo` é a exceção de emergência.
+
+### Impressão com marca d'água
+
+- **Dual mode:** "Imprimir direto" (com impressora padrão A4/A3 configurada) abre o PDF preparado
+  em nova aba via `window.printSolicitacao(id)`; "Baixar para impressão" entrega o PDF ao
+  Ctrl+P. O botão **"Imprimir" com seletor** abre diálogo com as impressoras de `tb_impressoras`
+  (sugerindo a padrão conforme o papel) — mas **não marca como impresso**: o desconto de cota e a
+  remoção dos arquivos só acontecem em **"Confirmar impressão"** (`imprimir_grupo`). Essa
+  separação é o que impede a UI de declarar um impresso que o usuário cancelou no diálogo do SO.
+- **Marca d'água** opcional e personalizável, aplicada no PDF pronto: texto com placeholders
+  `{data}`, `{usuario}`, `{id}`, `{secretaria}`, `{setor}`, `{solicitante}`; posição, opacidade,
+  fonte, cor e rotação em Configurações. Desativada → PDF sai limpo.
+- As datas vêm do **servidor** (`mod_intranet/hora_servidor.py` + `datetime('now','localtime')`),
+  nunca do navegador — inclusive dentro da marca d'água.
+
+### Relatório de cobrança
+
+Sub-aba **Relatórios** da Administração, com atalhos de prazo (**Este mês**, **Mês anterior**,
+**Últimos 6 meses**, **Ano atual**) ou **período personalizado** no calendário.
+`relatorio_impressao(data_inicio, data_fim)` agrega só `status='impresso'` no período (por
+`data_impressao`), com totais de **cópias** e **páginas contabilizadas**, separando **color/PB**
+pela coluna `cor`, e devolve 5 blocos: `geral`, `por_secretaria`, `por_setor`, `por_autorizador`,
+`por_impressor`. É um relatório de **cobrança/repasse** (quem consumiu, quem liberou, quem
+imprimiu), não um log técnico — e é por isso que os números são **cópias e páginas
+contabilizadas**, e não arquivos.
+
 ## Integrações com o núcleo
 
 - Bootstrap cria o banco (`inicializar_bancos` → `init_solicita`).
 - Módulo nativo em `tb_modulos` (seed `MODULOS_SISTEMA` em `autenticacao.py`):
   chave `solicita_impressao`, ícone `print`, rota `/solicita-impressao`.
 - Permissão por módulo em `tb_acesso_usuario` (papel `comum`/`administrador`).
+- **`mod_intranet.integracoes`** (fachada pública, import **lazy**): `obter_organograma_base()` é a
+  **única** porta de entrada para o organograma do `mod_lista_telefonica` — ver "Isolamento
+  modular". Nenhum outro `mod_*` importa `mod_lista_telefonica` diretamente.
+- **`mod_gest_cad_usuario`** é alcançado pelo seletor buscável de responsáveis (aba Autorização)
+  — também via núcleo, nunca por import direto de módulo de negócio.
 - Auditoria via `audit_log(usuario, 'solicita_impressao', acao, desc, hash)`.
+- `mod_intranet.hora_servidor` — fonte da verdade de **todas** as datas do módulo.
 - JS de impressão servido por rota `/solicita-impressao/src/impressao.js` (arquivo em
   `mod_solicita_impressao/src/`).
 - Documentação disponível em `/documentacao` (build MkDocs do `docs/analise_mod_solicita_impressao.md`).
@@ -280,6 +502,13 @@ páginas — gerada por `gerar_nome_arquivo` (`bd_manipulador.py:1038-1070`), qu
   (`navigator.getPrinters`). O fallback é sempre o diálogo nativo do SO via `window.print()`.
 - Contagem de páginas usa PyMuPDF com fallback `pdfplumber`; PDFs corrompidos/imagem podem retornar 0 (bloqueia envio).
 - Cotas são mensais; reset manual ou automático (dia 1) — não há notificação por e-mail (sem SMTP).
+- **Cota não é recalculada por refresh**: o `UPDATE` de cotas 1000/200 é proibido de propósito.
+  Consequência operacional: **adicionar secretaria/setor no `mod_lista_telefonica` NÃO cria o
+  setor de impressão** — o admin precisa criar em Administração → Setores, ou esvaziar
+  `tb_setores` para forçar a semeadura (e perder os ajustes de cota existentes).
+- **O fallback de 6 secretarias não tem setores**: se o `mod_lista_telefonica` estiver ausente,
+  o sistema sobe com as 6 secretarias de cota 1000 e **nenhum setor** — os setores precisam ser
+  cadastrados manualmente pelo admin.
 
 ## Hora do servidor (fonte da verdade de data/hora)
 

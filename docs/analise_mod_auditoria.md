@@ -1,16 +1,19 @@
 # Auditoria — `mod_auditoria`
 
-> Audit module: route `/auditoria` (key `auditoria`) · EXCLUSIVE database `db_mod_auditoria.db` with ONE TABLE PER PRODUCER MODULE (`tb_auditoria_<modulo>`) · read-only viewer with dynamic table navigation, filters by user/module/action/time/date range, server-side pagination, CSV export, per-auditor column selection/ordering, Grafana observability tab.
+> Audit module: route `/auditoria` (key `auditoria`) · EXCLUSIVE database `db_mod_auditoria.db` with ONE TABLE PER PRODUCER MODULE (`tb_auditoria_<modulo>`) · single writer (`audit_log`) reached through a decoupled hook · write cache + 3× commit retry · meta-first table discovery with `information_schema`/`sqlite_master` fallback · `to_char` vs `strftime` helpers · read-only viewer with dynamic table navigation, filters by user/module/action/time/date range, server-side pagination, CSV export, per-auditor column selection/ordering, Grafana observability tab.
 
 ---
 
 # Auditoria — `mod_auditoria`
 
-> Módulo de auditoria: rota `/auditoria` (chave `auditoria`) · **banco EXCLUSIVO** `db_mod_auditoria.db` com **UMA TABELA POR MÓDULO PRODUTOR** (`tb_auditoria_<modulo>`) · visualizador somente-leitura com navegação dinâmica por tabela, filtros por usuário/módulo/ação/hora/intervalo de datas, paginação server-side, exportação CSV, seleção/ordem de campos por auditor e aba de Observabilidade (Grafana).
+> Módulo de auditoria: rota `/auditoria` (chave `auditoria`) · **banco EXCLUSIVO** `db_mod_auditoria.db` com **UMA TABELA POR MÓDULO PRODUTOR** (`tb_auditoria_<modulo>`) · escritor **único** (`audit_log`) alcançado por **gancho desacoplado** · cache de escrita + retry 3× no commit · descoberta de tabela pela meta com fallback `information_schema`/`sqlite_master` · helpers `to_char` vs `strftime` · visualizador somente-leitura com navegação dinâmica por tabela, filtros por usuário/módulo/ação/hora/intervalo de datas, paginação server-side, exportação CSV, seleção/ordem de campos por auditor e aba de Observabilidade (Grafana).
 
 ## Propósito
 
 Banco e visualizador da trilha de auditoria LGPD. A **escrita** é feita pelos demais módulos via `audit_log` (núcleo) → `registrar_auditoria` (este módulo), que grava na tabela do módulo produtor (`tb_auditoria_<modulo>`, criada automaticamente). A **leitura** é feita pela tela `/auditoria` (exclusiva do `administrador_geral`), com filtros, paginação server-side e exportação CSV. As preferências de coluna e as configurações vão para `tb_config` central.
+
+Anatomia completa da escrita (caminho do `audit_log`, gancho desacoplado, cache de escrita, retry 3× no commit, descoberta de tabela, helpers `to_char`/`strftime` e as ações em background com ator `sistema`) na seção
+["Anatomia da escrita na trilha (25/09/2026)"](#anatomia-da-escrita-na-trilha-25092026).
 
 ## Banco exclusivo (`db_mod_auditoria.db`, WAL)
 
@@ -36,7 +39,7 @@ Criador vigente: `init_db_auditoria()` em `bd_manipulador.py` (executado no impo
 
 - **Acesso exclusivo ao `administrador_geral`** — dupla camada: bloqueio interno + exigência da chave `auditoria` em `pagina_restrita`. Tentativa sem permissão gera `acesso_negado` na trilha (choke point único em `telas.pagina_restrita`).
 - **Navegação dinâmica por tabela**: select "Visualizar auditoria de" montado a partir do banco (`get_modulos_com_auditoria`) — "Todas as auditorias" (UNION ALL) ou a tabela de um módulo específico; rótulos amigáveis por chave (`DEFS_NAV`).
-- **Filtros**: Usuário (LIKE), Ação (select com **categorias prontas** coloridas `CORES_ACAO` + texto livre via `with_input`), Hora (`strftime('%H:%M')`), intervalo de datas (campos com calendário em popup).
+- **Filtros**: Usuário (LIKE), Ação (select com **categorias prontas** coloridas `CORES_ACAO` + texto livre via `with_input`), Hora (expressão do helper `_sql_hora()` — `to_char` no PG / `strftime` no SQLite), intervalo de datas (campos com calendário em popup).
 - **Paginação server-side**: `LIMIT ? OFFSET ?` (`auditoria_limite` como tamanho de página, default 1000) com contador e botões Anterior/Próxima; auto-atualização a cada 30 s.
 - **Campos/ordem por auditor**: painel "Campos e ordem de exibição" com mover ↑/↓, ocultar, adicionar e "Restaurar padrão"; persistido em `tb_config` na chave `auditoria_campos:<usuario>` (JSON). Coluna "Ação" colorida por categoria.
 - **Exportação CSV**: baixa o resultado filtrado da página corrente respeitando os **campos e a ordem** selecionados pelo auditor.
@@ -44,9 +47,126 @@ Criador vigente: `init_db_auditoria()` em `bd_manipulador.py` (executado no impo
 - **Aba Observabilidade** (só quando a stack OTel está no ar — `docker_detector.otel_stack_rodando()`): cards de atalho para os dashboards Grafana (Visão Geral, Traces, Logs) com aviso LGPD sobre a senha padrão do Grafana.
 - **Administração separada** (`telas_administracao.py`, rota `/admin/auditoria`): `auditoria_limite`, `auditoria_retencao_dias`, `auditoria_texto_header` + card padrão **"Configurações de cores"** (`auditoria_cor_botao`, `auditoria_cor_texto_botao`, `auditoria_cor_fundo`, `auditoria_cor_titulo`, `auditoria_btn_tamanho` — vazios usam o padrão do PRÓPRIO módulo via `PADROES_TEMA["auditoria"]` = `#000000`, sem herança do tema do sistema). Salvar também **audita a si mesmo** (`auditoria`, `configuracao`).
 
+## Anatomia da escrita na trilha (25/09/2026)
+
+> **EN:** Anatomy of a write into the trail — the only writer is
+> `mod_intranet/bd_manipulador.py::audit_log()`, which hands the record to this
+> module through a decoupled hook. Writes are cached (DDL once per session) and
+> the commit is retried 3×; background actions (APScheduler) are recorded with
+> `sistema` as the actor.
+>
+> **PT-BR:** Anatomia de uma escrita na trilha — o **único** escritor é
+> `mod_intranet/bd_manipulador.py::audit_log()`, que entrega o registro a este
+> módulo por um **gancho desacoplado**. As escritas são cacheadas (DDL uma vez
+> por sessão) e o commit tem **retry 3×**; as ações em background (APScheduler)
+> entram na trilha com `sistema` como ator.
+
+### O caminho completo de uma escrita
+
+```text
+módulo de negócio
+   └─ audit_log(usuario, modulo, acao, descricao, hash_arquivo=None,
+               client_ip="__CTX__", client_user_agent="__CTX__")
+        │  mod_intranet/bd_manipulador.py:74-104
+        ├─ resolve IP/UA do contexto HTTP (mod_intranet/contexto.py) quando "__CTX__"
+        ├─ carimbo local: datetime.now().strftime("%Y-%m-%d %H:%M:%S")   (RF-08)
+        ├─ _hook_auditoria(...)            ← caminho normal (registrado no boot)
+        │      └─ mod_auditoria/bd_manipulador.registrar_auditoria(...)
+        └─ import lazy mod_auditoria...   ← fallback se nenhum gancho foi registrado
+```
+
+- **Único ponto de escrita.** Nenhum módulo grava em `db_mod_auditoria.db`
+  diretamente: todos passam por `audit_log`. Isso mantém o carimbo de tempo, a
+  rastreabilidade (IP/UA) e a decisão de destino (`tb_auditoria_<modulo>`) em um
+  lugar só.
+- **Gancho, não import, no caminho quente.** `registrar_hook_auditoria(fn)`
+  (`mod_intranet/bd_manipulador.py:29-39`) recebe a função gravadora **quando o
+  módulo carrega**, e `audit_log` só a chama. Isso **remove a dependência cíclica
+  núcleo↔auditoria**: o núcleo não importa o módulo de auditoria na rotina de
+  escrita. Sem gancho registrado, `audit_log` mantém o **import lazy** de
+  fallback (`bd_manipulador.py:102-104`) — o módulo continua funcionando mesmo
+  fora do boot completo.
+- **Falha de auditoria não derruba a operação.** `registrar_auditoria` é
+  fail-soft (loguru + `rollback`): se a trilha falhar, a escrita de negócio já
+  foi feita e a tela não cai. O mesmo vale para `crud_base.audit_reg`.
+
+### Descoberta de tabela: meta primária + fallback por backend
+
+`registrar_auditoria` cria a tabela do módulo **na primeira gravação** e registra
+o módulo em `tb_auditoria_meta` — um módulo novo passa a auditar **sem nenhuma
+edição** neste módulo. A **leitura** (menu da tela) descobre as tabelas em duas
+fontes (`get_tabelas_auditoria`, `bd_manipulador.py:230-280`):
+
+| Ordem | Fonte | Observação |
+|:--|:---|:---|
+| **1ª (primária)** | `SELECT modulo FROM tb_auditoria_meta ORDER BY nome` (`:245`) | Portátil nos dois backends; devolve as tabelas já sanitizadas por `_nome_tabela(modulo)` |
+| **2ª (fallback)** | `information_schema.tables` (PG, `:262-267`) · `sqlite_master` (SQLite, `:268`) | SÓ se a meta falhar/estiver vazia |
+
+O fallback é **explícito por backend** porque `SELECT` em `sqlite_master`
+**através do proxy** Postgres **devolve vazio** (não erro) — a comment no código
+registra isso. O mesmo par vale no helper `_tabela_existe` (`:72-96`), usado pela
+DDL e pela migração do legado. `get_modulos_com_auditoria` (`:283-318`) tem o
+mesmo desenho em dois níveis: meta → `get_tabelas_auditoria()` → derivação do
+módulo pelo nome da tabela (`_extrair_modulo`, inverso de `_nome_tabela`).
+
+### Helpers de data/hora — `to_char` (PG) vs `strftime` (SQLite)
+
+O filtro de **Hora** e o intervalo de **Datas** da tela precisavam de SQL de
+formatação — SQLite e PostgreSQL não compartilham a função. Em vez de `strftime`
+"solto" no SQL (que o proxy não traduz), há dois helpers que escolhem pelo SGBD
+ativo (`_sgbd()`, `:27-34`):
+
+| Helper | PostgreSQL | SQLite | Usado em |
+|:---|:---|:---|:---|
+| `_sql_hora(coluna)` (`:99-107`) | `to_char(col, 'HH24:MI')` | `strftime('%H:%M', col)` | filtro de hora na tabela única e no `UNION ALL` |
+| `_sql_data_formatada(coluna)` (`:110-118`) | `to_char(col, 'DD/MM/YYYY HH24:MI:SS')` | `strftime('%d/%m/%Y %H:%M:%S', col)` | coluna de data/hora formatada na tabela única e no `UNION ALL` |
+
+Ambos têm `except` com fallback para a forma SQLite e `log.exception` — nunca
+levantam.
+
+### Cache de escrita + retry 3× no commit
+
+Duas defesas contra a **janela de lock** do SQLite (o `audit_log` é chamado em
+toda ação, muitas vezes dentro de outra transação):
+
+1. **`_TABELAS_GARANTIDAS`** (`:21`) — set de tabelas já garantidas **nesta
+   sessão**: o `CREATE TABLE` + o registro em `tb_auditoria_meta` só rodam na
+   **primeira** escrita do módulo (`:352-354`). Se o `INSERT` falhar com
+   `no such table` / `does not exist` / `undefined_table` (tabela derrubada por
+   alguém no meio do caminho), o cache é **invalidado**, a DDL é regarantada e o
+   `INSERT` é refeito **uma vez** (`:363-382`) — a trilha LGPD não se perde.
+2. **`_commit_com_retry(conn, contexto)`** (`:37-69`) — até **`_TENTATIVAS_COMMIT = 3`**
+   tentativas; só re-tenta quando a mensagem indica contenção (`locked`, `busy`,
+   `timeout`) e ainda há tentativa, com backoff `0.05s × tentativa`; ao esgotar,
+   faz `rollback` seguro, registra `log.exception` e **devolve `False`** (fail-soft
+   — quem chamou não propaga). O `contexto` (ex.: `registrar blog/criar_postagem`)
+   identifica a ação que falhou no log.
+
+## A trilha também registra as ações em background (APScheduler)
+
+Nem todo registro da trilha vem de um clique humano: os **jobs agendados** pelo
+núcleo gravam com o ator literal **`sistema`**, o que permite distinguir ação
+humana de ação automática na auditoria.
+
+| Job (`mod_intranet/rotinas.py`) | Ator | Como entra na trilha |
+|:---|:---|:---|
+| `monitor_empenho` → `rodar_monitor("sistema")` (`:213-225`) | `sistema` | Varredura da pasta monitorada de empenhos grava o renomeio dos campos de cadastro com `audit_log("sistema", "renomear-empenho", "campo_cadastro", ...)` (`mod_renomear_empenho/bd_manipulador.py:2726`) |
+| `agregador_coleta` → `coletar_todas(ator="sistema")` (`:228-240`) | `sistema` | Cada coleta audita com `_auditoria(ator or "sistema", ...)` (`mod_agregador_noticias/bd_manipulador.py:97`); os definidores (`definir_habilitado`, `definir_intervalo`, `definir_termo`, `definir_fontes`, `definir_temas`, `definir_hora_reinicio`, `reiniciar_banco`) também têm `ator="sistema"` como default |
+| `poda_auditoria` (`:288-317`) | — | **Praticada sobre** a trilha: `podar_registros(dias)` remove registros mais antigos que `auditoria_retencao_dias` (default 90) em **todas** as tabelas; a remoção só gera `log` (`observabilidade`), não linha nova na trilha |
+| `backup` / `cleanup_pdf` / `cleanup_solicita` | `sistema`/usuário | Backup manual grava `audit_log(usuario, "intranet", "backup_manual", ...)` a partir do painel (`rotinas.py:123`); o backup agendado registra hash SHA-256 dos arquivos via `hash_arquivo` |
+
+!!! note "Consequência para o auditor"
+    Filtrar por `usuario = "sistema"` separa o que o sistema fez sozinho
+    (coleta de notícias, varredura de empenhos) do que uma pessoa fez. Sem isso,
+    renomear um empenho automaticamente pareceria uma ação de usuário e a trilha
+    perderia valor probatório. Auditoria **nunca** é apagada pela cascata LGPD de
+    exclusão de usuário (ver
+    [Gestão de Usuários](analise_mod_gest_cad_usuario.md#limpeza-cruzada-lgpd-a-unica-excecao-de-negocionegocio)).
+
 ## Integrações com o núcleo
 
-- **Escrita**: `mod_intranet.bd_manipulador.audit_log` preenche IP/UA do contexto (`mod_intranet.contexto`) e chama `registrar_auditoria` — produtores: todos os módulos + o próprio núcleo (login/logout/falhas/configurações/backups).
+- **Escrita**: `mod_intranet.bd_manipulador.audit_log` preenche IP/UA do contexto (`mod_intranet.contexto`) e chama `registrar_auditoria` — produtores: todos os módulos + o próprio núcleo (login/logout/falhas/configurações/backups) + os **jobs em background** com ator `sistema` (ver seção acima).
+- **Desacoplamento**: o núcleo **não importa** este módulo no caminho quente — usa o gancho `registrar_hook_auditoria`; o import lazy de `audit_log` é só o fallback.
 - **Leitura**: `buscar_logs` (UNION ALL entre tabelas ou tabela única), `get_modulos_com_auditoria` (menu dinâmico), `contar_registros` (resumo do dashboard).
 - **Config**: `get_config`/`set_config` centrais (`auditoria_limite`, `auditoria_retencao_dias`, `auditoria_texto_header`, `auditoria_campos:<usuario>`, tema `auditoria_*`).
 - **Poda**: job diário `poda_auditoria` do APScheduler central.

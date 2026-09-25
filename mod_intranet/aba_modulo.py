@@ -99,7 +99,7 @@ def abas(titulo_principal: str, icone_principal: str, admin: bool = False,
     return tabs_el
 
 
-def menu_modulo(itens, valor=None):
+def menu_modulo(itens, valor=None, *, classes_extra="", props_extra=""):
     """Builds the module menu tabs (icon above, label below).
 
     Cria a barra de abas de menu do módulo no padrão do Renomeador de
@@ -107,10 +107,21 @@ def menu_modulo(itens, valor=None):
     tupla `(chave, rotulo, icone)` — um `ui.tab` posicional com o ícone em
     cima e o nome embaixo (sem `inline-label`). `valor=None` ativa o
     primeiro item. Retorna o elemento `ui.tabs` para uso em `ui.tab_panels`.
+
+    `classes_extra`/`props_extra` são acréscimos **opcionais**: por padrão a
+    saída é exatamente `w-full` (byte-idêntica). Use-os quando a barra ficar
+    dentro de uma `ui.row` e precisar de comportamento de flex/scroll — por
+    exemplo `classes_extra="min-w-0 flex-1 overflow-x-auto"` e
+    `props_extra="dense"` para as telas estreitas (mobile), em vez de
+    reescrever a barra à mão.
     """
     if valor is None and itens:
         valor = itens[0][0]
     tabs_el = ui.tabs(value=valor).classes("w-full")
+    if classes_extra:
+        tabs_el.classes(classes_extra)
+    if props_extra:
+        tabs_el.props(props_extra)
     with tabs_el:
         for chave, rotulo, icone in itens:
             ui.tab(chave, rotulo, icon=icone)

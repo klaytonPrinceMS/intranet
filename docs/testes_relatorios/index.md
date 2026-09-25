@@ -21,6 +21,7 @@
 | Editor de PDF | 20 verificações |
 | `ui_comum` + drawer (12/09/2026) | `assets/test/verifica_ui_comum.py` — **190/190 OK** (fábrica `ItemMenuDrawer`/`item_menu_drawer` + drawer `menu-hamburguer/menu-home/menu-<chave>/menu-<chave>-indisponivel/menu-admin/menu-docs/menu-sair`, ARIA e `campo_modulo`; sem commit — validado via `.venv/bin/python assets/test/verifica_ui_comum.py`) |
 | Segurança (DevSecOps) | [Relatório de Segurança (06/09/2026)](seguranca_2026-09-06.md) — bandit 0 High/24 Medium/86 Low, semgrep 31, pip-audit sem CVEs, gitleaks 1 segredo real |
+| **QA de execução (25/09/2026)** | [Relatório de QA de Execução (25/09/2026)](qa_execucao_2026-09-25.md) — suíte de **60 scripts saiu de 10 falhando para 0** (`pytest` `exit=0`); smoke Playwright 25 rotas 0 erros; `check_integridade.py` **13/13**; `mkdocs --strict` **0 warnings**; `bandit` HIGH 0 / MEDIUM 0; `gitleaks` no leaks. Commit `624c9d5` |
 
 ## Sugestão de expansão
 

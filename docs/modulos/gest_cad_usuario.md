@@ -1,12 +1,12 @@
 # User Management Module — `mod_gest_cad_usuario`
 
-> User management module: route `/users` (key `usuarios`) · own database `db_mod_gest_cad_usuario.db` · soft CRUD, bcrypt, multi-profile/role, revocable sessions, cross-module LGPD cleanup.
+> User management module: route `/users` (key `usuarios`) · own database `db_mod_gest_cad_usuario.db` · soft CRUD, bcrypt, multi-profile/role, revocable sessions, cross-module LGPD cleanup · **the single user registry, consumed by other modules through the `mod_intranet/integracoes.py` facade (never a direct import)**.
 
 ---
 
 # Módulo Gestão de Usuários — `mod_gest_cad_usuario`
 
-> Módulo de gestão de usuários: rota `/users` (chave `usuarios`) · banco próprio `db_mod_gest_cad_usuario.db` · soft CRUD, bcrypt, múltiplos perfis/papéis, sessões revogáveis, limpeza cruzada LGPD.
+> Módulo de gestão de usuários: rota `/users` (chave `usuarios`) · banco próprio `db_mod_gest_cad_usuario.db` · soft CRUD, bcrypt, múltiplos perfis/papéis, sessões revogáveis, limpeza cruzada LGPD · **fonte única do cadastro, consumida pelos demais módulos pela fachada `mod_intranet/integracoes.py`**.
 
 ## Propósito
 
@@ -50,7 +50,9 @@ Criador vigente: `init_db()` em `bd_manipulador.py:61-215` (executado no import 
 
 - Rota: `/users` (chave `usuarios`) — gate duplo: `administrador_geral` ou `eh_admin_do_modulo(user, 'usuarios')`. Rota `/admin/usuarios` — painel `mostrar_administracao` em `telas_administracao.py` (só admin geral): cupê de cores `bloco_aparencia` + `usuarios_senha_min` (4–32, padrão 6, via `senha_minima()`/`set_config`, vale sem restart) + `painel_backup`.
 - Importa `autenticacao` (hash/papéis), `get_connection` central e `audit_log`; escreve/lê `tb_sessoes` central.
-- Seed idempotente em `init_db` (fonte única deste módulo): conta nativa `master` (`administrador_geral`) e contas de QA (`qacomum` perfil `comum`, `qamaster` `administrador_geral`); credenciais provisórias com **troca forçada no 1º login** (`marcar_trocar_senha`, auto-cura do `master` a cada boot) e renomeação obrigatória do `master` (`marcar_trocar_credenciais`). Por segurança, os valores das senhas provisórias **não são publicados nesta doc** — ver `bd_manipulador.py` (contexto interno).
+- **Fonte única do cadastro — consumida pela fachada do núcleo (25/09/2026)**: os demais módulos **não importam mais** este módulo. `mod_intranet/integracoes.py` expõe `obter_usuario_gestao(user_nome)` e `listar_usuarios_gestao(filtro_ativo=None)` (imports lazy + fail-soft: devolvem `None`/`[]` + `logger.warning` em vez de derrubar a tela). Consumidores: `mod_filas/bd_manipulador.py:454,483` (autorização e liberação de fila), `mod_filas/telas.py:631` (busca de usuário cadastrado) e `mod_lista_telefonica/telas_administracao.py:689,745` (busca de contato e preenchimento de nome/telefone). O SQL continua rodando **só** no banco deste módulo, pelo `bd_manipulador` dele — a fachada atravessa uma fronteira de **código**, nunca de **dados**. Detalhes: [Fachada de Integração](../arquitetura_de_software_das/fachada_integracoes.md).
+- **Única exceção de negócio→negócio**: a cascata LGPD (`_vinculos_cruzados_excluir`/`_vinculos_cruzados_renomear`) chama a API pública de limpeza do Blog, do Editor de PDF e do Renomeador de Empenhos — cada módulo toca só o seu banco. É a allowlist `CASCATA_LGPD` do `assets/test/check_integridade.py`.
+- Seed idempotente em `init_db` (fonte única deste módulo): conta nativa `master` (`administrador_geral`) e contas de QA (`qacomum` perfil `comum`, `qamaster` `administrador_geral`); credenciais provisórias com **troca forçada no 1º login** (`marcar_trocar_senha`, auto-cura do `master` a cada boot) e renomeação obrigatória do `master` (`marcar_trocar_credenciais`). Por segurança, os valores das senhas provisórias **não são publicados nesta doc** — ver `bd_manipulador.py` e a tabela de seeds no [AGENTS.md §8.2](../analise_mod_gest_cad_usuario.md#seeds-idempotentes-de-contas-agentsmd-82) (contexto interno).
 - Acesso padrão de todo usuário novo (`ACESSO_PADRAO_NOVO_USUARIO`): papel `comum` em `editar_pdf`, `empenhos` e `solicita_impressao`; `usuarios`/`auditoria`/`blog` nascem sem vínculo (concessão manual do admin).
 
 ## Testes
@@ -68,5 +70,7 @@ Criador vigente: `init_db()` em `bd_manipulador.py:61-215` (executado no import 
 - Tabela real é `tb_usuarios` (não `tb_usuario`); rota real é `/users` (não `/gestao-usuarios`).
 - `bd_criador.py` é morto — não executar.
 - Todos os testes de fluxo existem em `assets/test/` (local canónico; `test/` e `testes/` não existem na raiz): `teste_boot.py`, `teste_fluxo_autenticacao.py`, `teste_fluxo_permissoes.py` (Fase 2.5).
+- Consumidores externos dependem do **formato posicional das tuplas**, e os dois formatos **não são o mesmo**: `listar_usuarios` devolve 11 campos (`[1]` login, `[4]` **e-mail**, `[9]` nome completo) e `obter_usuario` devolve 10 (`[1]` login, `[4]` **telefone**, `[9]` nome completo). Reordenar as colunas de qualquer uma das duas QUEBRAS a fachada de forma silenciosa.
+- Senhas dos seeds são **provisórias**: assuma que já foram trocadas em qualquer fluxo de teste.
 
 Ver [Análise do Módulo](../analise_mod_gest_cad_usuario.md).

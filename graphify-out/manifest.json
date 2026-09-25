@@ -282,9 +282,9 @@
     "semantic_hash": ""
   },
   "assets/test/test_navegar_pesquisa_empenhos.py": {
-    "mtime": 1790357996.2895079,
-    "seen": 1790360455.921069,
-    "ast_hash": "2fbc754d41620d2795fcf24852e85ee4",
+    "mtime": 1790360479.0826833,
+    "seen": 1790362920.140279,
+    "ast_hash": "a192087d3d039668698c119b2c451ad2",
     "semantic_hash": ""
   },
   "assets/test/test_ordem_modulos.py": {
@@ -360,9 +360,9 @@
     "semantic_hash": ""
   },
   "assets/test/teste_aba_config_intranet.py": {
-    "mtime": 1790357996.2895079,
-    "seen": 1790360455.921083,
-    "ast_hash": "e818d66ee86e1388037fee916e2ec1ea",
+    "mtime": 1790361081.6946847,
+    "seen": 1790362920.1402981,
+    "ast_hash": "1cfabe26fd0f98d8373196c74ab58f4c",
     "semantic_hash": ""
   },
   "assets/test/teste_blog_refreshable.py": {
@@ -378,9 +378,9 @@
     "semantic_hash": ""
   },
   "assets/test/teste_carrossel_blog.py": {
-    "mtime": 1790357996.2895079,
-    "seen": 1790360455.9210856,
-    "ast_hash": "6411daae927b323abb2c39132b82590c",
+    "mtime": 1790360725.130685,
+    "seen": 1790362920.140302,
+    "ast_hash": "fbf35df00f56e39e5125aab0bd08dbf9",
     "semantic_hash": ""
   },
   "assets/test/teste_classes_crud.py": {
@@ -468,9 +468,9 @@
     "semantic_hash": ""
   },
   "iniciar.sh": {
-    "mtime": 1790357996.3126826,
-    "seen": 1790360455.92112,
-    "ast_hash": "66faa63ac482b73b32bf5f5a4608396e",
+    "mtime": 1790362444.922688,
+    "seen": 1790362920.140322,
+    "ast_hash": "92b0b5af4846c7aa1982fe66b2b8a877",
     "semantic_hash": ""
   },
   "main.py": {
@@ -594,9 +594,9 @@
     "semantic_hash": ""
   },
   "mod_intranet/bd_conexao.py": {
-    "mtime": 1790357996.3228478,
-    "seen": 1790360455.921163,
-    "ast_hash": "6efbe9239904cc081d90f8ba59aa3b9b",
+    "mtime": 1790361050.4386845,
+    "seen": 1790362920.1403744,
+    "ast_hash": "64ea100b64f9d8fede7271c2489fb35b",
     "semantic_hash": ""
   },
   "mod_intranet/bd_criador.py": {
@@ -726,9 +726,9 @@
     "semantic_hash": ""
   },
   "mod_intranet/tela_configuracoes.py": {
-    "mtime": 1790357996.3228478,
-    "seen": 1790360455.9211874,
-    "ast_hash": "1334af66fab2da9e136c7003144e9156",
+    "mtime": 1790361094.8266847,
+    "seen": 1790362920.1404042,
+    "ast_hash": "09c4e8612e4cb3b8334efd62cccaaae1",
     "semantic_hash": ""
   },
   "mod_intranet/telas.py": {
@@ -780,9 +780,9 @@
     "semantic_hash": ""
   },
   "mod_renomear_empenho/bd_manipulador.py": {
-    "mtime": 1790357996.3275003,
-    "seen": 1790360455.921203,
-    "ast_hash": "ac6fbd4e3b430dd3f82a7dc07a321e23",
+    "mtime": 1790360521.2586832,
+    "seen": 1790362920.1404245,
+    "ast_hash": "0b2802ebf5d96c8937f5fdfdb4d27559",
     "semantic_hash": ""
   },
   "mod_renomear_empenho/telas.py": {
@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "assets/test/README.md": {
-    "mtime": 1790357996.287742,
-    "seen": 1790360455.9212484,
-    "ast_hash": "12d7a9a687494511e104e514cb322db6",
+    "mtime": 1790360745.058685,
+    "seen": 1790362920.140481,
+    "ast_hash": "7a53ecf688293a687fbcb6f686fc4b95",
     "semantic_hash": ""
   },
   "docs/2_levantamento_requisitos/index.md": {
@@ -1038,45 +1038,45 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_auditoria.md": {
-    "mtime": 1790360034.182164,
-    "seen": 1790360455.9212525,
-    "ast_hash": "6f26988c05fa0f3257d9203f58959916",
+    "mtime": 1790362627.3826857,
+    "seen": 1790362920.140488,
+    "ast_hash": "5272e8347a6b4952c70c93e51981fe6d",
     "semantic_hash": ""
   },
   "docs/analise_mod_blog.md": {
-    "mtime": 1790360034.184576,
-    "seen": 1790360455.9212534,
-    "ast_hash": "4c2f76b7770735522736822a5629a7b8",
+    "mtime": 1790362687.2994149,
+    "seen": 1790362920.1404886,
+    "ast_hash": "8c21fd20f87222a9f92d5ba82eecbb22",
     "semantic_hash": ""
   },
   "docs/analise_mod_edit_pdf.md": {
-    "mtime": 1790360034.1878958,
-    "seen": 1790360455.9212544,
-    "ast_hash": "33cfc1cca93e2d3cdb97d67082c09e33",
+    "mtime": 1790362358.442687,
+    "seen": 1790362920.1404903,
+    "ast_hash": "2a054582c3f34b779a27fe72dfe47c9e",
     "semantic_hash": ""
   },
   "docs/analise_mod_gest_cad_usuario.md": {
-    "mtime": 1790360034.1928518,
-    "seen": 1790360455.9212563,
-    "ast_hash": "31f655a5115d2d60027dd849cbfae9a7",
+    "mtime": 1790362742.5146782,
+    "seen": 1790362920.140493,
+    "ast_hash": "efecb71c5338c5187c70f0b75b339a5d",
     "semantic_hash": ""
   },
   "docs/analise_mod_intranet.md": {
-    "mtime": 1790360034.194912,
-    "seen": 1790360455.9212573,
-    "ast_hash": "55b0578fd29b20ea945d085e14910e68",
+    "mtime": 1790362769.6746821,
+    "seen": 1790362920.1404939,
+    "ast_hash": "48a5bd5a39e01691fa60d5aa941e9081",
     "semantic_hash": ""
   },
   "docs/analise_mod_renomear_empenho.md": {
-    "mtime": 1790360034.1972685,
-    "seen": 1790360455.921259,
-    "ast_hash": "c7c68a83b218f3b0fedb3dc2ad268d28",
+    "mtime": 1790362468.9986882,
+    "seen": 1790362920.140496,
+    "ast_hash": "07cc3c64d9d9f1152a3b1bc40e26cf41",
     "semantic_hash": ""
   },
   "docs/analise_mod_solicita_impressao.md": {
-    "mtime": 1790360034.2004933,
-    "seen": 1790360455.92126,
-    "ast_hash": "dd57a18594206f9221ce2c80fad8442c",
+    "mtime": 1790362575.4666872,
+    "seen": 1790362920.140497,
+    "ast_hash": "81e652827f807cb23d830611fe91c69e",
     "semantic_hash": ""
   },
   "docs/api_referencia.md": {
@@ -1086,15 +1086,15 @@
     "semantic_hash": ""
   },
   "docs/arquitetura.md": {
-    "mtime": 1790357996.293922,
-    "seen": 1790360455.9212625,
-    "ast_hash": "37cf729f3177fefdb755a00223026f13",
+    "mtime": 1790362786.2866821,
+    "seen": 1790362920.1405005,
+    "ast_hash": "350a57c1ecc1d00f9189c22d9b94f4f3",
     "semantic_hash": ""
   },
   "docs/arquitetura_de_software_das/index.md": {
-    "mtime": 1790357996.293922,
-    "seen": 1790360455.9212637,
-    "ast_hash": "30ce73ec7d42b215d593f6672c1dd9fa",
+    "mtime": 1790362405.230688,
+    "seen": 1790362920.140503,
+    "ast_hash": "f414c7b3be2409c023a05b8db190f99c",
     "semantic_hash": ""
   },
   "docs/configuracoes.md": {
@@ -1188,9 +1188,9 @@
     "semantic_hash": ""
   },
   "docs/modulos/auditoria.md": {
-    "mtime": 1790357996.2991447,
-    "seen": 1790360455.9212828,
-    "ast_hash": "501cec138efa829af39145cf85f07e57",
+    "mtime": 1790362643.9106853,
+    "seen": 1790362920.140527,
+    "ast_hash": "00ba76a6a625c416188a7c66df9531cf",
     "semantic_hash": ""
   },
   "docs/modulos/blog.md": {
@@ -1200,33 +1200,33 @@
     "semantic_hash": ""
   },
   "docs/modulos/edit_pdf.md": {
-    "mtime": 1790357996.2991447,
-    "seen": 1790360455.9212847,
-    "ast_hash": "bf91852b80ac93431091e35e7bf9dee0",
+    "mtime": 1790362377.9466875,
+    "seen": 1790362920.1405296,
+    "ast_hash": "eb6b5f8b393432e7c486a4d54ca0f18e",
     "semantic_hash": ""
   },
   "docs/modulos/gest_cad_usuario.md": {
-    "mtime": 1790357996.2991447,
-    "seen": 1790360455.9212863,
-    "ast_hash": "a291f6dcf6600a7a05dd52a83bd11edc",
+    "mtime": 1790362745.890679,
+    "seen": 1790362920.1405327,
+    "ast_hash": "bb4e68a8492dea635b7af805e417da65",
     "semantic_hash": ""
   },
   "docs/modulos/intranet.md": {
-    "mtime": 1790357996.2991447,
-    "seen": 1790360455.9212875,
-    "ast_hash": "f947bd5999b3294695f9d92298485c3a",
+    "mtime": 1790362496.541262,
+    "seen": 1790362920.1405334,
+    "ast_hash": "cee7dbbcfef7361effe61ffc8c3c0b7e",
     "semantic_hash": ""
   },
   "docs/modulos/renomear_empenho.md": {
-    "mtime": 1790357996.2991447,
-    "seen": 1790360455.9212894,
-    "ast_hash": "7cba701f741e2b4dbb6c91baa488d40e",
+    "mtime": 1790362501.9386883,
+    "seen": 1790362920.140536,
+    "ast_hash": "e4302aa615930fa085ede19be0754fcb",
     "semantic_hash": ""
   },
   "docs/modulos/solicitacao_impressao.md": {
-    "mtime": 1790357996.2991447,
-    "seen": 1790360455.9212902,
-    "ast_hash": "54ff52841d750523ce42b48400e1afb1",
+    "mtime": 1790362704.81212,
+    "seen": 1790362920.140537,
+    "ast_hash": "c9e0351ccd759b8466d9ac9495431a41",
     "semantic_hash": ""
   },
   "docs/padroes_codificacao/index.md": {
@@ -1242,9 +1242,9 @@
     "semantic_hash": ""
   },
   "docs/registro_de_mudancas/index.md": {
-    "mtime": 1790357996.2991447,
-    "seen": 1790360455.921294,
-    "ast_hash": "b5091794aad7c1a12e8fc8af9c961898",
+    "mtime": 1790362676.6041114,
+    "seen": 1790362920.1405418,
+    "ast_hash": "1b48243bd84e61fe0e4932b3bdcd5178",
     "semantic_hash": ""
   },
   "docs/requisitos.md": {
@@ -1290,9 +1290,9 @@
     "semantic_hash": ""
   },
   "docs/testes_relatorios/index.md": {
-    "mtime": 1790357996.3021793,
-    "seen": 1790360455.9213026,
-    "ast_hash": "8e842a9199ef20c6530e443ed9ed9b10",
+    "mtime": 1790362669.6197846,
+    "seen": 1790362920.1405532,
+    "ast_hash": "c7af20411127cdba41148fe766a1523b",
     "semantic_hash": ""
   },
   "docs/testes_relatorios/seguranca_2026-09-06.md": {
@@ -1320,15 +1320,15 @@
     "semantic_hash": ""
   },
   "mkdocs.yml": {
-    "mtime": 1790360040.7327034,
-    "seen": 1790360455.921307,
-    "ast_hash": "071755791178053fbbe2d4ac7a881df1",
+    "mtime": 1790362666.4773662,
+    "seen": 1790362920.1405602,
+    "ast_hash": "b04f2e7d60d31d2d5238706d08967e35",
     "semantic_hash": ""
   },
   "requirements-dev.txt": {
-    "mtime": 1790357996.3304,
-    "seen": 1790360455.9213083,
-    "ast_hash": "3af3843cfd7a97f0a40549ef5965dad0",
+    "mtime": 1790360842.2746856,
+    "seen": 1790362920.1405613,
+    "ast_hash": "329dc94a931d97dc7e08b9a40ec9ee8e",
     "semantic_hash": ""
   },
   "requirements.txt": {
@@ -1380,9 +1380,9 @@
     "semantic_hash": ""
   },
   "mod_blog/telas.py": {
-    "mtime": 1790357996.3195202,
-    "seen": 1790360455.9211397,
-    "ast_hash": "80c057b188d5b8da830b15bbadc28521",
+    "mtime": 1790360660.4666848,
+    "seen": 1790362920.1403449,
+    "ast_hash": "1f7d6fad40564695339bc6e452e6b96d",
     "semantic_hash": ""
   },
   "mod_blog/telas_administracao.py": {
@@ -1524,21 +1524,21 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_filas.md": {
-    "mtime": 1790360034.1902983,
-    "seen": 1790360455.921255,
-    "ast_hash": "33f6c95e5c80a3ceac1cfca2a3d13cf9",
+    "mtime": 1790362578.897171,
+    "seen": 1790362920.1404915,
+    "ast_hash": "ee7a03b23cd187fc6f5f9c6f2ae8cc08",
     "semantic_hash": ""
   },
   "docs/analise_mod_lista_telefonica.md": {
-    "mtime": 1790357996.293922,
-    "seen": 1790360455.9212582,
-    "ast_hash": "75063ef709718254b1dbb662ce52e1d2",
+    "mtime": 1790362687.2997618,
+    "seen": 1790362920.140495,
+    "ast_hash": "519562c42a317c199bb44556cabb2e03",
     "semantic_hash": ""
   },
   "docs/analise_mod_tecnico.md": {
-    "mtime": 1790360034.2024822,
-    "seen": 1790360455.9212608,
-    "ast_hash": "e8bfd029b62f070fbf76972d1220c512",
+    "mtime": 1790362830.2388022,
+    "seen": 1790362920.140498,
+    "ast_hash": "bd432b81b47b87f3f39449058cf06bad",
     "semantic_hash": ""
   },
   "docs/modulos/filas.md": {
@@ -1554,15 +1554,15 @@
     "semantic_hash": ""
   },
   "docs/modulos/tecnico.md": {
-    "mtime": 1790357996.2991447,
-    "seen": 1790360455.9212914,
-    "ast_hash": "be0015ff9bd68b93542c03d1ab36c523",
+    "mtime": 1790362795.5786822,
+    "seen": 1790362920.1405382,
+    "ast_hash": "2bd322ee101d250c6eb3fcb9e6bca86f",
     "semantic_hash": ""
   },
   "assets/test/test_seg_novos_modulos.py": {
-    "mtime": 1790357996.2895079,
-    "seen": 1790360455.921076,
-    "ast_hash": "e223e463aff1060a2c9d20b944d933db",
+    "mtime": 1790360530.4906833,
+    "seen": 1790362920.140289,
+    "ast_hash": "27c8c10accb728ff1dc96143e23300f1",
     "semantic_hash": ""
   },
   "mod_agregador_noticias/__init__.py": {
@@ -1602,9 +1602,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_agregador_noticias.md": {
-    "mtime": 1790357996.293922,
-    "seen": 1790360455.9212515,
-    "ast_hash": "61263354d92857638dd85f92e7f06d12",
+    "mtime": 1790362661.7551708,
+    "seen": 1790362920.1404846,
+    "ast_hash": "a5777679f39ebece6286d52ffa587ca5",
     "semantic_hash": ""
   },
   "docs/modulos/agregador_noticias.md": {
@@ -1884,9 +1884,9 @@
     "semantic_hash": ""
   },
   "mod_intranet/integracoes.py": {
-    "mtime": 1790360139.1687026,
-    "seen": 1790360455.9211774,
-    "ast_hash": "55fb3741a35a4e9b573394268decb504",
+    "mtime": 1790360757.430685,
+    "seen": 1790362920.1403925,
+    "ast_hash": "07c94579a768b9aba52ab2d7c4fbac9a",
     "semantic_hash": ""
   },
   "vigia_arquivos_tmp.ps1": {
@@ -1899,6 +1899,24 @@
     "mtime": 1790357996.255513,
     "seen": 1790360455.9212356,
     "ast_hash": "9cda5307f61b95a02ac353c89ec6d9e3",
+    "semantic_hash": ""
+  },
+  "docs/analise_mod_agregador_noticias_puro.md": {
+    "mtime": 1790362691.6042025,
+    "seen": 1790362920.1404865,
+    "ast_hash": "ac140f790d50cde87a27ff2bf3c5f8f6",
+    "semantic_hash": ""
+  },
+  "docs/arquitetura_de_software_das/fachada_integracoes.md": {
+    "mtime": 1790362692.7026854,
+    "seen": 1790362920.140502,
+    "ast_hash": "3a7a37a04b7b4f4c49c4e0e67e03c1eb",
+    "semantic_hash": ""
+  },
+  "docs/testes_relatorios/qa_execucao_2026-09-25.md": {
+    "mtime": 1790362832.082682,
+    "seen": 1790362920.1405542,
+    "ast_hash": "8148ff88ee011561b542ccec23a429c4",
     "semantic_hash": ""
   }
 }

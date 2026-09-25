@@ -1,12 +1,12 @@
 # Gestão de Usuários — `mod_gest_cad_usuario`
 
-> User management module: route `/users` (key `usuarios`) · own database `db_mod_gest_cad_usuario.db` · soft CRUD, bcrypt, multi-profile/role, revocable sessions, cross-module LGPD cleanup.
+> User management module: route `/users` (key `usuarios`) · own database `db_mod_gest_cad_usuario.db` · soft CRUD, bcrypt, multi-profile/role, revocable sessions, cross-module LGPD cleanup · **the single user registry, consumed by other modules through the `mod_intranet/integracoes.py` facade (never a direct import)**.
 
 ---
 
 # Gestão de Usuários — `mod_gest_cad_usuario`
 
-> Módulo de gestão de usuários: rota `/users` (chave `usuarios`) · banco próprio `db_mod_gest_cad_usuario.db` · soft CRUD, bcrypt, múltiplos perfis/papéis, sessões revogáveis, limpeza cruzada LGPD.
+> Módulo de gestão de usuários: rota `/users` (chave `usuarios`) · banco próprio `db_mod_gest_cad_usuario.db` · soft CRUD, bcrypt, múltiplos perfis/papéis, sessões revogáveis, limpeza cruzada LGPD · **fonte única do cadastro, consumida pelos demais módulos pela fachada `mod_intranet/integracoes.py` (nunca por import direto)**.
 
 ## Propósito
 
@@ -57,9 +57,194 @@ Conexão com WAL + `foreign_keys=ON`. Criador vigente: `init_db()` em `bd_manipu
 - **Senha provisória**: criação/redefinição marcam `forcar_troca`; redefinição derruba todas as sessões. O admin digita a senha manualmente (não é gerada aleatória como diz o PLANO 2.5).
 - **Auto-cura do master**: enquanto a senha for `master`, a troca é rearmada a cada boot (`bd_manipulador.py:168-194`) — corrige o roadmap do README que dizia o contrário.
 
+## Soft CRUD, perfis/papéis e sessões revogáveis — referência de API
+
+O módulo expõe uma API funcional pura (sem camada de classe) dividida em 7 blocos
+por separadores `# =================`. Todas as funções devolvem
+`(ok, msg)` nas operações de escrita e `None`/`[]`/falsy nas consultas, com
+`try/except` + loguru (fail-soft, AGENTS.md §3.2).
+
+### Consultas (`bd_manipulador.py:423-544`)
+
+| Função | Devolve | Observação |
+|:---|:---|:---|
+| `listar_usuarios(filtro_ativo=None)` | `list[tuple]` de **11 campos**: `(0)id, (1)user_nome, (2)user_perfil, (3)user_ativo, (4)user_email, (5)user_fone, (6)data_cadastro, (7)acessos "modulo:papel, …", (8)user_deletado, (9)user_nome_completo, (10)user_motivo_exclusao`. `filtro_ativo` filtra `user_ativo`; **não** filtra `user_deletado` (os soft-deleted **aparecem** com a flag ligada em `[8]`); ordenação por login |
+| `obter_usuario(user_nome)` | `tuple` de **10 campos** ou `None`: `(0)id, (1)user_nome, (2)user_senha, (3)user_email, (4)user_fone, (5)user_perfil, (6)user_ativo, (7)data_cadastro, (8)user_deletado, (9)user_nome_completo`. Inclui o hash da senha (uso interno do núcleo); ponto de entrada da fachada `obter_usuario_gestao` |
+| `nome_de_tratamento(user_nome)` | `str` | `user_nome_completo` (nome social, Decreto 8.727/2016) com fallback no login |
+| `listar_acessos(user_nome)` | `list[tuple]` | Papéis por módulo + flags finas |
+
+!!! warning "Os dois formatos de tupla NÃO são o mesmo"
+    `listar_usuarios` e `obter_usuario` devolvem **layouts diferentes** — só
+    coincidem em `[1]` (login) e `[9]` (nome completo). Assim, `[4]` é
+    **`user_email`** em `listar_usuarios` e **`user_fone`** em `obter_usuario`:
+    quem consome precisa saber qual função chamou. Os consumidores atuais
+    respeitam isso — `mod_lista_telefonica/telas_administracao.py:697` filtra a
+    **lista** por `[1]`/`[9]`/`[4]` (login, nome completo, e-mail) e, em
+    `:746-756`, lê `[9]` e `[4]` da **tupla única** (nome completo, telefone).
+
+### CRUD (`:546-1018`)
+
+| Função | Regra de negócio |
+|:---|:---|
+| `criar_usuario(ator, user_nome, senha, email=None, fone=None, perfil="comum", ...)` | Senha vazia/`None` → padrão inicial; mínimo `usuarios_senha_min` (default 6); marca `forcar_troca`; semeia `ACESSO_PADRAO_NOVO_USUARIO`; audita `criar_usuario` |
+| `editar_usuario(ator, user_nome, ...)` | Aplica **só diferenças**; login travado para `master`; **RF-26** bloqueia rebaixar/bloquear o último `administrador_geral` ativo quando o ator é outro admin; marcador `__NULO__` distingue "não informado" de "limpar" |
+| `renomear_usuario(ator, nome_atual, novo_nome, permitir_master=False)` | Preserva o `id`; propaga em `tb_acesso_usuario`, sessões centrais abertas e autorias dos demais módulos (`_vinculos_cruzados_renomear`) |
+| `alterar_senha_admin(ator, user_nome, nova_senha)` | Marca troca pendente e **derruba todas as sessões** do usuário |
+| `bloquear_usuario(ator, user_nome, bloquear=True)` | Fecha as sessões (`_fechar_sessoes_central`) |
+| `soft_delete_usuario(ator, user_nome, motivo=None)` | Exclusão **lógica** com motivo **≥ 3 chars obrigatório**; grava `user_motivo_exclusao`; encerra sessões; **reversível** ("Restaurar" limpa o motivo); recusa `master` e a própria conta |
+| `excluir_usuario_definitivo(ator, user_nome)` | Estágio 2 LGPD: `DELETE` físico + limpeza cruzada; **só** admin geral; protege o último `administrador_geral` ativo |
+| `duplicar_usuario(ator, usuario_origem, novo_nome, senha, ...)` | Clona perfil global, papéis por módulo **e flags finas** da origem |
+
+### Papéis por módulo (`:1020-1119`)
+
+| Função | Devolve |
+|:---|:---|
+| `definir_acesso(ator, user_nome, modulo_chave, papel)` | Concede/vincula — papel em `PAPEIS_MODULO = ["comum", "administrador"]` |
+| `remover_acesso(ator, user_nome, modulo_chave)` | Revoga o vínculo |
+| `obter_papel_no_modulo(user_nome, modulo_chave)` | `"administrador"`, `"comum"` ou `None` — **`administrador_geral` ativo resolve como `administrador` em qualquer módulo** |
+| `validar_acesso_modulo(user_nome, modulo_chave)` | Booleano usado pela guarda de página do núcleo (`autenticacao.py`) e pelo menu. **RF-35:** `auditoria` é exclusivo do `administrador_geral` |
+
+`PERFIS_GLOBAIS = ["comum", "administrador_modulo", "administrador_geral"]` e
+`ACESSO_PADRAO_NOVO_USUARIO = ("editar_pdf", "empenhos", "solicita_impressao")` —
+`usuarios`, `auditoria` e `blog` **nascem sem vínculo** (concessão manual do admin).
+
+### Flags finas — JSON por vínculo (`:1121-1219`)
+
+Catálogo `FLAGS_PERMISSAO` = `blog.publicar`, `blog.comentar`, `blog.configurar`
+(JSON TEXT na coluna `flags` de `tb_acesso_usuario`, default `'{}'`).
+`obter_flags` (fail-soft `{}`), `definir_flags` (allowlist — valida contra o
+catálogo — e **exige vínculo prévio**) e `tem_flag(user, modulo, flag)` (quem é
+admin passa pelo papel, sem precisar da flag).
+
+### Sessões revogáveis (`:1221-1363`)
+
+As sessões vivem no **banco central** (`tb_sessoes` do `mod_intranet`) — este
+módulo é o **único** autorizado a lê-las e a **fechá-las** por ação administrativa
+(o login/sessão em si é do núcleo).
+
+| Função | Papel |
+|:---|:---|
+| `_fechar_sessoes_central(user_nome)` | Usada internamente por bloqueio, soft/hard delete e reset de senha — **fecha todas** as sessões abertas do usuário |
+| `listar_sessoes_ativas(usuario=None)` | Todas do sistema ou de um usuário (IP, dispositivo, MAC em tooltip) |
+| `contar_sessoes_ativas(usuario=None)` / `sessoes_ativas_por_usuario()` | Agregados do painel e do dashboard `/` |
+| `listar_historico_sessoes(usuario, limite=10)` | 10 últimas encerradas por usuário (duração calculada na tela) |
+| `encerrar_sessao(ator, sessao_id)` | Encerra **uma** sessão por id (idempotente: "Sessão já encerrada"); audita `encerrar_sessao` |
+| `encerrar_todas_sessoes(ator, user_nome)` | Encerramento em massa; audita `encerrar_todas_sessoes` |
+
+O mecanismo completo (cookie `cookie_hash` via `secrets`, revalidação a cada
+request em `sessao_ativa`) é do núcleo — ver
+[Análise do Núcleo](analise_mod_intranet.md#autenticacao-e-sessoes). A retenção do
+histórico usa a chave `sessao_retencao` (dias, default 50 — `PADRAO_CONFIG`).
+
+### Vínculos órfãos (`:1365-1385`)
+
+`listar_vinculos_orfaos(chaves_ativas)` devolve os vínculos cujo `modulo_chave`
+não está mais em `tb_modulos` — a tela os exibe com badge `INDISPONÍVEL` nos
+seletores. Observação: a função existe mas **não é chamada** pela tela (ver
+"Pontos de atenção").
+
+## Limpeza cruzada LGPD — a única exceção de negócio→negócio
+
+Quando um usuário é **excluído** (definitivo) ou **renomeado**, a Gestão de
+Usuários precisa limpar/anonimizar a autoria dele **nos demais módulos**:
+postagens e comentários do Blog, arquivos e cota do Editor de PDF, e autoria dos
+Empenhos (que vira `"(usuário excluído)"`). A **auditoria é sempre preservada**
+(rastro legal não se apaga).
+
+Essa necessidade é a **única exceção documentada** à regra de isolamento: cada
+módulo é acionado pela sua **API pública** (`_vinculos_cruzados_excluir` /
+`_vinculos_cruzados_renomear` chamam o `bd_manipulador` de cada vizinho), então
+**cada módulo continua tocando só o seu próprio banco** — não existe cross-query
+de SQL nem `sqlite3.connect` em banco alheio. É uma operação de negócio que
+precisa ser coerente na frente do usuário, não uma consulta que atravessa
+bancos.
+
+Por isso o `assets/test/check_integridade.py` mantém a allowlist
+`CASCATA_LGPD` com exatamente estes três pares e considera **qualquer outro**
+par negócio→negócio uma falha estrutural:
+
+```python
+CASCATA_LGPD = {("mod_gest_cad_usuario", "mod_blog"),
+                ("mod_gest_cad_usuario", "mod_edit_pdf"),
+                ("mod_gest_cad_usuario", "mod_renomear_empenho")}
+```
+
+Desde 25/09/2026 os **demais** usos de dado entre módulos passaram a passar pela
+fachada `mod_intranet/integracoes.py` (ver seção seguinte e
+[Fachada de Integração](arquitetura_de_software_das/fachada_integracoes.md)).
+
+## Fonte única do cadastro — consumo via `mod_intranet/integracoes.py` (25/09/2026)
+
+Este módulo é a **fonte única do cadastro de usuários** da intranet. A partir de
+25/09/2026 os demais módulos **não o importam mais direto**: consomem o cadastro
+pela **fachada pública do núcleo**, `mod_intranet.integracoes`
+(imports lazy + fail-soft, AGENTS.md §2 — nunca cross-query entre bancos).
+
+| Fachada (`integracoes.py`) | Delegada a | Consumidores |
+|:---|:---|:---|
+| `obter_usuario_gestao(user_nome)` `:32` | `obter_usuario` | `mod_filas/bd_manipulador.py:454` (reconhecer `administrador_geral` antes de autorizar) · `mod_filas/bd_manipulador.py:483` (`liberar_acesso` recusa usuário não cadastrado) · `mod_lista_telefonica/telas_administracao.py:745` (preenche nome e telefone do contato) |
+| `listar_usuarios_gestao(filtro_ativo=None)` `:49` | `listar_usuarios` | `mod_filas/telas.py:631` (autocomplete "liberar fila para usuário cadastrado") · `mod_lista_telefonica/telas_administracao.py:689` (busca de contato por nome, login ou e-mail) |
+
+**O que muda para quem consome:**
+
+- O `try/except` fica no **núcleo**; a fachada devolve `None`/`[]` e registra
+  `logger.warning` — a tela do consumidor decide se exibe "Nenhum usuário
+  encontrado" ou um aviso amigável.
+- Os **valores neutros** cobrem três cenários que antes viravam `try/except`
+  espalhado no chamador: módulo ausente, banco fechado/locked e usuário inexistente.
+- O **formato posicional das tuplas** é contrato informal de consumo — por isso
+  a fachada repassa a lista como veio, sem reordenar (quem indexa é o chamador).
+  Layouts **diferentes** entre as duas funções: `listar_usuarios` (11 campos,
+  `[4]` = e-mail) e `obter_usuario` (10 campos, `[4]` = telefone); só `[1]`
+  (login) e `[9]` (nome completo) coincidem. Ver o alerta na seção de consultas.
+- `obter_usuario_gestao` repassa a tupla **com o hash da senha** no campo
+  `[2]` (é o mesmo `obter_usuario` que o núcleo usa em `usuario_existe`): nunca
+  logar nem exibir esse campo na tela.
+
+!!! tip "Se você precisa de dado que NÃO é o cadastro de usuário"
+    Não abra exceção no isolamento: acrescente uma função à fachada
+    `mod_intranet/integracoes.py` seguindo o
+    [checklist de 7 passos](arquitetura_de_software_das/fachada_integracoes.md#como-adicionar-uma-funcao-nova-na-fachada)
+    (import lazy, fail-soft, docstring bilíngue, `check_integridade.py` verde).
+    Dados que são **configuração global** nem precisam da fachada — use
+    `get_config`/`set_config` (precedente `censura.py`).
+
+## Seeds idempotentes de contas (AGENTS.md §8.2)
+
+`init_db()` (`bd_manipulador.py:174-186`, executado no import **e** pelo
+bootstrap central) é a **fonte única** dos seeds. São criados **só se ainda não
+existirem** (idempotente) — nunca duplicados em outro ponto do código.
+
+| Usuário | Perfil global | Observações |
+|:---|:---|:---|
+| `master` | `administrador_geral` | Conta nativa; 1º login **força** troca de senha **e** de credenciais (`marcar_trocar_senha` + `marcar_trocar_credenciais`). Enquanto a senha padrão existir, a troca é **rearmada a cada boot** (auto-cura idempotente, `:343-350`) |
+| `qacomum` | `comum` | Teste/QA; reconciliado a cada boot com `ACESSO_PADRAO_NOVO_USUARIO` (`INSERT OR IGNORE` dos 3 acessos comuns + `DELETE` do vínculo `blog` legado concedido por `sistema`) — **concessões manuais do admin são preservadas** (`:394-404`); troca forçada no 1º login |
+| `qamaster` | `administrador_geral` | Teste/QA; troca forçada no 1º login |
+
+!!! danger "Credenciais fora desta documentação"
+    As senhas provisórias dos seeds **não** são publicadas aqui nem em nenhum
+    artefato versionado. A senha padrão é **provisória**: qualquer fluxo de teste
+    deve supor que ela **já pode ter sido trocada** pelo usuário. A tabela acima é
+    o contrato (login + perfil + regras); os valores vivem apenas no código
+    (`bd_manipulador.py`, contexto interno do AGENTS.md §8.2).
+
+O bootstrap em si é **check-then-add idempotente** e portátil SQLite↔PostgreSQL
+(`PRAGMA table_info` → `information_schema` no proxy; `INSERT OR IGNORE` →
+`ON CONFLICT DO NOTHING`), com `_commit_com_retry` (busy_timeout herdado + retry
+em `database is locked`) e rollback em falha parcial. `init_db()` **nunca**
+derruba o import do módulo: o `try/except` do entry point absorve e registra.
+
 ## Integrações com o núcleo
 
-Importa `autenticacao` (hash/verificação de senha, papéis, troca pendente), `get_connection` central e `audit_log`. Ações auditadas: `criar_usuario`, `editar_usuario`, `renomear_usuario`, `alterar_senha`, `soft_delete`, `excluir_definitivo`, `definir_acesso`, `remover_acesso`, `encerrar_sessao`, `encerrar_todas_sessoes`. Escreve/lê diretamente `tb_sessoes` central. Nenhuma chave `tb_config` usada.
+Importa `autenticacao` (hash/verificação de senha, papéis, troca pendente), `get_connection` central e `audit_log`. Ações auditadas: `criar_usuario`, `editar_usuario`, `renomear_usuario`, `alterar_senha`, `soft_delete`, `excluir_definitivo`, `definir_acesso`, `remover_acesso`, `encerrar_sessao`, `encerrar_todas_sessoes`. Escreve/lê diretamente `tb_sessoes` central. Nenhuma chave `tb_config` usada (exceto a leitura de `usuarios_senha_min`, feita pelo núcleo via `get_config`).
+
+**Na direção inversa (25/09/2026)**: este módulo é a **fonte do cadastro** e
+passou a ser acessado **pela fachada** `mod_intranet.integracoes` — o Blog, as
+Filas e a Lista Telefônica **não o importam mais**. Detalhes na seção
+"Fonte única do cadastro". A auditoria das próprias ações deste módulo também
+segue pelo `audit_log` do núcleo para `db_mod_auditoria.db`
+(tabela `tb_auditoria_usuarios`) — ver
+[Análise do Módulo Auditoria](analise_mod_auditoria.md#anatomia-da-escrita-na-trilha-25092026).
 
 ## Pontos de atenção
 

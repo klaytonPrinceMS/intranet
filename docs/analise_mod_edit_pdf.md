@@ -37,7 +37,7 @@ A tela foi migrada para os padrões centrais (`mod_intranet/ui_comum.py` + `tema
 | Padrão | Antes | Depois |
 |:---|:---|:---|
 | Botões de ação | 10 × `ui.button(...).props("unelevated no-caps")` crus + 3 exceções (`flat`/`outline`/`refresh`) | TODOS via `ui_comum.botao(..., variante="primario", chave_modulo="editar_pdf")` — sem `compacto`/`no_caps` (`telas.py:671-756,786-841`) |
-| Avisos | 32 × `ui.notify` cru | `notificar` (`tema_modulo`, tempo configurável em `notificacao_timeout`) |
+| Avisos | 32 × `ui.notify` cru | `notificar` (`tema_modulo`, tempo configurável em `notificacao_timeout`) — **zerado em `telas.py` em 25/09/2026** (ver "Avisos unificados via `notificar`") |
 | Tema | helpers locais `cls_btn`/`estilo_btn` | UMA `ler_tema("editar_pdf", ...)` (`telas.py:87-88`) — tema aplicado pela fábrica `ui_comum.botao` |
 | Borda do cabeçalho | `CORES["perigo"]` (vermelho fixo) | `tema["cor_botao"]` — a MESMA cor dos botões do módulo (`telas.py:621`) |
 | Título do cabeçalho | `text-grey-9` fixo | colorido por `_app_tema` via `lbl_header_titulo` (`telas.py:624`, `cor_titulo` configurável) |
@@ -51,6 +51,60 @@ A tela foi migrada para os padrões centrais (`mod_intranet/ui_comum.py` + `tema
 Coberto por `test/verifica_ui_comum.py` (190 verificações — seção "edit_pdf migrado (fonte)": `ui.notify` zerado, ≥5 `botao(`, helpers locais ausentes, sem `CORES` fixas em `telas.py`, borda do cabeçalho = `tema["cor_botao"]`, hexes fora dos defaults de reset e ausência das exceções cruas).
 - **Aparência** (Administração): padronização de tema dos botões — cor de fundo, cor do texto, cor de fundo da página do editor, cor dos títulos e tamanho dos botões (`small`/`medium`/`large`). Cada cor usa `ui.color_input` (seletor de cor **e** digitação direta hex/RGB). Valem sem restart (leitura live via `ler_tema`). O cupê agora é o **padronizado pelo helper central** `mod_intranet/tema_modulo.py::bloco_aparencia` (prefixo `editpdf_*`), **com botão Salvar próprio** e "Restaurar padrão". O cupê **"Edição do módulo"** (`campo_modulo`) foi **removido (06/09)** — a edição de nome de exibição, ícone e status do módulo é **exclusiva do painel central `/configuracoes`** (aba Módulo, admin geral). Com as chaves de botão `editpdf_*` vazias (padrão), os botões usam o **padrão do módulo** (`PADROES_TEMA` — todos os módulos em `#000000`, a cor do intranet — sem herança do tema do sistema).
 
+## Avisos unificados via `notificar` (25/09/2026 — commit `624c9d5`)
+
+Este era o **único módulo de tela com `ui.notify` cru remanescente**, violando o AGENTS.md §5.1
+("nunca `ui.notify` cru"). O commit `624c9d5` converteu **22 chamadas** em
+`mod_edit_pdf/telas.py`.
+
+### O que era o `ui.notify` cru
+
+As 22 chamadas não eram avisos de negócio — eram o **terceiro e último nível de defesa** de
+cada handler. O padrão do módulo é uma cadeia de três `try/except` aninhados (AGENTS.md §3.2):
+
+```python
+except Exception as e:                              # nível 1 — regra de negócio
+    log.exception(f"erro interno em X: {e}")        #   registra a causa real
+    notificar(f"Erro em X: {e}", tipo="error")      #   aviso com a causa
+except Exception:                                    # nível 2 — nem o aviso funcionou
+    try:
+        ui.notify(f"Erro em X", type="negative")    #   ⚠️ CRU — ignorava o timeout
+    except Exception:
+        pass                                         # nível 3 — falha silenciosa
+```
+
+O nível 2 recebia a mensagem **sem a causa** (`f"Erro em X"`, sem `: {e}`) e usava
+`ui.notify(..., type="negative")` diretamente — ou seja, o usuário via um toast com **duração
+default da NiceGUI**, ignorando o `notificacao_timeout` configurado pelo administrador, e sem a
+cor do tema do módulo. Foram convertidas para `notificar(f"Erro em X", type="negative")`
+(`notificar` aceita `type=` e normaliza para `tipo=`), unificando o tempo e o tema.
+
+Os 22 pontos convertidos cobrem exatamente os **callbacks e helpers que a tela executa**:
+`_fmt_bytes`, `_fmt_resta`, `_cor_resta`, `_rows_do_evento`, `_ao_selecionar`, `_renumerar`,
+`atualizar_tabela`, `_alvos`, `_registrar_saida`, `_op_reduzir`, `_op_juntar`, `_op_cortar_sel`,
+`_op_dividir`, `_op_verificar`, `baixar_zip`, `excluir_selecionados`, `baixar_originais`,
+`expirar_agora`, `_montar_hint`, `_baixar_linha`, `_excluir_linha` e o próprio `mostrar_tela`.
+
+### Comportamento resultante
+
+| Propriedade | Efeito no módulo |
+|:---|:---|
+| Tempo | **76 chamadas** a `notificar(` em `telas.py` (7 em `telas_administracao.py`) passam a respeitar `notificacao_timeout` — chave da `tb_config` central, **1–30 s, padrão 5** (`tema_modulo.notificacao_timeout()`, clamp `min(30, max(1, v))`) |
+| Precedência | `notificar` faz `kwargs.setdefault("timeout", notificacao_timeout())` — um `timeout=` explícito no ponto de chamada **vence** o configurado; nenhum aviso deste módulo passa `timeout=` explícito, então todos seguem a configuração |
+| Tema | o tipo é repassado ao `ui.notify` (`positive`/`negative`/`warning`); com as chaves `editpdf_*` no padrão, o toast sai na cor do módulo |
+| **Fail-soft** | `notificar` **nunca derruba a tela**: `try: ui.notify(msg, type=tipo, **kwargs)` → `except: try: ui.notify(msg)` → `except: pass`. Uma notificação que falha (slot de UI já desmontado, evento após `ui.navigate.reload()`, cliente desconectado) é engolida de propósito, porque o aviso é acessório e a exceção subir derrubaria o handler |
+| Formato | `multi_line=True` nos avisos de upload (lista de recusados com motivo), garantindo legibilidade sem truncamento |
+
+!!! warning "Lacuna conhecida — `telas_administracao.py:56`"
+    A conversão atingiu 100 % de `telas.py`, mas **1 `ui.notify` cru permanece** em
+    `mod_edit_pdf/telas_administracao.py:56` (nível 2 de `_fmt_bytes`, mesma cadeia de três
+    níveis). A guarda de QA `verifica_ui_comum.py:641-643` faz
+    `EPDF = ler("mod_edit_pdf/telas.py")` — leu **só a tela**, nunca o painel de Administração —
+    então `EPDF.count("ui.notify(") == 0` passa mesmo com o resíduo no arquivo irmão.
+    **Correção proposta (1 linha):** `notificar(f"Erro em _fmt_bytes", type="negative")`
+    (o helper já é importado no arquivo, linha 25) **e** ampliar a guarda para
+    `ler("mod_edit_pdf/telas_administracao.py")` com o mesmo `count("ui.notify(") == 0`.
+
 ## Regras de negócio relevantes
 
 - **Cotas em 4 níveis**, todas lidas de `tb_config` central a cada uso:
@@ -62,6 +116,104 @@ Coberto por `test/verifica_ui_comum.py` (190 verificações — seção "edit_pd
 - **Expiração**: executada pelo scheduler do núcleo a cada 1 min (sem login), critério mtime; remove do disco, inativa registro, devolve cota e audita como ator `sistema`.
 - **Prefixo obrigatório**: `dataHora_usuario_operacao_nomeArquivo.pdf` — cada usuário vê apenas os próprios arquivos.
 - **Auditoria com SHA-256**: upload grava `upload_hash`; reduzir/juntar/cortar gravam hashes das origens na descrição e hash do resultado no campo `hash_arquivo`; dividir audita origens; tipos extras: `erro_reducao`, `configuracao`, `expiracao`, `deletar`.
+
+## Referência operacional — espaço, cotas, expiração e operações
+
+### Espaço temporário por usuário
+
+Todo arquivo vive **dentro do módulo**, nunca fora dele (AGENTS.md §1):
+
+```
+mod_edit_pdf/editorPDF/              # PASTA_EDITOR — raiz do espaço temporário
+└── <usuario>/                       # pasta_usuario(usuario) — criada on demand (makedirs exist_ok)
+    ├── 20260925T153012_maria_upload_relatorio.pdf      # nome_padronizado()
+    ├── 20260925T153044_maria_saida_20260925T153012_maria_upload_relatorio.pdf
+    └── 20260925T153210_maria_zip_selecao.zip
+```
+
+- **Isolamento por usuário é físico**, não apenas lógico: cada login tem sua própria subpasta e
+  `obter_meus_arquivos(usuario)` filtra por `usuario` — um usuário **nunca** vê nem apaga arquivo
+  de outro, mesmo que manipule o id na URL.
+- **`nome_padronizado(usuario, operacao, nome_original)`** monta
+  `dataHora_usuario_operacao_nomeArquivo` com `dataHora` = `%Y%m%d%H%M%S` e o nome original
+  **sanitizado** (só `isalnum()` e `.`, `_`, `-`, espaço; truncado em 60 caracteres). O prefixo é
+  o que torna a expiração por `mtime` segura (o mtime do arquivo nunca é falsificado pelo nome).
+- **Raiz `editorPDF/`** nunca é servida como estático: só é percorrida por `uso_global_bytes()`
+  (cota global real em disco), por `expirar_antigos()` (job) e pelos ganchos de usuário
+  (`remover_vinculos_usuario`, `renomear_usuario`).
+
+### Cotas — 4 níveis, todos com default no código
+
+| Nível | Chave de configuração | Default | Onde é aplicado | Semântica |
+|:---|:---|:---|:---|:---|
+| Global | `cotadisco_global_gb` (chave **central**, sem prefixo) | **10 GB** (`QUOTA_GLOBAL_BYTES_DEFAULT`) | `verificar_quota()` — `SUM(tamanho_bytes) WHERE ativo=1` + o arquivo entrando | uso real do banco; aviso `Cota global excedida (10 GB)` |
+| Por usuário | `editar_pdf_usuario_gb` | **1 GB** (`cfg_usuario_gb`, mín. 1) | `verificar_quota()` — `tb_cota_disco.total_usado_bytes` | aviso `Sua cota de 1 GB foi excedida` |
+| Por lote (arquivos) | `editar_pdf_lote_arquivos` | 10 (`cfg_lote_arquivos`, mín. 1) | pré-checagem do lote inteiro **e** janela de 60 s | teto de arquivos `upload` ativos do usuário |
+| Por lote (MB) | `editar_pdf_lote_mb` | 1024 (`cfg_lote_mb`, mín. 1) | idem | teto de MB **por envio**, nunca acumulado |
+
+!!! tip "Ordem de validação do upload (`_receber_lote`, `telas.py:161-253`)"
+    1. **Janela deslizante** de `JANELA_LOTE_S = 60` s descarta envios antigos do `deque lote`.
+    2. **Filtro de formato** — só `.pdf` (case-insensitive) entra; o resto vai nominalmente para
+       `recusados` com o motivo `formato não-PDF`.
+    3. **Pré-checagem do lote inteiro** (`ativos_upload + len(pdfs) > lote_max`, depois
+       `sum(f.size()) > lote_bytes_max`) — ocorre **antes de gravar qualquer byte**, então um
+       envio único de 350 MB com limite 200 MB é recusado de imediato, e não "aceito pela metade".
+    4. **Validação por arquivo** na janela de 60 s, e `verificar_quota()` antes de cada `save`.
+    5. Grava com `nome_padronizado`, chama `registrar_arquivo` (transação atômica
+       `tb_arquivos` + `tb_cota_disco`); se a gravação falhar, **remove o arquivo do disco** e
+       manda o nome para `recusados` com `falha ao registrar` — nunca deixa órfão.
+    6. `audit_log(..., "upload_hash", f"{nome} sha256=...")`.
+    7. Resumo: sucesso em `text-green-8`, **`NÃO ENVIADOS (n) → 'nome' (motivo)` em `text-red-8`**
+       (nunca falha silencioso) + um `notificar(..., multi_line=True)` com o resumo.
+
+### Expiração — padrão 10 min
+
+- **Automática:** job `cleanup_pdf` do núcleo (`mod_intranet/rotinas.py`, **a cada 1 min**,
+  **sem usuário logado** — basta o servidor vivo) chama
+  `expirar_antigos(minutos=cfg_expiracao_min())` com `editar_pdf_expiracao_min` (default **10**).
+- **Critério:** `mtime` do arquivo, não a data do banco — `agora - os.path.getmtime(caminho) > minutos*60`.
+- **Efeito:** `os.remove` no disco → para os usuários tocados, `UPDATE tb_arquivos SET ativo=0`
+  dos registros cujo arquivo não existe mais → devolve a cota com
+  `MAX(0, total_usado_bytes - liberado)` (nunca fica negativo) → `audit_log("sistema", "edit-pdf",
+  "expiracao", …)`.
+- **Manual:** botão **"Expirar agora"** no card "Manutenção"
+  (`telas_administracao._expirar_agora`) roda exatamente a mesma função.
+- **Efeito colateral importante:** expirar é o mecanismo que **destrava a cota**. Como a cota é
+  de uso, e não de envio, um usuário que lotou 1 GB tem que esperar a expiração (ou excluir) para
+  voltar a enviar — por isso o texto de recusa orienta "aguarde expiração ou exclua".
+- **Falha nunca derruba:** toda a função é `try/except`; erro no banco faz `rollback()` e
+  retorna `0`; erro na varredura de disco só registra `debug` por arquivo e segue.
+
+### Operações e `data-testid`
+
+| Ação na UI | `data-testid` | Handler (`telas.py`) | Motor | Auditoria |
+|:---|:---|:---|:---|:---|
+| Atualizar lista | `editar_pdf-atualizar` | `atualizar_tabela` (timer 5 s) | — | — |
+| Verificar integridade | `editar_pdf-verificar` | `_op_verificar` | `op_verificar` | **não audita** — só `notificar(ok/msg)` por arquivo (operação de leitura) |
+| Juntar selecionados | `editar_pdf-juntar` | `_op_juntar` (exige ≥ 2 PDFs) | `op_juntar` | `juntar` — `sha256 origem=[…]` no texto + resultado em `hash_arquivo` (`_auditar_hash`) |
+| Excluir selecionados | `editar_pdf-excluir` | `excluir_selecionados` | `deletar_arquivo` | `deletar` (dentro de `bd_manipulador`, com estorno de cota) |
+| Baixar ZIP | `editar_pdf-baixar-zip` | `baixar_zip` | `zip_por_ids` | `zip` — `arquivos=N sha256=…` |
+| Baixar PDFs individuais | `editar_pdf-baixar-pdfs` | `baixar_originais` | — | — |
+| Enviar agora (reenvio) | `editar_pdf-enviar` | `up.reset()` + `_receber_lote` | — | `upload_hash` (um por arquivo) |
+| Modo de redução | `editar_pdf-modo-reduzir` | toggle `Leve`/`Agressivo` | — | — |
+| Reduzir | `editar_pdf-reduzir` | `_op_reduzir` | `op_reduzir` (leve/agressivo) | sucesso: `reduzir` (`_auditar_hash`); falha: `erro_reducao` com `hash_arquivo` do **original** |
+| Cortar | `editar_pdf-cortar` | `_op_cortar_sel` | `op_cortar` (pares/ímpares/lista `"2-5,8"`) | `cortar` via `_auditar_hash` |
+| Dividir | `editar_pdf-dividir` | `_op_dividir` | `op_dividir_partes` (`pagina`/`parimpar`/`cortes`/`intervalos`) | `dividir` — `modo=… filtro='…' bib=… arquivos=N sha256_origem=…` |
+| *(legado)* upload | `editpdf-upload` | `span.hidden` de compat | — | — |
+
+!!! note "Ordem que o Juntar respeita"
+    `op_juntar(alvos, out)` recebe os caminhos **na ordem de marcação** dos checkboxes
+    (`ordem_ids` → `_alvos()`), não em ordem alfabética nem de upload. A tela confirma isso com
+    o aviso `Junção na ordem dos # : a → b → c` e a coluna "Expira em"/badge `#` existe
+    exatamente para tornar essa ordem visível ao usuário. Se a mensagem de retorno contiver
+    `IGNORADOS`, o aviso sai em `warning` em vez de `positive` (o arquivo foi gerado, mas some
+    entrada foi descartada — a UI não pode dizer "sucesso" e esconder isso).
+
+O `editpdf-upload` (sem o `_` no meio) é um `ui.element("span").classes("hidden")` mantido
+**só** para não quebrar seletores Playwright antigos; o selador oficial é `editar_pdf-enviar`.
+Os `data-testid` são aplicados via `.props('data-testid=…')` sobre o retorno da fábrica
+`ui_comum.botao(...)` — o botão já padronizado continua sendo o alvo do teste (AGENTS.md do
+`kbp-qa`: `data-testid` **sempre** por `.props()`, nunca `id`).
 
 ## Integrações com o núcleo
 
@@ -81,6 +233,7 @@ Usa `get_connection`/`get_config`/`set_config` centrais e `audit_log`. Chaves de
 - Limite de "estoque de uploads" reaproveita o valor do limite de lote (não é configurável separadamente).
 - Redução Agressivo transforma texto em imagem (perde seleção/busca no PDF).
 - `cfg_tema` em `bd_manipulador.py:74` ficou **sem uso** após a migração da tela para `ler_tema` (06/09) — código morto candidato a remoção.
+- **`ui.notify` cru remanescente em `telas_administracao.py:56`** (nível 2 de `_fmt_bytes`) — ver "Avisos unificados via `notificar`". A guarda de QA lê só `telas.py`; ampliar a guarda para o arquivo de Administração fecha a lacuna.
 
 ## Status — Fase 5 do PLANO.md
 

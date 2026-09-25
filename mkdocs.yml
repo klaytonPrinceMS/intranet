@@ -29,7 +29,9 @@ nav:
       - Convenções de Criação de Código: convencoes_codigo.md
   - Visão de Produto: visao_de_produto/index.md
   - Levantamento de Requisitos: 2_levantamento_requisitos/index.md
-  - Arquitetura de Software (DAS): arquitetura_de_software_das/index.md
+  - Arquitetura de Software (DAS):
+      - Índice: arquitetura_de_software_das/index.md
+      - Fachada de Integração (mod_intranet/integracoes.py): arquitetura_de_software_das/fachada_integracoes.md
   - Guia de API: guia_API/index.md
   - Padrões de Codificação: padroes_codificacao/index.md
   - Manuais de Uso:
@@ -58,6 +60,7 @@ nav:
       - Plano: testes_plano/index.md
       - Relatórios: testes_relatorios/index.md
       - Relatório de Segurança (06/09/2026): testes_relatorios/seguranca_2026-09-06.md
+      - Relatório de QA de Execução (25/09/2026): testes_relatorios/qa_execucao_2026-09-25.md
       - E2E com Playwright: testes_playwright.md
   - Módulos (análise):
       - Intranet (núcleo): analise_mod_intranet.md
@@ -71,6 +74,7 @@ nav:
       - Filas (TV, multi-filas): analise_mod_filas.md
       - Lista Telefônica (organograma): analise_mod_lista_telefonica.md
       - Agregador de Notícias: analise_mod_agregador_noticias.md
+      - Agregador de Notícias — Tela Pura: analise_mod_agregador_noticias_puro.md
   - Módulos (resumo):
       - Intranet (núcleo): modulos/intranet.md
       - Gestão de Usuários: modulos/gest_cad_usuario.md

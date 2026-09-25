@@ -1,12 +1,12 @@
 # Intranet Core Module — `mod_intranet`
 
-> Core module: routes `/`, `/login`, `/configuracoes` · central database `db_mod_intranet.db` (WAL: unified audit, config, sessions, module registry) · revocable sessions · 4-part layout · centralized observability (loguru).
+> Core module: routes `/`, `/login`, `/configuracoes` · central database `db_mod_intranet.db` (WAL: config, sessions, module registry) · revocable sessions · 4-part layout · centralized observability (loguru) · **`integracoes.py` integration facade** (single public seam between modules, lazy imports + fail-soft).
 
 ---
 
 # Módulo Núcleo Intranet — `mod_intranet`
 
-> Módulo central: rotas `/`, `/login`, `/configuracoes` · banco central `db_mod_intranet.db` (auditoria unificada em WAL, configurações, sessões e cadastro de módulos) · sessões revogáveis · layout de 4 partes · observabilidade centralizada (loguru).
+> Módulo central: rotas `/`, `/login`, `/configuracoes` · banco central `db_mod_intranet.db` (configurações, sessões e cadastro de módulos em WAL) · sessões revogáveis · layout de 4 partes · observabilidade centralizada (loguru) · **fachada de integração `integracoes.py`** (costura pública única entre módulos, imports lazy + fail-soft).
 
 ## Propósito
 
@@ -37,6 +37,7 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` + `foreig
 ## Funcionalidades
 
 - **Autenticação bcrypt + sessões revogáveis**: `autenticar` → `registrar_login` (cookie_hash via `secrets`) → `sessao_ativa` revalidada a cada request; encerrar sessão pelo admin derruba o navegador.
+- **Fachada de integração `integracoes.py` (25/09/2026)**: 7 funções públicas com **imports lazy** (dentro da função — um import de topo fecharia ciclo com `main.py`) e contrato **fail-soft** (valor neutro + `logger.warning`, nunca derruba a tela). É a forma canônica de um módulo de negócio acessar dado de outro módulo: **o negócio fala com o núcleo, e o núcleo possui o acoplamento** — o SQL continua rodando só no banco do módulo de destino, pelo `bd_manipulador` dele. Precedente: `censura.py` (dado compartilhado que mora no núcleo); validação: `assets/test/check_integridade.py` (13/13, era 5 falhas/17). Detalhes e checklist: [Fachada de Integração](../arquitetura_de_software_das/fachada_integracoes.md).
 - **Guarda de página** (`pagina_restrita`): revalida usuário/sessão/permissão e monta o layout de 4 partes (header, drawer lateral, rodapé com versões, área principal).
 - **Dashboard `/` (redesign Home 09/2026)**: saudação + **feed do Blog por padrão** (RF-09) + **2 cards de Resumo sem botão Atualizar** — dados recalculados a cada acesso via `_orquestrar_resumo_dados()` (`main.py:250`):
     - **"Resumo do sistema" (8 métricas, só `administrador_geral`/`administrador_modulo` — `main.py:500` `eh_admin`)**: `Usuários ativos` (`people`, `filtro_ativo=None`), `Sessões ativas` (`sensors`, `tb_sessoes WHERE logout IS NULL`), `Visitas` (`login`, `tb_config contador_acessos_total`), `Postagens` (`article`), `Quarentena pendente` (`warning`, `tb_quarentena processado=0`), `PDFs ativos` (`picture_as_pdf`, `tb_arquivos ativo=1`), `Registros de auditoria` (`history`), `Auditoria 24h` (`schedule`, `SUM COUNT WHERE timestamp >= -1 day` por `tb_auditoria_*`). Ordem: `[Usuários, Sessões, Visitas, Postagens, Quarentena, PDFs, Logs, Logs 24h]`, `gap-1 px-2 py-1`, ícone 36px `text-2xl`, número `text-h6` 4 dígitos (`>9999` com total real no tooltip) — `_stat()` (`main.py:325`).
@@ -232,6 +233,7 @@ Mapeamento via `sqlalchemy.orm.registry.map_imperatively()` — SQLAlchemy fica 
 
 - Rotas: `/` (`main.py:189`), `/login` (`main.py:115`), `/admin/{chave_modulo}` (`main.py:439` — dispatch de admin por módulo, renderiza `mod_<nome>/telas_administracao.py` standalone), `/configuracoes` (`main.py:527` — painel central, guarda `pagina_restrita("Administração")`), `/documentacao` (mount).
 - Consumido por todos: `pagina_restrita`, `get_connection`/`get_config`/`set_config`, `audit_log`/`audit_reg`, `CrudBase`, `gerar_hash_senha`, `validar_acesso_modulo`.
+- **Fachada de integração** (`integracoes.py`, 25/09/2026) — 7 funções fail-soft de imports lazy que permitem a um módulo de negócio alcançar outro **sem importá-lo** (o núcleo possui o acoplamento; o banco de cada módulo continua isolado): `obter_usuario_gestao`/`listar_usuarios_gestao` (Filas, Lista Telefônica → Gestão de Usuários), `agregador_habilitado`/`listar_noticias_para_tv` (Filas → Agregador), `limpar_noticias_censuradas` (Blog → Agregador), `obter_organograma_base` (Solicitação → Lista Telefônica, com fallback local no chamador) e `modulo_habilitado`. Fecha as 5 violações de isolamento detectadas por `assets/test/check_integridade.py` (**5 falhas/17 → 13/13**). Referência completa: [Fachada de Integração](../arquitetura_de_software_das/fachada_integracoes.md).
 - Jobs: `backup:<chave>` (12 h), `cleanup_pdf`/`cleanup_solicita` (1 min), `poda_auditoria` (24 h), `monitor_empenho` (10 s).
 
 ## Testes
@@ -242,12 +244,14 @@ Mapeamento via `sqlalchemy.orm.registry.map_imperatively()` — SQLAlchemy fica 
 .venv/bin/python test/verifica_ui_comum.py   # 190 verificações (ui_comum + no_caps + helpers de tela + padrão próprio do tema + edit_pdf migrado + cabecalho com tema do módulo + campo_texto/campo_selecao + campo_cor/card_config + campo_modulo restaurado + equivalência wrapper↔classe)
 .venv/bin/python test/smoke_senha_ui_comum.py # 8 verificações (NiceGUI real: campo_texto(senha=True) byte-idêntico ao ui.input cru)
 .venv/bin/python test/teste_classes_crud.py   # 68 verificações (CrudBase em SQLite real, gancho de auditoria, banco_conexao, equivalência wrapper↔classe, GradeTabela/PainelLista/FormularioBuilder)
+.venv/bin/python assets/test/check_integridade.py  # 13/13 — isolamento modular por AST (fachada integracoes.py)
 ```
 
 ## Pontos de atenção
 
 - `inicializar_bancos()` roda o central **antes** de importar módulos (ordem crítica — `main.py:16-17`).
 - `storage_secret` é placeholder (`main.py:336`) — trocar em produção.
-- `backup_interval_hours` é seed legada; os jobs usam `backup_horas:<modulo>`.
+- `backup_interval_hours` é o intervalo do card "Configurações gerais" (grava e **reagenda** o job global); os jobs por módulo usam `backup_horas:<modulo>`. `sessao_retencao` (dias, padrão 50) tem campo no mesmo card. **Desde 25/09/2026 as duas chaves estão em `PADRAO_CONFIG`**, junto com todos os outros defaults de `tb_config` — o default nunca mais pode ser escrito como literal em outro ponto (ver [Análise do Núcleo — `PADRAO_CONFIG`](../analise_mod_intranet.md#padrao_config-fonte-unica-de-verdade-dos-defaults-25092026)).
+- **`grafana_sync.obter_grafana_url()` só aceita `http(s)`**: valor fora do esquema (ex.: `file://`) é ignorado e cai no padrão `http://localhost:3000` (correção de segurança 25/09/2026, bandit B310).
 
 Ver [Análise do Núcleo](../analise_mod_intranet.md) (detalhe completo, incluindo reconstrução de `bd_conexao.py`/`bd_manipulador.py` a partir de `*.pyc`).

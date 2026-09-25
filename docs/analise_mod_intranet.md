@@ -1,12 +1,12 @@
 # Núcleo — `mod_intranet`
 
-> Core module: routes `/`, `/login`, `/configuracoes` · central database `db_mod_intranet.db` (unified WAL audit, config, sessions, module registry) · revocable sessions · 4-part layout · centralized observability (loguru).
+> Core module: routes `/`, `/login`, `/configuracoes` · central database `db_mod_intranet.db` (config, sessions, module registry in unified WAL) · revocable sessions · 4-part layout · centralized observability (loguru) · **`integracoes.py` integration facade** (single public seam between modules, lazy imports + fail-soft).
 
 ---
 
 # Núcleo — `mod_intranet`
 
-> Módulo central: rotas `/`, `/login`, `/configuracoes` · banco central `db_mod_intranet.db` (auditoria unificada em WAL, configurações, sessões e cadastro de módulos) · sessões revogáveis · layout de 4 partes · observabilidade centralizada (loguru).
+> Módulo central: rotas `/`, `/login`, `/configuracoes` · banco central `db_mod_intranet.db` (configurações, sessões e cadastro de módulos em WAL unificado) · sessões revogáveis · layout de 4 partes · observabilidade centralizada (loguru) · **fachada de integração `integracoes.py`** (costura pública única entre módulos, imports lazy + fail-soft).
 
 ## Propósito
 
@@ -21,7 +21,7 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` (`bd_cone
 | Tabela | Conteúdo | Criada em |
 |:---|:---|:---|
 | `tb_auditoria_*` | auditoria LGPD em **banco separado** `db_mod_auditoria.db` — uma tabela por módulo (`tb_auditoria_<modulo>`: id, usuario, modulo, acao, descricao, timestamp, hash_arquivo + `ip`/`user_agent`) | `mod_auditoria/bd_manipulador.py` |
-| `tb_config` | chave PK / valor — seeds: `versao_sistema=1.0.260913`, `versao_modulo:intranet=1.0.260913`, `cotadisco_global_gb=10`, `backup_interval_hours=12` (legada) e padrões de aparência | `bd_conexao.py:49-74` |
+| `tb_config` | chave PK / valor — seeds: `versao_sistema=1.0.260913`, `versao_modulo:intranet=1.0.260913`, `cotadisco_global_gb=10`, `backup_interval_hours=12`, `sessao_retencao=50` e padrões de aparência — **todos os defaults vêm de `PADRAO_CONFIG`** (fonte única, ver seção abaixo) | `bd_conexao.py:47-...` |
 | `tb_sessoes` | id, usuario, modulo, login/logout_timestamp, cookie_hash + `ip`, `user_agent`, `dispositivo`, `mac` | `bd_conexao.py:55-63` |
 | `tb_modulos` | id, chave UNIQUE, nome, icone, rota, ativo, nativo, **ordem** — semeada com os 5 módulos nativos; `ordem` controla a exibição (migração idempotente em bancos antigos) | `autenticacao.py:29-84` |
 
@@ -103,6 +103,132 @@ O rodapé mostra as versões **da esquerda para a direita**: 1ª a versão globa
 | `get_config` / `set_config` | mod_edit_pdf (cotas/expiração), telas de login/home |
 | `gerar_hash_senha`, `marcar_trocar_senha` | mod_gest_cad_usuario |
 | `pode_publicar_no_blog`, `eh_admin_do_modulo` | mod_blog |
+| **`integracoes.*` (fachada)** | mod_filas, mod_lista_telefonica, mod_solicita_impressao, mod_blog — ver seção abaixo |
+
+## Fachada de integração entre módulos — `integracoes.py` (25/09/2026)
+
+> **EN:** Public seam for cross-module integration — added 25/09/2026 to close the
+> five module-isolation violations flagged by `assets/test/check_integridade.py`.
+> Lazy imports, fail-soft, core-owned coupling. Full reference (including the
+> step-by-step checklist to add a function) in
+> [Fachada de Integração — DAS](arquitetura_de_software_das/fachada_integracoes.md).
+
+`mod_intranet/integracoes.py` (145 linhas, 7 funções públicas) é a **costura
+pública única** para um módulo de negócio alcançar outro **sem importá-lo**. Fecha
+a regra do AGENTS.md §2 ("nunca faça cross-query entre bancos") sem criar
+dependência entre módulos de negócio.
+
+### Por que a arquitetura é esta
+
+> **Módulo de negócio fala com o núcleo; o núcleo possui o acoplamento.**
+
+- O **módulo de negócio** nunca importa outro `mod_*` de negócio — quando
+  precisa de dado alheio, chama a API pública do núcleo.
+- O **núcleo** é o único que sabe *qual* módulo serve *o quê*, e faz o `import`
+  sob demanda.
+- O **banco continua isolado**: a função do núcleo executa SQL apenas no banco do
+  módulo de destino, pelo `bd_manipulador` **dele**. Atravessa-se uma fronteira
+  de **código**, nunca de **dados** (nada de `sqlite3.connect` em banco alheio).
+
+### Os 2 padrões obrigatórios
+
+1. **Imports lazy** (dentro do corpo da função) — um `import` de topo aqui
+   **fecharia ciclo de import de topo** com `main.py` (que importa todos os
+   módulos para registrar as rotas). `check_integridade.py` trata ciclo
+   **top-level** como **falha** e ciclo **apenas-lazy** como **AVISO** (runtime
+   ok).
+2. **Fail-soft** (AGENTS.md §3.2) — toda função tem `try/except Exception`,
+   devolve **valor neutro** (`None`/`[]`/`0`/`False`) e registra
+   `logger.warning` com o nome da função + a causa. **A fachada nunca derruba a
+   tela de quem chama**: quem chama decide o que fazer com o vazio (padrão
+   adotado = aviso amigável).
+
+### As 7 funções e seus consumidores
+
+| Função (`integracoes.py`) | Destino | Onde é usada |
+|:---|:---|:---|
+| `obter_usuario_gestao(user_nome)` `:32` | `mod_gest_cad_usuario.obter_usuario` | `mod_filas/bd_manipulador.py:454` (reconhecer `administrador_geral` ao autorizar) e `:483` (`liberar_acesso` exige usuário cadastrado) · `mod_lista_telefonica/telas_administracao.py:745` (preencher nome/telefone do contato) |
+| `listar_usuarios_gestao(filtro_ativo=None)` `:49` | `mod_gest_cad_usuario.listar_usuarios` | `mod_filas/telas.py:631` (busca "liberar fila para usuário") · `mod_lista_telefonica/telas_administracao.py:689` (busca de contato por nome/login/e-mail) |
+| `agregador_habilitado()` `:66` | `mod_agregador_noticias.habilitado` | `mod_filas/telas.py:1739` (TV: agregador desligado → aviso "Notícias pausadas") |
+| `listar_noticias_para_tv(limite=200)` `:79` | `mod_agregador_noticias.listar_para_tv` (censura filtrada na origem) | `mod_filas/telas.py:1747` (carrossel de manchetes da TV de Filas) |
+| `limpar_noticias_censuradas()` `:93` | `mod_agregador_noticias.limpar_censuradas` | `mod_blog/telas_administracao.py:105` (após salvar a lista de censura, purga as manchetes já coletadas) |
+| `obter_organograma_base()` `:110` | `mod_lista_telefonica.ORGANOGRAMA_BASE` | `mod_solicita_impressao/bd_manipulador.py:407` (semeadura de cotas: 1000 por secretaria, 200 por setor/subsetor) |
+| `modulo_habilitado(chave)` `:127` | `autenticacao.modulos_registrados` (`tb_modulos.ativo`) | chamador genérico — módulo desconhecido conta como **desligado** |
+
+!!! warning "`obter_organograma_base()` devolve `None` de propósito"
+    Quando a Lista Telefônica não responde, a Solicitação de Impressão **mantém
+    o fallback local** (`mod_solicita_impressao/bd_manipulador.py:411-421`: 6
+    secretarias mínimas) para a semeadura das cotas não quebrar. O fallback é do
+    **chamador** — a fachada informa **ausência**, não simula presença com valor
+    inventado.
+
+### Precedente: `censura.py` generalizado
+
+`mod_intranet/censura.py` (chave `conteudo_palavras_bloqueadas` em `tb_config`)
+já resolvia o mesmo desenho **antes** da fachada: Blog e Agregador precisam da
+**mesma** lista de palavras bloqueadas e o dado mora no **núcleo**, não nos
+módulos. `integracoes.py` generaliza o padrão — **antes** o dado era uma chave de
+configuração compartilhada; **agora** a fachada cobre dado que mora no **outro
+módulo**. Mesma filosofia: núcleo como dono da costura, imports lazy, cada lado
+fail-soft (ver seção "Censura de conteúdo" abaixo).
+
+### Exceção documentada: cascata LGPD
+
+`check_integridade.py` mantém a allowlist `CASCATA_LGPD` com os **únicos** pares
+de negócio→negócio permitidos — `mod_gest_cad_usuario → {mod_blog, mod_edit_pdf,
+mod_renomear_empenho}` — porque a exclusão/renomeação de usuário precisa limpar
+a autoria nos bancos vizinhos na frente do usuário. Cada módulo toca **só** o seu
+banco (API pública de limpeza de cada um), então não há cross-query. Qualquer
+outro par é violação. Ver
+[Gestão de Usuários](analise_mod_gest_cad_usuario.md#limpeza-cruzada-lgpd-a-unica-excecao-de-negocionegocio).
+
+### Validação — `assets/test/check_integridade.py`
+
+Guarda estrutural por **AST** (stdlib `ast`, sem importar nada, sem banco, sem
+rede), 13 verificações em 3 blocos: **A** nenhum módulo de negócio importa outro
+(exceto `CASCATA_LGPD`); **B** sem ciclo de import **top-level** entre `mod_*` e
+`main.py` (lazy = AVISO); **C** todo `mod_*` tem `bd_manipulador.py` (nunca
+`db_manipulador.py`).
+
+```bash
+.venv/bin/python assets/test/check_integridade.py
+```
+
+**Antes/depois de 25/09/2026: 5 falhas em 17 verificações → 13/13 OK**, e 2 ciclos
+apenas-lazy desapareceram. O bloco A conta por **par de módulos**, e as 5
+violações fechadas foram: `mod_blog → mod_agregador_noticias`,
+`mod_filas → mod_agregador_noticias`, `mod_filas → mod_gest_cad_usuario`,
+`mod_lista_telefonica → mod_gest_cad_usuario` e
+`mod_solicita_impressao → mod_lista_telefonica` — exatamente as 5 arestas da
+tabela de consumidores acima.
+
+## `PADRAO_CONFIG` — fonte única de verdade dos defaults (25/09/2026)
+
+`PADRAO_CONFIG` (`bd_conexao.py:47-...`) é o **dicionário canônico de todos os
+defaults** de `tb_config`: appearance, observabilidade/loguru, OTel, Grafana,
+documentação, SGBD, contadores e cards de tela. Regras:
+
+- O `INSERT` de banco novo itera o dicionário — **nada de literal duplicado**.
+- A tela `/configuracoes` lê o default **daqui** (`padrao=PADRAO_CONFIG["<chave>"]`).
+- O dicionário do botão **"Restaurar padrão"** também lê daqui.
+- Os fallbacks de `aplicar_gerais` devem apontar para cá.
+
+**Bug corrigido em 25/09/2026:** `backup_interval_hours` e `sessao_retencao`
+**não estavam** em `PADRAO_CONFIG` — o mesmo default vivia **duplicado em 5
+lugares** (`INSERT` de banco novo, `padrao=` do campo na tela, dicionário do
+"Restaurar padrão", fallbacks de `aplicar_gerais` e o seed legado do bootstrap).
+Como a chave não existia no `PADRAO_CONFIG`, o campo da tela **não caía no
+padrão** quando a chave faltava em `tb_config`. Ambas foram movidas para
+`PADRAO_CONFIG` (`"12"` e `"50"`) e `tela_configuracoes.py` passou a lê-las de lá
+(`_campo_backup`, `_campo_sessao`, `_campo_aviso`, o dicionário de
+`restaurar_grupo` e o `pos_acao` que reagenda o backup com
+`int(PADRAO_CONFIG["backup_interval_hours"])`).
+
+!!! tip "Regra para quem for criar uma chave nova de `tb_config`"
+    Adicione **uma vez** em `PADRAO_CONFIG` e consuma com
+    `padrao=PADRAO_CONFIG["chave"]`. Literal repetido em dois pontos é bug
+    latente — foi exatamente assim que as duas chaves acima saíram do padrão
+    silenciosamente.
 
 ## Padronização de tema e administração dos módulos — `tema_modulo.py`
 
@@ -214,8 +340,60 @@ Documentação de uso: [Manual de Instalação — Inicialização por linha de 
 - Bootstrap: `inicializar_bancos()` roda antes de qualquer import de módulo (`main.py:15-16`) — ordem crítica.
 - O PLANO cita `mod_intranet_bd_criador.py` e `mod_intranet_auditoria.py`: esses arquivos **não existem** — quem cria as tabelas é `bd_conexao.init_db()` e quem audita é `bd_manipulador.audit_log()`.
 - `storage_secret` do `ui.run` é placeholder hardcoded ("...mude-isto") — trocar antes de produção.
-- `backup_interval_hours` é semente legada; os jobs usam apenas `backup_horas:<modulo>`. `sessao_retencao` não tem campo na UI.
+- `backup_interval_hours` é o intervalo do **card "Configurações gerais"** (`/configuracoes`), que grava e **reagenda** o job global; os jobs por módulo usam a chave própria `backup_horas:<modulo>`. `sessao_retencao` (dias, padrão 50) também tem campo no mesmo card e é lida pelo mecanismo de poda do histórico de sessões. **Desde 25/09/2026 as duas chaves vivem em `PADRAO_CONFIG`** (fonte única de verdade — ver seção acima); antes o default era duplicado em 5 pontos e o campo não caía no padrão quando a chave faltava em `tb_config`.
 - MAC via ARP não funciona neste host Windows (comandos Linux) — coluna fica nula.
+
+## Correções de segurança aplicadas 25/09/2026 — `bandit` HIGH 0 / MEDIUM 0
+
+Quatro achados no núcleo foram tratados no commit `624c9d5`. **Um foi corrigido
+de verdade** (não silenciado) e três foram **justificados com `# nosec`
+documentado** — a distinção importa: `nosec` é aceito só quando o risco é
+efetivamente inexistente, com a razão escrita no código.
+
+### 1. `grafana_sync.py` — URL do Grafana sem validação de esquema (B310) — **CORRIGIDO**
+
+`obter_grafana_url()` aceitava qualquer valor de `GRAFANA_URL`/`tb_config`. Com
+`GRAFANA_URL=file:///etc/passwd`, o `urllib.request.urlopen()` das funções
+seguintes (`grafana_aguardar_pronto`, `_api_autorizada`) abriria um **arquivo
+local** em vez de fazer HTTP — leitura de arquivo arbitrário (bandit **B310**).
+
+Correção: helper `_url_grafana_valida(cand)` (`grafana_sync.py:25-31`) com a
+tupla `_SCHEMAS_GRAFANA = ("http://", "https://")` (`:22`). `obter_grafana_url()`
+(`:33-48`) só aceita URL `http(s)` **absoluta**; qualquer outro esquema
+(`file://`, `ftp://`, custom) **cai no padrão** `http://localhost:3000`. Como
+todo `urlopen` do módulo herda a base já validada, os `# nosec B310` restantes
+(`:143`, `:167`) ficaram com justificativa: *"`base` vem de
+`obter_grafana_url()`, que só devolve http(s)"*.
+
+### 2. `ativacao.py` — `subprocess.run(shell=usar_shell)` (B602) — `# nosec` justificado
+
+`_cmd` (`ativacao.py:607`, `# nosec B602` em `:625`) executa o comando do
+assistente de ativação com `shell=usar_shell`. A justificativa escrita no código:
+`usar_shell` só é `True` para comandos **estáticos definidos no próprio
+assistente** (a docstring da função lista a allowlist), e a **senha entra por
+`stdin`**, nunca interpolada no `argv` — logo não há entrada do usuário na linha
+de comando.
+
+### 3. `repositorio.py` — `set_sql` no `UPDATE tb_modulos` (B608) — `# nosec` justificado
+
+`atualizar_modulo` (`repositorio.py:671`, `# nosec B608` em `:704`) monta o
+`set_sql` apenas a partir das **chaves literais de um if-chain fixo**
+(`nome`/`icone`/`rota`/`ativo`/`ordem`), enquanto os **valores vão por bind**
+(`:nome`, `:icone`, `:rota`, `:ativo`, `:ordem`) — não há interpolação de valor
+nem de nome de coluna vindo de entrada externa.
+
+### 4. `ativacao.py` — `urlopen` de probe local (B310) — `# nosec` justificado
+
+`_probe_http` (`:374`, `# nosec B310` em `:379`) e `_servicos_otel_online`
+(`:749`, `# nosec B310` em `:754`) chamam `urlopen` com
+`http://localhost:<porta>/...` **literal** (porta convertida com `int()`) —
+nunca `file://` nem URL vinda do usuário.
+
+!!! note "Resultado do `bandit` no lote"
+    HIGH 1→0 e MEDIUM 5→0 nos 11 módulos. O único achado **real** de segurança
+    (o `file://` do Grafana) foi corrigido na origem; o restante é
+    `# nosec` com razão — política do `kbp-devSecOps` (ver
+    [Ferramentas de Segurança](seguranca/ferramentas_de_seguranca.md)).
 
 ## Status — Fase 1 do PLANO.md
 
@@ -664,11 +842,11 @@ Pilotos migrados:
 
 ## Auditoria kbp-doc — lote núcleo 23/09/2026
 
-Inventário real: `__init__`, `banco_conexao` (dual SQLite/PostgreSQL, `conexao(chave)`, `conexao_central`, `_CursorPostgres`), `bd_conexao` (`get_config`/`set_config` via `Repositorio`), `crud_base` (`CrudBase` + `audit_reg`), `repositorio` (`Repositorio`, `MODULOS_BD`, `engine`/`sessaodb`), `models/__init__` (imperativo `Table` + `dataclass` + `map_imperatively`: `Configuracao`/`Sessao`/`Modulo`), `autenticacao` (bcrypt, sessões revogáveis, `tb_modulos`), `tema_modulo`, `ui_comum`, `aba_modulo`, `telas` (layout 4 partes), `tela_configuracoes` (5 abas), `ativacao` (Opção C Typer), `rotinas` (APScheduler: `backup:<chave>`, `cleanup_pdf`, `poda_auditoria`, `monitor_empenho`; `painel_backup`, anti-disconnect `run.io_bound` + spinner + trava `ocupado`), `documentacao` (`_build`/`montar`/`iniciar_servidor`), `observabilidade` (loguru `get_logger`, `configurar`, `limpar_logs`).
+Inventário real: `__init__`, `banco_conexao` (dual SQLite/PostgreSQL, `conexao(chave)`, `conexao_central`, `_CursorPostgres`), `bd_conexao` (`get_config`/`set_config` via `Repositorio`, **`PADRAO_CONFIG` como fonte única dos defaults**), `crud_base` (`CrudBase` + `audit_reg`), `repositorio` (`Repositorio`, `MODULOS_BD`, `engine`/`sessaodb`), `models/__init__` (imperativo `Table` + `dataclass` + `map_imperatively`: `Configuracao`/`Sessao`/`Modulo`), `autenticacao` (bcrypt, sessões revogáveis, `tb_modulos`), **`integracoes` (fachada pública entre módulos — imports lazy + fail-soft, 25/09/2026)**, `tema_modulo`, `ui_comum`, `aba_modulo`, `telas` (layout 4 partes), `tela_configuracoes` (5 abas), `ativacao` (Opção C Typer), `rotinas` (APScheduler: `backup:<chave>`, `cleanup_pdf`, `poda_auditoria`, `monitor_empenho`; `panel_backup`, anti-disconnect `run.io_bound` + spinner + trava `ocupado`), `documentacao` (`_build`/`montar`/`iniciar_servidor`), `observabilidade` (loguru `get_logger`, `configurar`, `limpar_logs`).
 
 Correções aplicadas: docstring bilíngue EN/PT-BR em `autenticacao.py` (estava sem cabeçalho), `telas.usuario_logado` e `documentacao._build`/`montar` (estavam PT-only).
 
-Helpers do núcleo já cobertos acima e mantidos: `contexto` (ContextVar IP/UA LGPD), `censura` (palavras bloqueadas), `hora_servidor` (NTP.br), `rotas_modulos` (slugs custom), `tema_css` (frameworks locais), `email_util` (SMTP RF-58), `port_scanner` (`--scan-ports`), `home_visual` (modelo Water). Arquivos auxiliares sem seção própria (intencionais, sem docs dedicadas): `decoradores`, `dialogo_backup` (legado, substituído por `rotinas.painel_backup`), `docker_detector`, `grafana_sync`, `instrumentacao_app`, `otel_integracao`, `pdf_operacoes`, `nicegui_patch`, `telefone`, `ui_form`, `ui_painel`, `hora_servidor` detalhada em `modulos/intranet.md`.
+Helpers do núcleo já cobertos acima e mantidos: `contexto` (ContextVar IP/UA LGPD), `censura` (palavras bloqueadas — **precedente da fachada `integracoes`**, ver seção própria), `hora_servidor` (NTP.br), `rotas_modulos` (slugs custom), `tema_css` (frameworks locais), `email_util` (SMTP RF-58), `port_scanner` (`--scan-ports`), `home_visual` (modelo Water). Arquivos auxiliares sem seção própria (intencionais, sem docs dedicadas): `decoradores`, `dialogo_backup` (legado, substituído por `rotinas.painel_backup`), `docker_detector`, `instrumentacao_app`, `otel_integracao`, `pdf_operacoes`, `nicegui_patch`, `telefone`, `ui_form`, `ui_painel`, `hora_servidor` detalhada em `modulos/intranet.md`. **`grafana_sync`** tem seção própria acima (validação de esquema da URL, 25/09/2026).
 
 ## Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)
 

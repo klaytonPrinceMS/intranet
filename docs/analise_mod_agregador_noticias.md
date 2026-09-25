@@ -6,7 +6,7 @@
 
 # Agregador de Notícias — `mod_agregador_noticias`
 
-> Agregador de notícias: rotas `/agregador-noticias` + `/agregador-noticias-puro` (pura estilo Noticia) (chave `agregador_noticias`) · banco próprio `db_mod_agregador_noticias.db` · tabela `tb_noticia` (título/fonte/tema/url/imagem/ícone_fonte/descrição/datas, `fonte_icon_url` 16×16 faviconV2 + `imagem_url` 30×30, **banco reciclado diariamente às `06:00` configurável `hora_reinicio` via `reiniciar_banco` `DELETE` + `CronTrigger`, sem backup** `MAPA_BACKUPS` sem `agregador_noticias`) · scrapy-like `httpx+parsel` espelhando `klaytonPrinceMS/Noticia` (Sites gn_brasil/gn_saude + Noticias get_noticiasGN/BBC/JFP/RSS) · intervalo 10–360 min + flag habilitado + termo livre via RSS (`/rss/search` — HTML `/search` dá 429/captcha) + fontes configuráveis (15: 3 + 8 RSS V1 + 4 cobertura V2, migração V1/V2) + coleta educada (`UA_COLETA`, `CORTEZIA_SEG` 1.5s+jitter, cooldown 30 min) · deduplicação por URL (`SELECT url`) + título normalizado (`_norm_tit` NFKD lower) antes de `INSERT OR IGNORE` · tempo real da postagem via `_parse_data_pub` (`email.utils.parsedate_to_datetime` + fallback ISO/RSS) ordenado por `COALESCE(data_publicacao, data_coleta) DESC` · **barra filtro tema + busca lado a lado** (`agregador-filtro-tema` + `agregador-busca` `debounce 300` NFKD, `placeholder "Buscar palavra…"`, `clearable`, tooltip, sem badge `Coleta:`) · **paginação 12 + busca** (`pagina` `por_pagina=12` `total_pag` `offset`, busca **global** em memória 500 NFKD título/descrição/fonte/tema (ignora filtro de tema), ordenação `COALESCE(...) DESC` mais atual→mais antiga, botões `Primeira/Anterior/Próxima/Última` `data-testid=agregador-primeira/anterior/proxima/ultima`) · grid responsivo **3 colunas desktop → 2 tablet (max-width 1024px) → 1 celular (max-width 640px) via `.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}` + media queries, cards `min-height 160px max-height 220px` (`.card-noticia`) baseado na média de 91 notícias (título média 79 chars mediana 75, descrição média 34, 87.9% com imagem, 24% com fonte_icon)** · cards **(ícone fonte `16×16` `contain` + miniatura `30×30` `cover` lado a lado antes do título quando há imagem/ícone `16px/30px object-cover/contain` + badge tema + título como `ui.link(new_tab=True)` + descrição + tempo relativo `_tempo_relativo` usando `data_publicacao` real, sem botão — título clicável basta, sem card TV, data absoluta substituída, busca NFKD)** · **tela pura** `telas_puro.py:mostrar_tela_pura` (`/agregador-noticias-puro`) copiando padrão `klaytonPrinceMS/Noticia` `intro-overlay` + `about` `info-list` com cards atuais (3 colunas, `fonte_icon 16×16` + `imagem 30×30`, tempo relativo) + originais `assets/noticia/` (`base.css`, `vendor.css`, `main.css`, `font-awesome`, `micons`, `fonts/lora/poppins`, `images/bg/intro`, `js/modernizr/pace/jquery/plugins/main.js`, `favicon.png`) servidos via `main.py` `@app.get("/assets/noticia/{caminho:path}")` + botão `Ver puro Noticia` `data-testid=agregador-ver-puro` · admin: habilitado, intervalo, termo, fontes, temas, **hora `06:00` + reinício `reiniciar_banco`** · TV filas `listar_para_tv` carrossel (7s rotação, 120s recarrega, `fonte_icon` incluso) · `assets/noticia/` 4.9M servido via rota estática · `mod_filas/midia/` (`PASTA_MIDIA` `mod_filas/midia` → `/midia_filas`) · auditoria só **quem alterou o quê** (`definir_*` + `reiniciar_banco`, sem postagens).
+> Agregador de notícias: rotas `/agregador-noticias` + `/agregador-noticias-puro` (pura estilo Noticia, ver [análise da tela pura](analise_mod_agregador_noticias_puro.md)) (chave `agregador_noticias`) · **atualizado 25/09/2026**: censura compartilhada orquestrada pelo núcleo via `integracoes.limpar_noticias_censuradas()` · banco próprio `db_mod_agregador_noticias.db` · tabela `tb_noticia` (título/fonte/tema/url/imagem/ícone_fonte/descrição/datas, `fonte_icon_url` 16×16 faviconV2 + `imagem_url` 30×30, **banco reciclado diariamente às `06:00` configurável `hora_reinicio` via `reiniciar_banco` `DELETE` + `CronTrigger`, sem backup** `MAPA_BACKUPS` sem `agregador_noticias`) · scrapy-like `httpx+parsel` espelhando `klaytonPrinceMS/Noticia` (Sites gn_brasil/gn_saude + Noticias get_noticiasGN/BBC/JFP/RSS) · intervalo 10–360 min + flag habilitado + termo livre via RSS (`/rss/search` — HTML `/search` dá 429/captcha) + fontes configuráveis (15: 3 + 8 RSS V1 + 4 cobertura V2, migração V1/V2) + coleta educada (`UA_COLETA`, `CORTEZIA_SEG` 1.5s+jitter, cooldown 30 min) · deduplicação por URL (`SELECT url`) + título normalizado (`_norm_tit` NFKD lower) antes de `INSERT OR IGNORE` · tempo real da postagem via `_parse_data_pub` (`email.utils.parsedate_to_datetime` + fallback ISO/RSS) ordenado por `COALESCE(data_publicacao, data_coleta) DESC` · **barra filtro tema + busca lado a lado** (`agregador-filtro-tema` + `agregador-busca` `debounce 300` NFKD, `placeholder "Buscar palavra…"`, `clearable`, tooltip, sem badge `Coleta:`) · **paginação 12 + busca** (`pagina` `por_pagina=12` `total_pag` `offset`, busca **global** em memória 500 NFKD título/descrição/fonte/tema (ignora filtro de tema), ordenação `COALESCE(...) DESC` mais atual→mais antiga, botões `Primeira/Anterior/Próxima/Última` `data-testid=agregador-primeira/anterior/proxima/ultima`) · grid responsivo **3 colunas desktop → 2 tablet (max-width 1024px) → 1 celular (max-width 640px) via `.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}` + media queries, cards `min-height 160px max-height 220px` (`.card-noticia`) baseado na média de 91 notícias (título média 79 chars mediana 75, descrição média 34, 87.9% com imagem, 24% com fonte_icon)** · cards **(ícone fonte `16×16` `contain` + miniatura `30×30` `cover` lado a lado antes do título quando há imagem/ícone `16px/30px object-cover/contain` + badge tema + título como `ui.link(new_tab=True)` + descrição + tempo relativo `_tempo_relativo` usando `data_publicacao` real, sem botão — título clicável basta, sem card TV, data absoluta substituída, busca NFKD)** · **tela pura** `telas_puro.py:mostrar_tela_pura` (`/agregador-noticias-puro`) copiando padrão `klaytonPrinceMS/Noticia` `intro-overlay` + `about` `info-list` com cards atuais (3 colunas, `fonte_icon 16×16` + `imagem 30×30`, tempo relativo) + originais `assets/noticia/` (`base.css`, `vendor.css`, `main.css`, `font-awesome`, `micons`, `fonts/lora/poppins`, `images/bg/intro`, `js/modernizr/pace/jquery/plugins/main.js`, `favicon.png`) servidos via `main.py` `@app.get("/assets/noticia/{caminho:path}")` + botão `Ver puro Noticia` `data-testid=agregador-ver-puro` · admin: habilitado, intervalo, termo, fontes, temas, **hora `06:00` + reinício `reiniciar_banco`** · TV filas `listar_para_tv` carrossel (7s rotação, 120s recarrega, `fonte_icon` incluso) · `assets/noticia/` 4.9M servido via rota estática · `mod_filas/midia/` (`PASTA_MIDIA` `mod_filas/midia` → `/midia_filas`) · auditoria só **quem alterou o quê** (`definir_*` + `reiniciar_banco`, sem postagens).
 
 ## Propósito
 
@@ -101,13 +101,192 @@ Funcionalidade compartilhada Blog ↔ Agregador (chave única `conteudo_palavras
 - **Agregador** (`bd_manipulador.py:399-443` `inserir_noticia` descarta censurada; `328-352` `listar_para_tv` filtra `LIMIT*3` → `titulo_bloqueado`; `354-381` `limpar_censuradas()` remove já coletadas censuradas).
 - **Blog** (`bd_manipulador.py:646-703`): `criar/atualizar` bloqueiam título censurado.
 - **Admin Agregador** (`telas_administracao.py:187-241`): card `Censura de conteúdo — palavras bloqueadas` (`block`, `data-testid=agregador-palavras-bloqueadas`, `textarea` CSV/;/linha, `Salvar censura` `data-testid=agregador-salvar-censura` + `Restaurar`, ao salvar `definir_palavras_bloqueadas` + `limpar_censuradas`) + botão `Remover já censuradas agora` (`data-testid=agregador-limpar-censuradas`).
-- **Admin Blog** (`mod_blog/telas_administracao.py:72-106`): mesmo card (`data-testid=blog-palavras-bloqueadas`).
+- **Admin Blog** (`mod_blog/telas_administracao.py:72-106`): mesmo card (`data-testid=blog-palavras-bloqueadas`); ao salvar dispara a purga via **`integracoes.limpar_noticias_censuradas()`** (25/09/2026) — o Blog **não** importa `mod_agregador_noticias` direto (AGENTS.md §2). Ver *Atualização 25/09/2026 — censura compartilhada orquestrada pelo núcleo* abaixo.
 - **Normalização**: `lower` + `NFD` remove `Mn` → `suicidio` bloqueia `suicídio`; substring (não exige palavra inteira).
 - **RNF**: persistência `banco_conexao` WAL por módulo, auditoria `censura/palavras_bloqueadas`, segurança `lower+NFD` substring, performance `limpar_censuradas` sem travar TV (TV filtra em `LIMIT*3`), usabilidade textarea CSV/;/linha.
 
 ## Integrações com o núcleo
 
 Importa `autenticacao.validar_acesso_modulo`/`perfil_global_de`/`eh_admin_do_modulo`, `banco_conexao.conexao`/`get_config`/`set_config`, `tema_modulo.ler_tema`/`notificar`/`bloco_aparencia`, `ui_comum.botao`/`card_admin`/`rodape_salvar_restaurar`, `observabilidade.get_logger`. Grava via `audit_log` → `tb_auditoria_agregador_noticias` (**só quem alterou o quê**: `definir_habilitado/intervalo/termo/fontes/temas/hora_reinicio/reiniciar_banco` auditam `configurar`/`reiniciar_banco`; `coletar_todas`/`limpar_antigas`/`limpar_censuradas` **sem audit**). Agendadores `rotinas._job_agregador_coleta` (`interval minutes` + `CronTrigger` hora) + `_job_agregador_reinicio` (`CronTrigger hora_reinicio` `06:00` default → `reiniciar_banco` `DELETE`) + `reconfigurar_agregador_noticias()` (`pause/resume`+`reschedule minutes`+`reschedule CronTrigger`). **Sem backup**: `MAPA_BACKUPS` sem `agregador_noticias`, `painel_backup` removido, card `Reinício diário — banco reciclado` com `Zerar agora` `data-testid=agregador-reiniciar-agora`. `PREFIXO_POR_CHAVE`/`PADROES_TEMA`/`MODULOS_SISTEMA`/`MODULOS_BD` com `agregador_noticias`. `bd_criador.py` init_agregador no `mod_intranet/bd_criador.py`. TV `mod_filas` consome `listar_para_tv`.
+
+## Atualização 25/09/2026 — censura compartilhada orquestrada pelo núcleo
+
+> A lista de **palavras bloqueadas** é a **mesma** para o Blog, o Agregador e a
+> TV de Filas (uma chave só). Em 25/09/2026, o `telas_administracao.py` do
+> **Blog** deixou de importar `mod_agregador_noticias` para fazer a purga e
+> passou a chamá-la pela fachada `mod_intranet.integracoes`
+> (AGENTS.md §2). Commit `624c9d5`.
+
+### Quem orquestra a purga — e por que o Blog
+
+O **Blog** é o módulo que tem a tela de **administração da lista de censura** com
+o card "Censura de conteúdo — palavras bloqueadas" (`mod_blog/telas_administracao.py:72-106`,
+`data-testid=blog-palavras-bloqueadas`). Ao salvar a lista, ele dispara a purga
+das notícias **já coletadas** cujo título passou a estar bloqueado:
+
+```python
+# ANTES — Blog importava o Agregador diretamente (violava AGENTS.md §2)
+from mod_agregador_noticias.bd_manipulador import limpar_censuradas
+n = limpar_censuradas()
+
+# DEPOIS — quem costura é o núcleo
+from mod_intranet import integracoes
+n = integracoes.limpar_noticias_censuradas()
+if n:
+    notificar(f"{n} notícias censuradas removidas do agregador", type="info")
+```
+
+!!! note "O Agregador também tem o seu próprio botão de purga"
+    `mod_agregador_noticias/telas_administracao.py:226` e `:246` chamam
+    `limpar_censuradas()` **de dentro do próprio módulo** (intracomponente, o que
+    é permitido). São **dois pontos de entrada** para a mesma rotina — o botão
+    "Remover já censuradas agora" (`data-testid=agregador-limpar-censuradas`) no
+    Agregador e o disparo automático ao salvar a censura no Blog.
+
+### `mod_intranet/censura.py` — o núcleo compartilhado
+
+Chave **única** em `tb_config` **central**: `conteudo_palavras_bloqueadas`.
+
+| Função | Comportamento |
+|:---|:---|
+| `obter_palavras_bloqueadas()` | Lê a chave, faz `split` por `,` / `;` / `\n`, com **fallback para JSON**, e normaliza em `lower` |
+| `definir_palavras_bloqueadas(lista, ator)` | Normaliza (`lower`), **deduplica**, grava o CSV via `set_config` e audita (`audit_log` → `censura/palavras_bloqueadas`) |
+| `titulo_bloqueado(titulo, palavras=None)` | Devolve `(bloqueado, palavra)` — tupla, para o chamador **saber qual** palavra bloqueou |
+| `filtrar_titulo(...)` | Variante de filtragem direta |
+
+**Normalização (o ponto que importa)** — `_normalizar` aplica **`lower` + NFD
+removendo os diacríticos (`Mn`)**:
+
+| Entrada gravada | Título testado | Bloqueia? |
+|:---|:---|:---:|
+| `suicidio` | `suicídio` | ✔ (o acento é ignorado) |
+| `SAÚDE` | `saúde pública` | ✔ (case-insensitive) |
+| `violencia` | `violência no trânsito` | ✔ (**substring** — não exige palavra inteira) |
+
+!!! warning "A comparação é por **substring**, não por palavra inteira"
+    Bloquear `vaca` também bloquearia `vacinação`. A lista de censura precisa ser
+    montada com termos **longos e específicos** para não produzir falsos
+    positivos.
+
+### Os três consumidores
+
+| Consumidor | Ponto de aplicação | Comportamento |
+|:---|:---|:---|
+| **Blog** | `bd_manipulador.py:criar_postagem` / `atualizar_postagem` | `titulo_bloqueado(titulo)` **antes** do `nh3`. Se bloqueado → retorno `None`/`False` + `warning` no log + `notificar("Título contém palavra bloqueada: ...")` — **não sanitiza e não grava** |
+| **Agregador** | `bd_manipulador.py:inserir_noticia` | Descarta a notícia na **coleta** — o banco nunca chega a receber o título censurado |
+| **Agregador → TV** | `bd_manipulador.py:listar_para_tv` | Filtra **na origem da TV**: busca `LIMIT × 3` e descarta as censuradas, devolvendo até `limite` itens válidos (assim a TV nunca fica sem notícia por causa de censura) |
+| **Agregador (pago)** | `bd_manipulador.py:limpar_censuradas` | Remove as **já coletadas** que ficaram censuradas depois da alteração da lista; retorna `n` |
+
+### Diagrama da censura compartilhada
+
+```mermaid
+graph TD
+  CFG["tb_config central<br/>conteudo_palavras_bloqueadas<br/>(CSV)"]
+  CENS["mod_intranet/censura.py<br/>obter / definir / titulo_bloqueado<br/>lower + NFD sem acento, substring"]
+  CFG --> CENS
+
+  CENS --> BLOGDB["mod_blog<br/>criar/atualizar_postagem<br/>bloqueia ANTES do nh3"]
+  CENS --> AGDB["mod_agregador_noticias<br/>inserir_noticia descarta"]
+  CENS --> TV["mod_filas (TV)<br/>listar_para_tv filtra"]
+
+  BLOGADM["Admin Blog<br/>blog-salvar-censura"] --> CENS
+  BLOGADM -.->|integracoes.limpar_<br/>noticias_censuradas| PURGA["Agregador<br/>limpar_censuradas"]
+  AGADM["Admin Agregador<br/>agregador-limpar-censuradas"] --> PURGA
+```
+
+### Complemento — coleta multi-fonte, grid, tela pura e limpeza 24 h
+
+#### Coleta multi-fonte (`httpx` + `parsel`)
+
+O coletor é **scrapy-like** e espelha o repositório `klaytonPrinceMS/Noticia`
+(`Sites` + `Noticias.get_noticiasGN/BBC/JFP/RSS`). Quatro despachantes, escolhidos
+pelo campo `tipo` de cada fonte:
+
+| `tipo` | Despachante | Alvo |
+|:---|:---|:---|
+| `google` | `_coletar_google` | Google News por tema (`gn_brasil`, `gn_saude`, …) |
+| `bbc` | `_coletar_bbc` | BBC Português |
+| `jfp` | `_coletar_jfp` | JFP Notícias (Monte Santo de Minas) |
+| `rss` | `_coletar_rss` | RSS oficial (12 das 15 fontes padrão) |
+| *(outro)* | `_coletar_google` | Fallback |
+
+**15 fontes padrão** (`FONTES_PADRAO`): 3 legadas (Google Brasil, Google Saúde,
+BBC) + 8 RSS V1 (Agência Brasil, Senado, G1 Últimas/Economia/Saúde/Tecnologia,
+Poder360, Folha) + 4 de cobertura V2 (G1 Mundo→`Internacional`, G1 Pop e
+Arte→`Entretenimento`, GE Esporte, JFP→`Monte Santo de Minas`). O `init_db`
+promove LEGADO/V1 → atual **apenas** para quem nunca customizou.
+
+**Coleta educada (anti-ban)** — o Google bloqueia por IP e por padrão
+robotizado (429/captcha comprovado com `httpx` **e** Chromium real):
+
+| Mecanismo | Valor |
+|:---|:---|
+| `UA_COLETA` | `Mozilla/5.0 … Chrome/126` (User-Agent comum) |
+| `_aguardar_cortezia()` | `CORTEZIA_SEG = 1.5` s + jitter de 0–1 s **antes de cada** requisição — nunca rajada |
+| Cooldown de 429 | `COOLDOWN_429_SEG = 1800` (30 min); `_GOOGLE_HTML_BLOQUEADO_ATE` faz `_coletar_google` pular |
+| Sem retry agressivo | RSS oficial é a via viável; `Scrapy`/`Playwright`/`Selenium` não burlam o bloqueio |
+| Termo livre | `_coletar_pesquisa_google` usa `news.google.com/**rss/search**` (o HTML `/search` dá 429/captcha) |
+| Pré-checagem | `_url_ja_coletada(url)` evita re-buscar `og:image` de URL já coletada |
+| Timeout | 12 s no HTML, 6 s no `og:image` (fail-soft) |
+
+**Deduplicação em duas camadas** (`inserir_noticia`): `SELECT 1 WHERE url=?`
+(`url` é `UNIQUE`) **e** um laço `SELECT titulo` com `_norm_tit`
+(`NFKD` → ascii → `lower` → `join`) — evita duplicata com **mesmo título**,
+case-insensitive e sem acento, antes do `INSERT` (que vira
+`ON CONFLICT DO NOTHING` no Postgres pelo proxy de `banco_conexao`).
+
+#### Grid responsivo 3 → 2 → 1 e paginação 12
+
+| Elemento | Implementação |
+|:---|:---|
+| **Colunas** | `.grid-noticias { display:grid; grid-template-columns: repeat(3,1fr) }` + media queries `max-width:1024px → 2`, `max-width:640px → 1` |
+| **Altura do card** | `.card-noticia { min-height:160px; max-height:220px }` (celular: `max-height:none`), dimensionado pela média de 91 notícias coletadas (título 79/75 chars, descrição 34, 87,9% com imagem, 24% com ícone de fonte) |
+| **Paginação** | `por_pagina = 12`; `total_pag = max(1, (total+11)//12)`; `offset = (pagina-1)*12`; botões `Primeira` / `Anterior` / `Próxima` / `Última` (`data-testid=agregador-primeira` / `-anterior` / `-proxima` / `-ultima`) + rótulo `Página X de Y • N notícias` |
+| **Ordenação** | `ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC` — **mais atual → mais antiga**, com o tempo real da postagem (`_parse_data_pub`, RFC822/ISO) e não o horário da coleta |
+| **Busca** | **Global** (ignora o filtro de tema): `listar_noticias(tema=None, limite=500)` filtrado em memória com `NFKD` sobre título/descrição/fonte/tema; `debounce 300`; digitar **reseta** para a página 1 |
+| **Card** | Ícone da fonte `16×16` `contain` + miniatura `30×30` `cover` **antes** do título + `badge(tema)` + `ui.link(titulo, new_tab=True)` + `descricao[:180]` + **tempo relativo** (`_tempo_relativo`). **Sem** botão "Abrir notícia" (o título clicável basta) e **sem** a fonte textual no card |
+
+#### Tela pura (`telas_puro.py`)
+
+Rota `/agregador-noticias-puro` — 145 linhas, **sem paginação** (12 fixas), sem
+filtro/busca, com o layout do modelo `Noticia` (`intro-overlay` + `about` +
+`info-list`) e o CSS/JS original servido por `main.py:818`
+`@app.get("/assets/noticia/{caminho:path}")` (anti path-traversal com `normpath` +
+`startswith(base)`). Acesso **por URL direta** — o botão `agregador-ver-puro` foi
+removido de `/agregador-noticias` em 20/09/2026. Análise completa em
+[Tela Pura de Notícias — análise](analise_mod_agregador_noticias_puro.md).
+
+#### `listar_para_tv` — o carrossel da TV de Filas
+
+```python
+# mod_agregador_noticias/bd_manipulador.py
+SELECT titulo, descricao, url, imagem_url, fonte, tema
+  FROM tb_noticia
+ ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC
+ LIMIT ? * 3          # pede 3x e filtra a censura no Python
+```
+
+| Garantia | Detalhe |
+|:---|:---|
+| **Censura já aplicada** | Busca `LIMIT × 3` e descarta censuradas com `titulo_bloqueado` — a TV **nunca** exibe título bloqueado e **nunca** fica sem notícia por causa da censura |
+| **`descricao or titulo`** | A TV nunca mostra um card vazio |
+| **Desabilitado** | `integracoes.agregador_habilitado()` falso → a TV cai num *placeholder* de pausa, não em erro |
+| **Consumo na TV** | `mod_filas/telas.py`: `carregar_noticias(limite=200)` + `_mostrar_noticia` com `ui.timer 15.0` (rotação) e `ui.timer 120.0` (recarga) no rodapé escuro |
+
+#### Limpeza 24 h e reciclagem diária
+
+| Mecanismo | Gatilho | O que faz |
+|:---|:---|:---|
+| `limpar_antigas(horas=24)` | Fim de **cada** `coletar_todas` | `DELETE WHERE data_coleta < datetime('now','-24 hours')` — portável: o proxy de `banco_conexao` traduz para `LOCALTIMESTAMP`/`CURRENT_TIMESTAMP` no Postgres. Log `info` + **`sem audit`** (postagens não são auditadas) |
+| `rotinas._job_agregador_coleta` | `interval minutes` (10–360, clamp) | `coletar_todas()` quando habilitado; `pause`/`resume` + `reschedule` por `reconfigurar_agregador_noticias()` sem reiniciar o sistema |
+| `rotinas._job_agregador_reinicio` | **`CronTrigger` diário** na `hora_reinicio` (padrão `06:00`, `HH:MM` validado) | `reiniciar_banco(ator)` → `DELETE FROM tb_noticia` + `audit reiniciar_banco N notícias + hora` |
+| **Sem backup** | — | `MAPA_BACKUPS` **não** tem `agregador_noticias` e o admin **não** tem `painel_backup`: o banco é **reciclado**, não preservado. No admin, o card "Reinício diário — banco reciclado" com `Zerar agora` (`agregador-reiniciar-agora`) substitui o card de backup |
+
+!!! note "Por que reciclar em vez de fazer backup"
+    Notícias são **efêmeras** por natureza: a tela mostra as 12 mais recentes e o
+    carrossel da TV renova a cada 15 s. Guardar cópias não agrega valor e só
+    consome espaço — recriar a base às 06:00 garante o mesmo resultado com
+    I/O zero.
 
 ## Pontos de atenção
 

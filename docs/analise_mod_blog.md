@@ -6,7 +6,7 @@
 
 # Blog — `mod_blog`
 
-> Módulo de blog corporativo: rota `/blog` (chave `blog`) · banco próprio `db_mod_blog.db` · HTML sanitizado com nh3 · somente-leitura para usuário comum · auditoria central LGPD.
+> Módulo de blog corporativo: rota `/blog` (chave `blog`) · banco próprio `db_mod_blog.db` · HTML sanitizado com nh3 · somente-leitura para usuário comum · auditoria central LGPD. **Atualizado 25/09/2026**: `atualizar()` com `refresh()` fail-soft (AGENTS.md §3.2) e modo carrossel redesenhado como **seleção em lote por checkbox** + `Tempo (s)`.
 
 ## Propósito
 
@@ -84,6 +84,8 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na tr
 | Editor com pré-visualização | **Implementado** (editor com preview, criar/editar) |
 | Publicar/Despublicar + restauração de inativas | **Implementado** (aba "Despublicadas" da tela do blog — `telas.py:251,469`; o admin standalone `/admin/blog` não lista mais inativas desde 06/09) |
 | `assets/test/teste_fluxo_blog.py` (46) | **Implementado** (em `assets/test/` — 46 verificações ✅) |
+| **`atualizar()` fail-soft (25/09/2026)** — `refresh()` sob `try/except` + `logger.debug` | **Implementado** (`telas.py:1098-1114`, AGENTS.md §3.2) |
+| **Carrossel por seleção em lote + `Tempo (s)` (25/09/2026)** — `_aplicar_carrossel_exib` / `_aplicar_unica_exib` / `_aplicar_historico_exib` / `_restaurar_padrao` | **Implementado** (`telas.py:618-695` + card `930-944`; `ui.select` dedicado removido) |
 
 > Fase 3 **REALIZADO** e validado. O teste `assets/test/teste_fluxo_blog.py` (**46 verificações** ✅)
 > cobre sanitização XSS (nh3), conversores HTML/Markdown, CRUD, publicar/
@@ -160,6 +162,7 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na tr
   - `_resumo_conteudo(conteudo, limite=220)` (`telas.py:215`) — extrai resumo em texto puro (remove HTML/Markdown/Mermaid, substitui ```mermaid por "[diagrama]", trunca com reticências); try/except + loguru.
   - `_renderizar_carrossel(...)` (`telas.py:239`) — monta o carrossel: `ui.timer` com rotação, barra de ações no topo e rodapé, card resumido quando não expandido e `_card_postagem` completo quando expandido; navegação com `aria-label` e guarda de estado expandido no timer; try/except + loguru.
   - Bloco administrativo no modo carrossel (`telas.py:546-596`): `ui.select` múltiplo das postagens + `ui.number` do tempo, com auditoria; **reverte a seleção** se o admin tentar selecionar exatamente 1 postagem (aviso "Selecione ao menos 2 postagens para o carrossel.").
+  - **SUPERADO em 25/09/2026**: o `ui.select` múltiplo e o campo "Tempo de exibição (segundos)" foram removidos. O desenho atual é **seleção em lote por checkbox + `Tempo (s)`**, com as funções `_aplicar_carrossel_exib` / `_aplicar_unica_exib` / `_aplicar_historico_exib` / `_restaurar_padrao` — ver [Atualização 25/09/2026](#atualizacao-25092026-atualizar-fail-soft-e-carrossel-por-selecao-em-lote).
   - `atualizar()` trata o modo carrossel (`telas.py:684-694`) — lista apenas as postagens selecionadas via `listar_postagens_por_ids`.
 - **Testes**:
   - `assets/test/teste_fluxo_blog.py`: isolamento do banco (reatribuição de `bd._crud` para banco temporário) + nova função `teste_carrossel` (7 verificações) validando o modo carrossel.
@@ -208,6 +211,131 @@ Importa `autenticacao.pode_publicar_no_blog` e `eh_admin_do_modulo`. Grava na tr
 - **Postagens atuais #1/#2/#3 atualizadas via `atualizar_postagem`** (autor `master`) para o mesmo padrão — bancos existentes não são re-semeados, só normalizados por edição.
 - **REGRA — `mover_mermaid_para_fim()` (`bd_manipulador.py:531-544`)**: ao salvar (criar em `:550-563` e editar em `:569-582`), blocos ```mermaid vão para o fim na ordem original (idempotente; sem fence completo o conteúdo segue intacto).
 - **Teste novo `assets/test/test_blog_mermaid_fim.py` (7 checks)** — meio→fim com ordem, sem fence/incompleto intacto, entradas vazias, seeds conformes + idempotência, 3 postagens, contrato do render (`justify-center` + `max-width: 680px`); linha correspondente no `assets/test/README.md`.
+
+## Atualização 25/09/2026 — `atualizar()` fail-soft e carrossel por seleção em lote
+
+> Duas correções aplicadas em `mod_blog/telas.py` no commit `624c9d5`. Nenhuma
+> mudança de schema; apenas a robustez do refresh e o **redesenho do controle de
+> exibição** do modo carrossel.
+
+### 1. `atualizar()` — `refresh()` agora é fail-soft (AGENTS.md §3.2)
+
+`telas.py:1098-1114`. Antes, `_feed_blog.refresh()` era chamado **sem
+`try/except`**, enquanto o `_atualizar_contador()` logo abaixo já era protegido —
+uma assimetria. Como `refreshable.refresh()` **agenda uma tarefa no `event-loop`
+do NiceGUI**, ele pode levantar quando o loop ainda não subiu ou quando o
+cliente desconectou; sem o `try`, **uma falha de refresh derrubava a tela
+inteira**.
+
+```python
+def atualizar():
+    # AGENTS.md §3.2: o refresh é fail-soft. `refreshable.refresh()`
+    # agenda tarefa no event-loop do NiceGUI e pode levantar se o loop
+    # ainda não subiu ou se o cliente desconectou — sem este try, uma
+    # falha de refresh derrubava a tela inteira (o conteúdo já foi
+    # renderizado logo abaixo por `_feed_blog()`, então o feed segue
+    # visível mesmo se a re-renderização não agendar).
+    try:
+        _feed_blog.refresh()
+    except Exception:
+        observabilidade.get_logger("blog").debug(
+            "atualizar: refresh do feed não agendado (loop indisponível)")
+    if pode_publicar:
+        try:
+            _atualizar_contador()
+        except Exception:
+            pass
+```
+
+| Ponto | Decisão |
+|:---|:---|
+| **Severidade do log** | `debug` (não `exception`/`warning`) — é uma condição **esperada** de corrida entre a UI e o event-loop, não um erro do módulo |
+| **Conteúdo não se perde** | O corpo do feed **já foi renderizado** logo abaixo, em `with posts_wrap: _feed_blog()`; só a *re-renderização* pode não agendar. A tela continua com o feed visível |
+| **Consistência** | Os dois caminhos de `atualizar()` (`refresh` e `_atualizar_contador`) passam a ter `try/except`, com `logger` em um e `pass` no outro (contador é cosmético) |
+| **Quem chama** | `on_change` da busca (`telas.py:954`), troca de modo/fixação, e o `atualizar()` final de montagem (`telas.py:1134`) |
+
+### 2. Modo carrossel — seleção em lote por checkbox + `Tempo (s)`
+
+O desenho anterior (um `ui.select` dedicado "Postagens do carrossel" mais um
+campo "Tempo de exibição (segundos)") foi **substituído** pela **seleção em
+lote** que já existia na tela. Hoje **não há mais um controle separado de
+carrossel**: o admin marca as postagens com os *checkboxes* da seleção em lote
+(`blog-selecionar-<id>` / `blog-selecionar-todos` / `blog-selecionar-5` /
+`blog-selecionar-10` / `blog-limpar-selecao`) e clica em um dos **três botões de
+aplicação** + o campo numérico `Tempo (s)`.
+
+#### Estado compartilhado
+
+```python
+selecionados = set()          # ids marcados nos checkboxes (declarado ANTES da UI
+                              # para evitar UnboundLocalError)
+_tempo_exib = {"valor": 1}    # valor do campo numérico, carregado do banco
+try:
+    from mod_blog.bd_manipulador import obter_carrossel_tempo as _get_t
+    _tempo_exib["valor"] = _get_t()
+except Exception:
+    pass
+```
+
+#### As quatro funções de aplicação (`telas.py:618-695`)
+
+| Função | Regra de aplicação | Efeito no banco | Auditoria |
+|:---|:---|:---|:---|
+| **`_aplicar_unica_exib()`** (`662-680`) | Exige **exatamente 1** selecionada; senão `notify` `warning` "Selecione exatamente 1 postagem para 'Publicação única'" e `return` (sem escrita) | `definir_postagem_unica_id(pid)` + `blog_modo_exibicao='unica'` | `audit(..., "configuracao", f"única via seleção: {pid}")` |
+| **`_aplicar_historico_exib()`** (`682-695`) | **Sem pré-condição** — aplica sempre | `blog_modo_exibicao='historico'` | `audit(..., "configuracao", "histórico via seleção (todas)")` |
+| **`_aplicar_carrossel_exib()`** (`642-660`) | Exige **≥ 2** selecionadas; senão `notify` `warning` "Selecione ao menos 2 postagens para o carrossel" e `return` | `definir_carrossel_postagens_ids(sorted(selecionados))` + `definir_carrossel_tempo(int(_tempo_exib["valor"] or 10))` + `blog_modo_exibicao='carrossel'` | `audit(..., "configuracao", f"carrossel via seleção: {sorted(selecionados)}")` |
+| **`_restaurar_padrao()`** (`618-640`) | Sem pré-condição | Modo **`carrossel`** + as **3 primeiras postagens ativas por `ordem ASC`** (`listar_postagens(ativo=True, ordem="ASC")[:3]`, só se houver ≥ 2) + `definir_postagem_unica_id(None)` (limpa a fixação) + `definir_carrossel_tempo(10)` | `audit(..., "configuracao", "exibição: padrões restaurados")` |
+
+**Padrão comum das quatro**: imports **locais** (lazy) do `bd_manipulador` e do
+`audit_reg`; `try/except` com `observabilidade.get_logger("blog").exception(...)`
++ `ui.notify` negativo; `notify` positivo **antes** do reload; e
+`ui.timer(0.1, lambda: ui.navigate.reload(), once=True)` para re-renderizar a
+página com o novo modo. A auditoria de `audit_reg` é ela própria `try/except` com
+`pass` — falhar no log de auditoria **não** cancela a mudança de configuração.
+
+#### Card de controle (`telas.py:930-944`)
+
+```text
+┌─ Exibição (coluna w-1/4, botões empilhados) ───────────────────┐
+│ [Aplicar à única]       blog-aplicar-unica      (exatamente 1) │
+│ [Exibir todas]         blog-aplicar-historico  (sem mínimo)   │
+│ [Aplicar ao carrossel] blog-aplicar-carrossel  (mín. 2)       │
+│ [Tempo (s)  1..60 step 1   outlined dense]                    │
+│ [Restaurar padrão]      (variante=restaurar)                  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+| Controle | `data-testid` | Restrição |
+|:---|:---|:---|
+| Aplicar à única | `blog-aplicar-unica` | exatamente 1 selecionada |
+| Exibir todas | `blog-aplicar-historico` | — |
+| Aplicar ao carrossel | `blog-aplicar-carrossel` | mínimo 2 selecionadas |
+| `Tempo (s)` | — | `min=1 max=60 step=1`, default vindo de `obter_carrossel_tempo()` (padrão do sistema: **10 s**) |
+| Restaurar padrão | — | — |
+
+O `Tempo (s)` usa `on_value_change` para atualizar o dicionário `_tempo_exib`
+(sem salvar sozinho) — o valor só é gravado quando **Aplicar ao carrossel** ou
+**Restaurar padrão** é clicado.
+
+#### Consequências
+
+- **Uma única fonte de seleção**: o mesmo `set()` alimenta "Excluir selecionados",
+  "Aplicar à única", "Exibir todas" e "Aplicar ao carrossel" — o admin não precisa
+  marcar as postagens duas vezes nem manter dois conceitos paralelos de seleção.
+- **Teste atualizado**: `assets/test/teste_carrossel_blog.py` foi reescrito para o
+  desenho novo (antes procurava o `ui.select` de postagens do carrossel).
+- **Mínimo de 2 para carrossel** preservado — com 1 postagem o modo carrossel não
+  faria sentido (não haveria rotação); o aviso é exibido **antes** de qualquer escrita.
+
+### 3. Complemento — sanitização, imagens, Mermaid e censura
+
+| Tema | Onde | Garantia |
+|:---|:---|:---|
+| **Sanitização `nh3`** | `_sanitizar_texto()` (`bd_manipulador.py:499`) na **gravação** e `formatar_conteudo_para_exibicao()` (`:782`) na **renderização** | Whitelists **alinhadas** — ambas usam `tags_permitidas()`; `div`/`br` garantidos sem atributos; esquemas `http`/`https`/`data`/`mailto` + URLs relativas (`url_relative="pass_through"`); `link_rel="noopener noreferrer"`. `div`/`br` são **sempre** permitidos para que bancos antigos (CSV sem essas tags) não percam a saída do QEditor |
+| **Imagens** | `salvar_imagem_postagem()` (`:410`), `expirar_imagens_orfas()` (`:446`), `ajustar_imagem_html` | Só `.jpg/.jpeg/.png`, máx 5 MB, **assinatura de arquivo validada** (JPEG `FFD8`, PNG `89504E47`); nome `AAMMDDHHMM_login_N.ext`; órfãs removidas em 1 min pelo job `cleanup_blog_imagens`; servido em `/img_postagens/*` por `montar_rotas_static()`; `img` aceita `class` + `style` no `nh3` |
+| **Mermaid** | `extrair_segmentos_mermaid()` (`bd_manipulador.py:68`), `_renderizar_conteudo_postagem()` (`telas.py:17`), `mover_mermaid_para_fim()` (`:531`) | Blocos ` ```mermaid ` viram `ui.mermaid` (bundle embutido, **sem CDN**), centralizados em `max-width:680px`; inválido mostra "(diagrama inválido)" sem derrubar a tela; desligável por `blog_habilitar_mermaid`; ao salvar, os blocos vão **para o fim** na ordem original (idempotente) |
+| **Censura** | `titulo_bloqueado()` de `mod_intranet/censura.py`, aplicado em `criar_postagem`/`atualizar_postagem` **antes** do `nh3` | Título bloqueado → retorno `None`/`False` + `warning` + `notificar("Título contém palavra bloqueada: ...")` — **sem** sanitizar e **sem** gravar. Chave única `conteudo_palavras_bloqueadas` (central), normalização `lower` + `NFD` sem acento, comparação por **substring** |
+| **Purga cruzada** | `mod_blog/telas_administracao.py:100-106` | Ao salvar a lista de censura, o admin do Blog chama `integracoes.limpar_noticias_censuradas()` — **não** importa `mod_agregador_noticias` direto (AGENTS.md §2, correção 25/09/2026) — e informa quantas notícias censuradas saíram do Agregador |
 
 ## Pendencia QA — WAL + paridade SQLite-Postgres (24/09/2026, sem correcao aplicada)
 

@@ -6,7 +6,7 @@
 
 # Filas — `mod_filas` (Multi-filas + TV por etapa + Mídia por fila + Lista única + Ordem da fala + Papel de fundo)
 
-> Gestor de filas/chamadas multi-filas: rotas `/filas` + `/tv?grupo=` (compartilhada) + `/tv/{id}` (isolada) + `?etapa=` réplica por sala · banco próprio `db_mod_filas.db` · tabelas `tb_fila` (colunas voz `voz_ordem` + textos) / `tb_fila_etapa` / `tb_chamada` (prioridade+manchester) / `tb_fila_nomes` (uma lista por fila) / `tb_midia` (por fila + ambiente global + `fundo` papel de fundo) / `tb_tv_estado` (claim+remoto) / `tb_fila_acesso` / `tb_config_filas` · projeto nasce SEM filas (sem seed `Geral`) · `tv_grupo` slug de URL + lista de grupos em uso · cards recolhíveis (`Cadastro de fila`, `Etapas/lista`, `Anexos`), `delay=1000` em todos os campos, ordem da fala `voz_ordem` via `normalizar_voz_ordem` · mídia por fila (mp3/mp4/fotos, volume padrão 40, duração real via mutagen, fotos dividem tempo do áudio, foto `Fundo` absoluta só na área de mídia) + áudio ambiente global em todas as TVs via `midias_para_tv` · `datahora_nomeFila` sempre (`renomear_arquivos_fila` ao renomear) · `nomes.txt`/CSV com tags via `csv_para_tags` (`#prioridade #manchester #etapa`), transferência dentro da mesma TV, revezamento + Manchester dominando (sem termos sensíveis nas telas, só cor de fundo) · espera/chamar por etapa/sala, voz serializada sem cortar (claim por etapa), ducking à metade, hora cheia/meia · acesso liberado por usuário (`tb_fila_acesso` + busca na gestão), botões Editar (no painel) / Acesso nos cards, notícias até 200 · admin via hambúrguer (`/admin/filas`).
+> Gestor de filas/chamadas multi-filas: rotas `/filas` + `/tv?grupo=` (compartilhada) + `/tv/{id}` (isolada) + `?etapa=` réplica por sala · banco próprio `db_mod_filas.db` · **atualizado 25/09/2026**: `contar_nomes_pendentes` (predicado `usado` invertido) e `listar_nomes` (`ORDER BY` invertido) corrigidos · tabelas `tb_fila` (colunas voz `voz_ordem` + textos) / `tb_fila_etapa` / `tb_chamada` (prioridade+manchester) / `tb_fila_nomes` (uma lista por fila) / `tb_midia` (por fila + ambiente global + `fundo` papel de fundo) / `tb_tv_estado` (claim+remoto) / `tb_fila_acesso` / `tb_config_filas` · projeto nasce SEM filas (sem seed `Geral`) · `tv_grupo` slug de URL + lista de grupos em uso · cards recolhíveis (`Cadastro de fila`, `Etapas/lista`, `Anexos`), `delay=1000` em todos os campos, ordem da fala `voz_ordem` via `normalizar_voz_ordem` · mídia por fila (mp3/mp4/fotos, volume padrão 40, duração real via mutagen, fotos dividem tempo do áudio, foto `Fundo` absoluta só na área de mídia) + áudio ambiente global em todas as TVs via `midias_para_tv` · `datahora_nomeFila` sempre (`renomear_arquivos_fila` ao renomear) · `nomes.txt`/CSV com tags via `csv_para_tags` (`#prioridade #manchester #etapa`), transferência dentro da mesma TV, revezamento + Manchester dominando (sem termos sensíveis nas telas, só cor de fundo) · espera/chamar por etapa/sala, voz serializada sem cortar (claim por etapa), ducking à metade, hora cheia/meia · acesso liberado por usuário (`tb_fila_acesso` + busca na gestão), botões Editar (no painel) / Acesso nos cards, notícias até 200 · admin via hambúrguer (`/admin/filas`).
 
 ## Propósito
 
@@ -150,6 +150,135 @@ Conexão WAL + `foreign_keys=ON` via `banco_conexao.conexao("filas")`. Criador: 
 | LGPD + auditoria `tb_auditoria_filas` (inclui `fundo_midia`) | Implementado |
 | Testes `assets/test/test_seg_novos_modulos.py` seções D–D8 | Implementado |
 | Reparo sintático de `telas.py` + slider de volume `filas-midia-som` (22/09/2026) | Implementado |
+
+## Correção 25/09/2026 — dois bugs reais de consulta na lista de nomes
+
+> Duas queries de `mod_filas/bd_manipulador.py` estavam com a **convenção de
+> `usado`** e com a **ordem de exibição** trocadas. O efeito era silencioso e
+> enganoso: o usuário via um número errado e uma lista na ordem inversa à da
+> chamada. Commit `624c9d5`.
+
+### Convenção do módulo: **pendente = `usado=0`**
+
+`tb_fila_nomes.usado` é o marcador de "este nome já foi chamado". Quem o muda é
+`gerar_senha` (e o caminho de emissão equivalente), que grava **`usado=1`** ao
+chamar o nome da lista (`bd_manipulador.py:972` e `:1196`). Logo:
+
+| Estado | Valor | Significado |
+|:---|:---:|:---|
+| Ainda na fila | **`usado=0`** | **pendente** |
+| Já chamado | `usado=1` | já saiu da fila |
+
+É a mesma convenção usada por `listar_nomes(somente_pendentes=True)`,
+`_escolher_proximo_nome` (revezamento/Manchester) e `transferir_nome` /
+`transferir_todos`.
+
+### Bug 1 — `contar_nomes_pendentes()` com o predicado invertido
+
+```python
+def contar_nomes_pendentes(fila_id: int) -> int:
+    """EN: Counts names still waiting in the queue (not yet called).
+
+    PT-BR: Conta os nomes AINDA NA FILA (não chamados). `usado=0` é pendente —
+    `gerar_senha` marca `usado=1` ao chamar (linhas 972/1196). Antes contava
+    `usado=1` (os já chamados), mostrando número errado na tela da fila."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        # ANTES: ... AND usado=1   -> contava os JÁ CHAMADOS
+        cur.execute("SELECT COUNT(*) FROM tb_fila_nomes WHERE fila_id=? AND usado=0", (fila_id,))
+        return cur.fetchone()[0]
+    finally:
+        conn.close()
+```
+
+| | Antes | Depois |
+|:---|:---|:---|
+| Predicado | `usado=1` (**invertido**) | `usado=0` |
+| Significado | contava os **já chamados** | conta os **ainda na fila** |
+
+**Efeito no usuário** (`telas.py:1239-1243`): o rótulo
+
+```text
+{n_pend} nome(s) na lista — o próximo chama em ordem
+```
+
+era preenchido com o número de quem **já foi atendido**, exatamente o inverso do
+que o texto promete. Num caso extremo (nenhum nome chamado ainda) o contador
+mostrava **0** com a lista cheia; com todos chamados, mostrava o total com a
+lista vazia. Como é só um rótulo (nada é **escrito** com esse valor), o bug era
+**puramente informativo** — nenhuma senha foi emitida com base nele.
+
+### Bug 2 — `listar_nomes()` invertendo a ordem de exibição
+
+```python
+def listar_nomes(fila_id: int, somente_pendentes: bool = False):
+    """EN: Queue name list; `somente_pendentes` filters the not-yet-called.
+
+    PT-BR: Lista de nomes da fila; `somente_pendentes` filtra os ainda não
+    chamados. Ordena sempre por `ordem` CRESCENTE — é a ordem de fala exibida
+    ao usuário e a mesma que `proximo_da_etapa` respeita (antes vinha `DESC`,
+    invertendo a lista na tela)."""
+    ...
+    if somente_pendentes:
+        cur.execute("SELECT ... WHERE fila_id=? AND usado=0 ORDER BY ordem", (fila_id,))
+    else:
+        cur.execute("SELECT ... WHERE fila_id=? ORDER BY ordem", (fila_id,))
+```
+
+| | Antes | Depois |
+|:---|:---|:---|
+| Ordem | `ORDER BY ordem DESC` (nos **dois** ramos) | `ORDER BY ordem` (ASC, nos **dois** ramos) |
+| Efeito | Lista de pendentes exibida ao contrário | Lista na ordem real de fala |
+
+**Por que ASC é a ordem certa**: `ordem` é a posição de sequência atribuída na
+importação (CSV/`nomes.txt` com `#etapa`) e é a mesma coluna lida por
+`proximo_da_etapa` e por `_escolher_proximo_nome` para escolher quem é chamado
+a seguir. Com `DESC`, a tela mostrava "Maria, João, Ana" enquanto o sistema
+chamava "Ana, João, Maria" — o usuário lia a lista na ordem inversa à da fila.
+
+!!! note "Consistência entre as duas funções"
+    As duas correções caminham juntas: `contar_nomes_pendentes` diz **quantos**
+    faltam e `listar_nomes` diz **em que ordem** eles virão. Se uma delas voltar
+    a usar a convenção errada, a informação da tela fica contraditória de novo.
+
+### Complemento 25/09/2026 — `data-testid` no botão "Enviar" da linha de etapa
+
+O botão de transferência de um nome para outra fila da mesma TV
+(`telas.py:349`, em `bloco_nomes_fila`) era **clicável sem `data-testid`**:
+
+```python
+# ANTES
+ui.button(icon="forward", on_click=_env).props("dense flat color=primary") \
+    .tooltip("Enviar este nome p/ fila de destino")
+# DEPOIS
+ui.button(icon="forward", on_click=_env).props("dense flat color=primary") \
+    .tooltip("Enviar este nome p/ fila de destino") \
+    .props('data-testid=filas-etapa-enviar')
+```
+
+Sem *testid*, o Playwright em **strict mode** (`page.get_by_test_id(...)` com
+seletor ambíguo) não conseguia addressar o botão sem ambiguidade — o que
+derrubava a suíte E2E de Filas antes de exercitar o resto do fluxo. O *testid*
+passa a ser o **canônico** do fluxo de transferência por etapa.
+
+!!! warning "`filas-midia-som`, não `filas-midia-mutar`"
+    O canônico do botão de som/volume da mídia é **`filas-midia-som`** (o speaker
+    que abre o slider 0–100), usado por 2 outras suítes. O `test_filas_testids.py`
+    esperava `filas-midia-mutar` e foi corrigido em 25/09/2026 — usar sempre
+    `filas-midia-som`.
+
+### Complemento — o módulo em números
+
+| Área | Garantia |
+|:---|:---|
+| **Multi-filas** | Projeto nasce **sem** seed (`init_db` não cria fila alguma); isolamento por `criado_por` + liberação via `tb_fila_acesso`; `administrador_geral` vê todas. Numeração própria por fila (`prefixo` + `senha_inicio`→`senha_fim`, `fim=0` = infinito circular) |
+| **TV por etapa / grupo / isolada** | `/tv/{id}` isolada, `/tv?grupo=<slug>` compartilhada, `?etapa=<sala>` réplica de uma única etapa. `tb_tv_estado` com chave `grupo:<slug>` / `fila:<id>` / `geral` **+ `<etapa>`**, e **fila de voz independente por etapa** (`chave_tv_etapa`) |
+| **Voz: ordem e ducking** | `voz_ordem` (`fila,senha,nome,destino,guiche`) normalizada por `normalizar_voz_ordem`; anúncio serializado por **claim** (`tv_claim_fala` — compare-and-swap, um por vez, sem cortar); **ducking à metade** (2 s antes a música vai a `data-vol × 0.5`, bip 880 Hz 0,35 s, `speechSynthesis pt-BR 0.9`, restaura 2 s depois); hora cheia/meia só sem chamada há 60 s |
+| **Mídia com fundo** | `tb_midia` por fila (`fila_id`) + global (`NULL`) + `fundo` (só `imagem`, **uma** por fila/global); fotos dividem o tempo real do áudio (`duracao_real` via `mutagen`, fallback WAV); backdrop absoluto (`opacity 0.22`, `z-index 0`) **só na área de mídia**, com o conteúdo em `z-index 1` |
+| **Lista única** | **Uma** `tb_fila_nomes` por fila; importação por `nomes.txt`/CSV com tags (`csv_para_tags`, `#gestante #vermelho #recepcao`); transferência só **dentro da mesma TV** e destino **sem** lista |
+| **Papéis e isolamento por criador** | `listar_filas_visiveis` = próprias + liberadas + legado sem dono (admin vê todas); `liberar_acesso` exige **usuário cadastrado** na Gestão de Usuários — agora consultado pela fachada `integracoes.obter_usuario_gestao()` (25/09/2026), sem import direto do módulo de gestão; dono não se auto-libera; `excluir_todas_filas` filtra por `criado_por` quando não-admin |
+| **Censura** | A TV recebe notícias já filtradas por `listar_para_tv` → `titulo_bloqueado` (chave central `conteudo_palavras_bloqueadas`); as telas mostram **só a cor de fundo** do Manchester, nunca o termo |
 
 ## Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)
 
