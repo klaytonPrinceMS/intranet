@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Sessão 26/09/2026 - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Sess\u00e3o 26/09/2026";
+        var mkdocs_page_input_path = "registro_de_mudancas/sessao_2026-09-26.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../">Índice</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Sessão 26/09/2026</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Registro de Mudanças</li>
+      <li class="breadcrumb-item active">Sessão 26/09/2026</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="sessao-26092026-auditoria-rfrnf-8-bugs-de-producao-e-a-suite-de-qa-que-nao-testava-nada">Sessão 26/09/2026 — Auditoria RF/RNF, 8 bugs de produção e a suíte de QA que não testava nada<a class="headerlink" href="#sessao-26092026-auditoria-rfrnf-8-bugs-de-producao-e-a-suite-de-qa-que-nao-testava-nada" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>EN: Session 26/09/2026 — RF/RNF audit of the core and 4 modules with <code>file:line</code> evidence, 8 production bugs fixed (audit warm-up on boot, Agregador admin panel <code>ui.slider</code> TypeError, stored XSS in the Auditoria "Ação" column, print-quota orphan status, upload ceiling, dead code, ZIP download off the event-loop, missing <code>log.exception</code>), a Playwright QA suite that was green without asserting anything (shared login helper, 24 → 81 passing), and 3 product findings the tests exposed. Docs only in this page: every <code>.py</code> fix was applied and documented in the respective <code>docs/analise_mod_*.md</code>.</p>
+</blockquote>
+<hr />
+<h1 id="sessao-26092026-auditoria-rfrnf-8-bugs-de-producao-e-a-suite-de-qa-que-nao-testava-nada_1">Sessão 26/09/2026 — Auditoria RF/RNF, 8 bugs de produção e a suíte de QA que não testava nada<a class="headerlink" href="#sessao-26092026-auditoria-rfrnf-8-bugs-de-producao-e-a-suite-de-qa-que-nao-testava-nada_1" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Sessão 26/09/2026 — auditoria de RF/RNF do núcleo e de 4 módulos com evidência
+<code>arquivo:linha</code>, 8 bugs de produção corrigidos (aquecimento da auditoria no
+boot, <code>TypeError</code> do <code>ui.slider</code> no painel admin do Agregador, XSS armazenado
+na coluna "Ação" da Auditoria, pedido de impressão órfão sem baixa de cota,
+teto de upload, código morto, ZIP fora do event-loop, <code>log.exception</code>
+faltando), uma suíte Playwright de QA que estava <strong>verde sem asseverar
+nada</strong> (helper único de login, 24 → 81 passando) e 3 achados de produto que os
+testes revelaram. Nesta página o registro é <strong>só documentação</strong>: cada correção
+de código já está aplicada e detalhada no <code>docs/analise_mod_*.md</code> do módulo.</p>
+</blockquote>
+<h2 id="escopo-e-regras">Escopo e regras<a class="headerlink" href="#escopo-e-regras" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>O que esta página é:</strong> o registro consolidado da sessão. O detalhamento por
+  módulo continua nos <code>docs/analise_mod_*.md</code> (seção de riscos/Dívidas com
+  <code>arquivo:linha</code>) e, para a suíte, em
+  <a href="../../testes_playwright/#suite-python-de-qa-assetstestpw_py-26092026">Testes E2E com Playwright</a>.</li>
+<li><strong>O que NÃO foi feito aqui:</strong> nenhum <code>.py</code> foi alterado por este registro; os
+  8 bugs abaixo já estavam corrigidos no código quando a página foi escrita.
+  Nenhum <code>commit</code>/<code>push</code> (regra <code>kbp-doc</code>, AGENTS.md §7).</li>
+<li><strong>Base da auditoria:</strong> rastreio RF/RNF com evidência conferida no código
+  (lote 1 em <code>analise_mod_intranet.md:955</code>, <code>analise_mod_tecnico.md:286</code>,
+  <code>analise_mod_auditoria.md</code>, <code>analise_mod_solicita_impressao.md</code>,
+  <code>analise_mod_gest_cad_usuario.md</code>).</li>
+</ul>
+<h2 id="resumo-da-sessao">Resumo da sessão<a class="headerlink" href="#resumo-da-sessao" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">frente</th>
+<th style="text-align: left;">resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Rastreio RF/RNF com evidência <code>arquivo:linha</code></td>
+<td style="text-align: left;">5 módulos abertos (<code>intranet</code>, <code>tecnico</code>, <code>auditoria</code>, <code>solicita_impressao</code>, <code>gest_cad_usuario</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Bugs de produção corrigidos</td>
+<td style="text-align: left;"><strong>8</strong> (1 aquecimento de boot, 1 painel admin quebrado, 1 XSS armazenado, 1 cota órfã, 1 teto de upload, 1 código morto, 1 anti-disconnect, 1 <code>log.exception</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Suíte Playwright de QA</td>
+<td style="text-align: left;"><code>pw_cobertura_extra_qa</code> <strong>24 falhas → 81 passando</strong>; <code>pw_intranet_login_dashboard</code> <strong>1 falha → 8</strong>; <code>pw_usuarios_lista</code> + <code>pw_empenhos_navegacao</code> <strong>5 falhas → 13</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">Achados de produto revelados pelos testes</td>
+<td style="text-align: left;"><strong>3</strong> (2 corrigidos nos testes, 1 divergência real ainda aberta)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Build da documentação</td>
+<td style="text-align: left;"><code>mkdocs build --strict</code> limpo</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1-8-bugs-de-producao-corrigidos">(1) 8 bugs de produção corrigidos<a class="headerlink" href="#1-8-bugs-de-producao-corrigidos" title="Permanent link">&para;</a></h2>
+<h3 id="11-a-1a-gravacao-de-auditoria-custava-739-s-dentro-do-event-loop">1.1 — A 1ª gravação de auditoria custava 73,9 s dentro do event-loop<a class="headerlink" href="#11-a-1a-gravacao-de-auditoria-custava-739-s-dentro-do-event-loop" title="Permanent link">&para;</a></h3>
+<p><strong>Sintoma:</strong> o primeiro clique em qualquer módulo que audita travava a tela por
+mais de um minuto e derrubava o WebSocket ("servidor desconectado"), de forma
+intermitente.</p>
+<p><strong>Causa raiz:</strong> <code>registrar_auditoria</code> roda <code>_garantir_tabela_auditoria</code> (DDL) na
+<strong>primeira</strong> gravação de cada módulo — dentro do event-loop do handler de tela.
+O preço era de setup de tabela, não de auditoria.</p>
+<p><strong>Correção:</strong> <code>aquecer_auditoria(modulos=None)</code>
+(<code>mod_auditoria/bd_manipulador.py:329</code>, corpo síncrono em
+<code>_aquecer_auditoria_sync</code> <code>:356</code>) pré-cria as tabelas de <strong>todos</strong> os módulos
+registrados <strong>antes</strong> o servidor aceitar requisições. O <code>main.py</code> chama isso em
+<code>_passo_auditoria</code> (<code>:1181-1198</code>), o primeiro passo do <code>progresso_boot</code>. O
+cache <code>_TABELAS_GARANTIDAS</code> (<code>:21</code>) evita recriar o que já está pronto.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">medição</th>
+<th style="text-align: left;">antes</th>
+<th style="text-align: left;">depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1ª gravação de auditoria</td>
+<td style="text-align: left;"><strong>73,9 s</strong></td>
+<td style="text-align: left;"><strong>141 ms</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">preço do aquecimento (1×, no boot)</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">4,5 s</td>
+</tr>
+<tr>
+<td style="text-align: left;">gravações seguintes</td>
+<td style="text-align: left;">~145 ms</td>
+<td style="text-align: left;">~122 ms</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Detalhe que vale registro:</strong> o aquecimento é <strong>síncrono de propósito</strong> — roda
+no boot, antes de o servidor existir, então não há event-loop a bloquear. Uma
+primeira tentativa usou <code>run.io_bound</code> e emitiu
+<code>RuntimeWarning: coroutine 'io_bound' was never awaited</code> (<code>io_bound</code> é <code>async</code> e
+não pode ser chamado de função síncrona); foi removida.</p>
+<p><strong>Efeito colateral medido:</strong> derrubou <code>criar_impressora</code> de 28,1 s para
+milissegundos — o que mudou a prioridade das correções anti-disconnect do
+Solicita Impressão (<code>analise_mod_solicita_impressao.md</code>, RISCO-SOL-01).</p>
+<h3 id="12-o-painel-admin-do-agregador-nao-abria-uisliderlabel">1.2 — O painel admin do Agregador não abria (<code>ui.slider(label=...)</code>)<a class="headerlink" href="#12-o-painel-admin-do-agregador-nao-abria-uisliderlabel" title="Permanent link">&para;</a></h3>
+<p><code>ui.slider</code> <strong>não</strong> aceita <code>label=</code> como argumento nesta versão do NiceGUI: a
+chamada levantava <code>TypeError: got an unexpected keyword argument 'label'</code> e
+derrubava <code>page_admin_modulo</code> inteiro (<code>main.py:1136</code> →
+<code>mod_agregador_noticias/telas_administracao.py:49</code>).</p>
+<p>Como o painel não abria, o erro ficava <strong>invisível</strong>: a rota devolvia 200 e o
+usuário via um painel em branco. O rótulo de um slider vai por <code>.props('label')</code>,
+como já era feito em <code>mod_filas/telas.py:183</code> e <code>mod_edit_pdf/telas.py:967</code>.</p>
+<p><strong>Validação:</strong> os 10 painéis <code>/admin/*</code> abrem com conteúdo e <strong>zero erros de JS</strong>
+no console.</p>
+<h3 id="13-xss-armazenado-na-coluna-acao-da-auditoria">1.3 — XSS armazenado na coluna "Ação" da Auditoria<a class="headerlink" href="#13-xss-armazenado-na-coluna-acao-da-auditoria" title="Permanent link">&para;</a></h3>
+<p>A coluna montava <code>&lt;span style="color:..."&gt;{raw["acao"]}&lt;/span&gt;</code> e o slot
+<code>body-cell-acao</code> renderiza por <strong><code>v-html</code></strong> (<code>mod_auditoria/telas.py:557-559</code>).
+<code>acao</code> é uma string livre em <code>_audit(usuario, acao, ...)</code>; qualquer valor fora
+do mapa <code>CORES_ACAO</code> caía direto no HTML — um <code>acao</code> com <code>&lt;img onerror=...&gt;</code>
+virava XSS <strong>armazenado e persistente</strong> para todo mundo que abrisse a auditoria.</p>
+<p><strong>Correção:</strong> <code>html.escape()</code> aplicado ao <code>acao</code> (e só ele — <code>descricao</code> e
+<code>hash</code> são renderizados como texto pelo Quasar, que já escapa), em
+<code>mod_auditoria/telas.py:266-276</code> (escape em <code>:274</code>).</p>
+<h3 id="14-cota-de-impressao-sem-controle-o-pedido-ficava-orfao">1.4 — Cota de impressão sem controle: o pedido ficava órfão<a class="headerlink" href="#14-cota-de-impressao-sem-controle-o-pedido-ficava-orfao" title="Permanent link">&para;</a></h3>
+<p><strong>Sintoma:</strong> o botão "Imprimir" abria o diálogo da impressora e <strong>não baixava a
+cota</strong>; o desconto só acontecia no "Confirmar impressão". Quem imprimia e
+nunca confirmava deixava o pedido <strong>órfão</strong> — gasto de papel sem nenhuma
+contabilização. Numa secretaria real isso foi medido: o consumo registrado
+mostrava <strong>3 páginas</strong> quando o departamento já havia impresso 53.</p>
+<p><strong>Correção — o fluxo passa a ter três estados:</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">passo</th>
+<th style="text-align: left;">o que faz</th>
+<th style="text-align: left;">onde</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">"Imprimir"</td>
+<td style="text-align: left;">grava o status <strong><code>impressao_iniciada</code></strong> (novo valor em <code>STATUS_VALIDOS</code>) via <code>registrar_impressao_iniciada()</code></td>
+<td style="text-align: left;"><code>mod_solicita_impressao/bd_manipulador.py:3147</code> (status <code>:76</code>) · clique em <code>telas.py:1618-1666</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">"Confirmar impressão"</td>
+<td style="text-align: left;">continua sendo quem <strong>desconta a cota</strong> e remove os arquivos</td>
+<td style="text-align: left;">inalterado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Job de reconciliação</td>
+<td style="text-align: left;"><code>reconciliar_impressoes_iniciadas(horas=24)</code> assume a impressão como efetivada após o prazo, desconta a cota, agenda a remoção do arquivo e audita <code>impressao_reconciliada</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:3354</code> · agendado <strong>1×/hora</strong> em <code>mod_intranet/rotinas.py:452-465</code> (<code>add_job(..., hours=1, id="reconciliar_impressao")</code> <code>:487</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>O job ficou separado do cleanup de 1 min <strong>de propósito</strong>: o prazo é em horas, e
+varrer a tabela inteira a cada minuto seria desperdício.</p>
+<p><strong>Medição:</strong> pedido parado em <code>impressao_iniciada</code> há mais de 24 h → consumo da
+secretaria <strong>3 → 53 páginas (+50)</strong> e status → <code>impresso</code>.</p>
+<p><strong>Complementos que vieram junto:</strong> <code>_pode_imprimir</code> agora restringe a impressão a
+administradores do módulo e responsáveis autorizados; e <strong>excedente de cota não
+bloqueia</strong> a impressão — exibe aviso gráfico e segue, conforme a regra do módulo.</p>
+<h3 id="15-teto-de-upload-ausente-await-fread-sem-limite">1.5 — Teto de upload ausente (<code>await f.read()</code> sem limite)<a class="headerlink" href="#15-teto-de-upload-ausente-await-fread-sem-limite" title="Permanent link">&para;</a></h3>
+<p><code>criar_rascunho</code>/<code>ao_upload</code> carregava os <strong>bytes de todos os arquivos em
+memória</strong> antes de gravar (<code>mod_solicita_impressao/telas.py:274-280</code>) — sem teto
+de tamanho. Num servidor com <strong>3,7 GB de RAM</strong>, um upload grande derrubava o
+processo.</p>
+<p><strong>Correção em duas camadas:</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">camada</th>
+<th style="text-align: left;">como</th>
+<th style="text-align: left;">onde</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>navegador (a que protege de verdade)</strong></td>
+<td style="text-align: left;"><code>max_file_size</code> / <code>max_total_size</code> no <code>ui.upload</code> — o Quasar <strong>recusa o arquivo antes de trafegar</strong></td>
+<td style="text-align: left;"><code>mod_solicita_impressao/telas.py:386</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">servidor (rede de segurança)</td>
+<td style="text-align: left;">comparação de <code>len(conteudo)</code> contra <code>MAX_BYTES</code> — cobre o <strong>POST direto no endpoint</strong>, que passaria pela regra do Quasar</td>
+<td style="text-align: left;"><code>mod_solicita_impressao/telas.py:331-341</code></td>
+</tr>
+</tbody>
+</table>
+<p>Padrão <strong>50 MB por arquivo</strong>, configurável em Configurações do módulo
+(<code>tamanho_maximo_mb</code>, com clamp <strong>1–500</strong> em <code>telas.py:208-212</code>); <code>MAX_ARQ = 10</code>
+arquivos por solicitação, e <code>max_total_size = MAX_BYTES * MAX_ARQ</code>.</p>
+<h3 id="16-codigo-morto-_tela_pesquisar-107-linhas-removido">1.6 — Código morto <code>_tela_pesquisar</code> (107 linhas) removido<a class="headerlink" href="#16-codigo-morto-_tela_pesquisar-107-linhas-removido" title="Permanent link">&para;</a></h3>
+<p>A aba "Pesquisar" tinha sido descontinuada — o próprio código registra o motivo
+em <code>mod_renomear_empenho/telas.py:171</code>: <em>"Pesquisar removido — busca foi para o
+Navegar"</em>. A função <code>_tela_pesquisar</code> (com o campo <code>empenhos-busca</code>) continuou
+no arquivo <strong>sem nenhum caller</strong>: 107 linhas que o <code>pyflakes</code> não acusa, porque
+código não chamado não é erro de sintaxe. Removida em 26/09/2026.</p>
+<p>O campo de busca da tela chama-se hoje <strong><code>empenhos-navegar-pesquisa</code></strong>
+(<code>telas.py:1197,1204,1210</code>).</p>
+<h3 id="17-baixar_selecionados_zip-compressionava-o-pdf-inteiro-dentro-do-event-loop">1.7 — <code>baixar_selecionados_zip</code> Compressionava o PDF inteiro dentro do event-loop<a class="headerlink" href="#17-baixar_selecionados_zip-compressionava-o-pdf-inteiro-dentro-do-event-loop" title="Permanent link">&para;</a></h3>
+<p><code>ZIP_DEFLATED</code> sobre PDFs inteiros em disco, no event-loop: um lote grande
+(dezenas de MB) segurava o loop por segundos e derrubava o WebSocket.</p>
+<p><strong>Correção (anti-disconnect, AGENTS.md §5.1):</strong> <code>baixar_selecionados_zip</code> virou
+<code>async def</code> (<code>mod_solicita_impressao/telas.py:889</code>) e o ZIP é montado em
+<code>await run.io_bound(_montar_zip, alvos)</code> (<code>:921</code>), com <strong>spinner</strong>
+(<code>aria-label=Gerando ZIP</code> em <code>:919</code>), botão desabilitado e <strong>trava de
+reentrância</strong> (<code>_zip_ocupado</code>) restaurada em <code>finally</code>.</p>
+<h3 id="18-logexception-faltando-num-except-do-mod_tecnico">1.8 — <code>log.exception</code> faltando num <code>except</code> do <code>mod_tecnico</code><a class="headerlink" href="#18-logexception-faltando-num-except-do-mod_tecnico" title="Permanent link">&para;</a></h3>
+<p>O <code>except</code> do handler <code>baixar()</code> (ZIP de software) <strong>só notificava</strong> o usuário, sem
+registrar a causa — violava o AGENTS.md §3.2 ("sempre registre/logue a causa
+além da notificação"). Hoje há <code>log.exception(f"download software falhou: {e}")</code>
+antes do <code>notificar(...)</code>, em <code>mod_tecnico/telas.py:150-151</code>.</p>
+<hr />
+<h2 id="2-a-suite-de-qa-estava-verde-sem-testar-nada">(2) A suíte de QA estava verde sem testar nada<a class="headerlink" href="#2-a-suite-de-qa-estava-verde-sem-testar-nada" title="Permanent link">&para;</a></h2>
+<p>O sintoma era invisível por definição: <strong>verde sem asserir nada</strong>.</p>
+<h3 id="o-problema">O problema<a class="headerlink" href="#o-problema" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Os seeds <code>qamaster</code>/<code>qacomum</code> nascem com <code>forcar_troca=1</code>. No 1º login, um
+   diálogo de troca obrigatória bloqueia a tela — e os testes faziam
+   <strong><code>pytest.skip</code></strong> nesse caso. Na prática a cobertura Playwright rodava
+   <strong>majoritariamente pulada</strong>, sem que ninguém visse.</li>
+<li><code>pw_cobertura_extra_qa.py</code> fazia <strong><code>assert total &gt;= 0</code></strong>, que é <em>sempre</em>
+   verdadeiro. Asseverar que uma contagem é ≥ 0 não verifica nada.</li>
+<li>Havia ainda <strong>falso verde</strong> por <code>return</code> silencioso depois do <code>skip</code>: o
+   teste passava sem asserir nada.</li>
+</ol>
+<p>As duas falhas se alimentavam: a asserção vazia impedia que o <code>skip</code> escondesse
+os testids obsoletos, e o <code>skip</code> impedia que a asserção vazia enganasse alguém.</p>
+<h3 id="o-que-mudou">O que mudou<a class="headerlink" href="#o-que-mudou" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">item</th>
+<th style="text-align: left;">antes</th>
+<th style="text-align: left;">depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">troca de senha</td>
+<td style="text-align: left;"><code>pytest.skip</code></td>
+<td style="text-align: left;">o teste <strong>conclui</strong> a troca, com a mesma senha de origem</td>
+</tr>
+<tr>
+<td style="text-align: left;">contagem de testid</td>
+<td style="text-align: left;"><code>assert total &gt;= 0</code> (sempre verdade)</td>
+<td style="text-align: left;"><strong><code>assert total &gt;= 1</code></strong> (<code>pw_cobertura_extra_qa.py:286</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">rota do teste</td>
+<td style="text-align: left;">mapa fixo por prefixo</td>
+<td style="text-align: left;">resolvida <strong>lendo o código-fonte</strong> (<code>_rota_para_testid</code> <code>:153</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>zerar_forcar_troca</code></td>
+<td style="text-align: left;"><code>sqlite3</code> cru em <code>db_mod_intranet.db</code></td>
+<td style="text-align: left;"><code>autenticacao.marcar_trocar_senha()</code> — funciona em SQLite <strong>e</strong> Postgres (AGENTS.md §4.1)</td>
+</tr>
+<tr>
+<td style="text-align: left;">login + troca</td>
+<td style="text-align: left;">duplicados em 8 arquivos</td>
+<td style="text-align: left;"><strong><code>assets/test/qa_login_helper.py</code></strong> (módulo único)</td>
+</tr>
+</tbody>
+</table>
+<p>O helper virou módulo — e não função em cada arquivo — porque <code>pw_cobertura_extra_qa</code>
+e <code>pw_click_extra_qa</code> precisam do <strong>mesmo</strong> comportamento; a duplicata era
+justamente o que mantinha a divergência (um arquivo punha, outro pulava).</p>
+<h3 id="dois-detalhes-que-custaram-tempo">Dois detalhes que custaram tempo<a class="headerlink" href="#dois-detalhes-que-custaram-tempo" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>A rota tem de ser resolvida por ARQUIVO, não por prefixo.</strong> <code>agregador-busca</code>
+  (público) e <code>agregador-termo</code> (admin) compartilham prefixo, e o card do blog
+  é usado pelas duas telas — metade dos testes falhava por rota errada, não por
+  elemento faltando. <code>_rota_para_testid</code> agora procura <code>data-testid=&lt;id&gt;</code> nos
+  <code>mod_*/**/*.py</code> e mapeia o arquivo encontrado para a rota: não apodrece quando
+  um elemento muda de tela.</li>
+<li><strong><code>fazer_login_com_troca</code> não pode recarregar a página.</strong> A primeira versão
+  fazia <code>page.goto('/login')</code> <strong>dentro</strong> do helper, o que destruía o próprio
+  diálogo que o <code>fazer_login</code> acabara de abrir. A troca ficou separada em
+  <code>concluir_troca(page, senha_atual, senha_nova)</code>, que não navega.</li>
+</ul>
+<h3 id="resultado">Resultado<a class="headerlink" href="#resultado" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">arquivo</th>
+<th style="text-align: left;">antes</th>
+<th style="text-align: left;">depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>pw_cobertura_extra_qa.py</code> (85 testes)</td>
+<td style="text-align: left;">24 falhas (escondidas)</td>
+<td style="text-align: left;"><strong>81 passaram</strong>, 4 pulados com motivo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pw_intranet_login_dashboard.py</code></td>
+<td style="text-align: left;">1 falha / 7 pulados</td>
+<td style="text-align: left;"><strong>8 passaram</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pw_usuarios_lista.py</code> + <code>pw_empenhos_navegacao.py</code></td>
+<td style="text-align: left;">5 falhas</td>
+<td style="text-align: left;"><strong>13 passaram</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Os <strong>4 pulados</strong> restantes têm motivo registrado na própria constante
+<code>PRECISA_DE_ITEM</code> (<code>pw_cobertura_extra_qa.py:221-229</code>): botões <strong>por linha</strong>
+(aba "Fila Renomeação" sem nenhum item) e a <strong>confirmação destrutiva</strong> do
+diálogo de exclusão em lote (exige seleção prévia; a suíte de leitura nunca
+dispara confirmação destrutiva). Pular com motivo escrito é diferente de pular
+em silêncio: a lacuna fica <strong>visível e nomeada</strong>.</p>
+<hr />
+<h2 id="3-3-achados-revelados-pelos-testes-2-de-teste-1-de-produto-ainda-aberto">(3) 3 achados revelados pelos testes (2 de teste, 1 de produto ainda aberto)<a class="headerlink" href="#3-3-achados-revelados-pelos-testes-2-de-teste-1-de-produto-ainda-aberto" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">achado</th>
+<th style="text-align: left;">o que a suíte provou</th>
+<th style="text-align: left;">situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">a busca do Empenhos é <strong><code>empenhos-navegar-pesquisa</code></strong>, não <code>empenhos-busca</code></td>
+<td style="text-align: left;"><code>empenhos-busca</code> pertencia à <strong>aba morta</strong> "Pesquisar" (item 1.6): o teste afirmava um id que saiu da tela antes de a suíte passar a rodar de verdade</td>
+<td style="text-align: left;">✅ teste alinhado ao desenho atual</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">a tela de usuários exibe o <strong>nome de exibição</strong>, não o login</td>
+<td style="text-align: left;">a coluna padrão é "Tratamento" — o <code>qamaster</code> aparece como "Usuário de Teste QA Master". O teste passou a comparar com o nome lido do cabeçalho, em vez de fixar string: prova que o usuário logado está <strong>listado</strong>, sem depender do nome nem do login</td>
+<td style="text-align: left;">✅ teste alinhado ao desenho atual</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">perfil <code>comum</code> em <code>/users</code> é <strong>redirecionado para a home</strong>, sem mensagem "Acesso restrito"</td>
+<td style="text-align: left;">o gate central <code>pagina_restrita</code> (<code>mod_intranet/telas.py:104-113</code>) intercepta <strong>antes</strong> do gate do módulo: notifica "Acesso negado a este módulo." e faz <code>ui.navigate.to("/")</code>. O <code>qacomum</code> nem tem acesso ao módulo <code>usuarios</code> em <code>tb_acesso_usuario</code>, então o gate central sempre dispara primeiro para ele</td>
+<td style="text-align: left;">🟡 <strong>aberto</strong> — o teste passou a afirmar o comportamento real (o redirecionamento é a barreira)</td>
+</tr>
+</tbody>
+</table>
+<p>Sobre o item 3, a leitura honesta é que <strong>não é um bug de segurança</strong>: a barreira
+funciona (a lista nunca aparece para quem não é administrador). É uma divergência
+de <strong>experiência</strong>: o usuário recebe um aviso transitório e uma volta para a home,
+em vez do painel explicativo que o módulo previa. O caminho de correção é uma
+decisão de produto (unificar a mensagem do gate central com o painel do módulo,
+ou manter o redirect e documentar), não um conserto pontual — por isso fica
+registrado como <strong>pendente</strong> e não foi tocado nesta sessão.</p>
+<p><strong>O painel "Acesso restrito" não é código morto.</strong> <code>_acesso_negado()</code>
+(<code>mod_gest_cad_usuario/telas.py:154</code>, chamado em <code>:87</code>) continua alcançável pelo
+caso que o gate central não cobre: usuário com acesso ao módulo <code>usuarios</code> em
+<code>tb_acesso_usuario</code> mas com <code>papel</code> <strong>não</strong> administrador. Ele passa em
+<code>validar_acesso_modulo</code> e cai no gate do próprio módulo, que é o lugar certo
+para explicar a restrição. O que o <code>qacomum</code> não exercita é esse caminho — ele
+não tem o acesso ao módulo, e por isso nunca chega lá. Os dois gates não são
+redundantes: o central barra quem nem tem o acesso; o do módulo explica a
+falta de privilégio dentro do módulo.</p>
+<hr />
+<h2 id="validacao">Validação<a class="headerlink" href="#validacao" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>mkdocs build --strict</code> — limpo (sem aviso, sem erro).</li>
+<li>Servidor em <code>:8080</code> no ar durante a sessão; nenhum restart derrubado por esta
+  página (esta tarefa é só documentação).</li>
+<li>Números e <code>arquivo:linha</code> conferidos no código no momento da escrita.</li>
+</ul>
+<h2 id="pendencias-que-sairam-desta-sessao">Pendências que saíram desta sessão<a class="headerlink" href="#pendencias-que-sairam-desta-sessao" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">pendência</th>
+<th style="text-align: left;">onde</th>
+<th style="text-align: left;">por quê</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Gate central × painel do módulo (achado 3 da seção 3)</td>
+<td style="text-align: left;"><code>mod_intranet/telas.py:104-113</code> vs <code>mod_gest_cad_usuario/telas.py:154-160</code></td>
+<td style="text-align: left;">decisão de produto: unificar a mensagem ou manter o redirect documentado</td>
+</tr>
+<tr>
+<td style="text-align: left;">4 testes Playwright pulados</td>
+<td style="text-align: left;"><code>PRECISA_DE_ITEM</code> (<code>pw_cobertura_extra_qa.py:221</code>)</td>
+<td style="text-align: left;">exigem massa de dados real (item na fila) ou confirmação destrutiva — a suíte de leitura não cria nem apaga</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Teto de upload nos demais módulos</strong></td>
+<td style="text-align: left;"><code>mod_edit_pdf/telas.py:829-834</code> (sem <code>max_file_size</code>/<code>max_total_size</code>) e <code>mod_tecnico/telas.py:268-289</code> (lê bytes em memória)</td>
+<td style="text-align: left;">o RISCO-SOL-03 foi corrigido no Solicitação; o mesmo padrão nos outros dois módulos segue aberto</td>
+</tr>
+<tr>
+<td style="text-align: left;">Extração semântica do grafo</td>
+<td style="text-align: left;"><code>graphify update .</code></td>
+<td style="text-align: left;">o <code>update</code> AST-only foi executado; a extração semântica (<code>/graphify --update</code>) continua sendo etapa separada, com custo de API</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>NÃO commitar</strong> <code>estrutura.md</code> (regra <code>kbp-doc</code>). Sem <code>commit</code>/<code>push</code> pelo
+documentador (AGENTS.md §7).</p>
+</blockquote>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../" class="btn btn-neutral float-left" title="Índice"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../wal_paridade_pendente_2026-09-24/" class="btn btn-neutral float-right" title="Plano WAL + Paridade (24/09/2026)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../wal_paridade_pendente_2026-09-24/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
