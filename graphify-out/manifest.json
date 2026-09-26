@@ -1038,9 +1038,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_auditoria.md": {
-    "mtime": 1790427751.2417052,
-    "seen": 1790428286.9273844,
-    "ast_hash": "9d3250bc6c90e2354b62f421aa5ec733",
+    "mtime": 1790464502.789039,
+    "seen": 1790465418.5829127,
+    "ast_hash": "476c706f5f2365ca3c97bbd4d477ea80",
     "semantic_hash": ""
   },
   "docs/analise_mod_blog.md": {
@@ -1068,15 +1068,15 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_renomear_empenho.md": {
-    "mtime": 1790388222.8911698,
-    "seen": 1790388574.984153,
-    "ast_hash": "27f8a2c4921e1797d7be492ddad7e1f8",
+    "mtime": 1790464521.3602018,
+    "seen": 1790465418.5829825,
+    "ast_hash": "a906078b8db59bf16e5bae9451929531",
     "semantic_hash": ""
   },
   "docs/analise_mod_solicita_impressao.md": {
-    "mtime": 1790427897.124834,
-    "seen": 1790428286.9274654,
-    "ast_hash": "4063d385ebb68087baab898027529b74",
+    "mtime": 1790464471.4867647,
+    "seen": 1790465418.5829923,
+    "ast_hash": "cdea616af0f8e68314a2deea7348a782",
     "semantic_hash": ""
   },
   "docs/api_referencia.md": {
@@ -1242,9 +1242,9 @@
     "semantic_hash": ""
   },
   "docs/registro_de_mudancas/index.md": {
-    "mtime": 1790380480.2255764,
-    "seen": 1790387687.6670234,
-    "ast_hash": "1b48243bd84e61fe0e4932b3bdcd5178",
+    "mtime": 1790465208.5574765,
+    "seen": 1790465418.5836024,
+    "ast_hash": "6d2e2f9a9aff4178bee5e772a6a47c42",
     "semantic_hash": ""
   },
   "docs/requisitos.md": {
@@ -1284,9 +1284,9 @@
     "semantic_hash": ""
   },
   "docs/testes_playwright.md": {
-    "mtime": 1790119490.6639953,
-    "seen": 1790387687.66705,
-    "ast_hash": "178a41d92065be00c67efa0e7a1a8b63",
+    "mtime": 1790464548.0144358,
+    "seen": 1790465418.5836859,
+    "ast_hash": "28ba4e7783e067a4107d55235c40bca8",
     "semantic_hash": ""
   },
   "docs/testes_relatorios/index.md": {
@@ -1320,9 +1320,9 @@
     "semantic_hash": ""
   },
   "mkdocs.yml": {
-    "mtime": 1790380480.2945762,
-    "seen": 1790387687.6670728,
-    "ast_hash": "b04f2e7d60d31d2d5238706d08967e35",
+    "mtime": 1790465215.6225219,
+    "seen": 1790465418.5837421,
+    "ast_hash": "7ef283518378c6fc872fe5b0d30272c3",
     "semantic_hash": ""
   },
   "requirements-dev.txt": {
@@ -1596,9 +1596,9 @@
     "semantic_hash": ""
   },
   "mod_agregador_noticias/telas_administracao.py": {
-    "mtime": 1790420936.3071952,
-    "seen": 1790428286.926379,
-    "ast_hash": "684e2acfad7cdea76124fc35611176d1",
+    "mtime": 1790461569.1412516,
+    "seen": 1790465418.581137,
+    "ast_hash": "b0fb610821575a2346650e8e7e879d71",
     "semantic_hash": ""
   },
   "docs/analise_mod_agregador_noticias.md": {
@@ -1806,9 +1806,9 @@
     "semantic_hash": ""
   },
   "assets/test/pw_cobertura_extra_qa.py": {
-    "mtime": 1790460672.4313936,
-    "seen": 1790461236.2765434,
-    "ast_hash": "ae4ec1dde9d9f5d766dfd844796986b8",
+    "mtime": 1790463393.850767,
+    "seen": 1790465418.5805619,
+    "ast_hash": "f93379d6809078eeb6ade072380329af",
     "semantic_hash": ""
   },
   "assets/test/pw_edit_pdf_painel.py": {
@@ -1917,6 +1917,12 @@
     "mtime": 1790455336.2454088,
     "seen": 1790461236.2765758,
     "ast_hash": "4db0582bdd586dd69a10ebc8ccb8a3b7",
+    "semantic_hash": ""
+  },
+  "docs/registro_de_mudancas/sessao_2026-09-26.md": {
+    "mtime": 1790465512.3615675,
+    "seen": 1790465567.2724302,
+    "ast_hash": "6046466cd01d9a79b584f79fb3ec04f6",
     "semantic_hash": ""
   }
 }

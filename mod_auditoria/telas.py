@@ -265,7 +265,8 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                 linha = {k: raw[k] for k in ativos if k in raw}
                 linha["id"] = r[0]
                 if "acao" in conjunto:
-                    # A coluna é renderizada por `v-html` (linha 551), então o
+                    # A coluna é renderizada por `v-html` (ver o slot
+                    # `body-cell-acao` mais abaixo, nesta tela), então o
                     # texto vem do banco e PRECISA de escape: `acao` é uma
                     # string livre em `_audit(usuario, acao, ...)` e escapa do
                     # `CORES_ACAO` cai direto no HTML. Sem escape, um `acao`
