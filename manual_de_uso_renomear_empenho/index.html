@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -101,9 +104,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -235,7 +247,7 @@
 <hr />
 <h1 id="manual-de-uso-renomeador-de-empenho-intranet-modular">Manual de Uso — Renomeador de Empenho — Intranet Modular<a class="headerlink" href="#manual-de-uso-renomeador-de-empenho-intranet-modular" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Guia operacional do módulo Renomeador de Empenho (<code>/renomear-empenho</code>), que monitora pastas, extrai, renomeia, indexa e organiza documentos de empenho, e atende ao fluxo de solicitação de cópia (comum → administrador). A tela é dividida em <strong>6 abas</strong>: Navegar, Fila Renomeação, Pesquisar, Organizador (admin), Solicitação e Configurações (admin). Quarentena com reprocessamento <strong>individual e em lote sem reiniciar</strong> (botão "Reprocessar fila") + separação de múltiplos documentos; organizador físico com <strong>capas <code>capa.txt</code>/<code>capa.pdf</code> por caixa</strong> e <code>matrizDeDocumentos.txt/.pdf</code>.</p>
+<p>Guia operacional do módulo Renomeador de Empenho (<code>/renomear-empenho</code>), que monitora pastas, extrai, renomeia, indexa e organiza documentos de empenho, e atende ao fluxo de solicitação de cópia (comum → administrador). A tela tem <strong>4 abas</strong>: Navegar (com busca FTS5 integrada), Fila Renomeação, Organizador (admin) e Solicitação (admin gerencia); as Configurações ficam no painel admin standalone (<code>/admin/empenhos</code>). Quarentena com reprocessamento <strong>individual e em lote sem reiniciar</strong> (botão "Reprocessar fila") + separação de múltiplos documentos; organizador físico com <strong>capas <code>capa.txt</code>/<code>capa.pdf</code> por caixa</strong> e <code>matrizDeDocumentos.txt/.pdf</code>.</p>
 </blockquote>
 <h2 id="contexto">Contexto<a class="headerlink" href="#contexto" title="Permanent link">&para;</a></h2>
 <p>O módulo atende à função de almoxarifado/gestão de empenhos. Usuários <code>comum</code> navegam, pesquisam e (quando autorizados pelo administrador) baixam/solicitam cópias; o <strong>Organizador</strong> e as <strong>Configurações</strong> são exclusivos do administrador do módulo (ou <code>administrador_geral</code>).</p>
@@ -255,10 +267,9 @@
 <li>Lista recursiva de PDFs ainda <strong>pendentes</strong> de renomeação, com as colunas <strong>Arquivo, Empenho, Parcela, Usuário, Data, Status</strong> — mesma leitura do reconhecimento/processamento do Navegar (zeros à esquerda normalizados só na exibição).</li>
 <li><strong>Processar</strong> individualmente ou <strong>Processar todos</strong>. Pastas inacessíveis (ex.: rede fora do ar) são puladas.</li>
 </ul>
-<h3 id="3-pesquisar">3. Pesquisar<a class="headerlink" href="#3-pesquisar" title="Permanent link">&para;</a></h3>
+<h3 id="3-pesquisar-integrada-ao-navegar-sem-aba-propria">3. Pesquisar (integrada ao Navegar — sem aba própria)<a class="headerlink" href="#3-pesquisar-integrada-ao-navegar-sem-aba-propria" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Busca textual</strong> via índice FTS5 (nome final, empenho, parcela, usuário e campos do cabeçalho indexado), com fallback <code>LIKE</code>.</li>
-<li>Tabela "Empenhos renomeados" com nome final, empenho, parcela, tipo, usuário e data (a coluna <strong>Usuário</strong> já existia e foi mantida).</li>
+<li><strong>Busca textual</strong> no campo de pesquisa do Navegar via índice FTS5 (nome final, empenho, parcela, usuário e campos do cabeçalho indexado, <code>pesquisar</code> + <code>pesquisar_levantamento</code> com prefixo <code>'"tok"*'</code>), com fallback <code>LIKE</code>; resultados mostram nome + badge na pasta/fora + colunas Empenho/Parcela/Usuário/Data.</li>
 </ul>
 <h3 id="4-organizador-admin-plano-4c">4. Organizador <em>(admin — PLANO 4c)</em><a class="headerlink" href="#4-organizador-admin-plano-4c" title="Permanent link">&para;</a></h3>
 <ul>
@@ -276,7 +287,7 @@
 <li><strong>Administrador</strong>: para cada solicitação (agrupada por lote) pode <strong>Enviar por e-mail</strong> (via SMTP central), <strong>Gerar ZIP</strong> (pega para envio manual e baixa o arquivo) ou <strong>Recusar</strong> (com motivo). ZIP gerado pode ser <strong>Confirmar envio manual</strong> ou <strong>Cancelar ZIP</strong> (volta a pendente).</li>
 <li>Expansão <strong>Histórico completo</strong>: todas as solicitações, com status e método de envio.</li>
 </ul>
-<h3 id="6-configuracoes-admin-inclui-plano-4b">6. Configurações <em>(admin — inclui PLANO 4b)</em><a class="headerlink" href="#6-configuracoes-admin-inclui-plano-4b" title="Permanent link">&para;</a></h3>
+<h3 id="6-configuracoes-admin-painel-adminempenhos-inclui-plano-4b">6. Configurações <em>(admin, painel <code>/admin/empenhos</code> — inclui PLANO 4b)</em><a class="headerlink" href="#6-configuracoes-admin-painel-adminempenhos-inclui-plano-4b" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Pastas monitoradas</strong> (uma por linha, local ou rede/UNC, ex.: <code>\\servidor\empenhos</code> ou <code>E:\scan</code>) — aplicado sem reiniciar.</li>
 <li><strong>Aparência</strong>: cor dos botões, texto, fundo, título e tamanho.</li>

@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -173,6 +183,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -230,17 +242,17 @@
               
                 <h1 id="audit-module-mod_auditoria">Audit Module — <code>mod_auditoria</code><a class="headerlink" href="#audit-module-mod_auditoria" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Audit module: route <code>/auditoria</code> (key <code>auditoria</code>) · EXCLUSIVE database <code>db_mod_auditoria.db</code> with ONE TABLE PER PRODUCER MODULE (<code>tb_auditoria_&lt;modulo&gt;</code>) · read-only viewer with dynamic table navigation, filters, server-side pagination, CSV export and per-auditor column selection/ordering.</p>
+<p>Audit module: route <code>/auditoria</code> (key <code>auditoria</code>) · EXCLUSIVE database <code>db_mod_auditoria.db</code> with ONE TABLE PER PRODUCER MODULE (<code>tb_auditoria_&lt;modulo&gt;</code>) · single writer (<code>audit_log</code>) reached through a decoupled hook · write cache + 3× commit retry · meta-first table discovery with <code>information_schema</code>/<code>sqlite_master</code> fallback · <code>to_char</code> vs <code>strftime</code> helpers · read-only viewer with dynamic table navigation, filters, server-side pagination, CSV export and per-auditor column selection/ordering.</p>
 </blockquote>
 <hr />
 <h1 id="modulo-auditoria-mod_auditoria">Módulo Auditoria — <code>mod_auditoria</code><a class="headerlink" href="#modulo-auditoria-mod_auditoria" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo de auditoria: rota <code>/auditoria</code> (chave <code>auditoria</code>) · <strong>banco EXCLUSIVO</strong> <code>db_mod_auditoria.db</code> com <strong>UMA TABELA POR MÓDULO PRODUTOR</strong> (<code>tb_auditoria_&lt;modulo&gt;</code>) · visualizador somente-leitura com navegação dinâmica por tabela, filtros, paginação server-side, exportação CSV e seleção/ordem de campos por auditor.</p>
+<p>Módulo de auditoria: rota <code>/auditoria</code> (chave <code>auditoria</code>) · <strong>banco EXCLUSIVO</strong> <code>db_mod_auditoria.db</code> com <strong>UMA TABELA POR MÓDULO PRODUTOR</strong> (<code>tb_auditoria_&lt;modulo&gt;</code>) · escritor <strong>único</strong> (<code>audit_log</code>) por <strong>gancho desacoplado</strong> · cache de escrita + retry 3× no commit · descoberta de tabela pela meta com fallback <code>information_schema</code>/<code>sqlite_master</code> · helpers <code>to_char</code> vs <code>strftime</code> · visualizador somente-leitura com navegação dinâmica por tabela, filtros, paginação server-side, exportação CSV e seleção/ordem de campos por auditor.</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Banco e visualizador da trilha de auditoria LGPD. A <strong>escrita</strong> é feita pelos demais módulos via <code>audit_log</code> (núcleo) → <code>registrar_auditoria</code> (este módulo), que grava na tabela do módulo produtor — criada automaticamente. A <strong>leitura</strong> é feita pela tela <code>/auditoria</code> (exclusiva do <code>administrador_geral</code>).</p>
 <h2 id="banco-de-dados">Banco de dados<a class="headerlink" href="#banco-de-dados" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db_auditoria()</code> em <code>bd_manipulador.py:25-38</code> (executado no import e pelo bootstrap central).</p>
+<p>Criador vigente: <code>init_db_auditoria()</code> em <code>bd_manipulador.py</code> (executado no import e pelo bootstrap central).</p>
 <table>
 <thead>
 <tr>
@@ -251,7 +263,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>tb_auditoria_&lt;modulo&gt;</code></td>
-<td style="text-align: left;">UMA POR MÓDULO produtor: <code>usuario</code>, <code>modulo</code>, <code>acao</code>, <code>descricao</code>, <code>timestamp</code> (local — RF-08), <code>hash_arquivo</code>, <code>ip</code>, <code>user_agent</code>, <code>client_hostname</code>; índices por módulo/usuário/timestamp</td>
+<td style="text-align: left;">UMA POR MÓDULO produtor: <code>usuario</code>, <code>modulo</code>, <code>acao</code>, <code>descricao</code>, <code>timestamp</code> (local — RF-08), <code>hash_arquivo</code>, <code>ip</code>, <code>user_agent</code>, <code>client_hostname</code>; índices por módulo/usuário/timestamp. O <code>hash_arquivo</code> é opaco: o cálculo (ex. SHA-256) é feito pelo módulo produtor e repassado via <code>audit_log</code> → <code>registrar_auditoria</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_auditoria_meta</code></td>
@@ -262,18 +274,22 @@
 <ul>
 <li><strong>Migração idempotente</strong> do legado central (<code>migrar_dados_existentes</code>) + remoção da antiga <code>tb_auditoria</code> do banco central.</li>
 <li><strong>Poda LGPD</strong> diária (<code>podar_registros</code>, <code>auditoria_retencao_dias</code> default 90 — job <code>poda_auditoria</code>).</li>
+<li><strong>Descoberta de tabela em 2 fontes</strong>: primária <code>tb_auditoria_meta</code> (portátil); fallback por backend — <code>information_schema.tables</code> no PostgreSQL, <code>sqlite_master</code> <strong>só</strong> no SQLite (via proxy, <code>SELECT</code> em <code>sqlite_master</code> no PG devolveria vazio sem erro).</li>
+<li><strong>Helpers de data/hora portables</strong>: <code>_sql_hora()</code> e <code>_sql_data_formatada()</code> escolhem <code>to_char(...)</code> no PG e <code>strftime(...)</code> no SQLite — o filtro de hora e o intervalo de datas funcionam nos dois backends.</li>
+<li><strong>Cache de escrita</strong> (<code>_TABELAS_GARANTIDAS</code>): o <code>CREATE TABLE</code> + registro na meta só rodam na <strong>primeira</strong> gravação do módulo na sessão; se o <code>INSERT</code> falhar com <code>no such table</code>/<code>undefined_table</code>, o cache é invalidado, a DDL é regarantada e o <code>INSERT</code> refeito uma vez (a trilha não se perde).</li>
+<li><strong>Retry 3× no commit</strong> (<code>_commit_com_retry</code>, backoff <code>0.05s × tentativa</code>): re-tenta só em contenção (<code>locked</code>/<code>busy</code>/<code>timeout</code>), faz <code>rollback</code> seguro, registra <code>log.exception</code> e devolve <code>False</code> — <strong>falha de auditoria nunca derruba a operação de negócio</strong>.</li>
 </ul>
 <h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Acesso exclusivo <code>administrador_geral</code></strong> — dupla camada: bloqueio interno + exigência da chave <code>auditoria</code> em <code>pagina_restrita</code>. Sem permissão: <code>acesso_negado</code> na trilha (choke point único).</li>
 <li><strong>Navegação dinâmica por tabela</strong>: select "Visualizar auditoria de" montado do banco ("Todas as auditorias" = UNION ALL, ou a tabela de um módulo).</li>
-<li><strong>Filtros</strong>: Usuário (LIKE), Ação (categorias prontas coloridas + texto livre), Hora (<code>strftime('%H:%M')</code>), intervalo de datas (calendário em popup).</li>
+<li><strong>Filtros</strong>: Usuário (LIKE), Ação (categorias prontas coloridas + texto livre), Hora (<code>_sql_hora()</code>: <code>to_char</code> no PG / <code>strftime</code> no SQLite), intervalo de datas (calendário em popup).</li>
 <li><strong>Paginação server-side</strong>: <code>LIMIT ? OFFSET ?</code> (<code>auditoria_limite</code>, default 1000) com contador e Anterior/Próxima; auto-atualização a cada 30 s.</li>
 <li><strong>Campos/ordem por auditor</strong>: painel com mover ↑/↓, ocultar, adicionar e "Restaurar padrão", persistido em <code>auditoria_campos:&lt;usuario&gt;</code> (JSON).</li>
 <li><strong>Exportação CSV</strong>: página corrente respeitando campos/ordem do auditor.</li>
 <li><strong>Colunas padrão</strong>: Data/Hora, Usuário, Módulo, Ação (cores por tipo — <code>CORES_ACAO</code>), Descrição (100 chars), Hash, IP, dispositivo.</li>
 <li><strong>Aba Observabilidade</strong> (quando a stack OTel está no ar): atalhos para os dashboards Grafana (Visão Geral, Traces, Logs) + aviso LGPD sobre a senha do Grafana.</li>
-<li><strong>Painel Administração</strong>: <code>auditoria_limite</code>, <code>auditoria_retencao_dias</code>, <code>auditoria_texto_header</code> + card padrão <strong>"Configurações de cores"</strong> (<code>auditoria_*</code> — vazios usam o padrão do PRÓPRIO módulo via <code>PADROES_TEMA["auditoria"]</code> = <code>#000000</code>, sem herança do tema do sistema); salvar audita a si mesmo. O cabeçalho usa <code>chave_modulo="auditoria"</code> (<code>telas.py:345</code>): a borda de destaque é a <strong>mesma cor dos botões do módulo</strong>.</li>
+<li><strong>Painel Administração standalone</strong> (<code>telas_administracao.py</code>, rota <code>/admin/auditoria</code>): <code>auditoria_limite</code>, <code>auditoria_retencao_dias</code>, <code>auditoria_texto_header</code> + card padrão <strong>"Configurações de cores"</strong> (<code>auditoria_*</code> — vazios usam o padrão do PRÓPRIO módulo via <code>PADROES_TEMA["auditoria"]</code> = <code>#000000</code>, sem herança do tema do sistema); salvar audita a si mesmo. O cabeçalho usa <code>chave_modulo="auditoria"</code> (<code>telas.py:345</code>): a borda de destaque é a <strong>mesma cor dos botões do módulo</strong>.</li>
 <li><strong>Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 <code>kbp-web-design</code>)</strong>: <code>overflow-x-auto</code> em tabs/filtros/tabela, barra de filtros <code>flex-wrap</code> <code>gap</code> via <code>.style</code>, <code>truncate</code> em colunas longas, dialogs <code>w-full max-w</code>; proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code> (header <code>flex-wrap</code> <code>min-width:0</code>).</li>
 <li><strong>Versionamento</strong>: <code>versao_modulo:auditoria = 1.0.260908</code>.</li>
 </ul>
@@ -304,19 +320,22 @@
 </table>
 <h2 id="rota-e-integracoes">Rota e integrações<a class="headerlink" href="#rota-e-integracoes" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Rota: <code>/auditoria</code> (chave <code>auditoria</code>) — <code>main.py:325</code>.</li>
-<li><strong>Escrita</strong>: <code>audit_log</code> (núcleo) → <code>registrar_auditoria</code> — produtores: todos os módulos + o núcleo (login/logout/falhas/config/backups).</li>
+<li>Rota: <code>/auditoria</code> (chave <code>auditoria</code>) — <code>main.py</code>. Administração: <code>/admin/auditoria</code> (<code>telas_administracao.mostrar_administracao</code>).</li>
+<li><strong>Escrita — escritor único</strong>: <code>mod_intranet/bd_manipulador.py::audit_log()</code> (resolve IP/UA do contexto HTTP + carimbo local RF-08) → <strong>gancho</strong> <code>registrar_hook_auditoria</code> → <code>registrar_auditoria</code>. O gancho <strong>remove a dependência cíclica núcleo↔auditoria</strong> (o núcleo não importa este módulo no caminho quente; o import lazy é só o fallback). Produtores: todos os módulos, o próprio núcleo (login/logout/falhas/config/backups) e os <strong>jobs APScheduler com ator <code>sistema</code></strong> (coleta do agregador, varredura de empenhos).</li>
 <li><strong>Leitura</strong>: <code>buscar_logs</code>/<code>get_modulos_com_auditoria</code>/<code>contar_registros</code> (usado pelo resumo do dashboard).</li>
 <li><strong>Poda</strong>: job diário <code>poda_auditoria</code> (<code>mod_intranet/rotinas.py:74-103</code>).</li>
+<li>Auditoria é <strong>preservada</strong> pela cascata LGPD de exclusão de usuário (só as autorias nos bancos de negócio são removidas/anonimizadas).</li>
 </ul>
 <h2 id="testes">Testes<a class="headerlink" href="#testes" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>test/test_auditoria.py
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/test_auditoria.py<span class="w">   </span><span class="c1"># 12/12 (índices, audit_log rastreável, poda LGPD, acesso exclusivo, prefs por usuário)</span>
+.venv/bin/python<span class="w"> </span>mod_auditoria/check_auditoria.py<span class="w">  </span><span class="c1"># diagnóstico standalone (portátil SQLite↔PG, só log)</span>
 </code></pre></div>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Exportação cobre a <strong>página corrente</strong> (não a consulta inteira).</li>
 <li>Ações novas/desconhecidas podem ser filtradas por texto livre no select de Ação.</li>
 <li><code>bd_criador.py</code> é legado — o esquema real vive em <code>bd_manipulador.py</code>.</li>
+<li><code>sqlite_master</code> só é consultado no <strong>ramo SQLite</strong>; no PostgreSQL a consulta equivalente é <code>information_schema.tables</code> (via proxy, <code>sqlite_master</code> devolveria vazio silenciosamente).</li>
 </ul>
 <p>Ver <a href="../../analise_mod_auditoria/">Análise do Módulo</a>.</p>
               

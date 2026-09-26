@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -235,7 +247,7 @@
 <hr />
 <h1 id="blog-mod_blog_1">Blog — <code>mod_blog</code><a class="headerlink" href="#blog-mod_blog_1" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo de blog corporativo: rota <code>/blog</code> (chave <code>blog</code>) · banco próprio <code>db_mod_blog.db</code> · HTML sanitizado com nh3 · somente-leitura para usuário comum · auditoria central LGPD.</p>
+<p>Módulo de blog corporativo: rota <code>/blog</code> (chave <code>blog</code>) · banco próprio <code>db_mod_blog.db</code> · HTML sanitizado com nh3 · somente-leitura para usuário comum · auditoria central LGPD. <strong>Atualizado 25/09/2026</strong>: <code>atualizar()</code> com <code>refresh()</code> fail-soft (AGENTS.md §3.2) e modo carrossel redesenhado como <strong>seleção em lote por checkbox</strong> + <code>Tempo (s)</code>.</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Blog corporativo com postagens e comentários em HTML sanitizado por <code>nh3</code>. Regra central: usuário <code>comum</code> tem acesso <strong>somente leitura</strong> — publicar, comentar e excluir são restritos ao administrador geral e ao administrador do módulo <code>blog</code>, validados na UI <strong>e</strong> no backend. Exclusão de postagem é lógica (<code>ativo=0</code>).</p>
@@ -281,6 +293,14 @@
 <ul>
 <li>O <code>bd_criador.py</code> do blog é <strong>legado/morto</strong>: conecta no banco central e duplica os CRUDs com sanitização sem whitelist — não executar.</li>
 <li>Comentários só são removidos fisicamente por cascade quando a postagem é deletada fisicamente (fluxo da limpeza cruzada do módulo de usuários).</li>
+</ul>
+<h2 id="cobertura-23092026-selecao-em-lote-quebras-word-timer-unico-e-lgpd">Cobertura 23/09/2026 — seleção em lote, quebras Word, timer único e LGPD<a class="headerlink" href="#cobertura-23092026-selecao-em-lote-quebras-word-timer-unico-e-lgpd" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Seleção em lote (só admin, <code>telas.py:mostrar_tela</code>)</strong>: card com checkbox por post (<code>blog-selecionar-&lt;id&gt;</code>), <code>blog-selecionar-todos</code>, contador <code>blog-selecionados-contador</code>, <code>blog-selecionar-10</code> / <code>blog-selecionar-5</code> / <code>blog-limpar-selecao</code> e <code>blog-excluir-selecionados</code> + diálogo (<code>blog-confirmar-excluir-lote</code>, soft delete restaurável em Despublicadas). Backend <code>excluir_postagens_em_lote(ids, autor)</code> → <code>(ok, falha)</code>, <code>requer_pode_publicar</code> + <code>auditado</code>, ids inválidos viram falha sem abortar. A seleção também define o modo: <strong>Aplicar à única</strong> (<code>blog-aplicar-unica</code>, exatamente 1), <strong>Exibir todas</strong> (<code>blog-aplicar-historico</code>) e <strong>Aplicar ao carrossel</strong> (<code>blog-aplicar-carrossel</code>, mín. 2 + <code>Tempo (s)</code> 1–60). Substitui o antigo <code>ui.select</code> múltiplo citado em versões anteriores desta análise.</li>
+<li><strong>Quebras de imagem estilo Word</strong>: <code>ajustar_imagem_html</code> cobre <code>esquerda/direita/centro</code> + <code>em_linha/quadrado/justo/atraves/sup_inf/atras/frente</code> (só layout do <code>style</code> da última <code>&lt;img&gt;</code>, <code>ValueError</code> sem imagem); botões <code>blog-quebra-*</code> na linha "Quebra:" + <code>blog-img-esq/-centro/-dir</code> e <code>blog-img-largura</code> na linha "Imagem:".</li>
+<li><strong>Timer único do carrossel</strong>: <code>_carrossel_timers</code> por <code>id(wrap)</code> — timer criado uma vez fora do <code>@ui.refreshable</code>, anterior cancelado (<code>cancel</code> + <code>delete</code>) a cada re-render; <code>expandido</code> pausa o avanço; barra de ações duplicada topo/rodapé.</li>
+<li><strong>LGPD</strong>: <code>remover_vinculos_usuario</code> (limpa banco próprio, fallback legado central) e <code>renomear_autor</code> (propaga <code>autor</code> em postagens + comentários); <code>_ordem_sql</code> blinda <code>ORDER BY</code>; <code>listar_postagens(ativo=None)</code> serve à gestão de despublicadas.</li>
+<li><strong>Regra comum só lê + seed + censura</strong>: <code>comum</code> só lê (UI oculta e backend <code>pode_publicar_no_blog</code> bloqueia criar/editar/comentar/excluir); seed idempotente das 3 postagens-guia <code>Como usar</code> (<code>POSTAGENS_PADRAO</code>, autor <code>master</code>, <code>data_criacao</code> = momento do bootstrap, <code>mermaid</code> ao fim via <code>mover_mermaid_para_fim</code>); censura central (<code>titulo_bloqueado</code> antes do <code>nh3</code>, <code>None</code>/<code>False</code> + <code>warning</code>, card <code>blog-palavras-bloqueadas</code> + <code>blog-salvar-censura</code> com <code>limpar_censuradas</code> do agregador).</li>
 </ul>
 <h2 id="status-fase-3-do-planomd">Status — Fase 3 do PLANO.md<a class="headerlink" href="#status-fase-3-do-planomd" title="Permanent link">&para;</a></h2>
 <table>
@@ -338,6 +358,14 @@
 <tr>
 <td style="text-align: left;"><code>assets/test/teste_fluxo_blog.py</code> (46)</td>
 <td style="text-align: left;"><strong>Implementado</strong> (em <code>assets/test/</code> — 46 verificações ✅)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>atualizar()</code> fail-soft (25/09/2026)</strong> — <code>refresh()</code> sob <code>try/except</code> + <code>logger.debug</code></td>
+<td style="text-align: left;"><strong>Implementado</strong> (<code>telas.py:1098-1114</code>, AGENTS.md §3.2)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Carrossel por seleção em lote + <code>Tempo (s)</code> (25/09/2026)</strong> — <code>_aplicar_carrossel_exib</code> / <code>_aplicar_unica_exib</code> / <code>_aplicar_historico_exib</code> / <code>_restaurar_padrao</code></td>
+<td style="text-align: left;"><strong>Implementado</strong> (<code>telas.py:618-695</code> + card <code>930-944</code>; <code>ui.select</code> dedicado removido)</td>
 </tr>
 </tbody>
 </table>
@@ -417,6 +445,7 @@ banco exclusivo <code>db_mod_auditoria.db</code> (tabela <code>tb_auditoria_blog
 <li><code>_resumo_conteudo(conteudo, limite=220)</code> (<code>telas.py:215</code>) — extrai resumo em texto puro (remove HTML/Markdown/Mermaid, substitui ```mermaid por "[diagrama]", trunca com reticências); try/except + loguru.</li>
 <li><code>_renderizar_carrossel(...)</code> (<code>telas.py:239</code>) — monta o carrossel: <code>ui.timer</code> com rotação, barra de ações no topo e rodapé, card resumido quando não expandido e <code>_card_postagem</code> completo quando expandido; navegação com <code>aria-label</code> e guarda de estado expandido no timer; try/except + loguru.</li>
 <li>Bloco administrativo no modo carrossel (<code>telas.py:546-596</code>): <code>ui.select</code> múltiplo das postagens + <code>ui.number</code> do tempo, com auditoria; <strong>reverte a seleção</strong> se o admin tentar selecionar exatamente 1 postagem (aviso "Selecione ao menos 2 postagens para o carrossel.").</li>
+<li><strong>SUPERADO em 25/09/2026</strong>: o <code>ui.select</code> múltiplo e o campo "Tempo de exibição (segundos)" foram removidos. O desenho atual é <strong>seleção em lote por checkbox + <code>Tempo (s)</code></strong>, com as funções <code>_aplicar_carrossel_exib</code> / <code>_aplicar_unica_exib</code> / <code>_aplicar_historico_exib</code> / <code>_restaurar_padrao</code> — ver <a href="#atualizacao-25092026-atualizar-fail-soft-e-carrossel-por-selecao-em-lote">Atualização 25/09/2026</a>.</li>
 <li><code>atualizar()</code> trata o modo carrossel (<code>telas.py:684-694</code>) — lista apenas as postagens selecionadas via <code>listar_postagens_por_ids</code>.</li>
 <li><strong>Testes</strong>:</li>
 <li><code>assets/test/teste_fluxo_blog.py</code>: isolamento do banco (reatribuição de <code>bd._crud</code> para banco temporário) + nova função <code>teste_carrossel</code> (7 verificações) validando o modo carrossel.</li>
@@ -465,8 +494,246 @@ banco exclusivo <code>db_mod_auditoria.db</code> (tabela <code>tb_auditoria_blog
 <li><strong>Postagens atuais #1/#2/#3 atualizadas via <code>atualizar_postagem</code></strong> (autor <code>master</code>) para o mesmo padrão — bancos existentes não são re-semeados, só normalizados por edição.</li>
 <li><strong>REGRA — <code>mover_mermaid_para_fim()</code> (<code>bd_manipulador.py:531-544</code>)</strong>: ao salvar (criar em <code>:550-563</code> e editar em <code>:569-582</code>), blocos ```mermaid vão para o fim na ordem original (idempotente; sem fence completo o conteúdo segue intacto).</li>
 <li><strong>Teste novo <code>assets/test/test_blog_mermaid_fim.py</code> (7 checks)</strong> — meio→fim com ordem, sem fence/incompleto intacto, entradas vazias, seeds conformes + idempotência, 3 postagens, contrato do render (<code>justify-center</code> + <code>max-width: 680px</code>); linha correspondente no <code>assets/test/README.md</code>.</li>
-<li><strong>Validação (sistema reiniciado, Playwright real — <code>/login</code> 200, screenshot das 3 postagens uniformes com diagramas estreitos centralizados)</strong>: backend (move/ordem/idempotência/seeds), screenshot e suíte <code>assets/test/teste_fluxo_blog.py</code> <strong>46/46</strong>.</li>
 </ul>
+<h2 id="atualizacao-25092026-atualizar-fail-soft-e-carrossel-por-selecao-em-lote">Atualização 25/09/2026 — <code>atualizar()</code> fail-soft e carrossel por seleção em lote<a class="headerlink" href="#atualizacao-25092026-atualizar-fail-soft-e-carrossel-por-selecao-em-lote" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Duas correções aplicadas em <code>mod_blog/telas.py</code> no commit <code>624c9d5</code>. Nenhuma
+mudança de schema; apenas a robustez do refresh e o <strong>redesenho do controle de
+exibição</strong> do modo carrossel.</p>
+</blockquote>
+<h3 id="1-atualizar-refresh-agora-e-fail-soft-agentsmd-32">1. <code>atualizar()</code> — <code>refresh()</code> agora é fail-soft (AGENTS.md §3.2)<a class="headerlink" href="#1-atualizar-refresh-agora-e-fail-soft-agentsmd-32" title="Permanent link">&para;</a></h3>
+<p><code>telas.py:1098-1114</code>. Antes, <code>_feed_blog.refresh()</code> era chamado <strong>sem
+<code>try/except</code></strong>, enquanto o <code>_atualizar_contador()</code> logo abaixo já era protegido —
+uma assimetria. Como <code>refreshable.refresh()</code> <strong>agenda uma tarefa no <code>event-loop</code>
+do NiceGUI</strong>, ele pode levantar quando o loop ainda não subiu ou quando o
+cliente desconectou; sem o <code>try</code>, <strong>uma falha de refresh derrubava a tela
+inteira</strong>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">atualizar</span><span class="p">():</span>
+    <span class="c1"># AGENTS.md §3.2: o refresh é fail-soft. `refreshable.refresh()`</span>
+    <span class="c1"># agenda tarefa no event-loop do NiceGUI e pode levantar se o loop</span>
+    <span class="c1"># ainda não subiu ou se o cliente desconectou — sem este try, uma</span>
+    <span class="c1"># falha de refresh derrubava a tela inteira (o conteúdo já foi</span>
+    <span class="c1"># renderizado logo abaixo por `_feed_blog()`, então o feed segue</span>
+    <span class="c1"># visível mesmo se a re-renderização não agendar).</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_feed_blog</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">observabilidade</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="s2">"blog"</span><span class="p">)</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">"atualizar: refresh do feed não agendado (loop indisponível)"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pode_publicar</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_atualizar_contador</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Ponto</th>
+<th style="text-align: left;">Decisão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Severidade do log</strong></td>
+<td style="text-align: left;"><code>debug</code> (não <code>exception</code>/<code>warning</code>) — é uma condição <strong>esperada</strong> de corrida entre a UI e o event-loop, não um erro do módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Conteúdo não se perde</strong></td>
+<td style="text-align: left;">O corpo do feed <strong>já foi renderizado</strong> logo abaixo, em <code>with posts_wrap: _feed_blog()</code>; só a <em>re-renderização</em> pode não agendar. A tela continua com o feed visível</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Consistência</strong></td>
+<td style="text-align: left;">Os dois caminhos de <code>atualizar()</code> (<code>refresh</code> e <code>_atualizar_contador</code>) passam a ter <code>try/except</code>, com <code>logger</code> em um e <code>pass</code> no outro (contador é cosmético)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Quem chama</strong></td>
+<td style="text-align: left;"><code>on_change</code> da busca (<code>telas.py:954</code>), troca de modo/fixação, e o <code>atualizar()</code> final de montagem (<code>telas.py:1134</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-modo-carrossel-selecao-em-lote-por-checkbox-tempo-s">2. Modo carrossel — seleção em lote por checkbox + <code>Tempo (s)</code><a class="headerlink" href="#2-modo-carrossel-selecao-em-lote-por-checkbox-tempo-s" title="Permanent link">&para;</a></h3>
+<p>O desenho anterior (um <code>ui.select</code> dedicado "Postagens do carrossel" mais um
+campo "Tempo de exibição (segundos)") foi <strong>substituído</strong> pela <strong>seleção em
+lote</strong> que já existia na tela. Hoje <strong>não há mais um controle separado de
+carrossel</strong>: o admin marca as postagens com os <em>checkboxes</em> da seleção em lote
+(<code>blog-selecionar-&lt;id&gt;</code> / <code>blog-selecionar-todos</code> / <code>blog-selecionar-5</code> /
+<code>blog-selecionar-10</code> / <code>blog-limpar-selecao</code>) e clica em um dos <strong>três botões de
+aplicação</strong> + o campo numérico <code>Tempo (s)</code>.</p>
+<h4 id="estado-compartilhado">Estado compartilhado<a class="headerlink" href="#estado-compartilhado" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="n">selecionados</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>          <span class="c1"># ids marcados nos checkboxes (declarado ANTES da UI</span>
+                              <span class="c1"># para evitar UnboundLocalError)</span>
+<span class="n">_tempo_exib</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"valor"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>    <span class="c1"># valor do campo numérico, carregado do banco</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mod_blog.bd_manipulador</span><span class="w"> </span><span class="kn">import</span> <span class="n">obter_carrossel_tempo</span> <span class="k">as</span> <span class="n">_get_t</span>
+    <span class="n">_tempo_exib</span><span class="p">[</span><span class="s2">"valor"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_get_t</span><span class="p">()</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="k">pass</span>
+</code></pre></div>
+<h4 id="as-quatro-funcoes-de-aplicacao-telaspy618-695">As quatro funções de aplicação (<code>telas.py:618-695</code>)<a class="headerlink" href="#as-quatro-funcoes-de-aplicacao-telaspy618-695" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Regra de aplicação</th>
+<th style="text-align: left;">Efeito no banco</th>
+<th style="text-align: left;">Auditoria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong><code>_aplicar_unica_exib()</code></strong> (<code>662-680</code>)</td>
+<td style="text-align: left;">Exige <strong>exatamente 1</strong> selecionada; senão <code>notify</code> <code>warning</code> "Selecione exatamente 1 postagem para 'Publicação única'" e <code>return</code> (sem escrita)</td>
+<td style="text-align: left;"><code>definir_postagem_unica_id(pid)</code> + <code>blog_modo_exibicao='unica'</code></td>
+<td style="text-align: left;"><code>audit(..., "configuracao", f"única via seleção: {pid}")</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>_aplicar_historico_exib()</code></strong> (<code>682-695</code>)</td>
+<td style="text-align: left;"><strong>Sem pré-condição</strong> — aplica sempre</td>
+<td style="text-align: left;"><code>blog_modo_exibicao='historico'</code></td>
+<td style="text-align: left;"><code>audit(..., "configuracao", "histórico via seleção (todas)")</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>_aplicar_carrossel_exib()</code></strong> (<code>642-660</code>)</td>
+<td style="text-align: left;">Exige <strong>≥ 2</strong> selecionadas; senão <code>notify</code> <code>warning</code> "Selecione ao menos 2 postagens para o carrossel" e <code>return</code></td>
+<td style="text-align: left;"><code>definir_carrossel_postagens_ids(sorted(selecionados))</code> + <code>definir_carrossel_tempo(int(_tempo_exib["valor"] or 10))</code> + <code>blog_modo_exibicao='carrossel'</code></td>
+<td style="text-align: left;"><code>audit(..., "configuracao", f"carrossel via seleção: {sorted(selecionados)}")</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>_restaurar_padrao()</code></strong> (<code>618-640</code>)</td>
+<td style="text-align: left;">Sem pré-condição</td>
+<td style="text-align: left;">Modo <strong><code>carrossel</code></strong> + as <strong>3 primeiras postagens ativas por <code>ordem ASC</code></strong> (<code>listar_postagens(ativo=True, ordem="ASC")[:3]</code>, só se houver ≥ 2) + <code>definir_postagem_unica_id(None)</code> (limpa a fixação) + <code>definir_carrossel_tempo(10)</code></td>
+<td style="text-align: left;"><code>audit(..., "configuracao", "exibição: padrões restaurados")</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Padrão comum das quatro</strong>: imports <strong>locais</strong> (lazy) do <code>bd_manipulador</code> e do
+<code>audit_reg</code>; <code>try/except</code> com <code>observabilidade.get_logger("blog").exception(...)</code>
++ <code>ui.notify</code> negativo; <code>notify</code> positivo <strong>antes</strong> do reload; e
+<code>ui.timer(0.1, lambda: ui.navigate.reload(), once=True)</code> para re-renderizar a
+página com o novo modo. A auditoria de <code>audit_reg</code> é ela própria <code>try/except</code> com
+<code>pass</code> — falhar no log de auditoria <strong>não</strong> cancela a mudança de configuração.</p>
+<h4 id="card-de-controle-telaspy930-944">Card de controle (<code>telas.py:930-944</code>)<a class="headerlink" href="#card-de-controle-telaspy930-944" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>┌─ Exibição (coluna w-1/4, botões empilhados) ───────────────────┐
+│ [Aplicar à única]       blog-aplicar-unica      (exatamente 1) │
+│ [Exibir todas]         blog-aplicar-historico  (sem mínimo)   │
+│ [Aplicar ao carrossel] blog-aplicar-carrossel  (mín. 2)       │
+│ [Tempo (s)  1..60 step 1   outlined dense]                    │
+│ [Restaurar padrão]      (variante=restaurar)                  │
+└────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Controle</th>
+<th style="text-align: left;"><code>data-testid</code></th>
+<th style="text-align: left;">Restrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Aplicar à única</td>
+<td style="text-align: left;"><code>blog-aplicar-unica</code></td>
+<td style="text-align: left;">exatamente 1 selecionada</td>
+</tr>
+<tr>
+<td style="text-align: left;">Exibir todas</td>
+<td style="text-align: left;"><code>blog-aplicar-historico</code></td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">Aplicar ao carrossel</td>
+<td style="text-align: left;"><code>blog-aplicar-carrossel</code></td>
+<td style="text-align: left;">mínimo 2 selecionadas</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>Tempo (s)</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;"><code>min=1 max=60 step=1</code>, default vindo de <code>obter_carrossel_tempo()</code> (padrão do sistema: <strong>10 s</strong>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Restaurar padrão</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">—</td>
+</tr>
+</tbody>
+</table>
+<p>O <code>Tempo (s)</code> usa <code>on_value_change</code> para atualizar o dicionário <code>_tempo_exib</code>
+(sem salvar sozinho) — o valor só é gravado quando <strong>Aplicar ao carrossel</strong> ou
+<strong>Restaurar padrão</strong> é clicado.</p>
+<h4 id="consequencias">Consequências<a class="headerlink" href="#consequencias" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Uma única fonte de seleção</strong>: o mesmo <code>set()</code> alimenta "Excluir selecionados",
+  "Aplicar à única", "Exibir todas" e "Aplicar ao carrossel" — o admin não precisa
+  marcar as postagens duas vezes nem manter dois conceitos paralelos de seleção.</li>
+<li><strong>Teste atualizado</strong>: <code>assets/test/teste_carrossel_blog.py</code> foi reescrito para o
+  desenho novo (antes procurava o <code>ui.select</code> de postagens do carrossel).</li>
+<li><strong>Mínimo de 2 para carrossel</strong> preservado — com 1 postagem o modo carrossel não
+  faria sentido (não haveria rotação); o aviso é exibido <strong>antes</strong> de qualquer escrita.</li>
+</ul>
+<h3 id="3-complemento-sanitizacao-imagens-mermaid-e-censura">3. Complemento — sanitização, imagens, Mermaid e censura<a class="headerlink" href="#3-complemento-sanitizacao-imagens-mermaid-e-censura" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Tema</th>
+<th style="text-align: left;">Onde</th>
+<th style="text-align: left;">Garantia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Sanitização <code>nh3</code></strong></td>
+<td style="text-align: left;"><code>_sanitizar_texto()</code> (<code>bd_manipulador.py:499</code>) na <strong>gravação</strong> e <code>formatar_conteudo_para_exibicao()</code> (<code>:782</code>) na <strong>renderização</strong></td>
+<td style="text-align: left;">Whitelists <strong>alinhadas</strong> — ambas usam <code>tags_permitidas()</code>; <code>div</code>/<code>br</code> garantidos sem atributos; esquemas <code>http</code>/<code>https</code>/<code>data</code>/<code>mailto</code> + URLs relativas (<code>url_relative="pass_through"</code>); <code>link_rel="noopener noreferrer"</code>. <code>div</code>/<code>br</code> são <strong>sempre</strong> permitidos para que bancos antigos (CSV sem essas tags) não percam a saída do QEditor</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Imagens</strong></td>
+<td style="text-align: left;"><code>salvar_imagem_postagem()</code> (<code>:410</code>), <code>expirar_imagens_orfas()</code> (<code>:446</code>), <code>ajustar_imagem_html</code></td>
+<td style="text-align: left;">Só <code>.jpg/.jpeg/.png</code>, máx 5 MB, <strong>assinatura de arquivo validada</strong> (JPEG <code>FFD8</code>, PNG <code>89504E47</code>); nome <code>AAMMDDHHMM_login_N.ext</code>; órfãs removidas em 1 min pelo job <code>cleanup_blog_imagens</code>; servido em <code>/img_postagens/*</code> por <code>montar_rotas_static()</code>; <code>img</code> aceita <code>class</code> + <code>style</code> no <code>nh3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Mermaid</strong></td>
+<td style="text-align: left;"><code>extrair_segmentos_mermaid()</code> (<code>bd_manipulador.py:68</code>), <code>_renderizar_conteudo_postagem()</code> (<code>telas.py:17</code>), <code>mover_mermaid_para_fim()</code> (<code>:531</code>)</td>
+<td style="text-align: left;">Blocos <code>```mermaid</code> viram <code>ui.mermaid</code> (bundle embutido, <strong>sem CDN</strong>), centralizados em <code>max-width:680px</code>; inválido mostra "(diagrama inválido)" sem derrubar a tela; desligável por <code>blog_habilitar_mermaid</code>; ao salvar, os blocos vão <strong>para o fim</strong> na ordem original (idempotente)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Censura</strong></td>
+<td style="text-align: left;"><code>titulo_bloqueado()</code> de <code>mod_intranet/censura.py</code>, aplicado em <code>criar_postagem</code>/<code>atualizar_postagem</code> <strong>antes</strong> do <code>nh3</code></td>
+<td style="text-align: left;">Título bloqueado → retorno <code>None</code>/<code>False</code> + <code>warning</code> + <code>notificar("Título contém palavra bloqueada: ...")</code> — <strong>sem</strong> sanitizar e <strong>sem</strong> gravar. Chave única <code>conteudo_palavras_bloqueadas</code> (central), normalização <code>lower</code> + <code>NFD</code> sem acento, comparação por <strong>substring</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Purga cruzada</strong></td>
+<td style="text-align: left;"><code>mod_blog/telas_administracao.py:100-106</code></td>
+<td style="text-align: left;">Ao salvar a lista de censura, o admin do Blog chama <code>integracoes.limpar_noticias_censuradas()</code> — <strong>não</strong> importa <code>mod_agregador_noticias</code> direto (AGENTS.md §2, correção 25/09/2026) — e informa quantas notícias censuradas saíram do Agregador</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pendencia-qa-wal-paridade-sqlite-postgres-24092026-sem-correcao-aplicada">Pendencia QA — WAL + paridade SQLite-Postgres (24/09/2026, sem correcao aplicada)<a class="headerlink" href="#pendencia-qa-wal-paridade-sqlite-postgres-24092026-sem-correcao-aplicada" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Documentacao da correcao pendente. Nenhum <code>.py</code> alterado neste lote.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Modulo</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Arquivo:linha</th>
+<th style="text-align: left;">Correcao proposta contida no modulo</th>
+<th style="text-align: left;">Risco regressao</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">blog</td>
+<td style="text-align: left;">Piloto <code>CrudBase</code> 100% — sem migracao; validar paridade datas</td>
+<td style="text-align: left;"><code>mod_blog/bd_manipulador.py:24</code>, <code>:104</code> (<code>CrudBase</code> OK)</td>
+<td style="text-align: left;">Sem migracao; so bateria paridade SQLite-PG</td>
+<td style="text-align: left;">Baixo</td>
+</tr>
+</tbody>
+</table>
+<p>Detalhe consolidado em <a href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade</a>.
+- <strong>Validação (sistema reiniciado, Playwright real — <code>/login</code> 200, screenshot das 3 postagens uniformes com diagramas estreitos centralizados)</strong>: backend (move/ordem/idempotência/seeds), screenshot e suíte <code>assets/test/teste_fluxo_blog.py</code> <strong>46/46</strong>.</p>
               
             </div>
           </div><footer>

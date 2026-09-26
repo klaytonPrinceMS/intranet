@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -235,7 +247,7 @@
 <hr />
 <h1 id="lista-telefonica-mod_lista_telefonica_1">Lista Telefônica — <code>mod_lista_telefonica</code><a class="headerlink" href="#lista-telefonica-mod_lista_telefonica_1" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Lista telefônica / organograma expansível: rota <code>/lista-telefonica</code> (chave <code>lista_telefonica</code>) · banco próprio <code>db_mod_lista_telefonica.db</code> · hierarquia Secretaria→Setor→Subsetor (12 secretarias genéricas) · contatos em ordem alfabética · busca por nome/telefone · telefone clicável <code>tel:</code> no celular · admin: excluir ramo, mover, elevar/rebaixar, ordenar/comutar, transferir, aparência.</p>
+<p>Lista telefônica / organograma expansível: rota <code>/lista-telefonica</code> (chave <code>lista_telefonica</code>) · banco próprio <code>db_mod_lista_telefonica.db</code> · <strong>atualizado 25/09/2026</strong>: usuários passaram a vir pela fachada <code>mod_intranet.integracoes</code> (AGENTS.md §2) · hierarquia Secretaria→Setor→Subsetor (12 secretarias genéricas) · contatos em ordem alfabética · busca por nome/telefone · telefone clicável <code>tel:</code> no celular · admin: excluir ramo, mover, elevar/rebaixar, ordenar/comutar, transferir, aparência.</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Módulo de <strong>organograma expansível</strong> com lista telefônica interna. O organograma base (<code>ORGANOGRAMA_BASE</code> — <code>bd_manipulador.py:21-75</code>) traz <strong>12 secretarias genéricas</strong> desacopladas de vínculo territorial, cada uma com setores e subsetores, servindo como semente editável. O usuário navega por Secretaria → Setor → Subsetor via selects em cascata e visualiza contatos da unidade selecionada sempre em <strong>ordem alfabética</strong>. A busca global localiza unidades e contatos por nome/telefone com normalização sem acentos. No celular, o telefone é <strong>clicável</strong> (<code>tel:</code>) com diálogo "Ligar agora".</p>
@@ -349,7 +361,306 @@
 <li><strong>LGPD</strong>: <code>remover_vinculos_usuario(user_nome)</code> (<code>578-589</code>) → <code>DELETE FROM tb_contato WHERE user_nome=?</code> + <code>audit remover_vinculos_lista</code>; <code>renomear_usuario(nome_atual, novo_nome)</code> (<code>592-600</code>) → <code>UPDATE tb_contato SET user_nome/nome WHERE user_nome/nome AND tipo='vinculado'</code>.</li>
 </ul>
 <h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
-<p>Importa <code>autenticacao.validar_acesso_modulo</code>/<code>eh_admin_do_modulo</code>, <code>banco_conexao.conexao</code>, <code>tema_modulo.ler_tema</code>/<code>notificar</code>/<code>bloco_aparencia</code>, <code>ui_comum.botao</code>/<code>botao_icone</code>/<code>card_admin</code>/<code>dialogo_card</code>/<code>rodape_salvar_restaurar</code>, <code>observabilidade.get_logger</code>. Grava via <code>audit_log</code> → <code>tb_auditoria_lista_telefonica</code>. Backup via <code>rotinas.painel_backup</code>/<code>MAPA_BACKUPS</code> (<code>lista_telefonica: db_mod_lista_telefonica.db</code>). <code>PREFIXO_POR_CHAVE</code>/<code>PADROES_TEMA</code>/<code>MODULOS_SISTEMA</code>/<code>MODULOS_BD</code> com <code>lista_telefonica</code>. <code>ORGANOGRAMA_BASE</code> exportado para <code>mod_solicita_impressao</code> semear cotas (1000/200).</p>
+<p>Importa <code>autenticacao.validar_acesso_modulo</code>/<code>eh_admin_do_modulo</code>, <code>banco_conexao.conexao</code>, <code>tema_modulo.ler_tema</code>/<code>notificar</code>/<code>bloco_aparencia</code>, <code>ui_comum.botao</code>/<code>botao_icone</code>/<code>card_admin</code>/<code>dialogo_card</code>/<code>rodape_salvar_restaurar</code>, <code>observabilidade.get_logger</code>. Grava via <code>audit_log</code> → <code>tb_auditoria_lista_telefonica</code>. Backup via <code>rotinas.painel_backup</code>/<code>MAPA_BACKUPS</code> (<code>lista_telefonica: db_mod_lista_telefonica.db</code>). <code>PREFIXO_POR_CHAVE</code>/<code>PADROES_TEMA</code>/<code>MODULOS_SISTEMA</code>/<code>MODULOS_BD</code> com <code>lista_telefonica</code>.</p>
+<p><strong>Fonte compartilhada de cotas</strong> (25/09/2026): <code>ORGANOGRAMA_BASE</code> é exposto ao
+restante do sistema <strong>apenas</strong> por
+<code>mod_intranet/integracoes.py:obter_organograma_base()</code> — consumida por
+<code>mod_solicita_impressao/bd_manipulador.py:init_db()</code> para semear as cotas
+(Secretaria <strong>1000</strong>, Setor/Subsetor <strong>200</strong>). A Lista Telefônica <strong>não</strong> importa
+ninguém fora do núcleo, e nenhum outro módulo importa <code>mod_lista_telefonica</code>
+diretamente.</p>
+<p><strong>Usuários</strong>: desde 25/09/2026 o módulo <strong>não</strong> importa mais
+<code>mod_gest_cad_usuario</code> — usa <code>integracoes.obter_usuario_gestao()</code> /
+<code>integracoes.listar_usuarios_gestao()</code> (ver a seção
+<em>Correção 25/09/2026</em> abaixo).</p>
+<h2 id="correcao-25092026-usuarios-via-fachada-mod_intranetintegracoes-agentsmd-2">Correção 25/09/2026 — usuários via fachada <code>mod_intranet.integracoes</code> (AGENTS.md §2)<a class="headerlink" href="#correcao-25092026-usuarios-via-fachada-mod_intranetintegracoes-agentsmd-2" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><code>mod_lista_telefonica/telas_administracao.py</code> importava
+<code>mod_gest_cad_usuario</code> <strong>diretamente</strong> em <strong>dois pontos</strong> do mesmo formulário
+de vínculo de contato. Isso violava a regra de ouro do AGENTS.md §2 ("nunca
+faça cross-query entre bancos" / cada módulo fala só com o núcleo). Commit
+<code>624c9d5</code>.</p>
+</blockquote>
+<h3 id="os-dois-pontos-corrigidos">Os dois pontos corrigidos<a class="headerlink" href="#os-dois-pontos-corrigidos" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Local</th>
+<th style="text-align: left;">Antes (import direto)</th>
+<th style="text-align: left;">Depois (fachada do núcleo)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Busca do usuário no formulário de contato (<code>telas_administracao.py:684-690</code>)</td>
+<td style="text-align: left;"><code>from mod_gest_cad_usuario import bd_manipulador as gest</code><br><code>todos = gest.listar_usuarios()</code></td>
+<td style="text-align: left;"><code>from mod_intranet import integracoes</code><br><code>todos = integracoes.listar_usuarios_gestao()</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Preenchimento automático ao escolher o usuário (<code>:738-746</code>)</td>
+<td style="text-align: left;"><code>from mod_gest_cad_usuario import bd_manipulador as gest</code><br><code>row = gest.obter_usuario(sel_user.value)</code></td>
+<td style="text-align: left;"><code>from mod_intranet import integracoes</code><br><code>row = integracoes.obter_usuario_gestao(sel_user.value)</code></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1) busca em tempo real</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Cadastro via API pública do núcleo (AGENTS.md §2: a</span>
+    <span class="c1"># Lista Telefônica não importa a Gestão de Usuários).</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mod_intranet</span><span class="w"> </span><span class="kn">import</span> <span class="n">integracoes</span>
+    <span class="n">todos</span> <span class="o">=</span> <span class="n">integracoes</span><span class="o">.</span><span class="n">listar_usuarios_gestao</span><span class="p">()</span>
+    <span class="o">...</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">todos</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1"># 2) botão "Usar usuário" — nome completo (row[9]) + telefone (row[5])</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mod_intranet</span><span class="w"> </span><span class="kn">import</span> <span class="n">integracoes</span>
+    <span class="n">row</span> <span class="o">=</span> <span class="n">integracoes</span><span class="o">.</span><span class="n">obter_usuario_gestao</span><span class="p">(</span><span class="n">sel_user</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">row</span><span class="p">:</span>
+        <span class="n">inp_nome</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span> <span class="ow">or</span> <span class="n">sel_user</span><span class="o">.</span><span class="n">value</span>
+        <span class="o">...</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="k">pass</span>
+</code></pre></div>
+<h3 id="por-que-a-fachada-e-nao-um-import">Por que a fachada e não um import<a class="headerlink" href="#por-que-a-fachada-e-nao-um-import" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Razão</th>
+<th style="text-align: left;">Detalhe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>AGENTS.md §2</strong></td>
+<td style="text-align: left;">Cada módulo tem o <strong>próprio</strong> banco; a comunicação passa pela API pública do núcleo. O acoplamento pertence ao <code>mod_intranet</code>, não ao módulo de negócio</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Fail-soft garantido</strong></td>
+<td style="text-align: left;"><code>integracoes.py</code> é <em>fail-soft por construção</em>: cada função envolve o import <strong>lazy</strong> + chamada em <code>try/except</code>, e devolve <strong>valor neutro</strong> (<code>None</code> / <code>[]</code> / <code>0</code> / <code>False</code>) com <code>logger.warning</code>. Se o módulo de Gestão de Usuários estiver ausente, desabilitado ou lançar, a tela da Lista Telefônica <strong>continua funcionando</strong> — com a busca vazia, sem quebrar</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Sem ciclo de import de topo</strong></td>
+<td style="text-align: left;">Os imports da fachada são <strong>lazy</strong> (dentro das funções) de propósito: um import de topo de um módulo de negócio ali fecharia um ciclo com o <code>main.py</code>. Por isso o <code>assets/test/check_integridade.py</code> reporta esses ciclos como <strong>AVISO</strong> de runtime, nunca como falha</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Contrato estável</strong></td>
+<td style="text-align: left;">A Lista Telefônica depende de <code>obter_usuario_gestao</code> / <code>listar_usuarios_gestao</code>, não de <code>listar_usuarios</code> / <code>obter_usuario</code>. Se a Gestão mudar a assinatura interna, a fachada absorve</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Verificável</strong></td>
+<td style="text-align: left;"><code>check_integridade.py</code> (bloco A) passa a <strong>13/13</strong>; o par <code>mod_lista_telefonica → mod_gest_cad_usuario</code> sumiu do grafo de imports</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Os mesmos dois pontos existiam em <code>mod_filas</code></p>
+<p><code>_ator_eh_dono_ou_admin</code> e <code>liberar_acesso</code> em <code>mod_filas/bd_manipulador.py</code> e
+<code>bloco_liberar_acesso</code> em <code>mod_filas/telas.py</code> faziam exatamente o mesmo
+import direto. Foram corrigidos na mesma sessão — ver
+<a href="../analise_mod_filas/#correcao-25092026-dois-bugs-reais-de-consulta-na-lista-de-nomes">Filas — Correção 25/09/2026</a>.</p>
+</div>
+<h3 id="contrato-das-funcoes-consumidas-mod_intranetintegracoespy">Contrato das funções consumidas (<code>mod_intranet/integracoes.py</code>)<a class="headerlink" href="#contrato-das-funcoes-consumidas-mod_intranetintegracoespy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">obter_usuario_gestao</span><span class="p">(</span><span class="n">user_nome</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""EN: One user row from the user registry, or None.</span>
+
+<span class="sd">    PT-BR: Uma linha do cadastro de usuários pelo nome, ou None. Usado por</span>
+<span class="sd">    Filas e Lista Telefônica sem que eles conheçam o módulo de gestão."""</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">listar_usuarios_gestao</span><span class="p">(</span><span class="n">filtro_ativo</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""EN: User rows from the registry (per-module access aggregated).</span>
+
+<span class="sd">    PT-BR: Linhas do cadastro de usuários (acesso por módulo agregado). Lista</span>
+<span class="sd">    vazia em qualquer falha — a tela que chama decide o que fazer."""</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Chamador</th>
+<th style="text-align: left;">Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>mod_lista_telefonica/telas_administracao.py</code></td>
+<td style="text-align: left;"><code>listar_usuarios_gestao()</code> (busca por <code>login</code>/<code>nome_completo</code> <code>r[9]</code>/<code>e-mail</code> <code>r[4]</code>, excluindo deletados <code>not r[8]</code>, 20 iniciais / 30 filtrados) e <code>obter_usuario_gestao(...)</code> (preenche <code>Nome</code> = <code>row[9]</code> + <code>Telefone</code> = <code>row[5]</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_filas/bd_manipulador.py</code></td>
+<td style="text-align: left;"><code>obter_usuario_gestao(ator)</code> em <code>_ator_eh_dono_ou_admin</code> (perfil do ator) e em <code>liberar_acesso</code> (valida que o usuário existe)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_filas/telas.py</code></td>
+<td style="text-align: left;"><code>listar_usuarios_gestao(filtro_ativo=True)</code> em <code>bloco_liberar_acesso</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="complemento-organograma-busca-tel-e-administracao">Complemento — organograma, busca, <code>tel:</code> e administração<a class="headerlink" href="#complemento-organograma-busca-tel-e-administracao" title="Permanent link">&para;</a></h3>
+<h4 id="organograma_base-e-a-fonte-compartilhada-de-cotas-do-sistema"><code>ORGANOGRAMA_BASE</code> é a <strong>fonte compartilhada</strong> de cotas do sistema<a class="headerlink" href="#organograma_base-e-a-fonte-compartilhada-de-cotas-do-sistema" title="Permanent link">&para;</a></h4>
+<p>O organograma semeado pelo módulo <strong>não é um detalhe do Lista Telefônica</strong>: ele é
+consumido por <strong>outro módulo de negócio</strong> para semear as cotas de impressão.</p>
+<pre class="mermaid"><code>graph LR
+  LT["mod_lista_telefonica&lt;br/&gt;ORGANOGRAMA_BASE&lt;br/&gt;(12 secretarias)"]
+  NUC["mod_intranet/integracoes.py&lt;br/&gt;obter_organograma_base()"]
+  SI["mod_solicita_impressao&lt;br/&gt;init_db() semeia cotas&lt;br/&gt;Secretaria 1000 · Setor/Subsetor 200"]
+  GEST["mod_gest_cad_usuario&lt;br/&gt;cadastro de usuários"]
+  F["mod_filas"]
+
+  LT --&gt; NUC
+  NUC --&gt; SI
+  NUC --&gt; GEST
+  NUC --&gt; F
+  GEST -.-&gt;|usados| NUC</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Consumidor</th>
+<th style="text-align: left;">Caminho</th>
+<th style="text-align: left;">Cotas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Solicitação de Impressão</strong></td>
+<td style="text-align: left;"><code>mod_intranet/integracoes.py:obter_organograma_base()</code> → <code>mod_solicita_impressao/bd_manipulador.py:init_db()</code> (semente idempotente por sigla/nome)</td>
+<td style="text-align: left;"><strong>Secretaria 1000</strong> páginas/mês · <strong>Setor e Subsetor 200</strong> cada</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Lista Telefônica</strong> (dono)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:init_db()</code> semeia <code>tb_unidade</code> quando a tabela está vazia</td>
+<td style="text-align: left;">12 secretarias + setores + subsetores</td>
+</tr>
+</tbody>
+</table>
+<p>Antes de 25/09/2026 a Solicitação fazia
+<code>from mod_lista_telefonica.bd_manipulador import ORGANOGRAMA_BASE</code> direto. Hoje
+usa a fachada, e <strong>mantém um <em>fallback</em> local</strong> (Gabinete, Administração, …)
+quando o organograma não responde — a semeadura das cotas continua funcionando
+mesmo com o módulo da Lista Telefônica ausente. Isso preserva a regra do AGENTS.md
+§2 sem criar um novo ponto de falha.</p>
+<div class="admonition warning">
+<p class="admonition-title">Consequência de manter: os subsetores são achatados</p>
+<p>Como a impressão só tem <strong>Secretaria → Setor</strong>, os subsetores do organograma
+são achatados em <code>tb_setores</code> com <strong>200</strong> cópias cada. Alterar a estrutura do
+<code>ORGANOGRAMA_BASE</code> impacta as cotas de impressão — mudança de organograma é
+mudança de cota.</p>
+</div>
+<h4 id="hierarquia-e-navegacao">Hierarquia e navegação<a class="headerlink" href="#hierarquia-e-navegacao" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Nível</th>
+<th style="text-align: left;"><code>tipo</code></th>
+<th style="text-align: left;">Regra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: left;"><code>secretaria</code></td>
+<td style="text-align: left;"><strong>Nunca</strong> tem pai (<code>parent_id</code> NULL) — raiz</td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: left;"><code>setor</code></td>
+<td style="text-align: left;">Exige pai <code>secretaria</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td style="text-align: left;"><code>subsetor</code></td>
+<td style="text-align: left;">Exige pai <code>setor</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>12 secretarias genéricas, <strong>desacopladas de vínculo territorial</strong>, com setores e
+  subsetores (Gabinete, Administração, Finanças, Saúde, Educação, Obras e
+  Infraestrutura, Agricultura, Meio Ambiente, Assistência Social, Cultura, Esporte
+  e Lazer, Planejamento).</li>
+<li>Semente <strong>idempotente</strong>: só roda quando <code>tb_unidade</code> está vazia — bancos já
+  semeados <strong>nunca</strong> são sobrescritos pelo <code>init_db</code>.</li>
+<li>Navegação em <strong>selects em cascata</strong> (<code>lista-select-secretaria</code> → setor →
+  subsetor), com <code>clearable</code> e <code>disable</code> nos filhos até o pai estar escolhido;
+  <code>unidade_selecionada()</code> prefere <code>subsetor &gt; setor &gt; secretaria</code>.</li>
+</ul>
+<h4 id="contatos-e-busca">Contatos e busca<a class="headerlink" href="#contatos-e-busca" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Regra</th>
+<th style="text-align: left;">Onde</th>
+<th style="text-align: left;">Detalhe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Ordem alfabética</strong></td>
+<td style="text-align: left;"><code>listar_contatos</code></td>
+<td style="text-align: left;"><code>ORDER BY nome COLLATE NOCASE ASC</code> — sempre alfabética, sem exceção, independentemente da ordem de inserção</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Busca sem acentos</strong></td>
+<td style="text-align: left;"><code>_norm</code> (<code>NFKD</code> → ascii → lower → <code>re.findall(r"[a-z0-9]+", s)</code>)</td>
+<td style="text-align: left;"><code>buscar_unidades</code> / <code>buscar_contatos</code> filtram <strong>em memória</strong> com <code>termo_n in _norm(campo)</code> sobre <code>nome</code> / <code>telefone</code> / <code>user_nome</code> — "saude" encontra "Saúde", "saude"</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Telefone clicável</strong></td>
+<td style="text-align: left;"><code>telas.py</code></td>
+<td style="text-align: left;"><code>re.sub(r"[^0-9+]", "", tel)</code> → <code>ui.link(target="tel:&lt;limpo&gt;")</code>; no clique, diálogo <code>_dlg_ligar</code> com <code>ui.run_javascript("window.location.href='tel:…'")</code> (fail-soft) e botão <code>Ligar agora</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Vínculo com usuários</strong></td>
+<td style="text-align: left;"><code>criar_contato</code></td>
+<td style="text-align: left;"><code>tipo='vinculado'</code> quando <code>user_nome</code> está preenchido, senão <code>'externo'</code>; nome ≥ 2, telefone ≥ 8, sem <code>nome</code> duplicado na unidade</td>
+</tr>
+</tbody>
+</table>
+<h4 id="administracao-telas_administracaopy">Administração (<code>telas_administracao.py</code>)<a class="headerlink" href="#administracao-telas_administracaopy" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Operação</th>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Garantia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Excluir ramo</strong></td>
+<td style="text-align: left;"><code>excluir_ramo</code></td>
+<td style="text-align: left;">Cascata real: <code>_coletar_ramo_ids</code> recursiva → <code>DELETE</code> → FK <code>ON DELETE CASCADE</code> apaga filhos <strong>e</strong> os contatos da unidade; auditado com a lista de <code>ids</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Mover</strong></td>
+<td style="text-align: left;"><code>mover_unidade</code></td>
+<td style="text-align: left;">Valida o novo pai pelo tipo; bloqueia <code>uid == novo_parent</code> e <strong>ciclo</strong> (sobe <code>parent_id</code> do destino até a raiz; se encontrar <code>uid</code>, cancela); reordena no destino (<code>ordem = MAX+1</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Elevar / rebaixar</strong></td>
+<td style="text-align: left;"><code>elevar_rebaixar</code></td>
+<td style="text-align: left;"><code>setor→secretaria</code> (parent NULL) e <code>subsetor→setor</code> (parent = avô) são diretos; <code>secretaria→setor</code> e <code>setor→subsetor</code> <strong>exigem</strong> mover antes, com mensagem que orienta; checa duplicado no destino</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Ordenar / comutar</strong></td>
+<td style="text-align: left;"><code>reordenar_unidades</code></td>
+<td style="text-align: left;"><code>UPDATE ... SET ordem=? WHERE id=? AND coalesce(parent_id,-1)=coalesce(?,-1)</code> — o <code>coalesce</code> trata <code>NULL</code> (raiz) sem <code>IS NULL</code> dinâmico</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Transferir contato</strong></td>
+<td style="text-align: left;"><code>transferir_contato</code></td>
+<td style="text-align: left;">Valida o destino, recusa a <strong>mesma</strong> unidade e bloqueia <code>nome</code> duplicado lá; audita <code>old→new</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>LGPD</strong></td>
+<td style="text-align: left;"><code>remover_vinculos_usuario</code> / <code>renomear_usuario</code></td>
+<td style="text-align: left;">Remove os contatos vinculados ao login; propaga <code>user_nome</code> <strong>e</strong> <code>nome</code> quando o login é renomeado</td>
+</tr>
+</tbody>
+</table>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Organograma genérico e desacoplado — semente só quando <code>tb_unidade</code> vazia (bancos já semeados não são sobrescritos).</li>

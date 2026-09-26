@@ -74,9 +74,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -101,9 +104,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -230,12 +242,12 @@
               
                 <h1 id="intranet-modular-architecture">Intranet Modular — Architecture<a class="headerlink" href="#intranet-modular-architecture" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Technical architecture of the Intranet Modular: single entry point (<code>main.py</code>), modular packages (<code>mod_*</code>), the <code>bd_manipulador.py</code> / <code>telas.py</code> / <code>telas_administracao.py</code> pattern (with <code>models/</code> SQLAlchemy as the pattern to propagate and <code>bd_criador.py</code> kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor, audit pruning, aggregator coleta 10–360 min + daily recycle <code>reiniciar_banco</code> at <code>06:00</code> configurable <code>CronTrigger</code>, no backup for aggregator).</p>
+<p>Technical architecture of the Intranet Modular: single entry point (<code>main.py</code>), modular packages (<code>mod_*</code>), the <code>bd_manipulador.py</code> / <code>telas.py</code> / <code>telas_administracao.py</code> pattern (with <code>models/</code> SQLAlchemy as the pattern to propagate and <code>bd_criador.py</code> kept as legacy/dead), one database per module (SQLite WAL or PostgreSQL database), centralized audit and the APScheduler jobs (per-module backups, 1-minute cleanups, folder monitor, audit pruning, aggregator coleta 10–9360 min na API (select do admin 10–360) + daily recycle <code>reiniciar_banco</code> at <code>09:00</code> backend default (rótulos UI legados <code>06:00</code>) configurable <code>CronTrigger</code>, no backup for aggregator).</p>
 </blockquote>
 <hr />
 <h1 id="intranet-modular-arquitetura">Intranet Modular — Arquitetura<a class="headerlink" href="#intranet-modular-arquitetura" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Arquitetura técnica da Intranet Modular: entry point único (<code>main.py</code>), pacotes modulares (<code>mod_*</code>), padrão <code>bd_manipulador.py</code> / <code>telas.py</code> / <code>telas_administracao.py</code> (com <code>models/</code> SQLAlchemy como padrão a propagar e <code>bd_criador.py</code> mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta, poda da auditoria, coleta do agregador 10–360 min + reinício diário <code>reiniciar_banco</code> às <code>06:00</code> configurável <code>CronTrigger</code>, sem backup para o agregador).</p>
+<p>Arquitetura técnica da Intranet Modular: entry point único (<code>main.py</code>), pacotes modulares (<code>mod_*</code>), padrão <code>bd_manipulador.py</code> / <code>telas.py</code> / <code>telas_administracao.py</code> (com <code>models/</code> SQLAlchemy como padrão a propagar e <code>bd_criador.py</code> mantido como legado/morto), um banco por módulo (SQLite WAL ou banco PostgreSQL), auditoria centralizada e agendadores APScheduler (backups por módulo, cleanups de 1 min, monitor de pasta, poda da auditoria, coleta do agregador 10–9360 min na API (select do admin 10–360) + reinício diário <code>reiniciar_banco</code> às <code>09:00</code> default do backend (rótulos UI legados <code>06:00</code>) configurável <code>CronTrigger</code>, sem backup para o agregador).</p>
 </blockquote>
 <h2 id="sumario">Sumário<a class="headerlink" href="#sumario" title="Permanent link">&para;</a></h2>
 <ol>
@@ -278,7 +290,7 @@
         BOOT[inicializar_bancos] --&gt; CHECK[verifica telas.py] --&gt; AG[iniciar_agendador] --&gt; RUN[ui.run :8080]
     end
     subgraph Nucleo["mod_intranet — núcleo"]
-        AUTH[autenticacao] --- LAY[layout_tela&lt;br/&gt;pagina_restrita]
+        AUTH[autenticacao] --- LAY[telas&lt;br/&gt;pagina_restrita]
         CONN[bd_conexao&lt;br/&gt;get_config/set_config]
         CONN --&gt; REPO[repositorio.py&lt;br/&gt;Repositorio + engine]
         REPO --&gt; MODELS[models/&lt;br/&gt;Configuracao&lt;br/&gt;Sessao&lt;br/&gt;Modulo]
@@ -308,7 +320,7 @@
 <li><strong>Telemetria OTel</strong> (opcional, <code>otel_ativo</code>) — auto-start da stack Docker ou conexão a servidor dedicado; instrumenta a app e sincroniza credenciais do Grafana (<code>main.py:20-60</code>).</li>
 <li><strong>Valida <code>telas.py</code></strong> — aborta com <code>RuntimeError</code> se algum <code>mod_*</code> não tiver <code>telas.py</code> (<code>main.py:65-67</code>).</li>
 <li><strong>Prepara favicon</strong> — copia o favicon nativo para <code>assets/favicon_atual.ico</code> (arquivo vivo, troca sem restart) (<code>main.py:103-112</code>).</li>
-<li><strong>Registra as rotas</strong> de página NiceGUI (<code>@ui.page</code>) e rotas auxiliares FastAPI (<code>@app.get</code>) — ver <a href="../api_referencia/">Referência de API</a>; slugs customizados re-registrados por <code>rotas_modulos.montar_rotas_ativas()</code> (<code>main.py:452-453</code>).</li>
+<li><strong>Registra as rotas</strong> de página NiceGUI (<code>@ui.page</code>) e rotas auxiliares FastAPI (<code>@app.get</code>) — <strong>inclui <code>main.py:820</code> <code>@app.get("/api/attachments/{caminho:path}")</code> <code>fallback_attachments</code> antes de <code>/assets/noticia</code></strong> (placeholder <code>assets/noticia/favicon.png</code> se caminho termina em <code>-w280-h168-p-df/.png/.jpg/.jpeg</code> senão <code>404</code>, evita log spam <code>http://localhost:8080/api/attachments/CC8... not found</code> no boot <code>NiceGUI ready</code>, TV/Blog sem imagem quebrada) — ver <a href="../api_referencia/">Referência de API</a>; slugs customizados re-registrados por <code>rotas_modulos.montar_rotas_ativas()</code> (<code>main.py:452-453</code>).</li>
 <li><strong><code>iniciar_agendador()</code></strong> (<code>main.py:71-75</code>) — delega ao <code>rotinas.iniciar_agendador()</code>.</li>
 <li><strong>Observabilidade</strong> — <code>observabilidade.configurar()</code> + <code>instalar_excepthook()</code> (<code>main.py:457-459</code>).</li>
 <li><strong>Documentação</strong> — <code>construir_e_montar_documentacao()</code> (<code>main.py:468-469</code>): build MkDocs <code>docs/</code> → <code>site/</code> e mount em <code>/documentacao</code> (falha nunca derruba o servidor).</li>
@@ -378,7 +390,7 @@
 <td style="text-align: left;"><code>mod_filas/</code></td>
 <td style="text-align: left;"><code>db_mod_filas.db</code></td>
 <td style="text-align: center;">✓ (<code>telas.py</code> + <code>mostrar_tv</code> + <code>PASTA_MIDIA</code>)</td>
-<td style="text-align: left;">multi-filas por local (<code>endereco/prefixo/inicio→fim</code> infinito + <code>criado_por</code> + <code>tv_grupo</code> + <code>tb_fila_etapa</code>/<code>tb_midia</code>, isolamento por criador, <code>/tv/{id}</code> isolada vs <code>/tv?grupo=</code> compartilhada, <code>/midia_filas</code> playlist, censura filtrada)</td>
+<td style="text-align: left;">multi-filas sem seed (<code>prefixo/inicio→fim</code> infinito + <code>criado_por</code> + <code>tv_grupo</code> slug + <code>voz_ordem</code> + <code>tb_fila_etapa</code>/<code>tb_fila_nomes</code>/<code>tb_midia</code> com <code>fundo</code> + volume 40, isolamento por criador/<code>tb_fila_acesso</code>, <code>/tv/{id}</code> isolada vs <code>/tv?grupo=</code> compartilhada vs <code>?etapa=</code>, <code>/midia_filas</code> playlist <code>datahora_nomeFila</code> sempre, voz claim na ordem + ducking metade, censura filtrada, notícias 200)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>mod_lista_telefonica/</code></td>
@@ -390,7 +402,7 @@
 <td style="text-align: left;"><code>mod_agregador_noticias/</code></td>
 <td style="text-align: left;"><code>db_mod_agregador_noticias.db</code></td>
 <td style="text-align: center;">✓</td>
-<td style="text-align: left;"><strong>novo</strong> (19/09/2026) — multi-fonte <code>httpx+parsel</code> (Google/BBC/JFP/RSS) grid responsivo <strong>3→2→1 + altura 160–220px</strong> <code>ui.link(target=href, new_tab=True)</code> + <strong>busca NFKD lado a lado filtro tema</strong> <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> <code>clearable</code> (<code>agregador-filtro-tema</code> + <code>agregador-busca</code> lado a lado, <strong>sem badge <code>Coleta:</code></strong> removido a169c9a), 24h <code>tb_noticia</code> (<code>fonte_icon_url</code> 16×16 <code>faviconV2</code> + <code>imagem_url</code> 30×30 <code>/api/attachments</code>), dedup <code>_norm_tit</code> + <code>COALESCE</code> + <code>fonte_icon</code>/<code>imagem</code> extração, grid responsivo <strong><code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + <code>@media 1024px→2 640px→1</code> + <code>.card-noticia {min-height:160px; max-height:220px}</code> (média 91 notícias: título 79/75, descrição 34, 87.9% imagem, 24% fonte_icon)</strong> + paginação 12 + busca 500 NFKD, <strong>tela pura</strong> <code>/agregador-noticias-puro</code> (<code>telas_puro.py:mostrar_tela_pura</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> com cards atuais 3 cols <code>fonte_icon 16×16</code> + <code>imagem 30×30</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>fonts/lora/poppins</code>/<code>images/bg/intro</code>/<code>js/modernizr/pace/jquery/plugins/main.js</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> + botão <code>Ver puro Noticia</code> <code>data-testid=agregador-ver-puro</code>), <code>listar_para_tv</code> (<code>fonte_icon</code> incluso, censura <code>conteudo_palavras_bloqueadas</code> + <code>limpar_censuradas</code>), termo+fontes configuráveis</td>
+<td style="text-align: left;"><strong>novo</strong> (19/09/2026) — multi-fonte <code>httpx+parsel</code> (Google/BBC/JFP/RSS) grid responsivo <strong>3→2→1 + card de ALTURA FIXA <code>300px</code></strong> <code>ui.link(target=href, new_tab=True)</code> + <strong>busca NFKD lado a lado filtro tema</strong> <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> <code>clearable</code> (<code>agregador-filtro-tema</code> + <code>agregador-busca</code> lado a lado, <strong>sem badge <code>Coleta:</code></strong> removido a169c9a), 24h <code>tb_noticia</code> (<code>fonte_icon_url</code> <code>faviconV2</code> como <strong>marca d'água <code>32×32</code></strong> sobre a miniatura / ícone <code>16×16</code> quando não há imagem + <code>imagem_url</code> <strong>miniatura <code>120×120</code></strong> ampliável em diálogo <code>lh3.googleusercontent</code> — <strong><code>/api/attachments</code> relativo/localhost filtrado para <code>""</code> em <code>inserir_noticia</code> (<code>bd_manipulador.py:481-493</code>; absoluto <code>news.google.com/api/attachments</code> preservado — thumbnail real), evita URL quebrada Trello/Notion; fallback <code>main.py:820</code> <code>@app.get("/api/attachments/{caminho:path}")</code> devolve <code>favicon.png</code> se <code>-w280-h168-p-df/.png/.jpg</code> senão <code>404</code> silencioso, sem log spam</strong>), dedup <code>_norm_tit</code> + <code>COALESCE</code> + <code>fonte_icon</code>/<code>imagem</code> extração, grid responsivo <strong><code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + <code>@media 1024px→2 640px→1</code> + <code>.card-noticia {height: 300px}</code> (<code>260px</code> no celular, </strong>altura FIXA — nunca <code>min/max-height</code><strong>) + card redesenhado 25/09/2026 (miniatura <code>120×120</code> <code>cover</code> com ampliação em <code>dialogo_card</code> 60vw×60vh <code>contain</code>, marca d'água <code>32×32</code> da fonte, descrição completa com <code>overflow-y: auto</code> no lugar do truncamento <code>desc[:180]</code>, <code>&lt;style&gt;</code> fora do <code>@ui.refreshable</code>)</strong> + paginação 12 + busca 500 NFKD, <strong>tela pura</strong> <code>/agregador-noticias-puro</code> (<code>telas_puro.py:mostrar_tela_pura</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> com cards atuais 3 cols <code>fonte_icon 16×16</code> + <code>imagem 30×30</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>fonts/lora/poppins</code>/<code>images/bg/intro</code>/<code>js/modernizr/pace/jquery/plugins/main.js</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> (botão <code>Ver puro Noticia</code> <code>agregador-ver-puro</code> removido 20/09/2026 — <code>/agregador-noticias-puro</code> por URL direta), <strong>fallback <code>/api/attachments</code> <code>main.py:820</code> antes de <code>/assets/noticia</code> (placeholder <code>favicon.png</code>, TV/Blog sem imagem quebrada)</strong>, <code>listar_para_tv</code> (<code>fonte_icon</code> incluso, censura <code>conteudo_palavras_bloqueadas</code> + <code>limpar_censuradas</code>), termo+fontes configuráveis</td>
 </tr>
 </tbody>
 </table>
@@ -462,6 +474,7 @@
 <li>Cada banco é um <strong>arquivo SQLite separado</strong> na raiz (<code>db_mod_*.db</code>).</li>
 <li>Toda conexão aplica <code>PRAGMA journal_mode=WAL</code> (+ <code>synchronous=NORMAL</code> no central e na auditoria).</li>
 <li><strong>Convenção:</strong> consultar um banco somente pelo <code>bd_manipulador</code> do seu próprio módulo (evitar cross-query). Exceções conhecidas e documentadas: a limpeza cruzada LGPD da exclusão de usuário (<code>mod_gest_cad_usuario</code> varre bancos vizinhos para anonimizar/excluir dados — ver <a href="../modulos/gest_cad_usuario/">Módulo de Gestão de Usuários</a>) e a escrita de auditoria (<code>audit_log</code> no núcleo grava no banco exclusivo de auditoria via <code>registrar_auditoria</code>).</li>
+<li><strong>Fachada de integração entre módulos (25/09/2026):</strong> a convenção acima tem uma <strong>costura pública</strong> para os casos em que um módulo de negócio precisa de dado de outro sem quebrar o isolamento — <code>mod_intranet/integracoes.py</code> (7 funções, imports <strong>lazy</strong> e contrato <strong>fail-soft</strong>). A regra é: <strong>módulo de negócio fala com o núcleo, e o núcleo possui o acoplamento</strong>; o SQL continua rodando só no banco do módulo de destino, pelo <code>bd_manipulador</code> dele (nunca <code>sqlite3.connect</code> em banco alheio). Fechou as 5 arestas de negócio→negócio que <code>assets/test/check_integridade.py</code> acusava (<strong>5 falhas/17 → 13/13</strong>). Detalhes, tabela de funções/consumidores e checklist: <a href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração — DAS</a>.</li>
 <li>O banco <strong>central</strong> (<code>db_mod_intranet.db</code>) guarda <code>tb_config</code>, <code>tb_sessoes</code> e <code>tb_modulos</code> (a antiga <code>tb_auditoria</code> central foi migrada e removida — ver <a href="#auditoria-lgpd-banco-exclusivo">Auditoria</a>).</li>
 <li><strong>SQLAlchemy em TODOS os bancos (06/09):</strong> o mapa <code>MODULOS_BD</code> (<code>repositorio.py:57-68</code>) registra os 11 bancos (<code>intranet</code>, <code>blog</code>, <code>editar_pdf</code>, <code>usuarios</code>, <code>empenhos</code>, <code>auditoria</code>, <code>solicita_impressao</code>, <code>tecnico</code>, <code>filas</code>, <code>lista_telefonica</code>, <code>agregador_noticias</code>); <code>engine(chave)</code>/<code>sessaodb(chave)</code>/<code>Repositorio(chave_db=...)</code> operam em qualquer um deles — ver <a href="#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura de acesso a dados do núcleo</a>.</li>
 <li><strong>Backend duplo controlado pelo sistema (08/09):</strong> além do SQLite, o sistema agora suporta <strong>PostgreSQL opcional</strong> — a chave <code>banco_tipo</code> em <code>tb_config</code> central (<code>'sqlite'</code> padrão | <code>'postgres'</code>) seleciona o backend. No Postgres, <strong>um DATABASE <code>db_mod_&lt;chave&gt;</code> por módulo</strong> preserva o isolamento "um banco por módulo" e evita colisão de nomes de tabela (ex.: <code>tb_solicitacoes</code>). SQLite continua o padrão. Ver <a href="#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Backend duplo (08/09)</a> abaixo.</li>
@@ -683,7 +696,7 @@
 <li><strong>Rastreabilidade</strong>: ContextVar do NiceGUI captura IP (prioriza <code>X-Forwarded-For</code>), user-agent, rótulo de dispositivo e MAC best-effort (Linux) em cada request (<code>mod_intranet/contexto.py</code>).</li>
 </ul>
 <h2 id="guarda-de-pagina-e-layout">Guarda de página e layout<a class="headerlink" href="#guarda-de-pagina-e-layout" title="Permanent link">&para;</a></h2>
-<p><code>pagina_restrita(titulo_modulo, chave_modulo)</code> (<code>layout_tela.py:32</code>) é usada por <strong>todas</strong> as rotas de módulos do <code>main.py</code>:</p>
+<p><code>pagina_restrita(titulo_modulo, chave_modulo)</code> (<code>mod_intranet/telas.py:35</code>) é usada por <strong>todas</strong> as rotas de módulos do <code>main.py</code>:</p>
 <ol>
 <li>Sem usuário → redireciona <code>/login</code>.</li>
 <li>Revalida existência/situação ativa do usuário no banco.</li>
@@ -747,7 +760,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>agregador_coleta</code></td>
-<td style="text-align: left;"><code>agregador_noticias_intervalo_min</code> (<strong>10–360 min</strong>, default <strong>60 min</strong>, <code>habilitado</code> flag)</td>
+<td style="text-align: left;"><code>agregador_noticias_intervalo_min</code> (<strong>10–9360 min</strong> na API — select do admin 10–360, default <strong>60 min</strong>, <code>habilitado</code> flag)</td>
 <td style="text-align: left;">coleta scrapy-like <code>httpx+parsel</code> (Google/BBC/JFP/RSS + pesquisa termo) via <code>coletar_todas()</code> — <code>reconfigurar_agregador_noticias()</code> sem restart</td>
 </tr>
 <tr>
@@ -846,7 +859,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>mod_agregador_noticias/</code></td>
-<td style="text-align: left;"><code>mod_agregador_noticias/telas_puro.py</code> + <code>assets/noticia/</code> (tema Noticia 4.9M <code>css→base.css/vendor.css/main.css/font-awesome/micons, fonts→lora/poppins, images→bg.jpg/intro-bg.jpg, js→jquery-2.1.3/modernizr/pace/plugins/main</code>, <code>favicon.png</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> path-traversal safe) — tela pura <code>/agregador-noticias-puro</code> (<code>intro-overlay</code> + <code>about</code> <code>info-list</code> com cards atuais 3 cols <code>fonte_icon 16×16</code> + <code>imagem 30×30</code>, 12 notícias <code>listar_noticias(limite=12)</code>) + <code>mod_filas/midia/</code> (<code>PASTA_MIDIA</code> <code>/midia_filas</code> 12K) — banco <code>tb_noticia</code> (<code>fonte_icon_url</code> 16×16 + <code>imagem_url</code> 30×30) grid responsivo <strong><code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + <code>@media 1024px→2 640px→1</code> + <code>.card-noticia {min-height:160px; max-height:220px}</code> (média 91 notícias: título 79/75, descrição 34, 87.9% imagem, 24% fonte_icon)</strong> paginado 12 + <strong>busca</strong> (<code>por_pagina=12</code> <code>COALESCE DESC</code> <code>Primeira/Anterior/Próxima/Última</code> <code>agregador-primeira/anterior/proxima/ultima</code> + <code>agregador-busca</code> <code>debounce 300</code> NFKD <code>placeholder "Buscar palavra…"</code> lado a lado filtro tema, <strong>sem badge <code>Coleta:</code></strong>), <strong>ícone fonte 16×16 + imagem 30×30 lado a lado antes do título + botão <code>Ver puro Noticia</code> <code>agregador-ver-puro</code> → <code>/agregador-noticias-puro</code></strong>, sem backup — banco reciclado <code>reiniciar_banco</code> <code>06:00</code> <code>CronTrigger</code> + coleta <code>httpx+parsel</code> + <code>listar_para_tv</code> (<code>fonte_icon</code> incluso) + <code>assets/noticia/</code> servido via rota estática 4.9M</td>
+<td style="text-align: left;"><code>mod_agregador_noticias/telas_puro.py</code> + <code>assets/noticia/</code> (tema Noticia 4.9M <code>css→base.css/vendor.css/main.css/font-awesome/micons, fonts→lora/poppins, images→bg.jpg/intro-bg.jpg, js→jquery-2.1.3/modernizr/pace/plugins/main</code>, <code>favicon.png</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code> path-traversal safe) + <strong><code>main.py:820</code> <code>@app.get("/api/attachments/{caminho:path}")</code> <code>fallback_attachments</code> (placeholder <code>favicon.png</code> se <code>-w280-h168-p-df/.png/.jpg</code> senão <code>404</code> silencioso, antes de <code>/assets/noticia</code>, sem log spam <code>CC8...</code>)</strong> — tela pura <code>/agregador-noticias-puro</code> (<code>intro-overlay</code> + <code>about</code> <code>info-list</code> com cards atuais 3 cols <code>fonte_icon 16×16</code> + <code>imagem 30×30</code>, 12 notícias <code>listar_noticias(limite=12)</code>) + <code>mod_filas/midia/</code> (<code>PASTA_MIDIA</code> <code>/midia_filas</code> 12K) — banco <code>tb_noticia</code> (<code>fonte_icon_url</code> 16×16 + <code>imagem_url</code> 30×30 <code>lh3.googleusercontent</code> — <strong><code>/api/attachments</code> relativo/localhost filtrado para <code>""</code> em <code>inserir_noticia</code> (absoluto <code>news.google.com/api/attachments</code> preservado — thumbnail real), evita URL quebrada Trello/Notion</strong>) grid responsivo <strong><code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + <code>@media 1024px→2 640px→1</code> + <code>.card-noticia {height: 300px}</code> (<code>260px</code> no celular, </strong>altura FIXA — nunca <code>min/max-height</code><strong>) + card redesenhado 25/09/2026 (miniatura <code>120×120</code> <code>cover</code> com ampliação em <code>dialogo_card</code> 60vw×60vh <code>contain</code>, marca d'água <code>32×32</code> da fonte, descrição completa com <code>overflow-y: auto</code> no lugar do truncamento <code>desc[:180]</code>, <code>&lt;style&gt;</code> fora do <code>@ui.refreshable</code>)</strong> paginado 12 + <strong>busca</strong> (<code>por_pagina=12</code> <code>COALESCE DESC</code> <code>Primeira/Anterior/Próxima/Última</code> <code>agregador-primeira/anterior/proxima/ultima</code> + <code>agregador-busca</code> <code>debounce 300</code> NFKD <code>placeholder "Buscar palavra…"</code> lado a lado filtro tema, <strong>sem badge <code>Coleta:</code></strong>), <strong>ícone fonte 16×16 + imagem 30×30 lado a lado antes do título (botão <code>agregador-ver-puro</code> removido 20/09/2026 — <code>/agregador-noticias-puro</code> por URL direta)</strong>, <strong>fallback silencioso <code>/api/attachments</code> (TV/Blog sem tentar carregar attachment externo quebrado)</strong>, sem backup — banco reciclado <code>reiniciar_banco</code> <code>06:00</code> <code>CronTrigger</code> + coleta <code>httpx+parsel</code> + <code>listar_para_tv</code> (<code>fonte_icon</code> incluso) + <code>assets/noticia/</code> servido via rota estática 4.9M</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>main.py</code>, <code>requirements.txt</code>, <code>mkdocs.yml</code>, <code>db_mod_*.db</code></td>

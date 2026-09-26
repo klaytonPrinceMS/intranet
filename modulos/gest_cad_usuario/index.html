@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -173,6 +183,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -230,12 +242,12 @@
               
                 <h1 id="user-management-module-mod_gest_cad_usuario">User Management Module — <code>mod_gest_cad_usuario</code><a class="headerlink" href="#user-management-module-mod_gest_cad_usuario" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>User management module: route <code>/users</code> (key <code>usuarios</code>) · own database <code>db_mod_gest_cad_usuario.db</code> · soft CRUD, bcrypt, multi-profile/role, revocable sessions, cross-module LGPD cleanup.</p>
+<p>User management module: route <code>/users</code> (key <code>usuarios</code>) · own database <code>db_mod_gest_cad_usuario.db</code> · soft CRUD, bcrypt, multi-profile/role, revocable sessions, cross-module LGPD cleanup · <strong>the single user registry, consumed by other modules through the <code>mod_intranet/integracoes.py</code> facade (never a direct import)</strong>.</p>
 </blockquote>
 <hr />
 <h1 id="modulo-gestao-de-usuarios-mod_gest_cad_usuario">Módulo Gestão de Usuários — <code>mod_gest_cad_usuario</code><a class="headerlink" href="#modulo-gestao-de-usuarios-mod_gest_cad_usuario" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo de gestão de usuários: rota <code>/users</code> (chave <code>usuarios</code>) · banco próprio <code>db_mod_gest_cad_usuario.db</code> · soft CRUD, bcrypt, múltiplos perfis/papéis, sessões revogáveis, limpeza cruzada LGPD.</p>
+<p>Módulo de gestão de usuários: rota <code>/users</code> (chave <code>usuarios</code>) · banco próprio <code>db_mod_gest_cad_usuario.db</code> · soft CRUD, bcrypt, múltiplos perfis/papéis, sessões revogáveis, limpeza cruzada LGPD · <strong>fonte única do cadastro, consumida pelos demais módulos pela fachada <code>mod_intranet/integracoes.py</code></strong>.</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Soft CRUD completo de usuários: criar, editar, renomear, bloquear/desbloquear, excluir logicamente (com motivo) e excluir permanentemente (LGPD). Gerencia perfis globais (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) e papéis granulares por módulo, além de visualizar/revogar sessões ativas de todo o sistema. Acesso restrito ao administrador geral ou administrador do módulo <code>usuarios</code>.</p>
@@ -243,15 +255,17 @@
 <p>Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:61-215</code> (executado no import e pelo bootstrap central).</p>
 <ul>
 <li><strong><code>tb_usuarios</code></strong>: <code>id</code> PK AUTOINCREMENT, <code>user_nome</code> UNIQUE, <code>user_senha</code> (bcrypt), <code>user_email</code>, <code>user_fone</code>, <code>user_perfil</code>, <code>user_ativo</code>, <code>data_cadastro</code>, <code>user_deletado</code>, <code>user_nome_completo</code> (nome social, Decreto 8.727/2016), <code>user_motivo_exclusao</code>.</li>
-<li><strong><code>tb_acesso_usuario</code></strong>: vínculo <code>usuário × módulo × papel</code> (<code>UNIQUE(user_nome, modulo_chave)</code>, FK CASCADE).</li>
+<li><strong><code>tb_acesso_usuario</code></strong> — vínculo usuário×módulo×papel (<code>UNIQUE(user_nome, modulo_chave)</code>, FK CASCADE para <code>tb_usuarios</code>); <code>modulo_chave</code> é texto livre — origem dos vínculos órfãos (ver <code>listar_vinculos_orfaos(chaves_ativas)</code>; na tela aparecem como badge <code>INDISPONÍVEL</code> nos seletores). Coluna <code>flags</code> (JSON TEXT, default <code>'{}'</code>) guarda permissões finas por vínculo.</li>
 </ul>
+<p><strong>Flags finas (JSON por vínculo)</strong> — catálogo <code>FLAGS_PERMISSAO</code>: <code>blog.publicar</code>, <code>blog.comentar</code>, <code>blog.configurar</code>. API: <code>obter_flags(user, modulo)</code> (fail-soft <code>{}</code>), <code>definir_flags(ator, user, modulo, flags)</code> (valida allowlist, exige vínculo prévio) e <code>tem_flag(user, modulo, flag)</code> (admin global/modular passa pelo papel). <code>duplicar_usuario</code> replica flags da origem junto com os papéis.</p>
 <p>⚠️ <code>tb_modulo_perfil</code> existe apenas no <code>bd_criador.py</code> — <strong>legado/morto</strong> (aponta para o banco central); não confiar.</p>
 <h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>CRUD soft</strong>: criar (senha vazia/None → <code>123456</code> padrão inicial 18/09/2026 + mín. 6 + <code>forcar_troca</code>), editar (aplica só diferenças; login travado para <code>master</code>), renomear (replica em dependentes), bloquear/desbloquear, excluir em 2 estágios (soft com motivo ≥ 3 chars → DELETE físico, liberado nas linhas de excluídos via busca "excluído" <strong>ou filtro Situação = Excluídos</strong>).</li>
 <li><strong>Busca instantânea</strong> (debounce 150 ms) insensível a acentos, com filtros situação/perfil e paginação 10/20/50/100. <strong>Barra superior inline sem quebra 18/09/2026</strong> (<code>telas.py:98-115</code> <code>flex-nowrap gap-4</code>, tabs <code>shrink overflow-x-auto</code>, busca <code>width:min(46%,620px) flex-nowrap shrink-0</code>). Busca em <strong>todos os campos</strong> (ID, login, perfil, e-mail, telefone, módulos:papel, nome completo) + palavras-chave de estado ("provisório", "bloqueado", "sessão", "excluído"). Filtro <strong>Situação</strong> (<code>SIT_OPCOES</code>) agora com 4 opções: <code>Todas</code>, <code>Ativos</code>, <code>Bloqueados</code>, <strong><code>Excluídos</code></strong> (<code>data-testid=usuarios-filtro-situacao</code>, <code>min-w-[170px]</code>, <code>tooltip</code> "Filtra por situação: Ativos, Bloqueados ou Excluídos (soft-delete)" — <code>telas.py:293</code>); lógica: <code>sit==excluidos</code> → só <code>user_deletado=1</code>; senão excluídos só entram quando <code>termo</code> contém <code>exclu</code> e <code>sit==""</code> (18/09/2026 <code>18690cb</code>). <strong>A aba Excluídos foi removida</strong> (redundante — substituída pelo filtro). Ordenação A→Z (nome/tratamento) ou numérica (ID) via seletor. <strong>Senha padrão ao criar/duplicar</strong> vazia caiu em <code>123456</code> (<code>bd_manipulador.py:366</code> + <code>telas.py:585/850</code>).</li>
-<li><strong>Papéis por módulo</strong>: seletores de acesso com módulos inativos marcados INDISPONÍVEL (vínculos órfãos). Tooltip no nome de tratamento expõe todos os campos (login, perfil, situação, contato, cadastro, acessos com nomes de exibição + badge de papel) — exibição compacta 4 colunas (ID | Tratamento | Senha provisória | Ações).</li>
-<li><strong>Sessões Ativas</strong>: todas as vivas do sistema (IP, dispositivo, MAC em tooltip), encerramento individual/em massa e histórico das 10 últimas por usuário.</li>
+<li><strong>Papéis por módulo</strong>: seletores de acesso com módulos inativos marcados INDISPONÍVEL (vínculos órfãos via <code>listar_vinculos_orfaos</code>). Tooltip no nome de tratamento expõe todos os campos (login, perfil, situação, contato, cadastro, acessos com nomes de exibição + badge de papel) — exibição compacta 4 colunas (ID | Tratamento | Senha provisória | Ações).</li>
+<li><strong>Duplicar usuário</strong> (<code>duplicar_usuario</code> + <code>_dlg_duplicar</code>): novo login herda perfil global, papéis por módulo e flags finas da origem (pré-selecionados, ajustáveis antes de salvar).</li>
+<li><strong>Sessões Ativas</strong>: todas as vivas do sistema lidas do <code>tb_sessoes</code> <strong>central</strong> (<code>id, usuario, modulo, login_timestamp, cookie_hash, ip, dispositivo, mac, logout_timestamp</code>; abertas = <code>logout_timestamp IS NULL</code>), com IP/dispositivo/MAC em tooltip, encerramento individual (<code>encerrar_sessao</code>) / em massa (<code>encerrar_todas_sessoes</code>, <code>_fechar_sessoes_central</code> em bloqueio/exclusão/reset) e histórico das 10 últimas encerradas por usuário (<code>listar_historico_sessoes</code>, duração calculada na tela). Agregados: <code>contar_sessoes_ativas(usuario)</code>, <code>sessoes_ativas_por_usuario()</code>.</li>
 <li><strong>Limpeza cruzada LGPD</strong>: exclui postagens/comentários do Blog, remove arquivos/cota do Editor PDF e anonimiza empenhos como "(usuário excluído)"; auditoria sempre preservada.</li>
 <li><strong>Proteções</strong>: vedado agir sobre a própria conta; <code>master</code> não é renomeado/excluído; último <code>administrador_geral</code> ativo protegido contra rebaixamento/bloqueio por outro admin (RF-26).</li>
 <li><strong>Aba Administração</strong> (admin geral): card padrão <strong>"Configurações de cores"</strong> (<code>usuarios_*</code> — <code>cor_botao</code>, <code>cor_texto_botao</code>, <code>cor_fundo</code>, <code>cor_titulo</code>, <code>btn_tamanho</code>, <code>texto_header</code>) + card "Configurações específicas" com a política <code>usuarios_senha_min</code>; card "Configurações de cores" padronizado via <code>tema_modulo.bloco_aparencia</code> (prévia ao vivo, rodapé 2 botões) e tela em área cheia (<code>w-full</code>). <strong>Padrão próprio do tema de botões (06/09)</strong>: os campos de botão exibem o rótulo "vazio = padrão do módulo" (<code>tema_modulo.bloco_aparencia</code> — <code>tema_modulo.py:319-322</code>) — com <code>usuarios_cor_botao</code>/<code>usuarios_cor_texto_botao</code>/<code>usuarios_btn_tamanho</code> vazios (padrão atual do banco), os botões usam o padrão do PRÓPRIO módulo (<code>PADROES_TEMA["usuarios"]</code> = <code>#000000</code> — sem herança do tema do sistema); os inputs mostram o valor resolvido e o "Restaurar padrão" grava <code>""</code> para voltar ao padrão do próprio módulo. O cabeçalho usa <code>chave_modulo="usuarios"</code> (<code>telas.py:97</code>): a borda de destaque é a <strong>mesma cor dos botões do módulo</strong> (<code>usuarios_cor_botao</code>, vazia = padrão do próprio módulo), título/fundo seguem o tema — sem hex hardcoded. <strong>Cupê "Edição do módulo" restaurado (06/09)</strong>: <code>campo_modulo(ator, "usuarios")</code> (<code>telas.py:705</code>) volta a permitir ao admin renomear o módulo, trocar o ícone e ativar/desativar (havia sido removido acidentalmente; a edição também permanece em <code>/configuracoes</code>).</li>
@@ -303,9 +317,12 @@
 </table>
 <h2 id="rota-e-integracoes">Rota e integrações<a class="headerlink" href="#rota-e-integracoes" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Rota: <code>/users</code> (chave <code>usuarios</code>) — gate duplo: <code>administrador_geral</code> ou <code>eh_admin_do_modulo(user, 'usuarios')</code>.</li>
+<li>Rota: <code>/users</code> (chave <code>usuarios</code>) — gate duplo: <code>administrador_geral</code> ou <code>eh_admin_do_modulo(user, 'usuarios')</code>. Rota <code>/admin/usuarios</code> — painel <code>mostrar_administracao</code> em <code>telas_administracao.py</code> (só admin geral): cupê de cores <code>bloco_aparencia</code> + <code>usuarios_senha_min</code> (4–32, padrão 6, via <code>senha_minima()</code>/<code>set_config</code>, vale sem restart) + <code>painel_backup</code>.</li>
 <li>Importa <code>autenticacao</code> (hash/papéis), <code>get_connection</code> central e <code>audit_log</code>; escreve/lê <code>tb_sessoes</code> central.</li>
-<li>Seed <code>master</code>/<code>master</code> com <strong>auto-cura da troca obrigatória</strong> a cada boot (<code>bd_manipulador.py:168-194</code>).</li>
+<li><strong>Fonte única do cadastro — consumida pela fachada do núcleo (25/09/2026)</strong>: os demais módulos <strong>não importam mais</strong> este módulo. <code>mod_intranet/integracoes.py</code> expõe <code>obter_usuario_gestao(user_nome)</code> e <code>listar_usuarios_gestao(filtro_ativo=None)</code> (imports lazy + fail-soft: devolvem <code>None</code>/<code>[]</code> + <code>logger.warning</code> em vez de derrubar a tela). Consumidores: <code>mod_filas/bd_manipulador.py:454,483</code> (autorização e liberação de fila), <code>mod_filas/telas.py:631</code> (busca de usuário cadastrado) e <code>mod_lista_telefonica/telas_administracao.py:689,745</code> (busca de contato e preenchimento de nome/telefone). O SQL continua rodando <strong>só</strong> no banco deste módulo, pelo <code>bd_manipulador</code> dele — a fachada atravessa uma fronteira de <strong>código</strong>, nunca de <strong>dados</strong>. Detalhes: <a href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração</a>.</li>
+<li><strong>Única exceção de negócio→negócio</strong>: a cascata LGPD (<code>_vinculos_cruzados_excluir</code>/<code>_vinculos_cruzados_renomear</code>) chama a API pública de limpeza do Blog, do Editor de PDF e do Renomeador de Empenhos — cada módulo toca só o seu banco. É a allowlist <code>CASCATA_LGPD</code> do <code>assets/test/check_integridade.py</code>.</li>
+<li>Seed idempotente em <code>init_db</code> (fonte única deste módulo): conta nativa <code>master</code> (<code>administrador_geral</code>) e contas de QA (<code>qacomum</code> perfil <code>comum</code>, <code>qamaster</code> <code>administrador_geral</code>); credenciais provisórias com <strong>troca forçada no 1º login</strong> (<code>marcar_trocar_senha</code>, auto-cura do <code>master</code> a cada boot) e renomeação obrigatória do <code>master</code> (<code>marcar_trocar_credenciais</code>). Por segurança, os valores das senhas provisórias <strong>não são publicados nesta doc</strong> — ver <code>bd_manipulador.py</code> e a tabela de seeds no <a href="../../analise_mod_gest_cad_usuario/#seeds-idempotentes-de-contas-agentsmd-82">AGENTS.md §8.2</a> (contexto interno).</li>
+<li>Acesso padrão de todo usuário novo (<code>ACESSO_PADRAO_NOVO_USUARIO</code>): papel <code>comum</code> em <code>editar_pdf</code>, <code>empenhos</code> e <code>solicita_impressao</code>; <code>usuarios</code>/<code>auditoria</code>/<code>blog</code> nascem sem vínculo (concessão manual do admin).</li>
 </ul>
 <h2 id="testes">Testes<a class="headerlink" href="#testes" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/teste_boot.py<span class="w">            </span><span class="c1"># 16 verificações</span>
@@ -319,6 +336,8 @@
 <li>Tabela real é <code>tb_usuarios</code> (não <code>tb_usuario</code>); rota real é <code>/users</code> (não <code>/gestao-usuarios</code>).</li>
 <li><code>bd_criador.py</code> é morto — não executar.</li>
 <li>Todos os testes de fluxo existem em <code>assets/test/</code> (local canónico; <code>test/</code> e <code>testes/</code> não existem na raiz): <code>teste_boot.py</code>, <code>teste_fluxo_autenticacao.py</code>, <code>teste_fluxo_permissoes.py</code> (Fase 2.5).</li>
+<li>Consumidores externos dependem do <strong>formato posicional das tuplas</strong>, e os dois formatos <strong>não são o mesmo</strong>: <code>listar_usuarios</code> devolve 11 campos (<code>[1]</code> login, <code>[4]</code> <strong>e-mail</strong>, <code>[9]</code> nome completo) e <code>obter_usuario</code> devolve 10 (<code>[1]</code> login, <code>[4]</code> <strong>telefone</strong>, <code>[9]</code> nome completo). Reordenar as colunas de qualquer uma das duas QUEBRAS a fachada de forma silenciosa.</li>
+<li>Senhas dos seeds são <strong>provisórias</strong>: assuma que já foram trocadas em qualquer fluxo de teste.</li>
 </ul>
 <p>Ver <a href="../../analise_mod_gest_cad_usuario/">Análise do Módulo</a>.</p>
               

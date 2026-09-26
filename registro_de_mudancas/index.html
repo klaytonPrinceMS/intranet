@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Registro de Mudanças - INTRANET Modular — Documentação Técnica</title>
+    <title>Índice - INTRANET Modular — Documentação Técnica</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Registro de Mudan\u00e7as";
+        var mkdocs_page_name = "\u00cdndice";
         var mkdocs_page_input_path = "registro_de_mudancas/index.md";
         var mkdocs_page_url = null;
       </script>
@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,11 +102,14 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">Registro de Mudanças</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Índice</a>
     <ul class="current">
     </ul>
-                </li>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -218,7 +230,8 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Registro de Mudanças</li>
+          <li class="breadcrumb-item">Registro de Mudanças</li>
+      <li class="breadcrumb-item active">Índice</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -240,6 +253,18 @@
 <p><strong>59 REALIZADOS · 0 PARCIAL · 0 PENDENTE</strong> (Fase 9.1 concluída: RF-04/16, RF-08, RF-26, RF-35, RF-36; Experiência/Blog: RF-09, RF-32; Renomear: RF-41, RF-45, RF-40, RF-44, RF-39; Infra: RF-58, RF-57).</p>
 <h2 id="concluido-recente">Concluído recente<a class="headerlink" href="#concluido-recente" title="Permanent link">&para;</a></h2>
 <ul>
+<li>
+<p><strong>Sessão 25/09/2026 (parte 2) — defaults de configuração sem fonte única + testes obsoletos (25/09/2026):</strong> (1) <strong>Bug real no card "Configurações gerais":</strong> <code>backup_interval_hours</code> e <code>sessao_retencao</code> <strong>não estavam em <code>PADRAO_CONFIG</code></strong>, a fonte única de verdade — o mesmo default vivia duplicado em 5 lugares (<code>INSERT</code> de banco novo <code>bd_conexao.py:163</code>, <code>padrao=</code> dos campos, dicionário do "Restaurar padrão" <code>tela_configuracoes.py:934-936</code>, e os fallbacks de <code>aplicar_gerais</code>). Consequência real: com a chave ausente do <code>tb_config</code>, o campo <strong>não caía no padrão</strong> e a tela mostrava valor divergente do esperado. Os 3 defaults (<code>12</code>/<code>50</code>/<code>5</code>) foram movidos para <code>PADRAO_CONFIG</code> (<code>bd_conexao.py:96-102</code>) e a tela passou a lê-los de lá (<code>padrao=</code> dos 3 campos + dicionário e <code>campos=</code> do "Restaurar padrão"); como <code>init_db</code> semeia <code>PADRAO_CONFIG</code> com <code>ON CONFLICT DO NOTHING</code>, as chaves passam a ser (re)criadas no boot. Verificado com as chaves <strong>removidas</strong> do <code>tb_config</code>: <code>teste_aba_config_intranet.py</code> <strong>165/165</strong>. (2) <strong>Teste obsoleto:</strong> o mesmo arquivo ainda esperava <code>notificacao_timeout = "10"</code> (linhas 372 e 403) — o próprio comentário dele registrava a divergência ("os do card Gerais são literais 12/50/10 na tela"). Passou a ler de <code>PADRAO_CONFIG</code> (vale 5), alinhando com <code>teste_config_intranet.py</code> e <code>tema_modulo.notificacao_timeout()</code>. (3) <strong><code>teste_carrossel_blog.py</code>:</strong> o carrossel migrou de select dedicado ("Postagens do carrossel") + campo "Tempo de exibição (segundos)" para <strong>seleção em lote por checkbox</strong> + campo <code>Tempo (s)</code> (<code>mod_blog/telas.py:942</code>); o teste foi alinhado ao desenho atual. (4) <strong><code>mod_blog/telas.py::atualizar</code>:</strong> <code>_feed_blog.refresh()</code> estava <strong>sem <code>try/except</code></strong> (o <code>_atualizar_contador()</code> logo abaixo é protegido) — violava o AGENTS.md §3.2 e derrubava a tela quando o <code>event-loop</code> do NiceGUI não estava pronto; agora é fail-soft com log. (5) <strong><code>pytest-env</code></strong> declarado em <code>requirements-dev.txt</code>: o <code>pytest.ini</code> usava <code>env = PYTHONUTF8=1</code> sem o plugin, o que gerava <code>PytestConfigWarning: Unknown config option: env</code> em toda execução <strong>e deixava a proteção de UTF-8 inativa</strong> (relevante para os acentos PT-BR).</p>
+</li>
+<li>
+<p><strong>Sessão 25/09/2026 (parte 1) — 7 bugs reais, isolamento modular, build da doc e bandit (25/09/2026):</strong> diagnóstico por smoke test autenticado (Playwright, 25 rotas) + <code>check_integridade.py</code> + <code>bandit</code> + <code>mkdocs --strict</code> + suíte completa. <strong>(1) Bugs de produção corrigidos:</strong> (a) <code>mod_filas/bd_manipulador.py:contar_nomes_pendentes</code> contava <code>usado=1</code> (nomes <strong>já chamados</strong>) em vez de <code>usado=0</code> — predicado invertido, a tela da fila mostrava quantidade errada (<code>telas.py:1243</code>); (b) <code>mod_filas/bd_manipulador.py:listar_nomes</code> ordenava <code>ORDER BY ordem DESC</code>, invertendo a lista de pendentes na tela em relação à ordem real de chamada (<code>telas.py:311-313</code>) — unificado em <code>ORDER BY ordem</code> nos dois ramos; (c) <code>mod_renomear_empenho/bd_manipulador.py:pesquisar_levantamento</code> só caía no fallback LIKE quando o FTS <strong>lançava</strong> exceção, mas a busca de 1 letra voltava vazia sem exceção (FTS é <em>prefixo</em>: <code>4*</code> não casa com o token <code>24</code>, enquanto o LIKE é <em>substring</em>) — agora, FTS vazio também aciona o LIKE; (d) <code>main.py:1100,1112</code> e 22 chamadas em <code>mod_edit_pdf/telas.py</code> usavam <code>ui.notify</code> cru — violavam o AGENTS.md §5.1 ("nunca <code>ui.notify</code> cru"), trocadas por <code>tema_modulo.notificar()</code> (respeita <code>notificacao_timeout</code>); (e) <code>mod_renomear_empenho/telas.py</code> tinha barra de abas escrita à mão (<code>ui.tabs()</code>/<code>ui.tab()</code> + dict de ícones redundante) enquanto <code>menu_modulo</code> já estava importado e sem uso — migrada para o helper padrão (<code>aba_modulo.menu_modulo</code>); (f) botão "Enviar" da linha de etapa sem <code>data-testid</code> (<code>mod_filas/telas.py:349</code>) — quebrava o Playwright em strict mode, adicionado <code>filas-etapa-enviar</code>; (g) <code>obter_grafana_url()</code> aceitava qualquer esquema, então <code>GRAFANA_URL=file://...</code> faria <code>urlopen</code> abrir <strong>arquivo local</strong> — agora valida <code>http(s)</code> (<code>_url_grafana_valida</code>) e cai no padrão. <strong>(2) Isolamento modular (AGENTS.md §2) fechado:</strong> as 5 violações de cross-import entre módulos de negócio foram eliminadas pela fachada pública <strong><code>mod_intranet/integracoes.py</code></strong> (imports lazy + fail-soft, mesmo padrão de <code>censura.py</code>): <code>limpar_noticias_censuradas</code> (blog→agregador), <code>agregador_habilitado</code>/<code>listar_noticias_para_tv</code> (filas→agregador), <code>obter_usuario_gestao</code>/<code>listar_usuarios_gestao</code> (filas e lista_telefonica→gest_cad_usuario), <code>obter_organograma_base</code> (solicita_impressao→lista_telefonica, com fallback local preservado), <code>modulo_habilitado</code>. <code>check_integridade.py</code> passou de 5 falhas/17 para <strong>13/13</strong>, e 2 ciclos lazy desapareceram. <strong>(3) Documentação:</strong> <code>mkdocs build --strict</code> <strong>abortava</strong> com 9 warnings — 9 arquivos <code>docs/analise_mod_*.md</code> linkavam <code>../registro_de_mudancas/...</code> (o <code>../</code> saía do diretório <code>docs</code>) e o arquivo estava fora do <code>nav</code>; links corrigidos, página adicionada ao <code>nav</code> e doc de WAL marcado como superado (os connects que ele acusava <strong>já aplicam WAL</strong>). <strong>(4) Segurança:</strong> <code>bandit</code> HIGH 1→0 e MEDIUM 5→0 nos 11 módulos, com <code># nosec</code> justificados (B602 <code>shell=True</code> estático do assistente de ativação, B310 urlopen, B608 colunas literais) — a do B310 em <code>grafana_sync</code> foi <strong>corrigida de verdade</strong>, não silenciada. <strong>(5) Testes obsoletos reparados (código certo, teste desatualizado):</strong> <code>test_ordem_modulos</code> (esperava 6 módulos; são 10), <code>test_filas_testids</code> (<code>filas-midia-mutar</code> → canônico <code>filas-midia-som</code>), <code>test_tema_cache_trava</code> e <code>teste_config_intranet</code> (esperavam timeout inválido 4 e 10, <strong>mutuamente contraditórios</strong> — código e docstring dizem 5), <code>verifica_ui_comum</code> (contagens exatas 16/9 → <code>&gt;=</code>, a migração <code>campo_texto</code> foi além do previsto), <code>test_seg_novos_modulos</code> (binário do gitleaks por <code>shutil.which</code> em vez de caminho hardcoded; asserção do organograma aceita a fachada), <code>test_navegar_pesquisa_empenhos</code> (levantamento agora semeia massa em pasta temporária isolada, como os testes irmãos — antes dependia de <code>mod_renomear_empenho/doc</code> vazia). <strong>Validação:</strong> <code>mkdocs build --strict</code> 0 warnings · <code>bandit</code> HIGH 0 / MEDIUM 0 · <code>check_integridade</code> 13/13 · <code>verifica_ui_comum</code> 190/190 · smoke autenticado 25 rotas sem erro JS/HTTP · <code>graphify update .</code> (5443 nós, 13381 arestas, 447 comunidades).</p>
+</li>
+<li>
+<p>📄 <strong>Referência completa da fachada <code>mod_intranet/integracoes.py</code></strong> (arquitetura do isolamento modular, tabela das 7 funções com seus consumidores, <code>CASCATA_LGPD</code> e checklist para adicionar função): <a href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração — DAS</a> · detalhe por módulo em <a href="../analise_mod_intranet/">Análise do Núcleo <code>mod_intranet</code></a>, <a href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a> e <a href="../analise_mod_auditoria/">Auditoria</a>.</p>
+</li>
+<li>
+<p><strong>Sessão 22/09/2026 — blindagem try/except, reparo Filas, Home sem título, toast 4s, volume com slider, Empenhos, gitignore, <code>opencode.json</code> (22/09/2026):</strong> (1) <strong>Regras <code>AGENTS.md</code>:</strong> §1 (comandos git liberados para todo agente/subagente via terminal + shell único bash), §3.2 novo (try/except OBRIGATÓRIO em toda função — <code>except Exception</code> + <code>logger.exception</code> + <code>notificar(tipo="error")</code> em handlers + restaura estado em <code>finally</code>, nunca derrubar o sistema), §7 reescrito (Git — Comandos Liberados, formato <code>AAMMDD HHMM</code>, sem <code>--force</code>/<code>--no-verify</code>, <code>kbp-commit</code> como referência), §8/§8.1 (<code>kbp-commit</code> virou referência; git liberado para qualquer subagente via terminal). (2) <strong>Blindagem try/except</strong> (~80 arquivos, ~700 funções): padrão aplicado em <code>main.py</code> e em todos os <code>mod_*/</code> (<code>telas.py</code>, <code>telas_administracao.py</code>, <code>bd_manipulador.py</code>); <code>main.py::page_tv</code> corrigida (<code>mostrar_tv</code> fora do <code>try</code> de leitura dos query params); leak de conexão corrigido em <code>mod_auditoria/bd_manipulador.py</code> (<code>conn.close()</code> em <code>try/except</code> + retorno antecipado fail-soft quando a conexão falha). (3) <strong>Reparo <code>mod_filas/telas.py</code>:</strong> o arquivo estava com corrupção sintática (placeholders <code>ui_.</code>, <code>arqui_.o</code>, <code>gui_.he</code>, <code>exclui_.</code>, <code>.class(</code> etc.) e nem importava — reparo sistemático validado contra o <code>bd_manipulador</code> (fonte de verdade), <code>COMPILE_OK</code> (<code>ast.parse</code>) + <code>IMPORT_OK</code>. (4) <strong>Home reordenada:</strong> feed do Blog acima do "Resumo do sistema", título "Publicações recentes" removido (<code>main.py::_construir_dashboard</code>). (5) <strong>Toast configurável:</strong> padrão <strong>10→4 s</strong> (<code>notificacao_timeout</code> em <code>PADRAO_CONFIG</code>, <code>tema_modulo.notificacao_timeout()</code> com clamp 1–30, fallback do Aplicar e "Restaurar padrão" em <code>4</code>); boas-vindas da Home obedece o configurado; edição em <code>/configuracoes</code> → Configurações gerais → "Tempo de exibição dos avisos (segundos)" (1–30). (6) <strong>Slider de volume no Filas:</strong> botão speaker (<code>data-testid=filas-midia-som</code>) em cards de áudio/vídeo alterna slider 0–100 sincronizado ao campo Volume (<code>on_change</code> escreve em <code>inp_vol</code> + rótulo); Salvar persiste (<code>atualizar_midia</code>); correção <code>with inp.slot:</code> → <code>with inp_slot:</code>. (7) <strong>Empenhos:</strong> causa da indisponibilidade (<code>tb_modulos.ativo=0</code> — o seed usa <code>INSERT OR IGNORE</code> e nunca religa) + como reativar (ver <code>modulos/renomear_empenho.md</code> § reativação). (8) <strong><code>.gitignore</code>:</strong> removido <code>/mod_blog</code> (ignorava o módulo inteiro); adicionados <code>mod_blog/img_postagens/*</code>, <code>mod_tecnico/backup/*</code>, <code>mod_tecnico/software/*</code>, <code>backup/*</code>, <code>logs/*</code>, <code>graphify-out/20*/</code>, <code>graphify-out/graph.html</code>; <code>.opencode/.gitignore</code> reduzido a <code>node_modules</code> (<code>.opencode/</code> 100% versionado). (9) <strong><code>opencode.json</code>:</strong> permissão <code>bash {git *: allow, *: ask}</code>. <strong>Validação:</strong> <code>mkdocs build --strict</code> (ver Retorno da sessão). <strong>Pendências honestas (NÃO implementadas):</strong> <code>mod_agregador_noticias/models/__init__.py</code> segue como stub com <code>IndentationError</code> (código morto — o módulo não o importa); itens das listas de QA do agregador/filas mantêm o status atual (nada marcado como feito sem implementação). Docs: <code>configuracoes.md</code> (toast 4s), <code>visao_geral.md</code> (Home), <code>modulos/filas.md</code> + <code>analise_mod_filas.md</code> (volume, reparo), <code>modulos/renomear_empenho.md</code> (reativação), <code>convencoes_codigo.md</code> (try/except), <code>contribuicoes/index.md</code> (git), <code>analise_mod_agregador_noticias.md</code> (pendência do stub).</p>
+</li>
 <li>
 <p><strong>Sessão 14/09/2026 — consolidação: card Banco, boot do zero, higiene de scripts, pendências do Blog (14/09/2026):</strong> itens da sessão ainda sem entrada própria, todos intranet-exclusivos: (1) <strong>Card "Banco de dados" movido da aba Documentação para o fim da aba Config</strong> (<code>mod_intranet/tela_configuracoes.py</code>, <code>config_backend</code>/<code>salvar_backend</code>, <code>data-testid="config-aplicar-banco"</code>, <strong>sem reload — exige restart</strong>; comportamento via <code>_aplicar_card_sem_reload</code>). Detalhe e arquivos:linhas em <code>analise_mod_intranet.md</code>, <code>configuracoes.md</code> (Aba Módulo/Card Banco), <code>arquitetura.md</code> e manual do administrador. (2) <strong>Boot do zero verificado:</strong> 7 bancos (<code>db_mod_*.db</code>) recriados, ordem dos módulos, seeds e logins <code>master</code>/<code>qacomum</code>/<code>qamaster</code> funcionais. (3) <strong>Higiene fora do escopo:</strong> <code>assets/test/fresh_install_test*.py</code> e <code>assets/test/diag_db.py</code> usavam caminhos relativos — rodados com outro CWD criavam <code>db_mod_intranet.db</code> de 0 bytes na pasta anterior; agora usam <strong>caminho absoluto a partir da raiz</strong> (<code>_RAIZ</code>, REGRA DE OURO do AGENTS.md: nada fora da raiz, nunca CWD). (4) <strong>Contagem corrigida da pasta de testes:</strong> são <strong>8 scripts standalone novos somando 73 checks</strong> (não 7/66 — faltava <code>test_blog_mermaid_fim.py</code>, 7 checks, na soma), + 3 specs E2E (<code>e2e/04_header_nome</code>, <code>05_rodape_hover</code>, <code>06_blog_editor</code>) + <code>assets/test/README.md</code> (catálogo e convenções). Suíte no fechamento: <strong>37 scripts OK + 2 falhas preexistentes</strong> (<code>test_dashboard.py</code> layout antigo, <code>verifica_ui_comum.py</code> check <code>ui.tabs()</code> prévio). (5) <strong>Pendente NÃO implementado (registrado no backlog):</strong> espaçamento acima das seções "Como usar/Dicas/Limites" das postagens-guia + checagem de subtítulos — ver <code>2_levantamento_requisitos/index.md</code> (Backlog). Validação: servidor em <code>:8080</code>, <code>/login</code> 200.</p>
 </li>
@@ -442,7 +467,7 @@
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../plano_de_projeto/" class="btn btn-neutral float-left" title="Plano de Projeto"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../versionamento/" class="btn btn-neutral float-right" title="Versionamento">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="wal_paridade_pendente_2026-09-24/" class="btn btn-neutral float-right" title="Plano WAL + Paridade (24/09/2026)">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -468,7 +493,7 @@
       <span><a href="../plano_de_projeto/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../versionamento/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="wal_paridade_pendente_2026-09-24/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

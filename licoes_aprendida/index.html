@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -236,6 +248,18 @@
 <blockquote>
 <p>Lições aprendidas durante o desenvolvimento. Documento-semente — expandir com registros de post-mortem e melhorias.</p>
 </blockquote>
+<h2 id="licao-em-destaque-25092026-tryexcept-esconde-nameerror">Lição em destaque (25/09/2026) — <code>try/except</code> esconde <code>NameError</code><a class="headerlink" href="#licao-em-destaque-25092026-tryexcept-esconde-nameerror" title="Permanent link">&para;</a></h2>
+<p>A regra "envolva toda função em <code>try/except</code>" (AGENTS.md §3.2) existe para nunca
+derrubar o servidor — e está correta. Mas ela tem um custo invisível: <strong>quando o
+<code>except</code> termina em <code>pass</code>, um <code>NameError</code> é capturado e engolido</strong>. A suíte passa,
+o terminal fica limpo, e a funcionalidade está quebrada.</p>
+<p>Foi o que aconteceu com <strong>7 <code>undefined name</code> em 5 arquivos</strong> no mesmo dia — <code>--otel</code>
+nunca subia o OTel, o botão "Resetar" da cota não fazia nada, a aba de Configurações
+do admin truncava antes do botão Salvar, o seletor de etapa da fila vinha vazio, ~60
+erros do Renomeador sumiam sem log e 11 erros de login nunca chegavam ao log.</p>
+<p><strong>Mitigação adotada:</strong> <code>pyflakes</code> como análise estática <strong>bloqueante</strong> antes de
+declarar o ciclo de testes verde. Ver
+<a href="../convencoes_codigo/#analise-estatica-obrigatoria-pyflakes">Convenções — Análise estática obrigatória</a>.</p>
 <h2 id="licoes-registradas-semente">Lições registradas (semente)<a class="headerlink" href="#licoes-registradas-semente" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Integridade de <code>main.py</code>:</strong> edições via PowerShell corromperam caracteres (<code>.</code>→<code>..</code>, <code>.</code>→<code>~</code>, <code>_</code>→<code>-</code>, <code>,</code>→<code>;;</code>). Mitigação: validar todo <code>.py</code> com <code>ast.parse</code> e revisar diffs.</li>
@@ -246,6 +270,13 @@
 <li><strong>Encoding UTF-8 + WSL (sessão "Ç não reconhecido no OpenCode via WSL", 14/09/2026):</strong> todo <code>.py</code>/<code>.md</code> do projeto é <strong>UTF-8 sem BOM</strong>; ferramentas que reescrevem encoding por fora (PowerShell, edição via WSL com locale divergente) já corromperam caracteres — validar com <code>ast.parse(open(..., encoding='utf-8').read())</code> após qualquer alteração e revisar o diff antes de seguir (mesma mitigação da integridade do <code>main.py</code> acima).</li>
 <li><strong>Toggles <code>hidden sm:*</code>/<code>md:*</code> não funcionam neste stack (sessão header 14/09/2026):</strong> o <code>tailwindcss.min.js</code> embutido no NiceGUI 3.15 resolve <code>hidden</code> acima de <code>sm:flex</code>/<code>md:block</code> mesmo em 1280 px — usar um único elemento sempre visível com <code>max-width</code> + ellipsis em vez de dois elementos desktop/mobile.</li>
 <li><strong>Scripts auxiliares e CWD (sessão 14/09/2026):</strong> <code>fresh_install_test*.py</code>/<code>diag_db.py</code> criavam <code>.db</code> de 0 bytes na pasta anterior quando rodados com outro CWD — todo script standalone resolve caminhos por <strong>absoluto a partir da raiz</strong> (<code>_RAIZ</code>), nunca por CWD relativo.</li>
+<li><strong><code>try/except</code> esconde <code>NameError</code> — <code>pyflakes</code> é obrigatório (25/09/2026):</strong> o padrão obrigatório do AGENTS.md §3.2 (envolver toda função em <code>try/except</code> para nunca derrubar o servidor) tem um custo invisível: quando o <code>except</code> termina em <code>pass</code> ou só em notificação, <strong>um <code>NameError</code> é capturado e engolido</strong>. A suíte passa, o terminal fica limpo e a funcionalidade está quebrada. No dia 25/09/2026 foram <strong>7 <code>undefined name</code> em 5 arquivos</strong>, cada um com efeito real e nenhum sinal: <code>--otel</code> nunca subia o OTel (<code>_otel_auto_stack</code>), o botão "Resetar" da cota não fazia nada (<code>bd</code>), a aba de Configurações truncava antes do botão Salvar (<code>ler_tema</code>/<code>bloco_aparencia</code>), o seletor de etapa vinha vazio (<code>fid</code> × <code>fila_id</code>), ~60 erros do Renomeador sumiam sem log (<code>notificar</code>) e 11 erros de login não iam para o log (<code>_login_erro_log</code>). <strong>Mitigação: <code>pyflakes</code> como análise estática BLOQUEANTE</strong> (<code>requirements-dev.txt</code>, seção "Lint / análise estática") antes de declarar o ciclo verde, e <strong>correção na fonte</strong> — nunca um <code>except: pass</code> novo. Detalhe em <a href="../convencoes_codigo/#analise-estatica-obrigatoria-pyflakes">Convenções</a>.</li>
+<li><strong>O <code>except</code> também é código — revise-o com a mesma atenção do caminho feliz (25/09/2026):</strong> os piores <code>undefined name</code> estavam <strong>dentro do tratamento de erro</strong> (<code>except NameError:</code> encadeado para obter o logger). Quando o <code>except</code> é o caminho crítico — o que mais precisa funcionar — é também onde os erros de escopo se escondem, porque quase nunca é exercitado nos testes.</li>
+<li><strong>Nome usado por várias funções vai no escopo de módulo (25/09/2026):</strong> o padrão que emerge de todos os casos corrigidos é importar <strong>no topo do arquivo</strong>, não repetir o import dentro de cada função. <code>mod_renomear_empenho/telas.py</code> chegou a usar <code>notificar</code> em ~60 call sites sem o import; <code>mod_solicita_impressao/telas.py</code> importava <code>bd</code> em uma função e usava em outra. Escopo de módulo é o que o <code>pyflakes</code> valida sem complaint.</li>
+<li><strong>Dado de configuração malformado no seed passa como "fonte que nunca traz notícia" (25/09/2026):</strong> a fonte <code>Folha de S.Paulo</code> tinha <code>https:/s.folha.uol.com.br/...</code> (<strong>uma barra só</strong>), e a coleta morria com <code>Request URL is missing an 'http://' or 'https://' protocol</code> — engolido pelo <code>try/except</code> do coletor. Sintoma: "aquela fonte nunca traz nada", sem rastro. Além de corrigir o seed, a correção robusta é uma <strong>migração idempotente</strong> que só reescreve o que está de fato quebrado (regex ancorado com lookahead, para não tocar em URL válida nem em fonte customizada do usuário).</li>
+<li><strong>Card com <code>min-height</code>/<code>max-height</code> fica irregular; <code>height</code> fixa uniformiza (25/09/2026):</strong> no Agregador, <code>min-height:160px; max-height:220px</code> fazia a altura depender do conteúdo e a página ficava com cards de tamanhos diferentes. <code>height</code> fixa (300px desktop / 260px celular) resolve, e o texto longo vai para uma caixa de altura fixa com <code>overflow-y: auto</code> em vez de truncamento com reticências.</li>
+<li><strong><code>&lt;style&gt;</code> injetado dentro de <code>@ui.refreshable</code> duplica a cada refresh (25/09/2026):</strong> <code>ui.add_head_html</code> dentro de um <code>@ui.refreshable</code> reemite o CSS a cada busca e a cada paginação. Mova para fora do decorado, emitido uma vez por página.</li>
+<li><strong>Clique em elemento que convive com um link exige <code>.stop</code> + hierarquia irma (25/09/2026):</strong> no redesenho do card, a miniatura clicável fica <strong>irmã</strong> do <code>ui.link</code> do título (nunca dentro dele) e usa o modificador <strong>nativo</strong> <code>.stop</code> (<code>Vue.withModifiers</code>, sem JavaScript à mão). Sem as duas camadas, o clique era absorvido pelo <code>&lt;a&gt;</code> e a ampliação nunca acontecia.</li>
 </ul>
 <h2 id="sugestao-de-expansao">Sugestão de expansão<a class="headerlink" href="#sugestao-de-expansao" title="Permanent link">&para;</a></h2>
 <p>Adicionar retrospectivas por fase, decisões de arquitetura (ADR) e melhorias de desempenho (WAL, ProcessPoolExecutor).</p>

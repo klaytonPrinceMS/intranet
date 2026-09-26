@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -230,17 +242,17 @@
               
                 <h1 id="tecnico-mod_tecnico">Técnico — <code>mod_tecnico</code><a class="headerlink" href="#tecnico-mod_tecnico" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Technical module: route <code>/tecnico</code> (key <code>tecnico</code>) · own database <code>db_mod_tecnico.db</code> · physical folders <code>software/</code> + <code>backup/YYYYMMDD_HHMM_nomePc_ip</code> · owner-isolated, webkitdirectory, SHA-256.</p>
+<p>Technical module: route <code>/tecnico</code> (key <code>tecnico</code>) · own database <code>db_mod_tecnico.db</code> · physical folders <code>software/</code> + <code>backup/YYYYMMDD_HHMM_nomePc_ip_SS</code> · owner-isolated, webkitdirectory, SHA-256, FS+DB atomicity.</p>
 </blockquote>
 <hr />
 <h1 id="tecnico-mod_tecnico_1">Técnico — <code>mod_tecnico</code><a class="headerlink" href="#tecnico-mod_tecnico_1" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo técnico: rota <code>/tecnico</code> (chave <code>tecnico</code>) · banco próprio <code>db_mod_tecnico.db</code> · pastas físicas <code>software/</code> + <code>backup/YYYYMMDD_HHMM_nomePc_ip</code> · isolamento por dono, webkitdirectory, SHA-256.</p>
+<p>Módulo técnico: rota <code>/tecnico</code> (chave <code>tecnico</code>) · banco próprio <code>db_mod_tecnico.db</code> · pastas físicas <code>software/</code> + <code>backup/YYYYMMDD_HHMM_nomePc_ip_SS</code> · isolamento por dono, webkitdirectory, SHA-256, atomicidade FS+DB.</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
-<p>Módulo de apoio à T.I. para formatação de PCs: disponibiliza executáveis em <code>software/</code> e recebe backups do PC a formatar em <code>backup/YYYYMMDD_HHMM_nomePc_ip</code> com isolamento por dono. Desenhado para uso <strong>no próprio PC a formatar</strong> (browser local) com upload 1-clique via <code>webkitdirectory</code>.</p>
+<p>Módulo de apoio à T.I. para formatação de PCs: disponibiliza executáveis em <code>software/</code> e recebe backups do PC a formatar em <code>backup/YYYYMMDD_HHMM_nomePc_ip_SS</code> com isolamento por dono. Desenhado para uso <strong>no próprio PC a formatar</strong> (browser local) com upload 1-clique via <code>webkitdirectory</code>.</p>
 <h2 id="banco-proprio">Banco próprio<a class="headerlink" href="#banco-proprio" title="Permanent link">&para;</a></h2>
-<p>Conexão WAL + <code>foreign_keys=ON</code> via <code>mod_intranet/banco_conexao.conexao("tecnico")</code>. Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:71-116</code>, executado no import e pelo bootstrap central (<code>mod_intranet_inicializacao_bd.py</code>).</p>
+<p>Conexão WAL + <code>foreign_keys=ON</code> via <code>mod_intranet/banco_conexao.conexao("tecnico")</code>. Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py</code>, executado no import e pelo bootstrap central (<code>mod_intranet_inicializacao_bd.py</code>).</p>
 <p><strong><code>tb_backup</code></strong> (pastas nomeadas):</p>
 <table>
 <thead>
@@ -256,7 +268,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>pasta_nome</code></td>
-<td style="text-align: left;">UNIQUE — <code>YYYYMMDD_HHMM_nomePc_ip</code> (ex.: <code>20260918_1430_NOTE07_192_168_1_10</code>), sanitizado <code>[^a-zA-Z0-9_-]</code>→<code>_</code></td>
+<td style="text-align: left;">UNIQUE — <code>YYYYMMDD_HHMM_nomePc_ip_SS</code> (ex.: <code>20260925_1557_NOTE07_192_168_1_10_44</code>), sanitizado <code>[^a-zA-Z0-9_-]</code>→<code>_</code>. O sufixo de <strong>segundos</strong> (<code>%S</code>) elimina a colisão de duas pastas criadas no mesmo minuto sem quebrar o prefixo <code>YYYYMMDD_HHMM_</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>owner</code></td>
@@ -316,33 +328,236 @@
 </tbody>
 </table>
 <p><strong><code>tb_config_tecnico</code></strong> (local do módulo): <code>tecnico_pasta_software</code>, <code>tecnico_pasta_backup</code>, <code>tecnico_max_zip_mb</code> (1024), <code>tecnico_quota_gb</code> (10) — seeds <code>INSERT OR IGNORE</code>.</p>
+<p><strong><code>models/__init__.py</code></strong> (dataclasses tipadas, padrão imperativo): <code>Backup</code> (<code>id</code>, <code>pasta_nome</code>, <code>owner</code>, <code>ip</code>, <code>hostname</code>, <code>tamanho_total</code>, <code>status</code>, <code>data_criacao</code>) e <code>BackupArquivo</code> (<code>id</code>, <code>backup_id</code>, <code>nome</code>, <code>caminho_relativo</code>, <code>tamanho</code>, <code>hash_sha256</code>) — espelham <code>tb_backup</code>/<code>tb_backup_arquivo</code> para uso tipado futuro (hoje o acesso real é via <code>bd_manipulador</code> + <code>banco_conexao</code>).</p>
+<p>Helpers internos: <code>_log()</code> (logger escopado <code>tecnico</code>), <code>_audit(ator, acao, alvo, detalhe)</code> (encaminha ao <code>audit_log</code> central → <code>tb_auditoria_tecnico</code>), <code>_hash_sha256(caminho)</code> (utilitário de arquivo; o envio atual calcula <code>hashlib.sha256(conteudo)</code> inline em <code>salvar_arquivos_backup</code>), <code>_pasta_backup_path(pasta_nome)</code> (canoniza com <code>basename</code> + regex + <code>commonpath</code>, nunca escapa de <code>PASTA_BACKUP</code>), <code>obter_backup(pasta_nome)</code> (busca uma linha de <code>tb_backup</code>), <code>listar_backups</code> ordena por <code>data_criacao ASC</code>.</p>
 <p>⚠️ <code>bd_criador.py</code> é <strong>código legado/morto</strong>: não é importado; não executar.</p>
 <h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Gate <code>_pode_acessar</code> (<code>telas.py:24-30</code>): <code>administrador_geral</code> ou <code>validar_acesso_modulo(user,"tecnico")</code>; sem acesso → "Acesso restrito".</li>
-<li><code>mostrar_tela(nome, perfil)</code> (<code>telas.py:33-65</code>): <code>ler_tema("tecnico")</code> + <code>ui.colors(primary)</code> + <code>cabecalho(chave_modulo="tecnico")</code> + <code>ui.tabs</code> <code>Software</code> (<code>apps</code>) | <code>Backup</code> (<code>backup</code>) → <code>_painel_software</code> / <code>_painel_backup</code>.</li>
-<li><strong>Software</strong> (<code>telas.py:69-151</code>): lista <code>software/</code> recursiva com checkbox + <code>Baixar selecionados</code> → <code>criar_zip_selecionados</code> (zip recursivo, limite <code>tecnico_max_zip_mb</code>).</li>
-<li><strong>Backup</strong> (<code>telas.py:172-310</code>): cria pasta <code>YYYYMMDD_HHMM_*</code> + <code>ui.upload(multiple, auto_upload, on_multi_upload)</code> com JS <code>webkitdirectory</code> + lista owner-isolated + <code>Baixar pasta (zip)</code> + <code>_dlg_listar</code> (dialogo com até 200 arquivos).</li>
+<li>Gate <code>_pode_acessar</code> (<code>telas.py</code>): <code>administrador_geral</code> ou <code>validar_acesso_modulo(user,"tecnico")</code>; sem acesso → "Acesso restrito".</li>
+<li><code>mostrar_tela(nome, perfil)</code> (<code>telas.py</code>): <code>ler_tema("tecnico")</code> + <code>ui.colors(primary)</code> + <code>cabecalho(chave_modulo="tecnico")</code> + <code>ui.tabs</code> <code>Software</code> (<code>apps</code>) | <code>Backup</code> (<code>backup</code>) → <code>_painel_software</code> / <code>_painel_backup</code>.</li>
+<li><strong>Software</strong> (<code>_painel_software</code> em <code>telas.py</code>): lista <code>software/</code> recursiva com checkbox + <code>Baixar selecionados</code> → <code>criar_zip_selecionados</code> (zip recursivo, limite <code>tecnico_max_zip_mb</code>). Helpers <code>_fmt_bytes</code> (B/KB/MB/GB/TB) e <code>_safe_id</code> (sanitiza relativo para <code>data-testid</code>, máx. 40).</li>
+<li><strong>Backup</strong> (<code>_painel_backup</code> em <code>telas.py</code>): cria pasta <code>YYYYMMDD_HHMM_*_*_*</code> + <code>ui.upload(multiple, auto_upload, on_multi_upload)</code> com JS <code>webkitdirectory</code> + lista owner-isolated + <code>Baixar pasta (zip)</code> + <code>_dlg_listar(pasta_nome, user)</code> (diálogo com até 200 arquivos).</li>
+<li><strong>Admin</strong> (<code>mostrar_administracao</code> em <code>telas_administracao.py</code>, rota <code>/admin/tecnico</code>): <code>bloco_aparencia</code> + card "Configurações do Técnico" (<code>tecnico_max_zip_mb</code> via <code>get_config</code>/<code>set_config</code> + <code>rodape_salvar_restaurar</code>) + card "Backups recentes (todos os usuários)" (até 30, <code>listar_backups(apenas_owner=False)</code>) + <code>painel_backup(usuario, "tecnico")</code>.</li>
 <li>Responsividade: <code>w-full p-6</code>, <code>flex-wrap</code>, <code>min-w</code> nos inputs, <code>data-testid</code> para QA.</li>
 </ul>
 <h2 id="regras-de-negocio-relevantes">Regras de negócio relevantes<a class="headerlink" href="#regras-de-negocio-relevantes" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Nome da pasta</strong> (<code>nome_pasta_backup</code>): <code>YYYYMMDD_HHMM</code> do servidor + <code>pc</code>/<code>ip</code> sanitizados (<code>_sanitizar_nome</code>: <code>[^a-zA-Z0-9_-]</code>→<code>_</code>, <code>__</code>→<code>_</code>, trim, 40 chars); <code>ip</code> com <code>.</code>→<code>_</code>.</li>
-<li><strong>Criação</strong> (<code>criar_pasta_backup</code>): valida <code>owner</code>, <code>pc≥2</code>, <code>ip≥3</code>; <code>os.makedirs(exist_ok=False)</code> + <code>INSERT tb_backup</code>; colisão → erro; falha física → <code>shutil.rmtree</code> rollback.</li>
-<li><strong>Envio</strong> (<code>salvar_arquivos_backup</code>): owner-isolation (só dono ou <code>administrador_geral</code> via <code>perfil_global_de</code>); sanitiza <code>webkitdirectory</code> preservando subpastas; <code>os.makedirs(dirname)</code> + <code>open(dest,"wb")</code> + <code>INSERT tb_backup_arquivo</code> por arquivo + <code>UPDATE tb_backup SET tamanho_total+status</code>; audita <code>enviar_backup</code>.</li>
-<li><strong>Download software</strong> (<code>criar_zip_selecionados</code>): zip recursivo de relativos selecionados; <code>..</code> ignorado; limite por <code>tecnico_max_zip_mb</code> (lido de <code>tb_config</code> central); audita <code>download_software</code>.</li>
+<li><strong>Nome da pasta</strong> (<code>nome_pasta_backup</code>): <code>YYYYMMDD_HHMM</code> + <code>_SS</code> (segundos) do servidor + <code>pc</code>/<code>ip</code> sanitizados (<code>_sanitizar_nome</code>: <code>[^a-zA-Z0-9_-]</code>→<code>_</code>, <code>__</code>→<code>_</code>, trim, 40 chars); <code>ip</code> com <code>.</code>→<code>_</code>. Ex.: <code>20260925_1557_NOTE07_192_168_1_10_44</code>.</li>
+<li><strong>Criação</strong> (<code>criar_pasta_backup</code>): valida <code>owner</code>, <code>pc≥2</code>, <code>ip≥3</code>; checa colisão <strong>no FS</strong> (<code>os.path.exists</code>) <strong>e no banco</strong> (<code>obter_backup</code>) antes de <code>os.makedirs(exist_ok=False)</code>; falha física → <code>shutil.rmtree</code> de rollback; falha de <code>UNIQUE</code> → mesma mensagem de colisão.</li>
+<li><strong>Envio</strong> (<code>salvar_arquivos_backup</code>): owner-isolation (só dono ou <code>administrador_geral</code> via <code>perfil_global_de</code>, fail-<strong>closed</strong>); sanitiza <code>webkitdirectory</code> preservando subpastas; fase FS grava + memoiza <code>escritos</code>; fase DB em transação curta com 3× retry em <code>database is locked</code>; <strong>compensa o FS removendo os arquivos desta chamada</strong> se o DB falhar; audita <code>enviar_backup</code>.</li>
+<li><strong>Download software</strong> (<code>criar_zip_selecionados</code>): zip recursivo de relativos selecionados; <code>..</code> e byte nulo rejeitados; <code>commonpath</code> revalidado <strong>dentro</strong> do walk (anti-symlink-escape); limite <code>tecnico_max_zip_mb</code> (lido do <code>tb_config</code> central) verificado <strong>incrementalmente</strong>; audita <code>download_software</code>.</li>
 <li><strong>Download backup</strong> (<code>criar_zip_backup</code>): owner-isolation idem; <code>os.walk</code> + <code>zipfile.ZIP_DEFLATED</code>; audita <code>download_backup</code>.</li>
-<li><strong>Sanitização/path traversal</strong>: <code>_sanitizar_nome</code>, <code>_pasta_backup_path</code> com regex <code>^[0-9]{8}_[0-9]{4}_[A-Za-z0-9_-]+_[A-Za-z0-9_-]+$</code>, <code>caminho_relativo</code> com <code>..</code> removido.</li>
-<li><strong>LGPD</strong>: <code>remover_vinculos_usuario</code> apaga pastas físicas + <code>DELETE tb_backup WHERE owner</code> (cascade); <code>renomear_usuario</code> propaga <code>owner</code>.</li>
+<li><strong>Sanitização/path traversal</strong>: <code>_sanitizar_nome</code>, <code>_pasta_backup_path</code> com regex <code>^[0-9]{8}_[0-9]{4}(_[0-9]{2})?_[A-Za-z0-9_-]+_[A-Za-z0-9_-]+(_[0-9]{2})?$</code> (aceita legado sem segundos e o novo <code>_SS</code>), <code>caminho_relativo</code> com <code>..</code> removido.</li>
+<li><strong>LGPD</strong>: <code>remover_vinculos_usuario</code> apaga pastas físicas + <code>tb_backup_arquivo</code> e <code>tb_backup WHERE owner</code> (filhos <strong>antes</strong> dos pais, porque o proxy Postgres remove <code>REFERENCES</code> e não há cascata implícita); <code>renomear_usuario</code> propaga <code>owner</code>.</li>
 </ul>
-<h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
-<p>Importa <code>autenticacao.validar_acesso_modulo</code>/<code>perfil_global_de</code>, <code>banco_conexao.conexao</code>, <code>tema_modulo.ler_tema</code>/<code>notificar</code>, <code>ui_comum.botao</code>. Grava via <code>audit_log</code> → <code>tb_auditoria_tecnico</code>. Backup do banco via <code>rotinas.painel_backup</code>/<code>MAPA_BACKUPS</code> (<code>tecnico: db_mod_tecnico.db</code>). Pastas físicas <code>PASTA_SOFTWARE</code>/<code>PASTA_BACKUP</code> garantidas em <code>init_db()</code>.</p>
+<h2 id="referencia-funcional-ferramentas-software-e-backup-de-pcs">Referência funcional — ferramentas, software e backup de PCs<a class="headerlink" href="#referencia-funcional-ferramentas-software-e-backup-de-pcs" title="Permanent link">&para;</a></h2>
+<h3 id="ferramentas-para-que-serve-o-modulo">Ferramentas — para que serve o módulo<a class="headerlink" href="#ferramentas-para-que-serve-o-modulo" title="Permanent link">&para;</a></h3>
+<p><code>mod_tecnico</code> é o conjunto de <strong>ferramentas de apoio à T.I.</strong> para manutenção e, principalmente,
+<strong>formatação de PCs da rede interna</strong>. O desenho é deliberadamente <strong>não-web</strong>: o técnico acessa
+a intranet <strong>do próprio PC que está formatando</strong>, com o browser em modo local, e faz duas
+coisas:</p>
+<ol>
+<li><strong>Baixar software</strong> —Drivers, utilitários, portáteis que o admin deixou em
+   <code>mod_tecnico/software/</code>. Seleção múltipla → <strong>um ZIP só</strong>, o que importa quando a pessoa
+   está copiando o pendrive para o PC que vai formatar e quer levar 30 executáveis de uma vez.</li>
+<li><strong>Salvar o backup do PC</strong> — antes de formatar, envia Documentos/Imagens/Vídeos do usuário para
+   uma pasta nomeada no servidor, <strong>preservando a árvore de subpastas</strong>, para restaurar depois.</li>
+</ol>
+<p>O segundo fluxo é o que dá o nome ao formato da pasta: o backup precisa ser <strong>autoidentificável
+na ausência de qualquer metadado externo</strong> — quem abrir a pasta depois, no PC novo, tem de saber
+de qual máquina e quando foi feito, sem abrir banco de dados.</p>
+<h3 id="aba-software-download-multi-selecao-em-zip">Aba Software — download multi-seleção em ZIP<a class="headerlink" href="#aba-software-download-multi-selecao-em-zip" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Etapa</th>
+<th style="text-align: left;">Implementação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Listagem</td>
+<td style="text-align: left;"><code>listar_software_recursivo()</code> faz <code>os.walk(PASTA_SOFTWARE)</code> e devolve <strong>só folhas</strong>, relativo a <code>software/</code>, ignorando <code>.gitkeep</code>, ordenado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Listagem por pasta</td>
+<td style="text-align: left;"><code>listar_software(relativo)</code> lista um nível, separando <code>eh_dir</code> (pastas) de arquivos; a tela achata <code>pastas + arquivos</code> numa lista só</td>
+</tr>
+<tr>
+<td style="text-align: left;">Seleção</td>
+<td style="text-align: left;"><code>ui.checkbox</code> por item com <code>data-testid=tecnico-soft-{safe_id}</code> ligado a <code>selecionados[rel]</code>. Marcar uma <strong>pasta</strong> baixa <strong>todo o conteúdo recursivo</strong> dela</td>
+</tr>
+<tr>
+<td style="text-align: left;">Zip</td>
+<td style="text-align: left;"><code>criar_zip_selecionados(relativos, owner)</code>: <code>tempfile.NamedTemporaryFile(delete=False, suffix=".zip")</code> + <code>ZIP_DEFLATED</code>. Pasta marcada → <code>os.walk</code>; arquivo → direto. O <strong>arco</strong> é o caminho relativo a <code>software/</code>, então a subpasta é preservada dentro do ZIP</td>
+</tr>
+<tr>
+<td style="text-align: left;">Limite</td>
+<td style="text-align: left;"><code>tecnico_max_zip_mb</code> (default <strong>1024</strong> MB). A verificação é <strong>incremental dentro do laço</strong> (<code>if total &gt; max_mb * 1024*1024: raise ValueError</code>) — um limite reavaliado só no fim permitiria gravar dezenas de GB em disco antes de descobrir que estourou</td>
+</tr>
+<tr>
+<td style="text-align: left;">Auditoria</td>
+<td style="text-align: left;"><code>download_software</code> com owner + total em bytes + caminho do zip</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Blindagem de path traversal (dupla):</strong> <code>rel</code> é rejeitado se contém <code>..</code>, começa com <code>/</code> ou tem
+<code>\x00</code>; e o <code>abs_path</code> é conferido com <code>os.path.commonpath</code> contra <code>PASTA_SOFTWARE</code>. O
+<code>commonpath</code> é revalidado <strong>dentro</strong> do <code>os.walk</code> para cada arquivo folha — a "dobra de
+verificação" documentada no código, que cobre o caso de <strong>symlink</strong> apontando para fora de
+<code>software/</code>: o filtro de <code>rel</code> passaria, mas o <code>commonpath</code> do arquivo real não.</p>
+<p>Se qualquer coisa der errado, o <code>except</code> <strong>remove o zip temporário</strong> antes de re-levantar — um
+<code>tela.py</code> quebrado não deixa lixo de centenas de MB em <code>/tmp</code> por request.</p>
+<h3 id="aba-backup-pasta-yyyymmdd_hhmm_nomepc_ip_ss-owner-isolated">Aba Backup — pasta <code>YYYYMMDD_HHMM_nomePc_ip_SS</code>, owner-isolated<a class="headerlink" href="#aba-backup-pasta-yyyymmdd_hhmm_nomepc_ip_ss-owner-isolated" title="Permanent link">&para;</a></h3>
+<h4 id="nome-da-pasta-com-sufixo-de-segundos-correcao-importante">Nome da pasta — com sufixo de segundos (correção importante)<a class="headerlink" href="#nome-da-pasta-com-sufixo-de-segundos-correcao-importante" title="Permanent link">&para;</a></h4>
+<p>O formato real é <strong><code>YYYYMMDD_HHMM_nomePc_ip_SS</code></strong>, com <strong>sufixo de segundos</strong> (<code>%S</code>, 00–59):</p>
+<div class="highlight"><pre><span></span><code>20260925_1557_NOTE07_192_168_1_10_44
+ └─ data ─┘ └min┘ └─ PC ──┘ └─ IP ────┘ └s┘
+</code></pre></div>
+<p>O motivo está na docstring de <code>nome_pasta_backup</code> (<code>bd_manipulador.py:393-422</code>): o formato antigo
+<code>YYYYMMDD_HHMM</code> <strong>colidia</strong> quando o técnico criava duas pastas no mesmo minuto para o mesmo
+PC/IP — o que é exatamente o caso de uso real (varrer a rede, achar dois Problems, criar backup
+dos dois em sequência). O sufixo de segundos resolve <strong>sem quebrar</strong> o prefixo <code>YYYYMMDD_HHMM_</code>:
+continua ordenável alfabeticamente e continua casando com a regex de validação.</p>
+<div class="admonition warning">
+<p class="admonition-title">A documentação anterior dizia <code>YYYYMMDD_HHMM_nomePc_ip</code> (sem segundos) — e a colisão no mesmo minuto era tratada como erro</p>
+<p>A versão antiga documentava que o <code>UNIQUE</code> de <code>pasta_nome</code> "impedia colisão mesmo com clocks
+iguais (segunda tentativa no mesmo minuto falha com 'Pasta já existe')". Hoje o sufixo
+<code>_SS</code> <strong>elimina</strong> a colisão na origem, e a mensagem de recusa mudou para
+<em>"Pasta já existe: <code>&lt;nome&gt;</code> — aguarde alguns segundos e tente novamente (nome inclui segundos
+para evitar colisão)"</em>. A recusa agora só acontece em <strong>condição de corrida real</strong> (dois
+requests no mesmo segundo, ou retry), e é verificada em <strong>duas camadas</strong> — <code>os.path.exists</code>
+no FS e <code>obter_backup</code> no banco — antes do <code>os.makedirs(exist_ok=False)</code>. <strong>Nunca sobrescreve
+pasta alheia.</strong></p>
+</div>
+<ul>
+<li><strong>Sanitização:</strong> <code>_sanitizar_nome</code> aplica <code>[^a-zA-Z0-9_-]</code>→<code>_</code>, colapsa <code>__</code>→<code>_</code>, faz trim e
+  corta em 40 chars. O IP é tratado à parte (<code>re.sub(r"[^a-zA-Z0-9._-]", "_")</code> <strong>preservando o
+  ponto</strong>, depois ponto→<code>_</code>), senão <code>192.168.1.10</code> viraria <code>192_168_1_10</code> já na etapa errada e o
+  fallback <code>sem_ip</code> nunca seria distinguível.</li>
+<li><strong>Validação de entrada:</strong> <code>owner</code> obrigatório, <code>nomePc</code> ≥ 2 chars, <code>ip</code> ≥ 3 chars — mensagens
+  em português, sem exceção estourada.</li>
+<li><strong>Rollback:</strong> se o <code>INSERT</code> em <code>tb_backup</code> falhar depois do <code>os.makedirs</code>, o código faz
+  <code>shutil.rmtree(caminho, ignore_errors=True)</code> — <strong>não deixa pasta órfã no disco sem registro no
+  banco</strong> (e vice-versa, o <code>UNIQUE</code> protege o registro órfão).</li>
+</ul>
+<h4 id="owner-isolated-a-regra-que-sustenta-o-modulo">Owner-isolated — a regra que sustenta o módulo<a class="headerlink" href="#owner-isolated-a-regra-que-sustenta-o-modulo" title="Permanent link">&para;</a></h4>
+<p>O backup de um PC contém <strong>dados pessoais de uma pessoa</strong> (Documentos, imagens, vídeos). O
+módulo aplica o mesmo gate nos três lugares que tocam o conteúdo:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Operação</th>
+<th style="text-align: left;">Regra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Listar</td>
+<td style="text-align: left;"><code>listar_backups(owner, apenas_owner=True)</code> → <code>WHERE owner=?</code>; a tela do técnico <strong>sempre</strong> passa <code>apenas_owner=True</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Enviar</td>
+<td style="text-align: left;"><code>salvar_arquivos_backup</code>: <code>row.owner != owner</code> → só passa se <code>perfil_global_de(owner) == "administrador_geral"</code>; senão <code>False, "Apenas o dono do backup pode enviar arquivos"</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Baixar (zip)</td>
+<td style="text-align: left;"><code>criar_zip_backup</code>: mesma checagem, mas via <code>raise PermissionError("Apenas o dono do backup pode baixar")</code> — <strong>e o <code>except</code> do próprio handler re-levanta <code>PermissionError</code> explicitamente</strong> (<code>except (FileNotFoundError, PermissionError): raise</code>), para o tratamento genérico não engolir a exceção de permissão como se fosse falha técnica</td>
+</tr>
+<tr>
+<td style="text-align: left;">Admin</td>
+<td style="text-align: left;">o card "Backups recentes (todos os usuários)" usa <code>listar_backups(apenas_owner=False)</code> — é a <strong>exceção declarada</strong>, restrita a quem tem acesso a <code>/admin/tecnico</code></td>
+</tr>
+</tbody>
+</table>
+<p>A checagem é <strong>por tabela, não por perfil</strong> (o mesmo padrão do <code>mod_solicita_impressao</code>): o dono é
+gravado no <code>tb_backup</code> no momento da criação e é a <strong>fonte da verdade</strong> da autorização, não o
+papel do usuário. Se o <code>perfil_global_de</code> falhar, o padrão é <strong>negar</strong> (<code>return False</code>), não
+permitir — fail-closed.</p>
+<h4 id="webkitdirectory-envio-de-pasta-inteira"><code>webkitdirectory</code> — envio de pasta inteira<a class="headerlink" href="#webkitdirectory-envio-de-pasta-inteira" title="Permanent link">&para;</a></h4>
+<p>O atalho é <code>ui.upload(multiple=True, auto_upload=True)</code> + uma injeção de atributo não-padrão:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">inp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s1">'[data-testid=tecnico-upload] input[type=file]'</span><span class="p">);</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">inp</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">inp</span><span class="p">.</span><span class="nx">setAttribute</span><span class="p">(</span><span class="s1">'webkitdirectory'</span><span class="p">,</span><span class="s1">''</span><span class="p">);</span><span class="w"> </span><span class="nx">inp</span><span class="p">.</span><span class="nx">setAttribute</span><span class="p">(</span><span class="s1">'directory'</span><span class="p">,</span><span class="s1">''</span><span class="p">);</span><span class="w"> </span><span class="p">}</span>
+<span class="p">},</span><span class="w"> </span><span class="err">…</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>O <code>setTimeout</code> existe porque o <code>&lt;input type=file&gt;</code> <strong>ainda não existe</strong> no momento em que o
+  <code>ui.upload</code> retorna — o elemento só é materializado depois do próximo tick do loop.</li>
+<li>O seletor ancorado em <code>[data-testid=tecnico-upload]</code> evita pegar o input de <strong>outro</strong> upload da
+  página.</li>
+<li>É <strong>fail-soft de propósito</strong>: <code>webkitdirectory</code>/<code>directory</code> não estão em nenhum padrão
+  (Chrome/Edge/Firefox modernos aceitam; outros ignoram o atributo silenciosamente). O
+  <code>if (inp)</code> sem <code>else</code> e sem exceção significa que, onde o atributo não funciona, o upload
+  <strong>continua funcionando</strong> — o técnico só precisa segurar Ctrl e selecionar os arquivos, e o
+  rótulo da tela explica as duas opções.</li>
+<li><strong>Efeito no backend:</strong> com <code>webkitdirectory</code> ativo, <code>f.name</code> vem como caminho <strong>relativo</strong>
+  (<code>Documents/foto.jpg</code>), não só o nome do arquivo. É isso que <code>salvar_arquivos_backup</code>
+  normaliza (<code>replace("\\","/")</code> → split → remove <code>..</code>/vazios/<code>\x00</code> → sanitiza cada segmento com
+  <code>[^A-Za-z0-9._-]</code>→<code>_</code> e <code>strip("._")</code> → <code>os.makedirs(dirname)</code> + escrita), preservando a
+  árvore. Sem o atributo, <code>f.name</code> é um nome simples e o arquivo cai na raiz da pasta — o backup
+  funciona, mas <strong>achatado</strong>, o que é a principal perda de qualidade desse fluxo.</li>
+</ul>
+<h4 id="atomicidade-fs-db-24092026-por-que-importa-num-upload-de-backup">Atomicidade FS + DB (24/09/2026) — por que importa num upload de backup<a class="headerlink" href="#atomicidade-fs-db-24092026-por-que-importa-num-upload-de-backup" title="Permanent link">&para;</a></h4>
+<p>Backup é a <strong>operação que o técnico faz uma vez, antes de uma ação irreversível</strong>. Um estado
+intermediário quebrado é o pior resultado possível: ou o arquivo está no disco sem registro (e
+ninguém sabe que ele existe), ou está no banco sem o arquivo (e a restauração perde dado).</p>
+<p>Por isso <code>salvar_arquivos_backup</code> é o único ponto do módulo com <strong>duas fases e compensação</strong>:</p>
+<div class="highlight"><pre><span></span><code>FASE 1 — FS (fora da transação, não dá para transacionar disco)
+  para cada (nome, conteudo):
+    sanitiza caminho → commonpath confere → makedirs(dirname) → open(dest,"wb")
+    pendentes.append((nome, nome_rel, tamanho, sha256(conteúdo)))
+    escritos.append(abspath(dest))          ← memo para a compensação
+FASE 2 — DB (transação CURTA, com retry)
+  até 3 tentativas: INSERT tb_backup_arquivo por arquivo
+                    UPDATE tb_backup SET tamanho_total += total, status='em_envio'
+                    commit
+    se "locked" no erro e ainda há tentativa: rollback, sleep(0.05 × tentativa), repete
+SE A FASE 2 FALHAR (qualquer caminho: último_erro ou exceção externa)
+  COMPENSAÇÃO: os.remove() de TODOS os arquivos de `escritos` (desta chamada)
+  loga a contagem removida e retorna (False, msg)
+</code></pre></div>
+<p>Três decisões merecem registro:</p>
+<ol>
+<li><strong>Fase 1 fora da transação</strong> — o SQLite controla transação de banco, não de sistema de
+   arquivos. Escrever dentro da transação e depois descobrir que o commit falhou deixaria os
+   arquivos no disco de qualquer forma; a ordem "FS primeiro, DB depois, compensa o FS se o DB
+   falhar" é a única que fecha o problema.</li>
+<li><strong>Retry em <code>database is locked</code></strong> (3×, <code>sleep</code> crescente 0.05/0.10/0.15 s) — o módulo roda em
+   SQLite com WAL e <code>busy_timeout=5000</code> herdado do núcleo, mas um <code>INSERT</code> de backup pode competir
+   com o job <code>cleanup_pdf</code>, com o monitor de empenhos ou com outro upload. O <code>rollback</code> antes do
+   retry é obrigatório: sem ele a tentativa 2 falha porconstraint pendente, não por lock.</li>
+<li><strong>A compensação apaga só o que esta chamada escreveu</strong> (<code>escritos</code> é preenchido durante a
+   fase 1). Um retry do usuário que reenvia arquivos já existentes <strong>não</strong> apaga os arquivos da
+   tentativa anterior, que continuam válidos e registrados.</li>
+</ol>
+<p>O <code>tecnico_quota_gb</code> <strong>não participa</strong> disso: ele é semeado em <code>tb_config_tecnico</code> mas <strong>não é
+lido em lugar nenhum do módulo</strong> (ver "Pontos de atenção").</p>
+<h3 id="configuracao-fonte-central-com-fallback-local">Configuração — fonte central com fallback local<a class="headerlink" href="#configuracao-fonte-central-com-fallback-local" title="Permanent link">&para;</a></h3>
+<p><code>_obter_config_tecnico(chave, padrao)</code> implementa uma leitura <strong>dual</strong>, e a ordem é deliberada:</p>
+<ol>
+<li><code>mod_intranet.bd_conexao.get_config(chave)</code> — <strong>fonte</strong> (é onde o painel <code>/admin/tecnico</code>
+   grava, via <code>set_config</code>).</li>
+<li><code>tb_config_tecnico</code> local — <strong>fallback/legado</strong> (seedado no <code>init_db</code>).</li>
+<li><code>padrao</code> do chamador.</li>
+</ol>
+<p>O motivo está na docstring: a tabela local nasceu como seed, mas o painel e o <code>criar_zip_selecionados</code>
+usam o central — ler o local primeiro faria os dois divergirem silenciosamente. O
+<code>tecnico_max_zip_mb</code> é a única chave efetivamente <strong>consumida</strong>; o painel grava sempre no central.</p>
+<h3 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h3>
+<p>Importa <code>autenticacao.validar_acesso_modulo</code>/<code>perfil_global_de</code>, <code>banco_conexao.conexao</code>,
+<code>tema_modulo.ler_tema</code>/<code>notificar</code>, <code>ui_comum.botao</code>. Grava via <code>audit_log</code> → <code>tb_auditoria_tecnico</code>. Backup do banco via <code>rotinas.painel_backup</code>/<code>MAPA_BACKUPS</code> (<code>tecnico: db_mod_tecnico.db</code>). Pastas físicas <code>PASTA_SOFTWARE</code>/<code>PASTA_BACKUP</code> garantidas em <code>init_db()</code>.</p>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>mod_tecnico/backup/*</code> é runtime (não commitado além do <code>.gitkeep</code>); <code>mod_tecnico/software/*</code> é conteúdo opcional versionável.</li>
-<li><code>webkitdirectory</code> é não-padrão — JS fail-soft; fallback Ctrl+A múltiplo.</li>
-<li>Zips temporários via <code>tempfile.NamedTemporaryFile(delete=False)</code> — limpeza SO; <code>cleanup_pdf</code> não afeta este módulo.</li>
-<li><code>tb_backup.pasta_nome</code> UNIQUE impede colisão mesmo com clocks iguais (segunda tentativa no mesmo minuto falha com "Pasta já existe").</li>
+<li><code>mod_tecnico/backup/*</code> é runtime (<strong>dados de usuário</strong> — nunca versionar além do <code>.gitkeep</code>); <code>mod_tecnico/software/*</code> é conteúdo opcional versionável. <strong>Estado real auditado em 25/09/2026:</strong> <code>software/</code> contém <strong>apenas <code>.gitkeep</code></strong> (sem a pasta <code>instalador/</code> que a documentação anterior citava → <code>listar_software_recursivo()</code> devolve <code>[]</code> e a tela mostra "Nenhum arquivo em software/." com botão Atualizar) e <code>backup/</code> contém <strong><code>.gitkeep</code></strong> (a documentação anterior afirmava "sem <code>.gitkeep</code>"). Ambos são garantidos em runtime por <code>os.makedirs(exist_ok=True)</code> no <code>init_db()</code>.</li>
+<li><strong><code>tecnico_quota_gb</code> é chave morta</strong> — semeada em <code>tb_config_tecnico</code> com valor <code>"10"</code> e <strong>nunca lida</strong> em nenhum ponto do módulo (nem em <code>salvar_arquivos_backup</code>, nem na tela, nem no painel). Não há, portanto, <strong>cota de disco por usuário</strong> no fluxo de backup: o único teto é o espaço do servidor. Se a intenção era limitar o backup por técnico, falta implementar a verificação (o padrão de referência está em <code>mod_edit_pdf.verificar_quota</code>).</li>
+<li><strong>Regex de validação de pasta</strong> — a documentação anterior registrava <code>^[0-9]{8}_[0-9]{4}_[A-Za-z0-9_-]+_[A-Za-z0-9_-]+$</code>; o código atual é <code>^[0-9]{8}_[0-9]{4}(_[0-9]{2})?_[A-Za-z0-9_-]+_[A-Za-z0-9_-]+(_[0-9]{2})?$</code>, que aceita o formato legado sem segundos <strong>e</strong> o novo com <code>_SS</code>. Nome fora do padrão não é rejeitado — é truncado em 80 chars e usado, e o <code>commonpath</code> ainda garante contenção em <code>backup/</code>.</li>
+<li><code>data-testid</code> para QA: <code>tecnico-soft-{safe_id}</code>, <code>tecnico-baixar</code>, <code>tecnico-backup-nomepc</code>, <code>tecnico-backup-ip</code>, <code>tecnico-criar-pasta</code>, <code>tecnico-backup-select</code>, <code>tecnico-upload</code>, <code>tecnico-baixar-{safe_id}</code>. <code>_safe_id</code> sanitiza o relativo e corta em 40 chars — <strong>pode colidir</strong> para dois caminhos longos diferentes; o seletor de teste deve preferir o checkbox pelo texto visível quando houver dúvida.</li>
+<li><code>webkitdirectory</code> é não-padrão — JS fail-soft; fallback Ctrl+A múltiplo (backup fica achatado, sem subpastas).</li>
+<li>Zips temporários via <code>tempfile.NamedTemporaryFile(delete=False)</code> — limpeza SO; <code>cleanup_pdf</code> não afeta este módulo. <code>criar_zip_selecionados</code> e <code>criar_zip_backup</code> removem o temp no <code>except</code> antes de re-levantar.</li>
+<li><code>tb_backup.pasta_nome</code> UNIQUE + prefixo de segundos <code>_SS</code> — a colisão real só ocorre em request concorrente no mesmo segundo, e é detectada no FS <strong>e</strong> no banco antes do <code>makedirs</code>.</li>
+<li><strong><code>remover_vinculos_usuario</code> apaga filhos antes dos pais</strong> (<code>tb_backup_arquivo</code> e depois <code>tb_backup</code>) em vez de confiar em <code>ON DELETE CASCADE</code>: o proxy Postgres remove a cláusula <code>REFERENCES</code>, então cascata implícita não existe lá. O <code>salvar_arquivos_backup</code> faz o mesmo no caminho inverso.</li>
+<li>✅ <strong><code>ui.notify</code> cru: zero</strong> neste módulo (0 ocorrências em <code>telas.py</code> e <code>telas_administracao.py</code>; 12 chamadas a <code>notificar(</code>). É um dos módulos já aderentes ao AGENTS.md §5.1 — ao contrário de <code>mod_edit_pdf</code> (parcial) e <code>mod_renomear_empenho</code> (117 + 23).</li>
 </ul>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
 <table>
@@ -363,19 +578,385 @@
 </tr>
 <tr>
 <td style="text-align: left;">Software multi-seleção + zip</td>
-<td style="text-align: left;">Implementado (<code>criar_zip_selecionados</code>)</td>
+<td style="text-align: left;">Implementado (<code>criar_zip_selecionados</code>, com <code>commonpath</code> revalidado no walk)</td>
 </tr>
 <tr>
-<td style="text-align: left;">Backup <code>YYYYMMDD_HHMM_nomePc_ip</code> + webkitdirectory</td>
+<td style="text-align: left;">Backup <code>YYYYMMDD_HHMM_nomePc_ip_SS</code> + webkitdirectory</td>
 <td style="text-align: left;">Implementado (<code>criar_pasta_backup</code> + <code>salvar_arquivos_backup</code>)</td>
 </tr>
 <tr>
+<td style="text-align: left;"><strong>Atomicidade FS+DB no envio</strong> (2 fases + compensação + retry em lock)</td>
+<td style="text-align: left;">Implementado (24/09/2026)</td>
+</tr>
+<tr>
 <td style="text-align: left;">LGPD (<code>remover/renomear</code>) + auditoria</td>
-<td style="text-align: left;">Implementado</td>
+<td style="text-align: left;">Implementado (filhos antes dos pais)</td>
 </tr>
 <tr>
 <td style="text-align: left;">Painel <code>/admin/tecnico</code></td>
 <td style="text-align: left;">Implementado (<code>bloco_aparencia</code> + <code>tecnico_max_zip_mb</code> + <code>painel_backup</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.notify</code> cru</td>
+<td style="text-align: left;"><strong>Zero</strong> — 100 % via <code>tema_modulo.notificar()</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Cota de disco por usuário (<code>tecnico_quota_gb</code>)</td>
+<td style="text-align: left;">⚠️ <strong>Não implementada</strong> — chave semeada e nunca lida</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada">Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)<a class="headerlink" href="#pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Documentação da correção pendente. Nenhum <code>.py</code> alterado neste lote.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Arquivo:linha</th>
+<th style="text-align: left;">Correção proposta contida no módulo</th>
+<th style="text-align: left;">Risco regressão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">tecnico</td>
+<td style="text-align: left;">Sem <code>CrudBase</code>; sem quebra PG localizada (varredura fina pendente)</td>
+<td style="text-align: left;"><code>mod_tecnico/bd_manipulador.py</code> (sem <code>CrudBase</code> — verificado por busca)</td>
+<td style="text-align: left;">Migrar para <code>CrudBase</code> + <code>conexao("tecnico")</code>; varredura <code>GROUP BY</code>/<code>COLLATE</code>/<code>strftime</code> SQL no módulo</td>
+<td style="text-align: left;">Baixo-médio (ZIP + backup <code>YYYYMMDD_HHMM_nomePc_ip_SS</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Detalhe consolidado em <a href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade</a>.</p>
+<hr />
+<h1 id="rf-e-rnf-verificados-no-codigo-lote-1-26092026">RF e RNF verificados no código — lote 1 (26/09/2026)<a class="headerlink" href="#rf-e-rnf-verificados-no-codigo-lote-1-26092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Auditoria de requisitos <strong>funcionais</strong> (o que o sistema faz) e <strong>não
+funcionais</strong> (qualidade e restrições), com evidência <code>arquivo:linha</code> conferida
+no código em 26/09/2026.</p>
+</blockquote>
+<h2 id="requisitos-funcionais-rf-mapa-codigo-doc">Requisitos funcionais (RF) — mapa código ↔ doc<a class="headerlink" href="#requisitos-funcionais-rf-mapa-codigo-doc" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-TEC-01</td>
+<td style="text-align: left;">Acesso à tela só para <code>administrador_geral</code> <strong>ou</strong> usuário com liberação no módulo <code>tecnico</code></td>
+<td style="text-align: left;"><code>telas.py:24-34</code> <code>_pode_acessar</code> (admin geral retorna <code>True</code>; senão <code>autenticacao.validar_acesso_modulo</code>); negação visual em <code>telas.py:44-49</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-02</td>
+<td style="text-align: left;">Abas <strong>Software</strong> | <strong>Backup</strong> com <code>ui.tabs</code> + <code>ui.tab_panels</code></td>
+<td style="text-align: left;"><code>telas.py:62-70</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-03</td>
+<td style="text-align: left;">Listagem recursiva de <code>software/</code> com pastas intermediárias derivadas e dedupe estável</td>
+<td style="text-align: left;"><code>telas.py:101-116</code> (<code>listar_software_recursivo</code> + <code>pastas</code> + <code>vistos</code>); <code>bd_manipulador.py:292</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-04</td>
+<td style="text-align: left;">Seleção múltipla (arquivo <strong>ou</strong> pasta marcada baixa tudo dentro) por <code>data-testid</code> estável</td>
+<td style="text-align: left;"><code>telas.py:132-135</code> (checkbox <code>data-testid=tecnico-soft-&lt;rel sanitizado&gt;</code>) + <code>_safe_id</code> em <code>telas.py:179-184</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-05</td>
+<td style="text-align: left;">Tamanho em arquivo exibido como B/KB/MB/GB/TB</td>
+<td style="text-align: left;"><code>telas.py:126-130</code> (<code>os.path.getsize</code>) + <code>_fmt_bytes</code> em <code>telas.py:163-176</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-06</td>
+<td style="text-align: left;"><strong>Baixar selecionados</strong> gera ZIP no servidor e dispara <code>ui.download</code>; recusa seleção vazia com aviso</td>
+<td style="text-align: left;"><code>telas.py:141-152</code> (<code>criar_zip_selecionados</code> → <code>ui.download</code>); <code>bd_manipulador.py:315</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-07</td>
+<td style="text-align: left;">Limite de tamanho do ZIP configurável (<code>tecnico_max_zip_mb</code>, 10–10000 MB, fallback 1024)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:144-153</code> <code>_obter_max_zip_mb</code>; painel em <code>telas_administracao.py:50-59</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-08</td>
+<td style="text-align: left;">Criar pasta de backup com nome automático <code>YYYYMMDD_HHMM_nomePc_ip</code> (+ sufixo <code>_SS</code> de segundos) e prévia ao vivo enquanto o usuário digita</td>
+<td style="text-align: left;"><code>bd_manipulador.py:393</code> <code>nome_pasta_backup</code> + <code>:424</code> <code>criar_pasta_backup</code>; prévia em <code>telas.py:222-230</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-09</td>
+<td style="text-align: left;">Upload 1-clique do PC a formatar via <code>webkitdirectory</code> (multi-pasta, estrutura preservada)</td>
+<td style="text-align: left;"><code>telas.py:268-289</code> <code>ao_upload</code> (lê bytes e usa <code>f.name</code> com caminho relativo) + <code>telas.py:294-302</code> <code>run_javascript</code> fail-soft aplicando <code>webkitdirectory</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-10</td>
+<td style="text-align: left;">Seletor de pasta destino do upload, populado só com backups <strong>do próprio usuário</strong></td>
+<td style="text-align: left;"><code>telas.py:245-258</code> (<code>listar_backups(owner=user_nome, apenas_owner=True)</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-11</td>
+<td style="text-align: left;"><strong>Baixar pasta (zip)</strong> de um backup, com spinner, trava de reentrância e I/O fora do event-loop</td>
+<td style="text-align: left;"><code>telas.py:316-344</code> <code>async _baixar</code> + <code>run.io_bound(tec.criar_zip_backup)</code> + <code>ui.spinner</code> + <code>_occ["sim"]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-12</td>
+<td style="text-align: left;">Prévia do conteúdo da pasta em diálogo (até 200 arquivos + "… e mais N")</td>
+<td style="text-align: left;"><code>telas.py:358-388</code> <code>_dlg_listar</code> (<code>os.walk</code> + <code>sorted(arquivos)[:200]</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-13</td>
+<td style="text-align: left;"><code>/admin/tecnico</code>: aparência (cores, tamanho de botão, cabeçalho), limite de ZIP, backups recentes (todos os usuários, 30) e painel de backup</td>
+<td style="text-align: left;"><code>telas_administracao.py:17-78</code> (<code>bloco_aparencia</code> + card config + <code>listar_backups(owner=None, apenas_owner=False)</code> + <code>painel_backup</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-14</td>
+<td style="text-align: left;">Painéis de backup: "Atualizar" (re-render) e "Atualizar" na aba Software</td>
+<td style="text-align: left;"><code>telas.py:92</code>, <code>:158</code>, <code>:353</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-15</td>
+<td style="text-align: left;">Falha de backup <strong>nunca</strong> derruba o handler — <code>OSError</code>→<code>None</code> e retorno <code>(ok, msg)</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:592-620</code> (<code>salvar_arquivos_backup</code> devolve tupla) + <code>telas.py:287</code> (<code>notificar</code> com <code>positive</code>/<code>negative</code> conforme <code>ok</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-16</td>
+<td style="text-align: left;">Hash <strong>SHA-256</strong> por arquivo enviado (rastreabilidade do conteúdo)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:89-101</code> <code>_hash_sha256</code>; gravado em <code>tb_backup_arquivo.hash_sha256</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-17</td>
+<td style="text-align: left;">LGPD: exclusão/renomeio de usuário limpa os vínculos de backup (filhos antes dos pais)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:790</code> <code>remover_vinculos_usuario</code> + <code>:853</code> <code>renomear_usuario</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-TEC-18</td>
+<td style="text-align: left;">Auditoria de todos os eventos do módulo na tabela do próprio módulo (<code>tb_auditoria_tecnico</code>)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:61-73</code> <code>_audit</code> → <code>mod_intranet.bd_manipulador.audit_log</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="requisitos-nao-funcionais-rnf-garantias-tecnicas">Requisitos não-funcionais (RNF) — garantias técnicas<a class="headerlink" href="#requisitos-nao-funcionais-rnf-garantias-tecnicas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RNF</th>
+<th style="text-align: left;">Exigência</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RNF-TEC-PERS-01</td>
+<td style="text-align: left;">Banco próprio, um <code>db_mod_&lt;chave&gt;.db</code> por módulo</td>
+<td style="text-align: left;"><code>get_connection</code> → <code>banco_conexao.conexao("tecnico")</code> (<code>bd_manipulador.py:41-59</code>) → <code>caminho_db("tecnico")</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-PERS-02</td>
+<td style="text-align: left;"><code>PRAGMA journal_mode=WAL</code> + <code>foreign_keys=ON</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:50-51</code> (falha de PRAGMA só gera <code>warning</code>, não derruba)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-PERS-03</td>
+<td style="text-align: left;"><code>busy_timeout=5000</code> + <code>synchronous=NORMAL</code> herdados do núcleo</td>
+<td style="text-align: left;"><code>banco_conexao.py:705-708</code>; <code>mod_tecnico</code> não repete (herda)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-PERS-04</td>
+<td style="text-align: left;">Retry em <code>database is locked</code> nas transações curtas de upload</td>
+<td style="text-align: left;"><code>bd_manipulador.py:597-601</code> (docstring) — 3 tentativas + rollback + <strong>compensação no FS</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-PERS-05</td>
+<td style="text-align: left;">DDL idempotente e import-safe (<code>init_db</code> nunca levanta)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:156-243</code> (<code>CREATE TABLE IF NOT EXISTS</code>, seed com fallback se <code>INSERT OR IGNORE</code> falhar, <code>except</code> → <code>log.exception</code> + <code>return</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-COMP-01</td>
+<td style="text-align: left;">Paridade SQLite ↔ PostgreSQL (proxy <code>_CursorPostgres</code>)</td>
+<td style="text-align: left;">DDL só <code>IF NOT EXISTS</code> (<code>:172-206</code>); <code>INSERT OR IGNORE</code> com <strong>fallback explícito</strong> <code>SELECT</code>+<code>INSERT</code> (<code>:206-212</code>); <code>REFERENCES ... ON DELETE CASCADE</code> traduzido</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-SEG-01</td>
+<td style="text-align: left;">Blindagem de <strong>path traversal</strong> em toda pasta física</td>
+<td style="text-align: left;"><code>bd_manipulador.py:557-589</code> <code>_pasta_backup_path</code>: <code>os.path.basename</code> + regex <code>^[\w.-]+$</code> + <strong><code>os.path.commonpath</code></strong> revalidado, com fallback seguro para dentro de <code>PASTA_BACKUP</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-SEG-02</td>
+<td style="text-align: left;">Sanitização de <code>nomePc</code>/<code>ip</code> (só <code>[A-Za-z0-9_-]</code>, 40 chars)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:76-86</code> <code>_sanitizar_nome</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-SEG-03</td>
+<td style="text-align: left;"><strong>Só o dono</strong> envia arquivo; <code>administrador_geral</code> é exceção</td>
+<td style="text-align: left;"><code>bd_manipulador.py:607-614</code> (<code>row[2] != owner</code> → <code>perfil_global_de(owner) != "administrador_geral"</code> → recusa)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-SEG-04</td>
+<td style="text-align: left;"><strong>Isolamento por dono</strong> na listagem (<code>apenas_owner=True</code> como default)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:504-517</code> <code>listar_backups</code>; chamada da tela em <code>telas.py:245</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-SEG-05</td>
+<td style="text-align: left;">Autorização de escrita auditada</td>
+<td style="text-align: left;"><code>bd_manipulador.py:61-73</code> <code>_audit</code> (falha de auditoria só gera <code>warning</code>, não bloqueia a ação)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-RES-01</td>
+<td style="text-align: left;"><code>try/except</code> obrigatório em função, com <code>notificar</code> + <code>log</code> (AGENTS.md §3.2)</td>
+<td style="text-align: left;">100 % das funções de <code>bd_manipulador.py</code> e <code>telas.py</code> protegem; <strong>zero</strong> <code>ui.notify</code> cru (só <code>tema_modulo.notificar</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-RES-02</td>
+<td style="text-align: left;">Fail-soft: falha de auditoria/conexão/config não derruba a operação</td>
+<td style="text-align: left;"><code>_audit</code> (<code>:69-73</code>), <code>_hash_sha256</code> → <code>""</code> (<code>:100-101</code>), <code>_obter_config_tecnico</code> → central e depois fallback local e depois <code>padrao</code> (<code>:104-141</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-UX-01</td>
+<td style="text-align: left;">Anti-disconnect: I/O pesado em <code>async</code> + <code>run.io_bound</code> + spinner + trava (§5.1)</td>
+<td style="text-align: left;">✅ <code>telas.py:316-344</code> (ZIP do backup) — referência canônica do módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-UX-02</td>
+<td style="text-align: left;"><code>data-testid</code> via <code>.props('data-testid=...')</code> em todas as ações</td>
+<td style="text-align: left;"><code>telas.py:134</code> (checkbox), <code>:157</code> (Baixar), <code>:216</code>/<code>:218</code> (Nome do PC / IP), <code>:242</code> (Criar pasta), <code>:256</code> (select), <code>:292</code> (upload), <code>:346</code> (Baixar pasta)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-UX-03</td>
+<td style="text-align: left;"><code>aria-label</code> no spinner de I/O pesado</td>
+<td style="text-align: left;"><code>telas.py:329-330</code> (<code>aria-label=Gerando ZIP de &lt;pasta&gt;</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-UX-04</td>
+<td style="text-align: left;">Rótulos PT-BR e docstrings bilíngue EN (topo) / PT-BR (abaixo)</td>
+<td style="text-align: left;"><code>telas.py:1-4</code>, <code>telas_administracao.py:1-4</code>, <code>bd_manipulador.py:1-10</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-PERF-01</td>
+<td style="text-align: left;">Sem N+1: listagem em 2 consultas (<code>listar_software</code> + <code>listar_software_recursivo</code>)</td>
+<td style="text-align: left;"><code>telas.py:88-89</code>, <code>:101</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-PERF-02</td>
+<td style="text-align: left;">Teto de renderização no diálogo de prévia (200 arquivos)</td>
+<td style="text-align: left;"><code>telas.py:382-385</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-RESP-01</td>
+<td style="text-align: left;">Responsividade com <code>flex-wrap</code> + <code>min-w-[220px]</code> nos campos</td>
+<td style="text-align: left;"><code>telas.py:215-218</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-TEC-CFG-01</td>
+<td style="text-align: left;">Configuração dual com fonte única de verdade (central) e fallback local</td>
+<td style="text-align: left;"><code>bd_manipulador.py:104-141</code>; escrita só no central (<code>telas_administracao.py:53</code>, <code>:57</code>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="divergencias-e-riscos">Divergências e riscos<a class="headerlink" href="#divergencias-e-riscos" title="Permanent link">&para;</a></h2>
+<h3 id="codigo-faz-doc-nao-diz">Código faz, doc não diz<a class="headerlink" href="#codigo-faz-doc-nao-diz" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Evidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DIV-TEC-01</td>
+<td style="text-align: left;">Sufixo <code>_SS</code> (segundos) no nome da pasta <strong>e</strong> a variante <code>YYYYMMDD_HHMM_SS_pc_ip</code> são aceitos na blindagem — a doc só cita <code>YYYYMMDD_HHMM_nomePc_ip</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:569-572</code> (regex com <code>(_[0-9]{2})?</code> nos dois formatos)</td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-TEC-02</td>
+<td style="text-align: left;">O <code>run_javascript</code> que injeta <code>webkitdirectory</code> é uma <strong>dependência de JS direto</strong>, que o AGENTS.md §5 proíbe; está em <code>try/except</code> e é fail-soft, mas é JS no caminho crítico do upload 1-clique</td>
+<td style="text-align: left;"><code>telas.py:294-302</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-TEC-03</td>
+<td style="text-align: left;"><code>telas.py:196-203</code> importa <code>nicegui.client.Client</code> e <strong>não usa</strong> — o comentário diz <em>"Não há acesso síncrono ao request aqui; usaremos placeholder"</em>, então <code>ip_sugerido</code> é <strong>sempre vazio</strong> e o campo IP nasce em branco. Código morto.</td>
+<td style="text-align: left;"><code>telas.py:196-203</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-TEC-04</td>
+<td style="text-align: left;"><code>tecnico_quota_gb</code> é semeada em <code>tb_config_tecnico</code> e <strong>nunca lida</strong> (já registrado como "não implementada" na seção Status)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:201</code> (seed) — nenhuma leitura no módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-TEC-05</td>
+<td style="text-align: left;"><code>/admin/tecnico</code> é alcançável por <strong>qualquer usuário com acesso ao módulo</strong>, não só por administrador</td>
+<td style="text-align: left;">ver RISCO-TEC-01</td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-TEC-06</td>
+<td style="text-align: left;"><code>telas_administracao.py:42-48</code> mostra os dois caminhos de pasta em campos <strong>desabilitados</strong> (<code>inp_soft.disable()</code>), com tooltip explicando que são fixos — a doc não registra que a edição é impossível por design</td>
+<td style="text-align: left;"><code>telas_administracao.py:42-48</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="doc-diz-codigo-nao-faz">Doc diz, código não faz<a class="headerlink" href="#doc-diz-codigo-nao-faz" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Alegação da doc</th>
+<th style="text-align: left;">Estado real</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DIV-TEC-07</td>
+<td style="text-align: left;">"Configuração dual com fonte única de verdade" (implica que o local é só cache)</td>
+<td style="text-align: left;">Correto no caminho de <strong>leitura</strong>, mas <code>_obter_config_tecnico</code> continua able to ler o local — se alguém escrever direto em <code>tb_config_tecnico</code>, o valor local ganha. Não há job de reconciliação.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="riscos">Riscos<a class="headerlink" href="#riscos" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Risco</th>
+<th style="text-align: left;">Severidade</th>
+<th style="text-align: left;">Evidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>RISCO-TEC-01</strong></td>
+<td style="text-align: left;"><strong><code>/admin/tecnico</code> sem gate de administrador.</strong> <code>main.py:1080-1086</code> calcula <code>eh_admin</code> (geral <strong>ou</strong> admin do módulo) e <strong>não usa</strong>: chama <code>mostrar_administracao(nome)</code> sem o flag e <strong>sem</strong> o <code>if not eh_admin: notificar + navigate</code> que <code>lista_telefonica</code> (<code>main.py:1102-1105</code>) e <code>agregador_noticias</code> (<code>main.py:1115-1117</code>) têm. <code>telas_administracao.py:17</code> também não recebe nem checa perfil. Efeito: um usuário <code>comum</code> com liberação do módulo Técnico <strong>altera <code>tecnico_max_zip_mb</code> e o tema</strong> e <strong>vê a lista de backups de todos os usuários</strong> (card "Backups recentes (todos os usuários)").</td>
+<td style="text-align: left;">🔴 Alta</td>
+<td style="text-align: left;"><code>main.py:1080-1086</code> + <code>mod_tecnico/telas_administracao.py:17</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-TEC-02</strong></td>
+<td style="text-align: left;"><strong><code>baixar()</code> do ZIP de software é <code>def</code> síncrono</strong> (<code>telas.py:141</code>) e chama <code>criar_zip_selecionados</code> (walk + <code>zipfile</code> de N arquivos) direto no event-loop — exatamente o padrão que o AGENTS.md §5.1 proíbe e que o próprio módulo já corrige em <code>_baixar</code> (<code>telas.py:316</code>). Zip grande ⇒ derruba o WebSocket do cliente.</td>
+<td style="text-align: left;">🟠 Média</td>
+<td style="text-align: left;"><code>telas.py:141-152</code> vs. <code>telas.py:316-344</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-TEC-03</strong></td>
+<td style="text-align: left;"><code>salvar_arquivos_backup</code> grava <strong>bytes em memória</strong> (<code>arquivos = [(nome, conteudo)]</code>, <code>telas.py:274-280</code>) antes de tocar o disco. Backup de usuário com GB vira RAM do servidor. Sem teto de tamanho por arquivo nem total.</td>
+<td style="text-align: left;">🟠 Média</td>
+<td style="text-align: left;"><code>telas.py:268-286</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-TEC-04</strong></td>
+<td style="text-align: left;">Sem <code>CrudBase</code>: o módulo faz SQL cru via <code>conn.cursor()</code>. Funciona (o proxy traduz), mas não usa a transação atômica <code>crud.transacao()</code> que o AGENTS.md §4 oferece, e a "atomicidade FS+DB" é <strong>compensação manual</strong> (remove o que gravou) — janela em que FS e DB divergem se o processo cair entre os dois passos.</td>
+<td style="text-align: left;">🟡 Baixa</td>
+<td style="text-align: left;"><code>bd_manipulador.py:597-601</code> + ausência de <code>CrudBase</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-TEC-05</strong></td>
+<td style="text-align: left;"><code>tb_backup.status</code> só tem <strong>dois</strong> estados reais: <code>'criado'</code> (default, <code>bd_manipulador.py:177</code>) e <code>'em_envio'</code> (gravado em <code>bd_manipulador.py:682</code> no fim da fase 2). Não existe estado "concluído"/"restaurado", então a coluna mostrada em <code>telas.py:311</code> fica presa em <code>em_envio</code> mesmo depois que o backup terminou — o usuário não tem como saber se a cópia ficou completa.</td>
+<td style="text-align: left;">🟡 Baixa</td>
+<td style="text-align: left;"><code>bd_manipulador.py:177</code> + <code>:682</code></td>
 </tr>
 </tbody>
 </table>

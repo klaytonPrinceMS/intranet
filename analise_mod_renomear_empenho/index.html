@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -239,8 +251,8 @@
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Extrai o nº do empenho/parcela (ou tipo especial EC/EE/EG/AE) do texto dos PDFs, renomeia sequencialmente e move falhas para quarentena reprocessável. Inclui organizador físico em caixas/subpastas, edição e ferramentas de PDF, e o fluxo completo de solicitação de envio. O processamento é <strong>manual</strong> (botão "Processar pasta agora", abas Fila/Navegar) e <strong>automático</strong> via job <code>monitor_empenho</code> do APScheduler (<strong>RF-40</strong>, intervalo padrão 60 s, configurável em <code>empenhos_monitor_intervalo_seg</code> sem restart — <code>mod_intranet/rotinas.py:36-70,229</code>).</p>
-<h3 id="tela-6-abas-internas">Tela — 6 abas internas<a class="headerlink" href="#tela-6-abas-internas" title="Permanent link">&para;</a></h3>
-<p>A tela <code>/renomear-empenho</code> é organizada em abas manuais (padrão <code>mod_solicita_impressao/telas.py</code>), sem alterar o menu lateral global:</p>
+<h3 id="tela-4-abas-internas-painel-de-configuracoes">Tela — 4 abas internas + painel de Configurações<a class="headerlink" href="#tela-4-abas-internas-painel-de-configuracoes" title="Permanent link">&para;</a></h3>
+<p>A tela <code>/renomear-empenho</code> (<code>telas.py:mostrar_tela</code>) tem <strong>4 abas</strong> (admin: Navegar, Fila, Organizador, Solicitação; comum: só Navegar). A busca FTS5 vive no campo de pesquisa do Navegar (<code>empenhos-navegar-pesquisa</code>) e as Configurações no painel standalone (<code>telas_administracao.py</code>, <code>/admin/empenhos</code>):</p>
 <table>
 <thead>
 <tr>
@@ -253,7 +265,7 @@
 <tr>
 <td style="text-align: left;">Navegar</td>
 <td style="text-align: left;">todos</td>
-<td style="text-align: left;">navegação recursiva/protegida (só PDFs), breadcrumb, baixar, revisar/renomear manual, solicitar envio, "Processar pasta agora"</td>
+<td style="text-align: left;">navegação recursiva/protegida (só PDFs), breadcrumb, baixar, revisar/renomear manual (<code>renomear_manual</code> com gate + edição ficha/parcela/ano), solicitar envio, "Processar pasta agora"</td>
 </tr>
 <tr>
 <td style="text-align: left;">Fila Renomeação</td>
@@ -261,14 +273,9 @@
 <td style="text-align: left;">pendentes recursivos, "Processar" individual e "Processar todos"</td>
 </tr>
 <tr>
-<td style="text-align: left;">Pesquisar</td>
-<td style="text-align: left;">todos</td>
-<td style="text-align: left;">busca FTS5 + tabela de empenhos renomeados</td>
-</tr>
-<tr>
 <td style="text-align: left;">Organizador</td>
 <td style="text-align: left;"><strong>admin</strong></td>
-<td style="text-align: left;">organizar caixas, capas/matriz, validar matriz, inventário, ferramentas de PDF</td>
+<td style="text-align: left;">organizar caixas, capas/matriz (<code>gerar_matriz_organizador</code>/<code>validar_presenca_matriz</code>), inventário, ferramentas de PDF</td>
 </tr>
 <tr>
 <td style="text-align: left;">Solicitação</td>
@@ -277,8 +284,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">Configurações</td>
-<td style="text-align: left;"><strong>admin</strong></td>
-<td style="text-align: left;">pastas monitoradas, aparência, template, campos, auditoria, quarentena, regras</td>
+<td style="text-align: left;"><strong>admin, painel <code>/admin/empenhos</code></strong></td>
+<td style="text-align: left;">pastas monitoradas, aparência, template, campos, quarentena (4b), regras com <code>valida_regex</code> anti-ReDoS</td>
 </tr>
 </tbody>
 </table>
@@ -303,7 +310,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_indexador_pesquisa_fts5</code></td>
-<td style="text-align: left;"><strong>VIRTUAL TABLE FTS5 com 32 colunas</strong> do cabeçalho (RF-41); alimentada por trigger de exclusão + <code>reindexar_empenho()</code></td>
+<td style="text-align: left;"><strong>VIRTUAL TABLE FTS5 (59 colunas de <code>FTS_COLS</code>, RF-41)</strong>; alimentada por <code>reindexar_empenho()</code> + trigger de exclusão + <code>campo_destino</code> nas regras</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_quarentena</code></td>
@@ -375,7 +382,7 @@
 <tr>
 <td style="text-align: left;">RF-005</td>
 <td style="text-align: left;">Índice de busca textual (FTS) e extração preditiva</td>
-<td style="text-align: left;">✅ Implementado (<code>tb_indexador_pesquisa_fts5</code>, 32 colunas)</td>
+<td style="text-align: left;">✅ Implementado (<code>tb_indexador_pesquisa_fts5</code>, 59 colunas)</td>
 </tr>
 <tr>
 <td style="text-align: left;">RF-006</td>
@@ -410,7 +417,7 @@
 <tr>
 <td style="text-align: left;">RF-41</td>
 <td style="text-align: left;">Indexação FTS5 do cabeçalho</td>
-<td style="text-align: left;">✅ Implementado (32 colunas + campos customizados)</td>
+<td style="text-align: left;">✅ Implementado (59 colunas + campos customizados)</td>
 </tr>
 <tr>
 <td style="text-align: left;">RF-44</td>
@@ -494,6 +501,377 @@
 <li><strong>Solicitações</strong>: <code>pendente → (email) enviado | (ZIP) zip_gerado → confirmar | recusado</code>; agrupadas por <code>lote_id</code>; ZIP em <code>mod_renomear_empenho/downloads/solic_*.zip</code>.</li>
 <li><strong>Auditoria</strong>: ações <code>processar</code>, <code>revisao_manual</code>, <code>solicitacao*</code>, <code>configuracao</code>, <code>quarentena</code>, <code>separar_documentos</code> na trilha central <strong>com hash SHA-256</strong>; + trilha por arquivo local (<code>tb_arquivos_auditoria</code>/<code>tb_eventos_arquivos</code>).</li>
 </ul>
+<h2 id="correcoes-registradas-25092026-lote-1-commit-624c9d5">Correções registradas (25/09/2026 — lote 1, commit <code>624c9d5</code>)<a class="headerlink" href="#correcoes-registradas-25092026-lote-1-commit-624c9d5" title="Permanent link">&para;</a></h2>
+<p>Duas falhas de produção e uma padronização de UI, todas no mesmo lote. (O <code>NameError</code> de <code>notificar</code> e os fallbacks de tema do <strong>lote 2</strong> estão na seção seguinte.)</p>
+<h3 id="bug-1-a-busca-de-1-letra-nao-filtrava-nada">Bug 1 — a busca de 1 letra não filtrava nada<a class="headerlink" href="#bug-1-a-busca-de-1-letra-nao-filtrava-nada" title="Permanent link">&para;</a></h3>
+<p><strong>Onde:</strong> <code>bd_manipulador.pesquisar_levantamento</code> (<code>bd_manipulador.py:2180-2228</code>).
+<strong>Sintoma:</strong> digitar <strong>uma única letra</strong> no campo de pesquisa do Navegar devolvia a lista
+<strong>vazia</strong>, mesmo com dezenas de arquivos cujo nome contém aquela letra. A UI prometia o
+comportamento oposto: o campo é <code>debounce='150'</code> (busca incremental, a cada tecla), o rótulo de
+status durante a busca é literalmente <code>Pesquisando (FTS5 + conteúdo)…</code>, e a docstring de
+<code>_fts_query_prefixada</code> afirma <em>"Permite resultado já na 1ª letra e refino a cada tecla (LIKE
+cobre o fallback)"</em>. A promessa existia em três lugares (placeholder, spinner e docstring) e a
+implementação não cumpria nenhuma para 1 caractere.</p>
+<h4 id="por-que-acontecia-fts-e-prefixo-like-e-substring">Por que acontecia — FTS é prefixo, <code>LIKE</code> é substring<a class="headerlink" href="#por-que-acontecia-fts-e-prefixo-like-e-substring" title="Permanent link">&para;</a></h4>
+<p>Os dois caminhos de busca <strong>não têm a mesma semântica de casamento</strong>, e essa é a raiz do bug:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Caminho</th>
+<th style="text-align: left;">Semântica</th>
+<th style="text-align: left;">Consulta montada</th>
+<th style="text-align: center;">Casa com o token <code>24</code>?</th>
+<th style="text-align: center;">Casa com <code>4abc</code>?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>FTS5</strong> (<code>MATCH</code>)</td>
+<td style="text-align: left;"><strong>prefixo de token</strong> — só o <em>começo</em> do token</td>
+<td style="text-align: left;"><code>_fts_query_prefixada(["4"])</code> → <code>"4"*</code></td>
+<td style="text-align: center;">✗ — o token indexado é <code>24</code>, e <code>4</code> não é prefixo de <code>24</code></td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>LIKE</code></strong></td>
+<td style="text-align: left;"><strong>substring</strong> — qualquer posição</td>
+<td style="text-align: left;"><code>f"%{termo.strip()}%"</code> → <code>%4%</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+</tbody>
+</table>
+<p><code>tb_levantamento_fts</code> é uma <code>VIRTUAL TABLE ... fts5</code> com o tokenizer padrão (<code>unicode61</code>), que
+quebra <code>EC_24.pdf</code> em tokens; o <code>4</code> de <code>24</code> é um token <strong>isolado</strong>, não o início de um token. Por
+isso <code>"4"*</code> — apesar do <code>*</code>, que só faz <em>prefix matching</em> — não encontra <code>24</code>. Já o
+<code>LIKE '%4%'</code> do fallback encontra, porque o <code>LIKE</code> do SQLite opera sobre a <strong>string bruta</strong>.</p>
+<div class="admonition danger">
+<p class="admonition-title">O defeito real não era o FTS — era o gatilho do fallback</p>
+<p>O código só caía no <code>LIKE</code> quando o FTS <strong>lançava exceção</strong> (índice ausente, FTS5 não
+compilado, tabela virtual não criada — que é o caso no <strong>PostgreSQL</strong>, onde o proxy ignora
+<code>CREATE VIRTUAL TABLE</code>). Mas a busca de 1 letra <strong>não levantava exceção nenhuma</strong>: o FTS
+executava normalmente e devolvia <strong>zero linhas</strong>. <code>if not achados</code> nunca era Verdadeiro,
+porque o <code>return</code> ficava <strong>fora</strong> da checagem:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ANTES — o fallback só era alcançado por exceção</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"... WHERE tb_levantamento_fts MATCH ? ..."</span><span class="p">,</span> <span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">limite</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>          <span class="c1"># ← retorna [] sem exceção; LIKE inalcançável</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="n">_log</span><span class="p">()</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"FTS indisponível, fallback LIKE"</span><span class="p">)</span>
+    <span class="n">like</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"%</span><span class="si">{</span><span class="n">termo</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">%"</span>
+    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"... WHERE nome_arquivo LIKE ? OR ..."</span><span class="p">,</span> <span class="p">(</span><span class="n">like</span><span class="p">,)</span><span class="o">*</span><span class="mi">5</span> <span class="o">+</span> <span class="p">(</span><span class="n">limite</span><span class="p">,))</span>
+    <span class="k">return</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+</code></pre></div>
+<p>Ou seja: o <code>LIKE</code> existia e estava correto — ele só era um <em>fallback de indisponibilidade</em>,
+nunca um <em>complemento de semântica</em>. Um resultado vazio do FTS, que aqui significa
+"encontrado pelo índice, mas nada casa com o prefixo", era interpretado como "não há
+nada", que é a <strong>mesma</strong> leitura de "o índice está fora do ar".</p>
+</div>
+<h4 id="correcao-fts-vazio-tambem-aciona-o-like">Correção — FTS vazio também aciona o <code>LIKE</code><a class="headerlink" href="#correcao-fts-vazio-tambem-aciona-o-like" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="n">like</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"%</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">termo</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">%"</span>          <span class="c1"># ← calculado uma vez, ANTES das duas tentativas</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"... WHERE tb_levantamento_fts MATCH ? ..."</span><span class="p">,</span> <span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">limite</span><span class="p">))</span>
+    <span class="n">achados</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">achados</span><span class="p">:</span>                            <span class="c1"># ← só sai se achou; senão cai no LIKE</span>
+        <span class="k">return</span> <span class="n">achados</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="n">_log</span><span class="p">()</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"pesquisar_levantamento FTS indisponível, fallback LIKE: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="c1"># ---- 2) LIKE por substring (1 letra / termo no meio do nome) ----</span>
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"... WHERE nome_arquivo LIKE ? OR numero_empenho LIKE ? "</span>
+            <span class="s2">"OR ficha LIKE ? OR ano LIKE ? OR conteudo_texto LIKE ? "</span>
+            <span class="s2">"ORDER BY id DESC LIMIT ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">like</span><span class="p">,</span> <span class="n">like</span><span class="p">,</span> <span class="n">like</span><span class="p">,</span> <span class="n">like</span><span class="p">,</span> <span class="n">like</span><span class="p">,</span> <span class="n">limite</span><span class="p">))</span>
+<span class="k">return</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+</code></pre></div>
+<p>A correção é mínima — mover o <code>return</code> para dentro de <code>if achados</code> e <strong>extrair o <code>LIKE</code> para fora
+do <code>except</code></strong> — e a docstring do próprio <code>MATCH</code> foi atualizada com a semântica, para que a
+dupla semântica (prefixo <strong>ou</strong> substring) fique escrita onde o próximo a mexer vai ler.</p>
+<h4 id="semantica-resultante">Semântica resultante<a class="headerlink" href="#semantica-resultante" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Termo digitado</th>
+<th style="text-align: left;">FTS (prefixo)</th>
+<th style="text-align: left;">Se o FTS não achou → <code>LIKE</code> (substring)</th>
+<th style="text-align: left;">Efeito percebido</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>4</code></td>
+<td style="text-align: left;"><code>"4"*</code> — só tokens que <strong>começam</strong> com 4</td>
+<td style="text-align: left;"><code>%4%</code> em nome/nº/ficha/ano/conteúdo</td>
+<td style="text-align: left;"><strong>1ª letra já filtra</strong> — a promessa da UI é cumprida</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>24</code></td>
+<td style="text-align: left;"><code>"24"*</code> — casa com <code>24</code>, <code>2451</code></td>
+<td style="text-align: left;"><code>%24%</code></td>
+<td style="text-align: left;">idem</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>2</code></td>
+<td style="text-align: left;"><code>"2"*</code> — casa com <code>20…</code>, <code>24</code>, <code>2º</code>…</td>
+<td style="text-align: left;"><code>%2%</code></td>
+<td style="text-align: left;">idem</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>EC_24</code></td>
+<td style="text-align: left;"><code>"EC_24"*</code> — casa com <code>EC_24</code>/prefixos longos</td>
+<td style="text-align: left;"><code>%EC_24%</code></td>
+<td style="text-align: left;">idem</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>jOA</code> (maiúsc. no meio)</td>
+<td style="text-align: left;">case-insensitive, mas <code>*</code> no fim</td>
+<td style="text-align: left;"><code>%jOA%</code> só se casar literal</td>
+<td style="text-align: left;">idem</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>silva sousa</code></td>
+<td style="text-align: left;"><code>"silva" AND "sousa"*</code></td>
+<td style="text-align: left;"><code>%silva sousa%</code> (a string inteira)</td>
+<td style="text-align: left;">idem</td>
+</tr>
+</tbody>
+</table>
+<p>Trade-off consciente: o <code>LIKE</code> é <strong>bem mais caro</strong> que o FTS (varre <code>conteudo_texto</code>, que guarda
+até 20 kB por arquivo) e <strong>não ordena por relevância</strong> (<code>ORDER BY id DESC</code>, contra
+<code>ORDER BY rank</code> do FTS). Em compensação, só roda quando o FTS <strong>não</strong> achou nada, e o
+<code>LIMIT</code> (padrão 100 na tela) limita o custo. O caminho quente (termo com 2+ caracteres que casa
+como prefixo) continua sendo 100 % FTS5.</p>
+<div class="admonition note">
+<p class="admonition-title">Reparo do teste que provou o bug</p>
+<p><code>assets/test/test_navegar_pesquisa_empenhos.py</code> falhava por <strong>falta de massa</strong>, não por
+defeito de código: a pasta real <code>mod_renomear_empenho/doc</code> só tem <code>.gitkeep</code>, então
+<code>levantar_arquivos</code> não populava <code>tb_levantamento</code> e o assert <code>len(hits) &gt; 0</code> falhava por
+tabela vazia. O teste foi reescrito para isolar banco <strong>e</strong> pasta monitorada em
+<code>tempfile.mkdtemp()</code>, semear 4 PDFs de <code>assets/test/pdf/</code> (<code>DOC_0201</code>, <code>EC_24</code>, <code>EE_9570</code>,
+<code>EG_89</code>), rodar <code>levantar_arquivos("tester")</code> e então exigir
+<code>pesquisar_levantamento("4", limite=10)</code> com hits — restaurando <code>DB_EMPENHO_PATH</code>,
+<code>PASTA_MONITORADA</code>, <code>pastas_monitoradas</code> e <code>mod_intranet.repositorio.MODULOS_BD["empenhos"]</code>
+no <code>finally</code>. <strong>Resultado: 20/20 verificações OK</strong> (<code>backend levantamento('4')=2 hits</code>).</p>
+</div>
+<h3 id="padronizacao-1-barra-de-abas-no-helper-padrao">Padronização 1 — barra de abas no helper padrão<a class="headerlink" href="#padronizacao-1-barra-de-abas-no-helper-padrao" title="Permanent link">&para;</a></h3>
+<p><strong>Onde:</strong> <code>telas.py:181-186</code>.
+<strong>Situação anterior:</strong> a barra de abas do módulo era montada <strong>à mão</strong>, com <code>ui.tabs()</code> +
+<code>ui.tab()</code> e um <strong>dicionário de ícones paralelo e redundante</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">_abas</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">"navegar"</span><span class="p">,</span> <span class="s2">"Navegar"</span><span class="p">,</span> <span class="s2">"folder_open"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"fila"</span><span class="p">,</span> <span class="s2">"Fila Renomeação"</span><span class="p">,</span> <span class="s2">"move_to_inbox"</span><span class="p">),</span> <span class="err">…</span><span class="p">]</span>
+<span class="n">_icones</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"navegar"</span><span class="p">:</span> <span class="s2">"folder_open"</span><span class="p">,</span> <span class="s2">"fila"</span><span class="p">:</span> <span class="s2">"move_to_inbox"</span><span class="p">,</span> <span class="s2">"organizador"</span><span class="p">:</span> <span class="s2">"inventory_2"</span><span class="p">,</span>
+           <span class="s2">"solicitacao"</span><span class="p">:</span> <span class="s2">"mail"</span><span class="p">}</span>                       <span class="c1"># ← duplicata de _abas</span>
+<span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tabs</span><span class="p">()</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense inline-label"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"min-w-0 flex-1 overflow-x-auto"</span><span class="p">)</span> <span class="k">as</span> <span class="n">tabs_el</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">_ico</span> <span class="ow">in</span> <span class="n">_abas</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">tab</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="n">_icones</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>      <span class="c1"># ← consome _icones, ignora _abas[2]</span>
+</code></pre></div>
+<p>O ícone já vinha <strong>dentro</strong> de <code>_abas</code> (3º elemento da tupla) e era <strong>ignorado</strong>; a fonte de
+verdade de fato era o dict <code>_icones</code>, parallelamente. Duas listas para o mesmo dado significa que
+trocar <code>folder_open</code> por <code>folder</code> em <code>_abas</code> <strong>não</strong> mudava nada na tela — a change silenciosamente
+perdida. Enquanto isso, <strong><code>menu_modulo</code> já estava importado</strong> (<code>telas.py:40</code>,
+<code>from mod_intranet.aba_modulo import cabecalho, menu_modulo</code>) e <strong>sem uso</strong> — import morto que
+o <code>verifica_ui_comum.py</code> exigia ver ausente (<code>not re.search(r"ui\.tabs\(\)", …)</code>), ou seja, o
+código de produção <strong>violava a própria regra</strong> que o teste de arquitetura cobrava.</p>
+<p><strong>Correção:</strong> <code>tabs_el = menu_modulo(_abas)</code>, e o dict <code>_icones</code> <strong>removido</strong> (com o comentário
+explicando por quê). Uma lista, um lugar, ícone no mesmo tuple que o rótulo.</p>
+<h4 id="efeito-colateral-de-ui-intencional">Efeito colateral de UI — intencional<a class="headerlink" href="#efeito-colateral-de-ui-intencional" title="Permanent link">&para;</a></h4>
+<p><code>menu_modulo</code> (<code>mod_intranet/aba_modulo.py:102-117</code>) monta
+<code>ui.tabs(value=valor).classes("w-full")</code> com <code>ui.tab(chave, rotulo, icon=icone)</code> <strong>sem</strong>
+<code>dense inline-label</code> — ou seja, <strong>ícone acima, rótulo abaixo</strong> (é o padrão do módulo). A barra
+muda de "ícone + rótulo na mesma linha" para "ícone empilhado sobre o rótulo", e perde as classes
+<code>min-w-0 flex-1 overflow-x-auto</code> que a versão manual trazia. O <code>flex-1</code> era o que segurava as
+abas à esquerda do botão TEMP à direita dentro do <code>row justify-between flex-nowrap</code>; com <code>w-full</code>
+isso é resolvido pelo próprio <code>ui.tabs</code>. O <code>overflow-x-auto</code> (rolagem horizontal das abas em
+tela estreita) <strong>não</strong> é reposto pelo helper — ver "Pontos de atenção".</p>
+<div class="admonition tip">
+<p class="admonition-title">Por que isso importa (e por que a suíte de QA acusou)</p>
+<p>O <code>verifica_ui_comum.py</code> tem o check <em>"renomear_empenho: barra de abas no helper padrão
+<code>menu_modulo</code> (sem <code>ui.tabs()</code> cru)"</em>. Com <code>menu_modulo</code> importado e <strong>sem uso</strong>, o módulo
+ficava num estado incoerente: a arquitetura exigia o helper, o teste exigia o helper e o
+código não usava o helper. Além disso, a política do projeto é a de <strong>um único lugar para o
+padrão visual</strong> — barra de abas, cabeçalho, botão e campo de busca saem de <code>aba_modulo</code> /
+<code>ui_comum</code>, nunca de construção local.</p>
+</div>
+<h2 id="correcoes-registradas-25092026-lote-2">Correções registradas (25/09/2026 — lote 2)<a class="headerlink" href="#correcoes-registradas-25092026-lote-2" title="Permanent link">&para;</a></h2>
+<h3 id="bug-3-notificar-nunca-importado-todo-erro-do-renomeador-sumia">Bug 3 — <code>notificar</code> nunca importado: todo erro do Renomeador sumia<a class="headerlink" href="#bug-3-notificar-nunca-importado-todo-erro-do-renomeador-sumia" title="Permanent link">&para;</a></h3>
+<p>Além dos dois bugs acima, o <code>pyflakes</code> (análise estática obrigatória) revelou que
+<code>mod_renomear_empenho/telas.py</code> chamava <strong><code>notificar</code> em cerca de 60 call sites sem
+nunca ter o import no arquivo</strong>. Cada chamada levantava <code>NameError</code> — e como quase
+todas estavam dentro de um <code>except Exception: pass</code> (o caminho de erro padrão do
+AGENTS.md §3.2), o efeito era:</p>
+<ul>
+<li>o usuário <strong>não via nenhuma notificação</strong> quando algo dava errado;</li>
+<li><strong>nada ia para o log</strong> — o nome nem existia para o <code>logger.exception</code> chamar;</li>
+<li>o <code>try/except</code> do fallback mascarava tudo e a suíte de testes passava.</li>
+</ul>
+<p>Correção: <code>from mod_intranet.tema_modulo import notificar</code> no <strong>escopo de módulo</strong>
+(<code>telas.py:42-43</code>), com comentário explicando o motivo. É o mesmo padrão dos demais
+casos do lote — nome usado por muitas funções vai no topo do arquivo, não repetido
+dentro de cada uma.</p>
+<h3 id="fallbacks-de-tema-que-referenciavam-nomes-inexistentes">Fallbacks de tema que referenciavam nomes inexistentes<a class="headerlink" href="#fallbacks-de-tema-que-referenciavam-nomes-inexistentes" title="Permanent link">&para;</a></h3>
+<p>No mesmo arquivo, três helpers de fallback usavam nomes que <strong>não existiam</strong> no
+escopo:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ANTES — `_bootstrap`, `_hibrido` e `_modelo` nunca foram definidos</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_eh_bootstrap</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_visual</span><span class="o">.</span><span class="n">eh_bootstrap</span><span class="p">(</span><span class="n">get_config</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_bootstrap</span>        <span class="c1"># → NameError dentro do tratamento de erro</span>
+
+<span class="c1"># DEPOIS</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_eh_bootstrap</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_visual</span><span class="o">.</span><span class="n">eh_bootstrap</span><span class="p">(</span><span class="n">get_config</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>             <span class="c1"># fallback semânticamente correto</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Helper</th>
+<th style="text-align: left;">Antes</th>
+<th style="text-align: left;">Depois</th>
+<th style="text-align: left;">Por quê</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>_eh_bootstrap</code></td>
+<td style="text-align: left;"><code>return _bootstrap</code></td>
+<td style="text-align: left;"><code>return False</code></td>
+<td style="text-align: left;">"não é Bootstrap" é o default seguro; <code>True</code> deixaria o tema errado sem nenhum sinal</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_eh_hibrido</code></td>
+<td style="text-align: left;"><code>return _hibrido</code></td>
+<td style="text-align: left;"><code>return False</code></td>
+<td style="text-align: left;">idem para o modo híbrido</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_modelo_atual</code></td>
+<td style="text-align: left;"><code>return _modelo</code></td>
+<td style="text-align: left;"><code>return _visual.MODELO_PADRAO</code></td>
+<td style="text-align: left;">aqui o fallback <strong>tem</strong> de ser um valor de verdade: <code>MODELO_PADRAO</code> existe em <code>mod_renomear_empenho/visual.py</code> e é o modelo documentado como padrão</td>
+</tr>
+</tbody>
+</table>
+<p>O caso de <code>_modelo_atual</code> é o mais perigoso dos três: o <code>except</code> era justamente o
+caminho tomado quando a leitura da config falhava, e ali a tela ficaria sem modelo
+nenhum.</p>
+<div class="admonition note">
+<p class="admonition-title">Padrão que emerge: o <code>except</code> também é código</p>
+<p>Nenhum desses três <code>except</code> executava com frequência — por isso o bug passou
+despercebido. Mas o <code>except</code> é o <strong>caminho mais crítico</strong> do código, porque é
+onde os bugs de escopo se escondem: quando ele é executado, já há um problema em
+curso, e o <code>NameError</code> do próprio tratamento de erro transforma um incidente
+pequeno em uma tela silenciosamente quebrada. Todo <code>except</code> deve ser revisto com
+a mesma atenção que o caminho feliz.</p>
+</div>
+<h2 id="referencia-funcional-monitor-regex-fts5-quarentena-organizador-e-solicitacoes">Referência funcional — monitor, regex, FTS5, quarentena, organizador e solicitações<a class="headerlink" href="#referencia-funcional-monitor-regex-fts5-quarentena-organizador-e-solicitacoes" title="Permanent link">&para;</a></h2>
+<h3 id="monitor-multi-pasta">Monitor multi-pasta<a class="headerlink" href="#monitor-multi-pasta" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>pastas_monitoradas()</code> lê a lista da <code>tb_config</code> (chave <code>empenhos_pastas_monitoradas</code>), <strong>uma
+  pasta por linha</strong>, aceitando caminho <strong>local</strong> (<code>E:\scan</code>) e <strong>rede/UNC</strong> (<code>\\servidor\compart</code>) —
+  vários computadores podem escanear simultâneos. A pasta padrão é
+  <code>_PASTA_MONITORADA_PADRAO</code> = <code>mod_renomear_empenho/doc</code>.</li>
+<li><strong>Automaticidade ≠ recursividade:</strong> o job <code>monitor_empenho</code> varre <strong>apenas a raiz</strong> de cada
+  pasta; as telas Navegar e Fila são <strong>recursivas</strong> (comportamento intencional, com proteção
+  anti-travessia por <code>raizes_navegacao</code>/<code>pasta_navegavel</code>).</li>
+<li>Intervalo padrão <strong>60 s</strong>, chave <code>empenhos_monitor_intervalo_seg</code>, alterável <strong>sem restart</strong>
+  (<code>mod_intranet/rotinas.py:intervalo_monitor_empenho</code> / <code>reagendar_monitor_empenho</code>).</li>
+<li>Falha de rede/UNC <strong>não derruba o monitor</strong> (RNF-06): <code>pasta_acessivel</code> pula a pasta
+  inacessível e segue as demais.</li>
+</ul>
+<h3 id="regex-dinamica-rf-41">Regex dinâmica (RF-41)<a class="headerlink" href="#regex-dinamica-rf-41" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>tb_regex_regras</code> (<code>nome_regra UNIQUE</code>, <code>padrao_regra</code>, <code>substituicao</code>, <code>ativo</code>,
+  <strong><code>campo_destino</code></strong>) é editável em Configurações <strong>sem reiniciar</strong>: <code>salvar_regra</code> valida
+  <code>re.compile</code> <strong>antes</strong> de gravar e as regras são relidas a cada <code>processar_pdf</code>/<code>extrair_numero</code>.</li>
+<li><code>extrair_campos_regex(texto)</code> aplica as regras com <code>campo_destino</code> definido e devolve
+  <code>{campo_destino: valor}</code> — é o que alimenta as <strong>colunas FTS customizadas</strong> do índice.</li>
+<li><code>validida_regex</code> anti-ReDoS barra padrões catastróficos na gravação.</li>
+</ul>
+<h3 id="fts5-59-colunas-e-as-duas-tabelas">FTS5 — 59 colunas e as duas tabelas<a class="headerlink" href="#fts5-59-colunas-e-as-duas-tabelas" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Tabela</th>
+<th style="text-align: left;">Quando</th>
+<th style="text-align: left;">Busca</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>tb_indexador_pesquisa_fts5</code></td>
+<td style="text-align: left;">Via <code>reindexar_empenho()</code> + trigger de exclusão</td>
+<td style="text-align: left;"><code>pesquisar()</code> — busca os <strong>empenhos já processados</strong> (<code>tb_empenhos</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tb_levantamento_fts</code></td>
+<td style="text-align: left;">JOIN do levantamento</td>
+<td style="text-align: left;"><code>pesquisar_levantamento()</code> — busca o <strong>inventário vivo</strong> (pendentes e processados)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>59 colunas</strong> (<code>FTS_COLS</code>): identificação, órgão/unidade/sub-unidade, função/subfunção,
+  programa, projeto/atividade, dotação, elemento/subelemento de despesa, fonte/subfonte de
+  recurso, favorecido (nome/código/CPF/endereço) e <strong>os campos livres mapeados por
+  <code>campo_destino</code></strong> das regex dinâmicas.</li>
+<li>Tokenizer <code>unicode61</code> padrão; prefixo <strong>só no último token</strong> (<code>"joao" AND "si"*</code>) para refinar a
+  cada tecla sem reprocessar os anteriores.</li>
+<li><code>tb_indexador_pesquisa</code> (sem FTS) permanece como <strong>fallback comum</strong> (<code>empenho_id</code>,
+  <code>conteudo_texto</code>).</li>
+<li><strong>Degradação no PostgreSQL:</strong> <code>CREATE VIRTUAL TABLE</code> e <code>CREATE TRIGGER</code> são SQLite-only e o
+  proxy os ignora; no PG a busca cai no <code>LIKE</code> portável (mesma degradação documentada na tabela de
+  pendências de WAL/paridade). Por isso o <code>LIKE</code> <strong>não pode ser removido</strong> como "código morto".</li>
+</ul>
+<h3 id="quarentena-plano-4b">Quarentena (PLANO 4b)<a class="headerlink" href="#quarentena-plano-4b" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Entrada:</strong> falha de extração, falha do gate de validação, PDF sem texto ("possivelmente
+  escaneado") ou múltiplos documentos no mesmo PDF.</li>
+<li><code>mover_quarentena</code> (<code>bd_manipulador.py:2231</code>) grava o motivo <strong>truncado a 300 caracteres</strong>,
+  copia o arquivo para <code>mod_renomear_empenho/quarentena/&lt;timestamp&gt;_&lt;nome&gt;</code> e registra em
+  <code>tb_quarentena</code>.</li>
+<li><strong>Identificação manual</strong> (sem restart): diálogo "Revisar/renomear" na aba Navegar chama
+  <code>renomear_manual</code> (com gate), que normaliza o nome e resolve colisão acrescentando <code>_v2</code>.</li>
+<li><strong>Reprocessamento individual:</strong> clique na linha da quarentena → "Reprocessar com nova regex" →
+  <code>reprocesse_quarentena(qid, novo_padrao)</code>.</li>
+<li><strong>Reprocessamento em lote:</strong> botão "Reprocessar fila" → <code>reprocessar_fila(usuario, novo_padrao)</code>
+  (<code>bd_manipulador.py:1792</code>) itera todos os <code>processado=0</code> com as regras ativas e reporta
+  <code>sucessos/total</code>.</li>
+<li><strong>Múltiplos documentos:</strong> <code>detectar_documentos_no_pdf</code>/<code>eh_multiplo_documento</code>
+  (<code>bd_manipulador.py:815</code>) agrupam por <code>_inicio_documento</code>; a quarentena oferece "Separar
+  documentos" → <code>separar_documentos_quarentena</code>/<code>separar_pdf_por_documentos</code>, que fatia em
+  <code>*_parteNN_pA-B.pdf</code>, move para a pasta monitorada e reprocessa cada parte.</li>
+</ul>
+<h3 id="organizador-fisico-plano-4c">Organizador físico (PLANO 4c)<a class="headerlink" href="#organizador-fisico-plano-4c" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Distribui os renomeados em <code>mod_renomear_empenho/organizadorPasta/caixa_NN/sub_X</code> com
+  <strong>~200 páginas por subpasta</strong> e <strong>4 subpastas por caixa</strong> (configuráveis:
+  <code>empenhos_organizador_paginas_pasta</code>, <code>empenhos_organizador_pastas_caixa</code> —
+  <code>bd_manipulador.py:1988</code>).</li>
+<li><code>gerar_matriz_organizador</code> (<code>bd_manipulador.py:2090</code>) gera <strong>capa por caixa</strong> em <strong>dois
+  formatos</strong> — <code>capa.txt</code> <strong>e</strong> <code>capa.pdf</code> (via pymupdf) — e a <strong>matriz geral</strong>
+  <code>matrizDeDocumentos.txt</code> <strong>e</strong> <code>matrizDeDocumentos.pdf</code>. O <code>.pdf</code> existe para quem precisa
+  imprimir a matriz de conferência física.</li>
+<li><code>validar_presenca_matriz</code> (<code>bd_manipulador.py:2121</code>) confere que <strong>todo <code>.pdf</code> listado na
+  matriz existe em disco</strong> — é a rede de segurança contra documento organizado sem registro.</li>
+<li><code>organizar_pastas</code> encadeia tudo e devolve <code>"&lt;N&gt; organizado(s). Matriz gerada (TOTAL documentos)."</code></li>
+</ul>
+<h3 id="solicitacoes-rf-39-fluxo-comum-admin">Solicitações (RF-39) — fluxo comum → admin<a class="headerlink" href="#solicitacoes-rf-39-fluxo-comum-admin" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>   comum (aba Navegar: seleciona + "Solicitar envio")
+        │  registra tb_solicitacoes(lote_id=…, status=pendente, metodo_envio=…)
+        ▼
+   admin (aba Solicitação)
+        ├─ e-mail  → enviado        (mod_intranet.email_util.enviar_email, SMTP central)
+        ├─ ZIP     → zip_gerado     (mod_renomear_empenho/downloads/solic_&lt;lote&gt;.zip)
+        │              └─ confirmar → concluído
+        └─ recusar → recusado        (grava motivo_recusa, visível ao comum)
+</code></pre></div>
+<ul>
+<li><strong>1 pedido por envio (grupo)</strong>: cada ação do comum cria <strong>um</strong> pedido com <code>lote_id</code>; vários
+  arquivos do mesmo envio são <strong>agrupados</strong> sob o mesmo <code>lote_id</code> — é o agrupamento que permite
+  ao admin tratar "12 arquivos" como uma unidade, e é o que torna o rótulo "lote" honesto.</li>
+<li>O histórico é exibido ao solicitante <strong>com o estado e, no caso de recusa, o motivo</strong>.</li>
+</ul>
 <h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>mod_intranet.bd_conexao</code> (<code>get_config</code>/<code>set_config</code> — chaves <code>empenhos_*</code> e <code>renomear_autorizar_download</code>).</li>
@@ -508,6 +886,9 @@
 <li><code>bd_criador.py</code> <strong>morto</strong> com esquema FTS5 fantasma — fonte de confusão; não executar.</li>
 <li>Monitor automático varre <strong>só a raiz</strong> de cada pasta monitorada; navegação/fila manuais são <strong>recursivas</strong> (comportamento intencional) — não equivaler automaticidade a recursividade.</li>
 <li>Intervalo padrão do monitor é <strong>600 s (10 min)</strong>; ajustado em <code>mod_intranet/rotinas.py</code> (<code>intervalo_monitor_empenho</code>), alterável pelo usuário na tela do módulo.</li>
+<li><strong><code>overflow-x-auto</code> perdido na barra de abas</strong> (25/09/2026) — a versão manual de <code>ui.tabs()</code> trazia <code>min-w-0 flex-1 overflow-x-auto</code>; <code>menu_modulo</code> devolve <code>w-full</code> sem a rolagem horizontal. Com 4 abas admin e rótulo "Fila Renomeação" o pior caso cabe em ~320 px, mas <strong>vale reverificar no RNF-UI-01</strong> se o menu passar a ter mais abas. Alternativa sem tocar no helper: envolver o <code>tabs_el</code> devolvido num <code>ui.element("div").classes("min-w-0 overflow-x-auto")</code>.</li>
+<li><strong><code>ui.notify</code> cru ainda é a maioria das notificações do módulo</strong> (25/09/2026): 117 ocorrências em <code>telas.py</code> + 23 em <code>telas_administracao.py</code>, contra a regra do AGENTS.md §5.1. O <code>mod_edit_pdf</code> foi migrado para <code>tema_modulo.notificar()</code> no mesmo dia; este módulo <strong>ainda não</strong>. A migração é mecânica (<code>notificar(msg, tipo=…)</code> aceita <code>type=</code>), mas é grande demais para um lote de bug-fix — deve ser tarefa própria, com guarda de QA por arquivo (o check atual de <code>verifica_ui_comum.py</code> só varre <code>mod_edit_pdf</code>).</li>
+<li>O <code>LIKE</code> de <code>pesquisar_levantamento</code> (<code>ORDER BY id DESC</code>, sem relevância) é <strong>o caminho do PostgreSQL</strong> e o <strong>complemento de substring</strong> do SQLite — não é fallback dispensável.</li>
 </ul>
 <h2 id="status-fases-do-plano-4b4c-concluidos">Status — Fases do PLANO (4b/4c concluídos)<a class="headerlink" href="#status-fases-do-plano-4b4c-concluidos" title="Permanent link">&para;</a></h2>
 <p><strong>Implementado:</strong> banco próprio em WAL; auditoria central com hash SHA-256; perfis/papéis por módulo; <strong>quarentena com motivo + reprocessamento individual e em lote sem reiniciar</strong> (<code>promover_quarentena</code>/<code>mover_quarentena</code>, <code>reprocesse_quarentena</code> + <code>reprocessar_fila</code> com botão "Reprocessar fila" — PLANO 4b); <strong>regex dinâmicas persistidas</strong> (<code>campo_destino</code> → FTS) com identificação manual (<code>renomear_manual</code>) e cadastro sem reiniciar; <strong>separação de múltiplos documentos</strong> (<code>detectar_documentos_no_pdf</code>/<code>separar_documentos_quarentena</code> com botão "Separar documentos"); renomeação automática sequencial; <strong>organizador físico completo (PLANO 4c)</strong> — ~200 páginas/subpasta, 4 subpastas/caixa (configuráveis), <strong>capas <code>capa.txt</code> + <code>capa.pdf</code> por caixa</strong> e <code>matrizDeDocumentos.txt/.pdf</code> geral com <code>validar_presenca_matriz</code> em <code>mod_renomear_empenho/organizadorPasta/</code>; indexação FTS5 (RF-41); ferramentas de PDF (RF-45); monitor automático multi-pasta (RF-40); ações de usuário comum (RF-39); tipos especiais EC/EE/EG/AE corrigidos; gate de validação; trilha por arquivo; solicitações comum→admin.</p>
@@ -541,7 +922,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">Índice FTS5 (30 campos)</td>
-<td style="text-align: left;"><code>tb_indexador_pesquisa_fts5</code> com <strong>32 colunas</strong> + campos customizados</td>
+<td style="text-align: left;"><code>tb_indexador_pesquisa_fts5</code> com <strong>59 colunas (<code>FTS_COLS</code>)</strong> + campos customizados</td>
 </tr>
 <tr>
 <td style="text-align: left;">Tipos EC/EE/EG/AE/EX</td>
@@ -579,7 +960,8 @@
 </ul>
 <h3 id="adicoes-recentes-092026-responsividade-global-rnf-ui-01">Adições recentes (09/2026) — responsividade global RNF-UI-01<a class="headerlink" href="#adicoes-recentes-092026-responsividade-global-rnf-ui-01" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Auditado 320/768/1024</strong> (<code>kbp-web-design</code>) — proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code>: <code>menu_modulo</code> <code>overflow-x-auto</code>, filtros/busca <code>flex-wrap</code> <code>flex-1 min-w</code>, tabelas <code>overflow-x-auto</code>, <code>scroll_area</code> altura explícita, grids <code>grid-cols-1 sm:grid-cols-2 md:grid-cols-3</code>, dialogs <code>w-full max-w</code>; header <code>flex-wrap</code> <code>truncate</code>. Ver <a href="../padroes_codificacao/">Padrões</a> §8.1.</li>
+<li><strong>Auditado 320/768/1024</strong> (<code>kbp-web-design</code>) — proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code>: <code>menu_modulo</code> <code>overflow-x-auto</code>, filtros/busca <code>flex-wrap</code> <code>flex-1 min-w</code>, tabelas <code>overflow-x-auto</code>, <code>scroll_area</code> altura explícita, grids <code>grid-cols-1 sm:grid-cols-2 md:grid-cols-3</code>, dialogs <code>w-full max-w</code>; header <code>flex-wrap</code> <code>truncate</code>. Ver <a href="../padroes_codificacao/">Padrões</a> §8.1.
+    ⚠️ <strong>Correção de 25/09/2026:</strong> o <code>overflow-x-auto</code> citado aqui era da barra de abas <strong>manual</strong> (<code>ui.tabs()</code> à mão). A migração para o helper <code>aba_modulo.menu_modulo</code> (ver "Padronização 1") <strong>removeu</strong> essa classe — o helper monta <code>ui.tabs().classes("w-full")</code>. Pendência registrada em "Pontos de atenção".</li>
 </ul>
 <h3 id="adicoes-recentes-14092026-levantamento-grava-usuario-listagem-exibe-empenhoparcelausuario">Adições recentes (14/09/2026) — levantamento grava usuário + listagem exibe empenho/parcela/usuário<a class="headerlink" href="#adicoes-recentes-14092026-levantamento-grava-usuario-listagem-exibe-empenhoparcelausuario" title="Permanent link">&para;</a></h3>
 <ul>
@@ -603,6 +985,53 @@
 <li>Editor de PDF e gestão <strong>não</strong> ficam dentro da tela dos empenhos — permanecem como módulos independentes (escopo definido na portabilidade).</li>
 <li>Intervalo de varredura foi elevado (60 s) para reduzir I/O em ambiente de rede; ajustável sem reiniciar.</li>
 </ul>
+<h2 id="pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada">Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)<a class="headerlink" href="#pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Documentação da correção pendente. Nenhum <code>.py</code> alterado neste lote.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Arquivo:linha</th>
+<th style="text-align: left;">Correção proposta contida no módulo</th>
+<th style="text-align: left;">Risco regressão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">renomear_empenho</td>
+<td style="text-align: left;">Sem <code>CrudBase</code>; FTS5 <code>VIRTUAL TABLE</code> + <code>sqlite_master</code> (degrada no PG por desenho)</td>
+<td style="text-align: left;"><code>mod_renomear_empenho/bd_manipulador.py:687</code>, <code>:786</code> (FTS5) · <code>:773</code> (<code>sqlite_master</code>) · <code>:660</code> (fallback LIKE)</td>
+<td style="text-align: left;">Manter fallback LIKE no PG; isolar FTS5 em ramo SQLite; migrar CRUD para <code>CrudBase</code>; <code>_tabela_existe()</code> interno</td>
+<td style="text-align: left;">Médio (monitor 60 s + quarentena + organizador)</td>
+</tr>
+</tbody>
+</table>
+<p>Detalhe consolidado em <a href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade</a>.</p>
+<h2 id="correcoes-registradas-26092026-lote-3">Correções registradas (26/09/2026 — lote 3)<a class="headerlink" href="#correcoes-registradas-26092026-lote-3" title="Permanent link">&para;</a></h2>
+<h3 id="bug-4-uisliderlabel-o-painel-admin-do-agregador-nao-abria">Bug 4 — <code>ui.slider(label=...)</code>: o painel admin do Agregador não abria<a class="headerlink" href="#bug-4-uisliderlabel-o-painel-admin-do-agregador-nao-abria" title="Permanent link">&para;</a></h3>
+<p>Não é deste módulo, mas o mesmo padrão apareceu aqui e no Agregador, então
+fica registrado junto. <code>ui.slider</code> <strong>não</strong> aceita <code>label=</code> como argumento nesta
+versão do NiceGUI: a chamada levantava <code>TypeError: got an unexpected keyword
+argument 'label'</code> e derrubava <code>page_admin_modulo</code> inteiro
+(<code>main.py:1136</code> → <code>telas_administracao.py:49</code>). O rótulo de um slider vai por
+<code>.props('label')</code>, como já era feito em <code>mod_filas/telas.py:183</code> e
+<code>mod_edit_pdf/telas.py:967</code>.</p>
+<p>Como o painel não abria, o erro ficava <strong>invisível</strong>: a rota devolvia 200 e o
+usuário só via um painel em branco. Validação depois da correção: os 10 painéis
+<code>/admin/*</code> abrem com conteúdo e <strong>zero erros de JS</strong> no console.</p>
+<h3 id="codigo-morto-_tela_pesquisar-107-linhas-removida">Código morto — <code>_tela_pesquisar</code> (107 linhas) removida<a class="headerlink" href="#codigo-morto-_tela_pesquisar-107-linhas-removida" title="Permanent link">&para;</a></h3>
+<p>A aba "Pesquisar" tinha sido descontinuada — o comentário em <code>telas.py:170</code>
+registra: <em>"Pesquisar removido — busca foi para o Navegar"</em>. A função
+<code>_tela_pesquisar</code> (com o campo <code>empenhos-busca</code>) continuou no arquivo, sem
+nenhum caller: 107 linhas que o <code>pyflakes</code> não acusa, porque código não
+chamado não é erro de sintaxe. Removida em 26/09/2026.</p>
+<p>O campo de busca da tela chama-se hoje <code>empenhos-navegar-pesquisa</code>. A suíte
+Playwright ainda referenciava o id antigo e falhou — o que expôs que o teste
+estava <strong>pulado</strong> desde a troca de senha forçada e nunca havia rodado contra a
+tela real.</p>
               
             </div>
           </div><footer>

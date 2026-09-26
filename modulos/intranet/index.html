@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -173,6 +183,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -230,12 +242,12 @@
               
                 <h1 id="intranet-core-module-mod_intranet">Intranet Core Module — <code>mod_intranet</code><a class="headerlink" href="#intranet-core-module-mod_intranet" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Core module: routes <code>/</code>, <code>/login</code>, <code>/configuracoes</code> · central database <code>db_mod_intranet.db</code> (WAL: unified audit, config, sessions, module registry) · revocable sessions · 4-part layout · centralized observability (loguru).</p>
+<p>Core module: routes <code>/</code>, <code>/login</code>, <code>/configuracoes</code> · central database <code>db_mod_intranet.db</code> (WAL: config, sessions, module registry) · revocable sessions · 4-part layout · centralized observability (loguru) · <strong><code>integracoes.py</code> integration facade</strong> (single public seam between modules, lazy imports + fail-soft).</p>
 </blockquote>
 <hr />
 <h1 id="modulo-nucleo-intranet-mod_intranet">Módulo Núcleo Intranet — <code>mod_intranet</code><a class="headerlink" href="#modulo-nucleo-intranet-mod_intranet" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo central: rotas <code>/</code>, <code>/login</code>, <code>/configuracoes</code> · banco central <code>db_mod_intranet.db</code> (auditoria unificada em WAL, configurações, sessões e cadastro de módulos) · sessões revogáveis · layout de 4 partes · observabilidade centralizada (loguru).</p>
+<p>Módulo central: rotas <code>/</code>, <code>/login</code>, <code>/configuracoes</code> · banco central <code>db_mod_intranet.db</code> (configurações, sessões e cadastro de módulos em WAL) · sessões revogáveis · layout de 4 partes · observabilidade centralizada (loguru) · <strong>fachada de integração <code>integracoes.py</code></strong> (costura pública única entre módulos, imports lazy + fail-soft).</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Pacote núcleo que centraliza o que todos os módulos compartilham: banco central (auditoria LGPD, configurações, sessões e cadastro de módulos), autenticação com sessões revogáveis, layout padrão de 4 partes com guarda de página, rotinas agendadas e a tela de personalização <code>/configuracoes</code>. <strong>Não possui <code>telas.py</code> próprio</strong> — suas telas são montadas pelas rotas de <code>main.py</code>.</p>
@@ -280,6 +292,7 @@ bd_conexao.py        get_config/set_config delegam para Repositorio
 <h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Autenticação bcrypt + sessões revogáveis</strong>: <code>autenticar</code> → <code>registrar_login</code> (cookie_hash via <code>secrets</code>) → <code>sessao_ativa</code> revalidada a cada request; encerrar sessão pelo admin derruba o navegador.</li>
+<li><strong>Fachada de integração <code>integracoes.py</code> (25/09/2026)</strong>: 7 funções públicas com <strong>imports lazy</strong> (dentro da função — um import de topo fecharia ciclo com <code>main.py</code>) e contrato <strong>fail-soft</strong> (valor neutro + <code>logger.warning</code>, nunca derruba a tela). É a forma canônica de um módulo de negócio acessar dado de outro módulo: <strong>o negócio fala com o núcleo, e o núcleo possui o acoplamento</strong> — o SQL continua rodando só no banco do módulo de destino, pelo <code>bd_manipulador</code> dele. Precedente: <code>censura.py</code> (dado compartilhado que mora no núcleo); validação: <code>assets/test/check_integridade.py</code> (13/13, era 5 falhas/17). Detalhes e checklist: <a href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração</a>.</li>
 <li><strong>Guarda de página</strong> (<code>pagina_restrita</code>): revalida usuário/sessão/permissão e monta o layout de 4 partes (header, drawer lateral, rodapé com versões, área principal).</li>
 <li><strong>Dashboard <code>/</code> (redesign Home 09/2026)</strong>: saudação + <strong>feed do Blog por padrão</strong> (RF-09) + <strong>2 cards de Resumo sem botão Atualizar</strong> — dados recalculados a cada acesso via <code>_orquestrar_resumo_dados()</code> (<code>main.py:250</code>):<ul>
 <li><strong>"Resumo do sistema" (8 métricas, só <code>administrador_geral</code>/<code>administrador_modulo</code> — <code>main.py:500</code> <code>eh_admin</code>)</strong>: <code>Usuários ativos</code> (<code>people</code>, <code>filtro_ativo=None</code>), <code>Sessões ativas</code> (<code>sensors</code>, <code>tb_sessoes WHERE logout IS NULL</code>), <code>Visitas</code> (<code>login</code>, <code>tb_config contador_acessos_total</code>), <code>Postagens</code> (<code>article</code>), <code>Quarentena pendente</code> (<code>warning</code>, <code>tb_quarentena processado=0</code>), <code>PDFs ativos</code> (<code>picture_as_pdf</code>, <code>tb_arquivos ativo=1</code>), <code>Registros de auditoria</code> (<code>history</code>), <code>Auditoria 24h</code> (<code>schedule</code>, <code>SUM COUNT WHERE timestamp &gt;= -1 day</code> por <code>tb_auditoria_*</code>). Ordem: <code>[Usuários, Sessões, Visitas, Postagens, Quarentena, PDFs, Logs, Logs 24h]</code>, <code>gap-1 px-2 py-1</code>, ícone 36px <code>text-2xl</code>, número <code>text-h6</code> 4 dígitos (<code>&gt;9999</code> com total real no tooltip) — <code>_stat()</code> (<code>main.py:325</code>).</li>
@@ -749,6 +762,7 @@ bd_conexao.py        get_config/set_config delegam para Repositorio
 <ul>
 <li>Rotas: <code>/</code> (<code>main.py:189</code>), <code>/login</code> (<code>main.py:115</code>), <code>/admin/{chave_modulo}</code> (<code>main.py:439</code> — dispatch de admin por módulo, renderiza <code>mod_&lt;nome&gt;/telas_administracao.py</code> standalone), <code>/configuracoes</code> (<code>main.py:527</code> — painel central, guarda <code>pagina_restrita("Administração")</code>), <code>/documentacao</code> (mount).</li>
 <li>Consumido por todos: <code>pagina_restrita</code>, <code>get_connection</code>/<code>get_config</code>/<code>set_config</code>, <code>audit_log</code>/<code>audit_reg</code>, <code>CrudBase</code>, <code>gerar_hash_senha</code>, <code>validar_acesso_modulo</code>.</li>
+<li><strong>Fachada de integração</strong> (<code>integracoes.py</code>, 25/09/2026) — 7 funções fail-soft de imports lazy que permitem a um módulo de negócio alcançar outro <strong>sem importá-lo</strong> (o núcleo possui o acoplamento; o banco de cada módulo continua isolado): <code>obter_usuario_gestao</code>/<code>listar_usuarios_gestao</code> (Filas, Lista Telefônica → Gestão de Usuários), <code>agregador_habilitado</code>/<code>listar_noticias_para_tv</code> (Filas → Agregador), <code>limpar_noticias_censuradas</code> (Blog → Agregador), <code>obter_organograma_base</code> (Solicitação → Lista Telefônica, com fallback local no chamador) e <code>modulo_habilitado</code>. Fecha as 5 violações de isolamento detectadas por <code>assets/test/check_integridade.py</code> (<strong>5 falhas/17 → 13/13</strong>). Referência completa: <a href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração</a>.</li>
 <li>Jobs: <code>backup:&lt;chave&gt;</code> (12 h), <code>cleanup_pdf</code>/<code>cleanup_solicita</code> (1 min), <code>poda_auditoria</code> (24 h), <code>monitor_empenho</code> (10 s).</li>
 </ul>
 <h2 id="testes">Testes<a class="headerlink" href="#testes" title="Permanent link">&para;</a></h2>
@@ -757,19 +771,21 @@ bd_conexao.py        get_config/set_config delegam para Repositorio
 .venv/bin/python<span class="w"> </span>test/verifica_ui_comum.py<span class="w">   </span><span class="c1"># 190 verificações (ui_comum + no_caps + helpers de tela + padrão próprio do tema + edit_pdf migrado + cabecalho com tema do módulo + campo_texto/campo_selecao + campo_cor/card_config + campo_modulo restaurado + equivalência wrapper↔classe)</span>
 .venv/bin/python<span class="w"> </span>test/smoke_senha_ui_comum.py<span class="w"> </span><span class="c1"># 8 verificações (NiceGUI real: campo_texto(senha=True) byte-idêntico ao ui.input cru)</span>
 .venv/bin/python<span class="w"> </span>test/teste_classes_crud.py<span class="w">   </span><span class="c1"># 68 verificações (CrudBase em SQLite real, gancho de auditoria, banco_conexao, equivalência wrapper↔classe, GradeTabela/PainelLista/FormularioBuilder)</span>
+.venv/bin/python<span class="w"> </span>assets/test/check_integridade.py<span class="w">  </span><span class="c1"># 13/13 — isolamento modular por AST (fachada integracoes.py)</span>
 </code></pre></div>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>inicializar_bancos()</code> roda o central <strong>antes</strong> de importar módulos (ordem crítica — <code>main.py:16-17</code>).</li>
 <li><code>storage_secret</code> é placeholder (<code>main.py:336</code>) — trocar em produção.</li>
-<li><code>backup_interval_hours</code> é seed legada; os jobs usam <code>backup_horas:&lt;modulo&gt;</code>.</li>
+<li><code>backup_interval_hours</code> é o intervalo do card "Configurações gerais" (grava e <strong>reagenda</strong> o job global); os jobs por módulo usam <code>backup_horas:&lt;modulo&gt;</code>. <code>sessao_retencao</code> (dias, padrão 50) tem campo no mesmo card. <strong>Desde 25/09/2026 as duas chaves estão em <code>PADRAO_CONFIG</code></strong>, junto com todos os outros defaults de <code>tb_config</code> — o default nunca mais pode ser escrito como literal em outro ponto (ver <a href="../../analise_mod_intranet/#padrao_config-fonte-unica-de-verdade-dos-defaults-25092026">Análise do Núcleo — <code>PADRAO_CONFIG</code></a>).</li>
+<li><strong><code>grafana_sync.obter_grafana_url()</code> só aceita <code>http(s)</code></strong>: valor fora do esquema (ex.: <code>file://</code>) é ignorado e cai no padrão <code>http://localhost:3000</code> (correção de segurança 25/09/2026, bandit B310).</li>
 </ul>
 <p>Ver <a href="../../analise_mod_intranet/">Análise do Núcleo</a> (detalhe completo, incluindo reconstrução de <code>bd_conexao.py</code>/<code>bd_manipulador.py</code> a partir de <code>*.pyc</code>).</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../../analise_mod_agregador_noticias/" class="btn btn-neutral float-left" title="Agregador de Notícias"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../analise_mod_agregador_noticias_puro/" class="btn btn-neutral float-left" title="Agregador de Notícias — Tela Pura"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../gest_cad_usuario/" class="btn btn-neutral float-right" title="Gestão de Usuários">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -793,7 +809,7 @@ bd_conexao.py        get_config/set_config delegam para Repositorio
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../../analise_mod_agregador_noticias/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../../analise_mod_agregador_noticias_puro/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../gest_cad_usuario/" style="color: #fcfcfc">Next &raquo;</a></span>

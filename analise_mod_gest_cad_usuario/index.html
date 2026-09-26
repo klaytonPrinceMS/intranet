@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -230,12 +242,12 @@
               
                 <h1 id="gestao-de-usuarios-mod_gest_cad_usuario">Gestão de Usuários — <code>mod_gest_cad_usuario</code><a class="headerlink" href="#gestao-de-usuarios-mod_gest_cad_usuario" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>User management module: route <code>/users</code> (key <code>usuarios</code>) · own database <code>db_mod_gest_cad_usuario.db</code> · soft CRUD, bcrypt, multi-profile/role, revocable sessions, cross-module LGPD cleanup.</p>
+<p>User management module: route <code>/users</code> (key <code>usuarios</code>) · own database <code>db_mod_gest_cad_usuario.db</code> · soft CRUD, bcrypt, multi-profile/role, revocable sessions, cross-module LGPD cleanup · <strong>the single user registry, consumed by other modules through the <code>mod_intranet/integracoes.py</code> facade (never a direct import)</strong>.</p>
 </blockquote>
 <hr />
 <h1 id="gestao-de-usuarios-mod_gest_cad_usuario_1">Gestão de Usuários — <code>mod_gest_cad_usuario</code><a class="headerlink" href="#gestao-de-usuarios-mod_gest_cad_usuario_1" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo de gestão de usuários: rota <code>/users</code> (chave <code>usuarios</code>) · banco próprio <code>db_mod_gest_cad_usuario.db</code> · soft CRUD, bcrypt, múltiplos perfis/papéis, sessões revogáveis, limpeza cruzada LGPD.</p>
+<p>Módulo de gestão de usuários: rota <code>/users</code> (chave <code>usuarios</code>) · banco próprio <code>db_mod_gest_cad_usuario.db</code> · soft CRUD, bcrypt, múltiplos perfis/papéis, sessões revogáveis, limpeza cruzada LGPD · <strong>fonte única do cadastro, consumida pelos demais módulos pela fachada <code>mod_intranet/integracoes.py</code> (nunca por import direto)</strong>.</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Soft CRUD completo de usuários: criar, editar, renomear, bloquear/desbloquear, excluir logicamente (com motivo) e excluir permanentemente (LGPD). Gerencia perfis globais (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) e papéis granulares por módulo, além da visualização e revogação de sessões ativas de todo o sistema. Acesso restrito ao administrador geral ou administrador do módulo <code>usuarios</code>.</p>
@@ -296,7 +308,9 @@
 </tr>
 </tbody>
 </table>
-<p><strong><code>tb_acesso_usuario</code></strong> — vínculo usuário×módulo×papel (<code>UNIQUE(user_nome, modulo_chave)</code>, FK CASCADE para <code>tb_usuarios</code>); <code>modulo_chave</code> é texto livre — origem dos vínculos órfãos.</p>
+<p><strong><code>tb_acesso_usuario</code></strong> — vínculo usuário×módulo×papel (<code>UNIQUE(user_nome, modulo_chave)</code>, FK CASCADE para <code>tb_usuarios</code>); <code>modulo_chave</code> é texto livre — origem dos vínculos órfãos (helper <code>listar_vinculos_orfaos(chaves_ativas)</code>; tela marca como badge <code>INDISPONÍVEL</code>). Coluna <code>flags</code> (JSON TEXT, default <code>'{}'</code>) para permissões finas.</p>
+<p><strong>Flags finas</strong> — catálogo <code>FLAGS_PERMISSAO</code> (<code>blog.publicar</code>, <code>blog.comentar</code>, <code>blog.configurar</code>): <code>obter_flags</code> (fail-soft <code>{}</code>), <code>definir_flags</code> (allowlist, exige vínculo) e <code>tem_flag</code> (admin passa pelo papel). <code>duplicar_usuario</code> replica papéis + flags da origem.</p>
+<p><strong>Sessões (banco central <code>tb_sessoes</code>)</strong> — <code>id, usuario, modulo, login_timestamp, cookie_hash, ip, dispositivo, mac, logout_timestamp</code>; abertas = <code>logout_timestamp IS NULL</code>. Helpers: <code>listar_sessoes_ativas</code>, <code>contar_sessoes_ativas</code>, <code>sessoes_ativas_por_usuario</code>, <code>listar_historico_sessoes</code> (10 últimas encerradas), <code>encerrar_sessao</code> / <code>encerrar_todas_sessoes</code> / <code>_fechar_sessoes_central</code> (invocado em bloqueio, soft/hard delete e reset de senha). Renomear reflete nas sessões centrais abertas.</p>
 <p>⚠️ <code>tb_modulo_perfil</code> existe apenas no <code>bd_criador.py</code>, que é <strong>código legado/morto</strong>: usa a conexão do banco <strong>central</strong> (criaria as tabelas em <code>db_mod_intranet.db</code>) e não é importado por ninguém.</p>
 <h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
 <ul>
@@ -315,13 +329,313 @@
 <li><strong>Senha provisória</strong>: criação/redefinição marcam <code>forcar_troca</code>; redefinição derruba todas as sessões. O admin digita a senha manualmente (não é gerada aleatória como diz o PLANO 2.5).</li>
 <li><strong>Auto-cura do master</strong>: enquanto a senha for <code>master</code>, a troca é rearmada a cada boot (<code>bd_manipulador.py:168-194</code>) — corrige o roadmap do README que dizia o contrário.</li>
 </ul>
+<h2 id="soft-crud-perfispapeis-e-sessoes-revogaveis-referencia-de-api">Soft CRUD, perfis/papéis e sessões revogáveis — referência de API<a class="headerlink" href="#soft-crud-perfispapeis-e-sessoes-revogaveis-referencia-de-api" title="Permanent link">&para;</a></h2>
+<p>O módulo expõe uma API funcional pura (sem camada de classe) dividida em 7 blocos
+por separadores <code># =================</code>. Todas as funções devolvem
+<code>(ok, msg)</code> nas operações de escrita e <code>None</code>/<code>[]</code>/falsy nas consultas, com
+<code>try/except</code> + loguru (fail-soft, AGENTS.md §3.2).</p>
+<h3 id="consultas-bd_manipuladorpy423-544">Consultas (<code>bd_manipulador.py:423-544</code>)<a class="headerlink" href="#consultas-bd_manipuladorpy423-544" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Devolve</th>
+<th style="text-align: left;">Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>listar_usuarios(filtro_ativo=None)</code></td>
+<td style="text-align: left;"><code>list[tuple]</code> de <strong>11 campos</strong>: <code>(0)id, (1)user_nome, (2)user_perfil, (3)user_ativo, (4)user_email, (5)user_fone, (6)data_cadastro, (7)acessos "modulo:papel, …", (8)user_deletado, (9)user_nome_completo, (10)user_motivo_exclusao</code>. <code>filtro_ativo</code> filtra <code>user_ativo</code>; <strong>não</strong> filtra <code>user_deletado</code> (os soft-deleted <strong>aparecem</strong> com a flag ligada em <code>[8]</code>); ordenação por login</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>obter_usuario(user_nome)</code></td>
+<td style="text-align: left;"><code>tuple</code> de <strong>10 campos</strong> ou <code>None</code>: <code>(0)id, (1)user_nome, (2)user_senha, (3)user_email, (4)user_fone, (5)user_perfil, (6)user_ativo, (7)data_cadastro, (8)user_deletado, (9)user_nome_completo</code>. Inclui o hash da senha (uso interno do núcleo); ponto de entrada da fachada <code>obter_usuario_gestao</code></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>nome_de_tratamento(user_nome)</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;"><code>user_nome_completo</code> (nome social, Decreto 8.727/2016) com fallback no login</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_acessos(user_nome)</code></td>
+<td style="text-align: left;"><code>list[tuple]</code></td>
+<td style="text-align: left;">Papéis por módulo + flags finas</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Os dois formatos de tupla NÃO são o mesmo</p>
+<p><code>listar_usuarios</code> e <code>obter_usuario</code> devolvem <strong>layouts diferentes</strong> — só
+coincidem em <code>[1]</code> (login) e <code>[9]</code> (nome completo). Assim, <code>[4]</code> é
+<strong><code>user_email</code></strong> em <code>listar_usuarios</code> e <strong><code>user_fone</code></strong> em <code>obter_usuario</code>:
+quem consome precisa saber qual função chamou. Os consumidores atuais
+respeitam isso — <code>mod_lista_telefonica/telas_administracao.py:697</code> filtra a
+<strong>lista</strong> por <code>[1]</code>/<code>[9]</code>/<code>[4]</code> (login, nome completo, e-mail) e, em
+<code>:746-756</code>, lê <code>[9]</code> e <code>[4]</code> da <strong>tupla única</strong> (nome completo, telefone).</p>
+</div>
+<h3 id="crud-546-1018">CRUD (<code>:546-1018</code>)<a class="headerlink" href="#crud-546-1018" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Regra de negócio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>criar_usuario(ator, user_nome, senha, email=None, fone=None, perfil="comum", ...)</code></td>
+<td style="text-align: left;">Senha vazia/<code>None</code> → padrão inicial; mínimo <code>usuarios_senha_min</code> (default 6); marca <code>forcar_troca</code>; semeia <code>ACESSO_PADRAO_NOVO_USUARIO</code>; audita <code>criar_usuario</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>editar_usuario(ator, user_nome, ...)</code></td>
+<td style="text-align: left;">Aplica <strong>só diferenças</strong>; login travado para <code>master</code>; <strong>RF-26</strong> bloqueia rebaixar/bloquear o último <code>administrador_geral</code> ativo quando o ator é outro admin; marcador <code>__NULO__</code> distingue "não informado" de "limpar"</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>renomear_usuario(ator, nome_atual, novo_nome, permitir_master=False)</code></td>
+<td style="text-align: left;">Preserva o <code>id</code>; propaga em <code>tb_acesso_usuario</code>, sessões centrais abertas e autorias dos demais módulos (<code>_vinculos_cruzados_renomear</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>alterar_senha_admin(ator, user_nome, nova_senha)</code></td>
+<td style="text-align: left;">Marca troca pendente e <strong>derruba todas as sessões</strong> do usuário</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bloquear_usuario(ator, user_nome, bloquear=True)</code></td>
+<td style="text-align: left;">Fecha as sessões (<code>_fechar_sessoes_central</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>soft_delete_usuario(ator, user_nome, motivo=None)</code></td>
+<td style="text-align: left;">Exclusão <strong>lógica</strong> com motivo <strong>≥ 3 chars obrigatório</strong>; grava <code>user_motivo_exclusao</code>; encerra sessões; <strong>reversível</strong> ("Restaurar" limpa o motivo); recusa <code>master</code> e a própria conta</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>excluir_usuario_definitivo(ator, user_nome)</code></td>
+<td style="text-align: left;">Estágio 2 LGPD: <code>DELETE</code> físico + limpeza cruzada; <strong>só</strong> admin geral; protege o último <code>administrador_geral</code> ativo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>duplicar_usuario(ator, usuario_origem, novo_nome, senha, ...)</code></td>
+<td style="text-align: left;">Clona perfil global, papéis por módulo <strong>e flags finas</strong> da origem</td>
+</tr>
+</tbody>
+</table>
+<h3 id="papeis-por-modulo-1020-1119">Papéis por módulo (<code>:1020-1119</code>)<a class="headerlink" href="#papeis-por-modulo-1020-1119" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Devolve</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>definir_acesso(ator, user_nome, modulo_chave, papel)</code></td>
+<td style="text-align: left;">Concede/vincula — papel em <code>PAPEIS_MODULO = ["comum", "administrador"]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>remover_acesso(ator, user_nome, modulo_chave)</code></td>
+<td style="text-align: left;">Revoga o vínculo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>obter_papel_no_modulo(user_nome, modulo_chave)</code></td>
+<td style="text-align: left;"><code>"administrador"</code>, <code>"comum"</code> ou <code>None</code> — <strong><code>administrador_geral</code> ativo resolve como <code>administrador</code> em qualquer módulo</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>validar_acesso_modulo(user_nome, modulo_chave)</code></td>
+<td style="text-align: left;">Booleano usado pela guarda de página do núcleo (<code>autenticacao.py</code>) e pelo menu. <strong>RF-35:</strong> <code>auditoria</code> é exclusivo do <code>administrador_geral</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>PERFIS_GLOBAIS = ["comum", "administrador_modulo", "administrador_geral"]</code> e
+<code>ACESSO_PADRAO_NOVO_USUARIO = ("editar_pdf", "empenhos", "solicita_impressao")</code> —
+<code>usuarios</code>, <code>auditoria</code> e <code>blog</code> <strong>nascem sem vínculo</strong> (concessão manual do admin).</p>
+<h3 id="flags-finas-json-por-vinculo-1121-1219">Flags finas — JSON por vínculo (<code>:1121-1219</code>)<a class="headerlink" href="#flags-finas-json-por-vinculo-1121-1219" title="Permanent link">&para;</a></h3>
+<p>Catálogo <code>FLAGS_PERMISSAO</code> = <code>blog.publicar</code>, <code>blog.comentar</code>, <code>blog.configurar</code>
+(JSON TEXT na coluna <code>flags</code> de <code>tb_acesso_usuario</code>, default <code>'{}'</code>).
+<code>obter_flags</code> (fail-soft <code>{}</code>), <code>definir_flags</code> (allowlist — valida contra o
+catálogo — e <strong>exige vínculo prévio</strong>) e <code>tem_flag(user, modulo, flag)</code> (quem é
+admin passa pelo papel, sem precisar da flag).</p>
+<h3 id="sessoes-revogaveis-1221-1363">Sessões revogáveis (<code>:1221-1363</code>)<a class="headerlink" href="#sessoes-revogaveis-1221-1363" title="Permanent link">&para;</a></h3>
+<p>As sessões vivem no <strong>banco central</strong> (<code>tb_sessoes</code> do <code>mod_intranet</code>) — este
+módulo é o <strong>único</strong> autorizado a lê-las e a <strong>fechá-las</strong> por ação administrativa
+(o login/sessão em si é do núcleo).</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Papel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>_fechar_sessoes_central(user_nome)</code></td>
+<td style="text-align: left;">Usada internamente por bloqueio, soft/hard delete e reset de senha — <strong>fecha todas</strong> as sessões abertas do usuário</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_sessoes_ativas(usuario=None)</code></td>
+<td style="text-align: left;">Todas do sistema ou de um usuário (IP, dispositivo, MAC em tooltip)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>contar_sessoes_ativas(usuario=None)</code> / <code>sessoes_ativas_por_usuario()</code></td>
+<td style="text-align: left;">Agregados do painel e do dashboard <code>/</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_historico_sessoes(usuario, limite=10)</code></td>
+<td style="text-align: left;">10 últimas encerradas por usuário (duração calculada na tela)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>encerrar_sessao(ator, sessao_id)</code></td>
+<td style="text-align: left;">Encerra <strong>uma</strong> sessão por id (idempotente: "Sessão já encerrada"); audita <code>encerrar_sessao</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>encerrar_todas_sessoes(ator, user_nome)</code></td>
+<td style="text-align: left;">Encerramento em massa; audita <code>encerrar_todas_sessoes</code></td>
+</tr>
+</tbody>
+</table>
+<p>O mecanismo completo (cookie <code>cookie_hash</code> via <code>secrets</code>, revalidação a cada
+request em <code>sessao_ativa</code>) é do núcleo — ver
+<a href="../analise_mod_intranet/#autenticacao-e-sessoes">Análise do Núcleo</a>. A retenção do
+histórico usa a chave <code>sessao_retencao</code> (dias, default 50 — <code>PADRAO_CONFIG</code>).</p>
+<h3 id="vinculos-orfaos-1365-1385">Vínculos órfãos (<code>:1365-1385</code>)<a class="headerlink" href="#vinculos-orfaos-1365-1385" title="Permanent link">&para;</a></h3>
+<p><code>listar_vinculos_orfaos(chaves_ativas)</code> devolve os vínculos cujo <code>modulo_chave</code>
+não está mais em <code>tb_modulos</code> — a tela os exibe com badge <code>INDISPONÍVEL</code> nos
+seletores. Observação: a função existe mas <strong>não é chamada</strong> pela tela (ver
+"Pontos de atenção").</p>
+<h2 id="limpeza-cruzada-lgpd-a-unica-excecao-de-negocionegocio">Limpeza cruzada LGPD — a única exceção de negócio→negócio<a class="headerlink" href="#limpeza-cruzada-lgpd-a-unica-excecao-de-negocionegocio" title="Permanent link">&para;</a></h2>
+<p>Quando um usuário é <strong>excluído</strong> (definitivo) ou <strong>renomeado</strong>, a Gestão de
+Usuários precisa limpar/anonimizar a autoria dele <strong>nos demais módulos</strong>:
+postagens e comentários do Blog, arquivos e cota do Editor de PDF, e autoria dos
+Empenhos (que vira <code>"(usuário excluído)"</code>). A <strong>auditoria é sempre preservada</strong>
+(rastro legal não se apaga).</p>
+<p>Essa necessidade é a <strong>única exceção documentada</strong> à regra de isolamento: cada
+módulo é acionado pela sua <strong>API pública</strong> (<code>_vinculos_cruzados_excluir</code> /
+<code>_vinculos_cruzados_renomear</code> chamam o <code>bd_manipulador</code> de cada vizinho), então
+<strong>cada módulo continua tocando só o seu próprio banco</strong> — não existe cross-query
+de SQL nem <code>sqlite3.connect</code> em banco alheio. É uma operação de negócio que
+precisa ser coerente na frente do usuário, não uma consulta que atravessa
+bancos.</p>
+<p>Por isso o <code>assets/test/check_integridade.py</code> mantém a allowlist
+<code>CASCATA_LGPD</code> com exatamente estes três pares e considera <strong>qualquer outro</strong>
+par negócio→negócio uma falha estrutural:</p>
+<div class="highlight"><pre><span></span><code><span class="n">CASCATA_LGPD</span> <span class="o">=</span> <span class="p">{(</span><span class="s2">"mod_gest_cad_usuario"</span><span class="p">,</span> <span class="s2">"mod_blog"</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">"mod_gest_cad_usuario"</span><span class="p">,</span> <span class="s2">"mod_edit_pdf"</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">"mod_gest_cad_usuario"</span><span class="p">,</span> <span class="s2">"mod_renomear_empenho"</span><span class="p">)}</span>
+</code></pre></div>
+<p>Desde 25/09/2026 os <strong>demais</strong> usos de dado entre módulos passaram a passar pela
+fachada <code>mod_intranet/integracoes.py</code> (ver seção seguinte e
+<a href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração</a>).</p>
+<h2 id="fonte-unica-do-cadastro-consumo-via-mod_intranetintegracoespy-25092026">Fonte única do cadastro — consumo via <code>mod_intranet/integracoes.py</code> (25/09/2026)<a class="headerlink" href="#fonte-unica-do-cadastro-consumo-via-mod_intranetintegracoespy-25092026" title="Permanent link">&para;</a></h2>
+<p>Este módulo é a <strong>fonte única do cadastro de usuários</strong> da intranet. A partir de
+25/09/2026 os demais módulos <strong>não o importam mais direto</strong>: consomem o cadastro
+pela <strong>fachada pública do núcleo</strong>, <code>mod_intranet.integracoes</code>
+(imports lazy + fail-soft, AGENTS.md §2 — nunca cross-query entre bancos).</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Fachada (<code>integracoes.py</code>)</th>
+<th style="text-align: left;">Delegada a</th>
+<th style="text-align: left;">Consumidores</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>obter_usuario_gestao(user_nome)</code> <code>:32</code></td>
+<td style="text-align: left;"><code>obter_usuario</code></td>
+<td style="text-align: left;"><code>mod_filas/bd_manipulador.py:454</code> (reconhecer <code>administrador_geral</code> antes de autorizar) · <code>mod_filas/bd_manipulador.py:483</code> (<code>liberar_acesso</code> recusa usuário não cadastrado) · <code>mod_lista_telefonica/telas_administracao.py:745</code> (preenche nome e telefone do contato)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_usuarios_gestao(filtro_ativo=None)</code> <code>:49</code></td>
+<td style="text-align: left;"><code>listar_usuarios</code></td>
+<td style="text-align: left;"><code>mod_filas/telas.py:631</code> (autocomplete "liberar fila para usuário cadastrado") · <code>mod_lista_telefonica/telas_administracao.py:689</code> (busca de contato por nome, login ou e-mail)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>O que muda para quem consome:</strong></p>
+<ul>
+<li>O <code>try/except</code> fica no <strong>núcleo</strong>; a fachada devolve <code>None</code>/<code>[]</code> e registra
+  <code>logger.warning</code> — a tela do consumidor decide se exibe "Nenhum usuário
+  encontrado" ou um aviso amigável.</li>
+<li>Os <strong>valores neutros</strong> cobrem três cenários que antes viravam <code>try/except</code>
+  espalhado no chamador: módulo ausente, banco fechado/locked e usuário inexistente.</li>
+<li>O <strong>formato posicional das tuplas</strong> é contrato informal de consumo — por isso
+  a fachada repassa a lista como veio, sem reordenar (quem indexa é o chamador).
+  Layouts <strong>diferentes</strong> entre as duas funções: <code>listar_usuarios</code> (11 campos,
+  <code>[4]</code> = e-mail) e <code>obter_usuario</code> (10 campos, <code>[4]</code> = telefone); só <code>[1]</code>
+  (login) e <code>[9]</code> (nome completo) coincidem. Ver o alerta na seção de consultas.</li>
+<li><code>obter_usuario_gestao</code> repassa a tupla <strong>com o hash da senha</strong> no campo
+  <code>[2]</code> (é o mesmo <code>obter_usuario</code> que o núcleo usa em <code>usuario_existe</code>): nunca
+  logar nem exibir esse campo na tela.</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Se você precisa de dado que NÃO é o cadastro de usuário</p>
+<p>Não abra exceção no isolamento: acrescente uma função à fachada
+<code>mod_intranet/integracoes.py</code> seguindo o
+<a href="../arquitetura_de_software_das/fachada_integracoes/#como-adicionar-uma-funcao-nova-na-fachada">checklist de 7 passos</a>
+(import lazy, fail-soft, docstring bilíngue, <code>check_integridade.py</code> verde).
+Dados que são <strong>configuração global</strong> nem precisam da fachada — use
+<code>get_config</code>/<code>set_config</code> (precedente <code>censura.py</code>).</p>
+</div>
+<h2 id="seeds-idempotentes-de-contas-agentsmd-82">Seeds idempotentes de contas (AGENTS.md §8.2)<a class="headerlink" href="#seeds-idempotentes-de-contas-agentsmd-82" title="Permanent link">&para;</a></h2>
+<p><code>init_db()</code> (<code>bd_manipulador.py:174-186</code>, executado no import <strong>e</strong> pelo
+bootstrap central) é a <strong>fonte única</strong> dos seeds. São criados <strong>só se ainda não
+existirem</strong> (idempotente) — nunca duplicados em outro ponto do código.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Usuário</th>
+<th style="text-align: left;">Perfil global</th>
+<th style="text-align: left;">Observações</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>master</code></td>
+<td style="text-align: left;"><code>administrador_geral</code></td>
+<td style="text-align: left;">Conta nativa; 1º login <strong>força</strong> troca de senha <strong>e</strong> de credenciais (<code>marcar_trocar_senha</code> + <code>marcar_trocar_credenciais</code>). Enquanto a senha padrão existir, a troca é <strong>rearmada a cada boot</strong> (auto-cura idempotente, <code>:343-350</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>qacomum</code></td>
+<td style="text-align: left;"><code>comum</code></td>
+<td style="text-align: left;">Teste/QA; reconciliado a cada boot com <code>ACESSO_PADRAO_NOVO_USUARIO</code> (<code>INSERT OR IGNORE</code> dos 3 acessos comuns + <code>DELETE</code> do vínculo <code>blog</code> legado concedido por <code>sistema</code>) — <strong>concessões manuais do admin são preservadas</strong> (<code>:394-404</code>); troca forçada no 1º login</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>qamaster</code></td>
+<td style="text-align: left;"><code>administrador_geral</code></td>
+<td style="text-align: left;">Teste/QA; troca forçada no 1º login</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition danger">
+<p class="admonition-title">Credenciais fora desta documentação</p>
+<p>As senhas provisórias dos seeds <strong>não</strong> são publicadas aqui nem em nenhum
+artefato versionado. A senha padrão é <strong>provisória</strong>: qualquer fluxo de teste
+deve supor que ela <strong>já pode ter sido trocada</strong> pelo usuário. A tabela acima é
+o contrato (login + perfil + regras); os valores vivem apenas no código
+(<code>bd_manipulador.py</code>, contexto interno do AGENTS.md §8.2).</p>
+</div>
+<p>O bootstrap em si é <strong>check-then-add idempotente</strong> e portátil SQLite↔PostgreSQL
+(<code>PRAGMA table_info</code> → <code>information_schema</code> no proxy; <code>INSERT OR IGNORE</code> →
+<code>ON CONFLICT DO NOTHING</code>), com <code>_commit_com_retry</code> (busy_timeout herdado + retry
+em <code>database is locked</code>) e rollback em falha parcial. <code>init_db()</code> <strong>nunca</strong>
+derruba o import do módulo: o <code>try/except</code> do entry point absorve e registra.</p>
 <h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
-<p>Importa <code>autenticacao</code> (hash/verificação de senha, papéis, troca pendente), <code>get_connection</code> central e <code>audit_log</code>. Ações auditadas: <code>criar_usuario</code>, <code>editar_usuario</code>, <code>renomear_usuario</code>, <code>alterar_senha</code>, <code>soft_delete</code>, <code>excluir_definitivo</code>, <code>definir_acesso</code>, <code>remover_acesso</code>, <code>encerrar_sessao</code>, <code>encerrar_todas_sessoes</code>. Escreve/lê diretamente <code>tb_sessoes</code> central. Nenhuma chave <code>tb_config</code> usada.</p>
+<p>Importa <code>autenticacao</code> (hash/verificação de senha, papéis, troca pendente), <code>get_connection</code> central e <code>audit_log</code>. Ações auditadas: <code>criar_usuario</code>, <code>editar_usuario</code>, <code>renomear_usuario</code>, <code>alterar_senha</code>, <code>soft_delete</code>, <code>excluir_definitivo</code>, <code>definir_acesso</code>, <code>remover_acesso</code>, <code>encerrar_sessao</code>, <code>encerrar_todas_sessoes</code>. Escreve/lê diretamente <code>tb_sessoes</code> central. Nenhuma chave <code>tb_config</code> usada (exceto a leitura de <code>usuarios_senha_min</code>, feita pelo núcleo via <code>get_config</code>).</p>
+<p><strong>Na direção inversa (25/09/2026)</strong>: este módulo é a <strong>fonte do cadastro</strong> e
+passou a ser acessado <strong>pela fachada</strong> <code>mod_intranet.integracoes</code> — o Blog, as
+Filas e a Lista Telefônica <strong>não o importam mais</strong>. Detalhes na seção
+"Fonte única do cadastro". A auditoria das próprias ações deste módulo também
+segue pelo <code>audit_log</code> do núcleo para <code>db_mod_auditoria.db</code>
+(tabela <code>tb_auditoria_usuarios</code>) — ver
+<a href="../analise_mod_auditoria/#anatomia-da-escrita-na-trilha-25092026">Análise do Módulo Auditoria</a>.</p>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>bd_criador.py</code> é morto e aponta para o banco central — não executar.</li>
 <li><code>listar_vinculos_orfaos()</code> existe mas não é chamada pela tela (órfãos aparecem apenas como badge INDISPONÍVEL nos seletores).</li>
-<li>Renomear usuário replica o nome nas tabelas dependentes e nas sessões centrais.</li>
+<li>Renomear usuário replica o nome nas tabelas dependentes (<code>tb_acesso_usuario</code>), nas sessões centrais abertas e nas autorias dos demais módulos (<code>_vinculos_cruzados_renomear</code>).</li>
+<li><strong>Duplicar usuário</strong> (<code>duplicar_usuario</code> + <code>_dlg_duplicar</code> em <code>telas.py</code>): clona perfil global, papéis por módulo e flags finas da origem (ajustáveis nos seletores antes de salvar).</li>
+<li><strong>Seed idempotente (fonte única do módulo, <code>init_db</code>)</strong>: conta nativa <code>master</code> (<code>administrador_geral</code>) + contas QA (<code>qacomum</code> <code>comum</code>, <code>qamaster</code> <code>administrador_geral</code>); todas com troca forçada no 1º login e auto-cura do <code>master</code> a cada boot; <code>qacomum</code> reconcilia <code>ACESSO_PADRAO_NOVO_USUARIO</code> (<code>editar_pdf</code>, <code>empenhos</code>, <code>solicita_impressao</code> como <code>comum</code>; sem <code>blog</code>/<code>usuarios</code>/<code>auditoria</code>). Valores das senhas provisórias não publicados nesta doc (contexto interno em <code>bd_manipulador.py</code>).</li>
+<li><strong>Administração (<code>/admin/usuarios</code>, <code>telas_administracao.py:mostrar_administracao</code>, só admin geral)</strong>: cupê de cores <code>bloco_aparencia</code> (chaves <code>usuarios_*</code>) + <code>usuarios_senha_min</code> (4–32, padrão 6, via <code>senha_minima()</code>, vale sem restart) + <code>painel_backup</code>.</li>
 </ul>
 <h2 id="status-fases-2-e-25-do-planomd">Status — Fases 2 e 2.5 do PLANO.md<a class="headerlink" href="#status-fases-2-e-25-do-planomd" title="Permanent link">&para;</a></h2>
 <p><strong>Implementado:</strong> CRUD completo (criar, editar, renomear, bloquear/desbloquear, soft delete, exclusão definitiva LGPD); hash <strong>bcrypt</strong>; múltiplos perfis globais (<code>comum</code>, <code>administrador_modulo</code>, <code>administrador_geral</code>) e papéis granulares por módulo (<code>tb_acesso_usuario</code>); seed <code>master</code>/<code>master</code> com troca obrigatória de senha no 1º login (auto-cura idempotente em boot); senha provisória (<code>forcar_troca</code>); nome completo/social (<code>user_nome_completo</code>, Decreto 8.727/2016); exclusão em 2 estágios com motivo; limpeza cruzada LGPD (Blog, editorPDF, empenhos anonimizados; auditoria preservada); proteções (vedado agir sobre a própria conta, <code>master</code> não renomeável/excluível); lista paginada (10/20/50/100), busca instantânea em todos os campos + palavras-chave de estado (debounce 150 ms), filtros situação/perfil, ordenação A→Z/numérica e exibição compacta com hover (tooltip com nomes de módulos); alerta de módulos inexistentes (vínculos órfãos como INDISPONÍVEL); gestão/revogação de sessões ativas + histórico; auditoria central LGPD.</p>
@@ -414,6 +728,425 @@ fim — LGPD), sem destruir dados do desenvolvedor:</p>
 <ul>
 <li><strong>Barra superior</strong> <code>flex-nowrap</code> → <code>flex-wrap</code>, tabs <code>overflow-x-auto</code>, busca <code>flex-1 min-w</code> (<code>campo_busca</code> <code>grow min-w-[220px]</code>), dialogs <code>w-full max-w</code> — validado 320/768/1024 (<code>kbp-web-design</code>). Tabelas com <code>overflow-x-auto</code> (parcial). Proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code> (header <code>flex-wrap</code> <code>truncate</code>, filtros <code>sm:grid-cols-2</code>) registrada na auditoria.</li>
 </ul>
+<h2 id="pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada">Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)<a class="headerlink" href="#pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Documentação da correção pendente. Nenhum <code>.py</code> alterado neste lote.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Arquivo:linha</th>
+<th style="text-align: left;">Correção proposta contida no módulo</th>
+<th style="text-align: left;">Risco regressão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">gest_cad_usuario</td>
+<td style="text-align: left;">Sem <code>CrudBase</code> completo; <code>sqlite_master</code> em seed/migração; <code>GROUP_CONCAT</code> agregado</td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario/bd_manipulador.py:146</code>, <code>:181</code> (<code>sqlite_master</code>) · <code>:301-315</code> (<code>GROUP_CONCAT</code>)</td>
+<td style="text-align: left;">Migrar para <code>CrudBase</code> + <code>conexao("usuarios")</code>; <code>_tabela_existe()</code> interno; manter <code>GROUP_CONCAT</code> (proxy traduz para <code>STRING_AGG</code>, só teste paridade)</td>
+<td style="text-align: left;">Médio (seed <code>master</code>/<code>qacomum</code>/<code>qamaster</code> + troca forçada)</td>
+</tr>
+</tbody>
+</table>
+<p>Detalhe consolidado em <a href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade</a>.</p>
+<h2 id="correcao-aplicada-24092026-wal-paridade-sqlitepostgresql">Correção aplicada 24/09/2026 — WAL + paridade SQLite↔PostgreSQL<a class="headerlink" href="#correcao-aplicada-24092026-wal-paridade-sqlitepostgresql" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN: Fix applied 24/09/2026 in <code>mod_gest_cad_usuario/bd_manipulador.py</code> (code already patched, docs-only batch): uniqueness/retry helpers, full GROUP BY, FK per active SGBD, orphan cleanup, preserved seeds; tests 19/19 + 13/13 + 20/20, verdict PASS.</p>
+<p>Correção aplicada em 24/09/2026 em <code>mod_gest_cad_usuario/bd_manipulador.py</code> (código já corrigido, lote só-documentação): helpers de unicidade/retry, GROUP BY completo, FK por SGBD ativo, limpeza de órfãos, seeds preservados; testes 19/19 + 13/13 + 20/20, veredito APROVADO.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Tema</th>
+<th style="text-align: left;">Antes (pendência 24/09)</th>
+<th style="text-align: left;">Depois (correção aplicada) — arquivo:linha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Helpers unicidade/retry</td>
+<td style="text-align: left;">Sem <code>CrudBase</code> completo; <code>database is locked</code> sem retry; <code>IntegrityError</code> genérico</td>
+<td style="text-align: left;"><code>_eh_violacao_unicidade</code> (<code>bd_manipulador.py:47</code>) — <code>UNIQUE</code>/<code>duplicate key</code>/<code>23505</code> SQLite↔PG sem importar <code>sqlite3</code>/<code>psycopg2</code>; <code>_eh_bloqueio_banco</code> (<code>:71</code>); <code>_rollback_seguro</code> (<code>:79</code>, fail-soft AGENTS §3.2); <code>_commit_com_retry</code> (<code>:91</code>, 3 tentativas c/ backoff, <code>busy_timeout=5000</code> herdado de <code>banco_conexao.conexao</code>); <code>_conexao_segura</code> (<code>:121</code>, fail-soft → <code>None</code>); uso em <code>criar_usuario</code> (<code>:596,602-608</code>), <code>renomear_usuario</code> (<code>:726,740-746</code>), <code>editar/definir/excluir</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>GROUP BY</code> completo</td>
+<td style="text-align: left;"><code>GROUP_CONCAT</code> agregado sem GROUP BY completo (quebra no PG)</td>
+<td style="text-align: left;"><code>listar_usuarios</code> (<code>bd_manipulador.py:438</code>) — <code>GROUP_CONCAT(a.modulo_chave \|\| ':' \|\| a.papel)</code> (<code>:455</code>, proxy traduz → <code>STRING_AGG</code> no PG) + <code>GROUP BY</code> com todas as colunas não agregadas (<code>:464-466</code>) + <code>ORDER BY u.user_nome</code>; <code>_normalizar_data</code> (<code>:425</code>) normaliza <code>datetime</code> PG → string</td>
+</tr>
+<tr>
+<td style="text-align: left;">FK por <code>sgbd_ativo</code></td>
+<td style="text-align: left;"><code>sqlite_master</code> em seed/migração; <code>ON UPDATE CASCADE</code> assumido nos dois backends</td>
+<td style="text-align: left;"><code>_init_db_seguro</code> (<code>bd_manipulador.py:189</code>); ramo <code>sgbd_ativo()</code> (<code>:238-264</code>): SQLite reinspeciona <code>sqlite_master</code> e faz rebuild p/ <code>ON DELETE/UPDATE CASCADE</code>; PG só marca <code>PRAGMA table_info</code> (proxy → <code>information_schema</code>) e delega integridade à aplicação (UPDATE manual nas duas tabelas em <code>renomear_usuario</code> <code>:718-719</code>); <code>flags</code> via check-then-add portável (<code>:268-272</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Limpeza de órfãos</td>
+<td style="text-align: left;">Sem tratamento PG (FK removida pelo <code>_ddl_postgres</code> do núcleo)</td>
+<td style="text-align: left;"><code>renomear_usuario</code> (<code>bd_manipulador.py:690</code>) — <code>DELETE FROM tb_acesso_usuario WHERE user_nome NOT IN (SELECT user_nome FROM tb_usuarios)</code> (<code>:723</code>, best-effort c/ <code>warning</code>); <code>definir_acesso</code> usa upsert <code>ON CONFLICT(user_nome, modulo_chave) DO UPDATE</code> (<code>:1037-1044</code>, portável PG)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Seeds preservados</td>
+<td style="text-align: left;">Risco regressão: seed <code>master</code>/<code>qacomum</code>/<code>qamaster</code> + troca forçada</td>
+<td style="text-align: left;">Preservados idempotentes: <code>ACESSO_PADRAO_NOVO_USUARIO</code> (<code>:23</code> = <code>editar_pdf</code>, <code>empenhos</code>, <code>solicita_impressao</code>); auto-cura <code>master</code> (<code>:343-350</code>); seed <code>master</code> (<code>:353-373</code>); seed/reconciliação <code>qacomum</code> (<code>:382-404</code>, remove <code>blog@sistema</code> legado) + <code>qamaster</code> (<code>:405-411</code>); <code>marcar_trocar_senha/credenciais</code> mantidos (AGENTS §8.2)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="testes-e-veredito">Testes e veredito<a class="headerlink" href="#testes-e-veredito" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Suíte</th>
+<th style="text-align: left;">Resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>assets/test/teste_fluxo_autenticacao.py</code> (login → troca 1º acesso → sessão/logout → auditoria → soft delete → restauração)</td>
+<td style="text-align: left;">19/19 OK</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/teste_fluxo_permissoes.py</code> (concessão/atualização/revogação por módulo + auditoria exclusiva)</td>
+<td style="text-align: left;">13/13 OK</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/teste_flags_permissao.py</code> (catálogo <code>FLAGS_PERMISSAO</code>, grant/revoke em <code>qacomum@blog</code>, bypass admin, decorador <code>requer_flag</code>)</td>
+<td style="text-align: left;">20/20 OK</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Veredito: APROVADO — sem regressão.</strong> Pendência WAL+paridade do <code>gest_cad_usuario</code> (linha da tabela acima) considerada <strong>superada</strong>; demais módulos do plano permanecem pendentes conforme o arquivo consolidado.</p>
+<hr />
+<h1 id="rf-e-rnf-verificados-no-codigo-lote-1-26092026">RF e RNF verificados no código — lote 1 (26/09/2026)<a class="headerlink" href="#rf-e-rnf-verificados-no-codigo-lote-1-26092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Auditoria de requisitos <strong>funcionais</strong> (o que o sistema faz) e <strong>não
+funcionais</strong> (qualidade e restrições), com evidência <code>arquivo:linha</code> conferida
+no código em 26/09/2026.</p>
+</blockquote>
+<h2 id="requisitos-funcionais-rf-mapa-codigo-doc">Requisitos funcionais (RF) — mapa código ↔ doc<a class="headerlink" href="#requisitos-funcionais-rf-mapa-codigo-doc" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-GEST-01</td>
+<td style="text-align: left;">Tela da Gestão de Usuários só para <code>administrador_geral</code> <strong>ou</strong> admin do módulo <code>usuarios</code></td>
+<td style="text-align: left;"><code>telas.py:85-87</code>; negação em <code>telas.py:154-161</code> <code>_acesso_negado</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-02</td>
+<td style="text-align: left;"><strong>Soft CRUD</strong>: criar, editar, bloquear/desbloquear, excluir lógico, duplicar e excluir definitivo</td>
+<td style="text-align: left;"><code>telas.py:73</code> <code>_mostrar_tela_segura</code> → <code>_painel_usuarios</code> (<code>:233</code>), <code>_dlg_novo</code> (<code>:623</code>), <code>_dlg_editar</code> (<code>:712</code>), <code>_dlg_duplicar</code> (<code>:974</code>), <code>_dlg_excluir</code> (<code>:857</code>), <code>_dlg_excluir_definitivo</code> (<code>:914</code>); backend em <code>bd_manipulador.py:558</code>, <code>:613</code>, <code>:782</code>, <code>:819</code>, <code>:920</code>, <code>:977</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-03</td>
+<td style="text-align: left;">Coluna de ex soft-delete (<code>user_deletado</code>) + aba <strong>1.5 Excluídos</strong> com restauração/duplicação</td>
+<td style="text-align: left;"><code>bd_manipulador.py:306-308</code> (migração da coluna) + <code>telas.py:972</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-04</td>
+<td style="text-align: left;"><strong>Motivo de exclusão lógica</strong> registrado no momento da exclusão</td>
+<td style="text-align: left;"><code>bd_manipulador.py:319-321</code> (migração <code>user_motivo_exclusao</code>) + <code>soft_delete_usuario(..., motivo)</code> em <code>bd_manipulador.py:819</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-05</td>
+<td style="text-align: left;">Senha <strong>provisória</strong> obrigatória:<em>hash bcrypt</em>, troca forçada no 1º acesso</td>
+<td style="text-align: left;"><code>bd_manipulador.py:558-611</code> <code>criar_usuario</code> (valida <code>senha_minima()</code>, grava <code>gerar_hash_senha</code>, chama <code>marcar_trocar_senha(..., True)</code>); <code>mod_intranet/autenticacao.py:447</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-06</td>
+<td style="text-align: left;">Tamanho mínimo da senha <strong>configurável</strong> (clamp 4–32, default 6), aplicado sem restart</td>
+<td style="text-align: left;"><code>bd_manipulador.py:159-172</code> <code>senha_minima</code>; painel em <code>telas_administracao.py:78-122</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-07</td>
+<td style="text-align: left;"><code>administrador_geral</code> <strong>não pode rebaixar nem bloquear o último</strong> admin geral ativo (RF-26)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:626-640</code> (dentro de <code>editar_usuario</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-08</td>
+<td style="text-align: left;">Nome de exibição / nome social (Decreto 8.727/2016) separado do login, com <code>nome_de_tratamento</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:309-315</code> (migração) + <code>:507-519</code> <code>nome_de_tratamento</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-09</td>
+<td style="text-align: left;"><strong>Papel por módulo</strong> (<code>tb_acesso_usuario.papel</code>): conceder, remover, consultar, validar</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1022-1055</code> <code>definir_acesso</code>, <code>:1057-1076</code> <code>remover_acesso</code>, <code>:1078-1102</code> <code>obter_papel_no_modulo</code>, <code>:1104-1119</code> <code>validar_acesso_modulo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-10</td>
+<td style="text-align: left;"><strong>Flags finas</strong> de permissão por módulo (JSON em <code>tb_acesso_usuario.flags</code>) com whitelist de flags válidas</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1130-1143</code> <code>_flags_validas</code>, <code>:1145-1173</code> <code>obter_flags</code>, <code>:1175-1206</code> <code>definir_flags</code>, <code>:1208-1219</code> <code>tem_flag</code>; migração em <code>:266-272</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-11</td>
+<td style="text-align: left;"><strong>Sessões ativas</strong> listadas, contadas, agrupadas por usuário, com histórico e encerramento (individual ou todas)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1234-1261</code>, <code>:1263-1280</code>, <code>:1282-1299</code>, <code>:1301-1327</code>, <code>:1329-1352</code> <code>encerrar_sessao</code>, <code>:1354-1363</code> <code>encerrar_todas_sessoes</code>; UI em <code>telas.py:1074</code> <code>_painel_sessoes</code> + <code>telas.py:510</code>/<code>525</code> diálogo</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-12</td>
+<td style="text-align: left;">Sessão revogável: o <code>pagina_restrita</code> do núcleo revalida sessão e <code>user_ativo</code> <strong>a cada request</strong></td>
+<td style="text-align: left;"><code>mod_intranet/telas.py:74-93</code> (corta sessão e manda pro <code>/login</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-13</td>
+<td style="text-align: left;">Renomear usuário propaga para <strong>todos</strong> os módulos (única limpeza cruzada de negócio→negócio autorizada)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:690-749</code> <code>renomear_usuario</code> + <code>:895-918</code> <code>_vinculos_cruzados_renomear</code> (filhos antes dos pais)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-14</td>
+<td style="text-align: left;">Excluir definitivamente remove os vínculos dos outros módulos antes dos próprios</td>
+<td style="text-align: left;"><code>bd_manipulador.py:920-975</code> + <code>:857-893</code> <code>_vinculos_cruzados_excluir</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-15</td>
+<td style="text-align: left;">Detecção de <strong>vínculos órfãos</strong> (módulos que ainda referenciam o usuário)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1367-1385</code> <code>listar_vinculos_orfaos</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-16</td>
+<td style="text-align: left;">Recusa de duplicidade de nome com mensagem amigável (não stack trace)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:47-69</code> <code>_eh_violacao_unicidade</code> + <code>:601-604</code> (<code>"Nome de usuário já existe"</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-17</td>
+<td style="text-align: left;">Redesenhar senha pelo admin (<code>alterar_senha_admin</code>) com troca forçada</td>
+<td style="text-align: left;"><code>bd_manipulador.py:751-780</code>; UI em <code>telas.py:814</code>/<code>830</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-18</td>
+<td style="text-align: left;">Fonte única do cadastro: os módulos consomem o Gestor por <code>mod_intranet/integracoes.py</code> (fachada), nunca import direto</td>
+<td style="text-align: left;"><code>mod_intranet/integracoes.py:32-61</code> <code>obter_usuario_gestao</code> / <code>listar_usuarios_gestao</code>; <code>mod_intranet/autenticacao.py:292-294</code> <code>_gest()</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-19</td>
+<td style="text-align: left;">Seed idempotente <code>master</code> / <code>qacomum</code> / <code>qamaster</code> (AGENTS.md §8.2) com troca de senha e de credenciais forçada no 1º login</td>
+<td style="text-align: left;"><code>bd_manipulador.py:339-420</code> (auto-cura do <code>master</code> em <code>:343-350</code>; <code>master</code> em <code>:353-373</code>; <code>qacomum</code>/<code>qamaster</code> em <code>:375-420</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-GEST-20</td>
+<td style="text-align: left;">Reconciliação idempotente do <code>qacomum</code> (garante os 3 acessos comuns e remove o <code>blog</code> legado concedido por <code>sistema</code>, preservando concessão manual do admin)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:394-404</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="requisitos-nao-funcionais-rnf-garantias-tecnicas">Requisitos não-funcionais (RNF) — garantias técnicas<a class="headerlink" href="#requisitos-nao-funcionais-rnf-garantias-tecnicas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RNF</th>
+<th style="text-align: left;">Exigência</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RNF-GEST-PERS-01</td>
+<td style="text-align: left;">Banco próprio <code>db_mod_gest_cad_usuario.db</code> via <code>banco_conexao.conexao("gest_cad_usuario")</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:26-45</code> <code>get_connection</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-PERS-02</td>
+<td style="text-align: left;"><code>PRAGMA journal_mode=WAL</code> + <code>foreign_keys=ON</code>; <code>busy_timeout=5000</code>/<code>synchronous=NORMAL</code> herdados do núcleo</td>
+<td style="text-align: left;"><code>bd_manipulador.py:39-40</code>; docstring em <code>:31</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-PERS-03</td>
+<td style="text-align: left;"><strong>Retry 3×</strong> em <code>database is locked</code> com rollback seguro, em <strong>toda</strong> transação de escrita</td>
+<td style="text-align: left;"><code>bd_manipulador.py:91-119</code> <code>_commit_com_retry</code> + <code>:71-77</code> <code>_eh_bloqueio_banco</code> + <code>:79-89</code> <code>_rollback_seguro</code>; ex. <code>:228</code>, <code>:299</code>, <code>:362</code>, <code>:392</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-PERS-04</td>
+<td style="text-align: left;"><code>init_db</code> <strong>import-safe</strong>: nunca levanta no import, erro só vai para o log</td>
+<td style="text-align: left;"><code>bd_manipulador.py:174-187</code> <code>init_db</code> → <code>:189</code> <code>_init_db_seguro</code> (re-levanta para o chamador) com <code>finally</code> sempre fechando a conexão (<code>:332-337</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-PERS-05</td>
+<td style="text-align: left;">FK com <code>ON UPDATE CASCADE</code> para renomeio, reconstruída de forma <strong>idempotente e só no SQLite</strong></td>
+<td style="text-align: left;"><code>bd_manipulador.py:237-264</code> (guarda <code>sgbd_ativo() != "postgres"</code>, detecta ausência de <code>ON UPDATE</code> em <code>sqlite_master</code>, rebuild em 4 passos)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-COMP-01</td>
+<td style="text-align: left;">Paridade SQLite ↔ PostgreSQL</td>
+<td style="text-align: left;">DDL só <code>IF NOT EXISTS</code> (<code>:204-227</code>); migrações por <strong>check-then-add</strong> com <code>PRAGMA table_info</code> traduzido para <code>information_schema</code> no proxy (<code>:268</code>, <code>:304</code>, <code>:310</code>, <code>:317</code>); <code>INSERT OR IGNORE</code> traduzido; no PG a integridade da FK é gerida na aplicação (UPDATE manual em <code>renomear_usuario</code> + limpeza de órfãos) — comentário explícito em <code>:230-236</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-SEG-01</td>
+<td style="text-align: left;">Senhas <strong>nunca</strong> em texto puro: só hash bcrypt</td>
+<td style="text-align: left;"><code>bd_manipulador.py:360</code>, <code>:385</code>, <code>:408</code> (<code>gerar_hash_senha</code>); nenhuma coluna <code>user_senha</code> em claro</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-SEG-02</td>
+<td style="text-align: left;">Autorização de escrita auditada com ator + detalhe (perfil, nome de exibição)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:143-151</code> <code>_audit</code> → <code>tb_auditoria_gest_cad_usuario</code>; ex. <code>:600</code> <code>criar_usuario</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-SEG-03</td>
+<td style="text-align: left;"><strong>Isolamento de banco</strong>: o módulo só toca o próprio <code>db_mod_gest_cad_usuario.db</code>; o acesso ao BD central é <strong>exclusivamente de leitura</strong> e só na migração do legado</td>
+<td style="text-align: left;"><code>bd_manipulador.py:133-141</code> <code>_central()</code>; única leitura em <code>:280-301</code> (migração única)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-SEG-04</td>
+<td style="text-align: left;">Sem <code>cross-query</code> entre bancos de negócio: a propagação para outros módulos é por <strong>API pública</strong> de cada módulo</td>
+<td style="text-align: left;"><code>bd_manipulador.py:857-893</code> e <code>:895-918</code> chamam <code>remover_vinculos_usuario</code>/<code>renomear_usuario</code> de cada <code>mod_*</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-RES-01</td>
+<td style="text-align: left;"><code>try/except</code> obrigatório em função, com retorno <code>(ok, msg)</code> + <code>log</code> — a UI sempre tem o que notificar</td>
+<td style="text-align: left;">100 % das funções de escrita retornam tupla; ex. <code>:573-577</code> (falha de conexão), <code>:601-604</code> (duplicidade), <code>:605-609</code> (erro inesperado)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-RES-02</td>
+<td style="text-align: left;"><strong>Fail-soft</strong> nas leituras: <code>obter_papel_no_modulo</code>/<code>validar_acesso_modulo</code> devolvem <code>None</code>/<code>False</code> em exceção (nunca levantam), então uma falha de permissão <strong>fecha</strong> o acesso em vez de abrir</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1104-1119</code>, e o espelho no núcleo <code>mod_intranet/autenticacao.py:604-609</code>, <code>:629-633</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-RES-03</td>
+<td style="text-align: left;">Toda tela/dialogo tem wrapper <code>*_seguro</code> com notificação de erro (fail-soft de UI)</td>
+<td style="text-align: left;"><code>telas.py:73</code>, <code>:525</code>, <code>:639</code>, <code>:729</code>, <code>:830</code>, <code>:874</code>, <code>:931</code>, <code>:990</code>; <code>telas_administracao.py:53</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-RES-04</td>
+<td style="text-align: left;">Sem <code>ui.notify</code> cru: só <code>tema_modulo.notificar</code> (respeita <code>notificacao_timeout</code>)</td>
+<td style="text-align: left;"><code>grep ui.notify</code> → 0 ocorrências em <code>mod_gest_cad_usuario/*.py</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-UX-01</td>
+<td style="text-align: left;"><code>data-testid</code> nas ações de QA</td>
+<td style="text-align: left;"><code>telas.py:141</code> (<code>usuarios-busca</code>), <code>:145</code> (<code>usuarios-novo</code>), <code>:345</code> (<code>usuarios-filtro-situacao</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-I18N-01</td>
+<td style="text-align: left;">Docstrings bilíngue EN (topo) / PT-BR (abaixo)</td>
+<td style="text-align: left;"><code>telas.py:1-4</code> (EN no topo), <code>telas_administracao.py:1-15</code> (bloco EN no <strong>meio/fim</strong>, não no topo — ver DIV-GEST-02), <code>bd_manipulador.py:1-24</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-I18N-02</td>
+<td style="text-align: left;">Toda a UI em PT-BR, com mensagens de erro operacionais (não stack traces)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:572-609</code>, <code>telas.py:154-161</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-PERF-01</td>
+<td style="text-align: left;">Consultas de lista <strong>paginate/limitadas</strong> e sem N+1 no painel de sessões</td>
+<td style="text-align: left;"><code>bd_manipulador.py:438-480</code> <code>listar_usuarios</code> (1 consulta) + <code>:1234-1261</code> (1 consulta)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-PERF-02</td>
+<td style="text-align: left;"><code>_conexao_segura()</code> evita abrir conexão quando a anterior está sob lock</td>
+<td style="text-align: left;"><code>bd_manipulador.py:121-131</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-GEST-RESP-01</td>
+<td style="text-align: left;">Responsividade com <code>flex-wrap</code> e <code>min-w</code> nos campos</td>
+<td style="text-align: left;"><code>telas.py:165-206</code> (<code>_seletores_de_acesso</code>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="divergencias-e-riscos">Divergências e riscos<a class="headerlink" href="#divergencias-e-riscos" title="Permanent link">&para;</a></h2>
+<h3 id="codigo-faz-doc-nao-diz">Código faz, doc não diz<a class="headerlink" href="#codigo-faz-doc-nao-diz" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Evidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DIV-GEST-01</td>
+<td style="text-align: left;"><code>_vinculos_cruzados_excluir</code>/<code>_vinculos_cruzados_renomear</code> tocam os módulos <strong>por lista explícita de funções importadas</strong> — a lista de módulos participantes está hardcoded no arquivo. Um módulo novo que guarde <code>user_nome</code> <strong>não</strong> entra na propagação sem editar este arquivo.</td>
+<td style="text-align: left;"><code>bd_manipulador.py:857-918</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-GEST-02</td>
+<td style="text-align: left;"><code>telas_administracao.py</code> põe o bloco <strong>EN depois</strong> do PT-BR (linhas 11-14), contrariando o padrão "EN no topo" do AGENTS.md</td>
+<td style="text-align: left;"><code>telas_administracao.py:1-15</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-GEST-03</td>
+<td style="text-align: left;"><code>validar_acesso_modulo_compat</code> existe como <strong>alias de compatibilidade</strong> (<code>bd_manipulador.py:1387-1395</code>) e é usada por <code>mod_intranet/autenticacao.py:607-631</code> — a doc não registra essa camada de indireção</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1387-1400</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-GEST-04</td>
+<td style="text-align: left;">A migração do legado lê <code>sqlite_master</code> da tabela <code>tb_usuarios</code> <strong>no banco central</strong> — se <code>banco_tipo=postgres</code>, o proxy devolve vazio e a migração é pulada silenciosamente (há <code>finally</code> fechando, mas sem <code>log</code> explícito do pulo)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:283-284</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="doc-diz-codigo-nao-faz">Doc diz, código não faz<a class="headerlink" href="#doc-diz-codigo-nao-faz" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Alegação da doc</th>
+<th style="text-align: left;">Estado real</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DIV-GEST-05</td>
+<td style="text-align: left;">"<code>telas_administracao.mostrar_administracao</code> — <strong>exclusivo do admin geral</strong>" (docstring em <code>telas_administracao.py:3-4</code> e <code>:14</code>)</td>
+<td style="text-align: left;">A função <strong>não recebe nem checa perfil</strong> (<code>telas_administracao.py:30</code>). O gate real é só a rota: <code>main.py:1031-1037</code> chama <code>pagina_restrita(nome_modulo, chave_modulo="usuarios")</code>, que exige <strong>acesso ao módulo</strong> — não papel de admin. Ver RISCO-GEST-01.</td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-GEST-06</td>
+<td style="text-align: left;">Doc sugere que "admin do módulo" e "admin geral" são equivalentes para a aba Administração</td>
+<td style="text-align: left;">Não são: a tela de negócio (<code>telas.py:85-87</code>) aceita os dois; o painel <code>/admin/usuarios</code> aceita <strong>qualquer</strong> um dos dois, <strong>e também um <code>comum</code> com acesso ao módulo</strong>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="riscos">Riscos<a class="headerlink" href="#riscos" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Risco</th>
+<th style="text-align: left;">Severidade</th>
+<th style="text-align: left;">Evidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>RISCO-GEST-01</strong></td>
+<td style="text-align: left;"><strong><code>/admin/usuarios</code> sem gate de administrador.</strong> <code>main.py:1031-1037</code> chama <code>mostrar_administracao(nome)</code> sem o flag <code>eh_admin</code> (ao contrário de <code>auditoria</code> e <code>solicita_impressao</code>, que o recebem). Efeito: um usuário <code>comum</code> com liberação do módulo <code>usuarios</code> <strong>altera <code>usuarios_senha_min</code> (4–32) e o tema</strong> e vê o painel de backup. Alterar o tamanho mínimo da senha é uma mudança de política de segurança de contas.</td>
+<td style="text-align: left;">🔴 Alta</td>
+<td style="text-align: left;"><code>main.py:1031-1037</code> + <code>mod_gest_cad_usuario/telas_administracao.py:30</code> + <code>:84-102</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-GEST-02</strong></td>
+<td style="text-align: left;"><strong>Zero <code>async</code> / <code>run.io_bound</code> / <code>ui.spinner</code></strong> no módulo (0 ocorrências). Todos os handlers são <code>def</code> síncrono e fazem I/O de banco (<code>criar_usuario</code>, <code>editar_usuario</code>, <code>renomear_usuario</code>, <code>excluir_usuario_definitivo</code>, <code>encerrar_todas_sessoes</code>, <code>duplicar_usuario</code>) diretamente no event-loop. some walks sobre nomes de usuário + dezenas de <code>UPDATE</code>s cross-módulo no caso de <code>renomear_usuario</code>/<code>excluir_usuario_definitivo</code>. Viola AGENTS.md §5.1.</td>
+<td style="text-align: left;">🟠 Média</td>
+<td style="text-align: left;">ausência de <code>async def</code> em <code>mod_gest_cad_usuario/*.py</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-GEST-03</strong></td>
+<td style="text-align: left;"><code>except Exception: pass</code> engole erro <strong>em silêncio</strong> em pontos de migração, contrariando AGENTS.md §3.2 ("SEMPRE registre/logue a causa").</td>
+<td style="text-align: left;">🟡 Baixa</td>
+<td style="text-align: left;"><code>bd_manipulador.py:220-221</code>, <code>:242-243</code> (blocos de migração de <code>limite</code>/<code>cota</code> com <code>except Exception: pass</code>, sem <code>log</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-GEST-04</strong></td>
+<td style="text-align: left;"><code>modulo_acesso TEXT</code> (coluna CSV legada) permanece em <code>tb_usuarios</code> e continua sendo lido/escrito, ao mesmo tempo que <code>tb_acesso_usuario</code> é a fonte de verdade. Duas fontes para a mesma informação.</td>
+<td style="text-align: left;">🟡 Baixa</td>
+<td style="text-align: left;"><code>bd_manipulador.py:214</code> (DDL) + <code>:285-298</code> (migração converte CSV→linhas, mas não zera a coluna)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-GEST-05</strong></td>
+<td style="text-align: left;">Sem <code>CrudBase</code>: SQL cru com <code>conn.cursor()</code>. A atomicidade depende de <code>_commit_com_retry</code> manual, e a propagação cross-módulo (RF-GEST-13/14) <strong>não é transacional</strong> — se o módulo 3 de 8 falhar, os 2 anteriores já foram alterados e não há compensação.</td>
+<td style="text-align: left;">🟠 Média</td>
+<td style="text-align: left;"><code>bd_manipulador.py:690-749</code> e <code>:920-975</code></td>
+</tr>
+</tbody>
+</table>
               
             </div>
           </div><footer>

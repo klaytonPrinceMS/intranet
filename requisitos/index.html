@@ -74,9 +74,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -101,9 +104,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -391,12 +403,29 @@ Detalhe em <code>ferramentas/graphify.md</code>.</p>
 <td style="text-align: center;">✅ Instalado (dev)</td>
 </tr>
 <tr>
+<td style="text-align: left;"><strong><code>pyflakes</code> (<code>&gt;=3.2.0</code>)</strong></td>
+<td style="text-align: left;"><strong>análise estática de código Python — <code>undefined name</code> é BLOQUEANTE antes de fechar o ciclo de testes</strong> (seção "Lint / análise estática" do <code>requirements-dev.txt</code>; <strong>nunca</strong> em <code>requirements.txt</code>)</td>
+<td style="text-align: center;">✅ Instalado (dev)</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>GEMINI_API_KEY</code> (opcional)</td>
 <td style="text-align: left;">passada semântica de <code>docs/</code>; sem ela, o agente host assume</td>
 <td style="text-align: center;">⚠️ Opcional</td>
 </tr>
 </tbody>
 </table>
+<div class="admonition danger">
+<p class="admonition-title"><code>pyflakes</code> não é opcional porque o <code>try/except</code> esconde <code>NameError</code></p>
+<p>O padrão obrigatório do AGENTS.md §3.2 (envolver toda função em <code>try/except</code>
+para nunca derrubar o servidor) <strong>engole o <code>NameError</code></strong> quando o <code>except</code>
+termina em <code>pass</code>. Resultado: a suíte passa, o terminal fica limpo e a
+funcionalidade está quebrada. Em 25/09/2026 foram <strong>7 <code>undefined name</code> em 5
+arquivos</strong> com efeito real e nenhum sinal. Comando:</p>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>pyflakes<span class="w"> </span>main.py<span class="w"> </span>mod_*/*.py<span class="w"> </span>mod_*/*/*.py
+.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>pyflakes<span class="w"> </span>main.py<span class="w"> </span>mod_*/*.py<span class="w"> </span>mod_*/*/*.py<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">"undefined name"</span>
+</code></pre></div>
+<p>Detalhe em <a href="../convencoes_codigo/#analise-estatica-obrigatoria-pyflakes">Convenções — Análise estática obrigatória</a>.</p>
+</div>
 <h3 id="armazenamento">Armazenamento<a class="headerlink" href="#armazenamento" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>SQLite (padrão) ou PostgreSQL opcional</strong> — backend duplo controlado por <code>banco_tipo</code> em <code>tb_config</code> central (<code>sqlite</code> padrão | <code>postgres</code>, <code>postgres_url</code> DSN) via <code>mod_intranet/banco_conexao.conexao(chave)</code>; no Postgres <strong>um DATABASE <code>db_mod_&lt;chave&gt;</code> por módulo</strong> (espelha <code>db_mod_&lt;chave&gt;.db</code>), preservando isolamento "um banco por módulo" (ver <a href="../configuracoes/#card-banco-de-dados-sqlite-ou-postgresql-0809">Configurações</a> e <a href="../arquitetura/#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809">Arquitetura</a>).</li>
@@ -861,11 +890,11 @@ Detalhe em <code>ferramentas/graphify.md</code>.</p>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">Banco <code>db_mod_filas.db</code> (<code>tb_fila</code> + <code>tb_fila_etapa</code> + <code>tb_chamada</code> + <code>tb_midia</code> + <code>tb_config_filas</code>) + seed <code>Geral A000</code> + 3 etapas padrão + <code>PASTA_MIDIA</code> <code>mod_filas/midia</code></td>
+<td style="text-align: left;">Banco <code>db_mod_filas.db</code> (<code>tb_fila</code> com <code>voz_ordem</code> + <code>tb_fila_etapa</code> + <code>tb_chamada</code> + <code>tb_fila_nomes</code> + <code>tb_midia</code> com <code>fundo</code> + volume 40 + <code>tb_tv_estado</code> + <code>tb_fila_acesso</code> + <code>tb_config_filas</code>) SEM seed (nasce vazio) + <code>PASTA_MIDIA</code> <code>mod_filas/midia</code> (<code>datahora_nomeFila</code> sempre)</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>criar_fila</code> por local (<code>endereco/prefixo/senha_inicio/fim</code> <code>fim=0</code> infinito, <code>criado_por</code>, <code>tv_grupo</code>) + <code>listar_filas_visiveis</code> isolamento por criador vs <code>administrador_geral</code> + <code>atualizar/excluir</code> + <code>excluir_todas_filas</code> (exceto Geral)</td>
+<td style="text-align: left;"><code>criar_fila</code> (<code>prefixo/senha_inicio/fim</code> <code>fim=0</code> infinito, <code>criado_por</code>, <code>tv_grupo</code> slug, <code>voz_ordem</code> via <code>normalizar_voz_ordem</code>) + <code>listar_filas_visiveis</code> isolamento por criador vs <code>administrador_geral</code> + <code>atualizar/excluir</code> (<code>renomear_arquivos_fila</code> ao renomear) + <code>excluir_todas_filas</code> (sem exceção)</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
@@ -873,11 +902,11 @@ Detalhe em <code>ferramentas/graphify.md</code>.</p>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">Painel <code>/filas</code> multi-filas isolado (criar + card por fila + etapas + <code>Chamar próximo</code> + histórico isolado + <code>Avançar</code>) + <code>Excluir todas</code></td>
+<td style="text-align: left;">Painel <code>/filas</code> multi-filas isolado (<code>Cadastro de fila</code> recolhível + criar/Editar no painel + etapas + lista única + anexos stage + <code>Chamar próximo</code> + histórico isolado + <code>Avançar</code>) + <code>Excluir todas</code> + <code>delay=1000</code> (admin via hambúrguer)</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">TV <code>/tv</code> (<code>?grupo=</code> compartilhada) + <code>/tv/{fila_id}</code> (isolada) full-screen <code>h-screen bg-black</code>, ícone padrão intranet, auto-refresh 3s <code>AudioContext</code> bip + <code>speechSynthesis pt-BR</code> só novo <code>id</code>, playlist <code>/midia_filas</code> (áudio elevador/vídeo propaganda, 40s rotação quando ociosa, pausada ao chamar) + carrossel notícias censura-filtrado</td>
+<td style="text-align: left;">TV <code>/tv</code> (<code>?grupo=</code> compartilhada) + <code>/tv/{fila_id}</code> (isolada) + <code>?etapa=</code> (por sala), ícone padrão intranet, auto-refresh 3s bip 880Hz + <code>speechSynthesis pt-BR</code> serializada por claim na ordem <code>voz_ordem</code>, playlist <code>/midia_filas</code> (volume 40, ducking à metade, papel de fundo absoluto só na mídia) + carrossel notícias até 200 censura-filtrado</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
@@ -885,7 +914,7 @@ Detalhe em <code>ferramentas/graphify.md</code>.</p>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">Administração <code>/admin/filas</code> 2 cards (Filas por local + Mídia TV global <code>/midia_filas</code>, upload sanitizado + <code>uuid6</code>, <code>Ativar/Desativar</code>, <code>↑/↓</code>)</td>
+<td style="text-align: left;">Administração <code>/admin/filas</code> via hambúrguer (Filas + voz/ordem/textos + mídia/fundo + áudio global <code>/midia_filas</code>, <code>Ativar/Desativar</code>, <code>↑/↓</code>, <code>Fundo</code>)</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
@@ -943,7 +972,7 @@ Detalhe em <code>ferramentas/graphify.md</code>.</p>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">Banco <code>db_mod_agregador_noticias.db</code> (<code>tb_noticia</code> 11 colunas, <code>data_publicacao</code> real via <code>_parse_data_pub</code>, <code>data_coleta</code>, índices <code>tema/fonte/data</code>) + seeds <code>tb_config</code> (<code>habilitado 0</code>, <code>intervalo 60</code>, <code>temas_json</code>, <code>fontes_json</code>, <code>hora_reinicio 06:00</code>)</td>
+<td style="text-align: left;">Banco <code>db_mod_agregador_noticias.db</code> (<code>tb_noticia</code> 11 colunas, <code>data_publicacao</code> real via <code>_parse_data_pub</code>, <code>data_coleta</code>, índices <code>tema/fonte/data</code>) + seeds <code>tb_config</code> (<code>habilitado 0</code>, <code>intervalo 60</code>, <code>temas_json</code>, <code>fontes_json</code>, <code>hora_reinicio 09:00</code> backend (rótulos UI legados <code>06:00</code>))</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
@@ -951,15 +980,15 @@ Detalhe em <code>ferramentas/graphify.md</code>.</p>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">Habilitado flag + intervalo 10–360 clamp + termo livre + fontes/temas <code>json</code> configuráveis sem restart</td>
+<td style="text-align: left;">Habilitado flag + intervalo 10–9360 clamp na API (select do admin 10–360) + termo livre + fontes/temas <code>json</code> configuráveis sem restart</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">Hora reinício <code>06:00</code> configurável + reinício diário <code>CronTrigger</code> <code>reiniciar_banco</code> <code>DELETE</code> + <code>Zerar agora</code> (<code>agregador-reiniciar-agora</code>) — sem backup</td>
+<td style="text-align: left;">Hora reinício <code>09:00</code> default do backend (rótulos UI legados <code>06:00</code>) configurável + reinício diário <code>CronTrigger</code> <code>reiniciar_banco</code> <code>DELETE</code> + <code>Zerar agora</code> (<code>agregador-reiniciar-agora</code>) — sem backup</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">Paginação 12 + <strong>busca lado a lado filtro tema</strong> (<code>pagina</code> <code>por_pagina=12</code> <code>total_pag</code> <code>offset</code>, <code>ORDER BY COALESCE(data_publicacao, data_coleta) DESC</code>, botões <code>agregador-primeira/anterior/proxima/ultima</code>, <strong>busca <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> NFKD 500 <code>titulo/descricao/fonte/tema</code> lado a lado filtro tema, sem badge <code>Coleta:</code> + botão <code>Ver puro Noticia</code> <code>agregador-ver-puro</code> → <code>/agregador-noticias-puro</code></strong>) + grid responsivo <strong>3 colunas desktop → 2 tablet (max-width 1024px) → 1 celular (max-width 640px) via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries, cards <code>min-height 160px max-height 220px</code> (<code>.card-noticia</code>) baseado na média de 91 notícias (título média 79 mediana 75, descrição 34, 87.9% imagem, 24% fonte_icon)</strong> + cards (<strong>ícone fonte <code>16×16</code> <code>contain</code> + <code>30x30</code> <code>cover</code> lado a lado antes do título</strong>, <code>badge tema</code>, <code>ui.link new_tab</code>, <code>descricao</code>, <code>_tempo_relativo</code> real) + <strong>tela pura</strong> <code>telas_puro.py</code> (<code>/agregador-noticias-puro</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> 12 notícias <code>COALESCE DESC</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code>)</td>
+<td style="text-align: left;">Paginação 12 + <strong>busca lado a lado filtro tema</strong> (<code>pagina</code> <code>por_pagina=12</code> <code>total_pag</code> <code>offset</code>, <code>ORDER BY COALESCE(data_publicacao, data_coleta) DESC</code>, botões <code>agregador-primeira/anterior/proxima/ultima</code>, <strong>busca <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> NFKD 500 <code>titulo/descricao/fonte/tema</code> lado a lado filtro tema, sem badge <code>Coleta:</code> (botão <code>Ver puro Noticia</code> <code>agregador-ver-puro</code> removido 20/09/2026 — <code>/agregador-noticias-puro</code> por URL direta)</strong>) + grid responsivo <strong>3 colunas desktop → 2 tablet (max-width 1024px) → 1 celular (max-width 640px) via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries, cards de </strong>ALTURA FIXA <code>300px</code><strong> (<code>260px</code> no celular, <code>.card-noticia</code> — nunca <code>min/max-height</code>, para todos os cards da linha ficarem idênticos)</strong> + cards (<strong>miniatura <code>120×120</code> <code>cover</code> clicável que abre a ampliação em diálogo <code>60vw×60vh</code> <code>contain</code></strong> + <strong>logo da fonte como marca d'água <code>32×32</code></strong> no rodapé da imagem, <code>badge tema</code>, <code>ui.link new_tab</code>, <code>descricao</code> <strong>completa com scroll</strong> <code>overflow-y: auto</code>, <code>_tempo_relativo</code> real) — <strong>redesenho 25/09/2026</strong> + <strong>tela pura</strong> <code>telas_puro.py</code> (<code>/agregador-noticias-puro</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> 12 notícias <code>COALESCE DESC</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code>)</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>

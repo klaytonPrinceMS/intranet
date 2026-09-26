@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">Guia de API</a>
@@ -101,9 +104,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -323,25 +335,25 @@
 <td style="text-align: left;"><code>/filas</code></td>
 <td style="text-align: left;"><code>mod_filas</code></td>
 <td style="text-align: left;"><code>filas</code></td>
-<td style="text-align: left;">liberados (multi-filas por local, <code>criado_por</code> isolado, <code>Chamar próximo</code> + <code>Avançar</code> + preview isolado)</td>
+<td style="text-align: left;">liberados (multi-filas por local, <code>criado_por</code> isolado + <code>tb_fila_acesso</code>, <code>Cadastro de fila</code> recolhível + Editar no painel + <code>Chamar próximo</code> + <code>Avançar</code>, <code>delay=1000</code>, admin via hambúrguer)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/tv</code></td>
 <td style="text-align: left;"><code>mod_filas</code> (<code>mostrar_tv</code> com <code>?grupo=</code>)</td>
 <td style="text-align: left;">— (pública)</td>
-<td style="text-align: left;"><strong>pública sem login</strong> (TV compartilhada <code>?grupo=xxx</code>, auto-refresh 3s + bip+voz só novo id + playlist <code>/midia_filas</code> + carrossel censura-filtrado)</td>
+<td style="text-align: left;"><strong>pública sem login</strong> (TV compartilhada <code>?grupo=xxx</code> + <code>?etapa=</code> por sala, auto-refresh 3s + bip 880Hz + voz <code>pt-BR</code> serializada por claim na ordem <code>voz_ordem</code> + ducking à metade (volume 40) + papel de fundo + playlist <code>/midia_filas</code> + carrossel até 200 censura-filtrado)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/tv/{fila_id}</code></td>
 <td style="text-align: left;"><code>mod_filas</code> (<code>mostrar_tv</code> isolada)</td>
 <td style="text-align: left;">— (pública)</td>
-<td style="text-align: left;"><strong>pública sem login</strong> (TV isolada por fila, ícone padrão intranet, bip+voz só novo id, mídia pausada ao chamar)</td>
+<td style="text-align: left;"><strong>pública sem login</strong> (TV isolada por fila, voz serializada por claim na ordem <code>voz_ordem</code>, ducking à metade, papel de fundo absoluto só na área de mídia)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/midia_filas/*</code></td>
 <td style="text-align: left;"><code>mod_filas</code> (<code>PASTA_MIDIA</code> <code>mod_filas/midia</code>)</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">público (áudios MP3 elevador / vídeos MP4 propaganda, playlist global 40s quando ociosa)</td>
+<td style="text-align: left;">público (áudios MP3 / vídeos MP4 / fotos por fila + ambiente global, <code>datahora_nomeFila.ext</code> sempre via <code>renomear_arquivos_fila</code>, volume 40)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/lista-telefonica</code></td>
@@ -353,7 +365,13 @@
 <td style="text-align: left;"><code>censura</code></td>
 <td style="text-align: left;"><code>mod_intranet/censura.py</code></td>
 <td style="text-align: left;"><code>conteudo_palavras_bloqueadas</code></td>
-<td style="text-align: left;">central (Blog <code>criar/atualizar</code> bloqueia + Agregador <code>inserir</code> descarta (<code>fonte_icon</code>/<code>imagem</code> extração <code>faviconV2</code>/<code>api/attachments</code>) / <code>listar_para_tv</code> filtra <code>LIMIT*3</code> (<code>fonte_icon</code> incluso) / <code>limpar_censuradas</code> remove; <code>lower+NFD</code> sem acentos)</td>
+<td style="text-align: left;">central (Blog <code>criar/atualizar</code> bloqueia + Agregador <code>inserir</code> descarta (<code>fonte_icon</code>/<code>imagem</code> extração <code>faviconV2</code>/<code>api/attachments</code>) / <code>listar_para_tv</code> filtra <code>limite=200</code> (<code>fonte_icon</code> incluso) / <code>limpar_censuradas</code> remove; <code>lower+NFD</code> sem acentos)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/api/attachments/{caminho:path}</code></td>
+<td style="text-align: left;"><code>main.py:820</code> <code>fallback_attachments</code></td>
+<td style="text-align: left;">— (público)</td>
+<td style="text-align: left;"><strong>fallback silencioso</strong> antes de <code>/assets/noticia</code>: <code>favicon.png</code> placeholder se caminho termina em <code>-w280-h168-p-df/.png/.jpg/.jpeg</code> senão <code>404</code> — evita log spam <code>http://localhost:8080/api/attachments/CC8... not found</code> no boot <code>NiceGUI ready</code>, TV/Blog sem imagem quebrada (compatível, sem quebrar coleta)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/css/frameworks/*</code></td>
@@ -400,7 +418,7 @@
 <li><code>db_mod_renomear_empenho.db</code>: <code>tb_empenhos</code> + <code>tb_indexador_pesquisa_fts5</code> (32 colunas, FTS5) + <code>tb_quarentena</code> + <code>tb_regex_regras</code>/<code>tb_campos_busca</code> + <code>doc/</code>/<code>organizadorPasta/</code>/<code>quarentena/</code>.</li>
 <li><code>db_mod_solicita_impressao.db</code>: <code>tb_solicitacoes</code> (com <code>grupo_id</code>, <code>tipo_papel</code> <code>sulfite|fotografico|verge</code>, <code>cota_excedida</code>/<code>requer_autorizacao</code>/<code>grupo_id</code>), <code>tb_secretarias</code> (<strong>1000 padrão via <code>ORGANOGRAMA_BASE</code></strong>), <code>tb_setores</code> (<strong>200 padrão</strong>, subsetores achatados), <code>tb_responsaveis_autorizacao</code>, <code>tb_cotas_impressao</code>/<code>tb_consumo_cota</code>/<code>tb_impressoras</code> + <code>solicitacaoImpressao/</code> (rascunhos 10 min, <code>MAX_ARQ=10</code>).</li>
 <li><code>db_mod_tecnico.db</code>: <code>tb_backup</code> (<code>pasta_nome</code> UNIQUE <code>YYYYMMDD_HHMM_nomePc_ip</code>, <code>owner</code>, <code>ip</code>/<code>hostname</code>) + <code>tb_backup_arquivo</code> (<code>caminho_relativo</code>, <code>hash_sha256</code>) + pastas <code>software/</code> (download zip multi-seleção, limite <code>tecnico_max_zip_mb</code> 1024) + <code>backup/</code>.</li>
-<li><code>db_mod_filas.db</code>: <code>tb_fila</code> (<code>Geral</code> seed <code>A000</code>/<code>ativa</code>/<code>01</code> + <code>endereco/prefixo/inicio→fim</code> <code>fim=0</code> infinito + <code>criado_por</code> + <code>tv_grupo</code>, <code>tb_fila_etapa</code> 3 etapas padrão) + <code>tb_chamada</code> (<code>fila_id</code> FK CASCADE, <code>senha</code>, <code>guiche</code> snapshot + <code>paciente_nome/etapa_nome/fila_nome</code>) + <code>tb_midia</code> (playlist TV <code>audio/video</code> global, <code>/midia_filas/*</code>) + <code>tb_config_filas</code> (<code>filas_modo_tv</code>, <code>filas_senha_prefixo</code>, <code>filas_guiche_padrao</code>) + <code>PASTA_MIDIA</code> <code>mod_filas/midia</code> + censura filtrada em <code>listar_para_tv</code>.</li>
+<li><code>db_mod_filas.db</code>: <code>tb_fila</code> SEM seed (nasce vazio + <code>prefixo/inicio→fim</code> <code>fim=0</code> infinito + <code>criado_por</code> + <code>tv_grupo</code> slug + voz <code>voz_ordem</code>, <code>tb_fila_etapa</code>) + <code>tb_chamada</code> (<code>fila_id</code> FK CASCADE, <code>senha</code>, <code>guiche</code> snapshot + <code>paciente_nome/etapa_nome/fila_nome</code> + prioridade/manchester) + <code>tb_fila_nomes</code> (lista única) + <code>tb_midia</code> (por fila + global + <code>fundo</code>, volume 40, <code>/midia_filas/*</code> <code>datahora_nomeFila</code> sempre) + <code>tb_tv_estado</code> (claim) + <code>tb_fila_acesso</code> + <code>tb_config_filas</code> + <code>PASTA_MIDIA</code> <code>mod_filas/midia</code> + notícias até 200 censura-filtradas em <code>listar_para_tv</code>.</li>
 <li><code>db_mod_lista_telefonica.db</code>: <code>tb_unidade</code> (<code>secretaria|setor|subsetor</code>, <code>parent_id</code> FK CASCADE, <code>ordem</code>, <code>telefone</code>) + <code>tb_contato</code> (<code>unidade_id</code> FK CASCADE, <code>nome</code>/<code>telefone</code>, <code>user_nome</code> opcional, <code>tipo</code> <code>vinculado|externo</code>, <code>COLLATE NOCASE</code>) + semente <code>ORGANOGRAMA_BASE</code> 12 secretarias (exportada para <code>solicita_impressao</code> 1000/200).</li>
 </ul>
 <p>Veja <a href="../padroes_codificacao/">Padrões de Codificação</a> para o modelo de módulo.</p>
@@ -408,7 +426,7 @@
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../arquitetura_de_software_das/" class="btn btn-neutral float-left" title="Arquitetura de Software (DAS)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../arquitetura_de_software_das/fachada_integracoes/" class="btn btn-neutral float-left" title="Fachada de Integração (mod_intranet/integracoes.py)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../padroes_codificacao/" class="btn btn-neutral float-right" title="Padrões de Codificação">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -432,7 +450,7 @@
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../arquitetura_de_software_das/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../arquitetura_de_software_das/fachada_integracoes/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../padroes_codificacao/" style="color: #fcfcfc">Next &raquo;</a></span>

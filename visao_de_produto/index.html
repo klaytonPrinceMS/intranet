@@ -74,9 +74,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -101,9 +104,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -251,7 +263,7 @@
 <li>Equipes de auditoria e conformidade.</li>
 </ul>
 <h2 id="modulos-em-operacao">Módulos em operação<a class="headerlink" href="#modulos-em-operacao" title="Permanent link">&para;</a></h2>
-<p><code>mod_intranet</code> (núcleo) + 9 de negócio: <code>mod_gest_cad_usuario</code>, <code>mod_blog</code>, <code>mod_edit_pdf</code>, <code>mod_renomear_empenho</code>, <code>mod_auditoria</code>, <code>mod_solicita_impressao</code> (cotas 1000/200 via <code>ORGANOGRAMA_BASE</code>), <code>mod_tecnico</code> (<strong>novo</strong> 18/09/2026 — <code>software/</code> + <code>backup/YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation, <code>webkitdirectory</code>), <code>mod_filas</code> (<strong>novo esqueleto</strong> 18/09/2026 — <code>/filas</code> + <code>/tv</code> pública 3s+beep) e <code>mod_lista_telefonica</code> (<strong>novo</strong> 19/09/2026 — organograma 12 secretarias <code>Secretaria→Setor→Subsetor</code>, contatos alfabéticos, busca sem acentos, <code>tel:</code> no celular).</p>
+<p><code>mod_intranet</code> (núcleo) + 9 de negócio: <code>mod_gest_cad_usuario</code>, <code>mod_blog</code>, <code>mod_edit_pdf</code>, <code>mod_renomear_empenho</code>, <code>mod_auditoria</code>, <code>mod_solicita_impressao</code> (cotas 1000/200 via <code>ORGANOGRAMA_BASE</code>), <code>mod_tecnico</code> (<strong>novo</strong> 18/09/2026 — <code>software/</code> + <code>backup/YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation, <code>webkitdirectory</code>), <code>mod_filas</code> (multi-filas 09/2026 — <code>/filas</code> + <code>/tv</code> pública isolada/compartilhada/por sala, ordem da fala <code>voz_ordem</code>, volume 40, papel de fundo) e <code>mod_lista_telefonica</code> (<strong>novo</strong> 19/09/2026 — organograma 12 secretarias <code>Secretaria→Setor→Subsetor</code>, contatos alfabéticos, busca sem acentos, <code>tel:</code> no celular).</p>
 <p>Total <strong>10 módulos</strong> (1 núcleo + 9 de negócio), semeados por <code>MODULOS_SISTEMA</code> em <code>mod_intranet/autenticacao.py:15-25</code> e <code>MODULOS_BD</code> em <code>mod_intranet/repositorio.py:57-68</code>.</p>
 <h2 id="proposito-de-negocio">Propósito de negócio<a class="headerlink" href="#proposito-de-negocio" title="Permanent link">&para;</a></h2>
 <p>Hub centralizador de acesso, gestão de identidade (soft CRUD, LGPD), comunicação (Blog), manipulação de PDF, gestão de empenhos e solicitação de impressão (cotas 1000/200), apoio de T.I. (software + backup owner-isolated), gestor de filas/TV e lista telefônica/organograma — tudo com trilha de auditoria unificada (banco exclusivo <code>db_mod_auditoria.db</code>, uma tabela por módulo).</p>

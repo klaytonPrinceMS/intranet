@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -173,6 +183,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -241,7 +253,7 @@
 <p>Lista telefônica interna com <strong>organograma genérico de 12 secretarias</strong> expansível em 3 níveis. O usuário navega por Secretaria → Setor → Subsetor via selects em cascata e visualiza os contatos da unidade selecionada sempre em <strong>ordem alfabética</strong> (<code>nome COLLATE NOCASE</code>). A busca global encontra unidades e contatos por nome ou telefone (normalização sem acentos). No celular, o telefone é <strong>clicável</strong> (<code>tel:</code>) e oferece diálogo "Ligar agora" com fallback para desktop.</p>
 <p>O organograma base é <strong>genérico</strong> e desacoplado de vínculo territorial, servindo como semente inicial editável pelo administrador (criar, mover, elevar, reordenar, excluir ramo).</p>
 <h2 id="banco-de-dados">Banco de dados<a class="headerlink" href="#banco-de-dados" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:106-157</code> (bootstrap central <code>mod_intranet/bd_criador.py:64</code> + chamada no import <code>bd_manipulador.py:603</code>).</p>
+<p>Criador vigente: <code>init_db()</code> em <code>bd_manipulador.py:134-199</code> (bootstrap central <code>mod_intranet/bd_criador.py</code> + chamada no import <code>bd_manipulador.py:925</code> <code>init_db()</code>).</p>
 <p>Conexão via <code>mod_intranet/banco_conexao.conexao("lista_telefonica")</code> (backend duplo SQLite/PostgreSQL, <code>PRAGMA journal_mode=WAL</code> + <code>foreign_keys=ON</code>). Índices <code>idx_unidade_parent</code>, <code>idx_contato_unidade</code>, <code>idx_contato_nome</code>.</p>
 <table>
 <thead>
@@ -261,12 +273,19 @@
 </tr>
 </tbody>
 </table>
-<p>Semente idempotente (<code>bd_manipulador.py:135-155</code>): só semeia quando <code>COUNT(tb_unidade)==0</code>. Constante <code>ORGANOGRAMA_BASE</code> (<code>bd_manipulador.py:21-75</code>) com 12 secretarias e respectivos setores/subsetores:</p>
+<p>Semente idempotente (<code>bd_manipulador.py:164-185</code>): só semeia quando <code>COUNT(tb_unidade)==0</code>. Constante <code>ORGANOGRAMA_BASE</code> (<code>bd_manipulador.py:21-75</code>) com 12 secretarias e respectivos setores/subsetores:</p>
 <ul>
 <li>Gabinete, Administração, Finanças, Saúde, Educação, Obras e Infraestrutura, Agricultura, Meio Ambiente, Assistência Social, Cultura, Esporte e Lazer, Planejamento — cada uma com setores e subsetores (ex.: Administração → Recursos Humanos → Folha/Capacitação, Patrimônio → Compras/Licitações, T.I. → Suporte/Redes, etc.). Ordem semeada via <code>ordem</code> sequencial por nível.</li>
 </ul>
 <p>⚠️ <code>bd_criador.py</code> é <strong>legado/morto</strong> — não executar (schema real em <code>bd_manipulador.py</code>).</p>
-<p>Modelos tipados: ainda sem <code>models/__init__.py</code> com <code>map_imperatively</code> — acesso via <code>CrudBase</code>/SQL direto (padrão a propagar).</p>
+<p>Modelos tipados: <code>models/__init__.py</code> com dataclasses <code>Unidade</code> (<code>id</code>, <code>nome</code>, <code>tipo</code>, <code>parent_id</code>, <code>ordem</code>, <code>telefone</code>, <code>ativo</code>) e <code>Contato</code> (<code>id</code>, <code>unidade_id</code>, <code>nome</code>, <code>telefone</code>, <code>user_nome</code>, <code>tipo</code>) espelhando <code>tb_unidade</code>/<code>tb_contato</code> (sem <code>map_imperatively</code>; acesso ao banco segue via <code>banco_conexao.conexao("lista_telefonica")</code> + SQL direto no <code>bd_manipulador</code>).</p>
+<h2 id="telefones-ddi-55-via-mod_intranettelefone">Telefones — DDI +55 via <code>mod_intranet.telefone</code><a class="headerlink" href="#telefones-ddi-55-via-mod_intranettelefone" title="Permanent link">&para;</a></h2>
+<p>Telefones são gravados como texto livre (validação mínima: ≥8 caracteres) e normalizados só na exibição/ligação via <code>mod_intranet.telefone</code> (não há <code>formatar_br</code>/<code>apenas_digitos</code> dentro do <code>mod_lista_telefonica</code>):</p>
+<ul>
+<li>Leitura: <code>obter_ddi(tel)</code> + <code>normalizar_telefone(ddi, tel)</code> (preserva <code>+</code>, DDI padrão <code>+55</code>) e <code>formatar_para_exibicao(tel)</code> para o formato BR (<code>telas.py:141-171</code>, <code>_dlg_ligar</code>, <code>telas_administracao.py:818-821</code>).</li>
+<li>Escrita/admin: <code>criar_campo_telefone(valor, testid_ddi, testid_numero)</code> com seletor de DDI + campo numérico (<code>telas_administracao.py:37-44</code> unidade <code>admin-unidade-ddi</code>/<code>admin-unidade-tel</code>, <code>telas_administracao.py:656-663</code> contato <code>admin-contato-ddi</code>/<code>admin-contato-tel</code>, edição via <code>_campo["obter"]()</code>/<code>_campo["definir"]()</code> com fallback para <code>ui.input</code> simples).</li>
+<li>Fallback sem o helper: <code>re.sub(r"[^0-9+]", "", tel or "")</code> para montar <code>tel:</code> (<code>ui.link(target="tel:...")</code> + <code>window.location.href='tel:...'</code> no diálogo "Ligar agora").</li>
+</ul>
 <h2 id="funcionalidades">Funcionalidades<a class="headerlink" href="#funcionalidades" title="Permanent link">&para;</a></h2>
 <h3 id="organograma-expansivel-secretaria-setor-subsetor">Organograma expansível — Secretaria → Setor → Subsetor<a class="headerlink" href="#organograma-expansivel-secretaria-setor-subsetor" title="Permanent link">&para;</a></h3>
 <ul>
@@ -373,6 +392,8 @@
 <li><code>tel:</code> é suportado nativamente em mobile; em desktop o diálogo avisa que discador pode não estar configurado — <code>ui.run_javascript</code> é <code>try/except</code> (fail-soft).</li>
 <li>Busca normalizada sem acentos: <code>João</code> encontra <code>joao</code>; telefone busca também por <code>user_nome</code> vinculado.</li>
 <li>Nunca commitar <code>db_mod_lista_telefonica.db</code>; <code>bd_criador.py</code> morto — nunca executar.</li>
+<li>API real do <code>bd_manipulador</code> (todas com <code>try/except</code> + <code>notificar</code>/log): <code>get_connection</code> (WAL + <code>foreign_keys=ON</code> via <code>banco_conexao.conexao</code>), <code>_log</code>/<code>_audit</code> (auditoria via <code>audit_log</code>), <code>_norm</code> (NFKD sem acentos), <code>init_db</code>, <code>listar_unidades(parent_id, tipo, ativo)</code>, <code>listar_todas_unidades</code>, <code>obter_unidade(uid)</code>, <code>criar_unidade</code>, <code>editar_unidade</code>, <code>excluir_ramo</code> (+ <code>_coletar_ramo_ids</code> recursivo), <code>mover_unidade</code> (anti-ciclo), <code>elevar_rebaixar</code>, <code>reordenar_unidades</code>, <code>buscar_unidades</code>, <code>listar_contatos</code> (alfabético <code>COLLATE NOCASE</code>), <code>buscar_contatos</code>, <code>criar_contato</code>, <code>editar_contato</code>, <code>excluir_contato</code>, <code>transferir_contato</code>, <code>contar_unidades</code> (contagem de <code>tb_unidade</code>), <code>remover_vinculos_usuario</code>/<code>renomear_usuario</code> (LGPD).</li>
+<li>Tela pública (<code>telas.py</code>): API real é <code>mostrar_tela(user_nome, perfil_global)</code> + helpers <code>_pode_ver</code>/<code>_eh_admin</code>/<code>_caminho_unidade</code> + internos <code>render_contatos</code>/<code>render_busca</code>/<code>_dlg_ligar</code>; <strong>não existe</strong> <code>_mostrar_tela_segura</code> nem diálogo <code>duplicar</code> — edição/duplicação de unidades e contatos ocorre só nos diálogos do admin (<code>_dlg_editar</code>, <code>_dlg_excluir_ramo</code>, <code>_dlg_mover</code>, <code>_dlg_elevar</code>, <code>_dlg_reordenar</code>, <code>_editar</code>/<code>_transferir</code> de contato).</li>
 </ul>
               
             </div>

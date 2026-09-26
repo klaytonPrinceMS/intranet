@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Relatório de QA de Execução (25/09/2026) - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Relat\u00f3rio de QA de Execu\u00e7\u00e3o (25/09/2026)";
+        var mkdocs_page_input_path = "testes_relatorios/qa_execucao_2026-09-25.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Relatório de QA de Execução (25/09/2026)</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Testes</li>
+      <li class="breadcrumb-item active">Relatório de QA de Execução (25/09/2026)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="qa-execution-report-intranet-modular-2026-09-25">QA Execution Report — Intranet Modular (2026-09-25)<a class="headerlink" href="#qa-execution-report-intranet-modular-2026-09-25" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Execution QA with the system <strong>running</strong> (SQLite, <code>INTRANET_SEM_OTEL=1</code>), diagnosed by an authenticated smoke test plus quality gates. The suite went from <strong>10 failing scripts (of 60) to 0</strong> — <code>.venv/bin/pytest</code> exits <code>0</code>. 8 production bugs fixed, 5 module-isolation violations closed via the <code>mod_intranet/integracoes.py</code> facade, and <code>mkdocs --strict</code>, <code>bandit</code> and <code>gitleaks</code> left clean. Commit <code>624c9d5</code>.</p>
+</blockquote>
+<hr />
+<h1 id="relatorio-de-execucao-de-qa-intranet-modular-25092026">Relatório de Execução de QA — Intranet Modular (25/09/2026)<a class="headerlink" href="#relatorio-de-execucao-de-qa-intranet-modular-25092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>QA de execução com o sistema <strong>no ar</strong> (SQLite, <code>INTRANET_SEM_OTEL=1</code>), diagnóstico por smoke test autenticado + gates de qualidade. A suíte saiu de <strong>10 scripts falhando (de 60) para 0</strong> — <code>.venv/bin/pytest</code> termina com <code>exit=0</code>. 8 bugs de produção corrigidos, 5 violações de isolamento entre módulos fechadas com a fachada <code>mod_intranet/integracoes.py</code>, e <code>mkdocs --strict</code>, <code>bandit</code> e <code>gitleaks</code> limpos. Commit <code>624c9d5</code>.</p>
+</blockquote>
+<h2 id="1-contexto-e-escopo">1. Contexto e escopo<a class="headerlink" href="#1-contexto-e-escopo" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Item</th>
+<th style="text-align: left;">Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Data</strong></td>
+<td style="text-align: left;">25/09/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Commit</strong></td>
+<td style="text-align: left;"><code>624c9d5</code> — <em>"Corrige 8 bugs de produção, fecha 5 violações de isolamento com a fachada mod_intranet/integracoes.py, repara 10 testes de QA e deixa mkdocs --strict, bandit e gitleaks limpos"</em></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Ambiente</strong></td>
+<td style="text-align: left;">Linux, venv <code>.venv</code>, porta <code>8080</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Backend</strong></td>
+<td style="text-align: left;">SQLite (<code>INTRANET_FORCE_SQLITE=1</code>; o PostgreSQL não foi exercitado nesta sessão)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Telemetria</strong></td>
+<td style="text-align: left;"><code>INTRANET_SEM_OTEL=1</code> (sem OTel na execução)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Método</strong></td>
+<td style="text-align: left;">Smoke test <strong>autenticado</strong> (login real no navegador) sobre as rotas + gates de qualidade automatizados</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Suíte</strong></td>
+<td style="text-align: left;"><code>assets/test/</code> — <strong>60 scripts</strong> standalone orquestrados por <code>assets/test/test_suite.py</code> (<code>.venv/bin/pytest</code>)</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Como a suíte é orquestrada</p>
+<p><code>pytest.ini</code> aponta <code>testpaths = assets/test/test_suite.py</code>, e esse arquivo executa
+<strong>cada script <code>.py</code> de <code>assets/test/</code> como subprocesso</strong> (timeout 240 s cada,
+<code>INTRANET_FORCE_SQLITE=1</code> e variáveis <code>PYTEST_*</code> removidas do ambiente).
+Uma lista <code>EXCLUIR</code> deixa de fora diagnósticos e helpers destrutivos
+(<code>debug_boot.py</code>, <code>diag_*.py</code>, <code>test_server.py</code>, <code>test_otel.py</code>, a fábrica de
+PDFs, fresh-install etc.) — de 76 arquivos <code>.py</code> no diretório, <strong>60 entram na
+suíte</strong>.</p>
+</div>
+<h2 id="2-resumo-dos-gates">2. Resumo dos gates<a class="headerlink" href="#2-resumo-dos-gates" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Gate</th>
+<th style="text-align: left;">Antes</th>
+<th style="text-align: left;">Depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Suíte (60 scripts)</td>
+<td style="text-align: left;"><strong>10 falhando</strong></td>
+<td style="text-align: left;"><strong>0</strong> (<code>exit=0</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Smoke Playwright (25 rotas autenticadas)</td>
+<td style="text-align: left;">0 erros</td>
+<td style="text-align: left;"><strong>0 erros</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/check_integridade.py</code></td>
+<td style="text-align: left;">5 falhas / 17 verificações</td>
+<td style="text-align: left;"><strong>13/13</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mkdocs build --strict</code></td>
+<td style="text-align: left;"><strong>abortava</strong> (9 warnings)</td>
+<td style="text-align: left;"><strong>0 warnings</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bandit</code> (11 módulos)</td>
+<td style="text-align: left;">HIGH 1, MEDIUM 5</td>
+<td style="text-align: left;"><strong>HIGH 0, MEDIUM 0</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gitleaks detect</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;"><strong>no leaks found</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Resultado consolidado: <strong><code>.venv/bin/pytest</code> termina com <code>exit=0</code></strong>.</p>
+<h2 id="3-os-10-scripts-que-falhavam-causa-e-tipo">3. Os 10 scripts que falhavam — causa e tipo<a class="headerlink" href="#3-os-10-scripts-que-falhavam-causa-e-tipo" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Script</th>
+<th style="text-align: left;">Causa</th>
+<th style="text-align: left;">Tipo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><code>check_integridade.py</code></td>
+<td style="text-align: left;">5 violações de <strong>isolamento entre módulos de negócio</strong> (AGENTS.md §2)</td>
+<td style="text-align: left;"><strong>código</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><code>test_seg_novos_modulos.py</code></td>
+<td style="text-align: left;">Caminho do binário <code>gitleaks</code> <strong>hardcoded</strong> (<code>~/.local/bin</code>, mas nesta máquina está em <code>/usr/local/bin</code>); <code>mkdocs --strict</code> abortando; asserção do organograma acoplada à <strong>forma do import</strong></td>
+<td style="text-align: left;">ambiente/teste</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;"><code>test_ordem_modulos.py</code></td>
+<td style="text-align: left;">Esperava <strong>6 módulos</strong> na ordem padrão; hoje são <strong>10</strong> (<code>tecnico</code>, <code>filas</code>, <code>lista_telefonica</code>, <code>agregador_noticias</code> foram adicionados depois)</td>
+<td style="text-align: left;">teste obsoleto</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><code>test_filas_testids.py</code></td>
+<td style="text-align: left;">Esperava <code>filas-midia-mutar</code>; o <strong>canônico é <code>filas-midia-som</code></strong> (usado por 2 outras suítes)</td>
+<td style="text-align: left;">teste obsoleto</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;"><code>test_tema_cache_trava.py</code></td>
+<td style="text-align: left;">Esperava timeout inválido = <strong>4</strong></td>
+<td style="text-align: left;">teste obsoleto</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;"><code>teste_config_intranet.py</code></td>
+<td style="text-align: left;">Esperava timeout inválido = <strong>10</strong></td>
+<td style="text-align: left;">teste obsoleto</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;"><code>test_navegar_pesquisa_empenhos.py</code></td>
+<td style="text-align: left;">O levantamento rodava contra a pasta real <code>mod_renomear_empenho/doc</code> (só <code>.gitkeep</code>), <strong>sem massa</strong></td>
+<td style="text-align: left;">fixture ausente</td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;"><code>test_tema_cache_trava.py</code> + <code>teste_config_intranet.py</code></td>
+<td style="text-align: left;">Os <strong>dois</strong> esperavam valores <strong>mutuamente contraditórios</strong> (4 e 10) para o <em>mesmo</em> default; o código e a docstring dizem <strong>5</strong></td>
+<td style="text-align: left;">teste obsoleto</td>
+</tr>
+<tr>
+<td style="text-align: left;">9</td>
+<td style="text-align: left;"><code>verifica_ui_comum.py</code></td>
+<td style="text-align: left;">Contagens exatas obsoletas (<code>campo_texto</code> 16 → hoje <strong>23</strong>; <code>senha=True</code> 9 → <strong>12</strong>) e <code>ui.notify</code> cru em <code>mod_edit_pdf</code></td>
+<td style="text-align: left;">teste obsoleto + <strong>código</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;"><code>teste_carrossel_blog.py</code></td>
+<td style="text-align: left;">O carrossel migrou de <em>select</em> dedicado para <strong>seleção em lote por checkbox</strong> + campo <code>Tempo (s)</code></td>
+<td style="text-align: left;">teste obsoleto</td>
+</tr>
+<tr>
+<td style="text-align: left;">11</td>
+<td style="text-align: left;"><code>teste_aba_config_intranet.py</code></td>
+<td style="text-align: left;">Defaults do card "Gerais" <strong>fora do <code>PADRAO_CONFIG</code></strong> (chave ausente no <code>tb_config</code> → o campo não caía no padrão) + esperava <code>notificacao_timeout=10</code></td>
+<td style="text-align: left;"><strong>código</strong> + teste obsoleto</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">Os itens 5/6 e 8 são o mesmo defeito, visto por dois ângulos</p>
+<p><code>test_tema_cache_trava.py</code> afirmava que um <code>notificacao_timeout</code> inválido cai
+no padrão <strong>4</strong>; <code>teste_config_intranet.py</code> afirmava <strong>10</strong>. Os dois testes
+não podiam passar ao mesmo tempo — e ambos estavam errados: o padrão real é
+<strong><code>5</code></strong>, declarado em <code>PADRAO_CONFIG["notificacao_timeout"]</code> (<code>mod_intranet/bd_conexao.py</code>)
+e replicado em <code>tema_modulo.notificacao_timeout()</code>. A correção foi alinhar
+<strong>os dois testes ao código</strong>, não o código a um dos testes.</p>
+</div>
+<h2 id="4-os-8-bugs-de-producao-corrigidos">4. Os 8 bugs de produção corrigidos<a class="headerlink" href="#4-os-8-bugs-de-producao-corrigidos" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Arquivo · função</th>
+<th style="text-align: left;">Sintoma</th>
+<th style="text-align: left;">Efeito no usuário</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><code>mod_filas</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:contar_nomes_pendentes</code></td>
+<td style="text-align: left;">Predicado <strong>invertido</strong>: contava <code>usado=1</code> (nomes <strong>já chamados</strong>) em vez de <code>usado=0</code></td>
+<td style="text-align: left;">O rótulo <em>"N nome(s) na lista — o próximo chama em ordem"</em> (<code>telas.py:1243</code>) mostrava o número <strong>errado</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><code>mod_filas</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:listar_nomes</code></td>
+<td style="text-align: left;"><code>ORDER BY ordem DESC</code> invertia a lista de pendentes</td>
+<td style="text-align: left;">A lista exibida na tela vinha na <strong>ordem inversa</strong> à ordem real de chamada</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;"><code>mod_renomear_empenho</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:pesquisar_levantamento</code></td>
+<td style="text-align: left;">O FTS5 é <strong>prefixo</strong> (<code>"4"*</code> casa com <code>4abc</code>, não com <code>24</code>) e o fallback <code>LIKE</code> só era acionado ao <strong>lançar exceção</strong> — o FTS respondia vazio sem erro</td>
+<td style="text-align: left;">Buscar por <strong>1 letra</strong> voltava vazio, mesmo com o termo presente no nome do arquivo</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><code>mod_intranet</code></td>
+<td style="text-align: left;"><code>bd_conexao.py</code> + <code>tela_configuracoes.py</code></td>
+<td style="text-align: left;">Defaults do card <strong>"Gerais"</strong> duplicados em <strong>5 lugares</strong> e fora do <code>PADRAO_CONFIG</code> (<code>backup_interval_hours</code>, <code>sessao_retencao</code>, <code>notificacao_timeout</code>)</td>
+<td style="text-align: left;">Chave ausente no <code>tb_config</code> fazia o campo <strong>não cair no padrão</strong>; um padrão divergente quebrava o card</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;"><code>mod_blog</code></td>
+<td style="text-align: left;"><code>telas.py:atualizar</code></td>
+<td style="text-align: left;"><code>_feed_blog.refresh()</code> chamado <strong>sem <code>try/except</code></strong> (violava AGENTS.md §3.2)</td>
+<td style="text-align: left;">Refresh que agenda tarefa no <code>event-loop</code> do NiceGUI podia <strong>derrubar a tela inteira</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;"><code>mod_intranet</code></td>
+<td style="text-align: left;"><code>grafana_sync.py:obter_grafana_url</code></td>
+<td style="text-align: left;"><code>GRAFANA_URL</code> <strong>sem validação de esquema</strong></td>
+<td style="text-align: left;"><code>urllib</code> aceita <code>file://</code> — config corrompida permitiria <strong>abrir arquivo local</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;"><code>main.py</code> (2) · <code>mod_edit_pdf/telas.py</code> (22)</td>
+<td style="text-align: left;"><code>page_admin_modulo</code> · fallbacks de erro</td>
+<td style="text-align: left;"><code>ui.notify</code> <strong>cru</strong> em vez de <code>tema_modulo.notificar()</code> (violava AGENTS.md §5.1)</td>
+<td style="text-align: left;">Toasts <strong>ignoravam o <code>notificacao_timeout</code></strong> configurado pelo admin</td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;"><code>mod_filas</code> · <code>mod_renomear_empenho</code></td>
+<td style="text-align: left;"><code>telas.py</code></td>
+<td style="text-align: left;">Botão de "Enviar" da linha de etapa <strong>clicável sem <code>data-testid</code></strong>; barra de abas feita à mão</td>
+<td style="text-align: left;">Playwright quebrava em <strong>strict mode</strong>; a barra de abas fugia do padrão do módulo</td>
+</tr>
+</tbody>
+</table>
+<h3 id="41-detalhamento-por-bug">4.1 Detalhamento por bug<a class="headerlink" href="#41-detalhamento-por-bug" title="Permanent link">&para;</a></h3>
+<p><strong>1 · <code>contar_nomes_pendentes</code> — predicado invertido</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ANTES — contava os JÁ CHAMADOS</span>
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT COUNT(*) FROM tb_fila_nomes WHERE fila_id=? AND usado=1"</span><span class="p">,</span> <span class="p">(</span><span class="n">fila_id</span><span class="p">,))</span>
+<span class="c1"># DEPOIS — pendente = usado=0 (convenção de todas as outras queries do módulo)</span>
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT COUNT(*) FROM tb_fila_nomes WHERE fila_id=? AND usado=0"</span><span class="p">,</span> <span class="p">(</span><span class="n">fila_id</span><span class="p">,))</span>
+</code></pre></div>
+<p><code>gerar_senha</code> marca <code>usado=1</code> ao chamar o nome (linhas 972/1196). Portanto
+<strong>pendente = <code>usado=0</code></strong> — a mesma convenção usada por <code>listar_nomes(somente_pendentes=True)</code>,
+<code>_escolher_proximo_nome</code> e <code>transferir_*</code>.</p>
+<p><strong>2 · <code>listar_nomes</code> — ordenação invertida</strong></p>
+<p>Os dois ramos (pendentes e todos) passaram de <code>ORDER BY ordem DESC</code> para
+<code>ORDER BY ordem</code> (ASC). A ordem exibida na tela passa a ser <strong>a ordem de fala</strong>,
+a mesma que <code>proximo_da_etapa</code> respeita.</p>
+<p><strong>3 · <code>pesquisar_levantamento</code> — FTS é prefixo</strong></p>
+<p>A cadeia passou a ser: <strong>(1) FTS5 por prefixo</strong> → se voltar <strong>vazio</strong>, <strong>(2) <code>LIKE</code>
+por substring</strong>. O segundo passo não é mais um <code>except</code>; é o caminho normal para
+termos curtos. Termo de 1 letra (<code>%4%</code> casando com <code>EC_24</code>) agora filtra.</p>
+<p><strong>4 · Defaults do card "Gerais"</strong> — <code>backup_interval_hours</code> (<code>"12"</code>) e
+<code>sessao_retencao</code> (<code>"50"</code>) entraram no <code>PADRAO_CONFIG</code>; <code>notificacao_timeout</code> já
+existia. <code>tela_configuracoes.py</code> passou a ler <code>PADRAO_CONFIG[...]</code> nos três
+<code>padrao=</code>, no dicionário do "Restaurar padrão" e no <code>_reagendar_backups(...)</code>.</p>
+<p><strong>5 · <code>mod_blog/telas.py:atualizar</code> — fail-soft</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># AGENTS.md §3.2: o refresh é fail-soft. `refreshable.refresh()`</span>
+<span class="c1"># agenda tarefa no event-loop do NiceGUI e pode levantar se o loop</span>
+<span class="c1"># ainda não subiu ou se o cliente desconectou — sem este try, uma</span>
+<span class="c1"># falha de refresh derrubava a tela inteira (o conteúdo já foi</span>
+<span class="c1"># renderizado logo abaixo por `_feed_blog()`, então o feed segue</span>
+<span class="c1"># visível mesmo se a re-renderização não agendar).</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">_feed_blog</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">observabilidade</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="s2">"blog"</span><span class="p">)</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+        <span class="s2">"atualizar: refresh do feed não agendado (loop indisponível)"</span><span class="p">)</span>
+</code></pre></div>
+<p>O <code>logger.debug</code> é intencional: o conteúdo <strong>já foi renderizado</strong> logo abaixo por
+<code>_feed_blog()</code>, então o feed continua visível mesmo que a re-renderização não
+agende. <code>_atualizar_contador()</code> (logo abaixo) já era protegido — agora os dois
+caminhos são.</p>
+<p><strong>6 · <code>GRAFANA_URL</code> com esquema validado</strong> — <code>obter_grafana_url()</code> valida via
+<code>_url_grafana_valida()</code>; valor fora de <code>http</code>/<code>https</code> é <strong>ignorado</strong> e cai no
+padrão local (<code>DEFAULT_GRAFANA_URL</code>). Fecha o achado <code>B310</code> apontado em
+<a href="../seguranca_2026-09-06/">Segurança 06/09/2026</a> ("<code>urllib</code> aceita <code>file://</code>").</p>
+<p><strong>7 · <code>ui.notify</code> cru</strong> — as 24 ocorrências migraram para
+<code>tema_modulo.notificar(...)</code>, que respeita <code>notificacao_timeout</code> e o tipo de aviso.</p>
+<p><strong>8 · <code>data-testid</code> + helper de abas</strong> — <code>filas-etapa-enviar</code> adicionado ao botão
+"Enviar" da linha de etapa (<code>mod_filas/telas.py:349</code>); a barra de abas de
+<code>mod_renomear_empenho/telas.py</code> passou a usar <code>aba_modulo.menu_modulo(_abas)</code>
+(padrão do módulo), eliminando o dicionário de ícones redundante.</p>
+<h2 id="5-mudancas-estruturais">5. Mudanças estruturais<a class="headerlink" href="#5-mudancas-estruturais" title="Permanent link">&para;</a></h2>
+<h3 id="51-fachada-publica-mod_intranetintegracoespy-nova">5.1 Fachada pública <code>mod_intranet/integracoes.py</code> (nova)<a class="headerlink" href="#51-fachada-publica-mod_intranetintegracoespy-nova" title="Permanent link">&para;</a></h3>
+<p>7 funções, <strong>imports lazy</strong> e <strong>fail-soft</strong> (valor neutro + <code>logger.warning</code>,
+nunca derrubam a tela do chamador). É a costura única que elimina as <strong>5 violações
+de isolamento</strong> (AGENTS.md §2 — "nunca faça cross-query entre bancos"): o módulo
+de negócio fala com o <code>mod_intranet</code>, e o núcleo possui o acoplamento.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função</th>
+<th style="text-align: left;">Destino</th>
+<th style="text-align: left;">Consumidores</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>obter_usuario_gestao(user_nome)</code></td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario.bd_manipulador.obter_usuario</code></td>
+<td style="text-align: left;">Filas, Lista Telefônica</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_usuarios_gestao(filtro_ativo=None)</code></td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario.bd_manipulador.listar_usuarios</code></td>
+<td style="text-align: left;">Filas, Lista Telefônica</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>agregador_habilitado()</code></td>
+<td style="text-align: left;"><code>mod_agregador_noticias.bd_manipulador.habilitado</code></td>
+<td style="text-align: left;">TV Filas</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_noticias_para_tv(limite=200)</code></td>
+<td style="text-align: left;"><code>mod_agregador_noticias.bd_manipulador.listar_para_tv</code></td>
+<td style="text-align: left;">TV Filas</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>limpar_noticias_censuradas()</code></td>
+<td style="text-align: left;"><code>mod_agregador_noticias.bd_manipulador.limpar_censuradas</code></td>
+<td style="text-align: left;">Admin do <strong>Blog</strong> (orquestra a purga)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>obter_organograma_base()</code></td>
+<td style="text-align: left;"><code>mod_lista_telefonica.bd_manipulador.ORGANOGRAMA_BASE</code></td>
+<td style="text-align: left;">Solicitação de Impressão (cotas 1000/200)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>modulo_habilitado(chave)</code></td>
+<td style="text-align: left;"><code>mod_intranet.autenticacao.modulos_registrados</code></td>
+<td style="text-align: left;">núcleo / roteamento</td>
+</tr>
+</tbody>
+</table>
+<h4 id="as-5-violacoes-fechadas-pares-origem-destino">As 5 violações fechadas (pares origem → destino)<a class="headerlink" href="#as-5-violacoes-fechadas-pares-origem-destino" title="Permanent link">&para;</a></h4>
+<p>O <code>assets/test/check_integridade.py</code> (bloco A) classifica como <strong>violação</strong>
+qualquer import de um módulo de negócio para <strong>outro</strong> módulo de negócio — com
+uma única exceção documentada, a <strong>cascata LGPD</strong> de
+<code>mod_gest_cad_usuario</code> para <code>blog</code> / <code>edit_pdf</code> / <code>renomear_empenho</code>. Fora essa
+cascata, eram exatamente <strong>5 pares</strong>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Origem</th>
+<th style="text-align: left;">Destino</th>
+<th style="text-align: left;">Ponto de código</th>
+<th style="text-align: left;">Fachada usada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><code>mod_blog</code></td>
+<td style="text-align: left;"><code>mod_agregador_noticias</code></td>
+<td style="text-align: left;"><code>telas_administracao.py:100-106</code> (purga ao salvar a censura)</td>
+<td style="text-align: left;"><code>integracoes.limpar_noticias_censuradas()</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><code>mod_filas</code></td>
+<td style="text-align: left;"><code>mod_agregador_noticias</code></td>
+<td style="text-align: left;"><code>telas.py:1737</code> (<code>carregar_noticias</code> da TV)</td>
+<td style="text-align: left;"><code>integracoes.agregador_habilitado()</code> + <code>integracoes.listar_noticias_para_tv(limite=200)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;"><code>mod_filas</code></td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:_ator_eh_dono_ou_admin</code>, <code>bd_manipulador.py:liberar_acesso</code>, <code>telas.py:bloco_liberar_acesso</code></td>
+<td style="text-align: left;"><code>integracoes.obter_usuario_gestao()</code> / <code>integracoes.listar_usuarios_gestao()</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><code>mod_lista_telefonica</code></td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario</code></td>
+<td style="text-align: left;"><code>telas_administracao.py:684-690</code> e <code>:738-746</code> (vínculo de contato)</td>
+<td style="text-align: left;"><code>integracoes.listar_usuarios_gestao()</code> / <code>integracoes.obter_usuario_gestao()</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;"><code>mod_solicita_impressao</code></td>
+<td style="text-align: left;"><code>mod_lista_telefonica</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:init_db</code> (semente de cotas 1000/200)</td>
+<td style="text-align: left;"><code>integracoes.obter_organograma_base()</code> (+ <em>fallback</em> local)</td>
+</tr>
+</tbody>
+</table>
+<p>Depois das correções o grafo de imports só tem: <code>mod_intranet ↔ módulo</code> (a
+fachada — permitido por construção) e a <strong>cascata LGPD</strong> documentada.</p>
+<blockquote>
+<p><strong>Imports lazy são deliberados</strong>: um import de topo de um módulo de negócio na
+fachada fecharia um <strong>ciclo de import de topo</strong> com o <code>main.py</code>. Por isso o
+<code>check_integridade.py</code> os reporta como AVISO de runtime, nunca como falha.</p>
+</blockquote>
+<h3 id="52-check_integridadepy-5-falhas-1313">5.2 <code>check_integridade.py</code>: 5 falhas → 13/13<a class="headerlink" href="#52-check_integridadepy-5-falhas-1313" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Verificação</th>
+<th style="text-align: left;">Antes</th>
+<th style="text-align: left;">Depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">A) isolamento (negócio nunca importa negócio, exceto a cascata LGPD)</td>
+<td style="text-align: left;"><strong>5 pares violando</strong></td>
+<td style="text-align: left;">OK — "nenhum import entre módulos de negócio (só cascata LGPD)"</td>
+</tr>
+<tr>
+<td style="text-align: left;">B) sem ciclo de import em nível de topo</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">OK</td>
+</tr>
+<tr>
+<td style="text-align: left;">C) <code>bd_manipulador.py</code> padronizado em todo <code>mod_*</code></td>
+<td style="text-align: left;">11 módulos</td>
+<td style="text-align: left;">11 módulos</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Total</strong></td>
+<td style="text-align: left;"><strong>5 falhas / 17</strong></td>
+<td style="text-align: left;"><strong>13/13</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Os 2 ciclos <strong>apenas-lazy</strong> que o próprio script antes apontava como AVISO foram
+eliminados com a fachada (restam apenas os ciclos lazy sadios <code>mod_intranet ↔ módulo</code>,
+que são o mecanismo de DI e rodam bem em runtime).</p>
+<h3 id="53-mkdocsyml-links-quebrados">5.3 <code>mkdocs.yml</code> + links quebrados<a class="headerlink" href="#53-mkdocsyml-links-quebrados" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>nav</code> da seção <strong>"Registro de Mudanças"</strong> corrigido: era um item simples
+  apontando para o índice e <strong>não alcançava</strong> <code>wal_paridade_pendente_2026-09-24.md</code>.</li>
+<li><strong>9 links</strong> <code>../registro_de_mudancas/...</code> quebrados arrumados.</li>
+<li>Resultado: <code>mkdocs build --strict</code> deixou de <strong>abortar</strong> (antes: 9 warnings com
+  <code>--strict</code> = build falha) e passou a <strong>0 warnings</strong>.</li>
+</ul>
+<h3 id="54-bandit-high-1-0-medium-5-0">5.4 <code>bandit</code>: HIGH 1 → 0, MEDIUM 5 → 0<a class="headerlink" href="#54-bandit-high-1-0-medium-5-0" title="Permanent link">&para;</a></h3>
+<p>Achados analisados e fechados com <code># nosec</code> <strong>justificados no código</strong> (o padrão
+do projeto: nomes de tabela/coluna internos interpolados, valores sempre por
+bind <code>?</code>/<code>%s</code>; nunca input do usuário):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Regra</th>
+<th style="text-align: left;">Falso positivo</th>
+<th style="text-align: left;">Fechamento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>B602</code> <code>subprocess</code> com <code>shell=True</code></td>
+<td style="text-align: left;"><code>mod_intranet/ativacao.py:_cmd</code> — <code>usar_shell</code> só é <code>True</code> para comandos <strong>estáticos</strong> definidos no próprio assistente; a senha entra por <code>stdin</code>, nunca interpolada no <code>argv</code></td>
+<td style="text-align: left;"><code># nosec B602</code> com justificativa</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>B310</code> <code>urllib</code> com scheme não auditado</td>
+<td style="text-align: left;"><code>mod_intranet/ativacao.py:_probe_http</code> / <code>_servicos_otel_online</code> — esquema <code>http://</code> <strong>literal</strong> + porta em <code>int()</code>; nunca <code>file://</code> nem entrada do usuário</td>
+<td style="text-align: left;"><code># nosec B310</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>B310</code> <code>GRAFANA_URL</code></td>
+<td style="text-align: left;"><code>mod_intranet/grafana_sync.py</code></td>
+<td style="text-align: left;"><strong>Corrigido de verdade</strong> (bug 6) — validação de esquema</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>B608</code> SQL com f-string</td>
+<td style="text-align: left;"><code>mod_intranet/repositorio.py</code> — <code>set_sql</code> é montado só das <strong>chaves literais</strong> do <code>if-chain</code> acima; valores por bind <code>:nome</code> etc.</td>
+<td style="text-align: left;"><code># nosec B608</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="55-gitleaks-detect-no-leaks-found">5.5 <code>gitleaks detect</code>: no leaks found<a class="headerlink" href="#55-gitleaks-detect-no-leaks-found" title="Permanent link">&para;</a></h3>
+<p>Sem segredo no código nem no histórico. O caminho do binário deixou de ser
+hardcoded (§3, item 2) e passa a resolver por <code>shutil.which</code> (PATH) com fallback
+para o caminho do <code>requirements-dev.txt</code>.</p>
+<h3 id="56-pytest-env-declarado-em-requirements-devtxt">5.6 <code>pytest-env</code> declarado em <code>requirements-dev.txt</code><a class="headerlink" href="#56-pytest-env-declarado-em-requirements-devtxt" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># pytest.ini</span>
+<span class="na">env</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">PYTHONUTF8=1</span>
+</code></pre></div>
+<p>A chave <code>env</code> <strong>só funciona com o plugin <code>pytest-env</code></strong>. Sem ele declarado, o
+pytest emitia <code>PytestConfigWarning</code> e a proteção de <strong>UTF-8 não era aplicada</strong> —
+o que quebrava qualquer asserção/print com acento em locale não-UTF-8.
+<code>pytest-env&gt;=1.1.0</code> foi adicionado a <code>requirements-dev.txt</code> com comentário
+explicando o porquê.</p>
+<h2 id="6-pendencias-conhecidas-nao-cobertas-por-esta-sessao">6. Pendências conhecidas (NÃO cobertas por esta sessão)<a class="headerlink" href="#6-pendencias-conhecidas-nao-cobertas-por-esta-sessao" title="Permanent link">&para;</a></h2>
+<div class="admonition danger">
+<p class="admonition-title">251 chamadas de <code>ui.notify</code> cru ainda existem no código</p>
+<p>Restam <strong>251 chamadas</strong> de <code>ui.notify</code> cru — violação do AGENTS.md §5.1
+(<code>tema_modulo.notificar()</code> é o padrão) — distribuídas assim:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: right;">Ocorrências</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>mod_renomear_empenho</code></td>
+<td style="text-align: right;"><strong>140</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_solicita_impressao</code></td>
+<td style="text-align: right;"><strong>73</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_blog</code></td>
+<td style="text-align: right;"><strong>34</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_intranet</code></td>
+<td style="text-align: right;"><strong>2</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_auditoria</code></td>
+<td style="text-align: right;"><strong>1</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_edit_pdf</code></td>
+<td style="text-align: right;"><strong>1</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Total</strong></td>
+<td style="text-align: right;"><strong>251</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>É dívida pré-existente</strong> — não introduzida por esta sessão.</li>
+<li><strong>Não é coberta pela suíte</strong>: nenhum dos 60 scripts falha por causa disso,
+  portanto corrigi-las não muda o resultado de <code>.venv/bin/pytest</code>.</li>
+<li><strong>Efeito real é restrito</strong>: apenas a <strong>padronização do <code>timeout</code> dos toasts</strong>
+  (os avisos não respeitam o <code>notificacao_timeout</code> configurado pelo admin) —
+  não há risco funcional ou de perda de dados.</li>
+<li><strong>Recomendação</strong>: tratar em lote por módulo, junto com a modernização das
+  chamadas, e <strong>adicionar um gate</strong> (<code>verifica_ui_comum.py</code> ou <code>check_integridade.py</code>)
+  que impeça o regresso de <code>ui.notify</code> cru em código novo.</li>
+</ul>
+</div>
+<h2 id="7-riscos-residuais-e-escopo-nao-exercitado">7. Riscos residuais e escopo não exercitado<a class="headerlink" href="#7-riscos-residuais-e-escopo-nao-exercitado" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>PostgreSQL não foi testado.</strong> A sessão rodou em SQLite
+  (<code>INTRANET_FORCE_SQLITE=1</code>); a paridade SQLite↔PostgreSQL exigida pelo
+  AGENTS.md §4.1 continua sendo verificada pelos testes de paridade, <strong>não</strong> por
+  esta execução.</li>
+<li><strong><code>_ativacao.py</code></strong> toca Docker/OTel por <code>subprocess</code>; com <code>INTRANET_SEM_OTEL=1</code>
+  esses caminhos <strong>não foram exercitados</strong> de ponta a ponta.</li>
+<li><strong>Smoke Playwright</strong> cobriu as <strong>25 rotas autenticadas</strong>; rotas públicas
+  (<code>/tv</code>, <code>/tv/{id}</code>, <code>/tv?grupo=</code>) foram cobertas pelas suítes E2E de Filas.</li>
+<li><strong>Higiene do banco</strong>: a suíte deixa dados de teste em <code>db_mod_*.db</code>
+  (padrão histórico dos scripts standalone) — não é regressão desta sessão.</li>
+</ul>
+<h2 id="8-como-reproduzir">8. Como reproduzir<a class="headerlink" href="#8-como-reproduzir" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># 0) subir o sistema (SQLite, sem OTel) — porta 8080</span>
+<span class="nv">INTRANET_SEM_OTEL</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>.venv/bin/python<span class="w"> </span>main.py<span class="w"> </span><span class="p">&amp;</span>
+
+<span class="c1"># 1) suíte completa (60 scripts) — deve terminar com exit=0</span>
+.venv/bin/pytest
+<span class="c1"># ou direto, com progresso por script:</span>
+.venv/bin/python<span class="w"> </span>assets/test/test_suite.py
+
+<span class="c1"># 2) integridade estrutural (13/13)</span>
+.venv/bin/python<span class="w"> </span>assets/test/check_integridade.py
+
+<span class="c1"># 3) gate de documentação (0 warnings)</span>
+.venv/bin/mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
+
+<span class="c1"># 4) segurança</span>
+.venv/bin/bandit<span class="w"> </span>-r<span class="w"> </span>mod_*/<span class="w"> </span>-q
+.venv/bin/gitleaks<span class="w"> </span>detect<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--no-git<span class="w"> </span>-v
+
+<span class="c1"># 5) E2E autenticado (exemplos)</span>
+.venv/bin/pytest<span class="w"> </span>assets/test/test_e2e_cobertura_extra_sec.py
+.venv/bin/pytest<span class="w"> </span>assets/test/teste_carrossel_blog.py
+</code></pre></div>
+<h2 id="9-referencias">9. Referências<a class="headerlink" href="#9-referencias" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a> — banda anterior
+  (o achado <code>B310</code>/<code>GRAFANA_URL</code> citado lá foi <strong>corrigido</strong> nesta sessão, bug 6).</li>
+<li><a href="../../testes_casos/">Testes — Casos</a> · <a href="../../testes_plano/">Testes — Plano</a></li>
+<li><a href="../../testes_playwright/">E2E com Playwright</a></li>
+<li><a href="../../registro_de_mudancas/">Registro de Mudanças</a></li>
+<li>Subagente responsável: <code>kbp-qa</code> (execução) + <code>kbp-devSecOps</code> (gates de segurança)</li>
+<li><code>kbp-doc</code> (este relatório).</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../seguranca_2026-09-06/" class="btn btn-neutral float-left" title="Relatório de Segurança (06/09/2026)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../testes_playwright/" class="btn btn-neutral float-right" title="E2E com Playwright">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../seguranca_2026-09-06/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../testes_playwright/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

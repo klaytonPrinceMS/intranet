@@ -74,9 +74,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -101,9 +104,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -325,9 +337,9 @@
 <tr>
 <td style="text-align: left;"><strong>Filas (TV)</strong></td>
 <td style="text-align: left;"><code>filas</code></td>
-<td style="text-align: left;"><code>/filas</code> + <code>/tv?grupo=</code> (compartilhada) + <code>/tv/{fila_id}</code> (isolada)</td>
+<td style="text-align: left;"><code>/filas</code> + <code>/tv?grupo=</code> (compartilhada) + <code>/tv/{fila_id}</code> (isolada) + <code>?etapa=</code> (por sala)</td>
 <td style="text-align: left;"><code>db_mod_filas.db</code></td>
-<td style="text-align: left;">multi-filas por local (<code>endereco/prefixo/inicio→fim</code> <code>fim=0</code> infinito, <code>criado_por</code>, <code>tv_grupo</code>, <code>tb_fila_etapa</code>/<code>tb_midia</code>, isolamento por criador vs <code>administrador_geral</code>, TV <code>/tv/{id}</code> isolada vs <code>/tv?grupo=</code> compartilhada, ícone padrão intranet, bip+voz só novo id, playlist áudio elevador/vídeo <code>/midia_filas</code>, exclusão uma/todas exceto Geral, censura filtrada)</td>
+<td style="text-align: left;">multi-filas sem seed (<code>prefixo/inicio→fim</code> <code>fim=0</code> infinito, <code>criado_por</code>, <code>tv_grupo</code> slug, <code>voz_ordem</code> + <code>tb_fila_etapa</code>/<code>tb_fila_nomes</code>/<code>tb_midia</code> com <code>fundo</code>, isolamento por criador/<code>tb_fila_acesso</code> vs <code>administrador_geral</code>, TV isolada vs compartilhada vs etapa, bip+voz claim na ordem + ducking metade (volume 40) + fundo, playlist <code>/midia_filas</code> (<code>datahora_nomeFila</code> sempre), Editar no painel + Acesso, notícias 200, censura filtrada)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Lista Telefônica</strong></td>
@@ -341,7 +353,7 @@
 <td style="text-align: left;"><code>agregador_noticias</code></td>
 <td style="text-align: left;"><code>/agregador-noticias</code> + <code>/agregador-noticias-puro</code> (pura) + <code>/assets/noticia/*</code> + <code>/admin/agregador_noticias</code></td>
 <td style="text-align: left;"><code>db_mod_agregador_noticias.db</code></td>
-<td style="text-align: left;"><strong>novo</strong> (19/09/2026) — multi-fonte <code>httpx+parsel</code> (Google/BBC/JFP/RSS) espelhando <code>klaytonPrinceMS/Noticia</code>, termo livre + fontes configuráveis, 10–360 min, <strong>barra filtro tema + busca lado a lado</strong> <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> NFKD (<strong>sem badge <code>Coleta:</code></strong> removido a169c9a) + <code>agregador-ver-puro</code> → <code>/agregador-noticias-puro</code>, grid responsivo <strong>3→2→1 via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries 1024px/640px + <code>.card-noticia {min-height:160px; max-height:220px}</code> (média 91 notícias: título 79/75, descrição 34, 87.9% imagem, 24% fonte_icon)</strong> <code>ui.link(target=href, new_tab=True)</code> + <strong>ícone fonte 16×16 + imagem 30×30 lado a lado antes do título</strong> (<code>fonte_icon_url</code> <code>faviconV2</code> + <code>imagem_url</code>), paginação 12 + busca 500 NFKD, <strong>tela pura</strong> <code>telas_puro.py</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> (12 notícias <code>COALESCE DESC</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code>), 24h <code>limpar_antigas</code>/<code>reiniciar_banco</code> <code>06:00</code> <code>CronTrigger</code>, TV <code>listar_para_tv</code> (<code>fonte_icon</code> incluso, censura filtrada) + censura central <code>conteudo_palavras_bloqueadas</code> + <code>assets/noticia/</code> 4.9M servido via rota estática</td>
+<td style="text-align: left;"><strong>novo</strong> (19/09/2026) — multi-fonte <code>httpx+parsel</code> (Google/BBC/JFP/RSS) espelhando <code>klaytonPrinceMS/Noticia</code>, termo livre + fontes configuráveis, 10–9360 min na API (select do admin 10–360) <strong>barra filtro tema + busca lado a lado</strong> <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> NFKD (<strong>sem badge <code>Coleta:</code></strong> removido a169c9a) (botão <code>agregador-ver-puro</code> removido 20/09/2026 — <code>/agregador-noticias-puro</code> por URL direta), grid responsivo <strong>3→2→1 via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries 1024px/640px + <code>.card-noticia {height: 300px}</code> (altura FIXA, <code>260px</code> no celular)</strong> <code>ui.link(target=href, new_tab=True)</code> + <strong>miniatura <code>120×120</code> ampliável em diálogo</strong> (<code>imagem_url</code>) + <strong>logo da fonte como marca d'água <code>32×32</code></strong> (<code>fonte_icon_url</code> <code>faviconV2</code>; ícone <code>16×16</code> ao lado do badge quando não há imagem) + <strong>descrição completa com scroll</strong>, paginação 12 + busca 500 NFKD, <strong>tela pura</strong> <code>telas_puro.py</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> (12 notícias <code>COALESCE DESC</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code>), 24h <code>limpar_antigas</code>/<code>reiniciar_banco</code> <code>09:00</code> backend (rótulos UI <code>06:00</code>) <code>CronTrigger</code>, TV <code>listar_para_tv</code> (<code>fonte_icon</code> incluso, censura filtrada) + censura central <code>conteudo_palavras_bloqueadas</code> + <code>assets/noticia/</code> 4.9M servido via rota estática</td>
 </tr>
 </tbody>
 </table>
@@ -352,7 +364,7 @@
 <pre class="mermaid"><code>flowchart TD
     U[Usuário] --&gt;|/login| L[Autenticação bcrypt]
     L --&gt;|ok| S[Sessão revogável&lt;br/&gt;tb_sessoes + cookie_hash&lt;br/&gt;+ Visitas ++contador_acessos_total]
-    S --&gt; D[Dashboard /&lt;br/&gt;boas-vindas + Resumo dinâmico Water + feed do Blog&lt;br/&gt;sem botão Abrir Blog (18/09/2026)]
+    S --&gt; D[Dashboard /&lt;br/&gt;boas-vindas + feed do Blog + Resumo dinâmico Water&lt;br/&gt;sem botão Abrir Blog (18/09/2026)]
     D --&gt; M[Drawer lateral&lt;br/&gt;módulos liberados]
     M --&gt; R1[/blog] &amp; R2[/users] &amp; R3[/edit-pdf] &amp; R4[/renomear-empenho] &amp; R5[/solicita-impressao] &amp; R6[/auditoria] &amp; R7[/tecnico] &amp; R8[/filas] &amp; R9[/lista-telefonica] &amp; R10[/agregador-noticias]
     R1 &amp; R2 &amp; R3 &amp; R4 &amp; R5 &amp; R6 &amp; R7 &amp; R8 &amp; R9 &amp; R10 --&gt; G[pagina_restrita&lt;br/&gt;autenticação + permissão + layout&lt;br/&gt;/tv sem guarda]
@@ -376,8 +388,8 @@
 <p>Home visual <strong>Water escopado só no card</strong> (<code>home_visual.injetar_water_card()</code> → <code>.home-resumo-water/.home-stat-water</code> border <code>#dfe8f0</code> bg <code>#fafcfd</code>, ícone 36px, <code>modelo="water"</code> fixo em <code>page_dashboard</code> — <strong>18/09/2026</strong>: sombra lateral direita <code>box-shadow:6px 0 16px rgba(0,0,0,.07)</code> + <code>border-left-color</code> = <strong>cor do módulo <code>intranet</code></strong> via <code>ler_tema("intranet")["cor_botao"]</code> (antes <code>#000000</code>/<code>#EF6C00</code> fixos) + <code>classes_card_resumo</code> com <code>shadow-md</code>).</p>
 </blockquote>
 <ul>
+<li><strong>Feed do Blog acima do Resumo, sem título (22/09/2026)</strong>: o feed (<code>renderizar_postagens</code>, mesmo padrão do módulo) é renderizado <strong>logo abaixo do banner, acima dos cards de Resumo</strong> (<code>main.py::_construir_dashboard</code>) — o rótulo "Publicações recentes" foi <strong>removido</strong> (antes header <code>row items-center</code> com o label, desde 18/09/2026 sem botão "Abrir Blog completo"). O acesso ao Blog permanece pelo drawer (<code>/blog</code>).</li>
 <li><strong>Sem botão Atualizar</strong>: <code>_orquestrar_resumo_dados()</code> (<code>main.py:250</code>) recalcula <strong>a cada acesso</strong> (9 contadores: usuários <code>filtro_ativo=None</code>, sessões <code>WHERE logout IS NULL</code>, visitas <code>contador_acessos_total</code>, postagens, quarentena <code>processado=0</code>, PDFs <code>ativo=1</code>, auditoria 24h <code>SUM WHERE timestamp &gt;= -1 day</code>, fila impressão pendente, logs totais).</li>
-<li><strong>Sem botão "Abrir Blog completo" (removido 18/09/2026)</strong>: o header do feed em <code>main.py:448-453</code> é agora só <code>row items-center</code> com <code>label "Publicações recentes"</code> — o acesso ao Blog permanece pelo drawer (<code>/blog</code>); a Home usa <code>renderizar_postagens</code> (mesmo padrão do módulo) sem navegação dedicada.</li>
 <li><strong>2 cards, altura -50%+25% com sombra lateral direita e cor do módulo</strong>: <code>gap-1 px-2 py-1</code>, ícone 36px <code>text-2xl</code>, número <code>text-h6</code> 4 dígitos (<code>&gt;9999</code> com total real no tooltip único do card; <code>Logs&gt;9999</code> com alerta <code>⚠️ realize backup do banco de auditoria (db_mod_auditoria.db)</code>), layout horizontal ícone esq + número, tooltip simples (<code>Usuarios/Sessões/Noticias/Logs/Visitas/Fila geral/Para autorizar/Quarentena/PDFs/Auditoria 24h</code>). Estilo: <code>.home-resumo-water</code> + <code>.home-resumo-pic</code> com <code>border-left-width:4px</code> + <code>box-shadow:6px 0 16px</code> + <code>shadow-md</code> em <code>classes_card_resumo</code>.</li>
 <li><strong>Visibilidade por papel</strong>:<ul>
 <li><strong>"Resumo do sistema"</strong> (8 métricas: Usuários, Sessões, Visitas, Postagens, Quarentena, PDFs, Logs, Logs 24h) — <strong>só <code>administrador_geral</code>/<code>administrador_modulo</code></strong> (<code>eh_admin</code> <code>main.py:500</code>, <code>main.py:406-426</code> com <code>_cor_modulo_home</code> via <code>ler_tema("intranet")</code>).</li>
@@ -488,7 +500,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">Agregador de Notícias</td>
-<td style="text-align: center;">ver 3 colunas + <strong>filtro tema + busca lado a lado</strong> <code>agregador-busca</code> <code>debounce 300</code> NFKD + abrir link externo (<strong>ícone fonte 16×16 + imagem 30×30 antes do título</strong>, sem badge <code>Coleta:</code>, censura filtra <code>listar_para_tv</code>)</td>
+<td style="text-align: center;">ver 3 colunas + <strong>filtro tema + busca lado a lado</strong> <code>agregador-busca</code> <code>debounce 300</code> NFKD + abrir link externo pelo título e <strong>ampliar a imagem da miniatura <code>120×120</code> em diálogo</strong> (marca d'água <code>32×32</code> da fonte, sem badge <code>Coleta:</code>, censura filtra <code>listar_para_tv</code>)</td>
 <td style="text-align: center;">configurar habilitado/intervalo/termo/fontes/temas + censura (<code>agregador-palavras-bloqueadas</code>) + <strong>busca NFKD</strong></td>
 <td style="text-align: center;">tudo + <code>Coletar agora</code> + <code>Remover já censuradas</code></td>
 </tr>
@@ -498,7 +510,7 @@
 <ul>
 <li>A visibilidade no <strong>menu lateral</strong> usa <code>listar_modulos_permitidos</code> / <code>modulos_do_usuario</code>.</li>
 <li>O <strong>gate de rota</strong> usa <code>validar_acesso_modulo</code> (núcleo delega ao manipulador do módulo de usuários).</li>
-<li>Tentativa sem permissão gera <code>acesso_negado</code> na trilha de auditoria (<code>layout_tela.pagina_restrita</code> — choke point único).</li>
+<li>Tentativa sem permissão gera <code>acesso_negado</code> na trilha de auditoria (<code>mod_intranet/telas.pagina_restrita</code> — choke point único).</li>
 <li>Dentro de cada módulo, a tela valida novamente o papel antes de qualquer escrita (dupla camada UI + backend).</li>
 </ul>
 <blockquote>

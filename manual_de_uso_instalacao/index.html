@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -121,9 +124,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -158,6 +164,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -168,6 +176,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -195,6 +205,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -428,7 +440,7 @@ Ativação dos serviços (independentes entre si):
 <td style="text-align: left;"><code>qacomum</code></td>
 <td style="text-align: left;"><code>123456</code></td>
 <td style="text-align: left;"><code>comum</code></td>
-<td style="text-align: left;">blog, editar_pdf, empenhos</td>
+<td style="text-align: left;">editar_pdf, empenhos, solicita_impressao (SEM blog)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>qamaster</code></td>
@@ -442,7 +454,7 @@ Ativação dos serviços (independentes entre si):
 <p><strong>Perfis do sistema</strong> — existem exatamente três (constante <code>PERFIS_GLOBAIS</code> em <code>mod_gest_cad_usuario/bd_manipulador.py:15</code>): <code>comum</code>, <code>administrador_modulo</code> e <code>administrador_geral</code>. Não há perfis "administrador", "almoxarife" ou "operador". O acesso por módulo é controlado por papel (<code>comum</code>/<code>administrador</code>) em <code>tb_acesso_usuario</code>; <code>administrador_geral</code> obtém papel <code>administrador</code> em todos os módulos e acesso exclusivo a <code>/auditoria</code>.</p>
 </blockquote>
 <h2 id="5-smoke-test">5. Smoke test<a class="headerlink" href="#5-smoke-test" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>test/test_server.py
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/test_server.py
 </code></pre></div>
 <h2 id="documentacao-local-mkdocs">Documentação local (MkDocs)<a class="headerlink" href="#documentacao-local-mkdocs" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>mkdocs<span class="w"> </span>serve<span class="w">   </span><span class="c1"># http://localhost:8000</span>

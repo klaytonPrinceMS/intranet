@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Plano WAL + Paridade (24/09/2026) - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Plano WAL + Paridade (24/09/2026)";
+        var mkdocs_page_input_path = "registro_de_mudancas/wal_paridade_pendente_2026-09-24.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../">Índice</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Plano WAL + Paridade (24/09/2026)</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Registro de Mudanças</li>
+      <li class="breadcrumb-item active">Plano WAL + Paridade (24/09/2026)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="wal-parity-plan-pending-no-code-changed">WAL + Parity Plan (pending, no code changed)<a class="headerlink" href="#wal-parity-plan-pending-no-code-changed" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Pending QA plan for WAL + SQLite↔PostgreSQL parity across 9 audited modules (intranet, gest_cad_usuario, auditoria, blog, edit_pdf, renomear_empenho, solicita_impressao, tecnico, filas). Central findings: hot-path WAL present (<code>banco_conexao.py:620</code>), 3 raw connects without WAL (<code>banco_conexao.py:74,90</code>, <code>ativacao.py:502</code>), zero <code>busy_timeout</code> in repo, no full <code>CrudBase</code> in 8/9, PG breaks (<code>sqlite_master</code>, <code>strftime</code>, <code>GROUP BY</code>, <code>COLLATE NOCASE</code>, FTS5, removed FK). NO code fix applied — documentation only, contained per-module proposals. <code>lista_telefonica</code> + <code>agregador_noticias</code> QA still pending.</p>
+</blockquote>
+<hr />
+<h1 id="plano-wal-paridade-pendente-sem-alteracao-de-codigo">Plano WAL + Paridade (pendente, sem alteração de código)<a class="headerlink" href="#plano-wal-paridade-pendente-sem-alteracao-de-codigo" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Plano QA pendente de WAL + paridade SQLite↔PostgreSQL nos 9 módulos auditados (intranet, gest_cad_usuario, auditoria, blog, edit_pdf, renomear_empenho, solicita_impressao, tecnico, filas). Achados centrais: WAL presente no quente (<code>banco_conexao.py:620</code>), 3 connects crus sem WAL (<code>banco_conexao.py:74,90</code>, <code>ativacao.py:502</code>), zero <code>busy_timeout</code> no repo, sem <code>CrudBase</code> completo em 8/9, quebras PG (<code>sqlite_master</code>, <code>strftime</code>, <code>GROUP BY</code>, <code>COLLATE NOCASE</code>, FTS5, FK removida). NENHUMA correção de código aplicada — só documentação, com propostas contidas por módulo. QA de <code>lista_telefonica</code> + <code>agregador_noticias</code> ainda pendente.</p>
+</blockquote>
+<h2 id="escopo-e-regras">Escopo e regras<a class="headerlink" href="#escopo-e-regras" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Só documentação:</strong> nenhum <code>.py</code> foi alterado; nada em <code>db_*.db</code>, <code>backup/</code>, <code>logs/</code>, <code>site/</code>.</li>
+<li><strong>Regra de ouro (AGENTS.md §1-2):</strong> toda correção futura DEVE viver contida no próprio <code>mod_*</code> (conexão via <code>mod_intranet/banco_conexao.conexao(chave)</code> ou <code>CrudBase</code>, sem cross-query entre bancos).</li>
+<li><strong>Fontes lidas:</strong> <code>docs/arquitetura.md</code>, <code>docs/visao_geral.md</code>, <code>docs/convencoes_codigo.md</code> + <code>docs/analise_mod_*.md</code> dos 9 módulos + verificação pontual no código (arquivo:linha abaixo).</li>
+<li><strong>Faltam auditar:</strong> <code>lista_telefonica</code> + <code>agregador_noticias</code> (fora deste lote; sem linha proposta aqui).</li>
+</ul>
+<h2 id="tabela-consolidada-modulo-achado-arquivolinha-correcao-proposta-contida-no-modulo-risco-regressao">Tabela consolidada — módulo | achado | arquivo:linha | correção proposta contida no módulo | risco regressão<a class="headerlink" href="#tabela-consolidada-modulo-achado-arquivolinha-correcao-proposta-contida-no-modulo-risco-regressao" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Arquivo:linha</th>
+<th style="text-align: left;">Correção proposta contida no módulo</th>
+<th style="text-align: left;">Risco regressão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">intranet (núcleo)</td>
+<td style="text-align: left;">~~3 connects crus sem WAL; zero <code>busy_timeout</code> no repo; WAL OK no quente~~ → <strong>SUPERADO 25/09/2026</strong></td>
+<td style="text-align: left;"><code>mod_intranet/banco_conexao.py:78</code> · <code>:106</code> · <code>:705</code> · <code>mod_intranet/ativacao.py:507</code> (TODOS com WAL hoje) · WAL quente em <code>banco_conexao.py:114</code>, <code>crud_base.py:121,144</code>, <code>repositorio.py:164</code></td>
+<td style="text-align: left;">Nenhuma ação pendente — os connects migraram de linha e já aplicam <code>PRAGMA journal_mode=WAL</code>; <code>busy_timeout</code> foi adotado nos módulos</td>
+<td style="text-align: left;">Superada</td>
+</tr>
+<tr>
+<td style="text-align: left;">gest_cad_usuario</td>
+<td style="text-align: left;">~~Sem <code>CrudBase</code> completo; <code>sqlite_master</code> em migração/seed; <code>GROUP_CONCAT</code> agregado~~ → <strong>CORRIGIDO 24/09/2026 (ver § Correção aplicada — gest_cad_usuario abaixo)</strong></td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario/bd_manipulador.py:47</code> (<code>_eh_violacao_unicidade</code>), <code>:71</code> (<code>_eh_bloqueio_banco</code>), <code>:79</code> (<code>_rollback_seguro</code>), <code>:91</code> (<code>_commit_com_retry</code>), <code>:238-264</code> (FK por <code>sgbd_ativo</code>), <code>:455</code> + <code>:464-466</code> (<code>GROUP_CONCAT</code> + GROUP BY completo), <code>:723</code> (limpeza órfãos), <code>:23</code> + <code>:353-411</code> (seeds preservados)</td>
+<td style="text-align: left;">Helpers unicidade/retry + GROUP BY completo + FK por SGBD + limpeza órfãos, tudo contido no módulo (sem <code>CrudBase</code>; <code>GROUP_CONCAT</code> mantido — proxy traduz p/ <code>STRING_AGG</code>)</td>
+<td style="text-align: left;">Superada (testes 19/19, 13/13, 20/20)</td>
+</tr>
+<tr>
+<td style="text-align: left;">auditoria</td>
+<td style="text-align: left;">~~Sem <code>CrudBase</code>; <code>sqlite_master</code> em 3 pontos; <code>strftime</code> em SQL (sem tradução no proxy)~~ → <strong>CORRIGIDO 24/09/2026 (ver § Correção aplicada — auditoria abaixo)</strong></td>
+<td style="text-align: left;"><code>mod_auditoria/bd_manipulador.py:27</code> (<code>_sgbd</code>), <code>:37</code> (<code>_commit_com_retry</code>), <code>:72</code> (<code>_tabela_existe</code>), <code>:99</code> (<code>_sql_hora</code>), <code>:110</code> (<code>_sql_data_formatada</code>), <code>:245</code> (meta primária) + <code>:260-269</code> (fallback <code>information_schema</code>/<code>sqlite_master</code>), <code>:352-354</code> (cache escrita) + <code>:367-375</code> (invalidação), <code>:637</code> (migração portável) · <code>mod_auditoria/check_auditoria.py:31</code> (<code>conexao("intranet")</code>)</td>
+<td style="text-align: left;">Meta primária + <code>information_schema</code> no PG; <code>to_char</code> vs <code>strftime</code> em helpers do módulo; cache <code>_TABELAS_GARANTIDAS</code> + retry 3x; migração e <code>check</code> portáveis, tudo contido no módulo (sem <code>CrudBase</code>)</td>
+<td style="text-align: left;">Superada (testes 12/12)</td>
+</tr>
+<tr>
+<td style="text-align: left;">blog</td>
+<td style="text-align: left;">Referência <code>CrudBase</code> 100% — sem migração; validar paridade de datas/<code>GROUP BY</code></td>
+<td style="text-align: left;"><code>mod_blog/bd_manipulador.py:24</code>, <code>:104</code> (<code>CrudBase</code> piloto)</td>
+<td style="text-align: left;">Nenhuma migração; só bateria paridade SQLite↔PG (datas como string via <code>_normalizar_valor</code>, <code>banco_conexao.py:516</code>; <code>GROUP_CONCAT</code>→<code>STRING_AGG</code> se usado)</td>
+<td style="text-align: left;">Baixo (módulo piloto; rodar <code>teste_fluxo_blog.py</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">edit_pdf</td>
+<td style="text-align: left;">Sem <code>CrudBase</code>; <code>strftime</code> só em Python (OK); auditar <code>GROUP BY</code>/<code>COLLATE</code></td>
+<td style="text-align: left;"><code>mod_edit_pdf/bd_manipulador.py:215</code>, <code>:423</code> (<code>strftime</code> Python — sem quebra)</td>
+<td style="text-align: left;">Migrar <code>bd_manipulador.py</code> para <code>CrudBase</code> + <code>conexao("editar_pdf")</code>; varredura interna de <code>GROUP BY</code>/<code>COLLATE</code> antes de fechar</td>
+<td style="text-align: left;">Médio (cotas 1 GB/10 GB + expiração 10 min + ZIP)</td>
+</tr>
+<tr>
+<td style="text-align: left;">renomear_empenho</td>
+<td style="text-align: left;">Sem <code>CrudBase</code>; FTS5 <code>VIRTUAL TABLE</code> + <code>sqlite_master</code> (degrada no PG por desenho)</td>
+<td style="text-align: left;"><code>mod_renomear_empenho/bd_manipulador.py:687</code>, <code>:786</code> (<code>VIRTUAL TABLE fts5</code>) · <code>:773</code> (<code>sqlite_master</code>) · <code>:660</code> (fallback LIKE documentado)</td>
+<td style="text-align: left;">Manter fallback LIKE no PG; isolar FTS5 em ramo SQLite; migrar CRUD comum para <code>CrudBase</code>; helper <code>_tabela_existe()</code> interno</td>
+<td style="text-align: left;">Médio (monitor 60 s + quarentena + organizador)</td>
+</tr>
+<tr>
+<td style="text-align: left;">solicita_impressao</td>
+<td style="text-align: left;"><code>CrudBase</code> parcial (só config local); <code>COLLATE NOCASE</code> em 3 buscas (quebra PG)</td>
+<td style="text-align: left;"><code>mod_solicita_impressao/bd_manipulador.py:24</code>, <code>:31</code> (parcial) · <code>:1920-1926</code>, <code>:2737-2742</code>, <code>:2848-2851</code> (<code>COLLATE NOCASE</code>)</td>
+<td style="text-align: left;">Completar migração <code>CrudBase</code>; trocar <code>LIKE ? COLLATE NOCASE</code> por helper interno portável (<code>LOWER(col) LIKE LOWER(?)</code> ou <code>ILIKE</code> no ramo PG, contido no módulo)</td>
+<td style="text-align: left;">Médio-alto (cotas 1000/200 + autorização grupo + relatório cobrança)</td>
+</tr>
+<tr>
+<td style="text-align: left;">tecnico</td>
+<td style="text-align: left;">Sem <code>CrudBase</code>; sem quebra PG localizada (varredura pendente fina)</td>
+<td style="text-align: left;"><code>mod_tecnico/bd_manipulador.py</code> (sem <code>CrudBase</code> — verificado por busca)</td>
+<td style="text-align: left;">Migrar para <code>CrudBase</code> + <code>conexao("tecnico")</code>; varredura <code>GROUP BY</code>/<code>COLLATE</code>/<code>strftime</code> SQL dentro do módulo</td>
+<td style="text-align: left;">Baixo-médio (software ZIP + backup <code>YYYYMMDD_HHMM_nomePc_ip</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">filas</td>
+<td style="text-align: left;">Sem <code>CrudBase</code>; <code>sqlite_master</code> em migração de <code>tb_midia</code></td>
+<td style="text-align: left;"><code>mod_filas/bd_manipulador.py:75</code> (<code>sqlite_master</code>) · sem <code>CrudBase</code> (verificado por busca)</td>
+<td style="text-align: left;">Migrar para <code>CrudBase</code>; trocar <code>sqlite_master</code> por <code>_tabela_existe()</code> interno; testar TV <code>/tv</code>, <code>/tv/{id}</code>, <code>/tv?grupo=</code> nos dois backends</td>
+<td style="text-align: left;">Médio (voz claim + ducking + <code>/midia_filas</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">lista_telefonica</td>
+<td style="text-align: left;">QA WAL+paridade <strong>pendente</strong> (fora do lote de 9)</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">Aguardar auditoria <code>kbp-qa</code> antes de propor</td>
+<td style="text-align: left;">A definir</td>
+</tr>
+<tr>
+<td style="text-align: left;">agregador_noticias</td>
+<td style="text-align: left;">QA WAL+paridade <strong>pendente</strong> (fora do lote de 9)</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">Aguardar auditoria <code>kbp-qa</code> antes de propor (atenção: sem backup, <code>reiniciar_banco</code> diário)</td>
+<td style="text-align: left;">A definir</td>
+</tr>
+</tbody>
+</table>
+<h2 id="achados-transversais-valem-para-todos">Achados transversais (valem para todos)<a class="headerlink" href="#achados-transversais-valem-para-todos" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>WAL quente OK:</strong> <code>banco_conexao.py:619-620</code> aplica <code>PRAGMA journal_mode=WAL</code>; <code>crud_base.py:112,125</code> e <code>repositorio.py:164</code> também.</li>
+<li><strong>Crus sem WAL: SUPERADO (25/09/2026).</strong> O achado original ("<code>banco_conexao.py:74,90</code> + <code>ativacao.py:502</code> usam <code>sqlite3.connect</code> sem pragmas") <strong>não vale mais</strong>: as linhas migraram para <code>:78</code>, <code>:106</code>, <code>:705</code> e <code>ativacao.py:507</code>, e todas aplicam <code>PRAGMA journal_mode=WAL</code>. Verifique no código antes de agir neste item.</li>
+<li><strong><code>busy_timeout</code> adotado nos módulos</strong> (não é mais "zero no repo"): <code>mod_agregador_noticias/bd_manipulador.py:75</code>, <code>mod_filas/bd_manipulador.py:72</code>, e herdado via <code>banco_conexao.conexao()</code> pelos demais.</li>
+<li><strong>Tradução PG existente (não reinventar):</strong> <code>_CursorPostgres</code> (<code>banco_conexao.py:390-545</code>) já cobre <code>?</code>→<code>%s</code>, <code>GROUP_CONCAT</code>→<code>STRING_AGG</code> (<code>:435-437</code>), <code>INSERT OR IGNORE/REPLACE</code>→<code>ON CONFLICT</code>, <code>PRAGMA</code>/<code>sqlite_master</code>/FTS5 degradados (<code>:462-467</code>), <code>PRAGMA table_info</code>→<code>information_schema</code>, <code>lastrowid</code> via <code>RETURNING</code>, datas→string (<code>:545</code>). Correções devem <strong>usar</strong> essa camada, não duplicá-la.</li>
+<li><strong>FK removida:</strong> <code>_ddl_postgres</code> (<code>banco_conexao.py:358</code>) remove <code>FOREIGN KEY</code> — módulos não devem confiar em cascata no PG; integridade em código onde houver <code>CASCADE</code> (ex. <code>tb_comentarios</code> no blog).</li>
+</ul>
+<h2 id="proximos-passos-quando-houver-pedido-de-codigo">Próximos passos (quando houver pedido de código)<a class="headerlink" href="#proximos-passos-quando-houver-pedido-de-codigo" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Auditar <code>lista_telefonica</code> + <code>agregador_noticias</code> (lote faltante).</li>
+<li>Aplicar correções <strong>uma por módulo</strong>, na ordem: intranet (base) → auditoria → gest → solicita → renomear → filas → tecnico → edit_pdf → blog (só testes).</li>
+<li>Validar cada módulo com <code>.venv/bin/pytest</code> + boot SQLite e boot Postgres (<code>banco_tipo=postgres</code>).</li>
+<li>Extração semântica LLM (<code>/graphify --update</code>) pendente se esta doc for considerada relevante para o grafo.</li>
+</ol>
+<blockquote>
+<p><strong>NÃO commitar</strong> este arquivo (regra <code>kbp-doc</code>). Sem <code>commit</code>/<code>push</code> pelo documentador.</p>
+</blockquote>
+<h2 id="correcao-aplicada-24092026-gest_cad_usuario-codigo-ja-corrigido-lote-so-documentacao">Correção aplicada 24/09/2026 — gest_cad_usuario (código já corrigido, lote só-documentação)<a class="headerlink" href="#correcao-aplicada-24092026-gest_cad_usuario-codigo-ja-corrigido-lote-so-documentacao" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN: Fix applied 24/09/2026 in <code>mod_gest_cad_usuario/bd_manipulador.py</code> (no .py touched in this batch): uniqueness/retry helpers, full GROUP BY, FK per active SGBD, orphan cleanup, preserved seeds; tests 19/19 + 13/13 + 20/20, verdict PASS. Other modules in the table above remain pending.</p>
+<p>Correção aplicada em 24/09/2026 em <code>mod_gest_cad_usuario/bd_manipulador.py</code> (nenhum <code>.py</code> tocado neste lote): helpers de unicidade/retry, GROUP BY completo, FK por SGBD ativo, limpeza de órfãos, seeds preservados; testes 19/19 + 13/13 + 20/20, veredito APROVADO. Demais módulos da tabela acima seguem pendentes.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Tema</th>
+<th style="text-align: left;">Antes</th>
+<th style="text-align: left;">Depois — arquivo:linha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Helpers unicidade/retry</td>
+<td style="text-align: left;"><code>IntegrityError</code> genérico; sem retry em <code>database is locked</code></td>
+<td style="text-align: left;"><code>_eh_violacao_unicidade</code> (<code>mod_gest_cad_usuario/bd_manipulador.py:47</code>); <code>_eh_bloqueio_banco</code> (<code>:71</code>); <code>_rollback_seguro</code> (<code>:79</code>); <code>_commit_com_retry</code> (<code>:91</code>); <code>_conexao_segura</code> (<code>:121</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">GROUP BY completo</td>
+<td style="text-align: left;"><code>GROUP_CONCAT</code> sem GROUP BY total (quebra PG)</td>
+<td style="text-align: left;"><code>listar_usuarios</code> (<code>:438</code>); <code>GROUP_CONCAT</code> (<code>:455</code> → <code>STRING_AGG</code> via proxy); <code>GROUP BY</code> completo (<code>:464-466</code>); <code>_normalizar_data</code> (<code>:425</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">FK por <code>sgbd_ativo</code></td>
+<td style="text-align: left;"><code>sqlite_master</code> + <code>ON UPDATE CASCADE</code> nos dois backends</td>
+<td style="text-align: left;"><code>sgbd_ativo()</code> (<code>:238-264</code>): rebuild CASCADE só no SQLite; no PG integridade na aplicação (<code>renomear_usuario</code> <code>:718-719</code>); <code>flags</code> check-then-add (<code>:268-272</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Limpeza de órfãos</td>
+<td style="text-align: left;">Sem cobertura PG (FK removida no <code>_ddl_postgres</code>)</td>
+<td style="text-align: left;"><code>DELETE ... NOT IN (SELECT ...)</code> (<code>:723</code>, best-effort); upsert <code>ON CONFLICT</code> (<code>:1037-1044</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Seeds preservados</td>
+<td style="text-align: left;">Risco em <code>master</code>/<code>qacomum</code>/<code>qamaster</code></td>
+<td style="text-align: left;"><code>ACESSO_PADRAO_NOVO_USUARIO</code> (<code>:23</code>); auto-cura <code>master</code> (<code>:343-350</code>); seeds (<code>:353-373</code>, <code>:382-411</code>); troca forçada mantida (AGENTS §8.2)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="testes-e-veredito">Testes e veredito<a class="headerlink" href="#testes-e-veredito" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Suíte</th>
+<th style="text-align: left;">Resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>assets/test/teste_fluxo_autenticacao.py</code></td>
+<td style="text-align: left;">19/19 OK</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/teste_fluxo_permissoes.py</code></td>
+<td style="text-align: left;">13/13 OK</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/teste_flags_permissao.py</code></td>
+<td style="text-align: left;">20/20 OK</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Veredito: APROVADO — sem regressão.</strong> Linha <code>gest_cad_usuario</code> da tabela consolidada marcada como superada; escopo/navegação MkDocs (<code>readthedocs</code>) inalterados.</p>
+<h2 id="correcao-aplicada-24092026-auditoria-codigo-ja-corrigido-lote-so-documentacao">Correção aplicada 24/09/2026 — auditoria (código já corrigido, lote só-documentação)<a class="headerlink" href="#correcao-aplicada-24092026-auditoria-codigo-ja-corrigido-lote-so-documentacao" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN: Fix applied 24/09/2026 in <code>mod_auditoria/bd_manipulador.py</code> (no .py touched in this batch): meta-first discovery + <code>information_schema</code> fallback, <code>to_char</code> vs <code>strftime</code> helpers, write cache + 3x commit retry, portable migration, portable check; tests 12/12 in <code>assets/test/test_auditoria.py</code>, verdict PASS. Other pending modules in the table above remain unchanged.</p>
+<p>Correção aplicada em 24/09/2026 em <code>mod_auditoria/bd_manipulador.py</code> (nenhum <code>.py</code> tocado neste lote): descoberta via meta + fallback <code>information_schema</code>, helpers <code>to_char</code> vs <code>strftime</code>, cache de escrita + retry 3x, migração portável, <code>check</code> portável; testes 12/12 em <code>assets/test/test_auditoria.py</code>, veredito APROVADO. Demais módulos pendentes da tabela acima seguem inalterados.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Tema</th>
+<th style="text-align: left;">Antes</th>
+<th style="text-align: left;">Depois — arquivo:linha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Descoberta via meta + <code>information_schema</code></td>
+<td style="text-align: left;"><code>sqlite_master</code> em 3 pontos, sem ramo PG</td>
+<td style="text-align: left;">Fonte primária <code>tb_auditoria_meta</code> (<code>mod_auditoria/bd_manipulador.py:245</code>); fallback por backend (<code>:256-269</code>): <code>information_schema.tables</code> no PG (<code>:260-267</code>), <code>sqlite_master</code> só no SQLite (<code>:268</code>); <code>_tabela_existe()</code> portável (<code>:72-96</code>) com <code>_sgbd()</code> (<code>:27-34</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Filtros hora/data <code>to_char</code></td>
+<td style="text-align: left;"><code>strftime</code> em SQL sem tradução no proxy</td>
+<td style="text-align: left;"><code>_sql_hora()</code> (<code>:99-107</code>, <code>to_char(col,'HH24:MI')</code> vs <code>strftime('%H:%M')</code>) usado em (<code>:515</code>, <code>:548</code>); <code>_sql_data_formatada()</code> (<code>:110-118</code>, <code>to_char(col,'DD/MM/YYYY HH24:MI:SS')</code> vs <code>strftime('%d/%m/%Y %H:%M:%S')</code>) usado em (<code>:528</code>, <code>:564</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cache de escrita + retry</td>
+<td style="text-align: left;">DDL+commit por escrita; <code>database is locked</code> sem retry</td>
+<td style="text-align: left;"><code>_TABELAS_GARANTIDAS</code> (<code>:21</code>) + <code>_TENTATIVAS_COMMIT = 3</code> (<code>:24</code>); <code>registrar_auditoria</code> (<code>:352-354</code> cache, <code>:367-375</code> invalidação/regarante em <code>no such table</code>/<code>undefined_table</code>); <code>_commit_com_retry()</code> (<code>:37-69</code>); <code>get_auditoria_connection()</code> via <code>conexao("auditoria")</code> + <code>PRAGMA journal_mode=WAL</code>/<code>synchronous=NORMAL</code> (<code>:130-146</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Migração portável</td>
+<td style="text-align: left;"><code>sqlite_master</code> no legado central</td>
+<td style="text-align: left;"><code>_migrar_dados_existentes_seguro()</code> (<code>:623</code>): <code>_tabela_existe(central_conn, "tb_auditoria")</code> (<code>:637</code>); garante meta (<code>:665-666</code>); <code>_commit_com_retry</code> (<code>:679</code>); marca <code>auditoria_migracao_concluida=1</code> + remove legado (<code>:696-697</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>check</code> portável</td>
+<td style="text-align: left;">Risco de <code>sqlite3</code> cru</td>
+<td style="text-align: left;"><code>check_auditoria.py</code> via <code>conexao("intranet")</code> (<code>:31-33</code>), <code>SELECT ... WHERE chave LIKE 'auditoria%'</code> (<code>:35</code>), log <code>logs/auditoria_*.log</code> — ferramenta dev-only, sem uso pela aplicação</td>
+</tr>
+</tbody>
+</table>
+<h3 id="testes-e-veredito_1">Testes e veredito<a class="headerlink" href="#testes-e-veredito_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Suíte</th>
+<th style="text-align: left;">Resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>assets/test/test_auditoria.py</code> (3 índices + 4 <code>audit_log</code> + 2 poda + 2 acesso + 1 prefs)</td>
+<td style="text-align: left;">12/12 OK</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Veredito: APROVADO — sem regressão.</strong> Linha <code>auditoria</code> da tabela consolidada marcada como superada; escopo/navegação MkDocs (<code>readthedocs</code>) inalterados.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../" class="btn btn-neutral float-left" title="Índice"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../versionamento/" class="btn btn-neutral float-right" title="Versionamento">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../versionamento/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

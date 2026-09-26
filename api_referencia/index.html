@@ -74,9 +74,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -101,9 +104,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -338,7 +350,7 @@
 <td style="text-align: left;"><code>/agregador-noticias</code></td>
 <td style="text-align: left;"><code>@ui.page</code></td>
 <td style="text-align: left;"><code>mod_agregador_noticias</code></td>
-<td style="text-align: left;">liberados (<code>agregador_noticias</code>, <code>_pode_ver</code> + <code>validar_acesso_modulo</code>) — grid responsivo <code>grid-noticias</code> 3→2→1 (1024px/640px) + <code>.card-noticia</code> 160–220px (média 91 notícias) <code>agregador-filtro-tema</code> + <code>agregador-busca</code> <code>debounce 300</code> + <code>agregador-ver-puro</code> → <code>/agregador-noticias-puro</code>, paginação 12 <code>agregador-primeira/anterior/proxima/ultima</code></td>
+<td style="text-align: left;">liberados (<code>agregador_noticias</code>, <code>_pode_ver</code> + <code>validar_acesso_modulo</code>) — grid responsivo <code>grid-noticias</code> 3→2→1 (1024px/640px) + <code>.card-noticia</code> de <strong>altura fixa <code>300px</code></strong> (miniatura <code>120×120</code> ampliável em diálogo, <code>data-testid=agregador-ampliar-&lt;id&gt;</code>) <code>agregador-filtro-tema</code> + <code>agregador-busca</code> <code>debounce 300</code> (botão <code>agregador-ver-puro</code> removido 20/09/2026 — <code>/agregador-noticias-puro</code> por URL direta), paginação 12 <code>agregador-primeira/anterior/proxima/ultima</code></td>
 <td style="text-align: left;"><code>main.py:794</code> <code>page_agregador_noticias</code> → <code>mod_agregador_noticias/telas.py:mostrar_tela</code></td>
 </tr>
 <tr>
@@ -349,11 +361,18 @@
 <td style="text-align: left;"><code>main.py:808</code> <code>page_agregador_noticias_puro</code> → <code>mod_agregador_noticias/telas_puro.py:mostrar_tela_pura</code></td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>/api/attachments/{caminho:path}</code></td>
+<td style="text-align: left;"><code>@app.get</code> (FastAPI)</td>
+<td style="text-align: left;"><code>mod_agregador_noticias</code> (+ <code>mod_blog</code>)</td>
+<td style="text-align: left;">público (fallback silencioso <strong>antes de <code>/assets/noticia</code></strong>) — <code>favicon.png</code> placeholder <code>assets/noticia/favicon.png</code> se caminho termina em <code>-w280-h168-p-df/-w280-h168/.png/.jpg/.jpeg</code> senão <code>404</code>; evita log spam <code>http://localhost:8080/api/attachments/CC8... not found</code> no boot <code>NiceGUI ready</code>; docstring bilíngue EN/PT-BR; TV/Blog sem imagem quebrada; compatível, sem quebrar coleta — <code>bd_manipulador.inserir_noticia</code> filtra <code>"/api/attachments"</code> relativo/localhost → <code>""</code> (absoluto <code>news.google.com/api/attachments</code> preservado — thumbnail real)</td>
+<td style="text-align: left;"><code>main.py:820</code> <code>fallback_attachments</code> — <code>if caminho.endswith(...) → FileResponse(favicon.png)</code> else <code>Response(404)</code></td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>/assets/noticia/{caminho:path}</code></td>
 <td style="text-align: left;"><code>@app.get</code> (FastAPI)</td>
 <td style="text-align: left;"><code>mod_agregador_noticias</code></td>
 <td style="text-align: left;">público (CSS/JS/fonts/images da tela pura) — path-traversal safe <code>normpath</code> + <code>startswith(base)</code> + <code>mimetypes.guess_type</code> → <code>FileResponse</code>, <code>404</code> se fora ou não existe</td>
-<td style="text-align: left;"><code>main.py:818</code> <code>servir_assets_noticia</code></td>
+<td style="text-align: left;"><code>main.py:834</code> <code>servir_assets_noticia</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/configuracoes</code></td>

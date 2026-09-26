@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -173,6 +183,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -325,6 +337,24 @@
 <li>Rota: <code>/blog</code> (chave <code>blog</code>) — permissão via <code>validar_acesso_modulo</code>; imagens do editor servidas em <code>/img_postagens/*</code> (arquivos estáticos de <code>mod_blog/img_postagens/</code>, via <code>montar_rotas_static</code> no boot — <code>main.py</code>).</li>
 <li>Consumido pelo núcleo: bootstrap cria o banco, scheduler faz backup e o dashboard usa <code>contar_postagens(ativo=True)</code>.</li>
 <li>Testes: <code>test/teste_fluxo_blog.py</code> (46/46 OK — sanitização XSS, conversores HTML/Markdown <strong>inclusive dentro do WYSIWYG</strong>, CRUD, publicar/despublicar, soft delete, config local, modo única/histórico, largura de imagem, modo carrossel, controles de imagem e auditoria), <code>test/teste_viabilidade_mermaid.py</code> (5/5 OK — renderização de <code>ui.mermaid</code> sem CDN e caminho real do blog), <code>test/teste_carrossel_blog.py</code> (headless — valida o DOM do modo carrossel: indicador de posição, botão Leitura completa, select de postagens, tempo e expansão) e <code>assets/test/test_blog_mermaid_fim.py</code> (7/7 OK — <code>mover_mermaid_para_fim</code> ao salvar, seeds no padrão único, render centralizado 680px).</li>
+</ul>
+<h2 id="selecao-em-lote-e-exclusao-em-lote-so-admin">Seleção em lote e exclusão em lote (só admin)<a class="headerlink" href="#selecao-em-lote-e-exclusao-em-lote-so-admin" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Card <strong>"Seleção em lote"</strong> (<code>mostrar_tela</code>, só quando <code>pode_publicar</code>): checkbox por card (<code>data-testid=blog-selecionar-&lt;id&gt;</code>), <strong>Selecionar todos</strong> (<code>blog-selecionar-todos</code>), contador (<code>blog-selecionados-contador</code>), atalhos <strong>Selecionar 10 / 5 próximas / Limpar</strong> (<code>blog-selecionar-10</code>, <code>blog-selecionar-5</code>, <code>blog-limpar-selecao</code>) e <strong>Excluir selecionados</strong> (<code>blog-excluir-selecionados</code>) com diálogo de confirmação (<code>blog-confirmar-excluir-lote</code>, soft delete com aviso de restauro em Despublicadas).</li>
+<li>Backend: <code>excluir_postagens_em_lote(ids, autor)</code> — soft delete (<code>ativo=0</code>) um a um, com permissão (<code>requer_pode_publicar</code>), auditoria e retorno <code>(ok, falha)</code>; ids inválidos contam como falha sem derrubar o lote.</li>
+<li>A mesma seleção alimenta os botões <strong>Aplicar à única</strong> (exige exatamente 1 selecionada → fixa <code>blog_postagem_unica_id</code> e modo <code>unica</code>), <strong>Exibir todas</strong> (modo <code>historico</code>) e <strong>Aplicar ao carrossel</strong> (exige ao menos 2 → grava <code>blog_carrossel_postagens_ids</code> + <code>blog_carrossel_tempo</code> e modo <code>carrossel</code>); <strong>Tempo (s)</strong> (<code>ui.number</code> 1–60) define o intervalo da rotação; <strong>Restaurar padrão</strong> volta a <code>carrossel</code> com as 3 básicas. O <code>comum</code> não vê o card (<code>selecionados=None</code>).</li>
+</ul>
+<h2 id="quebras-de-imagem-estilo-word-timer-unico-do-carrossel">Quebras de imagem estilo Word + timer único do carrossel<a class="headerlink" href="#quebras-de-imagem-estilo-word-timer-unico-do-carrossel" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>ajustar_imagem_html(html, alinhamento, largura)</code> (pura, testável): reescreve só o layout do <code>style</code> da <strong>última <code>&lt;img&gt;</code></strong> (<code>float</code>, <code>margin*</code>, <code>display</code>, <code>clear</code>, <code>shape-outside</code>, <code>position</code>, <code>z-index</code>, <code>opacity</code>, <code>max/min/width</code>), preserva o CSS do autor e levanta <code>ValueError</code> sem imagem. Alinhamentos: <code>esquerda</code>, <code>direita</code>, <code>centro</code> + quebras <code>em_linha</code>, <code>quadrado</code>, <code>justo</code>, <code>atraves</code>, <code>sup_inf</code>, <code>atras</code> (marca d'água <code>opacity:0.45</code>), <code>frente</code> (sobreposta); <code>largura="original"</code> remove o <code>max-width</code>.</li>
+<li>Linha <strong>"Quebra:"</strong> no editor (<code>blog-quebra-emlinha</code>, <code>-quadrado</code>, <code>-justo</code>, <code>-atraves</code>, <code>-supinf</code>, <code>-atras</code>, <code>-frente</code>) + linha <strong>"Imagem:"</strong> (<code>blog-img-esq</code>, <code>-centro</code>, <code>-dir</code>, <code>blog-img-largura</code> 25%/50%/75%/100%/Original).</li>
+<li>Carrossel: <code>ui.timer</code> <strong>único por wrap</strong> (<code>_carrossel_timers</code>), criado fora do <code>@ui.refreshable</code> e com cancelamento do timer anterior a cada re-render — evita acúmulo/aceleração e a corrida <code>parent slot of Timer has been deleted</code>; <code>expandido</code> pausa a rotação; barra de ações (Anterior, <code>atual/total</code>, Próxima, Leitura completa/Voltar) no topo <strong>e</strong> no rodapé.</li>
+</ul>
+<h2 id="lgpd-e-integracoes-com-usuarios">LGPD e integrações com usuários<a class="headerlink" href="#lgpd-e-integracoes-com-usuarios" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>remover_vinculos_usuario(user_nome)</code>: apaga postagens + comentários do usuário <strong>no banco próprio</strong> (<code>db_mod_blog.db</code>; fallback na cópia legada central quando o arquivo não existe); retorna nº de postagens removidas.</li>
+<li><code>renomear_autor(nome_atual, novo_nome)</code>: propaga o renomeio em <code>tb_postagens.autor</code> e <code>tb_comentarios.autor</code> (fail-loud, o chamador registra).</li>
+<li>Ordem do feed imune a injeção (<code>_ordem_sql</code> só aceita <code>ASC</code>/<code>DESC</code>); <code>listar_postagens(ativo=None)</code> retorna ativas + inativas (gestão de despublicadas); <code>listar_postagens_por_ids</code> preserva a ordem da seleção via placeholders <code>?</code>.</li>
 </ul>
 <h2 id="testes">Testes<a class="headerlink" href="#testes" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>test/teste_fluxo_blog.py

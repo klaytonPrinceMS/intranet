@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -228,46 +240,54 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="filas-mod_filas-multi-filas-carrossel-noticias-midia-tv">Filas — <code>mod_filas</code> (Multi-filas + Carrossel Notícias + Mídia TV)<a class="headerlink" href="#filas-mod_filas-multi-filas-carrossel-noticias-midia-tv" title="Permanent link">&para;</a></h1>
+                <h1 id="filas-mod_filas-multi-filas-tv-por-etapa-midia-por-fila-lista-unica-ordem-da-fala-papel-de-fundo">Filas — <code>mod_filas</code> (Multi-filas + TV por etapa + Mídia por fila + Lista única + Ordem da fala + Papel de fundo)<a class="headerlink" href="#filas-mod_filas-multi-filas-tv-por-etapa-midia-por-fila-lista-unica-ordem-da-fala-papel-de-fundo" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Queue/call manager multi-queue: routes <code>/filas</code> + <code>/tv?grupo=</code> (shared) + <code>/tv/{id}</code> (isolated) · own database <code>db_mod_filas.db</code> · tables <code>tb_fila</code>/<code>tb_fila_etapa</code>/<code>tb_chamada</code>/<code>tb_midia</code>/<code>tb_config_filas</code> · queue per local <code>endereco/prefixo/senha_inicio/fim</code> (fim=0 infinite) + <code>criado_por</code> + <code>tv_grupo</code> · isolated by creator vs <code>administrador_geral</code> · sequential steps + TV 40s media playlist + 3s beep/voice (new id only) + news carousel <code>listar_para_tv</code> 7s/120s (censorship filtered).</p>
+<p>Queue/call manager multi-queue: routes <code>/filas</code> + <code>/tv?grupo=</code> (shared) + <code>/tv/{id}</code> (isolated) + <code>?etapa=</code> per-room replica · own database <code>db_mod_filas.db</code> · tables <code>tb_fila</code> (voice <code>voz_ordem</code> + text columns) / <code>tb_fila_etapa</code> / <code>tb_chamada</code> (priority+manchester) / <code>tb_fila_nomes</code> (one list per queue) / <code>tb_midia</code> (per-queue + global ambient + <code>fundo</code> backdrop) / <code>tb_tv_estado</code> (claim+remote) / <code>tb_fila_acesso</code> / <code>tb_config_filas</code> · project starts with NO queues (no <code>Geral</code> seed) · <code>tv_grupo</code> URL slug + in-use group list · collapsible <code>Cadastro de fila</code> + <code>Etapas/lista</code> + <code>Anexos</code> cards, <code>delay=1000</code> tooltips, voice order <code>voz_ordem</code> via <code>normalizar_voz_ordem</code> · media per queue (mp3/mp4/photos, default volume 40, real duration via mutagen, photos split audio time, <code>Fundo</code> backdrop absolute only over media area) + global ambient audio on every TV via <code>midias_para_tv</code> · <code>datahora_nomeFila</code> always (<code>renomear_arquivos_fila</code> on rename) · <code>nomes.txt</code>/CSV tagged via <code>csv_para_tags</code> (<code>#prioridade #manchester #etapa</code>), transfer within same TV, round-robin + Manchester dominating (no sensitive words on screen, only background color) · wait/call per step/room, serialized voice without cutting (claim per step), 50% ducking, full/half hour · per-user access (<code>tb_fila_acesso</code> + management search), Edit (in-panel) / Access buttons on cards, news up to 200 · admin via hamburger (<code>/admin/filas</code>).</p>
 </blockquote>
 <hr />
-<h1 id="filas-mod_filas-multi-filas-carrossel-noticias-midia-tv_1">Filas — <code>mod_filas</code> (Multi-filas + Carrossel Notícias + Mídia TV)<a class="headerlink" href="#filas-mod_filas-multi-filas-carrossel-noticias-midia-tv_1" title="Permanent link">&para;</a></h1>
+<h1 id="filas-mod_filas-multi-filas-tv-por-etapa-midia-por-fila-lista-unica-ordem-da-fala-papel-de-fundo_1">Filas — <code>mod_filas</code> (Multi-filas + TV por etapa + Mídia por fila + Lista única + Ordem da fala + Papel de fundo)<a class="headerlink" href="#filas-mod_filas-multi-filas-tv-por-etapa-midia-por-fila-lista-unica-ordem-da-fala-papel-de-fundo_1" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Gestor de filas/chamadas multi-filas: rotas <code>/filas</code> + <code>/tv?grupo=</code> (compartilhada) + <code>/tv/{id}</code> (isolada) · banco próprio <code>db_mod_filas.db</code> · tabelas <code>tb_fila</code>/<code>tb_fila_etapa</code>/<code>tb_chamada</code>/<code>tb_midia</code>/<code>tb_config_filas</code> · fila por local <code>endereco/prefixo/senha_inicio/fim</code> (fim=0 infinito) + <code>criado_por</code> + <code>tv_grupo</code> · isolamento por criador vs <code>administrador_geral</code> · etapas sequenciais + TV playlist mídia 40s + 3s bip/voz (só novo id) + carrossel notícias <code>listar_para_tv</code> 7s/120s (filtrado por censura).</p>
+<p>Gestor de filas/chamadas multi-filas: rotas <code>/filas</code> + <code>/tv?grupo=</code> (compartilhada) + <code>/tv/{id}</code> (isolada) + <code>?etapa=</code> réplica por sala · banco próprio <code>db_mod_filas.db</code> · <strong>atualizado 25/09/2026</strong>: <code>contar_nomes_pendentes</code> (predicado <code>usado</code> invertido) e <code>listar_nomes</code> (<code>ORDER BY</code> invertido) corrigidos · tabelas <code>tb_fila</code> (colunas voz <code>voz_ordem</code> + textos) / <code>tb_fila_etapa</code> / <code>tb_chamada</code> (prioridade+manchester) / <code>tb_fila_nomes</code> (uma lista por fila) / <code>tb_midia</code> (por fila + ambiente global + <code>fundo</code> papel de fundo) / <code>tb_tv_estado</code> (claim+remoto) / <code>tb_fila_acesso</code> / <code>tb_config_filas</code> · projeto nasce SEM filas (sem seed <code>Geral</code>) · <code>tv_grupo</code> slug de URL + lista de grupos em uso · cards recolhíveis (<code>Cadastro de fila</code>, <code>Etapas/lista</code>, <code>Anexos</code>), <code>delay=1000</code> em todos os campos, ordem da fala <code>voz_ordem</code> via <code>normalizar_voz_ordem</code> · mídia por fila (mp3/mp4/fotos, volume padrão 40, duração real via mutagen, fotos dividem tempo do áudio, foto <code>Fundo</code> absoluta só na área de mídia) + áudio ambiente global em todas as TVs via <code>midias_para_tv</code> · <code>datahora_nomeFila</code> sempre (<code>renomear_arquivos_fila</code> ao renomear) · <code>nomes.txt</code>/CSV com tags via <code>csv_para_tags</code> (<code>#prioridade #manchester #etapa</code>), transferência dentro da mesma TV, revezamento + Manchester dominando (sem termos sensíveis nas telas, só cor de fundo) · espera/chamar por etapa/sala, voz serializada sem cortar (claim por etapa), ducking à metade, hora cheia/meia · acesso liberado por usuário (<code>tb_fila_acesso</code> + busca na gestão), botões Editar (no painel) / Acesso nos cards, notícias até 200 · admin via hambúrguer (<code>/admin/filas</code>).</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
-<p>Gestor <strong>multi-filas por local</strong> com TV dedicada por fila ou por grupo. Cada fila isolada (não interfere em outra) com numeração <code>prefixo+inicio→fim</code> (infinito quando <code>fim=0</code>) e fluxo sequencial <code>Atendimento → Triagem → Consultório 3</code> (<code>tb_fila_etapa</code>). TV <strong>isolada</strong> <code>/tv/{fila_id}</code> ou <strong>compartilhada</strong> <code>/tv?grupo=xxx</code> (mesmo <code>tv_grupo</code> → mesma TV). Playlist <strong>áudio elevador / vídeo propaganda</strong> em <code>/midia_filas</code> (global, 40s rotação quando ociosa, pausada ao chamar com <strong>bip 880Hz + voz <code>pt-BR</code> só no novo id</strong>). Carrossel <strong>notícias do Agregador</strong> no rodapé (filtrado por <code>conteudo_palavras_bloqueadas</code>).</p>
+<p>Gestor <strong>multi-filas por local</strong> com TV dedicada por fila, por grupo ou por etapa/sala. O projeto <strong>nasce sem filas</strong> — cada usuário com acesso cria as suas (isoladas por <code>criado_por</code> + liberadas via <code>tb_fila_acesso</code>); <code>administrador_geral</code> vê todas. Cada fila tem <strong>numeração própria</strong> (<code>prefixo</code> + <code>senha_inicio</code>→<code>senha_fim</code>, com <code>fim=0</code> = infinito circular) e <strong>sequência de etapas/salas</strong> (<code>tb_fila_etapa</code>: ex. Recepção | 01 → Triagem | 02 → Consultório 3 | 03 — cada etapa é subfila com guichê próprio, painel de "próximo" e TV replicável só dela via <code>?etapa=</code>). A TV pode ser <strong>isolada</strong> (<code>/tv/{fila_id}</code>), <strong>compartilhada por grupo</strong> (<code>/tv?grupo=recepcao</code> — slug de URL, sem acento/espaço) ou <strong>replicada por etapa</strong> (<code>/tv/{id}?etapa=Triagem</code>). Quando ociosa, reproduz playlist de <strong>mídias da fila</strong> (áudio/foto/vídeo em <code>/midia_filas</code>, fotos dividem o tempo real do áudio, volume padrão 40) + <strong>áudio ambiente global</strong> do admin (toca em todas as TVs via <code>midias_para_tv</code>); foto marcada como <strong>papel de fundo</strong> fica fixa atrás de tudo só na área de mídia. Ao chamar, toca <strong>bip 880Hz + voz</strong> (<code>SpeechSynthesis</code> <code>pt-BR</code>) serializada por claim (uma por vez, sem cortar) na <strong>ordem <code>voz_ordem</code></strong>, com <strong>ducking à metade</strong> da música, repetição configurável e <strong>hora cheia/meia</strong>. Carrossel <strong>notícias do Agregador</strong> no rodapé (até 200, filtrado por <code>conteudo_palavras_bloqueadas</code>). Painel com <strong>cards recolhíveis</strong> e <strong><code>delay=1000</code></strong> em todos os campos; <strong>Editar</strong> carrega no <code>Cadastro de fila</code>; admin via <strong>hambúrguer</strong>.</p>
 <h2 id="banco-proprio">Banco próprio<a class="headerlink" href="#banco-proprio" title="Permanent link">&para;</a></h2>
-<p>Conexão WAL + <code>foreign_keys=ON</code> via <code>banco_conexao.conexao("filas")</code>. Criador: <code>init_db()</code> <code>bd_manipulador.py:56-141</code>.</p>
-<p><strong><code>tb_fila</code></strong>: <code>id</code> PK, <code>nome</code> UNIQUE, <code>senha_atual</code> TEXT (<code>A000</code>), <code>status</code> TEXT (<code>ativa</code>), <code>guiche</code> TEXT (<code>01</code>), <code>data_criacao</code> + <code>endereco</code> TEXT, <code>descricao</code> TEXT, <code>prefixo</code> TEXT (<code>A</code>), <code>criado_por</code> TEXT, <code>senha_inicio</code> INTEGER (1), <code>senha_fim</code> INTEGER (0=infinito), <code>tv_grupo</code> TEXT (vazio=isolada). Migração <code>_garantir_coluna</code> para colunas novas. Seed <code>Geral</code> (<code>A000</code>, <code>prefixo A</code>, <code>1→0</code>, <code>tv_grupo ''</code>, <code>criado_por ''</code>) + 3 etapas padrão.</p>
+<p>Conexão WAL + <code>foreign_keys=ON</code> via <code>banco_conexao.conexao("filas")</code>. Criador: <code>init_db()</code> em <code>bd_manipulador.py</code> (sem seed — <strong>nenhuma fila fixa</strong>; migra grupos legados para slug via <code>normalizar_tv_grupo</code>; garante <code>voz_ordem</code> + <code>fundo</code> + <code>volume</code> 40; limpa <code>stage_*</code> órfão +24h).</p>
+<p><strong><code>tb_fila</code></strong>: <code>id</code> PK, <code>nome</code> UNIQUE, <code>senha_atual</code> TEXT, <code>status</code> TEXT (<code>ativa</code>), <code>guiche</code> TEXT, <code>data_criacao</code> + <code>endereco</code> TEXT, <code>descricao</code> TEXT (legado no banco, ocultos na UI), <code>prefixo</code> TEXT (<code>A</code>), <code>criado_por</code> TEXT, <code>senha_inicio</code> INTEGER (1), <code>senha_fim</code> INTEGER (0=infinito), <code>tv_grupo</code> TEXT (vazio=isolada, slug <code>a-z0-9-</code>, máx 40, reservados bloqueados) + <strong>voz</strong> <code>voz_nome/voz_senha/voz_destino/voz_guiche/voz_fila/voz_hora</code> (1/0 quais campos são falados) + <code>voz_ordem</code> TEXT (<code>DEFAULT 'fila,senha,nome,destino,guiche'</code>) + <code>voz_repetir</code> (0–10) + <code>voz_intervalo</code> (1–60s) + <strong>textos TV</strong> <code>tv_titulo/tv_subtitulo/tv_aguardando ('AGUARDE CHAMADA')/tv_midia_legenda/tv_noticias_titulo ('Notícias')</code> + <code>prio_turno</code> (revezamento). Migração <code>_garantir_coluna</code> para colunas novas. Constantes <code>VOZ_ORDEM_PADRAO</code> + <code>VOZ_CAMPOS</code>.</p>
 <p><strong><code>tb_fila_etapa</code></strong>: <code>id</code> PK, <code>fila_id</code> FK CASCADE, <code>ordem</code> INTEGER, <code>nome</code> TEXT, <code>guiche</code> TEXT, <code>ativo</code> INTEGER. Índice <code>idx_fila_etapa_fila(fila_id,ordem)</code>.</p>
-<p><strong><code>tb_chamada</code></strong>: <code>id</code> PK, <code>fila_id</code> FK CASCADE, <code>senha</code> TEXT, <code>guiche</code> TEXT (snapshot), <code>chamado_em</code>, <code>chamado_por</code> TEXT + <code>paciente_nome</code> TEXT, <code>etapa_nome</code> TEXT, <code>fila_nome</code> TEXT. Migração <code>paciente_nome/etapa_nome/fila_nome</code>.</p>
-<p><strong><code>tb_midia</code></strong>: <code>id</code> PK, <code>nome</code> TEXT, <code>tipo</code> CHECK(<code>audio</code>/<code>video</code>), <code>caminho</code> TEXT (<code>/midia_filas/...</code>), <code>arquivo_original</code> TEXT, <code>ordem</code> INTEGER, <code>ativo</code> INTEGER, <code>criado_em</code>. Pasta <code>mod_filas/midia/</code> → <code>/midia_filas/*</code> via <code>montar_rotas_static()</code> (<code>app.add_static_files</code>).</p>
+<p><strong><code>tb_chamada</code></strong>: <code>id</code> PK, <code>fila_id</code> FK CASCADE, <code>senha</code> TEXT, <code>guiche</code> TEXT (snapshot), <code>chamado_em</code>, <code>chamado_por</code> TEXT + <code>paciente_nome</code> TEXT, <code>etapa_nome</code> TEXT, <code>fila_nome</code> TEXT + <code>prioridade</code> TEXT (<code>comum/gestante/idoso/deficiente</code>) + <code>manchester</code> TEXT (<code>vermelho/laranja/amarelo/verde/azul</code>).</p>
+<p><strong><code>tb_fila_nomes</code></strong> (lista única por fila): <code>id</code> PK, <code>fila_id</code> FK CASCADE, <code>nome</code> TEXT, <code>ordem</code> INTEGER, <code>usado</code> INTEGER, <code>criado_em</code> + <code>prioridade</code> + <code>manchester</code> + <code>etapa</code> TEXT (etapa vinculada — nasce direto nela). Índice <code>idx_fila_nomes_fila(fila_id,usado,ordem)</code>. Arquivo salvo no servidor como <code>datahora_nomeFila.txt</code> (<code>salvar_lista_nomes</code>).</p>
+<p><strong><code>tb_midia</code></strong> (por fila + global + fundo): <code>id</code> PK, <code>nome</code> TEXT, <code>tipo</code> CHECK(<code>audio</code>/<code>video</code>/<code>imagem</code>), <code>caminho</code> TEXT (<code>/midia_filas/...</code>), <code>arquivo_original</code> TEXT, <code>ordem</code> INTEGER, <code>ativo</code> INTEGER, <code>criado_em</code> + <code>fila_id</code> NULL (NULL=global) + <code>volume</code> (padrão 40) + <code>duracao</code> (foto, 3–120s, padrão 8) + <code>slot</code> (exibição — mesmo número toca junto) + <code>duracao_real</code> REAL (extraída via <code>mutagen</code>, fallback WAV nativo) + <code>fundo</code> INTEGER (0/1 — só <code>imagem</code>, uma por fila/global). Nome no servidor <strong>sempre</strong> <code>datahora_nomeFila.ext</code> (<code>nome_arquivo_midia</code>); <code>renomear_arquivos_fila</code> reaplica ao renomear a fila. Índice <code>idx_midia_fila_slot(fila_id,slot,ordem)</code>. Pasta <code>mod_filas/midia/</code> → <code>/midia_filas/*</code> via <code>montar_rotas_static()</code>.</p>
+<p><strong><code>tb_tv_estado</code></strong> (claim + controle remoto): <code>chave</code> PK (<code>grupo:&lt;slug&gt;</code> / <code>fila:&lt;id&gt;</code> / <code>geral</code>, + <code>+&lt;etapa&gt;</code> por sala), <code>slot_atual</code>, <code>pausado</code>, <code>comando</code> (<code>pausar|retomar|proximo|anterior|slot:&lt;n&gt;</code>), <code>fala_ate</code> REAL (reserva de voz), <code>ultima_falada</code> INTEGER. Funções: <code>chave_tv</code>/<code>chave_tv_etapa</code>, <code>obter_estado_tv</code>, <code>tv_livre</code>/<code>tv_bloquear</code>, <code>tv_claim_fala</code> (compare-and-swap — um anuncia por vez, sem cortar), <code>buscar_proxima_fala</code> (mais antigo não falado por escopo), <code>enviar/consumir_comando_tv</code>.</p>
+<p><strong><code>tb_fila_acesso</code></strong>: <code>fila_id</code> FK CASCADE + <code>user_nome</code> (UNIQUE par) + <code>criado_em</code>. Índice por <code>user_nome</code>. Funções: <code>filas_liberadas</code>, <code>listar_acessos</code>, <code>liberar_acesso</code> (só usuário cadastrado na gestão), <code>remover_acesso</code>. Botão <strong>Acesso</strong> nos cards (<code>dialogo_acesso_fila</code>).</p>
 <p><strong><code>tb_config_filas</code></strong>: <code>filas_modo_tv</code> (<code>1</code>), <code>filas_senha_prefixo</code> (<code>A</code>), <code>filas_guiche_padrao</code> (<code>01</code>).</p>
 <p>⚠️ <code>bd_criador.py</code> legado/morto.</p>
 <h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>mostrar_tela(nome, perfil)</code> (<code>telas.py:28-188</code>): gate <code>_pode_acessar</code>, <code>ler_tema("filas")</code> + <code>cabecalho</code>, card <strong>Nova fila por local</strong> (inputs nome/endereco/descricao/prefixo/inicio/fim/guiche/tv_grupo + <code>criar_fila</code> + link TV isolada/compartilhada + <code>notificar</code>), <code>render_filas()</code> com <code>listar_filas_visiveis</code> (isolamento por criador vs admin), card por fila com <code>Senha atual • Prefixo • inicio→fim (∞) • Guichê • TV • Dono • status</code> + <code>TV grupo</code>/<code>Abrir TV desta fila</code> + <code>Excluir</code> (dono/admin, Geral bloqueada) + etapas badges + Chamar (<code>Paciente</code> + <code>select Etapa</code> + <code>gerar_senha</code>) + Histórico isolado (<code>listar_chamadas(5, fila_id)</code>) + <code>Avançar</code> sequencial. Botão <code>Excluir todas</code> com dialog (<code>excluir_todas_filas</code> filtrada por criador).</li>
-<li><code>mostrar_tv(fila_id=None, tv_grupo=None)</code> (<code>telas.py:191-370</code>): <code>w-full h-screen bg-black</code>, header com <strong>ícone padrão intranet</strong> (<code>get_config icone_sistema/titulo_sistema</code>, <code>hub</code>/<code>INTRANET</code>) + <code>TV — Grupo</code>/<code>Fila</code>/<code>Todas as filas</code> + <code>lbl_topo</code> + <code>lbl_senha 10vw</code> + <code>lbl_paciente</code> + <code>lbl_destino</code> + <code>lbl_guiche</code> + <code>media_container</code> (<code>media_html</code> audio/video) + rodapé notícias <code>bg-grey-900 min-height:14vh</code>. <code>estado {ultimo_id, midia_idx}</code> + <code>noticias_tv {lista, idx}</code>. <code>refresh_chamada</code> (<code>3.0</code> + imediata) lê <code>ultima_chamada_tv</code> (agregada por <code>tv_grupo</code> quando grupo) e só toca <strong>bip+voz se <code>cid != ultimo_id</code></strong> (<code>_js_beep_e_voz</code> <code>AudioContext</code> 880Hz 0.35s + <code>speechSynthesis pt-BR 0.9 cancel</code>); <code>carregar_noticias</code> (<code>listar_para_tv</code> censura filtrada) + <code>_mostrar_noticia</code> (<code>7.0</code>) + <code>ui.timer 120.0</code>; <code>rotacionar_midia</code> (<code>40.0</code>, só ociosa).</li>
-<li>Rota <code>/tv</code> pública (sem <code>pagina_restrita</code>) + <code>/tv/{fila_id}</code> (<code>main.py:753-778</code>) — <code>?grupo=</code> compartilhada, <code>/{id}</code> isolada (resolve grupo se pertence).</li>
+<li><code>mostrar_tela(nome, perfil)</code> (<code>telas.py</code>): gate <code>_pode_acessar</code>, <code>ler_tema("filas")</code> + <code>cabecalho</code>, <code>ui.expansion("Cadastro de fila")</code> (nome/prefixo/início/fim/guichê + <code>TV grupo em uso</code> + <code>Nova TV grupo</code> lado a lado + checkboxes voz + <code>Ordem da fala</code> + repetir/intervalo + <code>ui.expansion("Etapas, lista inicial e arquivos (opcional)")</code> com <code>_preencher_lista</code> + <code>ui.expansion("Anexar vídeos, áudios e fotos (opcional)")</code> com <code>_anexar_midia</code>/<code>midias_stage</code>/<code>_render_stage</code> + expansão textos TV + <code>Criar fila</code> / <code>Salvar alterações</code> / <code>Cancelar</code> via <code>_salvar_cadastro</code>/<code>_salvar_edicao</code>/<code>_cancelar_edicao</code>/<code>_limpar_form</code>/<code>_carregar_edicao</code>/<code>_editar_no_painel</code>), <code>render_filas()</code> com <code>listar_filas_visiveis</code> (próprias + liberadas + legado sem dono; admin vê todas), card por fila com botões <strong>TV grupo/Abrir TV + Excluir + Editar (carrega no cadastro) + Acesso</strong> + badges de etapas + Chamar (<code>Paciente avulso</code> + <code>select Etapa</code> + <code>select Grupo avulso</code> + <code>gerar_senha</code>) + Histórico isolado (5, com ajuste de Manchester + <code>Avançar</code> sequencial) + <code>bloco_etapas</code> (por sala: próximo/nome/Manchester/TV da etapa) + <code>bloco_nomes_fila</code> (lista única + transferência mesma TV) + <code>bloco_midia_fila</code> (upload por fila + <code>Fundo</code>, <strong>Salvar</strong> com <code>data-testid=filas-midia-salvar</code>) + <code>bloco_controle_tv</code> (pausar/retomar/retornar/avançar remoto). Botão <code>Excluir todas (minhas)</code> com dialog (sem fila preservada). <strong>Sem botão Administração no painel</strong> — admin via hambúrguer (<code>/admin/filas</code> com edição inline e etapas em <code>ui.expansion</code> recolhíveis). <strong>Tooltips <code>delay=1000</code></strong> em todos os campos (rótulo curto + detalhe no tooltip/<code>info_outline</code>); <code>endereco</code>/<code>descricao</code> fora da UI.</li>
+<li><code>mostrar_tv(fila_id=None, tv_grupo=None, etapa=None)</code> (<code>telas.py</code>): área de mídia <code>position: relative; overflow: hidden</code> + <code>div</code> de fundo absoluta (<code>cover</code>, <code>opacity:0.22</code>, <code>z-index:0</code>) quando há <code>fundo=1</code> (excluído do loop; conteúdo em <code>z-index:1</code>) + faixa lateral 240px (senha/paciente/destino/guichê + 3 últimos) + rodapé notícias escuro (título+descrição+fonte+contador). <code>slots</code> por <code>slot</code> (mesmo número = juntos, com cabeçalho <code>— Exibição N (juntos) —</code> no painel); <code>_render_slot()</code> com <code>calcular_passo</code> (tempo real); <code>refresh_chamada</code> (<code>3.0</code> + imediata) usa <strong>fila de voz</strong> (<code>buscar_proxima_fala</code> + <code>tv_claim_fala</code> por <code>chave_tv_etapa</code> — anuncia o mais antigo não falado, um por vez, sem cortar; repetição só com voz livre) + <code>_texto_chamada</code> na ordem <code>voz_ordem</code> (via <code>normalizar_voz_ordem</code>, fallback <code>VOZ_CAMPOS</code>) + <code>_js_duck_e_voz</code> (música à metade — <code>data-vol</code> <code>0.4</code> → <code>×0.5</code> 2s antes, bip 880Hz 0.35s, <code>speechSynthesis pt-BR 0.9</code>, restaura 2s depois) + <code>_falar_hora_se_hora</code> (cheia/meia, só sem chamada há 60s); <code>carregar_noticias</code> (<code>listar_para_tv(limite=200)</code>, fallback elegante nunca vazio) + <code>_mostrar_noticia</code> (<code>15.0</code>) + <code>ui.timer 120.0</code>; <code>rotacionar_midia</code> auto-sustentada (pausado adia 5s, erro cai em 8s, reagenda pela duração real; vídeo com fallback <code>muted</code>); comando remoto <code>consumir_comando_tv</code> (pausar/retomar/próximo/anterior/slot). <strong>Discrição</strong>: nenhuma palavra de grupo/cor na tela — só o fundo colorido (<code>_estilo_manchester</code>) orienta.</li>
+<li>Rotas <code>/tv</code> pública (sem <code>pagina_restrita</code>) + <code>/tv/{fila_id}</code> (<code>main.py</code>) — <code>?grupo=</code> compartilhada, <code>/{id}</code> isolada, <code>?etapa=</code> réplica por sala.</li>
+<li>Blocos reutilizáveis (<code>telas.py</code>, usados em <code>/filas</code> e <code>/admin/filas</code>): <code>bloco_midia_fila</code> (com <code>Fundo</code>), <code>bloco_nomes_fila</code>, <code>bloco_etapas</code>, <code>dialogo_editar_fila</code> (legado — Editar atual carrega no cadastro), <code>bloco_liberar_acesso</code>, <code>dialogo_acesso_fila</code>, <code>bloco_controle_tv</code>.</li>
 </ul>
 <h2 id="regras-de-negocio-relevantes">Regras de negócio relevantes<a class="headerlink" href="#regras-de-negocio-relevantes" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Criar fila</strong> (<code>criar_fila</code> <code>bd_manipulador.py:208-255</code>): valida <code>nome*</code>, <code>prefixo ^[A-Za-z0-9]+$</code>, <code>inicio&gt;=0</code>, <code>fim==0 || fim&gt;=inicio</code>; <code>senha_atual = prefixo + (inicio-1):03d</code> (04d se &gt;999); 3 etapas padrão; <code>audit criar_fila</code> com <code>endereco/prefixo/inicio/fim/tv=/tv/{fid}</code>; UNIQUE → <code>Já existe fila com nome</code>.</li>
-<li><strong>Listagem isolada</strong> (<code>listar_filas_visiveis</code> <code>bd_manipulador.py:157-175</code>): <code>eh_admin_geral</code> ou <code>eh_admin_modulo</code> → <code>listar_filas()</code> todas 13 colunas; senão <code>WHERE criado_por=user OR criado_por='' OR IS NULL</code> (legado visível a todos até ser assumido).</li>
-<li><strong>Atualizar/Excluir</strong> (<code>atualizar_fila</code> <code>258-313</code> com <code>senha_inicio/fim/tv_grupo</code>, <code>excluir_fila</code> <code>316-332</code> bloqueia <code>Geral</code>, <code>excluir_todas_filas</code> <code>335-356</code> com filtro <code>criado_por</code> quando não-admin).</li>
-<li><strong>Etapas</strong> (<code>359-436</code>): <code>listar_etapas ORDER BY ordem</code>, <code>criar_etapa</code> max ordem+1, <code>atualizar_etapa</code>, <code>excluir_etapa</code>, <code>reordenar_etapas</code>.</li>
-<li><strong>Incremento</strong> (<code>gerar_senha</code> <code>462-501</code> + <code>_proxima_senha</code> <code>440-459</code>): <code>SELECT ... senha_atual,prefixo,guiche,senha_inicio,senha_fim</code> → <code>_proxima_senha(atual,prefixo,inicio,fim)</code> (regex <code>([A-Za-z]*)(\d+)</code> + <code>prox&gt;fim→inicio</code> circular, width 3/4) → resolve guichê da etapa → <code>UPDATE tb_fila</code> + <code>INSERT tb_chamada</code> com <code>paciente_nome/etapa_nome/fila_nome</code> + <code>audit gerar_senha</code>.</li>
-<li><strong>Avançar</strong> (<code>avancar_chamada</code> <code>504-542</code>): sequencial por <code>ordem</code>; já está na última → <code>Já está na última etapa</code>.</li>
-<li><strong>Última/Histórico TV</strong> (<code>ultima_chamada</code> <code>545-555</code>, <code>ultima_chamada_tv</code> <code>558-573</code> com <code>tv_grupo IN</code>, <code>listar_chamadas</code> <code>576-587</code>, <code>listar_chamadas_tv</code> <code>589-603</code> idem).</li>
-<li><strong>Mídia</strong> (<code>606-694</code>): <code>listar_midias</code> (ativas), <code>adicionar_midia</code> max ordem+1, <code>excluir_midia</code> (remove arquivo só se dentro de <code>PASTA_MIDIA</code>), <code>reordenar_midias</code>, <code>set_midia_ativa</code>, <code>montar_rotas_static</code> <code>/midia_filas</code> (mod_filas/midia, <code>os.makedirs</code>).</li>
-<li><strong>LGPD</strong>: <code>remover_vinculos_usuario</code> (0), <code>renomear_usuario</code> (<code>UPDATE tb_chamada/ tb_fila criado_por</code>).</li>
+<li><strong>Sem seed</strong> (<code>init_db</code> em <code>bd_manipulador.py</code>): projeto nasce sem filas; <code>excluir_fila</code>/<code>excluir_todas_filas</code> sem exceção preservada.</li>
+<li><strong><code>tv_grupo</code> slug</strong> (<code>normalizar_tv_grupo</code> + <code>listar_grupos_tv</code>): minúsculo <code>a-z0-9-</code>, sem acento/espaço, 2–40 chars, reservados (<code>tv/admin/login/api/...</code>) bloqueados; migração de legados no boot; selects "TV grupo em uso" na criação/edição/admin (todos com <code>delay=1000</code>).</li>
+<li><strong>Ordem da fala</strong> (<code>normalizar_voz_ordem</code> + <code>VOZ_ORDEM_PADRAO</code> + <code>VOZ_CAMPOS</code>): só <code>fila,senha,nome,destino,guiche</code>, sem repetir; vazia rejeita (<code>Ordem da fala vazia — use ex: senha,nome,destino</code>); faltantes completados no fim (<code>senha,nome</code> → <code>senha,nome,fila,destino,guiche</code>). <code>criar_fila</code>/<code>atualizar_fila</code> validam; <code>obter_extras_fila</code> devolve o default; <code>_texto_chamada</code> ordena por ela (só <code>voz_*</code> ligados; fallback <code>senha</code>).</li>
+<li><strong>Criar fila</strong> (<code>criar_fila</code> em <code>bd_manipulador.py</code>): valida <code>nome*</code>, <code>prefixo ^[A-Za-z0-9]+$</code>, <code>inicio&gt;=0</code>, <code>fim==0 || fim&gt;=inicio</code>; slug de grupo; <code>voz_ordem</code> normalizada; <code>voz_repetir</code> 0–10 + <code>voz_intervalo</code> 1–60s; <code>senha_atual = prefixo + (inicio-1)</code> (03d/04d); <strong>sequência <code>etapas=[(nome, guiche)]</code></strong>; <code>audit criar_fila</code>; UNIQUE → <code>Já existe fila com nome</code>. <code>endereco</code>/<code>descricao</code> aceitos no backend, ocultos na UI.</li>
+<li><strong>Atualizar fila</strong> (<code>atualizar_fila</code>): <code>voz_ordem</code> opcional validada; <strong>nome mudou → <code>renomear_arquivos_fila</code></strong> reaplica <code>datahora_nomeFila</code> em todas as mídias (rename <code>src→dst</code> + <code>UPDATE caminho</code>).</li>
+<li><strong>Listagem visível</strong> (<code>listar_filas_visiveis</code>): admin geral/módulo → todas; senão próprias (<code>criado_por=user</code>) + liberadas (<code>tb_fila_acesso</code>) + legado sem dono. <code>liberar_acesso</code> exige usuário cadastrado (<code>mod_gest_cad_usuario.obter_usuario</code>); dono não se auto-libera.</li>
+<li><strong>Etapas/salas</strong> (<code>bd_manipulador.py</code>): CRUD + <code>reordenar_etapas</code>; <code>espera_etapa</code> (senhas cuja última posição é a etapa, por chegada); <code>proximo_da_etapa</code> (reanuncia mais antigo aguardando, senão emite o vinculado à etapa); <code>avancar_chamada</code> sequencial (<code>Já está na última etapa</code>).</li>
+<li><strong>Incremento</strong> (<code>gerar_senha</code> + <code>_proxima_senha</code> + <code>_emitir_senha</code>): vazio consome próximo elegível da lista (<code>_escolher_proximo_nome</code>); avulso usa grupo informado; nome com etapa vinculada nasce nela; snapshot guichê da etapa; <code>audit gerar_senha</code>.</li>
+<li><strong>Lista única + tags</strong> (<code>bd_manipulador.py</code>): <code>csv_para_tags</code> (CSV <code>,</code>/<code>;</code> com cabeçalho <code>nome/grupo/cor/etapa</code> → linhas com tags); <code>_parse_nome_tags</code> (<code>Maria #gestante #vermelho #recepcao</code>, <code>[colchetes]</code>, <code>,</code>/<code>;</code>/<code>#</code> separadores, etapa por igualdade NFKD, desconhecidas ignoradas); <code>importar_nomes</code> (uma lista por fila — recusa se existe sem <code>substituir</code>); <code>transferir_nome</code>/<code>transferir_todos</code> (só mesma TV, destino sem lista); <code>definir_etapa_nome</code>/<code>definir_manchester_nome</code>/<code>definir_nome_senha</code> (vincula nome ao papelzinho)/<code>definir_manchester_senha</code> (qualquer atendente, a qualquer hora) /<code>definir_prioridade_nome</code>.</li>
+<li><strong>Revezamento + Manchester</strong> (<code>_escolher_proximo_nome</code>): elegíveis = etapa <code>''</code> (geral) ou a pedida; com Manchester → cor domina (<code>vermelho&gt;laranja&gt;amarelo&gt;verde&gt;azul</code>, desempate demografia/chegada); sem Manchester e ≤3 → chegada; &gt;3 → ciclo (<code>gestante, idoso, deficiente, comum, comum</code> via <code>prio_turno</code>).</li>
+<li><strong>Mídia</strong> (<code>bd_manipulador.py</code>): <code>VOLUME_AMBIENTE_PADRAO = 40</code>; <code>tipo_por_extensao</code> (mp3/wav/ogg/m4a→audio, mp4/webm/mov→video, jpg/png/webp→imagem); <code>duracao_real_arquivo</code> (mutagen + fallback WAV); <code>calcular_passo</code> (áudio/vídeo valem tempo real; fotos dividem; sem real: fotos somam config, só vídeo=25s, nada=12s); <code>nome_arquivo_midia</code> (<strong>sempre</strong> <code>datahora_nomeFila.ext</code>, global=<code>global</code>); <code>listar_midias(fila_id=None→todas, X→só X)</code> (inclui <code>fundo</code>); <code>midias_para_tv</code> (próprias + áudios globais após as próprias; vídeo/foto global só na TV geral); <code>adicionar/atualizar/excluir/reordenar/set_midia_ativa</code> (volume 0–100 padrão 40, duração 3–120, slot 0–999); <code>set_midia_fundo</code> (só <code>imagem</code>, uma por fila/global — demais zeradas, <code>audit fundo_midia</code>); <code>renomear_arquivos_fila</code> (reaplica padrão ao renomear).</li>
+<li><strong>Última/Histórico TV</strong> (<code>ultima_chamada</code>/<code>ultima_chamada_tv</code>/<code>listar_chamadas</code>/<code>listar_chamadas_tv</code> com <code>etapa_nome</code> opcional + <code>IN</code> por grupo).</li>
+<li><strong>LGPD</strong>: <code>remover_vinculos_usuario</code> (limpa <code>tb_fila_acesso</code>), <code>renomear_usuario</code> (<code>tb_chamada</code>/<code>tb_fila</code>/<code>tb_fila_acesso</code>).</li>
 <li><strong>Censura</strong>: TV filtra via <code>listar_para_tv</code> (<code>conteudo_palavras_bloqueadas</code>, <code>titulo_bloqueado</code>).</li>
 </ul>
 <h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
-<p><code>autenticacao.validar_acesso_modulo</code>/<code>perfil_global_de</code>/<code>eh_admin_do_modulo</code>, <code>banco_conexao.conexao</code>/<code>get_config</code>, <code>tema_modulo.ler_tema</code>/<code>notificar</code>, <code>ui_comum.botao</code>/<code>card_admin</code>/<code>rodape_salvar_restaurar</code>, <code>observabilidade.get_logger</code>. Auditoria → <code>tb_auditoria_filas</code>. <code>MODULOS_SISTEMA</code>/<code>MODULOS_BD</code>/<code>PADROES_TEMA</code> com <code>filas</code>. <strong>Integração Agregador</strong>: <code>mod_filas/telas.py:330-357</code> consome <code>listar_para_tv(limite=10, censura filtrada)</code> → carrossel título+descrição (<code>7s</code> rotate, <code>120s</code> reload) no rodapé da TV (<code>bg-grey-900</code>). <strong>Mídia</strong>: <code>PASTA_MIDIA</code> + <code>/midia_filas</code> (isFormats <code>mp3/wav/ogg/m4a</code>→audio, <code>mp4/webm</code>→video) + upload sanitizado + <code>uuid6</code>. Ver <code>mod_agregador_noticias</code>.</p>
+<p><code>autenticacao.validar_acesso_modulo</code>/<code>perfil_global_de</code>/<code>eh_admin_do_modulo</code>, <code>banco_conexao.conexao</code>/<code>get_config</code>, <code>tema_modulo.ler_tema</code>/<code>notificar</code>/<code>bloco_aparencia</code>, <code>ui_comum.botao</code>/<code>card_admin</code>/<code>rodape_salvar_restaurar</code>/<code>painel_backup</code>, <code>observabilidade.get_logger</code>. Auditoria → <code>tb_auditoria_filas</code>. <code>MODULOS_SISTEMA</code>/<code>MODULOS_BD</code>/<code>PADROES_TEMA</code> com <code>filas</code>. <strong>Integração Agregador</strong>: <code>mod_filas/telas.py</code> consome <code>listar_para_tv(limite=200)</code> → carrossel título+descrição+fonte+contador (<code>15s</code> rotate, <code>120s</code> reload, fallback elegante nunca vazio) no rodapé escuro da TV. <strong>Mídia</strong>: <code>PASTA_MIDIA</code> + <code>/midia_filas</code> + <code>mutagen&gt;=1.45</code> (<code>requirements.txt</code>). Ver <code>mod_agregador_noticias</code>.</p>
 <h2 id="requisitos-funcionais-rf-mapa-codigo-doc">Requisitos funcionais (RF) — mapa código ↔ doc<a class="headerlink" href="#requisitos-funcionais-rf-mapa-codigo-doc" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -280,43 +300,93 @@
 <tbody>
 <tr>
 <td style="text-align: left;">RF-FILAS-01</td>
-<td style="text-align: left;">Multi-filas por local</td>
-<td style="text-align: left;"><code>tb_fila</code> com <code>endereco/descricao</code> + <code>criar_fila(endereco,...)</code> (<code>bd_manipulador.py:208-255</code>) + <code>listar_filas_visiveis</code> por criador</td>
+<td style="text-align: left;">Multi-filas por local, projeto sem filas fixas</td>
+<td style="text-align: left;"><code>tb_fila</code> + <code>criar_fila</code>; sem seed; excluir sem exceção</td>
 </tr>
 <tr>
 <td style="text-align: left;">RF-FILAS-02</td>
 <td style="text-align: left;">Numeração configurável <code>prefixo+inicio→fim</code> com <code>fim=0</code> infinito</td>
-<td style="text-align: left;"><code>_proxima_senha(atual,prefixo,inicio,fim)</code> (<code>bd_manipulador.py:440-459</code>) <code>prox&gt;fim→inicio</code>, width 3/4, <code>fim=0</code> circular</td>
+<td style="text-align: left;"><code>_proxima_senha</code> <code>prox&gt;fim→inicio</code>, width 3/4, <code>fim=0</code> circular</td>
 </tr>
 <tr>
 <td style="text-align: left;">RF-FILAS-03</td>
-<td style="text-align: left;">Fluxo sequencial por etapas</td>
-<td style="text-align: left;"><code>tb_fila_etapa</code> <code>ordem</code> + <code>criar/listar/atualizar/reordenar</code> (<code>359-436</code>) + <code>avancar_chamada</code> (<code>504-542</code>) <code>Já está na última etapa</code></td>
+<td style="text-align: left;">Sequência de etapas na criação + fluxo sequencial</td>
+<td style="text-align: left;"><code>etapas=[(nome,guiche)]</code> no criar + CRUD + <code>avancar_chamada</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">RF-FILAS-04</td>
-<td style="text-align: left;">TV isolada <code>/tv/{id}</code> vs compartilhada <code>/tv?grupo=</code></td>
-<td style="text-align: left;"><code>tv_grupo</code> (<code>tb_fila</code>) + <code>mostrar_tv(fila_id/tv_grupo)</code> (<code>telas.py:191-370</code>) + <code>main.py:753-778</code> <code>?grupo=</code> + <code>ultima_chamada_tv</code> <code>IN</code> (<code>558-573</code>)</td>
+<td style="text-align: left;">TV isolada <code>/tv/{id}</code> vs compartilhada <code>/tv?grupo=</code> (slug) vs réplica <code>?etapa=</code></td>
+<td style="text-align: left;"><code>tv_grupo</code> slug + <code>mostrar_tv(fila_id/tv_grupo/etapa)</code> + <code>main.py</code> + <code>chave_tv_etapa</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">RF-FILAS-05</td>
-<td style="text-align: left;">Mídia ambiente áudio elevador / vídeo propaganda</td>
-<td style="text-align: left;"><code>tb_midia</code> + <code>PASTA_MIDIA</code> <code>mod_filas/midia</code> → <code>/midia_filas/*</code> (<code>684-694</code>) + <code>listar_midias</code> + <code>rotacionar_midia</code> <code>40s</code> ociosa + pausada ao chamar</td>
+<td style="text-align: left;">Mídia por fila + áudio ambiente global em todas as TVs</td>
+<td style="text-align: left;"><code>tb_midia</code> <code>fila_id</code> NULL=global + <code>midias_para_tv</code> (áudios globais após próprias) + <code>calcular_passo</code> + <code>mutagen</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">RF-FILAS-06</td>
-<td style="text-align: left;">Isolamento por dono vs <code>administrador_geral</code> vê tudo</td>
-<td style="text-align: left;"><code>criado_por</code> + <code>listar_filas_visiveis(user,perfil,eh_admin_modulo)</code> (<code>157-175</code>) <code>WHERE criado_por=? OR '' OR NULL</code></td>
+<td style="text-align: left;">Isolamento por dono + acesso liberado por usuário</td>
+<td style="text-align: left;"><code>criado_por</code> + <code>tb_fila_acesso</code> + <code>listar_filas_visiveis</code> + busca na gestão (<code>bloco_liberar_acesso</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;">RF-FILAS-07</td>
-<td style="text-align: left;">Censura de títulos na TV</td>
-<td style="text-align: left;"><code>listar_para_tv</code> filtrado por <code>conteudo_palavras_bloqueadas</code> (<code>mod_agregador_noticias</code>) — <code>titulo_bloqueado</code> <code>lower+NFD</code></td>
+<td style="text-align: left;">Censura de títulos na TV (até 200 notícias)</td>
+<td style="text-align: left;"><code>listar_para_tv(limite=200)</code> filtrado + fallback nunca vazio</td>
 </tr>
 <tr>
 <td style="text-align: left;">RF-FILAS-08</td>
-<td style="text-align: left;">Exclusão uma/todas (Geral preservada)</td>
-<td style="text-align: left;"><code>excluir_fila</code> bloqueia <code>Geral</code> (<code>316-332</code>) + <code>excluir_todas_filas</code> com dialog (<code>335-356</code>) filtro <code>criado_por</code> quando não-admin</td>
+<td style="text-align: left;">Exclusão uma/todas sem fila preservada</td>
+<td style="text-align: left;"><code>excluir_fila</code> + <code>excluir_todas_filas</code> com filtro <code>criado_por</code> quando não-admin</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-FILAS-09</td>
+<td style="text-align: left;">Lista única com tags + CSV + transferência mesma TV</td>
+<td style="text-align: left;"><code>csv_para_tags</code> + <code>_parse_nome_tags</code> + <code>importar_nomes</code> (uma por fila) + <code>transferir_nome/todos</code> (mesma TV) + upload <code>nomes.txt</code>/<code>.csv</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-FILAS-10</td>
+<td style="text-align: left;">Revezamento + Manchester dominando, sem termos sensíveis</td>
+<td style="text-align: left;"><code>_escolher_proximo_nome</code> (cor&gt;demografia&gt;chegada; ciclo) + telas só com cor de fundo</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-FILAS-11</td>
+<td style="text-align: left;">Espera/chamar por etapa/sala (qualquer atendente)</td>
+<td style="text-align: left;"><code>espera_etapa</code> + <code>proximo_da_etapa</code> + <code>bloco_etapas</code> (próximo/nome/cor/TV etapa)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-FILAS-12</td>
+<td style="text-align: left;">Voz serializada por claim sem cortar + ordem + ducking + hora cheia/meia</td>
+<td style="text-align: left;"><code>tv_claim_fala</code> + <code>buscar_proxima_fala</code> + <code>normalizar_voz_ordem</code>/<code>_texto_chamada</code> + <code>_js_duck_e_voz</code> (metade, <code>0.4</code>) + <code>_falar_hora_se_hora</code> + repetir/intervalo</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-FILAS-13</td>
+<td style="text-align: left;">Voz configurável (inclui ordem) + textos TV editáveis + lista inicial + anexos</td>
+<td style="text-align: left;"><code>voz_*</code> + <code>voz_ordem</code> em criar/atualizar + <code>obter_extras_fila</code> + textarea lista inicial + <code>midias_stage</code>/<code>stage_*</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-FILAS-14</td>
+<td style="text-align: left;">Controle remoto da TV pela edição</td>
+<td style="text-align: left;"><code>tb_tv_estado</code> comando + <code>bloco_controle_tv</code> (pausar/retomar/retornar/avançar) + <code>consumir_comando_tv</code> na TV</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-FILAS-15</td>
+<td style="text-align: left;">Botões Editar (no painel) / Acesso nos cards</td>
+<td style="text-align: left;"><code>_editar_no_painel</code>/<code>_carregar_edicao</code>/<code>_salvar_edicao</code> + <code>dialogo_acesso_fila</code> (buscar e chamar) + <code>tb_fila_acesso</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-FILAS-16</td>
+<td style="text-align: left;">Papel de fundo (foto fixa só na área de mídia)</td>
+<td style="text-align: left;"><code>tb_midia.fundo</code> + <code>set_midia_fundo</code> (só imagem, uma por fila/global) + backdrop absoluto (<code>opacity:0.22</code>) fora do loop</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-FILAS-17</td>
+<td style="text-align: left;">Arquivos sempre <code>datahora_nomeFila</code> (inclusive ao renomear)</td>
+<td style="text-align: left;"><code>nome_arquivo_midia</code> + <code>renomear_arquivos_fila</code> (chamado em <code>atualizar_fila</code> quando nome muda)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-FILAS-18</td>
+<td style="text-align: left;">UX: cards recolhíveis + <code>delay=1000</code> + admin via hambúrguer</td>
+<td style="text-align: left;"><code>ui.expansion("Cadastro de fila"/"Etapas, lista inicial e arquivos"/"Anexar vídeos, áudios e fotos")</code> + <code>ui.tooltip(...).props("delay=1000")</code> + botão Administração removido</td>
 </tr>
 </tbody>
 </table>
@@ -333,42 +403,42 @@
 <tr>
 <td style="text-align: left;">RNF-PERS-01</td>
 <td style="text-align: left;">Persistência por módulo com <code>banco_conexao</code></td>
-<td style="text-align: left;"><code>banco_conexao.conexao("filas")</code> (<code>get_connection</code> <code>bd_manipulador.py:24-34</code>) + <code>PRAGMA journal_mode=WAL</code> + <code>foreign_keys=ON</code></td>
+<td style="text-align: left;"><code>banco_conexao.conexao("filas")</code> (<code>get_connection</code>) + <code>PRAGMA journal_mode=WAL</code> + <code>foreign_keys=ON</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">RNF-PERS-02</td>
 <td style="text-align: left;">WAL + auditoria central</td>
-<td style="text-align: left;"><code>audit_log</code> → <code>db_mod_auditoria.db</code> <code>tb_auditoria_filas</code> (<code>_audit</code> <code>37-39</code>) <code>criar_fila</code>/<code>gerar_senha</code>/<code>avancar</code></td>
+<td style="text-align: left;"><code>audit_log</code> → <code>db_mod_auditoria.db</code> <code>tb_auditoria_filas</code> (<code>_audit</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;">RNF-SEG-01</td>
-<td style="text-align: left;">Validação prefixo / isolamento</td>
-<td style="text-align: left;"><code>re.match ^[A-Za-z0-9]+$</code> (<code>216</code>), <code>inicio&gt;=0</code>, <code>fim==0||fim&gt;=inicio</code> + isolamento <code>criado_por</code></td>
+<td style="text-align: left;">Validação prefixo/slug/ordem/isolamento</td>
+<td style="text-align: left;"><code>prefixo ^[A-Za-z0-9]+$</code>, slug 2–40 + reservados, <code>normalizar_voz_ordem</code> só <code>VOZ_CAMPOS</code>, isolamento <code>criado_por</code> + <code>tb_fila_acesso</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">RNF-SEG-02</td>
 <td style="text-align: left;">XSS (nh via censura)</td>
-<td style="text-align: left;">Títulos do agregador/blog filtrados via <code>titulo_bloqueado</code> antes de <code>nh3</code>/<code>INSERT</code>; <code>listar_para_tv</code> censura <code>LIMIT*3</code></td>
+<td style="text-align: left;">Títulos do agregador filtrados via <code>titulo_bloqueado</code> antes de exibir; <code>listar_para_tv</code> censura</td>
 </tr>
 <tr>
 <td style="text-align: left;">RNF-PERF-01</td>
-<td style="text-align: left;">Poll TV 3s + rotação mídia 40s + notícias 7s/120s</td>
-<td style="text-align: left;"><code>ui.timer 3.0 refresh_chamada</code> + <code>40.0 rotacionar_midia</code> (só ociosa) + <code>7.0 _mostrar_noticia</code> + <code>120.0 carregar_noticias</code></td>
+<td style="text-align: left;">Poll TV 3s + rotação auto-sustentada + notícias 15s/120s</td>
+<td style="text-align: left;"><code>ui.timer 3.0 refresh_chamada</code> + <code>rotacionar_midia</code> (pausado adia 5s, erro 8s) + <code>15.0 _mostrar_noticia</code> + <code>120.0 carregar_noticias</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">RNF-PERF-02</td>
-<td style="text-align: left;">Limpeza 24h agregador</td>
-<td style="text-align: left;"><code>limpar_antigas(24)</code> em <code>coletar_todas</code> (<code>mod_agregador_noticias</code>) + <code>reiniciar_banco</code> <code>DELETE</code> 06:00</td>
+<td style="text-align: left;">Duração real sem travar (mutagen fail-soft)</td>
+<td style="text-align: left;"><code>duracao_real_arquivo</code> try/except + fallback WAV + preenchimento melhor-esforço no <code>init_db</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">RNF-USAB-01</td>
-<td style="text-align: left;">Voz <code>pt-BR</code> bip 880Hz só novo id</td>
-<td style="text-align: left;"><code>_js_beep_e_voz</code> <code>AudioContext</code> 880Hz 0.35s + <code>speechSynthesis</code> <code>pt-BR</code> <code>0.9</code> <code>cancel</code> + <code>estado["ultimo_id"]</code> guarda</td>
+<td style="text-align: left;">Voz <code>pt-BR</code> serializada + ordem + ducking + hora</td>
+<td style="text-align: left;"><code>tv_claim_fala</code> (sem cortar) + <code>_texto_chamada</code> (<code>voz_ordem</code>) + <code>_js_duck_e_voz</code> (metade, <code>0.4</code>, bip 880Hz 0.35s, <code>pt-BR 0.9</code>) + <code>_falar_hora_se_hora</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">RNF-USAB-02</td>
-<td style="text-align: left;">Links TV + ícone padrão intranet</td>
-<td style="text-align: left;"><code>get_config icone_sistema/titulo_sistema</code> (<code>hub</code>/<code>INTRANET</code>) + link <code>tv_grupo ? /tv?grupo= : /tv/{id}</code> no criar e no card</td>
+<td style="text-align: left;">Links TV + grupos em uso + ícone padrão intranet + tooltips</td>
+<td style="text-align: left;"><code>get_config icone_sistema/titulo_sistema</code> + <code>listar_grupos_tv</code> nos selects + links <code>/tv?grupo=</code>/<code>/tv/{id}</code>/<code>?etapa=</code> + <code>delay=1000</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">RNF-COMP-01</td>
@@ -377,21 +447,48 @@
 </tr>
 <tr>
 <td style="text-align: left;">RNF-RESP-01</td>
-<td style="text-align: left;">Responsividade + <code>data-testid</code></td>
-<td style="text-align: left;"><code>w-full flex-wrap</code> <code>min-w</code> nos cards, <code>data-testid</code> em admin (censura, TV); TV <code>10vw</code>/<code>2.5vw</code> escalável</td>
+<td style="text-align: left;">Responsividade</td>
+<td style="text-align: left;"><code>w-full flex-wrap</code> <code>min-w</code> nos cards; TV mídia <code>max-height:62vh</code> + lateral 240px + rodapé <code>min-height:22vh</code>; fundo absoluto só na área de mídia</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-DISC-01</td>
+<td style="text-align: left;">Discrição (sem termos sensíveis)</td>
+<td style="text-align: left;">Telas exibem só cor de fundo (<code>_estilo_manchester</code>); palavras de grupo/cor só nos controles de edição</td>
 </tr>
 </tbody>
 </table>
+<h2 id="complementos-auditados-lote-3">Complementos auditados (lote 3)<a class="headerlink" href="#complementos-auditados-lote-3" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>_fundo_rodape_escuro</code> (<code>telas.py</code>): fundo do rodapé de notícias deriva da <code>cor_botao</code> do tema se escura (luminância &lt; 0,45), senão <code>#1b1b1b</code>.</li>
+<li>Primitivas de voz: <code>tv_livre</code>/<code>tv_bloquear</code>/<code>definir_estado_tv</code>/<code>obter_estado_tv</code>/<code>buscar_proxima_fala</code> + chaves <code>chave_tv</code>/<code>chave_tv_etapa</code> + <code>ids_do_grupo</code> + <code>montar_rotas_static</code> (<code>/midia_filas</code>).</li>
+<li>Nomes: <code>listar_nomes</code>/<code>salvar_lista_nomes</code> (<code>datahora_nomeFila.txt</code>) + <code>remover_nome</code>/<code>limpar_nomes</code>; LGPD <code>remover_vinculos_usuario</code>/<code>renomear_usuario</code>.</li>
+<li>Massa 70 nomes (<code>massa_nomes_teste.py</code>, <code>GeradorMassaNomes</code>): 10 <code>#gestante</code> + 10 <code>#idoso</code> + 50 comuns, 12 com Manchester; <code>contar_distribuicao</code>/<code>validar_massa</code>/<code>gerar_massa_teste</code> + CLI <code>--semente/--saida</code> em <code>mod_filas/midia/</code>.</li>
+</ul>
+<h2 id="gaps-conhecidos-codigo-docs">Gaps conhecidos (código ↔ docs)<a class="headerlink" href="#gaps-conhecidos-codigo-docs" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>dialogo_editar_fila</code> (<code>telas.py</code>) legado — Editar atual carrega no <code>Cadastro de fila</code>; admin usa edição inline.</li>
+<li>Sem função de relatório em <code>telas_administracao.py</code> — "relatório" = histórico isolado + auditoria <code>tb_auditoria_filas</code> + <code>painel_backup</code>.</li>
+<li>Footer <code>versao_modulo:filas</code> citado antes não existe no código atual.</li>
+</ul>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Multi-filas isoladas por <code>criado_por</code> — <code>listar_filas_visiveis</code> implementa; comum vê só suas + legadas.</li>
+<li>Projeto nasce SEM filas — <code>init_db</code> sem seed; <code>excluir_todas</code> pode zerar tudo.</li>
+<li><code>tv_grupo</code> é slug (<code>recepcao-2</code>): selects mostram grupos em uso; legados com acento/espaço são migrados no boot.</li>
 <li>Numeração infinita <code>fim=0</code> circular (<code>_proxima_senha</code>).</li>
-<li>TV <code>tv_grupo</code> vazio=isolada <code>/tv/{id}</code>, preenchido=compartilhada <code>/tv?grupo=</code> agregada por <code>IN</code>.</li>
-<li>Bip+voz só no novo <code>id</code> (<code>estado["ultimo_id"]</code> + <code>speechSynthesis.cancel</code>).</li>
-<li>Mídia global (<code>tb_midia</code> ordem/ativo) — playlist ociosa 40s, pausada ao chamar.</li>
+<li>TV <code>tv_grupo</code> vazio=isolada <code>/tv/{id}</code>, preenchido=compartilhada <code>/tv?grupo=</code>, <code>?etapa=</code> replica só a sala (fila de voz independente por etapa).</li>
+<li>Voz em fila (<code>buscar_proxima_fala</code> + <code>tv_claim_fala</code>): anuncia o mais antigo não falado, um por vez, sem cortar; ordem por <code>voz_ordem</code> (<code>normalizar_voz_ordem</code>); repetição só com voz livre.</li>
+<li>Volume ambiente 40 com ducking à metade na chamada (<code>data-vol</code> <code>0.4</code> → <code>×0.5</code>).</li>
+<li>Mídia por fila (<code>fila_id</code>) + áudio global (NULL, todas as TVs via <code>midias_para_tv</code>); vídeo/foto global só na TV geral; <code>slot</code>/<code>Exibição</code> igual = juntos; fotos dividem o tempo real do áudio.</li>
+<li>Papel de fundo: só foto, uma por fila/global (<code>set_midia_fundo</code>); backdrop absoluto só na área de mídia, fora do loop.</li>
+<li>Arquivos sempre <code>datahora_nomeFila</code> — <code>renomear_arquivos_fila</code> reaplica ao renomear a fila.</li>
+<li>Uma lista de nomes por fila (<code>csv_para_tags</code> converte CSV); transferência só dentro da mesma TV; destino de <code>transferir_todos</code> deve estar sem lista.</li>
+<li>Manchester domina demografia e chegada; telas nunca exibem os termos — só cor de fundo.</li>
+<li>UX: <code>delay=1000</code> em todos os campos; cards recolhíveis; <strong>Editar</strong> carrega no <code>Cadastro de fila</code>; admin via hambúrguer (botão removido do painel); <code>endereco</code>/<code>descricao</code> ocultos na UI.</li>
 <li><code>/tv</code> pública — adicionar <code>ACL</code> se expor fora da rede.</li>
-<li><code>Geral</code> nunca excluível; <code>Excluir todas</code> preserva Geral com filtro por criador.</li>
-<li><code>tb_chamada.guiche</code> snapshot.</li>
+<li><code>tb_chamada.guiche</code> snapshot — não retroage.</li>
+<li><code>tb_tv_estado.fala_ate</code> usa relógio do servidor — múltiplas TVs sincronizam pelo banco.</li>
+<li><strong>Reparo sintático de <code>telas.py</code> (22/09/2026)</strong>: o arquivo chegou com corrupção sintática (placeholders <code>nicegui_</code>, <code>ui_.</code>, <code>arqui_.o</code>, <code>gui_.he</code>, <code>exclui_.</code>, <code>.class(</code>, <code>validar.acesso_modulo</code>) e nem importava — reparo sistemático validado contra o <code>bd_manipulador</code> (fonte de verdade), <code>COMPILE_OK</code> (<code>ast.parse</code>) + <code>IMPORT_OK</code>. Evidência do estado anterior preservada em <code>/tmp/telas_filas_pre_reparo.py</code> (fora do repo).</li>
+<li><strong>Volume com slider (22/09/2026)</strong>: botão speaker <code>filas-midia-som</code> alterna slider 0–100 sincronizado ao campo <code>Volume</code>; Salvar persiste (<code>atualizar_midia</code>); <code>with inp.slot:</code> corrigido para <code>with inp_slot:</code>.</li>
 </ul>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
 <table>
@@ -403,43 +500,323 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">Banco WAL <code>tb_fila</code> + <code>tb_fila_etapa</code> + <code>tb_chamada</code> + <code>tb_midia</code> + seed <code>Geral</code> + <code>Geral</code> 3 etapas</td>
-<td style="text-align: center;">Implementado (multi-filas)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>criar_fila</code> endereço/prefixo/inicio/fim/tv_grupo + <code>listar_filas_visiveis</code> isolamento + <code>atualizar/excluir</code> + <code>excluir_todas_filas</code></td>
+<td style="text-align: left;">Banco WAL 8 tabelas, sem seed, slug migrado + <code>voz_ordem</code> + <code>fundo</code> + volume 40</td>
 <td style="text-align: center;">Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>gerar_senha</code> + <code>_proxima_senha</code> infinito + <code>avancar_chamada</code> sequencial + <code>ultima_chamada_tv</code> grupo</td>
+<td style="text-align: left;"><code>criar_fila</code> sequência etapas + voz (inclui ordem) + textos + lista inicial + anexos stage + <code>atualizar/excluir</code> (rename reaplica padrão) + <code>excluir_todas</code></td>
 <td style="text-align: center;">Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">Painel <code>/filas</code> multi-filas + etapas + histórico isolado + <code>Excluir todas</code></td>
+<td style="text-align: left;"><code>gerar_senha</code> + <code>_proxima_senha</code> + <code>avancar</code> + <code>espera/proximo_da_etapa</code> + revezamento/Manchester + <code>csv_para_tags</code></td>
 <td style="text-align: center;">Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">TV <code>/tv</code> + <code>/tv/{id}</code> + <code>?grupo=</code> com ícone padrão intranet + 3s bip/voz só novo id + 40s mídia playlist + carrossel notícias filtrado</td>
-<td style="text-align: center;">Implementado (<code>mostrar_tv</code> 191-370, <code>main.py</code> 753-778)</td>
-</tr>
-<tr>
-<td style="text-align: left;">Admin <code>/admin/filas</code> 2 cards (Filas por local + Mídia TV global)</td>
-<td style="text-align: center;">Implementado (218 linhas, <code>queue</code> + <code>queue_music</code>)</td>
-</tr>
-<tr>
-<td style="text-align: left;">Mídia <code>/midia_filas</code> (<code>PASTA_MIDIA</code> <code>mod_filas/midia</code>, <code>/midia_filas/*</code>, upload sanitizado + uuid)</td>
+<td style="text-align: left;"><code>nomes.txt</code>/CSV tags + 1 lista/fila + transferência mesma TV + vincular nome/Manchester</td>
 <td style="text-align: center;">Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">LGPD + auditoria <code>tb_auditoria_filas</code></td>
+<td style="text-align: left;"><code>tb_fila_acesso</code> + busca gestão + botões Editar (no painel) / Acesso</td>
 <td style="text-align: center;">Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">Integração TV Agregador (censura filtrada)</td>
+<td style="text-align: left;">Painel <code>/filas</code> recolhível + <code>delay=1000</code> + blocos reutilizáveis + controle remoto TV (sem botão Administração)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">TV <code>/tv</code> + <code>/tv/{id}</code> + <code>?grupo=</code> + <code>?etapa=</code> + claim por etapa + ordem + ducking metade (40) + hora cheia/meia + notícias 200 + fundo</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Mídia por fila + ambiente global (<code>midias_para_tv</code>) + <code>mutagen</code> + <code>calcular_passo</code> + <code>datahora_nomeFila</code> sempre + <code>set_midia_fundo</code></td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Admin <code>/admin/filas</code> via hambúrguer (filas + voz/ordem/textos + nomes + mídia/fundo + controle + áudio global + backup)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">LGPD + auditoria <code>tb_auditoria_filas</code> (inclui <code>fundo_midia</code>)</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Testes <code>assets/test/test_seg_novos_modulos.py</code> seções D–D8</td>
+<td style="text-align: center;">Implementado</td>
+</tr>
+<tr>
+<td style="text-align: left;">Reparo sintático de <code>telas.py</code> + slider de volume <code>filas-midia-som</code> (22/09/2026)</td>
 <td style="text-align: center;">Implementado</td>
 </tr>
 </tbody>
 </table>
+<h2 id="correcao-25092026-dois-bugs-reais-de-consulta-na-lista-de-nomes">Correção 25/09/2026 — dois bugs reais de consulta na lista de nomes<a class="headerlink" href="#correcao-25092026-dois-bugs-reais-de-consulta-na-lista-de-nomes" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Duas queries de <code>mod_filas/bd_manipulador.py</code> estavam com a <strong>convenção de
+<code>usado</code></strong> e com a <strong>ordem de exibição</strong> trocadas. O efeito era silencioso e
+enganoso: o usuário via um número errado e uma lista na ordem inversa à da
+chamada. Commit <code>624c9d5</code>.</p>
+</blockquote>
+<h3 id="convencao-do-modulo-pendente-usado0">Convenção do módulo: <strong>pendente = <code>usado=0</code></strong><a class="headerlink" href="#convencao-do-modulo-pendente-usado0" title="Permanent link">&para;</a></h3>
+<p><code>tb_fila_nomes.usado</code> é o marcador de "este nome já foi chamado". Quem o muda é
+<code>gerar_senha</code> (e o caminho de emissão equivalente), que grava <strong><code>usado=1</code></strong> ao
+chamar o nome da lista (<code>bd_manipulador.py:972</code> e <code>:1196</code>). Logo:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Estado</th>
+<th style="text-align: center;">Valor</th>
+<th style="text-align: left;">Significado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Ainda na fila</td>
+<td style="text-align: center;"><strong><code>usado=0</code></strong></td>
+<td style="text-align: left;"><strong>pendente</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">Já chamado</td>
+<td style="text-align: center;"><code>usado=1</code></td>
+<td style="text-align: left;">já saiu da fila</td>
+</tr>
+</tbody>
+</table>
+<p>É a mesma convenção usada por <code>listar_nomes(somente_pendentes=True)</code>,
+<code>_escolher_proximo_nome</code> (revezamento/Manchester) e <code>transferir_nome</code> /
+<code>transferir_todos</code>.</p>
+<h3 id="bug-1-contar_nomes_pendentes-com-o-predicado-invertido">Bug 1 — <code>contar_nomes_pendentes()</code> com o predicado invertido<a class="headerlink" href="#bug-1-contar_nomes_pendentes-com-o-predicado-invertido" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">contar_nomes_pendentes</span><span class="p">(</span><span class="n">fila_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""EN: Counts names still waiting in the queue (not yet called).</span>
+
+<span class="sd">    PT-BR: Conta os nomes AINDA NA FILA (não chamados). `usado=0` é pendente —</span>
+<span class="sd">    `gerar_senha` marca `usado=1` ao chamar (linhas 972/1196). Antes contava</span>
+<span class="sd">    `usado=1` (os já chamados), mostrando número errado na tela da fila."""</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">get_connection</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1"># ANTES: ... AND usado=1   -&gt; contava os JÁ CHAMADOS</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT COUNT(*) FROM tb_fila_nomes WHERE fila_id=? AND usado=0"</span><span class="p">,</span> <span class="p">(</span><span class="n">fila_id</span><span class="p">,))</span>
+        <span class="k">return</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Antes</th>
+<th style="text-align: left;">Depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Predicado</td>
+<td style="text-align: left;"><code>usado=1</code> (<strong>invertido</strong>)</td>
+<td style="text-align: left;"><code>usado=0</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Significado</td>
+<td style="text-align: left;">contava os <strong>já chamados</strong></td>
+<td style="text-align: left;">conta os <strong>ainda na fila</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Efeito no usuário</strong> (<code>telas.py:1239-1243</code>): o rótulo</p>
+<div class="highlight"><pre><span></span><code>{n_pend} nome(s) na lista — o próximo chama em ordem
+</code></pre></div>
+<p>era preenchido com o número de quem <strong>já foi atendido</strong>, exatamente o inverso do
+que o texto promete. Num caso extremo (nenhum nome chamado ainda) o contador
+mostrava <strong>0</strong> com a lista cheia; com todos chamados, mostrava o total com a
+lista vazia. Como é só um rótulo (nada é <strong>escrito</strong> com esse valor), o bug era
+<strong>puramente informativo</strong> — nenhuma senha foi emitida com base nele.</p>
+<h3 id="bug-2-listar_nomes-invertendo-a-ordem-de-exibicao">Bug 2 — <code>listar_nomes()</code> invertendo a ordem de exibição<a class="headerlink" href="#bug-2-listar_nomes-invertendo-a-ordem-de-exibicao" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">listar_nomes</span><span class="p">(</span><span class="n">fila_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">somente_pendentes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""EN: Queue name list; `somente_pendentes` filters the not-yet-called.</span>
+
+<span class="sd">    PT-BR: Lista de nomes da fila; `somente_pendentes` filtra os ainda não</span>
+<span class="sd">    chamados. Ordena sempre por `ordem` CRESCENTE — é a ordem de fala exibida</span>
+<span class="sd">    ao usuário e a mesma que `proximo_da_etapa` respeita (antes vinha `DESC`,</span>
+<span class="sd">    invertendo a lista na tela)."""</span>
+    <span class="o">...</span>
+    <span class="k">if</span> <span class="n">somente_pendentes</span><span class="p">:</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT ... WHERE fila_id=? AND usado=0 ORDER BY ordem"</span><span class="p">,</span> <span class="p">(</span><span class="n">fila_id</span><span class="p">,))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT ... WHERE fila_id=? ORDER BY ordem"</span><span class="p">,</span> <span class="p">(</span><span class="n">fila_id</span><span class="p">,))</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Antes</th>
+<th style="text-align: left;">Depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Ordem</td>
+<td style="text-align: left;"><code>ORDER BY ordem DESC</code> (nos <strong>dois</strong> ramos)</td>
+<td style="text-align: left;"><code>ORDER BY ordem</code> (ASC, nos <strong>dois</strong> ramos)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Efeito</td>
+<td style="text-align: left;">Lista de pendentes exibida ao contrário</td>
+<td style="text-align: left;">Lista na ordem real de fala</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Por que ASC é a ordem certa</strong>: <code>ordem</code> é a posição de sequência atribuída na
+importação (CSV/<code>nomes.txt</code> com <code>#etapa</code>) e é a mesma coluna lida por
+<code>proximo_da_etapa</code> e por <code>_escolher_proximo_nome</code> para escolher quem é chamado
+a seguir. Com <code>DESC</code>, a tela mostrava "Maria, João, Ana" enquanto o sistema
+chamava "Ana, João, Maria" — o usuário lia a lista na ordem inversa à da fila.</p>
+<div class="admonition note">
+<p class="admonition-title">Consistência entre as duas funções</p>
+<p>As duas correções caminham juntas: <code>contar_nomes_pendentes</code> diz <strong>quantos</strong>
+faltam e <code>listar_nomes</code> diz <strong>em que ordem</strong> eles virão. Se uma delas voltar
+a usar a convenção errada, a informação da tela fica contraditória de novo.</p>
+</div>
+<h3 id="complemento-25092026-data-testid-no-botao-enviar-da-linha-de-etapa">Complemento 25/09/2026 — <code>data-testid</code> no botão "Enviar" da linha de etapa<a class="headerlink" href="#complemento-25092026-data-testid-no-botao-enviar-da-linha-de-etapa" title="Permanent link">&para;</a></h3>
+<p>O botão de transferência de um nome para outra fila da mesma TV
+(<code>telas.py:352</code>, em <code>bloco_nomes_fila</code>) era <strong>clicável sem <code>data-testid</code></strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ANTES</span>
+<span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"forward"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_env</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense flat color=primary"</span><span class="p">)</span> \
+    <span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Enviar este nome p/ fila de destino"</span><span class="p">)</span>
+<span class="c1"># DEPOIS</span>
+<span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"forward"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_env</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense flat color=primary"</span><span class="p">)</span> \
+    <span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Enviar este nome p/ fila de destino"</span><span class="p">)</span> \
+    <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s1">'data-testid=filas-etapa-enviar'</span><span class="p">)</span>
+</code></pre></div>
+<p>Sem <em>testid</em>, o Playwright em <strong>strict mode</strong> (<code>page.get_by_test_id(...)</code> com
+seletor ambíguo) não conseguia addressar o botão sem ambiguidade — o que
+derrubava a suíte E2E de Filas antes de exercitar o resto do fluxo. O <em>testid</em>
+passa a ser o <strong>canônico</strong> do fluxo de transferência por etapa.</p>
+<div class="admonition warning">
+<p class="admonition-title"><code>filas-midia-som</code>, não <code>filas-midia-mutar</code></p>
+<p>O canônico do botão de som/volume da mídia é <strong><code>filas-midia-som</code></strong> (o speaker
+que abre o slider 0–100), usado por 2 outras suítes. O <code>test_filas_testids.py</code>
+esperava <code>filas-midia-mutar</code> e foi corrigido em 25/09/2026 — usar sempre
+<code>filas-midia-som</code>.</p>
+</div>
+<h3 id="complemento-25092026-fid-fila_id-no-seletor-de-etapa-bug-nameerror">Complemento 25/09/2026 — <code>fid</code> × <code>fila_id</code> no seletor de etapa (bug <code>NameError</code>)<a class="headerlink" href="#complemento-25092026-fid-fila_id-no-seletor-de-etapa-bug-nameerror" title="Permanent link">&para;</a></h3>
+<p>O seletor de etapa da linha de nome — em <code>bloco_nomes_fila</code>, junto aos seletores de
+grupo e de cor — <strong>nunca listava as etapas</strong>. O <code>select</code> abria só com <code>["(geral)"]</code>,
+sem nenhum nome de etapa, e o botão "Salvar etapa" (<code>meeting_room</code>, <code>tooltip "Salvar
+etapa"</code>) não tinha o que gravar.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ANTES — `fid` não existe neste escopo (o parâmetro chama-se `fila_id`;</span>
+<span class="c1"># `nid` é o id do NOME, closure do `_trocar_m`/`_trocar_e` abaixo)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">_ets</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">filas</span><span class="o">.</span><span class="n">listar_etapas</span><span class="p">(</span><span class="n">fid</span><span class="p">)]</span>   <span class="c1"># NameError</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">_ets</span> <span class="o">=</span> <span class="p">[]</span>                                          <span class="c1"># silencioso</span>
+
+<span class="c1"># DEPOIS — `telas.py:334`</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># `fila_id` (não `fid`/`nid`): listar_etapas filtra por fila_id.</span>
+    <span class="n">_ets</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">filas</span><span class="o">.</span><span class="n">listar_etapas</span><span class="p">(</span><span class="n">fila_id</span><span class="p">)]</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">_ets</span> <span class="o">=</span> <span class="p">[]</span>
+</code></pre></div>
+<p>Por que ninguém percebeu: o <code>try/except Exception</code> local (que existe para a chamada
+realmente poder falhar) <strong>capturava o <code>NameError</code> e caía no <code>_ets = []</code></strong> — o mesmo
+caminho do "não tem etapa cadastrada". O sintoma era indistinguível de "a fila
+realmente não tem etapas", e o terminal ficava limpo. O nome certo (<code>fila_id</code>, o
+parâmetro da função) está ao lado do <code>except</code> que mascarava o erro: os dois
+<code>listar_*</code> vizinhos no mesmo bloco já usavam <code>fila_id</code> (<code>obter_fila(fila_id)</code>,
+<code>listar_nomes(fila_id)</code>, <code>listar_midias(fila_id=fila_id)</code>), só esta chamada ficou
+para trás.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Ponto</th>
+<th style="text-align: left;">Detalhe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Onde</td>
+<td style="text-align: left;"><code>mod_filas/telas.py:334</code>, dentro de <code>bloco_nomes_fila(fila_id, user_nome, recarregar)</code> (<code>telas.py:266</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Sintoma</td>
+<td style="text-align: left;"><code>ui.select(["(geral)"] + _ets, value=etapa_n if etapa_n in _ets else "(geral)")</code> só com <code>"(geral)"</code> — o <code>value</code> caía no fallback e um nome já com etapa aparecia como "(geral)"</td>
+</tr>
+<tr>
+<td style="text-align: left;">Correção</td>
+<td style="text-align: left;"><code>fid</code> → <code>fila_id</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Prevenção</td>
+<td style="text-align: left;"><code>pyflakes</code> como análise estática <strong>bloqueante</strong> — ver <a href="../convencoes_codigo/#analise-estatica-obrigatoria-pyflakes">Convenções — Análise estática obrigatória</a></td>
+</tr>
+</tbody>
+</table>
+<p>O <code>except Exception: _ets = []</code> foi <strong>mantido de propósito</strong>: ele agora cobre
+apenas a falha legítima de <code>listar_etapas</code> (fila removida entre a leitura e a
+renderização), que é o comportamento fail-soft correto.</p>
+<h3 id="complemento-o-modulo-em-numeros">Complemento — o módulo em números<a class="headerlink" href="#complemento-o-modulo-em-numeros" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Área</th>
+<th style="text-align: left;">Garantia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Multi-filas</strong></td>
+<td style="text-align: left;">Projeto nasce <strong>sem</strong> seed (<code>init_db</code> não cria fila alguma); isolamento por <code>criado_por</code> + liberação via <code>tb_fila_acesso</code>; <code>administrador_geral</code> vê todas. Numeração própria por fila (<code>prefixo</code> + <code>senha_inicio</code>→<code>senha_fim</code>, <code>fim=0</code> = infinito circular)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TV por etapa / grupo / isolada</strong></td>
+<td style="text-align: left;"><code>/tv/{id}</code> isolada, <code>/tv?grupo=&lt;slug&gt;</code> compartilhada, <code>?etapa=&lt;sala&gt;</code> réplica de uma única etapa. <code>tb_tv_estado</code> com chave <code>grupo:&lt;slug&gt;</code> / <code>fila:&lt;id&gt;</code> / <code>geral</code> <strong>+ <code>&lt;etapa&gt;</code></strong>, e <strong>fila de voz independente por etapa</strong> (<code>chave_tv_etapa</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Voz: ordem e ducking</strong></td>
+<td style="text-align: left;"><code>voz_ordem</code> (<code>fila,senha,nome,destino,guiche</code>) normalizada por <code>normalizar_voz_ordem</code>; anúncio serializado por <strong>claim</strong> (<code>tv_claim_fala</code> — compare-and-swap, um por vez, sem cortar); <strong>ducking à metade</strong> (2 s antes a música vai a <code>data-vol × 0.5</code>, bip 880 Hz 0,35 s, <code>speechSynthesis pt-BR 0.9</code>, restaura 2 s depois); hora cheia/meia só sem chamada há 60 s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Mídia com fundo</strong></td>
+<td style="text-align: left;"><code>tb_midia</code> por fila (<code>fila_id</code>) + global (<code>NULL</code>) + <code>fundo</code> (só <code>imagem</code>, <strong>uma</strong> por fila/global); fotos dividem o tempo real do áudio (<code>duracao_real</code> via <code>mutagen</code>, fallback WAV); backdrop absoluto (<code>opacity 0.22</code>, <code>z-index 0</code>) <strong>só na área de mídia</strong>, com o conteúdo em <code>z-index 1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Lista única</strong></td>
+<td style="text-align: left;"><strong>Uma</strong> <code>tb_fila_nomes</code> por fila; importação por <code>nomes.txt</code>/CSV com tags (<code>csv_para_tags</code>, <code>#gestante #vermelho #recepcao</code>); transferência só <strong>dentro da mesma TV</strong> e destino <strong>sem</strong> lista</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Papéis e isolamento por criador</strong></td>
+<td style="text-align: left;"><code>listar_filas_visiveis</code> = próprias + liberadas + legado sem dono (admin vê todas); <code>liberar_acesso</code> exige <strong>usuário cadastrado</strong> na Gestão de Usuários — agora consultado pela fachada <code>integracoes.obter_usuario_gestao()</code> (25/09/2026), sem import direto do módulo de gestão; dono não se auto-libera; <code>excluir_todas_filas</code> filtra por <code>criado_por</code> quando não-admin</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Censura</strong></td>
+<td style="text-align: left;">A TV recebe notícias já filtradas por <code>listar_para_tv</code> → <code>titulo_bloqueado</code> (chave central <code>conteudo_palavras_bloqueadas</code>); as telas mostram <strong>só a cor de fundo</strong> do Manchester, nunca o termo</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada">Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)<a class="headerlink" href="#pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Documentação da correção pendente. Nenhum <code>.py</code> alterado neste lote.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Arquivo:linha</th>
+<th style="text-align: left;">Correção proposta contida no módulo</th>
+<th style="text-align: left;">Risco regressão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">filas</td>
+<td style="text-align: left;">Sem <code>CrudBase</code>; <code>sqlite_master</code> em migração de <code>tb_midia</code></td>
+<td style="text-align: left;"><code>mod_filas/bd_manipulador.py:75</code> (<code>sqlite_master</code>) · sem <code>CrudBase</code> (verificado por busca)</td>
+<td style="text-align: left;">Migrar para <code>CrudBase</code>; <code>_tabela_existe()</code> interno; testar <code>/tv</code>, <code>/tv/{id}</code>, <code>/tv?grupo=</code> nos dois backends</td>
+<td style="text-align: left;">Médio (voz claim + ducking + <code>/midia_filas</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Detalhe consolidado em <a href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade</a>.</p>
               
             </div>
           </div><footer>

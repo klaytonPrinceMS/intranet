@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>requirements.py (dev-only) - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "requirements.py (dev-only)";
+        var mkdocs_page_input_path = "ferramentas/requirements_py.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">requirements.py (dev-only)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-para-que-serve">1. Para que serve</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-quando-usar">2. Quando usar</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-como-executar">3. Como executar</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#31-instalacao-completa-tudo">3.1 Instalação completa (tudo)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#32-so-playwright">3.2 Só Playwright</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#33-so-ferramentas-de-seguranca-devtools">3.3 Só ferramentas de segurança (DevTools)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#4-deteccao-de-so-windows-vs-linux">4. Detecção de SO (Windows vs Linux)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#41-no-windows">4.1 No Windows</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#42-no-linux">4.2 No Linux</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-estrutura-do-script">5. Estrutura do script</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#6-fluxo-de-execucao">6. Fluxo de execução</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#7-troubleshooting">7. Troubleshooting</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#8-regras-e-boas-praticas">8. Regras e boas práticas</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Ferramentas (dev)</li>
+      <li class="breadcrumb-item active">requirements.py (dev-only)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="requirementspy-instalacao-complementar-de-dependencias-dev-only">requirements.py — Instalação Complementar de Dependências (dev-only)<a class="headerlink" href="#requirementspy-instalacao-complementar-de-dependencias-dev-only" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>EN: Complementary dependency installer script not managed by <code>requirements.txt</code> — Playwright and security devtools. Dev/test-only; never used in production.
+PT-BR: Script de instalação complementar de dependências não gerenciadas pelo <code>requirements.txt</code> — Playwright e ferramentas de segurança de desenvolvimento. Apenas para modo de desenvolvimento/testes; nunca usado em produção.</p>
+<p><code>requirements.py</code> padroniza instalações extras que o <code>requirements.txt</code> não gerencia:
+- <strong>Playwright</strong> (com detecção de SO: Windows vs Linux) + Chromium
+- <strong>Ferramentas de DevOps/segurança</strong> (gitleaks, bandit, semgrep, pip-audit, safety, k6)</p>
+<p>Fonte das dependências de produção: <code>requirements.txt</code>. Fonte das dependências dev: <code>requirements-dev.txt</code> e <code>requirements.py</code>.</p>
+</blockquote>
+<h2 id="1-para-que-serve">1. Para que serve<a class="headerlink" href="#1-para-que-serve" title="Permanent link">&para;</a></h2>
+<p><code>requirements.py</code> é um <strong>script complementar de instalação</strong> que cobre dependências que o <code>requirements.txt</code> (produção) e o <code>requirements-dev.txt</code> (dev) não gerenciam automaticamente:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Dependência</th>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Finalidade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>playwright</code></td>
+<td style="text-align: left;"><code>--playwright</code></td>
+<td style="text-align: left;">Testes E2E headless (navegador automatizado)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>chromium</code></td>
+<td style="text-align: left;"><code>--playwright</code></td>
+<td style="text-align: left;">Browser alvo do Playwright</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bandit</code></td>
+<td style="text-align: left;"><code>--devtools</code></td>
+<td style="text-align: left;">SAST Python (análise estática de segurança)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>semgrep</code></td>
+<td style="text-align: left;"><code>--devtools</code></td>
+<td style="text-align: left;">SAST multi-regra</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pip-audit</code></td>
+<td style="text-align: left;"><code>--devtools</code></td>
+<td style="text-align: left;">Auditoria de CVEs em dependências</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>safety</code></td>
+<td style="text-align: left;"><code>--devtools</code></td>
+<td style="text-align: left;">Verificação de CVEs conhecidas</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gitleaks</code></td>
+<td style="text-align: left;"><code>--devtools</code></td>
+<td style="text-align: left;">Varredura de segredos no histórico git</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>k6</code></td>
+<td style="text-align: left;"><code>--devtools</code></td>
+<td style="text-align: left;">Teste de carga/performance</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Regra de ouro:</strong> <code>requirements.py</code> <strong>NUNCA</strong> entra em produção. É usado exclusivamente no ambiente de desenvolvimento e testes da equipe.</p>
+<h2 id="2-quando-usar">2. Quando usar<a class="headerlink" href="#2-quando-usar" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Cenário</th>
+<th style="text-align: left;">Comando</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Primeira instalação do ambiente dev</strong> (tudo)</td>
+<td style="text-align: left;"><code>.venv/bin/python requirements.py</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Só Playwright + Chromium</strong></td>
+<td style="text-align: left;"><code>.venv/bin/python requirements.py --playwright</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Só ferramentas de segurança</strong></td>
+<td style="text-align: left;"><code>.venv/bin/python requirements.py --devtools</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Diferença entre <code>requirements.txt</code> e <code>requirements.py</code>:</strong>
+- <code>requirements.txt</code> → dependências de <strong>produção</strong> (<code>pip install -r requirements.txt</code>). Usado pelo sistema em runtime. Inclui <code>nicegui</code>, <code>sqlalchemy</code>, <code>psycopg2-binary</code>, etc.
+- <code>requirements.py</code> → dependências de <strong>desenvolvimento/testes</strong>. Executado manualmente pela equipe. NUNCA usado em produção nem no deploy.</p>
+</blockquote>
+<h2 id="3-como-executar">3. Como executar<a class="headerlink" href="#3-como-executar" title="Permanent link">&para;</a></h2>
+<p>Pré-requisito: <code>.venv/</code> do projeto criado (ver <code>manual_de_uso_instalacao/index.md</code>).</p>
+<h3 id="31-instalacao-completa-tudo">3.1 Instalação completa (tudo)<a class="headerlink" href="#31-instalacao-completa-tudo" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>requirements.py
+</code></pre></div>
+<p>Executa <code>install_playwright()</code> + <code>install_devtools()</code> — instala Playwright, Chromium e todas as ferramentas de segurança.</p>
+<h3 id="32-so-playwright">3.2 Só Playwright<a class="headerlink" href="#32-so-playwright" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>requirements.py<span class="w"> </span>--playwright
+</code></pre></div>
+<p>Instala apenas <code>playwright</code> + navegador. Antes de baixar o Chromium (~150MB), verifica o <strong>Chrome do sistema</strong> com <code>channel="chrome"</code> — se funcionar, o download é dispensado (essencial em links lentos, onde o timeout de 30s do Playwright estoura). Útil quando o navegador precisa ser reinstalado ou atualizado. Flag <code>--force-chromium</code> força o download mesmo com Chrome OK.</p>
+<h3 id="33-so-ferramentas-de-seguranca-devtools">3.3 Só ferramentas de segurança (DevTools)<a class="headerlink" href="#33-so-ferramentas-de-seguranca-devtools" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>requirements.py<span class="w"> </span>--devtools
+</code></pre></div>
+<p>Instala via pip <code>bandit</code>, <code>semgrep</code>, <code>pip-audit</code> e <code>safety</code>, e via winget (Windows) os binários externos <code>gitleaks</code> e <code>k6</code> (não existem no PyPI — são binários Go). Útil para configurar o ambiente de QA/DevSecOps.</p>
+<h2 id="4-deteccao-de-so-windows-vs-linux">4. Detecção de SO (Windows vs Linux)<a class="headerlink" href="#4-deteccao-de-so-windows-vs-linux" title="Permanent link">&para;</a></h2>
+<p>O script detecta automaticamente o sistema operacional via <code>platform.system()</code> e adapta o comportamento:</p>
+<div class="highlight"><pre><span></span><code><span class="n">IS_WINDOWS</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"Windows"</span>
+<span class="n">IS_LINUX</span>   <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"Linux"</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Plataforma</th>
+<th style="text-align: left;">Playwright</th>
+<th style="text-align: left;">Chromium</th>
+<th style="text-align: left;">DevTools extras</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Windows</strong></td>
+<td style="text-align: left;"><code>playwright install chromium</code> (download automático)</td>
+<td style="text-align: left;">Download automático via Playwright</td>
+<td style="text-align: left;"><code>winget install gitleaks.Gitleaks</code> (fallback: <code>go install</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Linux</strong></td>
+<td style="text-align: left;">Dependências de sistema (<code>apt</code>) + <code>playwright install chromium</code></td>
+<td style="text-align: left;">Requer libs do sistema antes do download</td>
+<td style="text-align: left;">Instalação via pip apenas</td>
+</tr>
+</tbody>
+</table>
+<h3 id="41-no-windows">4.1 No Windows<a class="headerlink" href="#41-no-windows" title="Permanent link">&para;</a></h3>
+<ul>
+<li>O Playwright baixa o Chromium automaticamente.</li>
+<li>Se o download falhar (proxy/firewall), o script exibe o comando manual:
+  <div class="highlight"><pre><span></span><code>.venv/bin/playwright<span class="w"> </span>install<span class="w"> </span>chromium
+</code></pre></div></li>
+<li>O <code>gitleaks</code> é instalado via <code>winget</code> (fallback: <code>go install github.com/gitleaks/gitleaks@latest</code>).</li>
+</ul>
+<h3 id="42-no-linux">4.2 No Linux<a class="headerlink" href="#42-no-linux" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Dependências de sistema necessárias antes do Playwright:
+  <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>curl<span class="w"> </span>gnupg<span class="w"> </span>libnss3<span class="w"> </span>libatk1.0-0<span class="w"> </span>libatk-bridge2.0-0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>libcups2<span class="w"> </span>libdrm2<span class="w"> </span>libxkbcommon0<span class="w"> </span>libxcomposite1<span class="w"> </span>libxdamage1<span class="w"> </span>libxrandr2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>libgbm1<span class="w"> </span>libpango-1.0-0<span class="w"> </span>libcairo2<span class="w"> </span>libasound2<span class="w"> </span>libatspi2.0-0<span class="w"> </span>libxshmfence1
+</code></pre></div></li>
+<li>Após instalar as dependências, o script executa <code>playwright install chromium</code>.</li>
+<li>Se o download falhar, verificar proxy/firewall.</li>
+</ul>
+<h2 id="5-estrutura-do-script">5. Estrutura do script<a class="headerlink" href="#5-estrutura-do-script" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>requirements.py
+├── main()                     # Entrada: parseia --playwright / --devtools
+├── install_playwright()       # Playwright + Chromium (detecção de SO)
+├── install_devtools()         # Ferramentas de segurança (bandit, semgrep, ...)
+├── pip_install(packages, desc)  # Helper: instala pacotes via pip
+└── IS_WINDOWS / IS_LINUX      # Detecção de SO via platform.system()
+</code></pre></div>
+<h2 id="6-fluxo-de-execucao">6. Fluxo de execução<a class="headerlink" href="#6-fluxo-de-execucao" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>.venv/bin/python requirements.py [--playwright | --devtools]
+│
+├── Sem flags       → install_playwright() + install_devtools()
+├── --playwright    → install_playwright() apenas
+└── --devtools      → install_devtools() apenas
+</code></pre></div>
+<p>Cada função:
+1. Imprime cabeçalho identificando o bloco (PLAYWRIGHT / DEVTOOLS).
+2. Executa <code>pip_install()</code> com os pacotes necessários.
+3. No Windows: tenta <code>winget install gitleaks</code>.
+4. No Linux: exibe comandos <code>apt-get</code> e executa <code>playwright install chromium</code>.
+5. Em caso de falha no download do Chromium: avisa e exibe comando manual de retry.</p>
+<h2 id="7-troubleshooting">7. Troubleshooting<a class="headerlink" href="#7-troubleshooting" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Sintoma</th>
+<th style="text-align: left;">Causa provável</th>
+<th style="text-align: left;">Correção</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>playwright install chromium</code> falha</td>
+<td style="text-align: left;">Proxy/firewall bloqueando download</td>
+<td style="text-align: left;">Verificar proxy; executar manualmente quando a rede liberar</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gitleaks</code> não encontrado no Windows</td>
+<td style="text-align: left;"><code>winget</code> indisponível</td>
+<td style="text-align: left;">Usar <code>go install github.com/gitleaks/gitleaks@latest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Dependências de sistema faltando (Linux)</td>
+<td style="text-align: left;">libs do Playwright não instaladas</td>
+<td style="text-align: left;">Executar o <code>sudo apt-get install</code> listado na saída do script</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ModuleNotFoundError: No module named 'playwright'</code></td>
+<td style="text-align: left;">Playwright não instalado no <code>.venv</code></td>
+<td style="text-align: left;">Rodar <code>.venv/bin/python requirements.py --playwright</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Venv não encontrado</td>
+<td style="text-align: left;"><code>.venv/bin/python</code> não existe</td>
+<td style="text-align: left;">O script auto-detecta e usa <code>sys.executable</code> como fallback</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-regras-e-boas-praticas">8. Regras e boas práticas<a class="headerlink" href="#8-regras-e-boas-praticas" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>NUNCA</strong> adicione dependências do <code>requirements.py</code> ao <code>requirements.txt</code> — isso polui o ambiente de produção.</li>
+<li><strong>SEMPRE</strong> use <code>.venv/bin/python requirements.py</code> (nunca <code>python</code> cru).</li>
+<li><strong>NÃO</strong> execute <code>requirements.py</code> no servidor de produção — é script dev-only.</li>
+<li>Após instalar com <code>--playwright</code>, valide com:
+  <div class="highlight"><pre><span></span><code>.venv/bin/playwright<span class="w"> </span>--version
+</code></pre></div></li>
+<li>Após instalar com <code>--devtools</code>, valide com:
+  <div class="highlight"><pre><span></span><code>.venv/bin/bandit<span class="w"> </span>--version
+.venv/bin/semgrep<span class="w"> </span>--version
+</code></pre></div></li>
+</ul>
+<blockquote>
+<p>Veja também <a href="../../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>, <a href="../graphify/">Graphify (dev-only)</a> e <a href="../../manual_de_uso_instalacao/">Manual de Instalação</a>.</p>
+</blockquote>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../graphify/" class="btn btn-neutral float-left" title="Graphify (grafo, dev-only)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../testes_casos/" class="btn btn-neutral float-right" title="Casos">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../graphify/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../testes_casos/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

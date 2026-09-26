@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul class="current">
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">E2E com Playwright</a>
     <ul class="current">
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -277,6 +289,101 @@
  [pageerror] ReferenceError: x is not defined
  [requestfailed] https://cdn.exemplo.com/lib.js net::ERR_NAME_NOT_RESOLVED
 </code></pre></div>
+<h2 id="suite-python-de-qa-assetstestpw_py-26092026">Suíte Python de QA (<code>assets/test/pw_*.py</code>) — 26/09/2026<a class="headerlink" href="#suite-python-de-qa-assetstestpw_py-26092026" title="Permanent link">&para;</a></h2>
+<p>Além dos specs Node, há 8 arquivos <code>pw_*.py</code> (pytest-playwright) que cobrem
+<code>data-testid</code> por módulo. Esta seção registra uma correção de <strong>processo</strong>,
+porque o sintoma era invisível.</p>
+<h3 id="o-problema-uma-suite-verde-que-nao-testava-nada">O problema: uma suíte verde que não testava nada<a class="headerlink" href="#o-problema-uma-suite-verde-que-nao-testava-nada" title="Permanent link">&para;</a></h3>
+<p>Os seeds <code>qamaster</code>/<code>qacomum</code> nascem com <code>forcar_troca=1</code>. No 1º login, um
+diálogo de troca obrigatória bloqueia a tela, e os testes faziam
+<code>pytest.skip</code> nesse caso. Na prática, <strong>a suíte rodava majoritariamente
+pulada e ninguém via</strong> — inclusive casos de "falso verde", em que <code>return</code>
+silencioso depois do <code>skip</code> deixava o teste passar sem asserir nada.</p>
+<p>Pior: <code>pw_cobertura_extra_qa.py</code> fazia <code>assert total &gt;= 0</code>, que é <strong>sempre
+verdadeiro</strong>. Asseverar que uma contagem é ≥ 0 não verifica nada. As duas falhas
+se alimentavam: a asserção vazia impedia que o <code>skip</code> escondesse os testids
+obsoletos, e o <code>skip</code> impedia que a asserção vazia enganasse alguém.</p>
+<h3 id="o-que-mudou">O que mudou<a class="headerlink" href="#o-que-mudou" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">item</th>
+<th style="text-align: left;">antes</th>
+<th style="text-align: left;">depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">troca de senha</td>
+<td style="text-align: left;"><code>pytest.skip</code></td>
+<td style="text-align: left;">o teste <strong>conclui</strong> a troca, com a mesma senha de origem</td>
+</tr>
+<tr>
+<td style="text-align: left;">contagem de testid</td>
+<td style="text-align: left;"><code>assert total &gt;= 0</code> (sempre verdade)</td>
+<td style="text-align: left;"><code>assert total &gt;= 1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">rota do teste</td>
+<td style="text-align: left;">mapa fixo por prefixo</td>
+<td style="text-align: left;">resolvida <strong>lendo o código-fonte</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>zerar_forcar_troca</code></td>
+<td style="text-align: left;"><code>sqlite3</code> cru no arquivo <code>db_mod_intranet.db</code></td>
+<td style="text-align: left;"><code>autenticacao.marcar_trocar_senha()</code> (funciona em SQLite <strong>e</strong> Postgres)</td>
+</tr>
+</tbody>
+</table>
+<p>O login e a troca ficaram em um módulo só, <code>assets/test/qa_login_helper.py</code>,
+porque estavam duplicados em 8 arquivos — e a duplicata era o que mantinha a
+divergência (um arquivo punha, outro pulava).</p>
+<p>Dois detalhes que custaram tempo e valem registro:</p>
+<ul>
+<li><strong>A rota tem de ser resolvida por ARQUIVO, não por prefixo.</strong> <code>agregador-busca</code>
+  (público) e <code>agregador-termo</code> (admin) compartilham prefixo, e o card do blog
+  é usado pelas duas telas. <code>_rota_para_testid</code> agora procura
+  <code>data-testid=&lt;id&gt;</code> nos <code>mod_*/**/*.py</code> e mapeia o arquivo encontrado para a
+  rota — não apodrece quando um elemento muda de tela.</li>
+<li><strong><code>_fazer_login_com_troca</code> não pode recarregar a página.</strong> A primeira versão
+  fazia <code>page.goto('/login')</code> dentro do helper, o que destruía o próprio
+  diálogo que o <code>fazer_login</code> acabara de abrir. A troca ficou separada em
+  <code>concluir_troca(page, senha_atual, senha_nova)</code>, que não navega.</li>
+</ul>
+<h3 id="resultado">Resultado<a class="headerlink" href="#resultado" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">arquivo</th>
+<th style="text-align: left;">antes</th>
+<th style="text-align: left;">depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>pw_cobertura_extra_qa.py</code></td>
+<td style="text-align: left;">24 falhas (escondidas)</td>
+<td style="text-align: left;"><strong>81 passaram</strong>, 4 pulados com motivo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pw_intranet_login_dashboard.py</code></td>
+<td style="text-align: left;">1 falha / 7 pulados</td>
+<td style="text-align: left;"><strong>8 passaram</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pw_usuarios_lista.py</code> + <code>pw_empenhos_navegacao.py</code></td>
+<td style="text-align: left;">5 falhas</td>
+<td style="text-align: left;"><strong>13 passaram</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Os 4 pulados restantes são botões <strong>por linha</strong> (aba "Fila Renomeação" sem
+item) e a confirmação destrutiva do diálogo de exclusão em lote — cada um com
+o motivo registrado na própria constante <code>PRECISA_DE_ITEM</code>.</p>
+<p>Correção de comportamento que a suíte revelou (não era bug do teste): o campo de
+busca do Empenhos é <code>empenhos-navegar-pesquisa</code>, não <code>empenhos-busca</code>; e a tela de
+usuários mostra o <strong>nome de exibição</strong> do usuário, não o login. Os dois testes
+afirmavam o contrário e nunca tinham rodado.</p>
 <h2 id="pre-requisitos">Pré-requisitos<a class="headerlink" href="#pre-requisitos" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Node.js + npm</strong> (para o Playwright em JS).</li>
@@ -350,7 +457,7 @@ package-lock.json
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../testes_relatorios/seguranca_2026-09-06/" class="btn btn-neutral float-left" title="Relatório de Segurança (06/09/2026)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../testes_relatorios/qa_execucao_2026-09-25/" class="btn btn-neutral float-left" title="Relatório de QA de Execução (25/09/2026)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../analise_mod_intranet/" class="btn btn-neutral float-right" title="Intranet (núcleo)">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -374,7 +481,7 @@ package-lock.json
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../testes_relatorios/seguranca_2026-09-06/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../testes_relatorios/qa_execucao_2026-09-25/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../analise_mod_intranet/" style="color: #fcfcfc">Next &raquo;</a></span>

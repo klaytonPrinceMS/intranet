@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Arquitetura de Software (DAS) - INTRANET Modular — Documentação Técnica</title>
+    <title>Índice - INTRANET Modular — Documentação Técnica</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Arquitetura de Software (DAS)";
+        var mkdocs_page_name = "\u00cdndice";
         var mkdocs_page_input_path = "arquitetura_de_software_das/index.md";
         var mkdocs_page_url = null;
       </script>
@@ -72,11 +72,14 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">Arquitetura de Software (DAS)</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Índice</a>
     <ul class="current">
     </ul>
-                </li>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -101,9 +104,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -218,7 +230,8 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Arquitetura de Software (DAS)</li>
+          <li class="breadcrumb-item">Arquitetura de Software (DAS)</li>
+      <li class="breadcrumb-item active">Índice</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -229,12 +242,12 @@
               
                 <h1 id="software-architecture-intranet-modular">Software Architecture — Intranet Modular<a class="headerlink" href="#software-architecture-intranet-modular" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Technical architecture: single entry point, modular package layout, per-module WAL databases, the centralized audit model and the background schedulers.</p>
+<p>Technical architecture: single entry point, modular package layout, per-module WAL databases, the centralized audit model, the background schedulers and the integration facade that stitches the modules together.</p>
 </blockquote>
 <hr />
 <h1 id="arquitetura-de-software-das-intranet-modular">Arquitetura de Software (DAS) — Intranet Modular<a class="headerlink" href="#arquitetura-de-software-das-intranet-modular" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Arquitetura técnica: entry point único, layout de pacotes modulares, bancos WAL por módulo, modelo de auditoria centralizada e agendadores em segundo plano.</p>
+<p>Arquitetura técnica: entry point único, layout de pacotes modulares, bancos WAL por módulo, modelo de auditoria centralizada, agendadores em segundo plano e a fachada de integração que costura os módulos.</p>
 </blockquote>
 <h2 id="entry-point">Entry point<a class="headerlink" href="#entry-point" title="Permanent link">&para;</a></h2>
 <ul>
@@ -247,8 +260,9 @@
 <ul>
 <li><strong>Central</strong> <code>db_mod_intranet.db</code>: <code>tb_config</code> (incl. <code>conteudo_palavras_bloqueadas</code> censura central <code>mod_intranet/censura.py</code>), <code>tb_sessoes</code>, <code>tb_modulos</code> (seed <code>MODULOS_SISTEMA</code> com <strong>9 de negócio + núcleo = 10</strong> — 6 históricos + <code>tecnico</code> + <code>filas</code> multi-filas 09/2026 + <code>lista_telefonica</code> 19/09/2026 + <code>agregador_noticias</code> 19/09/2026; 11 módulos no <code>MODULOS_BD</code>).</li>
 <li><strong>Auditoria</strong> <code>db_mod_auditoria.db</code>: <code>tb_auditoria_&lt;modulo&gt;</code> (uma tabela por módulo produtor, inclui <code>tecnico</code>/<code>filas</code>/<code>lista_telefonica</code>/<code>agregador_noticias</code> + <code>censura</code> <code>palavras_bloqueadas</code> em <code>audit_log</code>) + <code>tb_auditoria_meta</code> (criada via <code>mod_auditoria/bd_manipulador.py</code>).</li>
-<li>Cada módulo tem seu <code>.db</code> na raiz em modo <strong>WAL</strong> (<code>*.db-wal</code>, <code>*.db-shm</code>) — <strong>novos</strong> <code>db_mod_tecnico.db</code> (<code>tb_backup</code>/<code>tb_backup_arquivo</code> + pastas <code>software/</code>+<code>backup/YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation), <code>db_mod_filas.db</code> <strong>multi-filas</strong> (<code>tb_fila</code> com <code>endereco/prefixo/inicio→fim</code> <code>fim=0</code> infinito + <code>criado_por</code> + <code>tv_grupo</code>, <code>tb_fila_etapa</code>, <code>tb_chamada</code> com <code>paciente_nome/etapa_nome</code>, <code>tb_midia</code> global, <code>PASTA_MIDIA</code> <code>mod_filas/midia</code> → <code>/midia_filas/*</code>, rotas <code>/tv</code> + <code>/tv/{id}</code> + <code>/tv?grupo=</code>) e <code>db_mod_lista_telefonica.db</code> (<code>tb_unidade</code> <code>secretaria|setor|subsetor</code> + <code>tb_contato</code> alfabético + <code>ORGANOGRAMA_BASE</code> 12 secretarias, <code>tel:</code> no celular) e <code>db_mod_agregador_noticias.db</code> (<code>tb_noticia</code> com censura <code>titulo_bloqueado</code>/<code>limpar_censuradas</code> + <code>listar_para_tv</code> filtra <code>LIMIT*3</code>). Backend duplo SQLite/PostgreSQL via <code>mod_intranet/banco_conexao.conexao(chave)</code> (um <code>DATABASE db_mod_&lt;chave&gt;</code> por módulo no Postgres, espelhando o arquivo SQLite). <strong>Censura central</strong> (<code>mod_intranet/censura.py</code>, <code>conteudo_palavras_bloqueadas</code>) compartilhada Blog↔Agregador (filtrada na TV).</li>
+<li>Cada módulo tem seu <code>.db</code> na raiz em modo <strong>WAL</strong> (<code>*.db-wal</code>, <code>*.db-shm</code>) — <strong>novos</strong> <code>db_mod_tecnico.db</code> (<code>tb_backup</code>/<code>tb_backup_arquivo</code> + pastas <code>software/</code>+<code>backup/YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation), <code>db_mod_filas.db</code> <strong>multi-filas sem seed</strong> (<code>tb_fila</code> com <code>prefixo/inicio→fim</code> <code>fim=0</code> infinito + <code>criado_por</code> + <code>tv_grupo</code> slug + <code>voz_ordem</code> via <code>normalizar_voz_ordem</code> + textos, <code>tb_fila_etapa</code>, <code>tb_chamada</code> com <code>paciente_nome/etapa_nome</code> + <code>prioridade/manchester</code>, <code>tb_fila_nomes</code> lista única via <code>csv_para_tags</code>, <code>tb_midia</code> por fila + global + <code>fundo</code> volume 40, <code>tb_tv_estado</code> claim, <code>tb_fila_acesso</code>, <code>PASTA_MIDIA</code> <code>mod_filas/midia</code> → <code>/midia_filas/*</code> <code>datahora_nomeFila</code> sempre via <code>renomear_arquivos_fila</code>, rotas <code>/tv</code> + <code>/tv/{id}</code> + <code>/tv?grupo=</code> + <code>?etapa=</code>, voz claim na ordem + ducking metade, notícias até 200) e <code>db_mod_lista_telefonica.db</code> (<code>tb_unidade</code> <code>secretaria|setor|subsetor</code> + <code>tb_contato</code> alfabético + <code>ORGANOGRAMA_BASE</code> 12 secretarias, <code>tel:</code> no celular) e <code>db_mod_agregador_noticias.db</code> (<code>tb_noticia</code> com censura <code>titulo_bloqueado</code>/<code>limpar_censuradas</code> + <code>listar_para_tv</code> filtra <code>LIMIT*3</code>). Backend duplo SQLite/PostgreSQL via <code>mod_intranet/banco_conexao.conexao(chave)</code> (um <code>DATABASE db_mod_&lt;chave&gt;</code> por módulo no Postgres, espelhando o arquivo SQLite). <strong>Censura central</strong> (<code>mod_intranet/censura.py</code>, <code>conteudo_palavras_bloqueadas</code>) compartilhada Blog↔Agregador (filtrada na TV).</li>
 <li><strong>Não cross-query</strong>: consultar via o <code>bd_manipulador</code> do próprio módulo (via <code>banco_conexao.conexao(chave)</code>, nunca <code>sqlite3.connect</code> cru em banco alheio); isolamento "um banco por módulo" válido nos dois backends.</li>
+<li><strong>Fachada de integração</strong> (<code>mod_intranet/integracoes.py</code>, 25/09/2026): quando um módulo de negócio precisa de dado de <strong>outro</strong> módulo, ele chama a <strong>API pública do núcleo</strong> em vez de importar o vizinho — <strong>o módulo de negócio fala com o núcleo, e o núcleo possui o acoplamento</strong>. 7 funções fail-soft com imports <strong>lazy</strong> (dentro das funções, para não fechar ciclo top-level), precedência do <code>censura.py</code>. Fechou as 5 arestas de negócio→negócio que <code>assets/test/check_integridade.py</code> acusava (<strong>5 falhas/17 → 13/13</strong>). Detalhes, tabela de consumidores e checklist para adicionar função: <a href="fachada_integracoes/">Fachada de Integração</a>.</li>
 <li>Auditoria LGPD via <code>audit_log</code> → banco exclusivo <code>db_mod_auditoria.db</code> (tabela por módulo) para toda escrita; operações de PDF e backup registram hash SHA-256 (<code>hash_arquivo</code>).</li>
 </ul>
 <h2 id="agendadores-apscheduler">Agendadores (APScheduler)<a class="headerlink" href="#agendadores-apscheduler" title="Permanent link">&para;</a></h2>
@@ -272,7 +286,7 @@
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../2_levantamento_requisitos/" class="btn btn-neutral float-left" title="Levantamento de Requisitos"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../guia_API/" class="btn btn-neutral float-right" title="Guia de API">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="fachada_integracoes/" class="btn btn-neutral float-right" title="Fachada de Integração (mod_intranet/integracoes.py)">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -298,7 +312,7 @@
       <span><a href="../2_levantamento_requisitos/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../guia_API/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="fachada_integracoes/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

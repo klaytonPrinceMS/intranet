@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -235,7 +247,7 @@
 <hr />
 <h1 id="solicitacao-de-impressao-mod_solicita_impressao_1">Solicitação de Impressão — <code>mod_solicita_impressao</code><a class="headerlink" href="#solicitacao-de-impressao-mod_solicita_impressao_1" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo de solicitação de impressão: rota <code>/solicita-impressao</code> (chave <code>solicita_impressao</code>) · banco próprio <code>db_mod_solicita_impressao.db</code> · envio de PDF, contagem de páginas, cotas mensais hierárquicas (1000/200 via <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code>), impressão dual, auditoria central.</p>
+<p>Módulo de solicitação de impressão: rota <code>/solicita-impressao</code> (chave <code>solicita_impressao</code>) · banco próprio <code>db_mod_solicita_impressao.db</code> · envio de PDF, contagem de páginas, cotas mensais hierárquicas (1000 secretaria / 200 setor, via organograma <strong>compartilhado</strong> obtido pela fachada <code>mod_intranet.integracoes.obter_organograma_base()</code>), impressão dual com marca d'água, auditoria central.</p>
 <p><strong>Versionamento</strong>: <code>versao_modulo:solicita_impressao = 1.0.260913</code> (seed em <code>bd_conexao.init_db()</code> — chave <code>tb_config</code> central, formato <code>1.0.AAMMDD</code>, exibida no rodapé em <code>/solicita-impressao</code> junto à versão global). Duplicada também em <code>tb_configuracoes_modulo</code> (<code>versao_modulo</code>) do banco do módulo. Atualizar a cada alteração do módulo.</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
@@ -273,10 +285,10 @@ com outros módulos).</p>
   <strong>grupo_id</strong> (agrupamento "1 pedido por envio"; criado via ALTER idempotente +
   backfill <code>grupo_id = id</code> para registros sem grupo + índice <code>idx_sol_grupo</code> —
   <code>bd_manipulador.py:278-287</code>).</li>
-<li><strong><code>tb_secretarias</code></strong>: id, nome, sigla, cota_paginas_mensal (<strong>1000 padrão via <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code></strong>), limite_pedidos_abertos (20 padrão), ativo.</li>
-<li><strong><code>tb_setores</code></strong>: id, nome, secretaria_id FK, cota_paginas_mensal (<strong>200 padrão via <code>ORGANOGRAMA_BASE</code> — subsetores achatados como setores</strong>), limite_pedidos_abertos (10 padrão), ativo.</li>
+<li><strong><code>tb_secretarias</code></strong>: id, nome, sigla, cota_paginas_mensal (<strong>1000 padrão</strong>, derivado do organograma compartilhado via <code>mod_intranet.integracoes.obter_organograma_base()</code> — ver "Isolamento modular"), limite_pedidos_abertos (20 padrão), ativo.</li>
+<li><strong><code>tb_setores</code></strong>: id, nome, secretaria_id FK, cota_paginas_mensal (<strong>200 padrão</strong> — subsetores achatados como setores), limite_pedidos_abertos (10 padrão), ativo.</li>
 <li><strong><code>tb_responsaveis_autorizacao</code></strong>: id, user_nome, secretaria_id FK, setor_id FK (opcional), ativo.</li>
-<li><strong><code>tb_cotas_impressao</code></strong>: id, secretaria_id, setor_id (NULL=secretaria), cota_paginas,
+<li><strong><code>tb_cotas_impressao</code></strong>: id, secretaria_id, setor_id (<code>0</code> sentinela para "sem setor" — SQLite trata NULL como distinto em UNIQUE, sem FK em <code>setor_id</code> por isso), cota_paginas,
   mes_referencia (YYYY-MM, único por vínculo), ativo.</li>
 <li><strong><code>tb_consumo_cota</code></strong>: id, secretaria_id, setor_id, mes_referencia, paginas_usadas, atualizado_em.</li>
 <li><strong><code>tb_configuracoes_modulo</code></strong>: chave/valor (pasta, max MB, <strong>alertas da nova solicitação</strong>,
@@ -294,7 +306,9 @@ com outros módulos).</p>
 <p>Exemplos: 10 pág × 3 cóp × A4 frente = 30; A4 frente/verso = 60; A3 frente = 60; A3 frente/verso = 120.</p>
 <h2 id="cotas-mensal-hierarquicas">Cotas (mensal, hierárquicas)<a class="headerlink" href="#cotas-mensal-hierarquicas" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Cada <strong>secretaria</strong> tem cota máxima mensal (total do mês) — <strong>1000 cópias padrão do <code>ORGANOGRAMA_BASE</code> do <code>mod_lista_telefonica</code></strong> (semeada no <code>init_db</code> + migração <code>UPDATE</code> para bancos existentes — <code>bd_manipulador.py:382-463</code>).</li>
+<li>Cada <strong>secretaria</strong> tem cota máxima mensal (total do mês) — <strong>1000 cópias padrão</strong>, derivadas
+  do <strong>organograma compartilhado</strong> obtido por <code>mod_intranet.integracoes.obter_organograma_base()</code>
+  (semeado no <code>init_db</code>; <strong>nunca</strong> sobrescrito por <code>UPDATE</code> depois de existir — <code>bd_manipulador.py:401-518</code>).</li>
 <li>Cada <strong>setor</strong> pode ter cota própria (<strong>200 cópias padrão</strong> — subsetores achatados como setores); se não tiver, usa o <strong>pool da secretaria</strong>.</li>
 <li>Ao <strong>exceder</strong>: o envio é <strong>permitido</strong>, porém a solicitação fica marcada como
   <code>excedente_cota</code> e a critério do autorizador/admin imprimir ou não.</li>
@@ -389,7 +403,12 @@ por coluna. Desde a reformulação de 07/09, a contagem de <strong>pedidos</stro
   <code>bd_manipulador.py:1923</code>) com Autorizar / Recusar (motivo obrigatório) — ações em <strong>todo o grupo</strong>.</li>
 <li><strong>Administração</strong> (admin do módulo): tabela mestra + sub-abas Secretarias, Setores,
   Responsáveis, Cotas, Relatórios, Configurações. Ações: Imprimir (seletor de impressora), Baixar (sempre),
-  Recuar (cancelar), Autorizar, Recusar.</li>
+  Recuar (cancelar), Autorizar, Recusar. Painel standalone em <code>telas_administracao.py::mostrar_administracao</code>
+  (rota <code>/admin/solicita_impressao</code>); <code>_admin_solicitacoes</code> delega para <code>telas.py</code> (pedidos agrupados por
+  secretaria→setor); <code>_admin_relatorio</code> gera cobrança/repasse por período (prazos fixos + calendário).</li>
+<li><strong>Legado</strong>: <code>bd_criador.py</code> é MORTO (tabela <code>tb_solicitacoes_impressao_legacy</code> no banco central) — fonte de verdade é <code>bd_manipulador.init_db()</code> em <code>db_mod_solicita_impressao.db</code>.</li>
+<li><strong>Upload assíncrono anti-disconnect</strong>: <code>_tela_nova.ao_upload</code> é <code>async</code> (<code>on_multi_upload</code>, <code>await f.read()</code> por PDF, máx. 10 por envio via <code>MAX_ARQ</code>); contagem regressiva de expiração via <code>ui.timer(1.0, tick)</code>.</li>
+<li><strong>QA</strong>: <code>data-testid</code> estáveis — <code>solicita-enviar</code> (envio), <code>solicita-busca</code> (Minhas Solicitações), <code>solicita-admin-salvar</code> (Configurações).</li>
 <li><strong>Administração → Secretarias / Setores</strong>: campo <strong>"Limite pedidos abertos (0=ilimitado)"</strong>
   no criar/editar e exibição do limite na listagem (<code>telas_administracao.py:100,150,190,245</code>).</li>
 <li><strong>Administração → Solicitações</strong> (<code>_admin_solicitacoes</code>, <code>telas.py:700</code>; <code>telas_administracao.py:77</code>
@@ -470,13 +489,293 @@ páginas — gerada por <code>gerar_nome_arquivo</code> (<code>bd_manipulador.py
   (<code>autorizar_grupo</code>, <code>recusar_grupo</code>, <code>imprimir_grupo</code>, <code>recuar_grupo</code>, <code>cancelar_grupo</code>) são
   auditadas por <code>grupo_id</code>.</li>
 </ul>
+<h2 id="isolamento-modular-organograma-pela-fachada-do-nucleo-25092026-commit-624c9d5">Isolamento modular — organograma pela fachada do núcleo (25/09/2026, commit <code>624c9d5</code>)<a class="headerlink" href="#isolamento-modular-organograma-pela-fachada-do-nucleo-25092026-commit-624c9d5" title="Permanent link">&para;</a></h2>
+<h3 id="a-violacao">A violação<a class="headerlink" href="#a-violacao" title="Permanent link">&para;</a></h3>
+<p><code>bd_manipulador.init_db()</code> semeava as cotas a partir do organograma <strong>importando o outro módulo
+diretamente</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mod_lista_telefonica.bd_manipulador</span><span class="w"> </span><span class="kn">import</span> <span class="n">ORGANOGRAMA_BASE</span> <span class="k">as</span> <span class="n">_ORG_BASE</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="o">...</span>
+</code></pre></div>
+<p>Isso quebrava o AGENTS.md §2 ("<strong>Isolamento total</strong> … nunca faça cross-query entre bancos") de três
+maneiras, e todas são estruturais, não cosméticas:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Dimensão</th>
+<th style="text-align: left;">Por que o import direto é errado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Dependência</strong></td>
+<td style="text-align: left;"><code>mod_solicita_impressao</code> passa a <strong>não iniciar</strong> (ou a iniciar com organograma vazio) se o <code>mod_lista_telefonica</code> falhar no import, sumir do disco ou for desativado. O módulo de impressão não deveria depender de lista telefônica para semear cota.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Ciclo de importação</strong></td>
+<td style="text-align: left;"><code>main.py</code> carrega os módulos; um import de topo entre módulos fecha ciclo de import (<code>A → B → A</code>) e o sintoma é <code>ImportError</code> intermitente <strong>dependente da ordem de carga</strong> — a classe de bug mais difícil de diagnosticar.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Coerência de dados</strong></td>
+<td style="text-align: left;">O organograma é <strong>seed de um módulo, consumido por outro</strong>: quem altera a estrutura do organograma (departamento novo) tem de lembrar de semear em dois lugares, e o <code>mod_lista_telefonica</code> não tem nenhuma visibilidade de quem consome — acoplamento invisível.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Portabilidade (PyInstaller)</strong></td>
+<td style="text-align: left;">Na conversão <code>main.py → executável</code>, um import entre módulos passa a ser dependência de <em>hidden import</em> — falha só em produção.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="a-correcao-a-fachada-mod_intranetintegracoes">A correção — a fachada <code>mod_intranet.integracoes</code><a class="headerlink" href="#a-correcao-a-fachada-mod_intranetintegracoes" title="Permanent link">&para;</a></h3>
+<p>A costura passou para o <strong>núcleo</strong>, que é quem pode conhecer todos os módulos:</p>
+<div class="highlight"><pre><span></span><code><span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Organograma via API pública do núcleo (AGENTS.md §2: Solicitação</span>
+    <span class="c1"># não importa a Lista Telefônica — quem costura é o mod_intranet).</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mod_intranet</span><span class="w"> </span><span class="kn">import</span> <span class="n">integracoes</span>
+    <span class="n">_ORG_BASE</span> <span class="o">=</span> <span class="n">integracoes</span><span class="o">.</span><span class="n">obter_organograma_base</span><span class="p">()</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">_ORG_BASE</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">_ORG_BASE</span><span class="p">:</span>
+    <span class="c1"># Fallback local: módulo ausente ou organograma vazio — a semeadura</span>
+    <span class="c1"># das cotas continua funcionando com o mínimo de secretarias.</span>
+    <span class="n">_ORG_BASE</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">"Gabinete"</span><span class="p">,</span> <span class="p">[]),</span> <span class="p">(</span><span class="s2">"Administração"</span><span class="p">,</span> <span class="p">[]),</span> <span class="p">(</span><span class="s2">"Finanças"</span><span class="p">,</span> <span class="p">[]),</span>
+        <span class="p">(</span><span class="s2">"Saúde"</span><span class="p">,</span> <span class="p">[]),</span> <span class="p">(</span><span class="s2">"Educação"</span><span class="p">,</span> <span class="p">[]),</span> <span class="p">(</span><span class="s2">"Obras e Infraestrutura"</span><span class="p">,</span> <span class="p">[]),</span>
+    <span class="p">]</span>
+</code></pre></div>
+<p>Três propriedades deliberadas:</p>
+<ol>
+<li><strong>Fachada, não reexport</strong> — <code>mod_intranet/integracoes.py</code> é a <strong>costura pública única</strong>
+   (<code>obter_usuario_gestao</code>, <code>listar_usuarios_gestao</code>, <code>agregador_habilitado</code>,
+   <code>listar_noticias_para_tv</code>, <code>limpar_noticias_censuradas</code>, <code>obter_organograma_base</code>,
+   <code>modulo_habilitado</code>). O módulo de negócio <strong>fala com o núcleo</strong>; o núcleo possui o
+   acoplamento. Isso mantém a direção da dependência sempre apontando para <code>mod_intranet</code>.</li>
+<li><strong>Import lazy dentro da função</strong> — proposital: um import de topo de módulo de negócio dentro
+   de <code>integracoes.py</code> fecharia ciclo com <code>main.py</code> (documentado na própria docstring do arquivo).</li>
+<li><strong>Fail-soft por construção</strong> — <code>obter_organograma_base()</code> faz o import interno dentro de
+   <code>try/except</code>, e devolve <code>None</code> com <code>logger.warning</code> se o módulo de destino falhar. O chamador
+   <strong>nunca</strong> propaga exceção de terceiro.</li>
+</ol>
+<h3 id="o-fallback-local-de-6-secretarias-e-por-que-ele-e-necessario">O fallback local de 6 secretarias — e por que ele é necessário<a class="headerlink" href="#o-fallback-local-de-6-secretarias-e-por-que-ele-e-necessario" title="Permanent link">&para;</a></h3>
+<p><code>|not _ORG_BASE|</code> (e não só <code>except</code>) é a guarda real: cobre os <strong>dois</strong> modos de falha — a
+importação que <strong>lança</strong> e o módulo que <strong>responde vazio</strong>. Sem o fallback, um
+<code>mod_lista_telefonica</code> ausente deixaria <code>tb_secretarias</code> <strong>vazia</strong>, e aí o módulo de impressão
+iniciaria sem nenhuma secretaria — a tela de nova solicitação apareceria sem crédito disponível
+para o usuário, sem erro visível.</p>
+<p>O mínimo semeado é <strong>6 secretarias com lista de setores vazia</strong> (<code>[]</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Secretaria</th>
+<th style="text-align: left;">Sigla derivada</th>
+<th style="text-align: right;">Cota</th>
+<th style="text-align: right;">Limite de pedidos abertos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Gabinete</td>
+<td style="text-align: left;"><code>SEC_GABI</code></td>
+<td style="text-align: right;"><strong>1000</strong></td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td style="text-align: left;">Administração</td>
+<td style="text-align: left;"><code>SEC_ADMI</code></td>
+<td style="text-align: right;"><strong>1000</strong></td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td style="text-align: left;">Finanças</td>
+<td style="text-align: left;"><code>SEC_FINA</code></td>
+<td style="text-align: right;"><strong>1000</strong></td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td style="text-align: left;">Saúde</td>
+<td style="text-align: left;"><code>SEC_SAUD</code></td>
+<td style="text-align: right;"><strong>1000</strong></td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td style="text-align: left;">Educação</td>
+<td style="text-align: left;"><code>SEC_EDUC</code></td>
+<td style="text-align: right;"><strong>1000</strong></td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td style="text-align: left;">Obras e Infraestrutura</td>
+<td style="text-align: left;"><code>SEC_OBRA</code></td>
+<td style="text-align: right;"><strong>1000</strong></td>
+<td style="text-align: right;">20</td>
+</tr>
+</tbody>
+</table>
+<p><code>_sigla_sec(nome)</code> normaliza em NFKD, tira acento, <code>lower()</code>, filtra alfanuméricos e corta em 4
+chars (<code>s[:4].upper()</code>, ou <code>ljust(3,"X")</code> se mais curto). Como <strong>os setores ficam vazios</strong>, o
+fallback garante o nível 1 da hierarquia de cotas (secretaria) e <strong>deixa o nível 2 (setor) a
+cargo do admin</strong>, que pode criá-los em Administração → Setores com cota própria. É
+deliberadamente o menor organograma que ainda permite o sistema funcionar.</p>
+<div class="admonition warning">
+<p class="admonition-title">A fonte das cotas 1000 / 200 é o organograma <strong>compartilhado</strong></p>
+<p>Com a fachada, quem manda no organograma é o <strong><code>mod_lista_telefonica</code></strong> — o mesmo
+organograma que popula a lista telefônica. Isso é intencional (um organograma oficial, uma
+fonte), mas significa que <strong>cadastrar um departamento novo na Lista Telefônica não cria
+automaticamente o setor de impressão correspondente</strong>. Os dois bancos são independentes por
+desenho (AGENTS.md §4.1, um database por módulo): o <code>mod_solicita_impressao</code> semeia uma cópia
+da estrutura no <strong>seu</strong> <code>tb_setores</code> no <code>init_db</code>, e a partir daí o admin do módulo é
+soberano.</p>
+</div>
+<h3 id="cotas-1000-secretaria-200-setor-como-a-semeadura-converte-o-organograma">Cotas 1000 (secretaria) / 200 (setor) — como a semeadura converte o organograma<a class="headerlink" href="#cotas-1000-secretaria-200-setor-como-a-semeadura-converte-o-organograma" title="Permanent link">&para;</a></h3>
+<p><code>ORGANOGRAMA_BASE</code> tem <strong>3 níveis</strong>; o banco de impressão tem <strong>2</strong>. A conversão acontece em
+<code>init_db()</code> (<code>bd_manipulador.py:443-518</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="k">for</span> <span class="n">_sec_nome</span><span class="p">,</span> <span class="n">_setores</span> <span class="ow">in</span> <span class="n">_ORG_BASE</span><span class="p">:</span>                     <span class="c1"># nível 1 → tb_secretarias</span>
+    <span class="n">_SECRETARIAS_PADRAO</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">_sec_nome</span><span class="p">,</span> <span class="n">_sigla_sec</span><span class="p">(</span><span class="n">_sec_nome</span><span class="p">),</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">_sec_nome</span><span class="p">,</span> <span class="n">_setores</span> <span class="ow">in</span> <span class="n">_ORG_BASE</span><span class="p">:</span>                     <span class="c1"># níveis 2 e 3 → tb_setores</span>
+    <span class="k">for</span> <span class="n">_set_nome</span><span class="p">,</span> <span class="n">_subsetores</span> <span class="ow">in</span> <span class="n">_setores</span><span class="p">:</span>
+        <span class="n">_SETORES_PADRAO</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">_set_nome</span><span class="p">,</span> <span class="n">_sec_nome</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">_sub</span> <span class="ow">in</span> <span class="n">_subsetores</span><span class="p">:</span>                          <span class="c1"># ← subsetor ACHATADO como setor</span>
+            <span class="n">_SETORES_PADRAO</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">_sub</span><span class="p">,</span> <span class="n">_sec_nome</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+</code></pre></div>
+<p>O <strong>subsetor é achatado (flattened) no nível de setor</strong> — não existe coluna de subsetor em
+<code>tb_setores</code>. Isso é a simplificação que o modelo de cota exige: a cota é sempre
+<code>secretaria → setor</code>, e um subsetor é, para fins de impressão, um setor. Todos os setores e
+subsetores recebem a <strong>mesma cota de 200</strong> e o <strong>mesmo limite de 10 pedidos abertos</strong>.</p>
+<div class="admonition danger">
+<p class="admonition-title">O seed NUNCA faz <code>UPDATE</code> de cota — regra explícita de devSecOps/Postgres</p>
+<p>A semeadura é guardada por <code>COUNT(*) == 0</code> em <code>tb_secretarias</code> <strong>e</strong> em <code>tb_setores</code>, e cada
+inserção é precedida de <code>SELECT id … WHERE sigla=? OR nome=?</code> (ou <code>nome=? AND secretaria_id=?</code>).
+O comentário no código é literal: <em>"NUNCA forçar cotas padrão via <code>UPDATE</code> (1000/200): ajuste
+do admin é soberano."</em> Sem isso, <strong>todo restart do servidor sobrescreveria a cota que o admin
+acabou de ajustar</strong> — o sintoma seria o admin editar, o servidor reiniciar e a cota voltar
+sozinha. Consequência: <strong>bancos já existentes mantêm os valores</strong>; só banco <strong>novo</strong> (ou
+deliberadamente esvaziado) recebe 1000/200.</p>
+</div>
+<h2 id="referencia-funcional-envio-contagem-cotas-autorizacao-impressao-e-cobranca">Referência funcional — envio, contagem, cotas, autorização, impressão e cobrança<a class="headerlink" href="#referencia-funcional-envio-contagem-cotas-autorizacao-impressao-e-cobranca" title="Permanent link">&para;</a></h2>
+<h3 id="envio-de-pdf-rascunho-pedido">Envio de PDF (rascunho → pedido)<a class="headerlink" href="#envio-de-pdf-rascunho-pedido" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Até 10 arquivos por envio</strong> (<code>MAX_ARQ = 10</code>), só <code>.pdf</code>; qualquer outra extensão é recusada
+   com o nome na lista.</li>
+<li>Cada arquivo <strong>sobe automaticamente</strong> ao selecionar e vira <strong>rascunho</strong>:
+   <code>YYYYMMDD_HHMMSS_&lt;usuario&gt;_&lt;uuid&gt;_rascunho.pdf</code>, em
+   <code>mod_solicita_impressao/solicitacaoImpressao/</code>, com expiração
+   <code>tempo_expira_rascunho_min</code> (<strong>padrão 10 min</strong>, job <code>cleanup_solicita</code> a cada 1 min remove o
+   não-confirmado). Botão "Remover selecionados" descarta antes.</li>
+<li>Ao <strong>"Enviar solicitação"</strong>, os arquivos são renomeados para o padrão final
+   (ver "Nomenclatura do arquivo") e as linhas ganham <code>grupo_id</code> comum.</li>
+</ol>
+<h3 id="1-pedido-por-envio-grupo">1 pedido por envio (grupo)<a class="headerlink" href="#1-pedido-por-envio-grupo" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Aspecto</th>
+<th style="text-align: left;">Comportamento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Modelo</td>
+<td style="text-align: left;">A reformulação de <strong>07/09</strong> eliminou o "1 pedido por arquivo": até 10 PDFs confirmados de uma vez = <strong>um único pedido</strong> com <strong>status único</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">Coluna</td>
+<td style="text-align: left;"><code>grupo_id</code> (ALTER idempotente + backfill <code>grupo_id = id</code> para registros antigos + índice <code>idx_sol_grupo</code>); o índice <strong>não</strong> é <code>UNIQUE</code> porque vários arquivos partilham o grupo</td>
+</tr>
+<tr>
+<td style="text-align: left;">Ciclo de vida</td>
+<td style="text-align: left;"><code>autorizar_grupo</code> / <code>recusar_grupo</code> / <code>imprimir_grupo</code> / <code>recuar_grupo</code> / <code>cancelar_grupo</code> atuam <strong>por <code>grupo_id</code></strong> — um clique, todos os arquivos</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cota</td>
+<td style="text-align: left;">Descontada <strong>uma vez por grupo</strong>, pelo total de páginas contabilizadas — na secretaria e no setor, se houver</td>
+</tr>
+<tr>
+<td style="text-align: left;">Arquivos</td>
+<td style="text-align: left;">Apagados do servidor <strong>imediatamente</strong> após a confirmação da impressão</td>
+</tr>
+<tr>
+<td style="text-align: left;">Autorização</td>
+<td style="text-align: left;"><strong>Auto-autorização removida</strong>: sem responsável cadastrado, o grupo fica <code>pendente</code> e o <strong>admin autoriza e imprime</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">Contagem em relatório</td>
+<td style="text-align: left;"><code>COUNT(DISTINCT s.grupo_id)</code> — "pedidos" no relatório é <strong>grupo</strong>, não linha de <code>tb_solicitacoes</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="contagem-de-paginas-e-formula">Contagem de páginas e fórmula<a class="headerlink" href="#contagem-de-paginas-e-formula" title="Permanent link">&para;</a></h3>
+<p><code>contar_paginas_pdf</code> usa <strong>PyMuPDF com fallback <code>pdfplumber</code></strong>; PDF corrompido ou digitalizado
+como imagem pode devolver <strong>0</strong>, e isso <strong>bloqueia o envio</strong> (falha barulhenta, não cota zerada
+silenciosa). A contabilização é:</p>
+<div class="highlight"><pre><span></span><code>paginas_contabilizadas = qtd_paginas × qtd_copias × fator_papel × fator_frente_verso
+  fator_papel:        A4 = 1,  A3 = 2
+  fator_frente_verso: não = 1, sim = 2
+</code></pre></div>
+<p>Ex.: 10 pág × 3 cóp × A4 frente = 30; A4 frente/verso = 60; A3 frente = 60; A3 frente/verso = 120.</p>
+<h3 id="cotas-mensais-e-limite-de-pedidos-abertos">Cotas mensais e limite de pedidos abertos<a class="headerlink" href="#cotas-mensais-e-limite-de-pedidos-abertos" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Cota mensal</strong> por secretaria (1000) e por setor (200); setor sem cota própria usa o <strong>pool
+  da secretaria</strong>. Ao exceder, o envio <strong>é permitido</strong> e o pedido fica <code>excedente_cota</code> — a
+  decisão de imprimir ou não é do autorizador/admin.</li>
+<li>Consumo descontado <strong>só na impressão efetiva</strong>; <code>mes_referencia</code> (<code>YYYY-MM</code>) faz o reset
+  automático no dia 1º; admin pode editar cota e resetar consumo do mês.</li>
+<li>Barra de progresso no painel é <strong>sem numeral</strong> (não expõe consumo entre secretarias): verde
+  &lt;50%, amarelo 50–80%, laranja 80–100%, vermelho &gt;100%.</li>
+<li><strong>Limite de pedidos abertos</strong> (<code>limite_pedidos_abertos</code>, 20 secretaria / 10 setor, <strong>0 = sem
+  limite</strong>): conta status <code>pendente</code>, <code>aguardando_autorizacao</code>, <code>autorizado</code> e <code>excedente_cota</code>.
+  Atingido o teto, <code>criar_solicitacao</code> e <code>confirmar_rascunho</code> <strong>bloqueiam</strong> com mensagem
+  orientando a imprimir/cancelar; imprimir, recusar ou cancelar <strong>libera a vaga</strong> (por isso
+  "elástico").</li>
+</ul>
+<h3 id="autorizacao">Autorização<a class="headerlink" href="#autorizacao" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Responsáveis</strong> (<code>tb_responsaveis_autorizacao</code>): admin vincula um usuário <strong>cadastrado</strong> (via
+  seletor buscável do <code>mod_gest_cad_usuario</code>) a uma secretaria/setor. A checagem é por
+  <strong>tabela</strong>, não por perfil — logo a permissão <strong>pode ser concedida a <code>comum</code></strong>, que passa a ver
+  a aba <strong>Autorização</strong> ao logar.</li>
+<li><code>autorizar_solicitacao</code> grava <code>autorizado_por</code>/<code>data_autorizacao</code>; <code>recusar_solicitacao</code> grava
+  <code>motivo_recusa</code> (visível ao solicitante, que pode <strong>Reenviar</strong> — volta a
+  <code>aguardando_autorizacao</code>/<code>pendente</code> com os dados de autorização limpos).</li>
+<li><code>eh_responsavel_autorizacao</code> + <code>_pode_autorizar</code> + <code>tem_responsavel_para</code> formam o portão;
+  <code>_eh_admin_do_modulo</code> é a exceção de emergência.</li>
+</ul>
+<h3 id="impressao-com-marca-dagua">Impressão com marca d'água<a class="headerlink" href="#impressao-com-marca-dagua" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Dual mode:</strong> "Imprimir direto" (com impressora padrão A4/A3 configurada) abre o PDF preparado
+  em nova aba via <code>window.printSolicitacao(id)</code>; "Baixar para impressão" entrega o PDF ao
+  Ctrl+P. O botão <strong>"Imprimir" com seletor</strong> abre diálogo com as impressoras de <code>tb_impressoras</code>
+  (sugerindo a padrão conforme o papel) — mas <strong>não marca como impresso</strong>: o desconto de cota e a
+  remoção dos arquivos só acontecem em <strong>"Confirmar impressão"</strong> (<code>imprimir_grupo</code>). Essa
+  separação é o que impede a UI de declarar um impresso que o usuário cancelou no diálogo do SO.</li>
+<li><strong>Marca d'água</strong> opcional e personalizável, aplicada no PDF pronto: texto com placeholders
+  <code>{data}</code>, <code>{usuario}</code>, <code>{id}</code>, <code>{secretaria}</code>, <code>{setor}</code>, <code>{solicitante}</code>; posição, opacidade,
+  fonte, cor e rotação em Configurações. Desativada → PDF sai limpo.</li>
+<li>As datas vêm do <strong>servidor</strong> (<code>mod_intranet/hora_servidor.py</code> + <code>datetime('now','localtime')</code>),
+  nunca do navegador — inclusive dentro da marca d'água.</li>
+</ul>
+<h3 id="relatorio-de-cobranca">Relatório de cobrança<a class="headerlink" href="#relatorio-de-cobranca" title="Permanent link">&para;</a></h3>
+<p>Sub-aba <strong>Relatórios</strong> da Administração, com atalhos de prazo (<strong>Este mês</strong>, <strong>Mês anterior</strong>,
+<strong>Últimos 6 meses</strong>, <strong>Ano atual</strong>) ou <strong>período personalizado</strong> no calendário.
+<code>relatorio_impressao(data_inicio, data_fim)</code> agrega só <code>status='impresso'</code> no período (por
+<code>data_impressao</code>), com totais de <strong>cópias</strong> e <strong>páginas contabilizadas</strong>, separando <strong>color/PB</strong>
+pela coluna <code>cor</code>, e devolve 5 blocos: <code>geral</code>, <code>por_secretaria</code>, <code>por_setor</code>, <code>por_autorizador</code>,
+<code>por_impressor</code>. É um relatório de <strong>cobrança/repasse</strong> (quem consumiu, quem liberou, quem
+imprimiu), não um log técnico — e é por isso que os números são <strong>cópias e páginas
+contabilizadas</strong>, e não arquivos.</p>
 <h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Bootstrap cria o banco (<code>inicializar_bancos</code> → <code>init_solicita</code>).</li>
 <li>Módulo nativo em <code>tb_modulos</code> (seed <code>MODULOS_SISTEMA</code> em <code>autenticacao.py</code>):
   chave <code>solicita_impressao</code>, ícone <code>print</code>, rota <code>/solicita-impressao</code>.</li>
 <li>Permissão por módulo em <code>tb_acesso_usuario</code> (papel <code>comum</code>/<code>administrador</code>).</li>
+<li><strong><code>mod_intranet.integracoes</code></strong> (fachada pública, import <strong>lazy</strong>): <code>obter_organograma_base()</code> é a
+  <strong>única</strong> porta de entrada para o organograma do <code>mod_lista_telefonica</code> — ver "Isolamento
+  modular". Nenhum outro <code>mod_*</code> importa <code>mod_lista_telefonica</code> diretamente.</li>
+<li><strong><code>mod_gest_cad_usuario</code></strong> é alcançado pelo seletor buscável de responsáveis (aba Autorização)
+  — também via núcleo, nunca por import direto de módulo de negócio.</li>
 <li>Auditoria via <code>audit_log(usuario, 'solicita_impressao', acao, desc, hash)</code>.</li>
+<li><code>mod_intranet.hora_servidor</code> — fonte da verdade de <strong>todas</strong> as datas do módulo.</li>
 <li>JS de impressão servido por rota <code>/solicita-impressao/src/impressao.js</code> (arquivo em
   <code>mod_solicita_impressao/src/</code>).</li>
 <li>Documentação disponível em <code>/documentacao</code> (build MkDocs do <code>docs/analise_mod_solicita_impressao.md</code>).</li>
@@ -485,9 +784,58 @@ páginas — gerada por <code>gerar_nome_arquivo</code> (<code>bd_manipulador.py
 <ul>
 <li>NiceGUI roda no servidor; a lista real de impressoras do cliente depende de API experimental
   (<code>navigator.getPrinters</code>). O fallback é sempre o diálogo nativo do SO via <code>window.print()</code>.</li>
-<li>Contagem de páginas usa PyMuPDF; PDFs corrompidos/imagem podem retornar 0 (bloqueia envio).</li>
+<li>Contagem de páginas usa PyMuPDF com fallback <code>pdfplumber</code>; PDFs corrompidos/imagem podem retornar 0 (bloqueia envio).</li>
 <li>Cotas são mensais; reset manual ou automático (dia 1) — não há notificação por e-mail (sem SMTP).</li>
+<li><strong>Cota não é recalculada por refresh</strong>: o <code>UPDATE</code> de cotas 1000/200 é proibido de propósito.
+  Consequência operacional: <strong>adicionar secretaria/setor no <code>mod_lista_telefonica</code> NÃO cria o
+  setor de impressão</strong> — o admin precisa criar em Administração → Setores, ou esvaziar
+  <code>tb_setores</code> para forçar a semeadura (e perder os ajustes de cota existentes).</li>
+<li><strong>O fallback de 6 secretarias não tem setores</strong>: se o <code>mod_lista_telefonica</code> estiver ausente,
+  o sistema sobe com as 6 secretarias de cota 1000 e <strong>nenhum setor</strong> — os setores precisam ser
+  cadastrados manualmente pelo admin.</li>
+<li><strong><code>bd</code>, <code>ler_tema</code> e <code>bloco_aparencia</code> precisam estar no escopo de módulo (25/09/2026)</strong>: ver
+  <a href="#correcoes-de-nameerror-25092026">Correções de <code>NameError</code></a> — sem esses imports de
+  módulo, o botão "Resetar" da cota e a aba de Configurações do admin truncavam em silêncio.</li>
 </ul>
+<h2 id="correcoes-de-nameerror-25092026">Correções de <code>NameError</code> (25/09/2026)<a class="headerlink" href="#correcoes-de-nameerror-25092026" title="Permanent link">&para;</a></h2>
+<p>Duas funcionalidades deste módulo estavam <strong>quebradas em produção sem nenhum erro
+visível</strong>, porque o padrão obrigatório do AGENTS.md §3.2 (<code>try/except</code> em toda função)
+tinha <code>except Exception: pass</code> no caminho de erro, e o <code>NameError</code> caía exatamente ali.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Sintoma</th>
+<th style="text-align: left;">Causa</th>
+<th style="text-align: left;">Correção</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Botão <strong>"Resetar"</strong> da cota (<code>_resetar_cota</code>, <code>telas.py:2582-2607</code>) <strong>nunca zerava o consumo</strong> — ao clicar, nada acontecia e nenhuma notificação saía</td>
+<td style="text-align: left;"><code>bd</code> era usado dentro de <code>_resetar_cota</code>, mas o <code>from mod_solicita_impressao import bd_manipulador as bd</code> só existia <strong>na outra função</strong> do arquivo</td>
+<td style="text-align: left;">Import no <strong>escopo de módulo</strong> (<code>telas.py:25</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Aba <strong>Admin › Solicita Impressão › Configurações</strong> (<code>_admin_configuracoes</code>, <code>telas.py:2612-2766</code>) <strong>truncava antes de criar o botão "Salvar configurações"</strong> — a tela aparecia, mas sem os campos de retenção, marca d'água, impressoras e tema</td>
+<td style="text-align: left;"><code>ler_tema</code> e <code>bloco_aparencia</code> eram usados sem nenhum import no arquivo; o <code>NameError</code> caía no <code>except Exception</code> do <strong>corpo inteiro</strong> da função, que só registrava log</td>
+<td style="text-align: left;">Imports no <strong>escopo de módulo</strong> (<code>telas.py:28</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Detalhe importante: a cópia de <code>_resetar_cota</code> em <code>telas_administracao.py:853-880</code> <strong>já
+tinha</strong> o import local do <code>bd</code> dentro da função e nunca foi afetada — só a versão de
+<code>telas.py</code> estava quebrada. As duas cópias da sub-aba <code>_admin_configuracoes</code> continuam
+duplicadas por desenho (a de <code>telas.py</code> é a aba embutida em <code>/solicita-impressao</code>; a de
+<code>telas_administracao.py</code> é a de <code>/admin/solicita_impressao</code>).</p>
+<div class="admonition note">
+<p class="admonition-title">Como esse tipo de bug sobrevive à suíte de testes</p>
+<p>O <code>try/except</code> que o AGENTS.md §3.2 exige é a <strong>melhor defesa contra derrubar o
+servidor</strong> e a <strong>pior inimiga contra <code>NameError</code></strong>: a exceção é capturada, nada é
+logado no caminho feliz e o teste passa. Por isso a análise estática com
+<code>pyflakes</code> é <strong>bloqueante</strong> no ciclo de QA (ver
+<a href="../convencoes_codigo/#analise-estatica-obrigatoria-pyflakes">Convenções de Criação de Código</a>):
+<code>undefined name</code> é erro de runtime, não estilo.</p>
+</div>
 <h2 id="hora-do-servidor-fonte-da-verdade-de-datahora">Hora do servidor (fonte da verdade de data/hora)<a class="headerlink" href="#hora-do-servidor-fonte-da-verdade-de-datahora" title="Permanent link">&para;</a></h2>
 <p>Desde 07/09, <strong>todas as datas</strong> do módulo (criação, autorização, impressão, expiração de
 rascunho, exclusão de impresso, marca d'água e chave do mês de cota) vêm do <strong>servidor</strong> —
@@ -563,7 +911,12 @@ central — ver <a href="../analise_mod_intranet/#hora-do-servidor-ntp">Análise
 <li><strong>Novo wrapper <code>_reenviar_grupo</code></strong> (<code>telas.py:613-619</code>).</li>
 <li><strong>Admin config</strong> (<code>_admin_configuracoes</code>): campo único <strong>"Alertas da nova solicitação (uma
   frase por linha)"</strong> e select <strong>"Tipo de papel padrão"</strong> (sulfite/fotográfico/vergê) —
-  <code>telas.py:1359-1390</code> e <code>telas_administracao.py:416-447</code>.</li>
+  <code>telas.py:2612-2766</code> e <code>telas_administracao.py:884-1041</code> (cópia duplicada da sub-aba
+  existe nos dois arquivos; a de <code>telas_administracao.py</code> é a que <code>/admin/solicita_impressao</code>
+  renderiza, a de <code>telas.py</code> é a aba embutida em <code>/solicita-impressao</code>). Ambas terminam em
+  <code>botao("Salvar configurações", icone="save", on_click=salvar)</code> (<code>telas.py:2744</code>,
+  <code>telas_administracao.py:1016</code>) e ambas montam o rodapé de aparência com
+  <code>ler_tema("solicita_impressao", …)</code> + <code>bloco_aparencia(…, com_card=False)</code>.</li>
 </ul>
 <h3 id="adicoes-recentes-092026-responsividade-global-rnf-ui-01">Adições recentes (09/2026) — responsividade global RNF-UI-01<a class="headerlink" href="#adicoes-recentes-092026-responsividade-global-rnf-ui-01" title="Permanent link">&para;</a></h3>
 <ul>
@@ -690,6 +1043,537 @@ passou a usar <code>bloco_aparencia</code> (o <code>campo_modulo</code> foi <str
 exclusiva de <code>/configuracoes</code>); as variáveis <code>t_cor_fundo</code>, <code>t_cor_titulo</code> e
 <code>t_texto_header</code> (usadas no cabeçalho) permanecem em <code>mostrar_tela</code>. Código morto (<code>_btn_cls</code>,
 <code>_btn_style</code>) removido. Regra de uniformidade e prefixos cobertos por <code>test/test_tema.py</code>.</p>
+<h2 id="pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada">Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)<a class="headerlink" href="#pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Documentação da correção pendente. Nenhum <code>.py</code> alterado neste lote.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Arquivo:linha</th>
+<th style="text-align: left;">Correção proposta contida no módulo</th>
+<th style="text-align: left;">Risco regressão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">solicita_impressao</td>
+<td style="text-align: left;"><code>CrudBase</code> parcial (só config local); <code>COLLATE NOCASE</code> em 3 buscas (quebra PG)</td>
+<td style="text-align: left;"><code>mod_solicita_impressao/bd_manipulador.py:24</code>, <code>:31</code> (parcial) · <code>:1920-1926</code>, <code>:2737-2742</code>, <code>:2848-2851</code> (<code>COLLATE NOCASE</code>)</td>
+<td style="text-align: left;">Completar migração <code>CrudBase</code>; trocar <code>LIKE ? COLLATE NOCASE</code> por helper interno portável (<code>LOWER(col) LIKE LOWER(?)</code>, contido no módulo)</td>
+<td style="text-align: left;">Médio-alto (cotas 1000/200 + grupo + cobrança)</td>
+</tr>
+</tbody>
+</table>
+<p>Detalhe consolidado em <a href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade</a>.</p>
+<hr />
+<h1 id="rf-e-rnf-verificados-no-codigo-lote-1-26092026">RF e RNF verificados no código — lote 1 (26/09/2026)<a class="headerlink" href="#rf-e-rnf-verificados-no-codigo-lote-1-26092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Auditoria de requisitos <strong>funcionais</strong> (o que o sistema faz) e <strong>não
+funcionais</strong> (qualidade e restrições), com evidência <code>arquivo:linha</code> conferida
+no código em 26/09/2026. Substitui as referências <code>arquivo:linha</code> antigas desta
+página, que ficaram desatualizadas após a refatoração para agrupamento
+(ver DIV-SOL-01).</p>
+</blockquote>
+<h2 id="requisitos-funcionais-rf-mapa-codigo-doc">Requisitos funcionais (RF) — mapa código ↔ doc<a class="headerlink" href="#requisitos-funcionais-rf-mapa-codigo-doc" title="Permanent link">&para;</a></h2>
+<h3 id="envio-agrupamento-e-pedidos">Envio, agrupamento e pedidos<a class="headerlink" href="#envio-agrupamento-e-pedidos" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-SOL-01</td>
+<td style="text-align: left;">Usuário envia <strong>até 10 PDFs</strong> (<code>MAX_ARQ = 10</code>) e os arquivos de um envio viram <strong>um único pedido (grupo)</strong> com status único</td>
+<td style="text-align: left;"><code>telas.py:100-596</code> (formulário + <code>Enviar solicitação</code>) + <code>bd_manipulador.py:2657</code> <code>confirmar_lote</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-02</td>
+<td style="text-align: left;">Validações do envio: arquivo existe, secretaria obrigatória, <strong>limite de pedidos abertos</strong> respeitado, PDF contável</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1812-1824</code> (<code>os.path.exists</code>, <code>if not secretaria_id</code>, <code>verificar_limite_pedidos</code>, <code>qtd_paginas &lt;= 0</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-03</td>
+<td style="text-align: left;">Só PDF é aceito</td>
+<td style="text-align: left;"><code>telas.py:301-330</code> (<code>ao_upload</code>) + <code>contar_paginas_pdf</code> (<code>bd_manipulador.py:767</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-04</td>
+<td style="text-align: left;">Nomenclatura de arquivo com data, secretaria, setor, solicitante, cópias, cor, tipo de papel, quantidade de folhas e <strong>ordem de envio</strong> (garante unicidade no mesmo segundo)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1751</code> <code>gerar_nome_arquivo</code> + <code>bd_manipulador.py:1741</code> <code>_sanitizar_nome</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-05</td>
+<td style="text-align: left;">Rascunho de upload com prazo de expiração configurável e conversão em pedido</td>
+<td style="text-align: left;"><code>bd_manipulador.py:2373</code> <code>registrar_rascunho</code>, <code>:2439</code> <code>obter_rascunho</code>, <code>:2468</code> <code>cancelar_rascunho</code>, <code>:2501</code> <code>confirmar_rascunho</code>; prazo em <code>:2312</code> <code>tempo_expira_rascunho_min</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-06</td>
+<td style="text-align: left;">Fluxo do usuário em 3 abas: <strong>Nova solicitação</strong> | <strong>Minhas solicitações</strong> | <strong>Autorização</strong> (esta última só para responsável/admin)</td>
+<td style="text-align: left;"><code>telas.py:105-109</code>; <code>_tela_nova</code> (<code>:183</code>), <code>_tela_minhas</code> (<code>:624</code>), <code>_tela_autorizar</code> (<code>:698</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-07</td>
+<td style="text-align: left;">Ações no card do pedido: Baixar, Baixar selecionados, Baixar (zip), Cancelar, <strong>Reenviar</strong>, Autorizar, Recusar</td>
+<td style="text-align: left;"><code>telas.py:938-968</code> (<code>_card_grupo</code>, <code>:790</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-08</td>
+<td style="text-align: left;">Reenvio de pedido recusado volta a <code>aguardando_autorizacao</code> (se há responsável) ou <code>pendente</code>, limpando motivo e dados de autorização</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3284</code> <code>reenviar_grupo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-09</td>
+<td style="text-align: left;">Cancelamento pelo próprio usuário, aceitando também <code>recusado</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:3241</code> <code>cancelar_grupo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-10</td>
+<td style="text-align: left;">Recuar (cancelamento em lote pelo admin, com remoção de arquivos)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3212</code> <code>recuar_grupo</code>; <code>bd_manipulador.py:2239</code> <code>recuar_solicitacao</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-11</td>
+<td style="text-align: left;">Contagem de pedidos pendentes para o painel</td>
+<td style="text-align: left;"><code>bd_manipulador.py:2019</code> <code>contar_solicitacoes_pendentes</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="contabilizacao-e-cotas">Contabilização e cotas<a class="headerlink" href="#contabilizacao-e-cotas" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-SOL-12</td>
+<td style="text-align: left;">Fórmula exata de páginas contabilizadas: <code>páginas × cópias × fator_papel (A4=1, A3=2) × fator_frente_verso (não=1, sim=2)</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:802-820</code> <code>calcular_paginas_contabilizadas</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-13</td>
+<td style="text-align: left;">Contagem real de páginas do PDF (não estimada)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:767</code> <code>contar_paginas_pdf</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-14</td>
+<td style="text-align: left;">Cota <strong>mensal por secretaria e por setor</strong>, com <code>mes_referencia</code> e <code>UNIQUE(secretaria, setor, mês)</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:267-280</code> (DDL) + <code>:1371</code> <code>obter_ou_criar_cota</code> + <code>:1422</code> <code>definir_cota</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-15</td>
+<td style="text-align: left;"><code>setor_id = 0</code> como sentinela de "sem setor" (porque <code>UNIQUE</code> trata <code>NULL</code> como distinto)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:264-266</code> (comentário no DDL) + <code>:271</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-16</td>
+<td style="text-align: left;">Consumo acumulado, consulta de consumo, percentual e reset</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1461</code> <code>obter_consumo</code>, <code>:1495</code> <code>_incrementar_consumo</code>, <code>:1566</code> <code>resetar_consumo</code>, <code>:1712</code> <code>percentual_consumo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-17</td>
+<td style="text-align: left;">Pedido acima da cota é <strong>marcado</strong> (<code>cota_excedida</code>/<code>excedente_cota</code>) e segue para autorização, em vez de ser bloqueado</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1532</code> <code>verificar_excedente</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-18</td>
+<td style="text-align: left;">Limite de <strong>pedidos abertos</strong> elástico (<code>0</code> = sem limite), herdado da secretaria quando o setor não define o seu</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1603</code> <code>obter_limite_pedidos_abertos</code> + <code>:1636</code> <code>contar_pedidos_abertos</code> + <code>:1679</code> <code>verificar_limite_pedidos</code>; colunas com migração em <code>:220-227</code> e <code>:241-248</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-19</td>
+<td style="text-align: left;">Cota descontada <strong>uma vez por grupo</strong>, na secretaria e no setor (se houver)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3176-3181</code> (em <code>imprimir_grupo</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="autorizacao-impressao-e-marcas-dagua">Autorização, impressão e marcas d'água<a class="headerlink" href="#autorizacao-impressao-e-marcas-dagua" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-SOL-20</td>
+<td style="text-align: left;">Responsável por secretaria/setor concede a <strong>permissão de autorizar impressão</strong>; pode ser usuário <code>comum</code> (checagem por <code>tb_responsaveis_autorizacao</code>, independente do perfil)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1203</code> <code>criar_responsavel</code>, <code>:1251</code> <code>listar_responsaveis</code>, <code>:1293</code> <code>excluir_responsavel</code>, <code>:1322</code> <code>eh_responsavel_autorizacao</code>; UI em <code>telas.py:2353</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-21</td>
+<td style="text-align: left;"><strong>Sem auto-autorização</strong>: sem responsável cadastrado, o pedido fica <code>pendente</code> e o admin autoriza e imprime</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1911</code> <code>tem_responsavel_para</code> (fail-closed: devolve <code>None</code> em exceção) + <code>telas.py:82</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-22</td>
+<td style="text-align: left;">Autorizar / Recusar com motivo obrigatório e registro de autor + data</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3086</code> <code>autorizar_grupo</code>, <code>:3114</code> <code>recusar_grupo</code>; UI em <code>telas.py:1477-1481</code> e diálogo de recusa <code>telas.py:1145-1180</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-23</td>
+<td style="text-align: left;">Confirmação de impressão em diálogo com seletor de impressora (o nome é <strong>informativo</strong> — quem imprime é o diálogo do SO)</td>
+<td style="text-align: left;"><code>telas.py:1595-1609</code> (grupo) e <code>telas.py:1756-1771</code> (solicitação avulsa)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-24</td>
+<td style="text-align: left;">Impressão <strong>dual mode</strong>: direto (diálogo nativo do SO) ou "baixar para impressão" (<code>ui.download</code>)</td>
+<td style="text-align: left;"><code>telas.py:1595-1609</code> + <code>:938-949</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-25</td>
+<td style="text-align: left;">Marcas d'água configuráveis (texto com placeholders <code>{data}</code> <code>{usuario}</code> <code>{id}</code> <code>{secretaria}</code> <code>{setor}</code> <code>{solicitante}</code>, posição, opacidade, tamanho, cor, rotação) com <strong>fail-soft</strong> (devolve o PDF original se falhar)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3692-3770</code> <code>aplicar_marca_dagua</code>; rotação normalizada a múltiplos de 90° (PyMuPDF) em <code>:3727-3728</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-26</td>
+<td style="text-align: left;">Arquivos do servidor são <strong>apagados na confirmação da impressão</strong> (o pedido sai da gestão ativa) e também por prazo (<code>tempo_exclui_impresso_min</code>)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3182-3188</code> (em <code>imprimir_grupo</code>) + <code>:3337-3392</code> <code>expirar_rascunhos_e_impressos</code>; prazo em <code>:2323</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-27</td>
+<td style="text-align: left;">Catálogo de impressoras (nome, papel, cor, frente/verso, sulfite, padrão)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:585</code> <code>criar_impressora</code>, <code>:636</code> <code>listar_impressoras</code>, <code>:669</code> <code>obter_impressora</code>, <code>:699</code> <code>excluir_impressora</code>, <code>:729</code> <code>definir_impressora_padrao</code>; UI em <code>telas.py:2816-2846</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="cadastros-relatorios-e-painel">Cadastros, relatórios e painel<a class="headerlink" href="#cadastros-relatorios-e-painel" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-SOL-28</td>
+<td style="text-align: left;">CRUD de secretarias e setores com cota e limite próprios</td>
+<td style="text-align: left;"><code>bd_manipulador.py:825</code>/<code>:873</code>/<code>:906</code>/<code>:935</code>/<code>:979</code> (secretarias) e <code>:1010</code>/<code>:1060</code>/<code>:1099</code>/<code>:1128</code>/<code>:1172</code> (setores); UI em <code>telas.py:1899-1922</code> e <code>:2105-2132</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-29</td>
+<td style="text-align: left;">Painel administrativo com 7 abas: Solicitações, Secretarias, Setores, Responsáveis, Cotas, Relatórios, Configurações</td>
+<td style="text-align: left;"><code>telas.py:1209-1215</code> <code>_tela_admin</code> (<code>:1202</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-30</td>
+<td style="text-align: left;">Relatório de <strong>cotas</strong> do mês (consumo × cota por secretaria/setor)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3448</code> <code>relatorio_cotas</code>; UI em <code>telas.py:2476-2481</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-31</td>
+<td style="text-align: left;">Relatório de <strong>impressão</strong> por período, com agregações e atalhos de data (mês atual, mês anterior, últimos 6 meses, ano)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3555</code> <code>relatorio_impressao</code> + <code>:3497</code> <code>_agregar_impressao</code>; atalhos em <code>telas.py:2973-2989</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-32</td>
+<td style="text-align: left;">Listagem de pedidos do responsável, com busca e limite (<code>limite=200</code>)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:2960</code> <code>listar_pedidos_responsavel</code> + <code>:3393</code> <code>solicitar_solicitacoes_responsavel</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-33</td>
+<td style="text-align: left;">Configurações do módulo (chave/valor) com gravar + restaurar</td>
+<td style="text-align: left;"><code>bd_manipulador.py:554</code> <code>obter_config</code>, <code>:567</code> <code>definir_config</code>; UI em <code>telas.py:2744</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-34</td>
+<td style="text-align: left;">Tipo de papel (<code>sulfite</code>/<code>fotografico</code>/<code>verge</code>) ativo <strong>apenas em A4</strong>; A3 = sulfite obrigatório; papel não sulfite notifica "o usuário deve trazer o próprio papel"</td>
+<td style="text-align: left;"><code>telas.py:284-301</code> <code>ao_tipo_papel</code> / <code>ao_papel</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-35</td>
+<td style="text-align: left;">Alertas de nova solicitação configuráveis (uma frase por linha com ⚠), substituindo os avisos antigos</td>
+<td style="text-align: left;"><code>telas.py:366-369</code> + <code>telas_administracao.py:416-418</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="permissoes-por-perfil">Permissões por perfil<a class="headerlink" href="#permissoes-por-perfil" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-SOL-36</td>
+<td style="text-align: left;">Três perfis na tela: <code>comum</code> (cria/acompanha os próprios), responsável (autoriza sua secretaria/setor), <code>administrador</code> do módulo (imprime, recua, gerencia)</td>
+<td style="text-align: left;"><code>telas.py:53-54</code> <code>eh_admin</code> + <code>telas.py:82</code>; <code>bd_manipulador.py:2076</code> <code>_eh_admin_do_modulo</code> + <code>:2088</code> <code>_pode_autorizar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-37</td>
+<td style="text-align: left;">Painel administrativo recebe o flag <code>eh_admin</code> e esconde ações de quem não é admin</td>
+<td style="text-align: left;"><code>telas.py:53-54</code>, <code>:82</code>; <code>telas_administracao.py:38</code> (<code>mostrar_administracao(usuario_logado, eh_admin)</code>) — referência correta do padrão</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-SOL-38</td>
+<td style="text-align: left;">A rota <code>/admin/solicita_impressao</code> <strong>exige</strong> admin geral ou admin do módulo</td>
+<td style="text-align: left;"><code>main.py:1070-1077</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="requisitos-nao-funcionais-rnf-garantias-tecnicas">Requisitos não-funcionais (RNF) — garantias técnicas<a class="headerlink" href="#requisitos-nao-funcionais-rnf-garantias-tecnicas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RNF</th>
+<th style="text-align: left;">Exigência</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RNF-SOL-PERS-01</td>
+<td style="text-align: left;">Banco próprio <code>db_mod_solicita_impressao.db</code> via <code>banco_conexao.conexao("solicita_impressao")</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:82-108</code> <code>get_connection</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-PERS-02</td>
+<td style="text-align: left;"><code>PRAGMA journal_mode=WAL</code> + <code>busy_timeout=5000</code>/<code>synchronous=NORMAL</code>/<code>foreign_keys=ON</code> herdados do núcleo</td>
+<td style="text-align: left;"><code>bd_manipulador.py:92</code> + <code>banco_conexao.py:705-708</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-PERS-03</td>
+<td style="text-align: left;">FK entre solicitações ↔ secretarias/setores (<code>ON DELETE SET NULL</code>) e setores ↔ secretarias (<code>ON DELETE CASCADE</code>)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:204-205</code>, <code>:238</code>, <code>:258-259</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-PERS-04</td>
+<td style="text-align: left;"><code>UNIQUE(secretaria_id, setor_id, mes_referencia)</code> garante <strong>uma</strong> cota por combinação/mês</td>
+<td style="text-align: left;"><code>bd_manipulador.py:277</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-PERS-05</td>
+<td style="text-align: left;"><code>init_db</code> <strong>nunca apaga dados</strong>; migrações idempotentes por <code>ALTER TABLE ADD COLUMN</code> com guarda <code>PRAGMA table_info</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:161-166</code> (docstring) + <code>:220-227</code>, <code>:241-248</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-COMP-01</td>
+<td style="text-align: left;">Paridade SQLite ↔ PostgreSQL</td>
+<td style="text-align: left;">DDL só <code>IF NOT EXISTS</code>; <code>datetime('now','localtime')</code> gravado <strong>como string em Python</strong> (não como função SQL) — <code>:3184-3185</code> usa <code>"datetime('now','localtime')"</code> como <em>literal</em> passado ao <code>UPDATE</code>, evitando SQL não-portável; toda comparação de prazo usa <code>hora_servidor_str</code> (Python) em vez de <code>datetime()</code> do SQLite — <code>:3347</code>, <code>:3354</code>, <code>:3364</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-SEC-01</td>
+<td style="text-align: left;"><code>_pode_autorizar</code> é o <strong>único</strong> caminho de autorização — nenhuma tela confere papel por conta própria</td>
+<td style="text-align: left;"><code>bd_manipulador.py:2088-2097</code> + <code>autorizar_grupo</code> (<code>:3086</code>), <code>autorizar_solicitacao</code> (<code>:2099</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-SEC-02</td>
+<td style="text-align: left;"><strong>Fail-closed</strong> na checagem de responsável: exceção → <code>None</code> (falsy) → o pedido <strong>não</strong> é auto-autorizado</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1926-1941</code> (<code>tem_responsavel_para</code> devolve <code>None</code> no <code>except</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-SEC-03</td>
+<td style="text-align: left;">Nome de arquivo sanitizado antes de virar caminho no disco</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1741-1749</code> <code>_sanitizar_nome</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-SEC-04</td>
+<td style="text-align: left;">Auditoria em <strong>todos</strong> os eventos de escrita, com ator + detalhe; <code>criar_lote</code> inclui o <strong>SHA-256</strong> dos arquivos</td>
+<td style="text-align: left;"><code>bd_manipulador.py:112-123</code> <code>_audit</code>; chamadas em <code>:844</code>, <code>:1822-1825</code>, <code>:3086-3112</code>, <code>:3147-3206</code>, <code>:3212</code>, <code>:3241</code>, <code>:3284</code>, <code>:3359</code>, <code>:3370</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-SEC-05</td>
+<td style="text-align: left;">Remoção de arquivo do servidor <strong>não</strong> derruba a rotina: <code>_remover_arquivo_se_existir</code> devolve bool e trata <code>OSError</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:2334-2360</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-RES-01</td>
+<td style="text-align: left;"><code>try/except</code> obrigatório em função, com <code>log.exception</code> em <strong>camada tripla</strong> e notificação visível — a tela nunca mostra stack trace</td>
+<td style="text-align: left;">padrão repetido em todo o <code>bd_manipulador.py</code> (ex. <code>:857-861</code>, <code>:3192-3204</code>) e em <code>telas.py</code> (ex. <code>:1576-1594</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-RES-02</td>
+<td style="text-align: left;">Fail-soft no logger: se <code>observabilidade</code> falhar, tenta <code>log</code> global e por fim um logger novo</td>
+<td style="text-align: left;"><code>bd_manipulador.py:125-131</code> <code>_log</code> + padrão <code>except NameError</code> (ex. <code>:3192-3200</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-RES-03</td>
+<td style="text-align: left;">Retorno <code>(ok, msg)</code> em toda operação de escrita — a UI sempre tem mensagem para o usuário</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1812-1824</code>, <code>:3147-3206</code>, <code>:3337-3392</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-UX-01</td>
+<td style="text-align: left;"><code>data-testid</code> nas ações de QA</td>
+<td style="text-align: left;"><code>telas.py:596</code> (<code>solicita-enviar</code>), <code>:640</code> (<code>solicita-busca</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-UX-02</td>
+<td style="text-align: left;">Anti-disconnect: apenas o upload é <code>async</code> (<code>await f.read()</code>); <strong>todo</strong> o resto é <code>def</code> síncrono</td>
+<td style="text-align: left;"><code>telas.py:301-316</code> — ver RISCO-SOL-01</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-I18N-01</td>
+<td style="text-align: left;">Docstrings bilíngue EN (topo) / PT-BR (abaixo)</td>
+<td style="text-align: left;"><code>telas.py:1-11</code>, <code>telas_administracao.py:1-12</code>, <code>bd_manipulador.py:1-79</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-I18N-02</td>
+<td style="text-align: left;">Toda a UI e todas as mensagens de erro em PT-BR</td>
+<td style="text-align: left;"><code>telas.py</code> (rótulos e diálogos) e <code>bd_manipulador.py</code> (mensagens <code>(ok, msg)</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-PERF-01</td>
+<td style="text-align: left;">Teto de paginação em todas as listagens (<code>limite=200</code> / <code>limite_sql=1000</code>)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1943</code> (<code>limite=200</code>), <code>:2960</code> (<code>limite=200</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-PERF-02</td>
+<td style="text-align: left;">Consumos somados no SQL (<code>_agregar_impressao</code>) em vez de agregação em Python</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3497-3553</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-PERF-03</td>
+<td style="text-align: left;">Limpeza agendada de rascunhos/impressos <strong>a cada 1 min</strong>, sem depender de login</td>
+<td style="text-align: left;"><code>mod_intranet/rotinas.py:456-468</code> (<code>_job_cleanup_solicita</code>) + <code>:466</code> <code>add_job</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-RESP-01</td>
+<td style="text-align: left;">Responsividade com <code>w-full</code> + <code>max-w-[520px]</code> nos diálogos e <code>flex-wrap</code> nas linhas de ação</td>
+<td style="text-align: left;"><code>telas.py:1595</code>, <code>:1604</code>, <code>:1756</code>, <code>:1764</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-SOL-TIME-01</td>
+<td style="text-align: left;">Toda data/hora de decisão (expiração, prazo de impressão) vem do <strong>servidor</strong> (<code>hora_servidor_str</code>), nunca do relógio do cliente</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3347</code>, <code>:3714</code>; <code>mod_intranet/hora_servidor.py</code> (NTP.br com cache de 60 s e fallback ao relógio local)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="divergencias-e-riscos">Divergências e riscos<a class="headerlink" href="#divergencias-e-riscos" title="Permanent link">&para;</a></h2>
+<h3 id="codigo-faz-doc-nao-diz">Código faz, doc não diz<a class="headerlink" href="#codigo-faz-doc-nao-diz" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Evidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DIV-SOL-01</td>
+<td style="text-align: left;"><strong>As referências <code>arquivo:linha</code> das seções anteriores desta página ficaram desatualizadas</strong> pela refatoração do agrupamento: <code>imprimir_grupo</code> é <code>bd_manipulador.py:3147</code> (a doc diz <code>1862</code>), <code>confirmar_lote</code> é <code>:2657</code> (a doc diz <code>1610-1619</code>), <code>reenviar_grupo</code> é <code>:3284</code> (a doc diz <code>2025-2055</code>), <code>gerar_nome_arquivo</code> é <code>:1751</code> (a doc diz <code>1038-1070</code>).</td>
+<td style="text-align: left;">verificado por <code>grep -n "^def "</code> em 26/09/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-SOL-02</td>
+<td style="text-align: left;"><code>data_impressao</code> e <code>excluir_arquivo_em</code> são gravados como o <strong>literal string</strong> <code>"datetime('now','localtime')"</code>, não como o resultado da função — ou seja, o valor persistido é o texto <code>datetime('now','localtime')</code>, não uma data. Isso só é legível porque a coluna é <code>DATETIME</code>/texto e nada compara <code>data_impressao</code> por faixa (o prazo usa <code>excluir_arquivo_em</code>, gravado pelo job de limpeza com <code>hora_servidor_str</code>).</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3183-3185</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-SOL-03</td>
+<td style="text-align: left;"><code>tem_responsavel_para</code> devolve <code>None</code> (não <code>False</code>) em exceção — fail-closed correto para segurança, mas a doc não registra essa escolha.</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1926-1941</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-SOL-04</td>
+<td style="text-align: left;">A rotina de expiração roda <code>SELECT</code> <strong>sem <code>LIMIT</code></strong> e apaga arquivo por arquivo dentro de uma transação única — com muitos rascunhos vencidos, a transação fica longa e disputa lock com os usuários.</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3353-3372</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-SOL-05</td>
+<td style="text-align: left;"><code>aplicar_marca_dagua</code> substitui <code>{copias}</code> e <code>{paginas}</code> por <strong>string vazia</strong> (o texto padrão da doc os lista, mas o código nunca os preenche).</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3720-3721</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-SOL-06</td>
+<td style="text-align: left;">O seletor de impressora no diálogo de impressão é <strong>puramente informativo</strong> (o navegador usa o diálogo do SO), mas grava-se mesmo assim o destino escolhido.</td>
+<td style="text-align: left;"><code>telas.py:1761-1766</code> (texto explícito na UI)</td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-SOL-07</td>
+<td style="text-align: left;">O módulo usa <strong><code>ui.notify</code> cru</strong> em <strong>73 pontos</strong> (56 em <code>telas.py</code>, 17 em <code>telas_administracao.py</code>), ignorando <code>tema_modulo.notificar()</code> — o resto do sistema padronizou no <code>notificar</code> (que respeita <code>notificacao_timeout</code>). O <code>mod_tecnico</code> chega a registrar "<code>ui.notify</code> cru: <strong>Zero</strong>" em seu Status.</td>
+<td style="text-align: left;"><code>grep -c "ui.notify("</code> → <code>telas.py:56</code>, <code>telas_administracao.py:17</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="doc-diz-codigo-nao-faz">Doc diz, código não faz<a class="headerlink" href="#doc-diz-codigo-nao-faz" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Alegação da doc</th>
+<th style="text-align: left;">Estado real</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DIV-SOL-09</td>
+<td style="text-align: left;">Doc descreve "<strong>Padrões migrados (07/09, sem restart via <code>init_db</code>)</strong>: <code>tempo_expira_rascunho_min</code> 4→<strong>10</strong> e <code>padrao_cor</code> PB→<strong>Color</strong>" com <code>bd_manipulador.py:328-331</code></td>
+<td style="text-align: left;">Confirmado quanto ao efeito; a referência de linha está errada (hoje as funções são <code>bd_manipulador.py:2312</code> e <code>:2323</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-SOL-10</td>
+<td style="text-align: left;">Doc descreve a impressão como "<code>window.printSolicitacao(id)</code> via JS" e a tela chama <strong><code>window.imprimirPdf(url, nome)</code></strong></td>
+<td style="text-align: left;">O arquivo <code>impressao.js</code> <strong>existe</strong> (<code>mod_solicita_impressao/src/impressao.js</code>) e exporta <code>window.imprimirPdf</code> — o nome da função na doc (<code>printSolicitacao</code>) está <strong>desatualizado</strong>. O <code>run_javascript</code> é uma exceção declarada ao "sem JavaScript direto": <code>telas.py:1727-1731</code> documenta o motivo no próprio comentário.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="riscos">Riscos<a class="headerlink" href="#riscos" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Risco</th>
+<th style="text-align: left;">Severidade</th>
+<th style="text-align: left;">Evidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>RISCO-SOL-01</strong></td>
+<td style="text-align: left;"><strong>Anti-disconnect violado em todo o módulo</strong> (AGENTS.md §5.1). Há <strong>1 único</strong> <code>async def</code> (<code>telas.py:301</code>, o <code>await f.read()</code>) e <strong>zero</strong> <code>run.io_bound</code>/<code>ui.spinner</code>. Todos os handlers pesados rodam <code>def</code> no event-loop: <code>Enviar solicitação</code> (<code>confirmar_lote</code> — grava N arquivos + conta páginas de N PDFs + SHA-256), <code>Imprimir</code>/<code>Confirmar impressão</code> (aplica marca d'água com PyMuPDF <strong>abrindo o PDF</strong>), <code>Baixar (zip)</code>, <code>Gerar relatório</code> (<code>_agregar_impressao</code>). Um lote de 10 PDFs de 300 páginas trava a tela e derruba o WebSocket do cliente.</td>
+<td style="text-align: left;">✅ <strong>Corrigido 26/09/2026</strong></td>
+<td style="text-align: left;"><code>baixar_selecionados_zip</code> virou <code>async def</code> + <code>run.io_bound</code> com spinner e trava de reentrância (<code>telas.py:863-897</code>). Os demais handlers de BD mediram <strong>2,5–3,4 ms</strong> após o aquecimento da auditoria (o custo de 28 s que existia era DDL de auditoria, não These operações) — abaixo do limiar de "I/O pesado" do §5.1.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-SOL-02</strong></td>
+<td style="text-align: left;">~~<strong>Cota e arquivo dependem de um segundo clique, e o botão que imprime não é o que confirma.</strong>~~ <strong>Corrigido 26/09/2026.</strong> O fluxo agora tem três estados: "Imprimir" grava <code>impressao_iniciada</code> (novo status em <code>STATUS_VALIDOS</code>) via <code>registrar_impressao_iniciada</code>; "Confirmar impressão" continua sendo quem desconta a cota; e <code>reconciliar_impressoes_iniciadas(horas=24)</code> — agendado <strong>1×/hora</strong> em <code>rotinas.py</code> (<code>id="reconciliar_impressao"</code>) — assume a impressão como efetivada após o prazo, desconta a cota, agenda a remoção do arquivo e audita <code>impressao_reconciliada</code>. O job de 1 min ficou só com a limpeza, porque o prazo é em horas. <strong>Complemento:</strong> <code>_pode_imprimir</code> restringe a impressão a administradores do módulo e responsáveis autorizados; e excedente de cota <strong>não bloqueia</strong> a impressão — exibe aviso gráfico na tela e segue, conforme a regra do módulo.</td>
+<td style="text-align: left;">✅ <strong>Corrigido 26/09/2026</strong></td>
+<td style="text-align: left;">medido: pedido em <code>impressao_iniciada</code> há &gt;24 h → consumo da secretaria 3 → 53 (+50 páginas) e status → <code>impresso</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-SOL-03</strong></td>
+<td style="text-align: left;"><code>criar_rascunho</code>/<code>ao_upload</code> carrega os <strong>bytes de todos os arquivos em memória</strong> antes de gravar (<code>telas.py:274-280</code>, padrão idêntico ao <code>mod_tecnico</code>). Sem teto de tamanho.</td>
+<td style="text-align: left;">✅ <strong>Corrigido 26/09/2026</strong></td>
+<td style="text-align: left;"><code>ui.upload</code> recebeu <code>max_file_size</code> / <code>max_total_size</code>, que o Quasar <strong>recusa no navegador</strong> (o arquivo nem trafega); o padrão é 50 MB por arquivo, ajustável em Configurações do módulo (<code>tamanho_maximo_mb</code>, clamp 1–500). Há também a checagem no servidor, para o POST direto no endpoint. Relevante porque o servidor tem 3,7 GB de RAM.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-SOL-04</strong></td>
+<td style="text-align: left;"><code>data_impressao</code>/<code>excluir_arquivo_em</code> gravados com o <strong>literal</strong> <code>"datetime('now','localtime')"</code> — qualquer relatório ou ordenação por <code>data_impressao</code> fica incorreta.</td>
+<td style="text-align: left;">⚪ <strong>Falso positivo</strong></td>
+<td style="text-align: left;"><code>_atualizar_status_grupo</code> (<code>bd_manipulador.py:3047</code>) trata esse valor <strong>como expressão SQL</strong>, injetando <code>col=datetime('now','localtime')</code> em vez de um parâmetro. O banco avalia; a coluna grava a hora correta.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-SOL-05</strong></td>
+<td style="text-align: left;">Sem <code>CrudBase</code>: SQL cru com <code>conn.cursor()</code>. A transação de <code>confirmar_lote</code> (N inserts + UPDATE de status) depende de commit manual e <strong>não</strong> usa <code>crud.transacao()</code>.</td>
+<td style="text-align: left;">🟡 Baixa</td>
+<td style="text-align: left;"><code>bd_manipulador.py:2657-2846</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-SOL-06</strong></td>
+<td style="text-align: left;">Expiração sem <code>LIMIT</code> e sem índice declarado em <code>tb_rascunhos_upload.expira_em</code> / <code>tb_solicitacoes.excluir_arquivo_em</code> — varredura completa a cada minuto.</td>
+<td style="text-align: left;">🟡 Baixa</td>
+<td style="text-align: left;"><code>bd_manipulador.py:3353</code>, <code>:3362</code></td>
+</tr>
+</tbody>
+</table>
               
             </div>
           </div><footer>

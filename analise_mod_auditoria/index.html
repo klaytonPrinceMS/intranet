@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -230,49 +242,263 @@
               
                 <h1 id="auditoria-mod_auditoria">Auditoria — <code>mod_auditoria</code><a class="headerlink" href="#auditoria-mod_auditoria" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Audit module: route <code>/auditoria</code> (key <code>auditoria</code>) · EXCLUSIVE database <code>db_mod_auditoria.db</code> with ONE TABLE PER PRODUCER MODULE (<code>tb_auditoria_&lt;modulo&gt;</code>) · read-only viewer with dynamic table navigation, filters by user/module/action/time/date range, server-side pagination, CSV export, per-auditor column selection/ordering, Grafana observability tab.</p>
+<p>Audit module: route <code>/auditoria</code> (key <code>auditoria</code>) · EXCLUSIVE database <code>db_mod_auditoria.db</code> with ONE TABLE PER PRODUCER MODULE (<code>tb_auditoria_&lt;modulo&gt;</code>) · single writer (<code>audit_log</code>) reached through a decoupled hook · write cache + 3× commit retry · meta-first table discovery with <code>information_schema</code>/<code>sqlite_master</code> fallback · <code>to_char</code> vs <code>strftime</code> helpers · read-only viewer with dynamic table navigation, filters by user/module/action/time/date range, server-side pagination, CSV export, per-auditor column selection/ordering, Grafana observability tab.</p>
 </blockquote>
 <hr />
 <h1 id="auditoria-mod_auditoria_1">Auditoria — <code>mod_auditoria</code><a class="headerlink" href="#auditoria-mod_auditoria_1" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo de auditoria: rota <code>/auditoria</code> (chave <code>auditoria</code>) · <strong>banco EXCLUSIVO</strong> <code>db_mod_auditoria.db</code> com <strong>UMA TABELA POR MÓDULO PRODUTOR</strong> (<code>tb_auditoria_&lt;modulo&gt;</code>) · visualizador somente-leitura com navegação dinâmica por tabela, filtros por usuário/módulo/ação/hora/intervalo de datas, paginação server-side, exportação CSV, seleção/ordem de campos por auditor e aba de Observabilidade (Grafana).</p>
+<p>Módulo de auditoria: rota <code>/auditoria</code> (chave <code>auditoria</code>) · <strong>banco EXCLUSIVO</strong> <code>db_mod_auditoria.db</code> com <strong>UMA TABELA POR MÓDULO PRODUTOR</strong> (<code>tb_auditoria_&lt;modulo&gt;</code>) · escritor <strong>único</strong> (<code>audit_log</code>) alcançado por <strong>gancho desacoplado</strong> · cache de escrita + retry 3× no commit · descoberta de tabela pela meta com fallback <code>information_schema</code>/<code>sqlite_master</code> · helpers <code>to_char</code> vs <code>strftime</code> · visualizador somente-leitura com navegação dinâmica por tabela, filtros por usuário/módulo/ação/hora/intervalo de datas, paginação server-side, exportação CSV, seleção/ordem de campos por auditor e aba de Observabilidade (Grafana).</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
 <p>Banco e visualizador da trilha de auditoria LGPD. A <strong>escrita</strong> é feita pelos demais módulos via <code>audit_log</code> (núcleo) → <code>registrar_auditoria</code> (este módulo), que grava na tabela do módulo produtor (<code>tb_auditoria_&lt;modulo&gt;</code>, criada automaticamente). A <strong>leitura</strong> é feita pela tela <code>/auditoria</code> (exclusiva do <code>administrador_geral</code>), com filtros, paginação server-side e exportação CSV. As preferências de coluna e as configurações vão para <code>tb_config</code> central.</p>
+<p>Anatomia completa da escrita (caminho do <code>audit_log</code>, gancho desacoplado, cache de escrita, retry 3× no commit, descoberta de tabela, helpers <code>to_char</code>/<code>strftime</code> e as ações em background com ator <code>sistema</code>) na seção
+<a href="#anatomia-da-escrita-na-trilha-25092026">"Anatomia da escrita na trilha (25/09/2026)"</a>.</p>
 <h2 id="banco-exclusivo-db_mod_auditoriadb-wal">Banco exclusivo (<code>db_mod_auditoria.db</code>, WAL)<a class="headerlink" href="#banco-exclusivo-db_mod_auditoriadb-wal" title="Permanent link">&para;</a></h2>
-<p>Criador vigente: <code>init_db_auditoria()</code> em <code>bd_manipulador.py:25-38</code> (executado no import e pelo bootstrap central).</p>
+<p>Criador vigente: <code>init_db_auditoria()</code> em <code>bd_manipulador.py</code> (executado no import e pelo bootstrap central).</p>
 <ul>
-<li><strong><code>tb_auditoria_&lt;modulo&gt;</code></strong> — UMA TABELA POR MÓDULO (nome sanitizado: hífen vira <code>_</code>, ex. <code>edit-pdf</code> → <code>tb_auditoria_edit_pdf</code>). Colunas: <code>id</code>, <code>usuario</code>, <code>modulo</code>, <code>acao</code>, <code>descricao</code>, <code>timestamp</code> (horário local — RF-08), <code>hash_arquivo</code>, <code>ip</code>, <code>user_agent</code>, <code>client_hostname</code>; índices por <code>modulo</code>, <code>usuario</code> e <code>timestamp</code>.</li>
+<li><strong><code>tb_auditoria_&lt;modulo&gt;</code></strong> — UMA TABELA POR MÓDULO (nome sanitizado: hífen vira <code>_</code>, ex. <code>edit-pdf</code> → <code>tb_auditoria_edit_pdf</code>). Colunas: <code>id</code>, <code>usuario</code>, <code>modulo</code>, <code>acao</code>, <code>descricao</code>, <code>timestamp</code> (horário local — RF-08), <code>hash_arquivo</code>, <code>ip</code>, <code>user_agent</code>, <code>client_hostname</code>; índices por <code>modulo</code>, <code>usuario</code> e <code>timestamp</code>. O <code>hash_arquivo</code> é opaco para este módulo: quem calcula (ex. SHA-256 no Editor de PDF) é o produtor, que repassa via <code>audit_log</code> → <code>registrar_auditoria</code>.</li>
 <li><strong><code>tb_auditoria_meta</code></strong> — registro dos módulos produtores (<code>modulo</code> PK, <code>nome</code>, <code>criada_em</code>).</li>
-<li><strong>Migração idempotente</strong> do legado: <code>migrar_dados_existentes()</code> (<code>bd_manipulador.py:273-324</code>) copia a antiga <code>tb_auditoria</code> do banco central para as tabelas por módulo, marca <code>auditoria_migracao_concluida=1</code> na <code>tb_config</code> e <strong>remove a tabela legada</strong> do central.</li>
-<li><strong>Poda LGPD</strong>: <code>podar_registros(dias)</code> (<code>bd_manipulador.py:147-171</code>) remove registros mais antigos que o prazo em TODAS as tabelas — chamada diariamente pelo job <code>poda_auditoria</code> (<code>mod_intranet/rotinas.py:74-103</code>, <code>auditoria_retencao_dias</code>, default 90).</li>
+<li><strong>Migração idempotente</strong> do legado: <code>migrar_dados_existentes()</code> (<code>bd_manipulador.py</code>) copia a antiga <code>tb_auditoria</code> do banco central para as tabelas por módulo, marca <code>auditoria_migracao_concluida=1</code> na <code>tb_config</code> e <strong>remove a tabela legada</strong> do central.</li>
+<li><strong>Poda LGPD</strong>: <code>podar_registros(dias)</code> (<code>bd_manipulador.py</code>) remove registros mais antigos que o prazo em TODAS as tabelas — chamada diariamente pelo job <code>poda_auditoria</code> (<code>mod_intranet/rotinas.py</code>, <code>auditoria_retencao_dias</code>, default 90).</li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Escrita automática por novos módulos</p>
-<p><code>registrar_auditoria</code> (<code>bd_manipulador.py:99-124</code>) cria a tabela do módulo e o registro em <code>tb_auditoria_meta</code> na primeira gravação — um módulo novo passa a auditar <strong>sem nenhuma edição</strong> neste módulo.</p>
+<p><code>registrar_auditoria</code> (<code>bd_manipulador.py</code>) cria a tabela do módulo e o registro em <code>tb_auditoria_meta</code> na primeira gravação — um módulo novo passa a auditar <strong>sem nenhuma edição</strong> neste módulo.</p>
 </div>
 <h2 id="estrutura-do-pacote">Estrutura do pacote<a class="headerlink" href="#estrutura-do-pacote" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>bd_manipulador.py</code> — conexão WAL, criação/garantia de tabelas, <code>registrar_auditoria</code>, <code>contar_registros</code>, <code>podar_registros</code>, <code>buscar_logs</code> (filtros + paginação), descoberta de módulos (<code>get_modulos_com_auditoria</code>/<code>get_tabelas_auditoria</code>) e migração do legado.</li>
-<li><code>telas.py</code> — visualizador (<code>mostrar_tela(usuario_logado, perfil)</code>).</li>
+<li><code>telas.py</code> — visualizador somente-leitura (<code>mostrar_tela(usuario_logado, perfil)</code>): abas Logs + Observabilidade (sem aba de administração interna).</li>
+<li><code>telas_administracao.py</code> — painel standalone <code>mostrar_administracao</code> (rota <code>/admin/auditoria</code>): cores + configurações específicas (limite, retenção, cabeçalho) + backup; exclusivo do <code>administrador_geral</code>.</li>
 <li><code>bd_criador.py</code> — <strong>legado</strong> (cria apenas <code>tb_auditoria_meta</code>; o esquema real é o de <code>bd_manipulador.py</code>).</li>
 <li><code>check_auditoria.py</code> — script diagnóstico standalone (lista chaves <code>auditoria%</code> da <code>tb_config</code> central).</li>
 </ul>
 <h2 id="fluxo-da-tela">Fluxo da tela<a class="headerlink" href="#fluxo-da-tela" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Acesso exclusivo ao <code>administrador_geral</code></strong> — dupla camada: bloqueio interno + exigência da chave <code>auditoria</code> em <code>pagina_restrita</code>. Tentativa sem permissão gera <code>acesso_negado</code> na trilha (choke point único em <code>layout_tela.pagina_restrita</code>).</li>
+<li><strong>Acesso exclusivo ao <code>administrador_geral</code></strong> — dupla camada: bloqueio interno + exigência da chave <code>auditoria</code> em <code>pagina_restrita</code>. Tentativa sem permissão gera <code>acesso_negado</code> na trilha (choke point único em <code>telas.pagina_restrita</code>).</li>
 <li><strong>Navegação dinâmica por tabela</strong>: select "Visualizar auditoria de" montado a partir do banco (<code>get_modulos_com_auditoria</code>) — "Todas as auditorias" (UNION ALL) ou a tabela de um módulo específico; rótulos amigáveis por chave (<code>DEFS_NAV</code>).</li>
-<li><strong>Filtros</strong>: Usuário (LIKE), Ação (select com <strong>categorias prontas</strong> coloridas <code>CORES_ACAO</code> + texto livre via <code>with_input</code>), Hora (<code>strftime('%H:%M')</code>), intervalo de datas (campos com calendário em popup).</li>
+<li><strong>Filtros</strong>: Usuário (LIKE), Ação (select com <strong>categorias prontas</strong> coloridas <code>CORES_ACAO</code> + texto livre via <code>with_input</code>), Hora (expressão do helper <code>_sql_hora()</code> — <code>to_char</code> no PG / <code>strftime</code> no SQLite), intervalo de datas (campos com calendário em popup).</li>
 <li><strong>Paginação server-side</strong>: <code>LIMIT ? OFFSET ?</code> (<code>auditoria_limite</code> como tamanho de página, default 1000) com contador e botões Anterior/Próxima; auto-atualização a cada 30 s.</li>
 <li><strong>Campos/ordem por auditor</strong>: painel "Campos e ordem de exibição" com mover ↑/↓, ocultar, adicionar e "Restaurar padrão"; persistido em <code>tb_config</code> na chave <code>auditoria_campos:&lt;usuario&gt;</code> (JSON). Coluna "Ação" colorida por categoria.</li>
 <li><strong>Exportação CSV</strong>: baixa o resultado filtrado da página corrente respeitando os <strong>campos e a ordem</strong> selecionados pelo auditor.</li>
 <li><strong>Colunas padrão</strong>: Data/Hora, Usuário, Módulo, Ação, Descrição (truncada a 100 chars), Hash, IP e rótulo de dispositivo (<code>rotulo_dispositivo</code>).</li>
 <li><strong>Aba Observabilidade</strong> (só quando a stack OTel está no ar — <code>docker_detector.otel_stack_rodando()</code>): cards de atalho para os dashboards Grafana (Visão Geral, Traces, Logs) com aviso LGPD sobre a senha padrão do Grafana.</li>
-<li><strong>Aba Administração</strong> (expansão, exclusiva do admin geral): <code>auditoria_limite</code>, <code>auditoria_retencao_dias</code>, <code>auditoria_texto_header</code> + card padrão <strong>"Configurações de cores"</strong> (<code>auditoria_cor_botao</code>, <code>auditoria_cor_texto_botao</code>, <code>auditoria_cor_fundo</code>, <code>auditoria_cor_titulo</code>, <code>auditoria_btn_tamanho</code> — vazios usam o padrão do PRÓPRIO módulo via <code>PADROES_TEMA["auditoria"]</code> = <code>#000000</code>, sem herança do tema do sistema). Salvar também <strong>audita a si mesmo</strong> (<code>auditoria</code>, <code>configuracao</code>).</li>
+<li><strong>Administração separada</strong> (<code>telas_administracao.py</code>, rota <code>/admin/auditoria</code>): <code>auditoria_limite</code>, <code>auditoria_retencao_dias</code>, <code>auditoria_texto_header</code> + card padrão <strong>"Configurações de cores"</strong> (<code>auditoria_cor_botao</code>, <code>auditoria_cor_texto_botao</code>, <code>auditoria_cor_fundo</code>, <code>auditoria_cor_titulo</code>, <code>auditoria_btn_tamanho</code> — vazios usam o padrão do PRÓPRIO módulo via <code>PADROES_TEMA["auditoria"]</code> = <code>#000000</code>, sem herança do tema do sistema). Salvar também <strong>audita a si mesmo</strong> (<code>auditoria</code>, <code>configuracao</code>).</li>
 </ul>
+<h2 id="anatomia-da-escrita-na-trilha-25092026">Anatomia da escrita na trilha (25/09/2026)<a class="headerlink" href="#anatomia-da-escrita-na-trilha-25092026" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>EN:</strong> Anatomy of a write into the trail — the only writer is
+<code>mod_intranet/bd_manipulador.py::audit_log()</code>, which hands the record to this
+module through a decoupled hook. Writes are cached (DDL once per session) and
+the commit is retried 3×; background actions (APScheduler) are recorded with
+<code>sistema</code> as the actor.</p>
+<p><strong>PT-BR:</strong> Anatomia de uma escrita na trilha — o <strong>único</strong> escritor é
+<code>mod_intranet/bd_manipulador.py::audit_log()</code>, que entrega o registro a este
+módulo por um <strong>gancho desacoplado</strong>. As escritas são cacheadas (DDL uma vez
+por sessão) e o commit tem <strong>retry 3×</strong>; as ações em background (APScheduler)
+entram na trilha com <code>sistema</code> como ator.</p>
+</blockquote>
+<h3 id="o-caminho-completo-de-uma-escrita">O caminho completo de uma escrita<a class="headerlink" href="#o-caminho-completo-de-uma-escrita" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>módulo de negócio
+   └─ audit_log(usuario, modulo, acao, descricao, hash_arquivo=None,
+               client_ip="__CTX__", client_user_agent="__CTX__")
+        │  mod_intranet/bd_manipulador.py:74-104
+        ├─ resolve IP/UA do contexto HTTP (mod_intranet/contexto.py) quando "__CTX__"
+        ├─ carimbo local: datetime.now().strftime("%Y-%m-%d %H:%M:%S")   (RF-08)
+        ├─ _hook_auditoria(...)            ← caminho normal (registrado no boot)
+        │      └─ mod_auditoria/bd_manipulador.registrar_auditoria(...)
+        └─ import lazy mod_auditoria...   ← fallback se nenhum gancho foi registrado
+</code></pre></div>
+<ul>
+<li><strong>Único ponto de escrita.</strong> Nenhum módulo grava em <code>db_mod_auditoria.db</code>
+  diretamente: todos passam por <code>audit_log</code>. Isso mantém o carimbo de tempo, a
+  rastreabilidade (IP/UA) e a decisão de destino (<code>tb_auditoria_&lt;modulo&gt;</code>) em um
+  lugar só.</li>
+<li><strong>Gancho, não import, no caminho quente.</strong> <code>registrar_hook_auditoria(fn)</code>
+  (<code>mod_intranet/bd_manipulador.py:29-39</code>) recebe a função gravadora <strong>quando o
+  módulo carrega</strong>, e <code>audit_log</code> só a chama. Isso <strong>remove a dependência cíclica
+  núcleo↔auditoria</strong>: o núcleo não importa o módulo de auditoria na rotina de
+  escrita. Sem gancho registrado, <code>audit_log</code> mantém o <strong>import lazy</strong> de
+  fallback (<code>bd_manipulador.py:102-104</code>) — o módulo continua funcionando mesmo
+  fora do boot completo.</li>
+<li><strong>Falha de auditoria não derruba a operação.</strong> <code>registrar_auditoria</code> é
+  fail-soft (loguru + <code>rollback</code>): se a trilha falhar, a escrita de negócio já
+  foi feita e a tela não cai. O mesmo vale para <code>crud_base.audit_reg</code>.</li>
+</ul>
+<h3 id="descoberta-de-tabela-meta-primaria-fallback-por-backend">Descoberta de tabela: meta primária + fallback por backend<a class="headerlink" href="#descoberta-de-tabela-meta-primaria-fallback-por-backend" title="Permanent link">&para;</a></h3>
+<p><code>registrar_auditoria</code> cria a tabela do módulo <strong>na primeira gravação</strong> e registra
+o módulo em <code>tb_auditoria_meta</code> — um módulo novo passa a auditar <strong>sem nenhuma
+edição</strong> neste módulo. A <strong>leitura</strong> (menu da tela) descobre as tabelas em duas
+fontes (<code>get_tabelas_auditoria</code>, <code>bd_manipulador.py:230-280</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Ordem</th>
+<th style="text-align: left;">Fonte</th>
+<th style="text-align: left;">Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>1ª (primária)</strong></td>
+<td style="text-align: left;"><code>SELECT modulo FROM tb_auditoria_meta ORDER BY nome</code> (<code>:245</code>)</td>
+<td style="text-align: left;">Portátil nos dois backends; devolve as tabelas já sanitizadas por <code>_nome_tabela(modulo)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>2ª (fallback)</strong></td>
+<td style="text-align: left;"><code>information_schema.tables</code> (PG, <code>:262-267</code>) · <code>sqlite_master</code> (SQLite, <code>:268</code>)</td>
+<td style="text-align: left;">SÓ se a meta falhar/estiver vazia</td>
+</tr>
+</tbody>
+</table>
+<p>O fallback é <strong>explícito por backend</strong> porque <code>SELECT</code> em <code>sqlite_master</code>
+<strong>através do proxy</strong> Postgres <strong>devolve vazio</strong> (não erro) — a comment no código
+registra isso. O mesmo par vale no helper <code>_tabela_existe</code> (<code>:72-96</code>), usado pela
+DDL e pela migração do legado. <code>get_modulos_com_auditoria</code> (<code>:283-318</code>) tem o
+mesmo desenho em dois níveis: meta → <code>get_tabelas_auditoria()</code> → derivação do
+módulo pelo nome da tabela (<code>_extrair_modulo</code>, inverso de <code>_nome_tabela</code>).</p>
+<h3 id="helpers-de-datahora-to_char-pg-vs-strftime-sqlite">Helpers de data/hora — <code>to_char</code> (PG) vs <code>strftime</code> (SQLite)<a class="headerlink" href="#helpers-de-datahora-to_char-pg-vs-strftime-sqlite" title="Permanent link">&para;</a></h3>
+<p>O filtro de <strong>Hora</strong> e o intervalo de <strong>Datas</strong> da tela precisavam de SQL de
+formatação — SQLite e PostgreSQL não compartilham a função. Em vez de <code>strftime</code>
+"solto" no SQL (que o proxy não traduz), há dois helpers que escolhem pelo SGBD
+ativo (<code>_sgbd()</code>, <code>:27-34</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Helper</th>
+<th style="text-align: left;">PostgreSQL</th>
+<th style="text-align: left;">SQLite</th>
+<th style="text-align: left;">Usado em</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>_sql_hora(coluna)</code> (<code>:99-107</code>)</td>
+<td style="text-align: left;"><code>to_char(col, 'HH24:MI')</code></td>
+<td style="text-align: left;"><code>strftime('%H:%M', col)</code></td>
+<td style="text-align: left;">filtro de hora na tabela única e no <code>UNION ALL</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>_sql_data_formatada(coluna)</code> (<code>:110-118</code>)</td>
+<td style="text-align: left;"><code>to_char(col, 'DD/MM/YYYY HH24:MI:SS')</code></td>
+<td style="text-align: left;"><code>strftime('%d/%m/%Y %H:%M:%S', col)</code></td>
+<td style="text-align: left;">coluna de data/hora formatada na tabela única e no <code>UNION ALL</code></td>
+</tr>
+</tbody>
+</table>
+<p>Ambos têm <code>except</code> com fallback para a forma SQLite e <code>log.exception</code> — nunca
+levantam.</p>
+<h3 id="cache-de-escrita-retry-3-no-commit">Cache de escrita + retry 3× no commit<a class="headerlink" href="#cache-de-escrita-retry-3-no-commit" title="Permanent link">&para;</a></h3>
+<p>Duas defesas contra a <strong>janela de lock</strong> do SQLite (o <code>audit_log</code> é chamado em
+toda ação, muitas vezes dentro de outra transação):</p>
+<ol>
+<li><strong><code>_TABELAS_GARANTIDAS</code></strong> (<code>:21</code>) — set de tabelas já garantidas <strong>nesta
+   sessão</strong>: o <code>CREATE TABLE</code> + o registro em <code>tb_auditoria_meta</code> só rodam na
+   <strong>primeira</strong> escrita do módulo (<code>:352-354</code>). Se o <code>INSERT</code> falhar com
+   <code>no such table</code> / <code>does not exist</code> / <code>undefined_table</code> (tabela derrubada por
+   alguém no meio do caminho), o cache é <strong>invalidado</strong>, a DDL é regarantada e o
+   <code>INSERT</code> é refeito <strong>uma vez</strong> (<code>:363-382</code>) — a trilha LGPD não se perde.</li>
+<li><strong><code>_commit_com_retry(conn, contexto)</code></strong> (<code>:37-69</code>) — até <strong><code>_TENTATIVAS_COMMIT = 3</code></strong>
+   tentativas; só re-tenta quando a mensagem indica contenção (<code>locked</code>, <code>busy</code>,
+   <code>timeout</code>) e ainda há tentativa, com backoff <code>0.05s × tentativa</code>; ao esgotar,
+   faz <code>rollback</code> seguro, registra <code>log.exception</code> e <strong>devolve <code>False</code></strong> (fail-soft
+   — quem chamou não propaga). O <code>contexto</code> (ex.: <code>registrar blog/criar_postagem</code>)
+   identifica a ação que falhou no log.</li>
+</ol>
+<h3 id="aquecimento-no-boot-por-que-a-1a-gravacao-custava-739-s-26092026">Aquecimento no boot: por que a 1ª gravação custava 73,9 s (26/09/2026)<a class="headerlink" href="#aquecimento-no-boot-por-que-a-1a-gravacao-custava-739-s-26092026" title="Permanent link">&para;</a></h3>
+<p>O item 1 acima tem um custo escondido. A <strong>primeira</strong> gravação de cada módulo
+roda <code>_garantir_tabela_auditoria</code> (DDL) dentro do event-loop do handler de tela.
+Medido num banco recém-criado: a 1ª chamada de <code>audit_log</code> levava <strong>73,9 s</strong>, e as
+seguintes caíam para ~145 ms. Como o handler roda no event-loop, a tela ficava
+congelada por mais de um minuto e o WebSocket caía — o "servidor desconectado"
+intermitente.</p>
+<p>A causa não era a auditoria em si, e sim o preço de setup de cada tabela pago na
+primeira ação de cada módulo. A correção é <strong><code>aquecer_auditoria(modulos=None)</code></strong>:
+ela pré-cria as tabelas de todos os módulos registrados <strong>antes</strong> do servidor
+aceitar requisições. O <code>main.py</code> chama isso em <code>_passo_auditoria</code>, o primeiro
+passo de <code>ativacao.progresso_boot</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">medição</th>
+<th style="text-align: left;">antes</th>
+<th style="text-align: left;">depois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1ª gravação de auditoria</td>
+<td style="text-align: left;"><strong>73,9 s</strong></td>
+<td style="text-align: left;"><strong>141 ms</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">preço do aquecimento (1×, no boot)</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">4,5 s</td>
+</tr>
+<tr>
+<td style="text-align: left;">gravações seguintes</td>
+<td style="text-align: left;">~145 ms</td>
+<td style="text-align: left;">~122 ms</td>
+</tr>
+</tbody>
+</table>
+<p>O aquecimento é <strong>síncrono de propósito</strong>: roda no boot, antes de o servidor
+existir, então não há event-loop a bloquear. Uma primeira tentativa usou
+<code>run.io_bound</code> e emitiu <code>RuntimeWarning: coroutine 'io_bound' was never awaited</code>
+— <code>io_bound</code> é <code>async</code> e não pode ser chamado de função síncrona; foi removido.</p>
+<p>Consequência prática: depois de um boot, <strong>nenhuma ação de usuário paga o preço de
+setup</strong>. Vale notar que isso derrubou <code>criar_impressora</code> de 28,1 s para
+milissegundos — medição que mudou a prioridade das correções anti-disconnect do
+Solicita Impressão (ver <code>analise_mod_solicita_impressao.md</code>, RISCO-SOL-01).</p>
+<h2 id="a-trilha-tambem-registra-as-acoes-em-background-apscheduler">A trilha também registra as ações em background (APScheduler)<a class="headerlink" href="#a-trilha-tambem-registra-as-acoes-em-background-apscheduler" title="Permanent link">&para;</a></h2>
+<p>Nem todo registro da trilha vem de um clique humano: os <strong>jobs agendados</strong> pelo
+núcleo gravam com o ator literal <strong><code>sistema</code></strong>, o que permite distinguir ação
+humana de ação automática na auditoria.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Job (<code>mod_intranet/rotinas.py</code>)</th>
+<th style="text-align: left;">Ator</th>
+<th style="text-align: left;">Como entra na trilha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>monitor_empenho</code> → <code>rodar_monitor("sistema")</code> (<code>:213-225</code>)</td>
+<td style="text-align: left;"><code>sistema</code></td>
+<td style="text-align: left;">Varredura da pasta monitorada de empenhos grava o renomeio dos campos de cadastro com <code>audit_log("sistema", "renomear-empenho", "campo_cadastro", ...)</code> (<code>mod_renomear_empenho/bd_manipulador.py:2726</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>agregador_coleta</code> → <code>coletar_todas(ator="sistema")</code> (<code>:228-240</code>)</td>
+<td style="text-align: left;"><code>sistema</code></td>
+<td style="text-align: left;">Cada coleta audita com <code>_auditoria(ator or "sistema", ...)</code> (<code>mod_agregador_noticias/bd_manipulador.py:97</code>); os definidores (<code>definir_habilitado</code>, <code>definir_intervalo</code>, <code>definir_termo</code>, <code>definir_fontes</code>, <code>definir_temas</code>, <code>definir_hora_reinicio</code>, <code>reiniciar_banco</code>) também têm <code>ator="sistema"</code> como default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>poda_auditoria</code> (<code>:288-317</code>)</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;"><strong>Praticada sobre</strong> a trilha: <code>podar_registros(dias)</code> remove registros mais antigos que <code>auditoria_retencao_dias</code> (default 90) em <strong>todas</strong> as tabelas; a remoção só gera <code>log</code> (<code>observabilidade</code>), não linha nova na trilha</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>backup</code> / <code>cleanup_pdf</code> / <code>cleanup_solicita</code></td>
+<td style="text-align: left;"><code>sistema</code>/usuário</td>
+<td style="text-align: left;">Backup manual grava <code>audit_log(usuario, "intranet", "backup_manual", ...)</code> a partir do painel (<code>rotinas.py:123</code>); o backup agendado registra hash SHA-256 dos arquivos via <code>hash_arquivo</code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Consequência para o auditor</p>
+<p>Filtrar por <code>usuario = "sistema"</code> separa o que o sistema fez sozinho
+(coleta de notícias, varredura de empenhos) do que uma pessoa fez. Sem isso,
+renomear um empenho automaticamente pareceria uma ação de usuário e a trilha
+perderia valor probatório. Auditoria <strong>nunca</strong> é apagada pela cascata LGPD de
+exclusão de usuário (ver
+<a href="../analise_mod_gest_cad_usuario/#limpeza-cruzada-lgpd-a-unica-excecao-de-negocionegocio">Gestão de Usuários</a>).</p>
+</div>
 <h2 id="integracoes-com-o-nucleo">Integrações com o núcleo<a class="headerlink" href="#integracoes-com-o-nucleo" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Escrita</strong>: <code>mod_intranet.bd_manipulador.audit_log</code> preenche IP/UA do contexto (<code>mod_intranet.contexto</code>) e chama <code>registrar_auditoria</code> — produtores: todos os módulos + o próprio núcleo (login/logout/falhas/configurações/backups).</li>
+<li><strong>Escrita</strong>: <code>mod_intranet.bd_manipulador.audit_log</code> preenche IP/UA do contexto (<code>mod_intranet.contexto</code>) e chama <code>registrar_auditoria</code> — produtores: todos os módulos + o próprio núcleo (login/logout/falhas/configurações/backups) + os <strong>jobs em background</strong> com ator <code>sistema</code> (ver seção acima).</li>
+<li><strong>Desacoplamento</strong>: o núcleo <strong>não importa</strong> este módulo no caminho quente — usa o gancho <code>registrar_hook_auditoria</code>; o import lazy de <code>audit_log</code> é só o fallback.</li>
 <li><strong>Leitura</strong>: <code>buscar_logs</code> (UNION ALL entre tabelas ou tabela única), <code>get_modulos_com_auditoria</code> (menu dinâmico), <code>contar_registros</code> (resumo do dashboard).</li>
 <li><strong>Config</strong>: <code>get_config</code>/<code>set_config</code> centrais (<code>auditoria_limite</code>, <code>auditoria_retencao_dias</code>, <code>auditoria_texto_header</code>, <code>auditoria_campos:&lt;usuario&gt;</code>, tema <code>auditoria_*</code>).</li>
 <li><strong>Poda</strong>: job diário <code>poda_auditoria</code> do APScheduler central.</li>
@@ -345,6 +571,403 @@
 <tr>
 <td style="text-align: left;">Cupê Aparência + auto-auditoria das configs</td>
 <td style="text-align: center;">✅ Implementado</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada">Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)<a class="headerlink" href="#pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Documentação da correção pendente. Nenhum <code>.py</code> alterado neste lote.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Arquivo:linha</th>
+<th style="text-align: left;">Correção proposta contida no módulo</th>
+<th style="text-align: left;">Risco regressão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">auditoria</td>
+<td style="text-align: left;">Sem <code>CrudBase</code>; <code>sqlite_master</code> em 3 pontos; <code>strftime</code> em SQL sem tradução PG</td>
+<td style="text-align: left;"><code>mod_auditoria/bd_manipulador.py:138</code>, <code>:460</code>, <code>:475</code> (<code>sqlite_master</code>) · <code>:339</code>, <code>:352</code>, <code>:372</code>, <code>:388</code> (<code>strftime</code>)</td>
+<td style="text-align: left;">Migrar para <code>CrudBase</code> + <code>conexao("auditoria")</code>; helper <code>_tabela_existe()</code> interno; reescrever filtro hora/datas sem <code>strftime</code> SQL (Python ou <code>EXTRACT</code>/<code>TO_CHAR</code> isolado)</td>
+<td style="text-align: left;">Médio-alto (LGPD/poda + UNION ALL + CSV)</td>
+</tr>
+</tbody>
+</table>
+<p>Detalhe consolidado em <a href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade</a>.</p>
+<h2 id="correcao-aplicada-24092026-wal-paridade-sqlitepostgresql">Correção aplicada 24/09/2026 — WAL + paridade SQLite↔PostgreSQL<a class="headerlink" href="#correcao-aplicada-24092026-wal-paridade-sqlitepostgresql" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>EN: Fix applied 24/09/2026 in <code>mod_auditoria/bd_manipulador.py</code> (code already patched, docs-only batch): meta-first discovery + <code>information_schema</code> fallback, <code>to_char</code> vs <code>strftime</code> helpers, write cache + 3x commit retry, portable migration, portable <code>check_auditoria.py</code>; tests 12/12 in <code>assets/test/test_auditoria.py</code>, verdict PASS.</p>
+<p>Correção aplicada em 24/09/2026 em <code>mod_auditoria/bd_manipulador.py</code> (código já corrigido, lote só-documentação): descoberta via meta + fallback <code>information_schema</code>, helpers <code>to_char</code> vs <code>strftime</code>, cache de escrita + retry 3x, migração portável, <code>check_auditoria.py</code> portável; testes 12/12 em <code>assets/test/test_auditoria.py</code>, veredito APROVADO.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Tema</th>
+<th style="text-align: left;">Antes (pendência 24/09)</th>
+<th style="text-align: left;">Depois (correção aplicada) — arquivo:linha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Descoberta via meta + <code>information_schema</code></td>
+<td style="text-align: left;"><code>sqlite_master</code> em 3 pontos, sem ramo PG</td>
+<td style="text-align: left;">Fonte primária <code>tb_auditoria_meta</code> (<code>bd_manipulador.py:245</code>); fallback por backend (<code>:256-269</code>): <code>information_schema.tables</code> no PG (<code>:260-267</code>), <code>sqlite_master</code> só no SQLite (<code>:268</code>); <code>_tabela_existe()</code> portável (<code>:72-96</code>) com <code>_sgbd()</code> (<code>:27-34</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Filtros hora/data <code>to_char</code></td>
+<td style="text-align: left;"><code>strftime('%H:%M'/'%d/%m/%Y')</code> em SQL sem tradução no proxy (<code>:339</code>, <code>:352</code>, <code>:372</code>, <code>:388</code>)</td>
+<td style="text-align: left;"><code>_sql_hora()</code> (<code>:99-107</code>): <code>to_char(col, 'HH24:MI')</code> no PG, <code>strftime('%H:%M')</code> no SQLite — usado em <code>buscar_logs</code> tabela única (<code>:515</code>) e <code>UNION ALL</code> (<code>:548</code>); <code>_sql_data_formatada()</code> (<code>:110-118</code>): <code>to_char(col, 'DD/MM/YYYY HH24:MI:SS')</code> vs <code>strftime('%d/%m/%Y %H:%M:%S')</code> — usado em (<code>:528</code>) e (<code>:564</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cache de escrita + retry</td>
+<td style="text-align: left;">DDL+commit por escrita (janela de lock); <code>database is locked</code> sem retry</td>
+<td style="text-align: left;"><code>_TABELAS_GARANTIDAS</code> (<code>:21</code>) + <code>_TENTATIVAS_COMMIT = 3</code> (<code>:24</code>); <code>registrar_auditoria</code> só garante DDL se fora do cache (<code>:352-354</code>), invalida e regarante em <code>no such table</code>/<code>undefined_table</code> (<code>:367-375</code>); <code>_commit_com_retry()</code> (<code>:37-69</code>, backoff <code>0.05s × tentativa</code>, rollback seguro, fail-soft AGENTS §3.2); conexão via <code>conexao("auditoria")</code> + <code>PRAGMA journal_mode=WAL</code>/<code>synchronous=NORMAL</code> (<code>:130-146</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Migração portável</td>
+<td style="text-align: left;"><code>sqlite_master</code> no legado central, sem ramo PG</td>
+<td style="text-align: left;"><code>_migrar_dados_existentes_seguro()</code> (<code>:623</code>) usa <code>_tabela_existe(central_conn, "tb_auditoria")</code> (<code>:637</code>, <code>information_schema</code> no PG); garante <code>tb_auditoria_meta</code> (<code>:665-666</code>); grava por módulo + <code>_commit_com_retry</code> (<code>:679</code>); marca <code>auditoria_migracao_concluida=1</code> e remove legado (<code>:696-697</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>check</code> portável</td>
+<td style="text-align: left;">Risco de <code>sqlite3</code> cru no diagnóstico</td>
+<td style="text-align: left;"><code>check_auditoria.py</code> via <code>banco_conexao.conexao("intranet")</code> (<code>:31-33</code>), <code>SELECT chave, valor FROM tb_config WHERE chave LIKE 'auditoria%'</code> (<code>:35</code>) portável nos dois backends, log dedicado <code>logs/auditoria_*.log</code> — sem uso pela aplicação</td>
+</tr>
+</tbody>
+</table>
+<h3 id="testes-e-veredito">Testes e veredito<a class="headerlink" href="#testes-e-veredito" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Suíte</th>
+<th style="text-align: left;">Resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>assets/test/test_auditoria.py</code> — índices (3: <code>modulo</code>/<code>usuario</code>/<code>timestamp</code> em <code>tb_auditoria_intranet</code>) + <code>audit_log</code> rastreável (4: ação/IP/UA/timestamp local) + poda LGPD (2: remove velho/preserva novo) + acesso exclusivo (2: <code>qacomum</code> nega/<code>qamaster</code> permite) + prefs por usuário (1)</td>
+<td style="text-align: left;">12/12 OK</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Veredito: APROVADO — sem regressão.</strong> Pendência WAL+paridade do <code>mod_auditoria</code> (linha da tabela acima) considerada <strong>superada</strong>; demais módulos do plano permanecem pendentes conforme o arquivo consolidado.</p>
+<hr />
+<h1 id="rf-e-rnf-verificados-no-codigo-lote-1-26092026">RF e RNF verificados no código — lote 1 (26/09/2026)<a class="headerlink" href="#rf-e-rnf-verificados-no-codigo-lote-1-26092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Auditoria de requisitos <strong>funcionais</strong> (o que o sistema faz) e <strong>não
+funcionais</strong> (qualidade e restrições), com evidência <code>arquivo:linha</code> conferida
+no código em 26/09/2026.</p>
+</blockquote>
+<h2 id="requisitos-funcionais-rf-mapa-codigo-doc">Requisitos funcionais (RF) — mapa código ↔ doc<a class="headerlink" href="#requisitos-funcionais-rf-mapa-codigo-doc" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-AUD-01</td>
+<td style="text-align: left;"><strong>Uma tabela por módulo</strong> (<code>tb_auditoria_&lt;modulo&gt;</code>) criada automaticamente: módulo novo audita sem editar o Auditoria</td>
+<td style="text-align: left;"><code>bd_manipulador.py:121-127</code> <code>_nome_tabela</code> + <code>:183-227</code> <code>_garantir_tabela_auditoria</code> + cache de sessão <code>_TABELAS_GARANTIDAS</code> (<code>:21</code>, <code>:352-354</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-02</td>
+<td style="text-align: left;">Hífen do módulo vira <code>_</code> no nome da tabela (<code>edit-pdf</code> → <code>tb_auditoria_edit_pdf</code>)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:127</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-03</td>
+<td style="text-align: left;">Gravar ação com 10 campos LGPD: <code>usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent, client_hostname, timestamp</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:329-396</code> <code>registrar_auditoria</code> (INSERT em <code>:357-362</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-04</td>
+<td style="text-align: left;">Rastreabilidade preenchida a partir do <strong>contexto HTTP corrente</strong> quando o chamador não informa (<code>__CTX__</code>)</td>
+<td style="text-align: left;"><code>mod_intranet/bd_manipulador.py:88-95</code> (<code>contexto.contexto_atual()</code>) + <code>mod_intranet/contexto.py:71</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-05</td>
+<td style="text-align: left;">Timestamp em <strong>horário local</strong> (consistente com <code>tb_sessoes</code>)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:340-342</code> + <code>mod_intranet/bd_manipulador.py:96</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-06</td>
+<td style="text-align: left;">Tabela desaparecida no meio do caminho → recria e reinsere <strong>uma vez</strong>, sem perder a trilha</td>
+<td style="text-align: left;"><code>bd_manipulador.py:363-382</code> (detecta <code>no such table</code>/<code>does not exist</code>/<code>undefined_table</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-07</td>
+<td style="text-align: left;">Navegação <strong>dinâmica</strong> por tabela na tela (menu montado a partir do banco; módulo novo aparece sozinho)</td>
+<td style="text-align: left;"><code>telas.py:198</code> <code>_opcoes_navegacao</code> (consumida em <code>:416-424</code>) + <code>telas.py:432-441</code> <code>nav_tabela</code> + <code>bd_manipulador.py:230</code> <code>get_tabelas_auditoria</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-08</td>
+<td style="text-align: left;">Busca com filtros: usuário (<code>LIKE</code>), módulo (exato), ação (<code>LIKE</code> + categorias coloridas), hora <code>HH:MM</code>, intervalo de datas</td>
+<td style="text-align: left;"><code>bd_manipulador.py:483-531</code>; tela em <code>telas.py:409-503</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-09</td>
+<td style="text-align: left;">Sem tabela selecionada → <code>UNION ALL</code> de <strong>todas</strong> as tabelas por módulo (visão global)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:532-571</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-10</td>
+<td style="text-align: left;">Paginação <strong>server-side</strong> (<code>LIMIT ? OFFSET ?</code>) com total em <code>COUNT(*)</code> separado</td>
+<td style="text-align: left;"><code>bd_manipulador.py:500</code>, <code>:525-530</code>; tela em <code>telas.py:285-318</code> (<code>total_paginas</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-11</td>
+<td style="text-align: left;">Escolha de <strong>campos visíveis e ordem</strong> por auditor, persistida por usuário</td>
+<td style="text-align: left;"><code>telas.py:150-168</code> <code>_campos_ativos</code> (<code>auditoria_campos:&lt;usuario&gt;</code>) + painel <code>ui.expansion</code> em <code>telas.py:504-536</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-12</td>
+<td style="text-align: left;">Exportar <strong>CSV</strong> da consulta atual (respeita os campos escolhidos)</td>
+<td style="text-align: left;"><code>telas.py:321-339</code> <code>_exportar_csv</code> + botão <code>data-testid=auditoria-exportar</code> (<code>telas.py:501</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-13</td>
+<td style="text-align: left;">Poda LGPD por retenção (<code>podar_registros(dias)</code>), aplicada uniformemente a todas as tabelas</td>
+<td style="text-align: left;"><code>bd_manipulador.py:438-481</code>; agendado em <code>mod_intranet/rotinas.py:288</code> (<code>_job_poda_auditoria</code>, 24 h) + <code>:465</code> (<code>add_job</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-14</td>
+<td style="text-align: left;">Migração única do <code>tb_auditoria</code> central legado para as tabelas por módulo, com marcador persistido; ao final <strong>derruba</strong> a tabela legada</td>
+<td style="text-align: left;"><code>bd_manipulador.py:605-621</code> <code>migrar_dados_existentes</code> + <code>:582-602</code> <code>_remover_legado_central</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-15</td>
+<td style="text-align: left;">Visualizador <strong>somente leitura</strong> para <code>administrador_geral</code>; painel <code>/admin/auditoria</code> <strong>não renderiza</strong> para os demais</td>
+<td style="text-align: left;"><code>telas.py:104</code> <code>eh_admin_geral</code>; <code>telas_administracao.py:66</code>, <code>:87-88</code> (<code>if not eh_admin_geral: return</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-16</td>
+<td style="text-align: left;">Atualização automática da tabela a cada <strong>30 s</strong></td>
+<td style="text-align: left;"><code>telas.py:566</code> <code>ui.timer(30.0, _atualizar_tabela)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-17</td>
+<td style="text-align: left;">Aba <strong>Observabilidade</strong> (dashboards Grafana) só quando a stack OTel está no ar</td>
+<td style="text-align: left;"><code>telas.py:408</code> <code>obs_ligado = _dd.otel_stack_rodando()</code> + <code>abas(..., observabilidade=obs_ligado)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-AUD-18</td>
+<td style="text-align: left;">Categorias de ação com <strong>cor por tipo</strong> (<code>CORES_ACAO</code>) na coluna Ação</td>
+<td style="text-align: left;"><code>telas.py:54</code> <code>CORES_ACAO</code> + <code>telas.py:265-268</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="requisitos-nao-funcionais-rnf-garantias-tecnicas">Requisitos não-funcionais (RNF) — garantias técnicas<a class="headerlink" href="#requisitos-nao-funcionais-rnf-garantias-tecnicas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RNF</th>
+<th style="text-align: left;">Exigência</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RNF-AUD-PERS-01</td>
+<td style="text-align: left;">Banco <strong>exclusivo</strong> da auditoria, um por módulo</td>
+<td style="text-align: left;"><code>get_auditoria_connection</code> → <code>banco_conexao.conexao("auditoria")</code> (<code>bd_manipulador.py:130-146</code>) → <code>db_mod_auditoria.db</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-PERS-02</td>
+<td style="text-align: left;"><code>PRAGMA journal_mode=WAL</code> + <code>synchronous=NORMAL</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:141-142</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-PERS-03</td>
+<td style="text-align: left;"><code>busy_timeout=5000</code> herdado do núcleo + <strong>retry 3× em <code>database is locked</code></strong> com rollback seguro</td>
+<td style="text-align: left;"><code>banco_conexao.py:707</code> + <code>bd_manipulador.py:37-69</code> <code>_commit_com_retry</code> (<code>_TENTATIVAS_COMMIT = 3</code> em <code>:24</code>, backoff <code>0.05 × tentativa</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-PERS-04</td>
+<td style="text-align: left;"><strong>Trilha nunca é perdida por contenção</strong>: DDL só na primeira vez por sessão (fora da janela de lock)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:350-354</code> (<code>if tabela not in _TABELAS_GARANTIDAS</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-PERF-01</td>
+<td style="text-align: left;">3 índices por tabela — <code>modulo</code>, <code>usuario</code>, <code>timestamp</code></td>
+<td style="text-align: left;"><code>bd_manipulador.py:207-211</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-PERF-02</td>
+<td style="text-align: left;">Teto de página configurável (<code>auditoria_limite</code>, piso 10, default 1000)</td>
+<td style="text-align: left;"><code>telas.py:144-146</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-PERF-03</td>
+<td style="text-align: left;">Leitura <strong>curta</strong> (1 <code>COUNT</code> + 1 <code>SELECT</code>), sem carregar a tabela inteira</td>
+<td style="text-align: left;"><code>bd_manipulador.py:525-530</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-COMP-01</td>
+<td style="text-align: left;">Paridade SQLite ↔ PostgreSQL</td>
+<td style="text-align: left;"><code>_sgbd()</code> (<code>:27-34</code>) escolhe o backend; <code>_tabela_existe</code> (<code>:72-96</code>) usa <code>information_schema.tables</code> no PG e <code>sqlite_master</code> no SQLite; <code>_sql_hora</code> (<code>:99-107</code>) → <code>to_char(...,'HH24:MI')</code> vs <code>strftime('%H:%M')</code>; <code>_sql_data_formatada</code> (<code>:110-118</code>) → <code>to_char(...,'DD/MM/YYYY HH24:MI:SS')</code>; <code>datetime('now','localtime')</code> → <code>LOCALTIMESTAMP</code> (proxy, <code>banco_conexao.py:471</code>); <code>cur.executescript</code> de 3 <code>CREATE INDEX</code> emulado no proxy (<code>banco_conexao.py:604-608</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-SEG-01</td>
+<td style="text-align: left;">Nome de tabela sempre derivado de <code>_nome_tabela()</code> (hífen→<code>_</code>), nunca input cru — com <code># nosec B608</code> documentando o porquê</td>
+<td style="text-align: left;"><code>bd_manipulador.py:127</code>, <code>:359</code>, <code>:206</code>, <code>:211</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-SEG-01b</td>
+<td style="text-align: left;">Tabelas do <code>UNION ALL</code> vêm de <code>get_modulos_com_auditoria()</code> (whitelist do próprio banco), não de string do usuário</td>
+<td style="text-align: left;"><code>bd_manipulador.py:558-561</code>, <code>:562-566</code> (todos com <code># nosec B608</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-SEG-02</td>
+<td style="text-align: left;"><code>Filtros parametrizados</code> (<code>?</code>) em toda a cláusula <code>WHERE</code>, inclusive <code>LIKE</code> e intervalo de datas</td>
+<td style="text-align: left;"><code>bd_manipulador.py:505-522</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-SEG-03</td>
+<td style="text-align: left;">Leitura da trilha é <strong>read-only</strong>: a tela não expõe escrita/edição/exclusão de registro</td>
+<td style="text-align: left;"><code>telas.py:94-566</code> — só <code>buscar_logs</code>, <code>contar_registros</code>, <code>podar_registros</code> (esta última só via painel do admin)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-RES-01</td>
+<td style="text-align: left;"><code>try/except</code> em toda função, com <code>log.exception</code> + retorno neutro (<code>0</code>, <code>[]</code>, <code>None</code>, <code>( [], 0 )</code>) — a trilha <strong>nunca derruba</strong> a tela nem o <code>try/except</code> do chamador</td>
+<td style="text-align: left;"><code>bd_manipulador.py:29-34</code>, <code>:37-69</code>, <code>:90-96</code>, <code>:144-146</code>, <code>:157-161</code>, <code>:174-180</code>, <code>:221-227</code>, <code>:405-436</code>, <code>:494-498</code>, <code>:572-578</code>; <code>telas.py:379-389</code>, <code>:392-399</code>, <code>:283-318</code>, <code>:321-339</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-UX-01</td>
+<td style="text-align: left;"><code>data-testid</code> nas ações de QA</td>
+<td style="text-align: left;"><code>telas.py:411</code> (<code>auditoria-busca</code>), <code>telas.py:501</code> (<code>auditoria-exportar</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-UX-02</td>
+<td style="text-align: left;">Calendário em <strong>popup</strong> (abre só ao clicar) em vez de sempre aberto</td>
+<td style="text-align: left;"><code>telas.py:447-483</code> <code>_campo_data</code> (<code>ui.menu</code> + <code>campo.on('click', _abrir)</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-UX-03</td>
+<td style="text-align: left;">Descrição truncada em 100 caracteres com reticências na tabela (tabela enxuta; o texto completo fica no CSV)</td>
+<td style="text-align: left;"><code>telas.py:270-272</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-I18N-01</td>
+<td style="text-align: left;">Docstring bilíngue EN/PT-BR nas telas; <strong>exceção</strong> no <code>bd_manipulador.py</code> (só PT-BR)</td>
+<td style="text-align: left;"><code>telas.py:1-10</code> e <code>telas_administracao.py:1-5</code> são bilíngues; <code>bd_manipulador.py:1-8</code> <strong>não</strong> tem o bloco EN (ver DIV-AUD-01)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-AUD-I18N-02</td>
+<td style="text-align: left;">Toda a UI em PT-BR; rótulos de campo derivados de <code>CAMPOS</code>/<code>_LABEL</code></td>
+<td style="text-align: left;"><code>telas.py:409-503</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="divergencias-e-riscos">Divergências e riscos<a class="headerlink" href="#divergencias-e-riscos" title="Permanent link">&para;</a></h2>
+<h3 id="codigo-faz-doc-nao-diz">Código faz, doc não diz<a class="headerlink" href="#codigo-faz-doc-nao-diz" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Evidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DIV-AUD-01</td>
+<td style="text-align: left;">O docstring de módulo de <code>bd_manipulador.py</code> <strong>não</strong> segue o padrão bilíngue EN-topo/PT-BR-abaixo exigido pelo AGENTS.md (é PT-BR puro)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1-8</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-AUD-02</td>
+<td style="text-align: left;"><code>_TABELAS_GARANTIDAS</code> é um cache de sessão que só é invalidado quando o <code>INSERT</code> falha com "no such table" — se o DDL for feito por fora (restauração de backup, <code>psql</code>), a primeira escrita da sessão já cai no caminho de recuperação</td>
+<td style="text-align: left;"><code>bd_manipulador.py:21</code>, <code>:352-354</code>, <code>:363-373</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-AUD-03</td>
+<td style="text-align: left;">A aba Observabilidade (Grafana) é condicional à stack OTel, mas a doc da tela de auditoria não descreve o comportamento quando a stack está <strong>fora</strong></td>
+<td style="text-align: left;"><code>telas.py:408</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-AUD-04</td>
+<td style="text-align: left;"><code>check_auditoria.py</code> (<code>main()</code>) é um verificador standalone de integridade da trilha que <strong>não</strong> é chamado por nenhum fluxo do sistema</td>
+<td style="text-align: left;"><code>mod_auditoria/check_auditoria.py:26</code> — sem referência em <code>main.py</code> nem em <code>rotinas.py</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="doc-diz-codigo-nao-faz">Doc diz, código não faz<a class="headerlink" href="#doc-diz-codigo-nao-faz" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Alegação da doc</th>
+<th style="text-align: left;">Estado real</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DIV-AUD-05</td>
+<td style="text-align: left;">Doc descreve a trilha como "somente <code>administrador_geral</code>"</td>
+<td style="text-align: left;">A <strong>rota</strong> <code>/auditoria</code> só exige acesso ao módulo (<code>main.py:601-605</code> → <code>pagina_restrita(..., chave_modulo="auditoria")</code>); o <code>eh_admin_geral</code> de <code>telas.py:104</code> controla <strong>cores/aparência e a aba de Administração</strong>, não a leitura da trilha. Um <code>administrador</code> do módulo com papel <code>comum</code> <strong>lê a trilha</strong> e só não gerencia.</td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-AUD-06</td>
+<td style="text-align: left;">Doc cita "retenção LGPD 90 dias" como padrão</td>
+<td style="text-align: left;">Confirmado: <code>telas.py:147</code> <code>retencao_dias = _cfg("retencao_dias", "90")</code> — mas é <strong>texto de config</strong>, e quem efetivamente executa a poda é <code>_job_poda_auditoria</code> (<code>mod_intranet/rotinas.py:288</code>), que precisa ler essa chave.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="riscos">Riscos<a class="headerlink" href="#riscos" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Risco</th>
+<th style="text-align: left;">Severidade</th>
+<th style="text-align: left;">Evidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>RISCO-AUD-01</strong></td>
+<td style="text-align: left;">~~<strong><code>v-html</code> sem escape na coluna "Ação"</strong>~~ <strong>Corrigido 26/09/2026.</strong> A coluna montava <code>&lt;span style="color:..."&gt;{raw["acao"]}&lt;/span&gt;</code> e o slot <code>body-cell-acao</code> renderiza por <code>v-html</code>; <code>acao</code> é uma string livre em <code>_audit(usuario, acao, ...)</code>, então qualquer valor fora de <code>CORES_ACAO</code> caía direto no HTML. Agora <code>html.escape()</code> é aplicado ao <code>acao</code> (e só ele — <code>descricao</code> e <code>hash</code> são renderizados como texto pelo Quasar, que já escapa).</td>
+<td style="text-align: left;">✅ <strong>Corrigido 26/09/2026</strong></td>
+<td style="text-align: left;"><code>telas.py:266-276</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-AUD-02</strong></td>
+<td style="text-align: left;"><strong><code>contar_registros()</code> sem tabela faz N+1</strong>: um <code>COUNT(*)</code> por tabela de módulo</td>
+<td style="text-align: left;"><code>bd_manipulador.py:415-426</code> — com ~12 módulos são 12 <code>COUNT</code>s a cada montagem do dashboard</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-AUD-03</strong></td>
+<td style="text-align: left;"><strong><code>_exportar_csv</code> exporta só <code>_ultimos_logs</code></strong> (a página atual, ≤ <code>auditoria_limite</code> = 1000), mas a dica da UI não avisa disso. Quem filtrou 50 mil registros e exportou recebe 1 000 linhas sem indicação.</td>
+<td style="text-align: left;">🟡 Baixa</td>
+<td style="text-align: left;"><code>telas.py:323-336</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-AUD-04</strong></td>
+<td style="text-align: left;"><strong>Zero <code>async</code> / <code>run.io_bound</code> / <code>spinner</code></strong> no módulo. <code>_atualizar_tabela</code> (chamada pelo <code>ui.timer(30.0)</code> e por cada clique em "Buscar") roda <code>COUNT</code> + <code>SELECT</code> + <code>UNION ALL</code> de N tabelas direto no event-loop. Com trilha grande, o poll de 30 s por auditor累积 e derruba o WebSocket — viola AGENTS.md §5.1.</td>
+<td style="text-align: left;">🟠 Média</td>
+<td style="text-align: left;"><code>telas.py:566</code> + ausência de <code>async def</code> em <code>mod_auditoria/*.py</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-AUD-05</strong></td>
+<td style="text-align: left;"><code>buscar_logs</code> sem <code>tabela</code> monta o <code>UNION ALL</code> por chamada (string concatenada a partir de N tabelas) — o <strong>plano de consulta é re-parseado a cada busca</strong>, e <code>COUNT</code> roda sobre o mesmo <code>UNION</code> (2 varreduras). Em PostgreSQL isso é o pior caso do planejador.</td>
+<td style="text-align: left;">🟡 Baixa</td>
+<td style="text-align: left;"><code>bd_manipulador.py:557-570</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-AUD-06</strong></td>
+<td style="text-align: left;"><code>check_auditoria.py</code> não é executado por nenhum job — a verificação de integridade da trilha depende de alguém rodar o script à mão.</td>
+<td style="text-align: left;">🟡 Baixa</td>
+<td style="text-align: left;"><code>mod_auditoria/check_auditoria.py:26</code></td>
 </tr>
 </tbody>
 </table>

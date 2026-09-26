@@ -74,9 +74,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="guia_API/">Guia de API</a>
@@ -101,9 +104,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -268,9 +280,9 @@
 <li><a href="analise_mod_auditoria/">Auditoria</a></li>
 <li><a href="analise_mod_solicita_impressao/">Solicitação de Impressão</a> — cotas 1000/200 via <code>ORGANOGRAMA_BASE</code> do organograma</li>
 <li><a href="analise_mod_tecnico/">Técnico</a> — software + backup <code>YYYYMMDD_HHMM_nomePc_ip</code>, owner-isolation, <code>webkitdirectory</code></li>
-<li><a href="analise_mod_filas/">Filas (TV, esqueleto)</a> — gestor de chamadas com TV (<code>/filas</code> + <code>/tv</code> pública) + <strong>carrossel de notícias</strong> do Agregador</li>
+<li><a href="analise_mod_filas/">Filas (TV, multi-filas)</a> — gestor de chamadas com TV (<code>/filas</code> + <code>/tv</code> pública) + <strong>carrossel de notícias</strong> do Agregador + ordem da fala <code>voz_ordem</code> + papel de fundo</li>
 <li><a href="analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a> — <strong>novo</strong> (19/09/2026) organograma 12 secretarias <code>Secretaria→Setor→Subsetor</code>, contatos alfabéticos, busca sem acentos, <code>tel:</code> no celular</li>
-<li><a href="analise_mod_agregador_noticias/">Agregador de Notícias</a> — <strong>novo</strong> (19/09/2026) <code>httpx+parsel</code> scrapy-like (Google/BBC/JFP/RSS), 3 colunas masonry, 24h retenção, integração TV <code>listar_para_tv</code></li>
+<li><a href="analise_mod_agregador_noticias/">Agregador de Notícias</a> — <strong>novo</strong> (19/09/2026) <code>httpx+parsel</code> scrapy-like (Google/BBC/JFP/RSS), grid 3→2→1 com card de altura fixa e miniatura <code>120×120</code> ampliável, 24h retenção, integração TV <code>listar_para_tv</code></li>
 </ul>
 <h2 id="modulos-resumo">Módulos (resumo)<a class="headerlink" href="#modulos-resumo" title="Permanent link">&para;</a></h2>
 <ul>
@@ -282,14 +294,42 @@
 <li><a href="modulos/auditoria/">Auditoria</a></li>
 <li><a href="modulos/solicitacao_impressao/">Solicitação de Impressão</a> — <strong>atualizado</strong> cotas 1000/200 via <code>ORGANOGRAMA_BASE</code></li>
 <li><a href="modulos/tecnico/">Técnico</a> — <strong>novo</strong> (18/09/2026)</li>
-<li><a href="modulos/filas/">Filas (TV, esqueleto)</a> — <strong>novo</strong> esqueleto (18/09/2026) + <strong>carrossel Agregador</strong> (19/09/2026)</li>
+<li><a href="modulos/filas/">Filas (TV, multi-filas)</a> — multi-filas + TV por etapa + <strong>carrossel Agregador</strong> + ordem da fala + papel de fundo (volume 40)</li>
 <li><a href="modulos/lista_telefonica/">Lista Telefônica (organograma)</a> — <strong>novo</strong> (19/09/2026) <code>Secretaria→Setor→Subsetor</code>, <code>tel:</code> clicável, admin com excluir ramo/mover/elevar</li>
-<li><a href="modulos/agregador_noticias/">Agregador de Notícias</a> — <strong>novo</strong> (19/09/2026) <code>httpx+parsel</code> multi-fonte (Google/BBC/JFP/RSS), 3 colunas masonry <code>window.open</code>, TV <code>listar_para_tv</code> 7s/120s</li>
+<li><a href="modulos/agregador_noticias/">Agregador de Notícias</a> — <strong>novo</strong> (19/09/2026) <code>httpx+parsel</code> multi-fonte (Google/BBC/JFP/RSS), grid 3→2→1 com card de altura fixa <code>300px</code>, miniatura <code>120×120</code> ampliável em diálogo, marca d'água da fonte, resumo com scroll, TV <code>listar_para_tv</code> 7s/120s</li>
 </ul>
 <h2 id="documentos-raiz-de-apoio">Documentos-raiz de apoio<a class="headerlink" href="#documentos-raiz-de-apoio" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>README.md</code> (cartão de visitas) · <code>PLANO.md</code> (checklist por fases) · <code>analise.md</code> (requisitos/roadmap) · <code>../AGENTSadf.md</code> (regras de edição/IA)</li>
 </ul>
+<h2 id="qualidade-verificacao-obrigatoria-antes-de-fechar-um-ciclo">Qualidade — verificação obrigatória antes de fechar um ciclo<a class="headerlink" href="#qualidade-verificacao-obrigatoria-antes-de-fechar-um-ciclo" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Barreira</th>
+<th style="text-align: left;">Comando</th>
+<th style="text-align: left;">Regra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Análise estática</strong></td>
+<td style="text-align: left;"><code>.venv/bin/python -m pyflakes main.py mod_*/*.py mod_*/*/*.py</code></td>
+<td style="text-align: left;"><strong><code>undefined name</code> é bloqueante</strong> — igual a teste vermelho. O <code>try/except</code> obrigatório do AGENTS.md §3.2 engole o <code>NameError</code> e a suíte passa com a funcionalidade quebrada (7 casos reais em 25/09/2026)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Documentação</strong></td>
+<td style="text-align: left;"><code>.venv/bin/mkdocs build --strict</code></td>
+<td style="text-align: left;">Sem novos avisos; padrão MkDocs tema <code>readthedocs</code>, docstrings bilíngue EN no topo / PT-BR abaixo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Segurança</strong></td>
+<td style="text-align: left;"><code>.venv/bin/bandit -r mod_*/</code></td>
+<td style="text-align: left;">HIGH e MEDIUM zerados</td>
+</tr>
+</tbody>
+</table>
+<p>Detalhes em <a href="convencoes_codigo/#analise-estatica-obrigatoria-pyflakes">Convenções de Criação de Código</a>.</p>
 <h2 id="convencao">Convenção<a class="headerlink" href="#convencao" title="Permanent link">&para;</a></h2>
 <p>Em conflito de informação, prevalece o código executável sobre a documentação. Cabeçalho EN+PT-BR em todas as páginas.</p>
               
@@ -340,5 +380,5 @@
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2026-09-20 12:22:51.324483+00:00
+Build Date UTC : 2026-09-26 23:16:04.890817+00:00
 -->

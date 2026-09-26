@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -173,6 +183,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -257,17 +269,108 @@
 <li><strong>Administração</strong> (padrão de cards dos módulos, 06/09): card <strong>"Configurações de cores"</strong> (prévia ao vivo), card <strong>"Configurações específicas"</strong> (cota global GB default 10, máx. arquivos/lote, MB/lote, cota por usuário GB, minutos de expiração e textos da tela) e card <strong>"Manutenção"</strong> ("Expirar agora") — todos recolhíveis (<code>card_admin</code>) com o rodapé padrão de 2 botões ("Restaurar padrão" + "Aplicar") exclusivos do card, recarregando após 1s; ao final, card padrão de backup do banco (<code>painel_backup</code>).</li>
 <li><strong>Aparência</strong> (Administração): tema do módulo via card padrão <strong>"Configurações de cores"</strong> (<code>tema_modulo.bloco_aparencia</code> — <code>mod_edit_pdf/telas_administracao.py:175</code>, <code>com_card=True</code> — prévia ao vivo e rodapé 2 botões) — campos <strong>"Cor geral do módulo"</strong> (<code>editpdf_cor_botao</code>), "Cor do texto do módulo", fundo, título, tamanho (<code>editpdf_*</code>) montados pelas fábricas <code>campo_cor</code>/<code>campo_selecao</code>. Este módulo é o <strong>módulo exemplo</strong> do padrão de exibição: área cheia (<code>w-full</code>) e card "Configurações de cores" com as 6 chaves (<code>cor_botao</code>, <code>cor_texto_botao</code>, <code>cor_fundo</code>, <code>cor_titulo</code>, <code>btn_tamanho</code>, <code>texto_header</code>), replicado aos demais módulos. Com as chaves de botão <code>editpdf_*</code> <strong>vazias</strong> (padrão atual), os botões usam o <strong>padrão do módulo</strong> (<code>PADROES_TEMA</code> — todos os módulos em <code>#000000</code>, a cor do intranet — sem herança do tema do sistema); o override por módulo continua possível no card.</li>
 <li><strong>Padrões centrais de UI (06/09)</strong>: TODOS os botões de ação usam o MESMO padrão <code>ui_comum.botao(..., variante="primario", chave_modulo="editar_pdf")</code> — sem <code>compacto</code>/<code>no_caps</code> — inclusive "Excluir selecionados" (deixou <code>variante="perigo"</code>), "Enviar agora" (deixou <code>variante="solido"</code>) e o botão "Atualizar" (deixou de ser <code>botao_icone</code>); 32 avisos via <code>notificar</code> (tempo configurável em <code>notificacao_timeout</code>); tema único via <code>ler_tema("editar_pdf", ...)</code> (helpers locais <code>cls_btn</code>/<code>estilo_btn</code> removidos de <code>telas.py</code>); borda do cabeçalho = <code>tema["cor_botao"]</code> (antes <code>CORES["perigo"]</code> fixo) e título colorido por <code>_app_tema</code> via <code>lbl_header_titulo</code>; <code>PADROES_CFG</code> corrigido para o prefixo real <code>editpdf_*</code> (antes <code>editar_pdf_cor_*</code>, nunca lidas). Detalhes em <a href="../../analise_mod_edit_pdf/">Análise do Módulo</a>.</li>
+<li><strong>Avisos unificados (25/09/2026, commit <code>624c9d5</code>)</strong>: <strong>22 chamadas de <code>ui.notify(...)</code> cru foram trocadas por <code>tema_modulo.notificar()</code></strong> em <code>telas.py</code> — o módulo <strong>não usa mais aviso cru na tela</strong> e passa a respeitar o tempo configurável <code>notificacao_timeout</code> (<strong>1–30 s, padrão 5</strong>) em <strong>todos</strong> os avisos (76 chamadas a <code>notificar</code> em <code>telas.py</code>, 7 em <code>telas_administracao.py</code>). As 22 eram o <strong>nível 2 de defesa</strong> dos handlers (a cadeia de três <code>try/except</code> do AGENTS.md §3.2): um <code>ui.notify(..., type="negative")</code> sem a causa e com a duração default da NiceGUI, disparado só quando o <code>notificar(..., tipo="error")</code> primário também falhava. <code>notificar</code> é <strong>fail-soft</strong> (nunca derruba a tela), aceita <code>tipo=</code> ou <code>type=</code>, e só usa o timeout configurado quando o ponto de chamada <strong>não</strong> passa <code>timeout=</code> explícito — o que não ocorre neste módulo. Lacuna conhecida: <strong>1 <code>ui.notify</code> cru sobrou</strong> em <code>telas_administracao.py:56</code>, fora do alcance da guarda de QA (que lê só <code>telas.py</code>).</li>
 <li><strong>Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 <code>kbp-web-design</code>)</strong>: botões centralizados <code>w-full justify-center flex-wrap</code> <code>gap</code> via <code>.style</code> <code>min-width:0</code>, toggle <code>spread</code>, grids responsivos <code>grid-cols-1 sm:grid-cols-2 md:grid-cols-3</code>; <code>overflow-x-auto</code> em tabelas, <code>scroll_area</code> altura explícita; proposta P0/P1/P2 por <code>container</code>/<code>row</code>/<code>grid</code> já aplicada.</li>
 <li><strong>Versionamento</strong>: <code>versao_modulo:editar_pdf = 1.0.260908</code>.</li>
 </ul>
 <h2 id="regras-de-negocio">Regras de negócio<a class="headerlink" href="#regras-de-negocio" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Cotas em 4 níveis</strong> (global, por usuário, por lote, estoque) lidas de <code>tb_config</code> central a cada uso.</li>
-<li><strong>Limite de MB é por envio, não acumulado</strong>: <code>_receber_lote</code> faz pré-checagem do lote inteiro antes de gravar.</li>
-<li><strong>Expiração</strong>: job <code>cleanup_pdf</code> (1 min) remove do disco, inativa registro, devolve cota e audita como ator <code>sistema</code>.</li>
+<li><strong>Espaço temporário por usuário</strong> — <code>mod_edit_pdf/editorPDF/&lt;usuario&gt;/</code> (pasta criada on demand por <code>pasta_usuario()</code>). O isolamento é <strong>físico</strong>, não só lógico: <code>obter_meus_arquivos(usuario)</code> filtra por usuário e um login nunca vê nem apaga arquivo de outro. <code>nome_padronizado(usuario, operacao, nome_original)</code> monta <code>dataHora_usuario_operacao_nomeArquivo</code> (<code>%Y%m%d%H%M%S</code> + nome sanitizado em 60 chars) — o prefixo é o que torna a expiração por <code>mtime</code> segura. A raiz <code>editorPDF/</code> nunca é servida como estático.</li>
+<li><strong>Cotas em 4 níveis</strong> (global <code>cotadisco_global_gb</code> default <strong>10 GB</strong>, por usuário <code>editar_pdf_usuario_gb</code> default <strong>1 GB</strong>, por lote <code>editar_pdf_lote_arquivos</code> (10) / <code>editar_pdf_lote_mb</code> (1024) em janela de 60 s <code>JANELA_LOTE_S</code>, estoque via <code>contar_uploads_ativos()</code>) lidas de <code>tb_config</code> central a cada uso. Ordem de validação do upload: janela deslizante → filtro <code>.pdf</code> → <strong>pré-checagem do lote inteiro</strong> (antes de gravar qualquer byte) → validação por arquivo na janela + <code>verificar_quota()</code> → grava e audita o SHA-256. Se a gravação falhar, remove o arquivo do disco (nunca deixa órfão) e manda o nome para <code>recusados</code>.</li>
+<li><strong>Limite de MB é por envio, não acumulado</strong>: <code>_receber_lote</code> faz pré-checagem do lote inteiro antes de gravar — um envio único de 350 MB com limite 200 MB é recusado de imediato.</li>
+<li><strong>Expiração — padrão 10 min</strong>: job <code>cleanup_pdf</code> (<code>mod_intranet/rotinas.py</code>, 1 min, <strong>sem usuário logado</strong>) chama <code>expirar_antigos(minutos=cfg_expiracao_min())</code> — remove do disco por <code>mtime</code>, inativa registro, devolve cota (<code>MAX(0, …)</code>, nunca negativa) e audita como ator <code>sistema</code>; "Expirar agora" força a mesma limpeza. <strong>Expirar é o que destrava a cota</strong> — a cota é de <em>uso</em>, não de envio, então o texto de recusa orienta "aguarde expiração ou exclua".</li>
 <li><strong>Prefixo obrigatório</strong>: <code>dataHora_usuario_operacao_nomeArquivo.pdf</code> — cada usuário vê apenas os próprios arquivos.</li>
-<li><strong>Auditoria SHA-256</strong>: <code>upload_hash</code> no upload; hashes das origens/resposta nas operações.</li>
+<li><strong>Auditoria SHA-256</strong>: <code>upload_hash</code> no upload; <code>juntar</code>/<code>cortar</code> gravam os hashes das origens no texto e o do resultado em <code>hash_arquivo</code> (<code>_auditar_hash</code>); <code>reduzir</code> idem, com <code>erro_reducao</code> (hash do <strong>original</strong>) quando falha; <code>dividir</code> grava <code>modo/filtro/bib/arquivos/sha256_origem</code>; <code>zip</code> grava <code>arquivos=N sha256</code>; <code>deletar</code> (em <code>bd_manipulador</code>) com estorno de cota. <strong><code>op_verificar</code> não audita</strong> — é leitura, e só notifica.</li>
+<li><strong>Motor PDF</strong>: <code>mod_intranet/pdf_operacoes.py</code> re-exportado (<code>hash_sha256</code>, <code>op_reduzir</code>/<code>op_juntar</code>/<code>op_cortar</code>/<code>op_dividir</code>/<code>op_dividir_partes</code>/<code>op_verificar</code>); ZIP via <code>zip_por_ids()</code> (seleção) / <code>zip_do_usuario()</code> (todos); exclusão com estorno de cota; ganchos <code>remover_vinculos_usuario()</code>/<code>renomear_usuario()</code>; <code>contar_arquivos_ativos()</code> no Resumo.</li>
 </ul>
+<h2 id="operacoes-e-data-testid">Operações e <code>data-testid</code><a class="headerlink" href="#operacoes-e-data-testid" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Ação</th>
+<th style="text-align: left;"><code>data-testid</code></th>
+<th style="text-align: left;">Motor</th>
+<th style="text-align: left;">Auditoria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Atualizar lista</td>
+<td style="text-align: left;"><code>editar_pdf-atualizar</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">Verificar integridade</td>
+<td style="text-align: left;"><code>editar_pdf-verificar</code></td>
+<td style="text-align: left;"><code>op_verificar</code></td>
+<td style="text-align: left;">— (só avisa)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Juntar (≥ 2 PDFs)</td>
+<td style="text-align: left;"><code>editar_pdf-juntar</code></td>
+<td style="text-align: left;"><code>op_juntar</code></td>
+<td style="text-align: left;"><code>juntar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Excluir selecionados</td>
+<td style="text-align: left;"><code>editar_pdf-excluir</code></td>
+<td style="text-align: left;"><code>deletar_arquivo</code></td>
+<td style="text-align: left;"><code>deletar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Baixar ZIP</td>
+<td style="text-align: left;"><code>editar_pdf-baixar-zip</code></td>
+<td style="text-align: left;"><code>zip_por_ids</code></td>
+<td style="text-align: left;"><code>zip</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Baixar PDFs individuais</td>
+<td style="text-align: left;"><code>editar_pdf-baixar-pdfs</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">Enviar agora (reenvio)</td>
+<td style="text-align: left;"><code>editar_pdf-enviar</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;"><code>upload_hash</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Modo de redução</td>
+<td style="text-align: left;"><code>editar_pdf-modo-reduzir</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">Reduzir</td>
+<td style="text-align: left;"><code>editar_pdf-reduzir</code></td>
+<td style="text-align: left;"><code>op_reduzir</code></td>
+<td style="text-align: left;"><code>reduzir</code> / <code>erro_reducao</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Cortar</td>
+<td style="text-align: left;"><code>editar_pdf-cortar</code></td>
+<td style="text-align: left;"><code>op_cortar</code></td>
+<td style="text-align: left;"><code>cortar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Dividir</td>
+<td style="text-align: left;"><code>editar_pdf-dividir</code></td>
+<td style="text-align: left;"><code>op_dividir_partes</code></td>
+<td style="text-align: left;"><code>dividir</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><em>(legado)</em></td>
+<td style="text-align: left;"><code>editpdf-upload</code> (<code>span.hidden</code>)</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">—</td>
+</tr>
+</tbody>
+</table>
+<p>O <strong>Juntar respeita a ordem de marcação</strong> dos checkboxes (<code>ordem_ids</code> → <code>_alvos()</code>), não a
+alfabética nem a de upload — a tela confirma com <code>Junção na ordem dos # : a → b → c</code>. Se o
+retorno contiver <code>IGNORADOS</code>, o aviso sai em <code>warning</code>, nunca em "sucesso" escondido.</p>
 <h2 id="permissoes">Permissões<a class="headerlink" href="#permissoes" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -296,16 +399,31 @@
 <h2 id="rota-e-integracoes">Rota e integrações<a class="headerlink" href="#rota-e-integracoes" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Rota: <code>/edit-pdf</code> (chave <code>editar_pdf</code>) — <code>main.py:218</code>.</li>
-<li>Integra com o núcleo via <code>get_connection</code>/<code>get_config</code>/<code>set_config</code>/<code>audit_log</code>; scheduler central chama <code>expirar_antigos()</code>.</li>
+<li>Integra com o núcleo via <code>get_connection</code>/<code>get_config</code>/<code>set_config</code>/<code>audit_log</code>; scheduler central (<code>mod_intranet/rotinas.py</code>, job <code>cleanup_pdf</code> 1 min) chama <code>expirar_antigos()</code>.</li>
+<li>Configs: <code>cotadisco_global_gb</code>, <code>editar_pdf_lote_arquivos</code>, <code>editar_pdf_lote_mb</code>, <code>editar_pdf_usuario_gb</code>, <code>editar_pdf_expiracao_min</code> (+ textos <code>editar_pdf_texto_*</code>); tema usa prefixo distinto <code>editpdf_*</code>.</li>
 <li>Reutilizado pelo módulo Renomear Empenho: <code>op_cortar</code>/<code>op_juntar</code>/<code>op_reduzir</code> (RF-45).</li>
 </ul>
 <h2 id="testes">Testes<a class="headerlink" href="#testes" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>test/test_editor_pdf.py
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/test_editor_pdf.py<span class="w">      </span><span class="c1"># 32 OK, 0 falha(s)</span>
+.venv/bin/python<span class="w"> </span>assets/test/verifica_ui_comum.py<span class="w">    </span><span class="c1"># 190 OK, 0 falha(s) de 190</span>
 </code></pre></div>
+<ul>
+<li><code>test_editor_pdf.py</code> — 32 verificações cobrindo banco próprio, cotas, auditoria com hash e
+  <code>expirar_antigos</code> (o README antigo dizia "20": número defasado).</li>
+<li><code>verifica_ui_comum.py</code>, seção <strong>"16. edit_pdf migrado (fonte)"</strong> (9 checks) — garante
+  <code>EPDF.count("ui.notify(") == 0</code>, <code>botao(</code> ≥ 5, ausência dos helpers locais de tema e de
+  <code>cfg_tema</code>, ausência de <code>CORES[…]</code> fixas, borda do cabeçalho = <code>tema["cor_botao"]</code>, hexes fora
+  dos defaults de reset e ausência das exceções de botão cruas. <strong>Lê só <code>telas.py</code></strong> — o painel
+  <code>telas_administracao.py</code> não é verificado por esse check.</li>
+</ul>
+<p><code>data-testid</code> (QA/playwright): <code>editar_pdf-atualizar</code>, <code>editar_pdf-verificar</code>, <code>editar_pdf-juntar</code>, <code>editar_pdf-excluir</code>, <code>editar_pdf-baixar-zip</code>, <code>editar_pdf-baixar-pdfs</code>, <code>editar_pdf-enviar</code>, <code>editar_pdf-modo-reduzir</code>, <code>editar_pdf-reduzir</code>, <code>editar_pdf-cortar</code>, <code>editar_pdf-dividir</code> (+ <code>editpdf-upload</code> legada, <code>span.hidden</code>).</p>
 <h2 id="pontos-de-atencao">Pontos de atenção<a class="headerlink" href="#pontos-de-atencao" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>_cfg</code> depende de <code>get_config</code> importado no topo de <code>bd_manipulador.py</code> (bug real já corrigido: defaults eram usados).</li>
 <li>Redução Agressivo transforma texto em imagem (perde seleção/busca no PDF).</li>
+<li><strong>1 <code>ui.notify</code> cru remanescente</strong> em <code>telas_administracao.py:56</code> (nível 2 de <code>_fmt_bytes</code>) — fora do alcance do check de QA. Correção de 1 linha: <code>notificar(..., type="negative")</code> + ampliar a guarda de <code>verifica_ui_comum.py</code> para o arquivo de Administração.</li>
+<li><code>cfg_tema</code> em <code>bd_manipulador.py</code> ficou sem uso após a migração para <code>ler_tema</code> — código morto candidato a remoção.</li>
+<li><code>bd_criador.py</code> é legado/morto com esquema divergente — <strong>não executar</strong>.</li>
 </ul>
 <p>Ver <a href="../../analise_mod_edit_pdf/">Análise do Módulo</a>.</p>
               

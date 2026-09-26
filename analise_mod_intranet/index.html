@@ -72,9 +72,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -99,9 +102,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -136,6 +142,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -146,6 +154,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -230,15 +242,15 @@
               
                 <h1 id="nucleo-mod_intranet">Núcleo — <code>mod_intranet</code><a class="headerlink" href="#nucleo-mod_intranet" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Core module: routes <code>/</code>, <code>/login</code>, <code>/configuracoes</code> · central database <code>db_mod_intranet.db</code> (unified WAL audit, config, sessions, module registry) · revocable sessions · 4-part layout · centralized observability (loguru).</p>
+<p>Core module: routes <code>/</code>, <code>/login</code>, <code>/configuracoes</code> · central database <code>db_mod_intranet.db</code> (config, sessions, module registry in unified WAL) · revocable sessions · 4-part layout · centralized observability (loguru) · <strong><code>integracoes.py</code> integration facade</strong> (single public seam between modules, lazy imports + fail-soft).</p>
 </blockquote>
 <hr />
 <h1 id="nucleo-mod_intranet_1">Núcleo — <code>mod_intranet</code><a class="headerlink" href="#nucleo-mod_intranet_1" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Módulo central: rotas <code>/</code>, <code>/login</code>, <code>/configuracoes</code> · banco central <code>db_mod_intranet.db</code> (auditoria unificada em WAL, configurações, sessões e cadastro de módulos) · sessões revogáveis · layout de 4 partes · observabilidade centralizada (loguru).</p>
+<p>Módulo central: rotas <code>/</code>, <code>/login</code>, <code>/configuracoes</code> · banco central <code>db_mod_intranet.db</code> (configurações, sessões e cadastro de módulos em WAL unificado) · sessões revogáveis · layout de 4 partes · observabilidade centralizada (loguru) · <strong>fachada de integração <code>integracoes.py</code></strong> (costura pública única entre módulos, imports lazy + fail-soft).</p>
 </blockquote>
 <h2 id="proposito">Propósito<a class="headerlink" href="#proposito" title="Permanent link">&para;</a></h2>
-<p>Pacote núcleo que centraliza tudo o que os módulos compartilham: banco central (auditoria unificada LGPD, configurações, sessões e cadastro de módulos), autenticação com sessões revogáveis, layout padrão de 4 partes com guarda de página, rotinas agendadas (backup por módulo + expiração do editorPDF) e a tela de personalização <code>/configuracoes</code>. Não possui <code>telas.py</code> próprio — suas telas (<code>layout_tela</code>, <code>tela_configuracoes</code>, <code>dialogo_backup</code>) são montadas pelas rotas de <code>main.py</code>.</p>
+<p>Pacote núcleo que centraliza tudo o que os módulos compartilham: banco central (auditoria unificada LGPD, configurações, sessões e cadastro de módulos), autenticação com sessões revogáveis, layout padrão de 4 partes com guarda de página, rotinas agendadas (backup por módulo + expiração do editorPDF) e a tela de personalização <code>/configuracoes</code>. Seu layout vive em <code>telas.py</code> (<code>pagina_restrita</code>, 4 partes) — as telas de configuração (<code>tela_configuracoes</code>) e backup (<code>rotinas.painel_backup</code>, legado <code>dialogo_backup</code>) são montadas pelas rotas de <code>main.py</code>.</p>
 <h2 id="banco-central-db_mod_intranetdb">Banco central <code>db_mod_intranet.db</code><a class="headerlink" href="#banco-central-db_mod_intranetdb" title="Permanent link">&para;</a></h2>
 <p>Toda conexão executa <code>PRAGMA journal_mode=WAL</code> + <code>synchronous=NORMAL</code> (<code>bd_conexao.py:29-30</code>). Tabelas criadas por <code>init_db()</code> (<code>bd_conexao.py:34-77</code>), chamada pelo bootstrap <code>inicializar_bancos()</code> <strong>antes</strong> da importação de qualquer módulo:</p>
 <blockquote>
@@ -260,8 +272,8 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_config</code></td>
-<td style="text-align: left;">chave PK / valor — seeds: <code>versao_sistema=1.0.260913</code>, <code>versao_modulo:intranet=1.0.260913</code>, <code>cotadisco_global_gb=10</code>, <code>backup_interval_hours=12</code> (legada) e padrões de aparência</td>
-<td style="text-align: left;"><code>bd_conexao.py:49-74</code></td>
+<td style="text-align: left;">chave PK / valor — seeds: <code>versao_sistema=1.0.260913</code>, <code>versao_modulo:intranet=1.0.260913</code>, <code>cotadisco_global_gb=10</code>, <code>backup_interval_hours=12</code>, <code>sessao_retencao=50</code> e padrões de aparência — <strong>todos os defaults vêm de <code>PADRAO_CONFIG</code></strong> (fonte única, ver seção abaixo)</td>
+<td style="text-align: left;"><code>bd_conexao.py:47-...</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>tb_sessoes</code></td>
@@ -285,7 +297,7 @@
 <li><code>validar_acesso_modulo()</code> (<code>autenticacao.py:421</code>) delega ao manipulador do módulo de usuários — o núcleo nunca lê <code>tb_usuarios</code> diretamente.</li>
 <li>Autoatendimento: flag <code>forcar_troca:&lt;user&gt;</code> em <code>tb_config</code> + diálogo persistent de troca obrigatória no layout.</li>
 </ul>
-<h2 id="guarda-de-pagina-layout_telapagina_restrita">Guarda de página — <code>layout_tela.pagina_restrita()</code><a class="headerlink" href="#guarda-de-pagina-layout_telapagina_restrita" title="Permanent link">&para;</a></h2>
+<h2 id="guarda-de-pagina-telaspagina_restrita">Guarda de página — <code>telas.pagina_restrita()</code><a class="headerlink" href="#guarda-de-pagina-telaspagina_restrita" title="Permanent link">&para;</a></h2>
 <ol>
 <li>Sem usuário → redireciona <code>/login</code>.</li>
 <li>Revalida existência/situação ativa contra o BD → aviso "Sua sessão foi encerrada pelo administrador."</li>
@@ -355,7 +367,7 @@
 </table>
 <p>Não há mais um botão único "APLICAR" geral: cada card é recolhível (<code>card_admin</code>, <code>aberto=False</code>) e tem o rodapé padrão de 2 botões — "Restaurar padrão" e "Aplicar" — exclusivos do card (<code>_aplicar_card</code>, <code>tela_configuracoes.py:284-308</code>): grava só os campos daquele card, aguarda 1 segundo e recarrega. A persistência grava em <code>tb_config</code> (<code>cor_principal</code>, <code>texto_*</code>, <code>smtp_*</code>, <code>log_*</code>, <code>backup_interval_hours</code>, <code>sessao_retencao</code>) e em <code>tb_modulos</code> (nome/ícone/ativo).</p>
 <p><code>dialogo_backup.abrir_dialogo()</code> (botão no header do módulo, para quem pode gerenciar): intervalo em horas salvo + reagendado ao vivo, "Fazer backup agora" e grade das cópias retidas.</p>
-<h2 id="versionamento-no-rodape-layout_tela_montar_layout">Versionamento no rodapé — <code>layout_tela._montar_layout</code><a class="headerlink" href="#versionamento-no-rodape-layout_tela_montar_layout" title="Permanent link">&para;</a></h2>
+<h2 id="versionamento-no-rodape-telas_montar_layout">Versionamento no rodapé — <code>telas._montar_layout</code><a class="headerlink" href="#versionamento-no-rodape-telas_montar_layout" title="Permanent link">&para;</a></h2>
 <p>O rodapé mostra as versões <strong>da esquerda para a direita</strong>: 1ª a versão global do sistema (<code>v{versao_sistema}</code>), e quando o usuário está dentro de um módulo (<code>chave_modulo</code>), 2ª a versão <strong>individual do módulo atual</strong> (<code>v{versao_modulo:&lt;chave&gt;}</code>). Sem módulo específico (Dashboard/Configurações) aparece só a global. A versão individual é lida de <code>tb_config</code> (chave <code>versao_modulo:&lt;chave&gt;</code>, mesmo estilo <code>1.0.AAMMDD</code>) com fallback <code>1.0</code> quando o módulo ainda não versionou. Ex.: <code>/edit-pdf</code> mostra <code>v1.0.260913</code> (sistema — bump 13/09/2026) + <code>v1.0.260913</code> (mod intranet/empenhos/solicita — ver <code>bd_conexao.py:130-201</code>).</p>
 <p><strong>Seed centralizado</strong>: <code>versao_modulo:&lt;chave&gt;</code> é semeada para os 5 módulos (<code>usuarios</code>, <code>auditoria</code>, <code>editar_pdf</code>, <code>empenhos</code>, <code>blog</code>) em <code>bd_conexao.init_db()</code> com <code>INSERT OR IGNORE</code> — idempotente, não sobrescreve edição manual. Para refletir numa base existente, chame <code>init_db()</code> novamente.</p>
 <p><strong>Painel "Administração" por módulo</strong>: cada módulo ganhou uma aba/expansão exclusiva do admin geral (ou admin do módulo) com o bloco <strong>Aparência</strong> (tema dos botões via <code>ui.color_input</code>, prefixo <code>&lt;chave&gt;_</code>) e <strong>config específica de comportamento</strong> salva via <code>set_config</code> do núcleo. Padrões: <code>usuarios_senha_min</code>, <code>auditoria_limite</code>/<code>auditoria_retencao_dias</code>/<code>auditoria_texto_header</code>, <code>empenhos_pasta_monitorada</code>/<code>empenhos_texto_header</code>, <code>blog_tags_permitidas</code>/<code>blog_texto_header</code>, além do <code>editpdf_*</code> já existente.</p>
@@ -369,7 +381,7 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>layout_tela.pagina_restrita</code></td>
+<td style="text-align: left;"><code>telas.pagina_restrita</code> (<code>telas.py:35</code>)</td>
 <td style="text-align: left;">todas as rotas de <code>main.py</code></td>
 </tr>
 <tr>
@@ -388,8 +400,163 @@
 <td style="text-align: left;"><code>pode_publicar_no_blog</code>, <code>eh_admin_do_modulo</code></td>
 <td style="text-align: left;">mod_blog</td>
 </tr>
+<tr>
+<td style="text-align: left;"><strong><code>integracoes.*</code> (fachada)</strong></td>
+<td style="text-align: left;">mod_filas, mod_lista_telefonica, mod_solicita_impressao, mod_blog — ver seção abaixo</td>
+</tr>
 </tbody>
 </table>
+<h2 id="fachada-de-integracao-entre-modulos-integracoespy-25092026">Fachada de integração entre módulos — <code>integracoes.py</code> (25/09/2026)<a class="headerlink" href="#fachada-de-integracao-entre-modulos-integracoespy-25092026" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>EN:</strong> Public seam for cross-module integration — added 25/09/2026 to close the
+five module-isolation violations flagged by <code>assets/test/check_integridade.py</code>.
+Lazy imports, fail-soft, core-owned coupling. Full reference (including the
+step-by-step checklist to add a function) in
+<a href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração — DAS</a>.</p>
+</blockquote>
+<p><code>mod_intranet/integracoes.py</code> (145 linhas, 7 funções públicas) é a <strong>costura
+pública única</strong> para um módulo de negócio alcançar outro <strong>sem importá-lo</strong>. Fecha
+a regra do AGENTS.md §2 ("nunca faça cross-query entre bancos") sem criar
+dependência entre módulos de negócio.</p>
+<h3 id="por-que-a-arquitetura-e-esta">Por que a arquitetura é esta<a class="headerlink" href="#por-que-a-arquitetura-e-esta" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Módulo de negócio fala com o núcleo; o núcleo possui o acoplamento.</strong></p>
+</blockquote>
+<ul>
+<li>O <strong>módulo de negócio</strong> nunca importa outro <code>mod_*</code> de negócio — quando
+  precisa de dado alheio, chama a API pública do núcleo.</li>
+<li>O <strong>núcleo</strong> é o único que sabe <em>qual</em> módulo serve <em>o quê</em>, e faz o <code>import</code>
+  sob demanda.</li>
+<li>O <strong>banco continua isolado</strong>: a função do núcleo executa SQL apenas no banco do
+  módulo de destino, pelo <code>bd_manipulador</code> <strong>dele</strong>. Atravessa-se uma fronteira
+  de <strong>código</strong>, nunca de <strong>dados</strong> (nada de <code>sqlite3.connect</code> em banco alheio).</li>
+</ul>
+<h3 id="os-2-padroes-obrigatorios">Os 2 padrões obrigatórios<a class="headerlink" href="#os-2-padroes-obrigatorios" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Imports lazy</strong> (dentro do corpo da função) — um <code>import</code> de topo aqui
+   <strong>fecharia ciclo de import de topo</strong> com <code>main.py</code> (que importa todos os
+   módulos para registrar as rotas). <code>check_integridade.py</code> trata ciclo
+   <strong>top-level</strong> como <strong>falha</strong> e ciclo <strong>apenas-lazy</strong> como <strong>AVISO</strong> (runtime
+   ok).</li>
+<li><strong>Fail-soft</strong> (AGENTS.md §3.2) — toda função tem <code>try/except Exception</code>,
+   devolve <strong>valor neutro</strong> (<code>None</code>/<code>[]</code>/<code>0</code>/<code>False</code>) e registra
+   <code>logger.warning</code> com o nome da função + a causa. <strong>A fachada nunca derruba a
+   tela de quem chama</strong>: quem chama decide o que fazer com o vazio (padrão
+   adotado = aviso amigável).</li>
+</ol>
+<h3 id="as-7-funcoes-e-seus-consumidores">As 7 funções e seus consumidores<a class="headerlink" href="#as-7-funcoes-e-seus-consumidores" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Função (<code>integracoes.py</code>)</th>
+<th style="text-align: left;">Destino</th>
+<th style="text-align: left;">Onde é usada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>obter_usuario_gestao(user_nome)</code> <code>:32</code></td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario.obter_usuario</code></td>
+<td style="text-align: left;"><code>mod_filas/bd_manipulador.py:454</code> (reconhecer <code>administrador_geral</code> ao autorizar) e <code>:483</code> (<code>liberar_acesso</code> exige usuário cadastrado) · <code>mod_lista_telefonica/telas_administracao.py:745</code> (preencher nome/telefone do contato)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_usuarios_gestao(filtro_ativo=None)</code> <code>:49</code></td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario.listar_usuarios</code></td>
+<td style="text-align: left;"><code>mod_filas/telas.py:631</code> (busca "liberar fila para usuário") · <code>mod_lista_telefonica/telas_administracao.py:689</code> (busca de contato por nome/login/e-mail)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>agregador_habilitado()</code> <code>:66</code></td>
+<td style="text-align: left;"><code>mod_agregador_noticias.habilitado</code></td>
+<td style="text-align: left;"><code>mod_filas/telas.py:1739</code> (TV: agregador desligado → aviso "Notícias pausadas")</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>listar_noticias_para_tv(limite=200)</code> <code>:79</code></td>
+<td style="text-align: left;"><code>mod_agregador_noticias.listar_para_tv</code> (censura filtrada na origem)</td>
+<td style="text-align: left;"><code>mod_filas/telas.py:1747</code> (carrossel de manchetes da TV de Filas)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>limpar_noticias_censuradas()</code> <code>:93</code></td>
+<td style="text-align: left;"><code>mod_agregador_noticias.limpar_censuradas</code></td>
+<td style="text-align: left;"><code>mod_blog/telas_administracao.py:105</code> (após salvar a lista de censura, purga as manchetes já coletadas)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>obter_organograma_base()</code> <code>:110</code></td>
+<td style="text-align: left;"><code>mod_lista_telefonica.ORGANOGRAMA_BASE</code></td>
+<td style="text-align: left;"><code>mod_solicita_impressao/bd_manipulador.py:407</code> (semeadura de cotas: 1000 por secretaria, 200 por setor/subsetor)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>modulo_habilitado(chave)</code> <code>:127</code></td>
+<td style="text-align: left;"><code>autenticacao.modulos_registrados</code> (<code>tb_modulos.ativo</code>)</td>
+<td style="text-align: left;">chamador genérico — módulo desconhecido conta como <strong>desligado</strong></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title"><code>obter_organograma_base()</code> devolve <code>None</code> de propósito</p>
+<p>Quando a Lista Telefônica não responde, a Solicitação de Impressão <strong>mantém
+o fallback local</strong> (<code>mod_solicita_impressao/bd_manipulador.py:411-421</code>: 6
+secretarias mínimas) para a semeadura das cotas não quebrar. O fallback é do
+<strong>chamador</strong> — a fachada informa <strong>ausência</strong>, não simula presença com valor
+inventado.</p>
+</div>
+<h3 id="precedente-censurapy-generalizado">Precedente: <code>censura.py</code> generalizado<a class="headerlink" href="#precedente-censurapy-generalizado" title="Permanent link">&para;</a></h3>
+<p><code>mod_intranet/censura.py</code> (chave <code>conteudo_palavras_bloqueadas</code> em <code>tb_config</code>)
+já resolvia o mesmo desenho <strong>antes</strong> da fachada: Blog e Agregador precisam da
+<strong>mesma</strong> lista de palavras bloqueadas e o dado mora no <strong>núcleo</strong>, não nos
+módulos. <code>integracoes.py</code> generaliza o padrão — <strong>antes</strong> o dado era uma chave de
+configuração compartilhada; <strong>agora</strong> a fachada cobre dado que mora no <strong>outro
+módulo</strong>. Mesma filosofia: núcleo como dono da costura, imports lazy, cada lado
+fail-soft (ver seção "Censura de conteúdo" abaixo).</p>
+<h3 id="excecao-documentada-cascata-lgpd">Exceção documentada: cascata LGPD<a class="headerlink" href="#excecao-documentada-cascata-lgpd" title="Permanent link">&para;</a></h3>
+<p><code>check_integridade.py</code> mantém a allowlist <code>CASCATA_LGPD</code> com os <strong>únicos</strong> pares
+de negócio→negócio permitidos — <code>mod_gest_cad_usuario → {mod_blog, mod_edit_pdf,
+mod_renomear_empenho}</code> — porque a exclusão/renomeação de usuário precisa limpar
+a autoria nos bancos vizinhos na frente do usuário. Cada módulo toca <strong>só</strong> o seu
+banco (API pública de limpeza de cada um), então não há cross-query. Qualquer
+outro par é violação. Ver
+<a href="../analise_mod_gest_cad_usuario/#limpeza-cruzada-lgpd-a-unica-excecao-de-negocionegocio">Gestão de Usuários</a>.</p>
+<h3 id="validacao-assetstestcheck_integridadepy">Validação — <code>assets/test/check_integridade.py</code><a class="headerlink" href="#validacao-assetstestcheck_integridadepy" title="Permanent link">&para;</a></h3>
+<p>Guarda estrutural por <strong>AST</strong> (stdlib <code>ast</code>, sem importar nada, sem banco, sem
+rede), 13 verificações em 3 blocos: <strong>A</strong> nenhum módulo de negócio importa outro
+(exceto <code>CASCATA_LGPD</code>); <strong>B</strong> sem ciclo de import <strong>top-level</strong> entre <code>mod_*</code> e
+<code>main.py</code> (lazy = AVISO); <strong>C</strong> todo <code>mod_*</code> tem <code>bd_manipulador.py</code> (nunca
+<code>db_manipulador.py</code>).</p>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/check_integridade.py
+</code></pre></div>
+<p><strong>Antes/depois de 25/09/2026: 5 falhas em 17 verificações → 13/13 OK</strong>, e 2 ciclos
+apenas-lazy desapareceram. O bloco A conta por <strong>par de módulos</strong>, e as 5
+violações fechadas foram: <code>mod_blog → mod_agregador_noticias</code>,
+<code>mod_filas → mod_agregador_noticias</code>, <code>mod_filas → mod_gest_cad_usuario</code>,
+<code>mod_lista_telefonica → mod_gest_cad_usuario</code> e
+<code>mod_solicita_impressao → mod_lista_telefonica</code> — exatamente as 5 arestas da
+tabela de consumidores acima.</p>
+<h2 id="padrao_config-fonte-unica-de-verdade-dos-defaults-25092026"><code>PADRAO_CONFIG</code> — fonte única de verdade dos defaults (25/09/2026)<a class="headerlink" href="#padrao_config-fonte-unica-de-verdade-dos-defaults-25092026" title="Permanent link">&para;</a></h2>
+<p><code>PADRAO_CONFIG</code> (<code>bd_conexao.py:47-...</code>) é o <strong>dicionário canônico de todos os
+defaults</strong> de <code>tb_config</code>: appearance, observabilidade/loguru, OTel, Grafana,
+documentação, SGBD, contadores e cards de tela. Regras:</p>
+<ul>
+<li>O <code>INSERT</code> de banco novo itera o dicionário — <strong>nada de literal duplicado</strong>.</li>
+<li>A tela <code>/configuracoes</code> lê o default <strong>daqui</strong> (<code>padrao=PADRAO_CONFIG["&lt;chave&gt;"]</code>).</li>
+<li>O dicionário do botão <strong>"Restaurar padrão"</strong> também lê daqui.</li>
+<li>Os fallbacks de <code>aplicar_gerais</code> devem apontar para cá.</li>
+</ul>
+<p><strong>Bug corrigido em 25/09/2026:</strong> <code>backup_interval_hours</code> e <code>sessao_retencao</code>
+<strong>não estavam</strong> em <code>PADRAO_CONFIG</code> — o mesmo default vivia <strong>duplicado em 5
+lugares</strong> (<code>INSERT</code> de banco novo, <code>padrao=</code> do campo na tela, dicionário do
+"Restaurar padrão", fallbacks de <code>aplicar_gerais</code> e o seed legado do bootstrap).
+Como a chave não existia no <code>PADRAO_CONFIG</code>, o campo da tela <strong>não caía no
+padrão</strong> quando a chave faltava em <code>tb_config</code>. Ambas foram movidas para
+<code>PADRAO_CONFIG</code> (<code>"12"</code> e <code>"50"</code>) e <code>tela_configuracoes.py</code> passou a lê-las de lá
+(<code>_campo_backup</code>, <code>_campo_sessao</code>, <code>_campo_aviso</code>, o dicionário de
+<code>restaurar_grupo</code> e o <code>pos_acao</code> que reagenda o backup com
+<code>int(PADRAO_CONFIG["backup_interval_hours"])</code>).</p>
+<div class="admonition tip">
+<p class="admonition-title">Regra para quem for criar uma chave nova de <code>tb_config</code></p>
+<p>Adicione <strong>uma vez</strong> em <code>PADRAO_CONFIG</code> e consuma com
+<code>padrao=PADRAO_CONFIG["chave"]</code>. Literal repetido em dois pontos é bug
+latente — foi exatamente assim que as duas chaves acima saíram do padrão
+silenciosamente.</p>
+</div>
 <h2 id="padronizacao-de-tema-e-administracao-dos-modulos-tema_modulopy">Padronização de tema e administração dos módulos — <code>tema_modulo.py</code><a class="headerlink" href="#padronizacao-de-tema-e-administracao-dos-modulos-tema_modulopy" title="Permanent link">&para;</a></h2>
 <p>Helper central em <code>mod_intranet/tema_modulo.py</code> que unifica, em TODOS os módulos, a
 configuração de aparência e o gerenciamento dos próprios módulos — eliminando a duplicação de
@@ -544,9 +711,51 @@ sistema</strong>: a data atual e de gravação devem vir SEMPRE do servidor (nun
 <li>Bootstrap: <code>inicializar_bancos()</code> roda antes de qualquer import de módulo (<code>main.py:15-16</code>) — ordem crítica.</li>
 <li>O PLANO cita <code>mod_intranet_bd_criador.py</code> e <code>mod_intranet_auditoria.py</code>: esses arquivos <strong>não existem</strong> — quem cria as tabelas é <code>bd_conexao.init_db()</code> e quem audita é <code>bd_manipulador.audit_log()</code>.</li>
 <li><code>storage_secret</code> do <code>ui.run</code> é placeholder hardcoded ("...mude-isto") — trocar antes de produção.</li>
-<li><code>backup_interval_hours</code> é semente legada; os jobs usam apenas <code>backup_horas:&lt;modulo&gt;</code>. <code>sessao_retencao</code> não tem campo na UI.</li>
+<li><code>backup_interval_hours</code> é o intervalo do <strong>card "Configurações gerais"</strong> (<code>/configuracoes</code>), que grava e <strong>reagenda</strong> o job global; os jobs por módulo usam a chave própria <code>backup_horas:&lt;modulo&gt;</code>. <code>sessao_retencao</code> (dias, padrão 50) também tem campo no mesmo card e é lida pelo mecanismo de poda do histórico de sessões. <strong>Desde 25/09/2026 as duas chaves vivem em <code>PADRAO_CONFIG</code></strong> (fonte única de verdade — ver seção acima); antes o default era duplicado em 5 pontos e o campo não caía no padrão quando a chave faltava em <code>tb_config</code>.</li>
 <li>MAC via ARP não funciona neste host Windows (comandos Linux) — coluna fica nula.</li>
 </ul>
+<h2 id="correcoes-de-seguranca-aplicadas-25092026-bandit-high-0-medium-0">Correções de segurança aplicadas 25/09/2026 — <code>bandit</code> HIGH 0 / MEDIUM 0<a class="headerlink" href="#correcoes-de-seguranca-aplicadas-25092026-bandit-high-0-medium-0" title="Permanent link">&para;</a></h2>
+<p>Quatro achados no núcleo foram tratados no commit <code>624c9d5</code>. <strong>Um foi corrigido
+de verdade</strong> (não silenciado) e três foram <strong>justificados com <code># nosec</code>
+documentado</strong> — a distinção importa: <code>nosec</code> é aceito só quando o risco é
+efetivamente inexistente, com a razão escrita no código.</p>
+<h3 id="1-grafana_syncpy-url-do-grafana-sem-validacao-de-esquema-b310-corrigido">1. <code>grafana_sync.py</code> — URL do Grafana sem validação de esquema (B310) — <strong>CORRIGIDO</strong><a class="headerlink" href="#1-grafana_syncpy-url-do-grafana-sem-validacao-de-esquema-b310-corrigido" title="Permanent link">&para;</a></h3>
+<p><code>obter_grafana_url()</code> aceitava qualquer valor de <code>GRAFANA_URL</code>/<code>tb_config</code>. Com
+<code>GRAFANA_URL=file:///etc/passwd</code>, o <code>urllib.request.urlopen()</code> das funções
+seguintes (<code>grafana_aguardar_pronto</code>, <code>_api_autorizada</code>) abriria um <strong>arquivo
+local</strong> em vez de fazer HTTP — leitura de arquivo arbitrário (bandit <strong>B310</strong>).</p>
+<p>Correção: helper <code>_url_grafana_valida(cand)</code> (<code>grafana_sync.py:25-31</code>) com a
+tupla <code>_SCHEMAS_GRAFANA = ("http://", "https://")</code> (<code>:22</code>). <code>obter_grafana_url()</code>
+(<code>:33-48</code>) só aceita URL <code>http(s)</code> <strong>absoluta</strong>; qualquer outro esquema
+(<code>file://</code>, <code>ftp://</code>, custom) <strong>cai no padrão</strong> <code>http://localhost:3000</code>. Como
+todo <code>urlopen</code> do módulo herda a base já validada, os <code># nosec B310</code> restantes
+(<code>:143</code>, <code>:167</code>) ficaram com justificativa: <em>"<code>base</code> vem de
+<code>obter_grafana_url()</code>, que só devolve http(s)"</em>.</p>
+<h3 id="2-ativacaopy-subprocessrunshellusar_shell-b602-nosec-justificado">2. <code>ativacao.py</code> — <code>subprocess.run(shell=usar_shell)</code> (B602) — <code># nosec</code> justificado<a class="headerlink" href="#2-ativacaopy-subprocessrunshellusar_shell-b602-nosec-justificado" title="Permanent link">&para;</a></h3>
+<p><code>_cmd</code> (<code>ativacao.py:607</code>, <code># nosec B602</code> em <code>:625</code>) executa o comando do
+assistente de ativação com <code>shell=usar_shell</code>. A justificativa escrita no código:
+<code>usar_shell</code> só é <code>True</code> para comandos <strong>estáticos definidos no próprio
+assistente</strong> (a docstring da função lista a allowlist), e a <strong>senha entra por
+<code>stdin</code></strong>, nunca interpolada no <code>argv</code> — logo não há entrada do usuário na linha
+de comando.</p>
+<h3 id="3-repositoriopy-set_sql-no-update-tb_modulos-b608-nosec-justificado">3. <code>repositorio.py</code> — <code>set_sql</code> no <code>UPDATE tb_modulos</code> (B608) — <code># nosec</code> justificado<a class="headerlink" href="#3-repositoriopy-set_sql-no-update-tb_modulos-b608-nosec-justificado" title="Permanent link">&para;</a></h3>
+<p><code>atualizar_modulo</code> (<code>repositorio.py:671</code>, <code># nosec B608</code> em <code>:704</code>) monta o
+<code>set_sql</code> apenas a partir das <strong>chaves literais de um if-chain fixo</strong>
+(<code>nome</code>/<code>icone</code>/<code>rota</code>/<code>ativo</code>/<code>ordem</code>), enquanto os <strong>valores vão por bind</strong>
+(<code>:nome</code>, <code>:icone</code>, <code>:rota</code>, <code>:ativo</code>, <code>:ordem</code>) — não há interpolação de valor
+nem de nome de coluna vindo de entrada externa.</p>
+<h3 id="4-ativacaopy-urlopen-de-probe-local-b310-nosec-justificado">4. <code>ativacao.py</code> — <code>urlopen</code> de probe local (B310) — <code># nosec</code> justificado<a class="headerlink" href="#4-ativacaopy-urlopen-de-probe-local-b310-nosec-justificado" title="Permanent link">&para;</a></h3>
+<p><code>_probe_http</code> (<code>:374</code>, <code># nosec B310</code> em <code>:379</code>) e <code>_servicos_otel_online</code>
+(<code>:749</code>, <code># nosec B310</code> em <code>:754</code>) chamam <code>urlopen</code> com
+<code>http://localhost:&lt;porta&gt;/...</code> <strong>literal</strong> (porta convertida com <code>int()</code>) —
+nunca <code>file://</code> nem URL vinda do usuário.</p>
+<div class="admonition note">
+<p class="admonition-title">Resultado do <code>bandit</code> no lote</p>
+<p>HIGH 1→0 e MEDIUM 5→0 nos 11 módulos. O único achado <strong>real</strong> de segurança
+(o <code>file://</code> do Grafana) foi corrigido na origem; o restante é
+<code># nosec</code> com razão — política do <code>kbp-devSecOps</code> (ver
+<a href="../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>).</p>
+</div>
 <h2 id="status-fase-1-do-planomd">Status — Fase 1 do PLANO.md<a class="headerlink" href="#status-fase-1-do-planomd" title="Permanent link">&para;</a></h2>
 <p><strong>Implementado:</strong></p>
 <ul>
@@ -555,7 +764,7 @@ sistema</strong>: a data atual e de gravação devem vir SEMPRE do servidor (nun
 <li>Visibilidade de módulos por permissão (drawer lateral com alerta de módulo inativo/removido).</li>
 <li>Login com sessão registrada em banco (<code>registrar_login</code>) + <strong>sessões revogáveis</strong>: <code>cookie_hash</code> via <code>secrets</code>, revalidação a cada request (<code>sessao_ativa</code>), logout próprio preserva as demais sessões do usuário.</li>
 <li>Gestão de Sessões (ativas + histórico + encerrar) no módulo de usuários; <strong>retenção</strong> do histórico implementada no mecanismo (poda por <code>sessao_retencao</code>, default 50/usuário).</li>
-<li>Layout de 4 partes (<code>layout_tela.pagina_restrita</code>) com versão no rodapé; área principal carrega o <strong>Blog por padrão</strong> (feed de publicações recentes) — RF-09 <strong>REALIZADO</strong>; a navegação por módulos permanece no drawer lateral.</li>
+<li>Layout de 4 partes (<code>telas.pagina_restrita</code>) com versão no rodapé; área principal carrega o <strong>Blog por padrão</strong> (feed de publicações recentes) — RF-09 <strong>REALIZADO</strong>; a navegação por módulos permanece no drawer lateral.</li>
 <li>Personalização de cor primária/fundo, ícone, título, textos e favicon via <code>/configuracoes</code> (gravação única, vale sem restart).</li>
 <li>Edição de Perfil ("Meu Perfil") e troca obrigatória de senha do <code>master</code> no 1º login (auto-cura idempotente em boot — <code>mod_gest_cad_usuario/bd_manipulador.py:136-156</code>).</li>
 <li>Backup automático configurável por módulo (12 h default, sem restart) + expiração do editorPDF agendada.</li>
@@ -1002,7 +1211,7 @@ sistema</strong>: a data atual e de gravação devem vir SEMPRE do servidor (nun
 <h4 id="observabilidade-remota-e-destino-de-logs-0509-endpoint-otlp-stack-remota-grafana">Observabilidade remota e destino de logs (05/09) — endpoint OTLP, stack remota, Grafana<a class="headerlink" href="#observabilidade-remota-e-destino-de-logs-0509-endpoint-otlp-stack-remota-grafana" title="Permanent link">&para;</a></h4>
 <ul>
 <li><strong>Telemetria OTel configurável</strong> (<code>otel_integracao.py</code>): <code>obter_endpoint()</code> resolve o destino OTLP com prioridade env <code>OTEL_ENDPOINT</code> &gt; <code>tb_config</code> (<code>otel_endpoint</code>, padrão <code>localhost:4317</code>) &gt; padrão local; <code>inicializar_otel(auto_stack=False)</code> pula Docker/<code>compose up</code> e conecta direto (modo servidor dedicado). <code>obter_info_otel()</code> reporta o endpoint resolvido.</li>
-<li><strong>Boot com gate</strong> (<code>main.py</code>): <code>otel_ativo=0</code> desliga a telemetria; <code>otel_auto_start_stack=0</code> usa stack remota (sem gerenciar Docker local); o sync de credenciais Grafana via <code>docker exec</code> só roda com stack local (remota usa token/API — Fase 3).</li>
+<li><strong>Boot com gate</strong> (<code>main.py:75-98</code>): <code>otel_ativo=0</code> desliga a telemetria; <code>otel_auto_start_stack=0</code> usa stack remota (sem gerenciar Docker local); o sync de credenciais Grafana via <code>docker exec</code> só roda com stack local (remota usa token/API — Fase 3). A flag <code>_otel_auto_stack</code> é lida <strong>antes</strong> do bloco que a consome — ver a correção de <code>NameError</code> em <a href="#correcoes-de-nameerror-no-boot-e-no-login-25092026">Correções de <code>NameError</code> no boot e no login (25/09/2026)</a>.</li>
 <li><strong>Grafana configurável</strong> (<code>grafana_sync.py</code>): <code>obter_grafana_url()</code> com prioridade env <code>GRAFANA_URL</code> &gt; <code>tb_config</code> (<code>grafana_url</code>, padrão <code>http://localhost:3000</code>); health-check, API e status usam a URL resolvida.</li>
 <li><strong>Bridge loguru→Loki com filtro</strong>: <code>log_otel_envio=0</code> mantém o log só local; <code>log_otel_nivel</code> define o nível mínimo enviado ao Loki.</li>
 <li><strong>Seed</strong>: todas as chaves novas estão em <code>bd_conexao.PADRAO_CONFIG</code> (propagadas via <code>INSERT OR IGNORE</code>, cobrindo bancos existentes).</li>
@@ -1181,6 +1390,618 @@ em <code>test/</code></strong> — nunca em <code>/tmp</code> (arquivos em <code
 <li><strong>Validação Playwright real</strong> (sistema reiniciado, <code>/login</code> 200): opacity inicial <code>0</code>, após hover <code>1</code> + transform <code>none</code>, screenshots desktop; texto preservado (<code>"INTRANET Básica — uso interno"</code>, <code>"v1.0.260913"</code>).</li>
 <li><strong>Ressalvas:</strong> no touch o reveal ocorre no toque na faixa (rodapé só informativo, sem focáveis); se o CSS falhar, degrada para sempre visível (fail-soft visual).</li>
 </ul>
+<h2 id="auditoria-kbp-doc-lote-nucleo-23092026">Auditoria kbp-doc — lote núcleo 23/09/2026<a class="headerlink" href="#auditoria-kbp-doc-lote-nucleo-23092026" title="Permanent link">&para;</a></h2>
+<p>Inventário real: <code>__init__</code>, <code>banco_conexao</code> (dual SQLite/PostgreSQL, <code>conexao(chave)</code>, <code>conexao_central</code>, <code>_CursorPostgres</code>), <code>bd_conexao</code> (<code>get_config</code>/<code>set_config</code> via <code>Repositorio</code>, <strong><code>PADRAO_CONFIG</code> como fonte única dos defaults</strong>), <code>crud_base</code> (<code>CrudBase</code> + <code>audit_reg</code>), <code>repositorio</code> (<code>Repositorio</code>, <code>MODULOS_BD</code>, <code>engine</code>/<code>sessaodb</code>), <code>models/__init__</code> (imperativo <code>Table</code> + <code>dataclass</code> + <code>map_imperatively</code>: <code>Configuracao</code>/<code>Sessao</code>/<code>Modulo</code>), <code>autenticacao</code> (bcrypt, sessões revogáveis, <code>tb_modulos</code>), <strong><code>integracoes</code> (fachada pública entre módulos — imports lazy + fail-soft, 25/09/2026)</strong>, <code>tema_modulo</code>, <code>ui_comum</code>, <code>aba_modulo</code>, <code>telas</code> (layout 4 partes), <code>tela_configuracoes</code> (5 abas), <code>ativacao</code> (Opção C Typer), <code>rotinas</code> (APScheduler: <code>backup:&lt;chave&gt;</code>, <code>cleanup_pdf</code>, <code>poda_auditoria</code>, <code>monitor_empenho</code>; <code>panel_backup</code>, anti-disconnect <code>run.io_bound</code> + spinner + trava <code>ocupado</code>), <code>documentacao</code> (<code>_build</code>/<code>montar</code>/<code>iniciar_servidor</code>), <code>observabilidade</code> (loguru <code>get_logger</code>, <code>configurar</code>, <code>limpar_logs</code>).</p>
+<p>Correções aplicadas: docstring bilíngue EN/PT-BR em <code>autenticacao.py</code> (estava sem cabeçalho), <code>telas.usuario_logado</code> e <code>documentacao._build</code>/<code>montar</code> (estavam PT-only).</p>
+<p>Helpers do núcleo já cobertos acima e mantidos: <code>contexto</code> (ContextVar IP/UA LGPD), <code>censura</code> (palavras bloqueadas — <strong>precedente da fachada <code>integracoes</code></strong>, ver seção própria), <code>hora_servidor</code> (NTP.br), <code>rotas_modulos</code> (slugs custom), <code>tema_css</code> (frameworks locais), <code>email_util</code> (SMTP RF-58), <code>port_scanner</code> (<code>--scan-ports</code>), <code>home_visual</code> (modelo Water). Arquivos auxiliares sem seção própria (intencionais, sem docs dedicadas): <code>decoradores</code>, <code>dialogo_backup</code> (legado, substituído por <code>rotinas.painel_backup</code>), <code>docker_detector</code>, <code>instrumentacao_app</code>, <code>otel_integracao</code>, <code>pdf_operacoes</code>, <code>nicegui_patch</code>, <code>telefone</code>, <code>ui_form</code>, <code>ui_painel</code>, <code>hora_servidor</code> detalhada em <code>modulos/intranet.md</code>. <strong><code>grafana_sync</code></strong> tem seção própria acima (validação de esquema da URL, 25/09/2026).</p>
+<h2 id="correcoes-de-nameerror-no-boot-e-no-login-25092026">Correções de <code>NameError</code> no boot e no login (25/09/2026)<a class="headerlink" href="#correcoes-de-nameerror-no-boot-e-no-login-25092026" title="Permanent link">&para;</a></h2>
+<p>Duas falhas do núcleo que afetavam <strong>todo o sistema</strong> (não um módulo), ambas
+encontradas por <code>pyflakes</code> e ambas mascaradas pelo <code>try/except</code> do AGENTS.md §3.2.</p>
+<h3 id="1-_otel_auto_stack-indefinido-python-mainpy-otel-nunca-ligava-o-otel">1. <code>_otel_auto_stack</code> indefinido — <code>python main.py --otel</code> nunca ligava o OTel<a class="headerlink" href="#1-_otel_auto_stack-indefinido-python-mainpy-otel-nunca-ligava-o-otel" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># main.py:75-98 — ANTES: `_otel_auto_stack` só era lido, nunca era definido</span>
+<span class="n">_otel_ativo</span> <span class="o">=</span> <span class="n">_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"otel_ativo"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span> <span class="ow">and</span> \
+    <span class="n">get_config</span><span class="p">(</span><span class="s2">"otel_ativo"</span><span class="p">,</span> <span class="s2">"1"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"1"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_sem_otel_env</span>
+<span class="k">if</span> <span class="n">_sem_otel_env</span><span class="p">:</span>
+    <span class="o">...</span>
+<span class="k">elif</span> <span class="ow">not</span> <span class="n">_otel_ativo</span><span class="p">:</span>
+    <span class="o">...</span>
+<span class="c1"># …mais abaixo, dentro do bloco:</span>
+<span class="k">if</span> <span class="n">_otel_auto_stack</span><span class="p">:</span>          <span class="c1"># → NameError</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Item</th>
+<th style="text-align: left;">Detalhe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Sintoma</td>
+<td style="text-align: left;"><code>python main.py --otel</code> e <code>python main.py --config</code> <strong>nunca</strong> inicializavam o OTel. O <code>NameError</code> caía no <code>except Exception</code> do <strong>fim do bloco</strong> e imprimia só <code>[otel] Aviso: não foi possível inicializar OTel</code> — que parece um problema de ambiente, não de código</td>
+</tr>
+<tr>
+<td style="text-align: left;">Por que passava</td>
+<td style="text-align: left;">a flag é lida <strong>antes</strong> de ser escrita, e o <code>try</code> que a envolve é largo demais para dar pista; a mensagem do <code>except</code> descreve o sintoma (OTel não subiu) e não a causa</td>
+</tr>
+<tr>
+<td style="text-align: left;">Correção</td>
+<td style="text-align: left;"><code>_otel_auto_stack = get_config("otel_auto_start_stack", "1") == "1"</code> <strong>antes</strong> do bloco que a consome, com comentário explicando que <code>otel_auto_start_stack=0</code> usa stack remota/dedicada (pula <code>compose up</code> e as checagens de Docker)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Efeito colateral</td>
+<td style="text-align: left;"><code>import sqlite3</code> que estava no topo de <code>main.py</code> <strong>não era mais usado</strong> e foi removido</td>
+</tr>
+</tbody>
+</table>
+<p>O nome da chave de configuração é <code>otel_auto_start_stack</code> (em <code>tb_config</code>, exposta no
+card Observabilidade). A variável local é <code>_otel_auto_stack</code> e <strong>precisa</strong> ser atribuída
+antes do <code>if</code> que a lê — esse é justamente o ponto do bug: o nome da config e o da
+variável não são iguais, o que torna o erro de leitura fácil de passar despercebido.</p>
+<h3 id="2-_login_erro_log-nao-existia-erros-de-login-nao-iam-para-o-log">2. <code>_login_erro_log()</code> não existia — erros de login não iam para o log<a class="headerlink" href="#2-_login_erro_log-nao-existia-erros-de-login-nao-iam-para-o-log" title="Permanent link">&para;</a></h3>
+<p><code>mod_intranet/telas.py</code> chamava <code>_login_erro_log()</code> em <strong>11 call sites</strong> (fluxo de
+login, troca de senha e troca de credenciais) e a função <strong>nunca foi definida</strong>. Cada
+chamada levantava <code>NameError</code> dentro do <code>try/except</code> do próprio <code>except</code> — ou seja,
+<strong>quando algo dava errado no login, o código que deveria registrar o erro era
+exatamente o que quebrava</strong>, e o <code>except Exception: pass</code> final engolia tudo.</p>
+<p>Correção: criação da função em <code>mod_intranet/telas.py:27-51</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">_login_erro_logger</span> <span class="o">=</span> <span class="kc">None</span>      <span class="c1"># memorizado no 1º uso (não é constante)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_login_erro_log</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Retorna o logger do fluxo de login (loguru, fail-soft).</span>
+
+<span class="sd">    Memoriza o logger na primeira chamada. Nunca levanta: se a observabilidade</span>
+<span class="sd">    falhar, devolve o logger padrão do loguru para o `except` do chamador</span>
+<span class="sd">    seguir funcionando."""</span>
+</code></pre></div>
+<p>Por que uma <strong>função</strong> e não uma constante: o logger só pode ser resolvido <strong>depois</strong>
+que <code>mod_intranet.observabilidade</code> estiver configurado (o que acontece durante o boot,
+depois do import do módulo). Um <code>import</code> no topo do arquivo abriria o <code>observabilidade</code>
+antes da hora. A função é <em>fail-soft</em> em três níveis: <code>observabilidade.get_logger("intranet")</code>
+→ <code>loguru.logger</code> → <code>None</code>, e nunca levanta.</p>
+<div class="admonition warning">
+<p class="admonition-title">Docstring fora do padrão bilíngue</p>
+<p><code>_login_erro_log</code> é a única função nova desta sessão com docstring <strong>só em PT-BR</strong>
+— o padrão do repositório é <strong>EN no topo, PT-BR abaixo</strong>. A mesma coisa ocorre com
+os cinco helpers aninhados criados no redesenho do card do Agregador
+(<code>_desempacotar_noticia</code>, <code>_criar_dialogo_noticia</code>, <code>_abrir_dialogo_noticia</code>,
+<code>_midia_noticia</code>, <code>_noticia_card</code>). Registrado como pendência; a correção é em
+<code>mod_*/</code>, fora do escopo deste lote de documentação.</p>
+</div>
+<h3 id="3-mensagem-documentacao-ok-duplicada-no-boot">3. Mensagem <code>[documentacao] OK</code> duplicada no boot<a class="headerlink" href="#3-mensagem-documentacao-ok-duplicada-no-boot" title="Permanent link">&para;</a></h3>
+<p>Não era <code>NameError</code>, mas o mesmo tipo de falha silenciosa: a linha saía <strong>duas vezes</strong>.</p>
+<p><code>iniciar_servidor()</code> já imprime <code>[documentacao] OK: servindo em http://localhost:&lt;porta&gt;</code>
+quando sobe; <code>construir_e_montar_documentacao()</code> imprimia a mesma informação outra
+vez depois de <code>montar()</code>. Agora só imprime no caminho de <strong>fallback</strong> — quando a porta
+documentada ficou ocupada e a doc é servida pela rota interna:</p>
+<div class="highlight"><pre><span></span><code><span class="n">ok_serve</span> <span class="o">=</span> <span class="n">iniciar_servidor</span><span class="p">(</span><span class="n">porta</span> <span class="ow">or</span> <span class="n">PORTA_PADRAO</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">montar</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">logar</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ok_serve</span><span class="p">:</span>      <span class="c1"># era `if logar: if ok_serve: ... else: ...`</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[documentacao] montado em /documentacao "</span>
+              <span class="sa">f</span><span class="s2">"(porta </span><span class="si">{</span><span class="n">porta</span><span class="si">}</span><span class="s2"> ocupada, docs via rota interna)"</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="como-esses-tres-bugs-escaparam">Como esses três bugs escaparam<a class="headerlink" href="#como-esses-tres-bugs-escaparam" title="Permanent link">&para;</a></h3>
+<p>Os quatro módulos com <code>NameError</code> (<code>solicita_impressao</code>, <code>filas</code>, <code>renomear_empenho</code>,
+<code>intranet</code>) compartilham o mesmo padrão: <strong><code>except Exception: pass</code></strong> no caminho de
+erro, exatamente onde o AGENTS.md §3.2 manda não derrubar o servidor. A regra continua
+sendo obrigatória — o que mudou foi a <strong>barreira de detecção</strong>: <code>pyflakes</code> como
+análise estática <strong>bloqueante</strong> antes de declarar o ciclo de testes verde. Ver
+<a href="../convencoes_codigo/#analise-estatica-obrigatoria-pyflakes">Convenções de Criação de Código — Análise estática obrigatória</a>.</p>
+<h2 id="pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada">Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)<a class="headerlink" href="#pendencia-qa-wal-paridade-sqlitepostgres-24092026-sem-correcao-aplicada" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Documentação da correção pendente. Nenhum <code>.py</code> alterado neste lote.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Módulo</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Arquivo:linha</th>
+<th style="text-align: left;">Correção proposta contida no módulo</th>
+<th style="text-align: left;">Risco regressão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">intranet</td>
+<td style="text-align: left;">3 connects crus sem WAL; zero <code>busy_timeout</code>; WAL OK no quente</td>
+<td style="text-align: left;"><code>mod_intranet/banco_conexao.py:74</code>, <code>:90</code> (crus) · <code>mod_intranet/ativacao.py:502</code> (cru) · <code>mod_intranet/banco_conexao.py:619-620</code> (quente COM WAL)</td>
+<td style="text-align: left;">Helper interno <code>_conectar_wal()</code> em <code>banco_conexao.py</code> + reuso em <code>ativacao.py:502</code>; <code>PRAGMA journal_mode=WAL</code> + <code>synchronous=NORMAL</code> + <code>busy_timeout=5000</code> só nesses pontos</td>
+<td style="text-align: left;">Baixo-médio (boot/assistente; validar fresh-install)</td>
+</tr>
+</tbody>
+</table>
+<p>Detalhe consolidado em <a href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade</a>.</p>
+<hr />
+<h1 id="rf-e-rnf-verificados-no-codigo-lote-1-26092026">RF e RNF verificados no código — lote 1 (26/09/2026)<a class="headerlink" href="#rf-e-rnf-verificados-no-codigo-lote-1-26092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Auditoria de requisitos <strong>funcionais</strong> (o que o sistema faz) e <strong>não
+funcionais</strong> (qualidade e restrições), com evidência <code>arquivo:linha</code> conferida
+no código em 26/09/2026. Cobre o núcleo: autenticação, guarda de página,
+layout, tema, config, agendador, backup, documentação, observabilidade e
+fachada de integração.</p>
+</blockquote>
+<h2 id="requisitos-funcionais-rf-mapa-codigo-doc">Requisitos funcionais (RF) — mapa código ↔ doc<a class="headerlink" href="#requisitos-funcionais-rf-mapa-codigo-doc" title="Permanent link">&para;</a></h2>
+<h3 id="autenticacao-sessao-e-guarda-de-pagina">Autenticação, sessão e guarda de página<a class="headerlink" href="#autenticacao-sessao-e-guarda-de-pagina" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-NUC-01</td>
+<td style="text-align: left;">Login por usuário+senha, com mensagem <strong>genérica</strong> em falha (não revela se o usuário existe)</td>
+<td style="text-align: left;"><code>autenticacao.py:332-349</code> <code>autenticar</code> (<code>"Usuário ou senha inválidos"</code> nos dois casos)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-02</td>
+<td style="text-align: left;">Bloqueio de conta com mensagem própria</td>
+<td style="text-align: left;"><code>autenticacao.py:345-347</code> (<code>"Usuário bloqueado. Procure o administrador."</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-03</td>
+<td style="text-align: left;"><strong>Toda</strong> tentativa de login falha é auditada com o nome do usuário tentado</td>
+<td style="text-align: left;"><code>autenticacao.py:341</code> <code>audit_log(..., "login_falha", ...)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-04</td>
+<td style="text-align: left;">Hash de senha <strong>bcrypt</strong> (<code>gerar_hash_senha</code>/<code>verificar_senha</code>) — o texto puro nunca é gravado</td>
+<td style="text-align: left;"><code>autenticacao.py:284-290</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-05</td>
+<td style="text-align: left;">Sessão com <strong>hash de cookie</strong> (<code>SESSION_COOKIE_NAME = "intranet_session"</code>), amarrada ao navegador</td>
+<td style="text-align: left;"><code>autenticacao.py:23</code> + <code>autenticacao.py:368-398</code> <code>registrar_login</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-06</td>
+<td style="text-align: left;">Sessão <strong>revogável</strong> pelo admin: <code>encerrar_sessao</code>/<code>encerrar_todas_sessoes</code> derrubam a navegação</td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario/bd_manipulador.py:1329</code>, <code>:1354</code>; checagem em <code>telas.py:82-88</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-07</td>
+<td style="text-align: left;">Revalidação de <code>user_ativo</code> <strong>a cada request</strong> (bloqueio/exclusão derrubam a sessão viva)</td>
+<td style="text-align: left;"><code>telas.py:73-79</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-08</td>
+<td style="text-align: left;">Sessão antiga (sem hash) <strong>adota</strong> rastreabilidade na primeira visita e passa a ser revogável</td>
+<td style="text-align: left;"><code>telas.py:89-93</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-09</td>
+<td style="text-align: left;">Retenção LGPD de sessões (<code>sessao_retencao</code>, padrão 50; <code>0</code> = manter tudo)</td>
+<td style="text-align: left;"><code>autenticacao.py:351-366</code> <code>_podar_sessoes</code> + default semeado em <code>bd_manipulador.py:65-68</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-10</td>
+<td style="text-align: left;">Troca obrigatória de senha e de <strong>credenciais</strong> (login + senha) no 1º acesso do <code>master</code>/seed</td>
+<td style="text-align: left;"><code>autenticacao.py:423-431</code> <code>precisa_trocar_senha</code>, <code>:447-454</code> <code>marcar_trocar_senha</code>, <code>:456-464</code> <code>marcar_trocar_credenciais</code>, <code>:466-474</code> <code>precisa_trocar_credenciais</code>; diálogo em <code>telas.py:117-121</code>;forced-change seed em <code>mod_gest_cad_usuario/bd_manipulador.py:343-350</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-11</td>
+<td style="text-align: left;">Troca de senha pelo próprio usuário (confere a atual) e troca de credenciais completa pelo master</td>
+<td style="text-align: left;"><code>autenticacao.py:492-512</code> <code>trocar_senha_propria</code>, <code>:514-564</code> <code>trocar_credenciais_master</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-12</td>
+<td style="text-align: left;">Edição do próprio perfil (e-mail, fone) e nome de tratamento</td>
+<td style="text-align: left;"><code>autenticacao.py:566-576</code> <code>editar_meu_perfil</code>, <code>:573-576</code> <code>nome_de_tratamento</code>; diálogo em <code>telas.py:452</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-13</td>
+<td style="text-align: left;">Logout com auditoria</td>
+<td style="text-align: left;"><code>autenticacao.py:413-421</code> <code>registrar_logout</code>; handler em <code>telas.py:444-450</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-14</td>
+<td style="text-align: left;"><code>pagina_restrita</code> = <strong>4 guards em sequência</strong>: sessão → revalidação no BD → sessão revogável → <strong>acesso ao módulo</strong></td>
+<td style="text-align: left;"><code>telas.py:63-133</code> (blocos <code>:68-71</code>, <code>:73-79</code>, <code>:81-93</code>, <code>:104-113</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-15</td>
+<td style="text-align: left;">Tentativa de abrir módulo sem permissão é <strong>auditada</strong> como <code>acesso_negado</code> e redireciona para <code>/</code></td>
+<td style="text-align: left;"><code>telas.py:104-113</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-16</td>
+<td style="text-align: left;">Guard de acesso por módulo vale para <strong>qualquer rota</strong> que passe <code>chave_modulo</code> (impede navegação por URL direta)</td>
+<td style="text-align: left;"><code>telas.py:99-104</code> (comentário) + <code>main.py</code> (todas as <code>@ui.page</code> restritas)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="modulos-menu-e-layout">Módulos, menu e layout<a class="headerlink" href="#modulos-menu-e-layout" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-NUC-17</td>
+<td style="text-align: left;">Registro de módulos em <code>tb_modulos</code> com nome, ícone, rota, ativo — <strong>descoberta dinâmica</strong></td>
+<td style="text-align: left;"><code>autenticacao.py:43-127</code> <code>_garantir_tb_modulos</code> + <code>:136-149</code> <code>modulos_registrados</code>; catálogo fixo <code>MODULOS_SISTEMA</code> em <code>:25-36</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-18</td>
+<td style="text-align: left;">CRUD de módulo pelo painel central: registrar, reordenar, alterar rota, excluir, ativar/desativar</td>
+<td style="text-align: left;"><code>autenticacao.py:151-179</code> <code>registrar_modulo</code>, <code>:180-202</code> <code>reordenar_modulos</code>, <code>:204-234</code> <code>alterar_rota_modulo</code>, <code>:236-254</code> <code>excluir_modulo</code>, <code>:256-274</code> <code>set_modulo_ativo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-19</td>
+<td style="text-align: left;"><strong>Módulo desativado não pode ser desativado</strong> se for o único <code>chave_nativa</code> (trava de segurança)</td>
+<td style="text-align: left;"><code>autenticacao.py:256-274</code> + <code>chaves_nativas</code> em <code>:276-282</code> (auditoria <code>modulo_desativado_bloqueado</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-20</td>
+<td style="text-align: left;">Módulos do usuário com <strong>vínculo mas desativados</strong> aparecem no menu como item laranja de alerta</td>
+<td style="text-align: left;"><code>autenticacao.py:645-655</code> <code>modulos_do_usuario</code> (retorna <code>ativa=False</code>) + <code>ui_comum.py:863-905</code> (item de menu)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-21</td>
+<td style="text-align: left;">Drawer do menu: Home → módulos → Administração → Documentação → Sair, com separadores e sem rótulos de seção</td>
+<td style="text-align: left;"><code>telas.py:213</code> <code>_montar_layout</code> + <code>ui_comum.py:855-905</code> <code>ItemMenuDrawer</code> / <code>item_menu_drawer</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-22</td>
+<td style="text-align: left;">Temas visual (cores, tamanho de botão, cabeçalho, card) por módulo, com prévia ao vivo e "Restaurar padrão"</td>
+<td style="text-align: left;"><code>tema_modulo.py:112-145</code> <code>ler_tema</code>, <code>:147-180</code> <code>salvar_tema</code>, <code>:182-191</code> <code>restaurar_tema</code>, <code>:323-555</code> <code>bloco_aparencia</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-23</td>
+<td style="text-align: left;"><strong>Modo escuro</strong> por usuário, com paleta escura derivada do tema</td>
+<td style="text-align: left;"><code>autenticacao.py:476-490</code> <code>tema_escuro</code>/<code>definir_tema_escuro</code>; <code>telas.py:136-205</code> <code>_aplicar_tema_escuro</code>; <code>tema_modulo.py:644-666</code> <code>paleta_escura</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-24</td>
+<td style="text-align: left;">Notificação com <strong>timeout configurável</strong> (nunca <code>ui.notify</code> cru)</td>
+<td style="text-align: left;"><code>tema_modulo.py:290-301</code> <code>notificacao_timeout</code> + <code>:303-321</code> <code>notificar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-25</td>
+<td style="text-align: left;">Rodapé com versão do sistema <strong>e</strong> do módulo (mesclada por patch)</td>
+<td style="text-align: left;"><code>telas.py:799-809</code> <code>_obter_versao</code>, <code>:812-829</code> <code>_obter_versao_modulo</code>, <code>:831-838</code> <code>_parse_versao</code>, <code>:840-851</code> <code>_mesclar_patch</code>, <code>:853-877</code> <code>_formatar_versao_rodape</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-26</td>
+<td style="text-align: left;">Rodapé padrão de configuração (<code>rodape_salvar_restaurar</code>) com <code>data-testid</code> no botão Aplicar</td>
+<td style="text-align: left;"><code>ui_comum.py:352-378</code> (<code>data_testid</code> → <code>.props(f'data-testid={data_testid}')</code> em <code>:378</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="configuracao-integracoes-e-servicos">Configuração, integrações e serviços<a class="headerlink" href="#configuracao-integracoes-e-servicos" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-NUC-27</td>
+<td style="text-align: left;">Painel <code>/configuracoes</code> com 5 abas: <strong>Config</strong>, <strong>E-mail</strong>, <strong>Módulo</strong>, <strong>Observabilidade</strong>, <strong>Documentação</strong></td>
+<td style="text-align: left;"><code>tela_configuracoes.py:605-609</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-28</td>
+<td style="text-align: left;">Teste de SMTP sob demanda, com spinner e notificação</td>
+<td style="text-align: left;"><code>tela_configuracoes.py:1143-1160</code> <code>async testar_smtp</code> + <code>run.io_bound(email_util.testar_conexao)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-29</td>
+<td style="text-align: left;">Reconstrução do MkDocs sob demanda (<code>reconstruir_docs</code>), com spinner e <code>data-testid=config-reconstruir-docs</code></td>
+<td style="text-align: left;"><code>tela_configuracoes.py:1401-1432</code> <code>async reconstruir_docs</code> + <code>run.io_bound(documentacao.reconstruir)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-30</td>
+<td style="text-align: left;">Aplicação de cards de configuração em <code>run.io_bound</code> (nunca bloqueia o event-loop)</td>
+<td style="text-align: left;"><code>tela_configuracoes.py:339-363</code> <code>_aplicar_card_async</code> + <code>:558-575</code> <code>_aplicar_paginas_async</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-31</td>
+<td style="text-align: left;"><strong>Fachada de integração</strong> entre módulos (<code>integracoes.py</code>): o núcleo costura as dependências, os módulos não se importam</td>
+<td style="text-align: left;"><code>integracoes.py:32-145</code> (<code>obter_usuario_gestao</code>, <code>listar_usuarios_gestao</code>, <code>agregador_habilitado</code>, <code>listar_noticias_para_tv</code>, <code>limpar_noticias_censuradas</code>, <code>obter_organograma_base</code>, <code>modulo_habilitado</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-32</td>
+<td style="text-align: left;"><strong>Um banco por módulo</strong>, com seletor de backend SQLite/PostgreSQL (<code>sgbd_ativo</code>) e rota para o DATABASE do módulo no PG</td>
+<td style="text-align: left;"><code>banco_conexao.py:676-720</code> <code>conexao(chave)</code>; <code>repositorio.py</code> <code>caminho_db</code>/<code>MODULOS_BD</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-33</td>
+<td style="text-align: left;">Agendador (APScheduler, daemon) com <strong>um job de backup por módulo</strong> em intervalo individual</td>
+<td style="text-align: left;"><code>rotinas.py:402-487</code> <code>iniciar_agendador</code> + <code>:435-437</code> (<code>add_job</code> por chave de <code>MAPA_BACKUPS</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-34</td>
+<td style="text-align: left;">Jobs de limpeza a cada 1 min: PDFs do editor, rascunhos/impressos da Solicitação, imagens órfãs do Blog; poda de auditoria a cada 24 h</td>
+<td style="text-align: left;"><code>rotinas.py:465-469</code> (<code>cleanup_pdf</code>, <code>cleanup_solicita</code>, <code>cleanup_blog_imagens</code>, <code>poda_auditoria</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-35</td>
+<td style="text-align: left;">Backup por módulo com <code>wal_checkpoint(TRUNCATE)</code> antes da cópia e poda mantendo as 10 últimas</td>
+<td style="text-align: left;"><code>rotinas.py:338-364</code> <code>backup_modulo</code> + <code>:366-378</code> <code>_podar_backups</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-36</td>
+<td style="text-align: left;">Painel de backup por módulo (rodapé da administração de cada módulo)</td>
+<td style="text-align: left;"><code>rotinas.py:35-162</code> <code>painel_backup</code>; ex. <code>mod_tecnico/telas_administracao.py:77-78</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-37</td>
+<td style="text-align: left;">Coleta/reinício do Agregador agendados e <strong>reconfiguráveis sem reiniciar</strong> o servidor</td>
+<td style="text-align: left;"><code>rotinas.py:228-255</code> <code>_job_agregador_coleta</code>/<code>_job_agregador_reinicio</code> + <code>:256-286</code> <code>reconfigurar_agregador_noticias</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-38</td>
+<td style="text-align: left;">Censura central de palavras bloqueadas (filtro de título, compartilhada por Agregador e Blog)</td>
+<td style="text-align: left;"><code>censura.py:30-50</code> <code>obter_palavras_bloqueadas</code>, <code>:52-77</code> <code>definir_palavras_bloqueadas</code>, <code>:79-99</code> <code>titulo_bloqueado</code>, <code>:101-107</code> <code>filtrar_titulo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-39</td>
+<td style="text-align: left;">Hora do servidor como <strong>fonte única</strong> de data/hora, com NTP.br e fallback ao relógio local</td>
+<td style="text-align: left;"><code>hora_servidor.py:1-13</code> (docstring) + <code>:24-32</code> (<code>SERVIDORES_NTP</code>, <code>CACHE_OFFSET_SEGUNDOS = 60</code>, <code>TIMEOUT_NTP = 2</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-40</td>
+<td style="text-align: left;">Observabilidade com loguru por escopo de módulo + stack OTel opcional</td>
+<td style="text-align: left;"><code>observabilidade.py</code> <code>get_logger</code>; <code>otel_integracao.py</code>; <code>instrumentacao_app.py</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-41</td>
+<td style="text-align: left;">Rastreabilidade de IP/User-Agent/dispositivo/MAC por <code>ContextVar</code> (sem passar request por parâmetro)</td>
+<td style="text-align: left;"><code>contexto.py:24</code> (<code>_override = contextvars.ContextVar(...)</code>), <code>:27-48</code> <code>_request</code>/<code>_extrair</code>, <code>:71-74</code> <code>contexto_atual</code>, <code>:76-112</code> <code>rotulo_dispositivo</code>, <code>:114-135</code> <code>mac_best_effort</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-42</td>
+<td style="text-align: left;"><code>CrudBase</code> com CRUD, <code>executar_muitas</code>, <code>criar_tabela</code> e <strong>transação atômica</strong> (<code>transacao()</code>)</td>
+<td style="text-align: left;"><code>crud_base.py:60-245</code> (<code>listar</code> <code>:208</code>, <code>obter</code> <code>:212</code>, <code>criar</code> <code>:216</code>, <code>atualizar</code> <code>:220</code>, <code>excluir</code> <code>:224</code>, <code>executar_muitas</code> <code>:228</code>, <code>criar_tabela</code> <code>:243</code>, <code>transacao</code> <code>:189</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-NUC-43</td>
+<td style="text-align: left;">Ativação/CLI do sistema (Opção C) com verificação de pré-requisitos</td>
+<td style="text-align: left;"><code>ativacao.py</code> (1642 linhas)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="requisitos-nao-funcionais-rnf-garantias-tecnicas">Requisitos não-funcionais (RNF) — garantias técnicas<a class="headerlink" href="#requisitos-nao-funcionais-rnf-garantias-tecnicas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RNF</th>
+<th style="text-align: left;">Exigência</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RNF-NUC-PERS-01</td>
+<td style="text-align: left;"><strong>Um <code>db_mod_&lt;chave&gt;.db</code> por módulo</strong>, nunca cross-query</td>
+<td style="text-align: left;"><code>banco_conexao.py:676-720</code> <code>conexao(chave)</code> resolve o caminho pelo <code>chave</code>; <code>repositorio.py</code> <code>MODULOS_BD</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-PERS-02</td>
+<td style="text-align: left;"><code>PRAGMA journal_mode=WAL</code> + <code>synchronous=NORMAL</code> + <code>busy_timeout=5000</code> + <code>foreign_keys=ON</code> em <strong>toda</strong> conexão</td>
+<td style="text-align: left;"><code>banco_conexao.py:705-708</code> (caminho SQLite de <code>conexao</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-COMP-01</td>
+<td style="text-align: left;"><strong>Paridade SQLite ↔ PostgreSQL</strong> por proxy <code>_CursorPostgres</code> / <code>_ConexaoPostgres</code></td>
+<td style="text-align: left;"><code>banco_conexao.py:454-608</code> — traduz <code>?</code>→<code>%s</code> (<code>:460-472</code>: <code>datetime('now','localtime')</code>→<code>LOCALTIMESTAMP</code>, <code>datetime('now')</code>→<code>CURRENT_TIMESTAMP</code>), DDL SQLite, PRAGMA, <code>executemany</code> (<code>:581</code>), <code>executescript</code> (<code>:604-608</code>), <code>lastrowid</code> (<code>:611</code>), e normaliza <code>datetime</code>/<code>date</code> do PG para string (<code>:622-637</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-COMP-02</td>
+<td style="text-align: left;">No PostgreSQL, cada módulo é um <strong>DATABASE</strong> <code>db_mod_&lt;chave&gt;</code> (schema <code>public</code>) — nunca schema isolando módulo</td>
+<td style="text-align: left;"><code>banco_conexao.py:687-694</code> <code>obter_engine_modulo(chave)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-CFG-01</td>
+<td style="text-align: left;">Fonte única de verdade dos defaults: <code>PADRAO_CONFIG</code></td>
+<td style="text-align: left;"><code>mod_intranet/repositorio.py</code> (bloco <code>PADRAO_CONFIG</code>, ver seção "Status — Fase 1" desta página)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-SEG-01</td>
+<td style="text-align: left;">Senhas só em <strong>bcrypt</strong>; <code>verificar_senha</code> nunca compara texto plano</td>
+<td style="text-align: left;"><code>autenticacao.py:284-290</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-SEG-02</td>
+<td style="text-align: left;">Mensagem de login <strong>genérica</strong> (não enumera usuários)</td>
+<td style="text-align: left;"><code>autenticacao.py:337</code>, <code>:342</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-SEG-03</td>
+<td style="text-align: left;">Auditoria <strong>não bloqueante</strong>: falha do hook de auditoria não impede a ação de negócio</td>
+<td style="text-align: left;"><code>bd_manipulador.py:97-104</code> (se <code>_hook_auditoria</code> falhar, cai no import lazy); <code>mod_auditoria/bd_manipulador.py:386-396</code> (<code>registrar_auditoria</code> engole e loga)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-SEG-04</td>
+<td style="text-align: left;"><strong>Sem import cíclico</strong> núcleo↔auditoria: o Auditoria registra um gancho e o <code>audit_log</code> usa o gancho (com import lazy de fallback)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:29-39</code> <code>registrar_hook_auditoria</code> + <code>:97-104</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-SEG-05</td>
+<td style="text-align: left;">Sanitização e reescrita de URL de fonte malformada só quando o dado está de fato quebrado (regex ancorado com lookahead)</td>
+<td style="text-align: left;"><code>mod_agregador_noticias/bd_manipulador.py:478-488</code> (<code>_re_url</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-RES-01</td>
+<td style="text-align: left;"><code>try/except</code> obrigatório em função, com notificação visível <strong>e</strong> log (AGENTS.md §3.2)</td>
+<td style="text-align: left;">Padrão do núcleo: <code>telas.py:117-131</code> (falha ao abrir troca obrigatória → log <strong>e</strong> notificar), <code>tela_configuracoes.py:339-363</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-RES-02</td>
+<td style="text-align: left;"><code>pagina_restrita</code> <strong>nunca</strong> levanta: qualquer falha na troca obrigatória é registrada e o usuário é avisado</td>
+<td style="text-align: left;"><code>telas.py:122-131</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-RES-03</td>
+<td style="text-align: left;"><code>conexao()</code> é <strong>fail-soft</strong>: devolve <code>None</code> em falha (o chamador decide)</td>
+<td style="text-align: left;"><code>banco_conexao.py:694-698</code>, <code>:709-714</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-UX-01</td>
+<td style="text-align: left;">Anti-disconnect nos cards de configuração, SMTP, docs e páginas</td>
+<td style="text-align: left;"><code>tela_configuracoes.py:339-363</code>, <code>:558-575</code>, <code>:1143-1160</code>, <code>:1401-1432</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-UX-02</td>
+<td style="text-align: left;"><strong>Reload único</strong> após concluir + <code>notificar()</code> visível; o card Banco nunca recarrega</td>
+<td style="text-align: left;"><code>mod_gest_cad_usuario/telas_administracao.py:99</code> e <code>mod_tecnico/telas_administracao.py:55</code> (<code>ui.timer(1.0, lambda: ui.navigate.reload(), once=True)</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-UX-03</td>
+<td style="text-align: left;"><code>data-testid</code> no menu (hambúrguer, itens, administração, docs, sair) e no botão Aplicar dos cards</td>
+<td style="text-align: left;"><code>ui_comum.py:898</code> (<code>data-testid={self.testid}</code>), <code>:378</code> (Aplicar)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-UX-04</td>
+<td style="text-align: left;"><strong>Acessibilidade de teclado</strong>: anel <code>focus-visible</code>, item ativo com <code>aria-current="page"</code>, <code>aria-label</code> em item só-ícone e em spinner</td>
+<td style="text-align: left;"><code>ui_comum.py:892</code> (<code>focus-visible:ring-2 focus-visible:outline-none</code>), <code>:898</code>, <code>:903</code>; <code>tela_configuracoes.py:360</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-UX-05</td>
+<td style="text-align: left;">Spinner sempre com <code>aria-label</code></td>
+<td style="text-align: left;"><code>tela_configuracoes.py:360</code>, <code>:572</code>, <code>:1148</code>, <code>:1410</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-UX-06</td>
+<td style="text-align: left;">Responsividade global 320/768/1024 sem <code>gap-*</code> em <code>ui.row()</code> (usa <code>.style('gap: 1rem')</code>) e <code>min-width: 0</code> contra colapso flex</td>
+<td style="text-align: left;">seção "Responsividade global — RNF-UI-01" desta página; <code>ui_comum.py:892</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-I18N-01</td>
+<td style="text-align: left;">Docstrings bilíngue EN (topo) / PT-BR (abaixo) — padrão do núcleo</td>
+<td style="text-align: left;"><code>hora_servidor.py:1-13</code> (referência canônica), <code>telas.py</code>, <code>crud_base.py</code>, <code>banco_conexao.py</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-I18N-02</td>
+<td style="text-align: left;">Toda a UI em PT-BR; mensagens de erro operacionais</td>
+<td style="text-align: left;"><code>telas.py:117-131</code>, <code>autenticacao.py:334-347</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-PERF-01</td>
+<td style="text-align: left;">Backup com <code>wal_checkpoint(TRUNCATE)</code> antes do <code>copy2</code> — cópia consistente e arquivo único</td>
+<td style="text-align: left;"><code>rotinas.py:338-364</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-PERF-02</td>
+<td style="text-align: left;">NTP com cache de 60 s (evita uma consulta SNTP por carimbo de data)</td>
+<td style="text-align: left;"><code>hora_servidor.py:31</code> <code>CACHE_OFFSET_SEGUNDOS = 60</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-PERF-03</td>
+<td style="text-align: left;">Agendador <code>daemon=True</code> (não segura o processo no shutdown)</td>
+<td style="text-align: left;"><code>rotinas.py:412</code> <code>BackgroundScheduler(daemon=True)</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-NUC-RESILI-01</td>
+<td style="text-align: left;">Falha de backup <strong>nunca</strong> derruba o handler: <code>OSError</code>→<code>None</code> + log</td>
+<td style="text-align: left;"><code>rotinas.py:338-364</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="divergencias-e-riscos">Divergências e riscos<a class="headerlink" href="#divergencias-e-riscos" title="Permanent link">&para;</a></h2>
+<h3 id="codigo-faz-doc-nao-diz">Código faz, doc não diz<a class="headerlink" href="#codigo-faz-doc-nao-diz" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Achado</th>
+<th style="text-align: left;">Evidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DIV-NUC-01</td>
+<td style="text-align: left;"><strong><code>garantir_rastreabilidade</code> engole a exceção em silêncio</strong> (<code>except Exception: pass</code>, <code>bd_manipulador.py:70-71</code>) — contraria AGENTS.md §3.2 ("SEMPRE registre/logue a causa"). Se a migração das colunas LGPD falhar, o <code>sessao_retencao</code> não é semeado e ninguém vê nada no log.</td>
+<td style="text-align: left;"><code>bd_manipulador.py:70-71</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-NUC-02</td>
+<td style="text-align: left;"><code>hash_arquivo</code> (<code>bd_manipulador.py:107-118</code>) <strong>não</strong> registra log no <code>except</code>: devolve <code>None</code> em silêncio.</td>
+<td style="text-align: left;"><code>bd_manipulador.py:114-117</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-NUC-03</td>
+<td style="text-align: left;">O <code>MODULOS_SISTEMA</code> fixo (<code>autenticacao.py:25-36</code>) e o catálogo em <code>tb_modulos</code> <strong>duplicam</strong> a fonte de verdade dos módulos. <code>rotas_modulos.py</code> re-registra slugs customizados no boot para reduzir a divergência, mas a lista fixa continua sendo a âncora das rotas.</td>
+<td style="text-align: left;"><code>autenticacao.py:25-36</code> + <code>main.py</code> (registro de rotas no boot)</td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-NUC-04</td>
+<td style="text-align: left;">O perfil <strong>real</strong> do usuário no menu vem do <strong>papel no módulo</strong> (<code>rotulo_perfil = "&lt;papel&gt; · neste módulo"</code>), não do perfil global — a tela de negócio mostra <code>administrador</code> mesmo para quem é <code>comum</code> globalmente.</td>
+<td style="text-align: left;"><code>telas.py:95-97</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="doc-diz-codigo-nao-faz">Doc diz, código não faz<a class="headerlink" href="#doc-diz-codigo-nao-faz" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Alegação da doc</th>
+<th style="text-align: left;">Estado real</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DIV-NUC-05</td>
+<td style="text-align: left;">Doc ("Fachada de integração", 25/09/2026) descreve o fechamento das violações de isolamento</td>
+<td style="text-align: left;"><strong>Confirmado e completo</strong>: o <code>mod_filas</code> também consome o Agregador pela fachada (<code>mod_filas/telas.py:1742-1750</code> → <code>integracoes.agregador_habilitado()</code> + <code>integracoes.listar_noticias_para_tv(limite=200)</code>), não por import direto. Nenhum <code>mod_*</code> importa outro <code>mod_*</code> hoje.</td>
+</tr>
+<tr>
+<td style="text-align: left;">DIV-NUC-06</td>
+<td style="text-align: left;">Doc cita <code>versao_modulo:&lt;chave&gt;</code> no rodapé</td>
+<td style="text-align: left;">Existe e funciona (<code>telas.py:812-829</code>); mas <code>_mesclar_patch</code> (<code>:840-851</code>) é a parte que a doc não descreve — a versão exibida é a <strong>combinação</strong> do patch do sistema com o do módulo, não o valor cru</td>
+</tr>
+</tbody>
+</table>
+<h3 id="riscos">Riscos<a class="headerlink" href="#riscos" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Risco</th>
+<th style="text-align: left;">Severidade</th>
+<th style="text-align: left;">Evidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>RISCO-NUC-01</strong></td>
+<td style="text-align: left;"><strong><code>garantir_rastreabilidade</code> engole falha silenciosa</strong> (DIV-NUC-01). Como ela também semeia <code>sessao_retencao</code> (o único lugar que cria esse default), uma falha ali deixa <strong>retenção de sessão em modo "manter para sempre"</strong> sem nenhum sinal — crescimento indefinido de <code>tb_sessoes</code> e divergência silenciosa de privacidade.</td>
+<td style="text-align: left;">🟠 Média</td>
+<td style="text-align: left;"><code>bd_manipulador.py:42-71</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-NUC-02</strong></td>
+<td style="text-align: left;"><strong>Zero <code>async</code> nos módulos de negócio, mas o núcleo é exemplar.</strong> O padrão correto (<code>_aplicar_card_async</code>, <code>testar_smtp</code>, <code>reconstruir_docs</code>, <code>_aplicar_paginas_async</code>) existe em <code>tela_configuracoes.py</code> — e <strong>não</strong> foi propagado para <code>mod_gest_cad_usuario</code>, <code>mod_auditoria</code>, <code>mod_solicita_impressao</code> (exceto o upload) e <code>mod_tecnico</code> (exceto o ZIP do backup). A dívida é conhecida e está espalhada por 4 módulos.</td>
+<td style="text-align: left;">🟠 Média</td>
+<td style="text-align: left;"><code>tela_configuracoes.py:339-363</code> como referência vs. os 4 módulos</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-NUC-03</strong></td>
+<td style="text-align: left;"><strong><code>/admin/{chave_modulo}</code> sem gate uniforme de administrador.</strong> <code>main.py</code> calcula <code>eh_admin</code> em 6 ramos e <strong>só o usa</strong> em <code>lista_telefonica</code> (<code>:1096-1105</code>) e <code>agregador_noticias</code> (<code>:1109-1117</code>). Em <code>tecnico</code> (<code>:1080-1086</code>) e <code>filas</code> (<code>:1088-1094</code>) o <code>eh_admin</code> é <strong>calculado e descartado</strong>; em <code>usuarios</code> (<code>:1031-1037</code>) nem é calculado. Efeito: <code>comum</code> com acesso ao módulo altera configuração sensível. Detalhe por módulo em RISCO-TEC-01 e RISCO-GEST-01.</td>
+<td style="text-align: left;">🔴 Alta</td>
+<td style="text-align: left;"><code>main.py:1031-1094</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RISCO-NUC-04</strong></td>
+<td style="text-align: left;"><code>conexao()</code> devolve <code>None</code> em falha, e vários módulos fazem <code>raise RuntimeError</code> em cima (ex. <code>mod_tecnico/bd_manipulador.py:44-45</code>). Um <code>None</code> propagado sem checagem quebra a página inteira em vez de falhar suave — a checagem é <strong>responsabilidade de cada módulo</strong>, sem padrão.</td>
+<td style="text-align: left;">🟡 Baixa</td>
+<td style="text-align: left;"><code>banco_conexao.py:694-698</code> + <code>mod_tecnico/bd_manipulador.py:44-45</code></td>
+</tr>
+</tbody>
+</table>
               
             </div>
           </div><footer>

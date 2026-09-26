@@ -74,9 +74,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Arquitetura de Software (DAS)</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
@@ -101,9 +104,12 @@
                 <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Registro de Mudanças</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
@@ -138,6 +144,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Testes</span></p>
               <ul>
@@ -148,6 +156,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
                   </li>
@@ -175,6 +185,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
@@ -244,6 +256,7 @@
 <li><a href="#visao-geral">Visão geral</a></li>
 <li><a href="#nomenclatura">Nomenclatura</a></li>
 <li><a href="#estilo-de-codigo">Estilo de código</a></li>
+<li><a href="#analise-estatica-obrigatoria-pyflakes">Análise estática obrigatória (pyflakes)</a></li>
 <li><a href="#modelo-de-classes-e-objetos">Modelo de classes e objetos</a></li>
 <li><a href="#estrutura-de-um-novo-modulo-mod_">Estrutura de um novo módulo <code>mod_*</code></a></li>
 <li><a href="#padrao-de-manipulador-de-banco">Padrão de manipulador de banco</a></li>
@@ -330,15 +343,152 @@
 <li><strong>Funcional/procedural</strong>: prefira funções a classes. Cada tela é uma função; cada regra de banco é uma função no <code>bd_manipulador.py</code>.</li>
 <li><strong>Interface de tela obrigatória</strong>: <code>telas.py</code> <strong>DEVE</strong> expor <code>mostrar_tela(usuario_logado, perfil)</code> (nome do parâmetro pode variar: <code>user_nome</code>, <code>usuario_logado</code>).</li>
 <li>Sem comentários supérfluos — o padrão do projeto mantém docstrings curtos em funções de núcleo e cabeçalhos de arquivo.</li>
-<li><strong>Validação obrigatória</strong> após alterar qualquer <code>.py</code>:</li>
+<li>
+<p><strong>Docstrings bilíngue — EN no topo, PT-BR abaixo.</strong> Vale para o <strong>docstring de módulo</strong> e para as <strong>funções</strong> (inclusive as aninhadas dentro de <code>mostrar_tela</code>). O repositório usa <strong>duas formas aceitas</strong>, ambas com a mesma ordem:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># forma 1 — rótulos explícitos</span>
+<span class="sd">"""EN: Single name list of the queue (import, priority, transfer within same TV).</span>
+
+<span class="sd">PT-BR: Lista ÚNICA da fila (só visível nela): importa, ajusta prioridade e envia</span>
+<span class="sd">p/ outra fila da mesma TV."""</span>
+
+<span class="c1"># forma 2 — frase EN, linha em branco, parágrafo PT-BR</span>
+<span class="sd">"""Zeros the month's consumption for the department/unit.</span>
+
+<span class="sd">Zera o consumo do mês para a secretaria/setor."""</span>
+</code></pre></div>
+<p>❌ Não conforma: docstring só em PT-BR (sem a linha de cima em inglês). É a forma
+mais comum de desvio, e passa despercebida porque o conteúdo está certo — falta
+apenas o par de idiomas. Divergências conhecidas estão registradas em
+<a href="../analise_mod_agregador_noticias/#fluxo-da-tela">Agregador de Notícias</a> (cinco
+helpers do card + <code>_tempo_relativo</code>) e
+<a href="../analise_mod_intranet/#correcoes-de-nameerror-no-boot-e-no-login-25092026">Intranet</a> (<code>_login_erro_log</code>).</p>
+</li>
+<li>
+<p><strong>Validação obrigatória</strong> após alterar qualquer <code>.py</code>:</p>
+</li>
 </ul>
 <div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import ast; ast.parse(open('&lt;arquivo&gt;', encoding='utf-8').read())"</span>
+.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>pyflakes<span class="w"> </span>&lt;arquivo&gt;<span class="w">   </span><span class="c1"># undefined name é bloqueante (ver seção própria)</span>
 </code></pre></div>
 <ul>
 <li>Histórico de <strong>caracteres corrompidos</strong> em <code>main.py</code> (edição via PowerShell): evite ferramentas que reescrevam encoding por fora; confira imports (<code>get_config</code>, <code>get_connection</code>) ao mexer no topo dos arquivos.</li>
+<li><strong>Corrupção sintática em <code>mod_filas/telas.py</code> (22/09/2026)</strong>: placeholders (<code>nicegui_</code>, <code>ui_.</code>, <code>arqui_.o</code>, <code>gui_.he</code>, <code>exclui_.</code>, <code>.class(</code>, <code>validar.acesso_modulo</code>) impediram até o import — reparo sistemático validado contra o <code>bd_manipulador</code> (fonte de verdade), <code>COMPILE_OK</code> (<code>ast.parse</code>) + <code>IMPORT_OK</code>.</li>
+</ul>
+<h3 id="tratamento-de-erros-tryexcept-obrigatorio-em-toda-funcao-agentsmd-32-blindagem-22092026">Tratamento de erros — try/except OBRIGATÓRIO em toda função (AGENTS.md §3.2, blindagem 22/09/2026)<a class="headerlink" href="#tratamento-de-erros-tryexcept-obrigatorio-em-toda-funcao-agentsmd-32-blindagem-22092026" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Toda função do sistema DEVE ser envolvida em <code>try/except</code>.</strong> Nunca deixe exceção estourar até o topo — o objetivo é <strong>nunca derrubar o sistema</strong>.</li>
+<li>No <code>except</code>, use <strong><code>except Exception</code></strong> (nunca <code>except:</code> cru), gere <strong>notificação visível ao usuário</strong> (na UI, <code>tema_modulo.notificar()</code> com tipo erro; fora da UI, registre no log) e faça rollback parcial sem travar o fluxo quando aplicável.</li>
+<li><strong>Nunca engula o erro em silêncio</strong>: SEMPRE registre/logue a causa (<code>logger.exception(...)</code> via <code>observabilidade.get_logger("&lt;modulo&gt;")</code> ou <code>traceback</code>) além da notificação.</li>
+<li>Em handlers NiceGUI, todo <code>on_click</code>/ação <code>async</code> DEVE seguir esta regra para não causar disconnect/crash do cliente.</li>
+<li>Restaure/componha o estado (botões, spinner, <code>ocupado</code>) no <code>else</code>/<code>finally</code> para não deixar a tela travada após erro.</li>
+<li>Detalhe aplicado: <code>main.py::page_tv</code> mantém o <code>mostrar_tv</code> <strong>fora</strong> do <code>try</code> de leitura dos query params; <code>mod_auditoria/bd_manipulador.py</code> fecha a conexão em <code>try/except</code> e retorna fail-soft quando a conexão falha (sem leak).</li>
 </ul>
 <h3 id="suite-de-testes-pytest">Suíte de testes — pytest<a class="headerlink" href="#suite-de-testes-pytest" title="Permanent link">&para;</a></h3>
 <p>A suíte é <strong>baseada em scripts standalone</strong> em <code>assets/test/*.py</code> (checagens/asserts próprios; rodam com <code>.venv/bin/python assets/test/&lt;arquivo&gt;.py</code>). O comando oficial de validação é <code>.venv/bin/pytest</code>: o <code>pytest.ini</code> (raiz) limita a coleta do pytest ao runner <code>assets/test/test_suite.py</code> (<code>testpaths = assets/test/test_suite.py</code>, <code>pytest.ini:2</code>) — sem isso, o pytest tentava coletar os scripts standalone e quebrava (<code>INTERNALERROR</code> por <code>sys.exit</code> no import de <code>test_dashboard.py</code>). O runner executa TODA a suíte em subprocessos (<code>test_suite_standalone()</code>, <code>assets/test/test_suite.py:50</code>), falha se algum script retornar código ≠ 0 (≈3–5 min) e limpa as variáveis <code>PYTEST_*</code> do ambiente (<code>_env_limpo()</code>, <code>assets/test/test_suite.py:34</code>). <code>addopts = -p no:cacheprovider</code> (<code>pytest.ini:3</code>) desativa o cache <code>.pytest_cache/</code>. Detalhes e exclusões: <a href="../testes_plano/">Testes — Plano</a>.</p>
+<h2 id="analise-estatica-obrigatoria-pyflakes">Análise estática obrigatória (pyflakes)<a class="headerlink" href="#analise-estatica-obrigatoria-pyflakes" title="Permanent link">&para;</a></h2>
+<div class="admonition danger">
+<p class="admonition-title"><code>undefined name</code> é erro BLOQUEANTE, igual a teste vermelho</p>
+<p>Rodar a análise estática <strong>antes</strong> de declarar o ciclo de testes verde não é
+opcional neste repositório. A regra está viva na spec do subagente de QA
+(<code>.opencode/agent/kbp-qa.md</code>, seção "Análise estática obrigatória") e no
+<a href="#checklist-de-aceite">Checklist de aceite</a> desta página.</p>
+</div>
+<div class="highlight"><pre><span></span><code><span class="c1"># obrigatório antes de fechar o ciclo</span>
+.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>pyflakes<span class="w"> </span>main.py<span class="w"> </span>mod_*/*.py<span class="w"> </span>mod_*/*/*.py
+.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>pyflakes<span class="w"> </span>main.py<span class="w"> </span>mod_*/*.py<span class="w"> </span>mod_*/*/*.py<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">"undefined name"</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Item</th>
+<th style="text-align: left;">Detalhe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Ferramenta</td>
+<td style="text-align: left;"><code>pyflakes</code> — checker <strong>passivo</strong> (analisa a AST, não importa o módulo): pega <code>undefined name</code>, <code>redefinition of unused</code>, <code>local variable ... assigned to but never used</code>, <code>f-string is missing placeholders</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Dependência</td>
+<td style="text-align: left;"><code>requirements-dev.txt</code>, seção <strong>"Lint / análise estática"</strong> — <code>pyflakes&gt;=3.2.0</code>. <strong>Nunca</strong> em <code>requirements.txt</code> (é dev-only)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Instalação</td>
+<td style="text-align: left;"><code>.venv/bin/pip install -r requirements-dev.txt</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Verificação de import</td>
+<td style="text-align: left;">ao mexer numa tela, <code>.venv/bin/python -c "import mod_&lt;nome&gt;.telas"</code> confirma que o módulo carrega isolado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="por-que-e-obrigatorio-aqui-tryexcept-esconde-nameerror">Por que é obrigatório aqui — <code>try/except</code> esconde <code>NameError</code><a class="headerlink" href="#por-que-e-obrigatorio-aqui-tryexcept-esconde-nameerror" title="Permanent link">&para;</a></h3>
+<p>O padrão obrigatório do AGENTS.md §3.2 manda <strong>envolver toda função em
+<code>try/except</code></strong> para nunca derrubar o servidor. Isso é correto e não muda. Mas o
+<code>except</code> do caminho de erro costuma terminar em <code>pass</code> (ou só em notificação), e
+uma referência a um nome inexistente no escopo levanta <code>NameError</code> <strong>exatamente ali</strong>.
+Resultado: <strong>a suíte passa, o terminal fica limpo, e a funcionalidade está
+quebrada</strong>. O <code>pyflakes</code> é a única barreira que enxerga isso antes do usuário.</p>
+<p>Foi exatamente o que aconteceu em 25/09/2026: <strong>7 <code>undefined name</code> em 5 arquivos</strong>,
+cada um com efeito funcional real e nenhum sinal visível. O relatório por módulo está
+nas páginas de análise — por exemplo
+<a href="../analise_mod_solicita_impressao/#correcoes-de-nameerror-25092026">Solicitação de Impressão — Correções de <code>NameError</code></a>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Onde</th>
+<th style="text-align: left;">Nome ausente</th>
+<th style="text-align: left;">Efeito silencioso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>main.py:86-98</code></td>
+<td style="text-align: left;"><code>_otel_auto_stack</code></td>
+<td style="text-align: left;"><code>python main.py --otel</code> / <code>--config</code> <strong>nunca</strong> subia o OTel — o <code>NameError</code> caía no <code>except</code> do fim e imprimia só um aviso</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_solicita_impressao/telas.py</code></td>
+<td style="text-align: left;"><code>bd</code></td>
+<td style="text-align: left;">botão <strong>"Resetar"</strong> da cota não fazia nada</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_solicita_impressao/telas.py</code></td>
+<td style="text-align: left;"><code>ler_tema</code>, <code>bloco_aparencia</code></td>
+<td style="text-align: left;">aba <strong>Admin › Configurações</strong> truncava antes do botão "Salvar"</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_filas/telas.py</code></td>
+<td style="text-align: left;"><code>fid</code> (o escopo usa <code>fila_id</code>)</td>
+<td style="text-align: left;">seletor de etapa da fila <strong>sempre vazio</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_renomear_empenho/telas.py</code></td>
+<td style="text-align: left;"><code>notificar</code> (~60 call sites)</td>
+<td style="text-align: left;"><strong>todo</strong> erro do Renomeador sumia sem log e sem notificação</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>mod_intranet/telas.py</code></td>
+<td style="text-align: left;"><code>_login_erro_log</code> (11 call sites)</td>
+<td style="text-align: left;">erros de login/troca de credenciais <strong>não iam para o log</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="regra-de-correcao">Regra de correção<a class="headerlink" href="#regra-de-correcao" title="Permanent link">&para;</a></h3>
+<p>Ao encontrar um <code>undefined name</code>, corrija <strong>na fonte</strong> — o import certo no escopo do
+módulo ou a definição da função. <strong>Nunca</strong> silencie com um <code>except Exception: pass</code>
+novinho: isso reintroduz o mesmo bug escondido, só que agora com aparência de
+tratamento de erro.</p>
+<div class="admonition warning">
+<p class="admonition-title">Imports de escopo de módulo, não só dentro da função</p>
+<p>O padrão que emerge dos 7 casos acima: quando um nome é usado por <strong>mais de uma</strong>
+função do arquivo (ou por muitas), ele vai no <strong>escopo de módulo</strong>, no topo —
+não repetido dentro de cada função. <code>mod_renomear_empenho/telas.py</code> chegou a
+usar <code>notificar</code> em ~60 call sites sem nunca ter o import; o
+<code>mod_solicita_impressao/telas.py</code> importava <code>bd</code> em uma função e usava em outra.
+Escopo de módulo é o que o <code>pyflakes</code> valida sem complaint.</p>
+</div>
 <h2 id="modelo-de-classes-e-objetos">Modelo de classes e objetos<a class="headerlink" href="#modelo-de-classes-e-objetos" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Default: funções.</strong> Os módulos <code>mod_*</code> não usam classes para regras de negócio (sem ORM, sem DTOs, sem "service objects").</li>
@@ -726,6 +876,8 @@
 <li>[ ] <code>versao_modulo:&lt;chave&gt;</code> semeada e log rotulado com <code>get_logger("&lt;modulo&gt;")</code>.</li>
 <li>[ ] Auditoria em todas as escritas; hash SHA-256 em operações com arquivos.</li>
 <li>[ ] <code>ast.parse</code> passou em todos os arquivos alterados.</li>
+<li>[ ] <strong>Análise estática limpa (BLOQUEANTE)</strong>: <code>.venv/bin/python -m pyflakes main.py mod_*/*.py mod_*/*/*.py</code> sem nenhum <code>undefined name</code> (ver <a href="#analise-estatica-obrigatoria-pyflakes">Análise estática obrigatória</a>). Um <code>undefined name</code> aqui significa funcionalidade quebrada e invisível, porque o <code>try/except</code> do AGENTS.md §3.2 engole o <code>NameError</code>.</li>
+<li>[ ] Todo <code>try/except</code> novo registra a causa (<code>logger.exception</code>/<code>traceback</code>) <strong>e</strong> notifica — nenhum <code>except Exception: pass</code> encobrindo <code>NameError</code> novo.</li>
 <li>[ ] Valores ajustáveis (cores, tempos, textos, pastas…) em <code>tb_config</code> + cupê Administração — nada de literais hardcoded (ver <a href="#configurabilidade-regra-de-projeto">Configurabilidade</a>).</li>
 <li>[ ] Componentes de UI via <code>mod_intranet/ui_comum</code> (<code>botao</code>/<code>botao_icone</code>/<code>CORES</code>/<code>dialogo_card</code>/<code>rodape_dialogo</code>/<code>notificar</code>/<code>item_menu_drawer</code>) — sem <code>ui.button</code>/<code>ui.item</code> cru nem hexes soltos; itens do drawer SEMPRE pela fábrica <code>item_menu_drawer</code> (com <code>testid="menu-*"</code>); <strong>todos os botões centralizados</strong> em linhas <code>w-full justify-center flex-wrap</code> com <code>.style('gap: 0.75rem')</code> + <code>.style('min-width: 0')</code>, <strong>mesmo formato</strong> <code>size=md</code> <code>min-w-[180px]</code> e <strong>cor única</strong> por módulo via <code>chave_modulo</code> (<code>RNF-UI-01</code>, 06/09; ref. botão <code>Aplicar configurações</code>/<code>Aplicar</code>); botões UPPERCASE legados do Quasar usam <code>no_caps=False</code> (o edit_pdf padronizou todos em <code>primario</code> sem <code>no_caps</code> em 06/09 — sem exceções cruas).</li>
 <li>[ ] <strong>Anti-disconnect AGENTS.md §5.1 (12/09/2026)</strong>: <code>on_click</code> rápido pode ser <code>sync</code>; I/O pesado (<code>subprocess</code> mkdocs, SMTP, <code>copy2</code>, <code>observabilidade.configurar()</code>, <code>rodar_monitor</code>) DEVE usar <code>await run.io_bound(fn)</code> em handler <code>async</code> com spinner + botão desabilitado + trava <code>ocupado</code>; reload único (<code>ui.timer(1.0, ui.navigate.reload())</code>) após <code>notificar()</code>; card Banco nunca recarrega; Aplicar com <code>data-testid</code> (<code>config-aplicar-&lt;card&gt;</code>); avisos via <code>tema_modulo.notificar()</code>.</li>
