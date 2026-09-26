@@ -12,9 +12,9 @@
 
 Extrai o nº do empenho/parcela (ou tipo especial EC/EE/EG/AE) do texto dos PDFs, renomeia sequencialmente e move falhas para quarentena reprocessável. Inclui organizador físico em caixas/subpastas, edição e ferramentas de PDF, e o fluxo completo de solicitação de envio. O processamento é **manual** (botão "Processar pasta agora", abas Fila/Navegar) e **automático** via job `monitor_empenho` do APScheduler (**RF-40**, intervalo padrão 60 s, configurável em `empenhos_monitor_intervalo_seg` sem restart — `mod_intranet/rotinas.py:36-70,229`).
 
-### Tela — 6 abas internas
+### Tela — 4 abas internas + painel de Configurações
 
-A tela `/renomear-empenho` (`telas.py:mostrar_tela`) tem **4 abas** (admin: Navegar, Fila, Organizador, Solicitação; comum: só Navegar). A busca FTS5 vive no campo de pesquisa do Navegar e as Configurações no painel standalone (`telas_administracao.py`, `/admin/empenhos`):
+A tela `/renomear-empenho` (`telas.py:mostrar_tela`) tem **4 abas** (admin: Navegar, Fila, Organizador, Solicitação; comum: só Navegar). A busca FTS5 vive no campo de pesquisa do Navegar (`empenhos-navegar-pesquisa`) e as Configurações no painel standalone (`telas_administracao.py`, `/admin/empenhos`):
 
 | Aba | Acesso | Conteúdo |
 |:---|:---|:---|
@@ -494,3 +494,32 @@ Mapeamento para esta implementação:
 | renomear_empenho | Sem `CrudBase`; FTS5 `VIRTUAL TABLE` + `sqlite_master` (degrada no PG por desenho) | `mod_renomear_empenho/bd_manipulador.py:687`, `:786` (FTS5) · `:773` (`sqlite_master`) · `:660` (fallback LIKE) | Manter fallback LIKE no PG; isolar FTS5 em ramo SQLite; migrar CRUD para `CrudBase`; `_tabela_existe()` interno | Médio (monitor 60 s + quarentena + organizador) |
 
 Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+
+## Correções registradas (26/09/2026 — lote 3)
+
+### Bug 4 — `ui.slider(label=...)`: o painel admin do Agregador não abria
+
+Não é deste módulo, mas o mesmo padrão apareceu aqui e no Agregador, então
+fica registrado junto. `ui.slider` **não** aceita `label=` como argumento nesta
+versão do NiceGUI: a chamada levantava `TypeError: got an unexpected keyword
+argument 'label'` e derrubava `page_admin_modulo` inteiro
+(`main.py:1136` → `telas_administracao.py:49`). O rótulo de um slider vai por
+`.props('label')`, como já era feito em `mod_filas/telas.py:183` e
+`mod_edit_pdf/telas.py:967`.
+
+Como o painel não abria, o erro ficava **invisível**: a rota devolvia 200 e o
+usuário só via um painel em branco. Validação depois da correção: os 10 painéis
+`/admin/*` abrem com conteúdo e **zero erros de JS** no console.
+
+### Código morto — `_tela_pesquisar` (107 linhas) removida
+
+A aba "Pesquisar" tinha sido descontinuada — o comentário em `telas.py:170`
+registra: *"Pesquisar removido — busca foi para o Navegar"*. A função
+`_tela_pesquisar` (com o campo `empenhos-busca`) continuou no arquivo, sem
+nenhum caller: 107 linhas que o `pyflakes` não acusa, porque código não
+chamado não é erro de sintaxe. Removida em 26/09/2026.
+
+O campo de busca da tela chama-se hoje `empenhos-navegar-pesquisa`. A suíte
+Playwright ainda referenciava o id antigo e falhou — o que expôs que o teste
+estava **pulado** desde a troca de senha forçada e nunca havia rodado contra a
+tela real.

@@ -13,6 +13,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 import csv
+import html as _html
 import io
 import json
 from datetime import datetime
@@ -264,9 +265,16 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                 linha = {k: raw[k] for k in ativos if k in raw}
                 linha["id"] = r[0]
                 if "acao" in conjunto:
+                    # A coluna é renderizada por `v-html` (linha 551), então o
+                    # texto vem do banco e PRECISA de escape: `acao` é uma
+                    # string livre em `_audit(usuario, acao, ...)` e escapa do
+                    # `CORES_ACAO` cai direto no HTML. Sem escape, um `acao`
+                    # com `<img onerror=...>` viraria XSS armazenado e
+                    # persistente para todo mundo que abre a auditoria.
+                    acao = _html.escape(str(raw["acao"] or ""))
                     cor = CORES_ACAO.get(raw["acao"])
                     linha["acao"] = (f'<span style="color:{cor};font-weight:600">'
-                                     f'{raw["acao"]}</span>' if cor else raw["acao"])
+                                     f'{acao}</span>' if cor else acao)
                 if "descricao" in conjunto:
                     d = raw["descricao"]
                     linha["descricao"] = d[:100] + ("..." if len(d) > 100 else "")

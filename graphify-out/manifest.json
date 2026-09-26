@@ -474,9 +474,9 @@
     "semantic_hash": ""
   },
   "main.py": {
-    "mtime": 1790386141.715342,
-    "seen": 1790387687.666402,
-    "ast_hash": "8a351e34275364fff86cdacb6783d6d2",
+    "mtime": 1790430049.9327734,
+    "seen": 1790461236.2769823,
+    "ast_hash": "3612e3aed2af64de9e273bf880b28cc5",
     "semantic_hash": ""
   },
   "mod_auditoria/__init__.py": {
@@ -492,9 +492,9 @@
     "semantic_hash": ""
   },
   "mod_auditoria/telas.py": {
-    "mtime": 1790119490.740996,
-    "seen": 1790387687.6664455,
-    "ast_hash": "30fe2da2bb7b6d6087714646e9268b57",
+    "mtime": 1790431004.2596872,
+    "seen": 1790461236.2770598,
+    "ast_hash": "866ffe0eea244d915e600d5c4b72f80b",
     "semantic_hash": ""
   },
   "mod_auditoria/telas_administracao.py": {
@@ -720,9 +720,9 @@
     "semantic_hash": ""
   },
   "mod_intranet/rotinas.py": {
-    "mtime": 1790119490.756996,
-    "seen": 1790387687.6666286,
-    "ast_hash": "9fe891c8a8c5a863542593a3545a2f93",
+    "mtime": 1790429523.9106174,
+    "seen": 1790461236.2774222,
+    "ast_hash": "ab796cb6a6f340665a170d8ddd2291e4",
     "semantic_hash": ""
   },
   "mod_intranet/tela_configuracoes.py": {
@@ -732,9 +732,9 @@
     "semantic_hash": ""
   },
   "mod_intranet/telas.py": {
-    "mtime": 1790386141.7433424,
-    "seen": 1790387687.666635,
-    "ast_hash": "dd33efc1ab14ffcba5ffcc3d25baa091",
+    "mtime": 1790391137.5711176,
+    "seen": 1790428286.9267137,
+    "ast_hash": "8b0cdd5e24de79edf41c6dfc26e7792d",
     "semantic_hash": ""
   },
   "mod_intranet/tema_css.py": {
@@ -786,15 +786,15 @@
     "semantic_hash": ""
   },
   "mod_renomear_empenho/telas.py": {
-    "mtime": 1790386141.8953443,
-    "seen": 1790387687.6666918,
-    "ast_hash": "1eb923c92bc308ac958f39b67f905556",
+    "mtime": 1790458408.60651,
+    "seen": 1790461236.2776084,
+    "ast_hash": "e4f17282c29783c7fec2c9f35a127f2a",
     "semantic_hash": ""
   },
   "mod_renomear_empenho/telas_administracao.py": {
-    "mtime": 1790119490.7659962,
-    "seen": 1790387687.6666954,
-    "ast_hash": "3b58fa41dd058a197d9b9d69a46b4677",
+    "mtime": 1790421849.6952143,
+    "seen": 1790428286.926859,
+    "ast_hash": "408eb1d0f604d764392d6156888a1206",
     "semantic_hash": ""
   },
   "mod_renomear_empenho/visual.py": {
@@ -816,9 +816,9 @@
     "semantic_hash": ""
   },
   "mod_solicita_impressao/bd_manipulador.py": {
-    "mtime": 1790380480.3815756,
-    "seen": 1790387687.6667087,
-    "ast_hash": "186abab64560ba9ecae3b3a57746a77d",
+    "mtime": 1790429485.092175,
+    "seen": 1790461236.2776413,
+    "ast_hash": "8231509ff9a4716c0ffc719ade78551d",
     "semantic_hash": ""
   },
   "mod_solicita_impressao/src/impressao.js": {
@@ -828,15 +828,15 @@
     "semantic_hash": ""
   },
   "mod_solicita_impressao/telas.py": {
-    "mtime": 1790386141.9533448,
-    "seen": 1790387687.6667154,
-    "ast_hash": "e59dee87aae593e912361363fa7b211d",
+    "mtime": 1790431267.3778472,
+    "seen": 1790461236.2776532,
+    "ast_hash": "093e8a8e2084a879eede6e6a49dfdf26",
     "semantic_hash": ""
   },
   "mod_solicita_impressao/telas_administracao.py": {
-    "mtime": 1790119490.767996,
-    "seen": 1790387687.666719,
-    "ast_hash": "4c1a9b276e79a670f9491c3a31452308",
+    "mtime": 1790431289.578949,
+    "seen": 1790461236.2776587,
+    "ast_hash": "3ceffef5259ab08bff629528186d6779",
     "semantic_hash": ""
   },
   "assets/test/teste_docs_boot.py": {
@@ -1038,9 +1038,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_auditoria.md": {
-    "mtime": 1790380480.1915767,
-    "seen": 1790387687.666872,
-    "ast_hash": "5272e8347a6b4952c70c93e51981fe6d",
+    "mtime": 1790427751.2417052,
+    "seen": 1790428286.9273844,
+    "ast_hash": "9d3250bc6c90e2354b62f421aa5ec733",
     "semantic_hash": ""
   },
   "docs/analise_mod_blog.md": {
@@ -1056,15 +1056,15 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_gest_cad_usuario.md": {
-    "mtime": 1790380480.1965766,
-    "seen": 1790387687.6668868,
-    "ast_hash": "efecb71c5338c5187c70f0b75b339a5d",
+    "mtime": 1790427809.094861,
+    "seen": 1790428286.9274282,
+    "ast_hash": "34925f6ae9281150247964ca4d743df3",
     "semantic_hash": ""
   },
   "docs/analise_mod_intranet.md": {
-    "mtime": 1790388271.2301366,
-    "seen": 1790388574.9841459,
-    "ast_hash": "7818bda242d8b129d617b2ee4fb660ff",
+    "mtime": 1790428026.7824588,
+    "seen": 1790428286.927438,
+    "ast_hash": "62acaf30d13af21e401356c0feba2ddd",
     "semantic_hash": ""
   },
   "docs/analise_mod_renomear_empenho.md": {
@@ -1074,9 +1074,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_solicita_impressao.md": {
-    "mtime": 1790388271.207511,
-    "seen": 1790388574.9841566,
-    "ast_hash": "9f08631321951a9d8902e402d67d4170",
+    "mtime": 1790427897.124834,
+    "seen": 1790428286.9274654,
+    "ast_hash": "4063d385ebb68087baab898027529b74",
     "semantic_hash": ""
   },
   "docs/api_referencia.md": {
@@ -1404,9 +1404,9 @@
     "semantic_hash": ""
   },
   "mod_auditoria/bd_manipulador.py": {
-    "mtime": 1790380480.3115761,
-    "seen": 1790387687.6664386,
-    "ast_hash": "63c540a74ba091ed5a155505764c62f3",
+    "mtime": 1790430173.452493,
+    "seen": 1790461236.2770474,
+    "ast_hash": "ecca9c575f010e42f183e28f0d71682f",
     "semantic_hash": ""
   },
   "mod_intranet/pdf_operacoes.py": {
@@ -1512,9 +1512,9 @@
     "semantic_hash": ""
   },
   "mod_tecnico/telas.py": {
-    "mtime": 1790380480.3845756,
-    "seen": 1790387687.6667373,
-    "ast_hash": "3a0cc5ab49bb37455007c5bdcb7dc646",
+    "mtime": 1790430346.4714832,
+    "seen": 1790461236.2776935,
+    "ast_hash": "2f9917879ebcaa8641d1ae87fc2f0f99",
     "semantic_hash": ""
   },
   "mod_tecnico/telas_administracao.py": {
@@ -1536,9 +1536,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_tecnico.md": {
-    "mtime": 1790380480.2035766,
-    "seen": 1790387687.6669037,
-    "ast_hash": "bd432b81b47b87f3f39449058cf06bad",
+    "mtime": 1790427679.015787,
+    "seen": 1790428286.9274745,
+    "ast_hash": "e1c868df050a1ff52b54a87a5f3f2abd",
     "semantic_hash": ""
   },
   "docs/modulos/filas.md": {
@@ -1578,9 +1578,9 @@
     "semantic_hash": ""
   },
   "mod_agregador_noticias/bd_manipulador.py": {
-    "mtime": 1790386141.7263422,
-    "seen": 1790387687.666413,
-    "ast_hash": "e10eced304ff92f15d298ad796e9ea4b",
+    "mtime": 1790430441.5847,
+    "seen": 1790461236.2770016,
+    "ast_hash": "a77afc52db41d64e0ff92f2e16a89d0f",
     "semantic_hash": ""
   },
   "mod_agregador_noticias/models/__init__.py": {
@@ -1590,21 +1590,21 @@
     "semantic_hash": ""
   },
   "mod_agregador_noticias/telas.py": {
-    "mtime": 1790386891.4122434,
-    "seen": 1790387687.6664207,
-    "ast_hash": "40300df08a4693d7f67ed2ef9c987e4a",
+    "mtime": 1790430394.0865858,
+    "seen": 1790461236.2770143,
+    "ast_hash": "9b828a0c2da8eca70039dee794a8baab",
     "semantic_hash": ""
   },
   "mod_agregador_noticias/telas_administracao.py": {
-    "mtime": 1790380480.310576,
-    "seen": 1790387687.6664243,
-    "ast_hash": "68ee0d71350e7d0e87edf01f76322365",
+    "mtime": 1790420936.3071952,
+    "seen": 1790428286.926379,
+    "ast_hash": "684e2acfad7cdea76124fc35611176d1",
     "semantic_hash": ""
   },
   "docs/analise_mod_agregador_noticias.md": {
-    "mtime": 1790388659.8156211,
-    "seen": 1790388737.9414632,
-    "ast_hash": "427fd14de8df0f626d3f80e58c755423",
+    "mtime": 1790427561.687226,
+    "seen": 1790428286.9273632,
+    "ast_hash": "89a0c93d8e2cc374ff547b3294a320ab",
     "semantic_hash": ""
   },
   "docs/modulos/agregador_noticias.md": {
@@ -1781,12 +1781,6 @@
     "ast_hash": "53718f970bcc8c999e73fd6805d1e340",
     "semantic_hash": "53718f970bcc8c999e73fd6805d1e340"
   },
-  "teste.txt": {
-    "mtime": 1790380480.3855758,
-    "seen": 1790387687.6670833,
-    "ast_hash": "698dc19d489c4e4db73e28a713eab07b",
-    "semantic_hash": ""
-  },
   "docs/registro_de_mudancas/wal_paridade_pendente_2026-09-24.md": {
     "mtime": 1790380480.2265763,
     "seen": 1790387687.667027,
@@ -1794,51 +1788,51 @@
     "semantic_hash": ""
   },
   "assets/test/pw_auditoria_acesso.py": {
-    "mtime": 1790380480.135577,
-    "seen": 1790387687.6661327,
-    "ast_hash": "110a92bca473daaeff865765b4f20cbf",
+    "mtime": 1790455346.4564557,
+    "seen": 1790461236.2765212,
+    "ast_hash": "603d73923c97bf58b4dd754ed1f83b72",
     "semantic_hash": ""
   },
   "assets/test/pw_blog_feed_carrossel.py": {
-    "mtime": 1790380480.136577,
-    "seen": 1790387687.666136,
-    "ast_hash": "4ec8bf80737db6ad880912674797dd6e",
+    "mtime": 1790455346.4644558,
+    "seen": 1790461236.2765303,
+    "ast_hash": "b63391d14488c82a246de922b87be8fc",
     "semantic_hash": ""
   },
   "assets/test/pw_click_extra_qa.py": {
-    "mtime": 1790380480.136577,
-    "seen": 1790387687.6661396,
-    "ast_hash": "fa67ed2a8d8bfa682782bde6da9b3dd2",
+    "mtime": 1790455346.469456,
+    "seen": 1790461236.276537,
+    "ast_hash": "3fccbe57338a08114b0a377980524c8a",
     "semantic_hash": ""
   },
   "assets/test/pw_cobertura_extra_qa.py": {
-    "mtime": 1790380480.1375768,
-    "seen": 1790387687.6661434,
-    "ast_hash": "210588036944d80bee4476b68f15062d",
+    "mtime": 1790460672.4313936,
+    "seen": 1790461236.2765434,
+    "ast_hash": "ae4ec1dde9d9f5d766dfd844796986b8",
     "semantic_hash": ""
   },
   "assets/test/pw_edit_pdf_painel.py": {
-    "mtime": 1790380480.1375768,
-    "seen": 1790387687.666147,
-    "ast_hash": "0ae43a463623ff1b63e29a84d0cf25c7",
+    "mtime": 1790455346.482456,
+    "seen": 1790461236.2765493,
+    "ast_hash": "75b2d3eab6e40931b73c16968251b431",
     "semantic_hash": ""
   },
   "assets/test/pw_empenhos_navegacao.py": {
-    "mtime": 1790380480.1375768,
-    "seen": 1790387687.6661506,
-    "ast_hash": "ace8a8af5ddfa7813b185ef8e842fd54",
+    "mtime": 1790455983.4342213,
+    "seen": 1790461236.2765555,
+    "ast_hash": "91a6b143e7591b28030fa5298ecfc06a",
     "semantic_hash": ""
   },
   "assets/test/pw_intranet_login_dashboard.py": {
-    "mtime": 1790380480.138577,
-    "seen": 1790387687.666154,
-    "ast_hash": "69c1da746a8638834b93b26ef54bda30",
+    "mtime": 1790455346.496456,
+    "seen": 1790461236.2765608,
+    "ast_hash": "d3c70eb0c3bdd4e28ba48a8a611430f2",
     "semantic_hash": ""
   },
   "assets/test/pw_usuarios_lista.py": {
-    "mtime": 1790380480.138577,
-    "seen": 1790387687.6661577,
-    "ast_hash": "011a8b655a7f4b874a06bb00e5b9b956",
+    "mtime": 1790456028.4493268,
+    "seen": 1790461236.2765677,
+    "ast_hash": "309d23e1764ce2115923ab61af6f0a0c",
     "semantic_hash": ""
   },
   "assets/test/test_e2e_agregador_noticias.py": {
@@ -1895,12 +1889,6 @@
     "ast_hash": "7d44c9ae4561ed79d7e8b5a327603d60",
     "semantic_hash": ""
   },
-  "CANARIO_APAGADOR.txt": {
-    "mtime": 1790380480.114577,
-    "seen": 1790387687.6668062,
-    "ast_hash": "9cda5307f61b95a02ac353c89ec6d9e3",
-    "semantic_hash": ""
-  },
   "docs/analise_mod_agregador_noticias_puro.md": {
     "mtime": 1790387920.1041644,
     "seen": 1790388574.9841216,
@@ -1917,6 +1905,18 @@
     "mtime": 1790380480.2285764,
     "seen": 1790387687.6670563,
     "ast_hash": "8148ff88ee011561b542ccec23a429c4",
+    "semantic_hash": ""
+  },
+  "assets/test/test_e2e_agregador_card_dom.py": {
+    "mtime": 1790426377.7868872,
+    "seen": 1790428286.9257717,
+    "ast_hash": "a87bdd7557f28fd9c99667e0f79cc32f",
+    "semantic_hash": ""
+  },
+  "assets/test/qa_login_helper.py": {
+    "mtime": 1790455336.2454088,
+    "seen": 1790461236.2765758,
+    "ast_hash": "4db0582bdd586dd69a10ebc8ccb8a3b7",
     "semantic_hash": ""
   }
 }

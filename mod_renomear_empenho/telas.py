@@ -322,29 +322,53 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                         pass
                 return None
 
-        def _revisar_renomear(caminho):
+        # trava de reentrância de _revisar_renomear (AGENTS.md §5.1)
+        _revisar_ocupado = {"sim": False}
+
+        async def _revisar_renomear(caminho):
+            """Abre o diálogo de renomear extraindo o texto do PDF SEM travar a tela.
+
+            `extrair_texto_pdf()` faz pymupdf → pdfplumber → OCR: num PDF
+            escaneado medimos 4,55 s de event-loop bloqueado em `def`, o que
+            derrubava o WebSocket ("servidor desconectado"). Agora a extração
+            (e o parse dos campos) vai para `run.io_bound`, com spinner e
+            trava de reentrância (AGENTS.md §5.1).
+            """
             if not eh_admin:
-                ui.notify("Ação restrita ao administrador do módulo.", type="warning")
+                notificar("Ação restrita ao administrador do módulo.", type="warning")
                 return
+            if _revisar_ocupado["sim"]:
+                notificar("Lendo o PDF… aguarde", type="warning")
+                return
+            _revisar_ocupado["sim"] = True
+            _st = ui.spinner(size="lg").props("aria-label=Lendo o PDF")
+            try:
+                texto = await run.io_bound(lambda: extrair_texto_pdf(caminho) or "")
+            except Exception as e:
+                _log.exception(f"_revisar_renomear: falha ao extrair texto de {caminho!r}: {e}")
+                texto = ""
+            finally:
+                _revisar_ocupado["sim"] = False
+                try:
+                    _st.delete()
+                except Exception:
+                    pass
             nome = os.path.basename(caminho)
             # Extrai valores atuais (podem vir parciais quando o OCR falha);
             # todos os campos ficam editáveis, inclusive os reconhecidos.
             try:
-                texto = extrair_texto_pdf(caminho) or ""
-            except Exception:
-                texto = ""
-            try:
-                tipo_detectado = detectar_tipo_especial(texto)
+                tipo_detectado = await run.io_bound(lambda: detectar_tipo_especial(texto))
             except Exception:
                 tipo_detectado = None
             dados_doc, dados_esp = {}, {}
             try:
-                dados_doc = extrair_dados_empenho(texto) or {}
+                dados_doc = await run.io_bound(lambda: extrair_dados_empenho(texto) or {})
             except Exception:
                 dados_doc = {}
             if tipo_detectado:
                 try:
-                    dados_esp = extrair_dados_tipo_especial(texto, tipo_detectado) or {}
+                    dados_esp = await run.io_bound(
+                        lambda: extrair_dados_tipo_especial(texto, tipo_detectado) or {})
                 except Exception:
                     dados_esp = {}
             eh_especial = bool(tipo_detectado)
@@ -630,42 +654,61 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
                         pass
                 return None
 
-        def _baixar_lote():
+        # trava de reentrância de _baixar_lote (AGENTS.md §5.1)
+        _baixar_lote_ocupado = {"sim": False}
+
+        async def _baixar_lote():
+            """Gera o ZIP do lote selecionado SEM travar a tela.
+
+            `gerar_zip_solicitacoes()` empacota vários PDFs: cresce com o
+            número de selecionados e derrubava o WebSocket quando em `def`
+            no event-loop. Agora em `run.io_bound`, com spinner e trava de
+            reentrância (AGENTS.md §5.1)."""
+            if _baixar_lote_ocupado["sim"]:
+                notificar("Gerando o ZIP… aguarde", type="warning")
+                return
+            if not selecionados:
+                notificar("Selecione ao menos 1 arquivo (checkbox).", type="warning")
+                return
+            if not (eh_admin or autorizado):
+                notificar("Download bloqueado pelo administrador — use Solicitar envio.",
+                          type="warning")
+                return
+            # checagem de existência também é I/O: fora do event-loop
+            existentes = await run.io_bound(
+                lambda: [(c, n) for c, n in list(selecionados.items())
+                         if os.path.exists(c)])
+            if not existentes:
+                notificar("Nenhum arquivo selecionado existe mais.", type="negative")
+                return
+            if len(existentes) == 1:
+                ui.download(existentes[0][0], os.path.basename(existentes[0][0]))
+                return
+            itens = [{"arquivo_caminho": c, "nome_arquivo": n,
+                      "solicitante_nome": usuario_logado} for c, n in existentes]
+            _baixar_lote_ocupado["sim"] = True
+            _status = ui.row().classes("w-full items-center justify-center") \
+                .style("gap: 0.5rem")
+            with _status:
+                ui.spinner(size="lg").props("aria-label=Gerando ZIP")
+                ui.label(f"Gerando ZIP de {len(itens)} arquivo(s)…") \
+                    .classes("text-caption text-grey-7")
             try:
-                if not selecionados:
-                    ui.notify("Selecione ao menos 1 arquivo (checkbox).", type="warning")
-                    return
-                if not (eh_admin or autorizado):
-                    ui.notify("Download bloqueado pelo administrador — use Solicitar envio.",
-                              type="warning")
-                    return
-                existentes = [(c, n) for c, n in list(selecionados.items()) if os.path.exists(c)]
-                if not existentes:
-                    ui.notify("Nenhum arquivo selecionado existe mais.", type="negative")
-                    return
-                if len(existentes) == 1:
-                    ui.download(existentes[0][0], os.path.basename(existentes[0][0]))
-                    return
-                itens = [{"arquivo_caminho": c, "nome_arquivo": n,
-                          "solicitante_nome": usuario_logado} for c, n in existentes]
-                ok, res = gerar_zip_solicitacoes(itens)
+                ok, res = await run.io_bound(lambda: gerar_zip_solicitacoes(itens))
                 if ok:
                     ui.download(res, os.path.basename(res))
+                    notificar(f"ZIP gerado: {os.path.basename(res)}", type="positive")
                 else:
-                    ui.notify(f"Erro ZIP: {res}", type="negative")
+                    notificar(f"Erro ao gerar o ZIP: {res}", type="negative")
             except Exception as e:
+                _log.exception(f"_baixar_lote falhou: {e}")
+                notificar(f"Erro ao gerar o ZIP do lote: {e}", type="error")
+            finally:
+                _baixar_lote_ocupado["sim"] = False
                 try:
-                    _log.exception(f"_baixar_lote falhou: {e}")
+                    _status.clear()
                 except Exception:
                     pass
-                try:
-                    notificar(f"Erro em _baixar_lote: {e}", tipo="error")
-                except Exception:
-                    try:
-                        ui.notify(f"Erro em _baixar_lote", type="negative")
-                    except Exception:
-                        pass
-                return None
 
         def _limpar_selecao():
             try:
@@ -1295,25 +1338,50 @@ def _tela_fila(usuario_logado, eh_admin, _btn_cls, _btn_style):
                             data = p.get("data") or "—"
                         return empenho, parcela, usuario, data
 
-                    def _editar_fila(caminho):
-                        # Lápis — permite escrever o que quiser nos campos (mesma tela do Navegar)
+                    # trava de reentrância de _editar_fila (AGENTS.md §5.1)
+                    _editar_ocupado = {"sim": False}
+
+                    async def _editar_fila(caminho):
+                        """Lápis da fila — extrai o texto do PDF SEM travar a tela.
+
+                        Mesma tela do Navegar, com os campos livres. A extração
+                        (pymupdf → pdfplumber → OCR) vai para `run.io_bound`:
+                        em `def` segurava o event-loop por 4,55 s num PDF
+                        escaneado e derrubava o WebSocket. Com spinner e trava
+                        de reentrância (AGENTS.md §5.1).
+                        """
                         nome = os.path.basename(caminho)
+                        if _editar_ocupado["sim"]:
+                            notificar("Lendo o PDF… aguarde", type="warning")
+                            return
+                        _editar_ocupado["sim"] = True
+                        _st = ui.spinner(size="lg").props("aria-label=Lendo o PDF")
                         try:
-                            texto = extrair_texto_pdf(caminho) or ""
-                        except Exception:
+                            texto = await run.io_bound(lambda: extrair_texto_pdf(caminho) or "")
+                        except Exception as e:
+                            _log.exception(f"_editar_fila: falha ao extrair {caminho!r}: {e}")
                             texto = ""
+                        finally:
+                            _editar_ocupado["sim"] = False
+                            try:
+                                _st.delete()
+                            except Exception:
+                                pass
                         try:
-                            tipo_detectado = detectar_tipo_especial(texto)
+                            tipo_detectado = await run.io_bound(
+                                lambda: detectar_tipo_especial(texto))
                         except Exception:
                             tipo_detectado = None
                         dados_doc, dados_esp = {}, {}
                         try:
-                            dados_doc = extrair_dados_empenho(texto) or {}
+                            dados_doc = await run.io_bound(
+                                lambda: extrair_dados_empenho(texto) or {})
                         except Exception:
                             dados_doc = {}
                         if tipo_detectado:
                             try:
-                                dados_esp = extrair_dados_tipo_especial(texto, tipo_detectado) or {}
+                                dados_esp = await run.io_bound(
+                                    lambda: extrair_dados_tipo_especial(texto, tipo_detectado) or {})
                             except Exception:
                                 dados_esp = {}
                         eh_especial = bool(tipo_detectado)
@@ -1472,134 +1540,42 @@ def _tela_fila(usuario_logado, eh_admin, _btn_cls, _btn_style):
         return None
 
 
-# ============================================================ ABA PESQUISAR
-def _tela_pesquisar(usuario_logado, _btn_cls, _btn_style):
-    """Search tab: live FTS5 search (fallback LIKE) + renamed empenhos table."""
-    try:
-        from mod_intranet.bd_conexao import get_config
-        autorizado = get_config("empenhos_autorizar_download", "0") == "1"
-        _bs_pesq = _visual.eh_bootstrap(get_config)
-        if _bs_pesq:
-            with ui.element("div").classes("input-group w-full shadow-sm rounded-3 overflow-hidden"):
-                ui.html('<span class="input-group-text bg-white border-end-0"><i class="q-icon notranslate material-icons" aria-hidden="true">search</i></span>')
-                with ui.input(placeholder="Pesquisar conteúdo…").props("outlined dense clearable borderless") \
-                    .classes("w-full").props('data-testid=empenhos-busca') as busca:
-                    pass
-        else:
-            with ui.input(placeholder="Pesquisar conteúdo…").props("outlined dense clearable debounce=300") \
-                .classes("w-full empenho-input-soft shadow-sm rounded-xl").props('data-testid=empenhos-busca') as busca:
-                pass
-        resultados_wrap = ui.column().classes("w-full")
-
-        def _pesq(e):
-            try:
-                resultados_wrap.clear()
-                termo = e.args if isinstance(e.args, str) else (e.args and e.args[0]) or ""
-                rs = pesquisar(termo) or []
-                _bs2 = _visual.eh_bootstrap(get_config)
-                with resultados_wrap:
-                    if not rs:
-                        if _bs2:
-                            ui.html('<div class="alert alert-light border text-center small text-muted">Nada encontrado.</div>')
-                        else:
-                            ui.label("Nada encontrado.").classes("text-caption text-grey-5")
-                        return
-                    for eid, final, num, parc, usr, dt, caminho in rs[:25]:
-                        item_cls = "w-full border rounded-3 mb-1 shadow-sm card" if _bs2 else "w-full border rounded-xl mb-1 shadow-sm empenho-card-pic"
-                        with ui.item().classes(item_cls):
-                            with ui.item_section().props("avatar"):
-                                ui.icon("description").classes("text-green-8")
-                            with ui.item_section():
-                                ui.item_label(final).classes("font-medium").style("min-width: 0; overflow-wrap: anywhere")
-                                ui.item_label(f"empenho {num} • parcela {parc} • {usr}").props("caption")
-            except Exception as e:
-                try:
-                    _log.exception(f"_pesq falhou: {e}")
-                except Exception:
-                    pass
-                try:
-                    notificar(f"Erro em _pesq: {e}", tipo="error")
-                except Exception:
-                    try:
-                        ui.notify(f"Erro em _pesq", type="negative")
-                    except Exception:
-                        pass
-                return None
-
-        busca.on("update:model-value", _pesq)
-
-        ui.separator().classes("my-3")
-        ui.label("Empenhos renomeados").classes("text-subtitle1 font-bold")
-        colunas = [
-            {"name": "final", "label": "Nome final", "field": "final", "align": "left"},
-            {"name": "num", "label": "Empenho", "field": "num"},
-            {"name": "parc", "label": "Parcela", "field": "parc"},
-            {"name": "tipo", "label": "Tipo", "field": "tipo"},
-            {"name": "usr", "label": "Usuário", "field": "usr"},
-            {"name": "dt", "label": "Data", "field": "dt"},
-        ]
-        tabela = ui.table(columns=colunas, rows=[], row_key="id").props("flat bordered dense").classes("w-full")
-
-        def _refresh():
-            try:
-                linhas = []
-                for r in listar_empenhos(status="ativo", limite=500):
-                    linhas.append({"id": r[0], "final": r[2], "num": r[3] or "—",
-                                   "parc": r[4] or "—", "tipo": r[8] if len(r) > 8 else "—",
-                                   "usr": r[5] or "—", "dt": (r[6] or "")[:16]})
-                tabela.rows = linhas
-                tabela.update()
-            except Exception as e:
-                try:
-                    _log.exception(f"_refresh falhou: {e}")
-                except Exception:
-                    pass
-                try:
-                    notificar(f"Erro em _refresh: {e}", tipo="error")
-                except Exception:
-                    try:
-                        ui.notify(f"Erro em _refresh", type="negative")
-                    except Exception:
-                        pass
-                return None
-
-        _refresh()
-    except Exception as e:
-        try:
-            _log.exception(f"_tela_pesquisar falhou: {e}")
-        except Exception:
-            pass
-        try:
-            notificar(f"Erro em _tela_pesquisar: {e}", tipo="error")
-        except Exception:
-            try:
-                ui.notify(f"Erro em _tela_pesquisar", type="negative")
-            except Exception:
-                pass
-        return None
-
-
 # ============================================================ ABA ORGANIZADOR (admin)
 def _tela_organizador(usuario_logado, _btn_cls, _btn_style):
     """Organizer tab (admin): boxes, covers/matrix, inventory and PDF tools."""
     try:
-        def _organizar():
+        # trava de reentrância de _organizar (AGENTS.md §5.1)
+        _organizar_ocupado = {"sim": False}
+
+        async def _organizar():
+            """Organiza as pastas (move/renomeia em lote) SEM travar a tela.
+
+            `organizar_pastas()` varre o disco e move arquivos: pode levar
+            segundos. Rodando `def` no event-loop, o WebSocket ficava sem
+            resposta e o cliente via "servidor desconectado". Agora o I/O
+            pesado vai para `run.io_bound`, com spinner e trava de
+            reentrância (AGENTS.md §5.1)."""
+            if _organizar_ocupado["sim"]:
+                notificar("Organização em andamento…", type="warning")
+                return
+            _organizar_ocupado["sim"] = True
+            _status = ui.row().classes("w-full items-center justify-center") \
+                .style("gap: 0.5rem")
+            with _status:
+                ui.spinner(size="lg").props("aria-label=Organizando pastas")
+                ui.label("Organizando pastas…").classes("text-caption text-grey-7")
             try:
-                ok, msg = organizar_pastas()
-                ui.notify(msg, type="positive" if ok else "negative")
+                ok, msg = await run.io_bound(organizar_pastas)
+                notificar(msg, type="positive" if ok else "negative")
             except Exception as e:
+                _log.exception(f"_organizar falhou: {e}")
+                notificar(f"Erro ao organizar pastas: {e}", type="error")
+            finally:
+                _organizar_ocupado["sim"] = False
                 try:
-                    _log.exception(f"_organizar falhou: {e}")
+                    _status.clear()
                 except Exception:
                     pass
-                try:
-                    notificar(f"Erro em _organizar: {e}", tipo="error")
-                except Exception:
-                    try:
-                        ui.notify(f"Erro em _organizar", type="negative")
-                    except Exception:
-                        pass
-                return None
 
         def _gerar_matriz():
             try:
@@ -2498,14 +2474,41 @@ def _tela_config(usuario_logado, eh_admin, t_cor_botao, t_cor_txt_botao, t_cor_f
         with ui.expansion("Quarentena", icon="block").classes("w-full mt-2"):
             ui.label("Falhas de leitura/extração vão para a quarentena com motivo. Clique na linha para reprocessar individualmente (com regex alternativa) ou use o lote abaixo. Separe múltiplos documentos quando o motivo indicar 2+ empenhos.").classes("text-caption text-grey-6")
             with ui.row().classes("w-full gap-2 mt-1 mb-1"):
-                def _reprocessar_fila_lote():
+                # trava de reentrância de _reprocessar_fila_lote (AGENTS.md §5.1)
+                _reproc_ocupado = {"sim": False}
+
+                async def _reprocessar_fila_lote():
+                    """Reprocessa a fila da quarentena (regex em lote de PDFs).
+
+                    `reprocessar_fila()` reprocessa arquivos um a um: pode levar
+                    segundos. Rodando `def` no event-loop derrubava o WebSocket
+                    ("servidor desconectado"). Agora o trabalho pesado vai para
+                    `run.io_bound`, com spinner e trava de reentrância
+                    (AGENTS.md §5.1)."""
+                    if _reproc_ocupado["sim"]:
+                        notificar("Reprocessamento em andamento…", type="warning")
+                        return
+                    _reproc_ocupado["sim"] = True
+                    _status = ui.row().classes("w-full items-center justify-center") \
+                        .style("gap: 0.5rem")
+                    with _status:
+                        ui.spinner(size="lg").props("aria-label=Reprocessando fila")
+                        ui.label("Reprocessando a fila… (pode levar alguns minutos)") \
+                            .classes("text-caption text-grey-7")
                     try:
-                        ok, msg, _det = reprocessar_fila(usuario=usuario_logado)
-                        ui.notify(msg, type="positive" if ok else "warning")
+                        ok, msg, _det = await run.io_bound(
+                            lambda: reprocessar_fila(usuario=usuario_logado))
+                        notificar(msg, type="positive" if ok else "warning")
                         _refresh_q()
-                    except Exception:
-                        _log.exception("erro ao reprocessar fila da quarentena em lote")
-                        ui.notify("Falha ao reprocessar fila", type="negative")
+                    except Exception as e:
+                        _log.exception(f"erro ao reprocessar fila da quarentena em lote: {e}")
+                        notificar(f"Falha ao reprocessar fila: {e}", type="negative")
+                    finally:
+                        _reproc_ocupado["sim"] = False
+                        try:
+                            _status.clear()
+                        except Exception:
+                            pass
                 botao("Reprocessar fila", icone="replay", on_click=_reprocessar_fila_lote, variante="solido", chave_modulo="empenhos").tooltip("Tenta reprocessar todos os pendentes com as regex ativas, sem reiniciar").props('data-testid=empenhos-reprocessar-fila')
                 botao("Atualizar", icone="refresh", on_click=lambda: _refresh_q(), variante="contorno", chave_modulo="empenhos")
             colunas_q = [

@@ -33,6 +33,67 @@ Os testes capturam e reportam erros para facilitar a identificação de problema
  [requestfailed] https://cdn.exemplo.com/lib.js net::ERR_NAME_NOT_RESOLVED
 ```
 
+## Suíte Python de QA (`assets/test/pw_*.py`) — 26/09/2026
+
+Além dos specs Node, há 8 arquivos `pw_*.py` (pytest-playwright) que cobrem
+`data-testid` por módulo. Esta seção registra uma correção de **processo**,
+porque o sintoma era invisível.
+
+### O problema: uma suíte verde que não testava nada
+
+Os seeds `qamaster`/`qacomum` nascem com `forcar_troca=1`. No 1º login, um
+diálogo de troca obrigatória bloqueia a tela, e os testes faziam
+`pytest.skip` nesse caso. Na prática, **a suíte rodava majoritariamente
+pulada e ninguém via** — inclusive casos de "falso verde", em que `return`
+silencioso depois do `skip` deixava o teste passar sem asserir nada.
+
+Pior: `pw_cobertura_extra_qa.py` fazia `assert total >= 0`, que é **sempre
+verdadeiro**. Asseverar que uma contagem é ≥ 0 não verifica nada. As duas falhas
+se alimentavam: a asserção vazia impedia que o `skip` escondesse os testids
+obsoletos, e o `skip` impedia que a asserção vazia enganasse alguém.
+
+### O que mudou
+
+| item | antes | depois |
+|:---|:---|:---|
+| troca de senha | `pytest.skip` | o teste **conclui** a troca, com a mesma senha de origem |
+| contagem de testid | `assert total >= 0` (sempre verdade) | `assert total >= 1` |
+| rota do teste | mapa fixo por prefixo | resolvida **lendo o código-fonte** |
+| `zerar_forcar_troca` | `sqlite3` cru no arquivo `db_mod_intranet.db` | `autenticacao.marcar_trocar_senha()` (funciona em SQLite **e** Postgres) |
+
+O login e a troca ficaram em um módulo só, `assets/test/qa_login_helper.py`,
+porque estavam duplicados em 8 arquivos — e a duplicata era o que mantinha a
+divergência (um arquivo punha, outro pulava).
+
+Dois detalhes que custaram tempo e valem registro:
+
+- **A rota tem de ser resolvida por ARQUIVO, não por prefixo.** `agregador-busca`
+  (público) e `agregador-termo` (admin) compartilham prefixo, e o card do blog
+  é usado pelas duas telas. `_rota_para_testid` agora procura
+  `data-testid=<id>` nos `mod_*/**/*.py` e mapeia o arquivo encontrado para a
+  rota — não apodrece quando um elemento muda de tela.
+- **`_fazer_login_com_troca` não pode recarregar a página.** A primeira versão
+  fazia `page.goto('/login')` dentro do helper, o que destruía o próprio
+  diálogo que o `fazer_login` acabara de abrir. A troca ficou separada em
+  `concluir_troca(page, senha_atual, senha_nova)`, que não navega.
+
+### Resultado
+
+| arquivo | antes | depois |
+|:---|:---|:---|
+| `pw_cobertura_extra_qa.py` | 24 falhas (escondidas) | **81 passaram**, 4 pulados com motivo |
+| `pw_intranet_login_dashboard.py` | 1 falha / 7 pulados | **8 passaram** |
+| `pw_usuarios_lista.py` + `pw_empenhos_navegacao.py` | 5 falhas | **13 passaram** |
+
+Os 4 pulados restantes são botões **por linha** (aba "Fila Renomeação" sem
+item) e a confirmação destrutiva do diálogo de exclusão em lote — cada um com
+o motivo registrado na própria constante `PRECISA_DE_ITEM`.
+
+Correção de comportamento que a suíte revelou (não era bug do teste): o campo de
+busca do Empenhos é `empenhos-navegar-pesquisa`, não `empenhos-busca`; e a tela de
+usuários mostra o **nome de exibição** do usuário, não o login. Os dois testes
+afirmavam o contrário e nunca tinham rodado.
+
 ## Pré-requisitos
 
 - **Node.js + npm** (para o Playwright em JS).

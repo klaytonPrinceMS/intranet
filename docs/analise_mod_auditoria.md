@@ -142,6 +142,37 @@ toda ação, muitas vezes dentro de outra transação):
    — quem chamou não propaga). O `contexto` (ex.: `registrar blog/criar_postagem`)
    identifica a ação que falhou no log.
 
+### Aquecimento no boot: por que a 1ª gravação custava 73,9 s (26/09/2026)
+
+O item 1 acima tem um custo escondido. A **primeira** gravação de cada módulo
+roda `_garantir_tabela_auditoria` (DDL) dentro do event-loop do handler de tela.
+Medido num banco recém-criado: a 1ª chamada de `audit_log` levava **73,9 s**, e as
+seguintes caíam para ~145 ms. Como o handler roda no event-loop, a tela ficava
+congelada por mais de um minuto e o WebSocket caía — o "servidor desconectado"
+intermitente.
+
+A causa não era a auditoria em si, e sim o preço de setup de cada tabela pago na
+primeira ação de cada módulo. A correção é **`aquecer_auditoria(modulos=None)`**:
+ela pré-cria as tabelas de todos os módulos registrados **antes** do servidor
+aceitar requisições. O `main.py` chama isso em `_passo_auditoria`, o primeiro
+passo de `ativacao.progresso_boot`.
+
+| medição | antes | depois |
+|:---|:---|:---|
+| 1ª gravação de auditoria | **73,9 s** | **141 ms** |
+| preço do aquecimento (1×, no boot) | — | 4,5 s |
+| gravações seguintes | ~145 ms | ~122 ms |
+
+O aquecimento é **síncrono de propósito**: roda no boot, antes de o servidor
+existir, então não há event-loop a bloquear. Uma primeira tentativa usou
+`run.io_bound` e emitiu `RuntimeWarning: coroutine 'io_bound' was never awaited`
+— `io_bound` é `async` e não pode ser chamado de função síncrona; foi removido.
+
+Consequência prática: depois de um boot, **nenhuma ação de usuário paga o preço de
+setup**. Vale notar que isso derrubou `criar_impressora` de 28,1 s para
+milissegundos — medição que mudou a prioridade das correções anti-disconnect do
+Solicita Impressão (ver `analise_mod_solicita_impressao.md`, RISCO-SOL-01).
+
 ## A trilha também registra as ações em background (APScheduler)
 
 Nem todo registro da trilha vem de um clique humano: os **jobs agendados** pelo
@@ -231,3 +262,86 @@ Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_
 | `assets/test/test_auditoria.py` — índices (3: `modulo`/`usuario`/`timestamp` em `tb_auditoria_intranet`) + `audit_log` rastreável (4: ação/IP/UA/timestamp local) + poda LGPD (2: remove velho/preserva novo) + acesso exclusivo (2: `qacomum` nega/`qamaster` permite) + prefs por usuário (1) | 12/12 OK |
 
 **Veredito: APROVADO — sem regressão.** Pendência WAL+paridade do `mod_auditoria` (linha da tabela acima) considerada **superada**; demais módulos do plano permanecem pendentes conforme o arquivo consolidado.
+
+---
+
+# RF e RNF verificados no código — lote 1 (26/09/2026)
+
+> Auditoria de requisitos **funcionais** (o que o sistema faz) e **não
+> funcionais** (qualidade e restrições), com evidência `arquivo:linha` conferida
+> no código em 26/09/2026.
+
+## Requisitos funcionais (RF) — mapa código ↔ doc
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-AUD-01 | **Uma tabela por módulo** (`tb_auditoria_<modulo>`) criada automaticamente: módulo novo audita sem editar o Auditoria | `bd_manipulador.py:121-127` `_nome_tabela` + `:183-227` `_garantir_tabela_auditoria` + cache de sessão `_TABELAS_GARANTIDAS` (`:21`, `:352-354`) |
+| RF-AUD-02 | Hífen do módulo vira `_` no nome da tabela (`edit-pdf` → `tb_auditoria_edit_pdf`) | `bd_manipulador.py:127` |
+| RF-AUD-03 | Gravar ação com 10 campos LGPD: `usuario, modulo, acao, descricao, hash_arquivo, ip, user_agent, client_hostname, timestamp` | `bd_manipulador.py:329-396` `registrar_auditoria` (INSERT em `:357-362`) |
+| RF-AUD-04 | Rastreabilidade preenchida a partir do **contexto HTTP corrente** quando o chamador não informa (`__CTX__`) | `mod_intranet/bd_manipulador.py:88-95` (`contexto.contexto_atual()`) + `mod_intranet/contexto.py:71` |
+| RF-AUD-05 | Timestamp em **horário local** (consistente com `tb_sessoes`) | `bd_manipulador.py:340-342` + `mod_intranet/bd_manipulador.py:96` |
+| RF-AUD-06 | Tabela desaparecida no meio do caminho → recria e reinsere **uma vez**, sem perder a trilha | `bd_manipulador.py:363-382` (detecta `no such table`/`does not exist`/`undefined_table`) |
+| RF-AUD-07 | Navegação **dinâmica** por tabela na tela (menu montado a partir do banco; módulo novo aparece sozinho) | `telas.py:198` `_opcoes_navegacao` (consumida em `:416-424`) + `telas.py:432-441` `nav_tabela` + `bd_manipulador.py:230` `get_tabelas_auditoria` |
+| RF-AUD-08 | Busca com filtros: usuário (`LIKE`), módulo (exato), ação (`LIKE` + categorias coloridas), hora `HH:MM`, intervalo de datas | `bd_manipulador.py:483-531`; tela em `telas.py:409-503` |
+| RF-AUD-09 | Sem tabela selecionada → `UNION ALL` de **todas** as tabelas por módulo (visão global) | `bd_manipulador.py:532-571` |
+| RF-AUD-10 | Paginação **server-side** (`LIMIT ? OFFSET ?`) com total em `COUNT(*)` separado | `bd_manipulador.py:500`, `:525-530`; tela em `telas.py:285-318` (`total_paginas`) |
+| RF-AUD-11 | Escolha de **campos visíveis e ordem** por auditor, persistida por usuário | `telas.py:150-168` `_campos_ativos` (`auditoria_campos:<usuario>`) + painel `ui.expansion` em `telas.py:504-536` |
+| RF-AUD-12 | Exportar **CSV** da consulta atual (respeita os campos escolhidos) | `telas.py:321-339` `_exportar_csv` + botão `data-testid=auditoria-exportar` (`telas.py:501`) |
+| RF-AUD-13 | Poda LGPD por retenção (`podar_registros(dias)`), aplicada uniformemente a todas as tabelas | `bd_manipulador.py:438-481`; agendado em `mod_intranet/rotinas.py:288` (`_job_poda_auditoria`, 24 h) + `:465` (`add_job`) |
+| RF-AUD-14 | Migração única do `tb_auditoria` central legado para as tabelas por módulo, com marcador persistido; ao final **derruba** a tabela legada | `bd_manipulador.py:605-621` `migrar_dados_existentes` + `:582-602` `_remover_legado_central` |
+| RF-AUD-15 | Visualizador **somente leitura** para `administrador_geral`; painel `/admin/auditoria` **não renderiza** para os demais | `telas.py:104` `eh_admin_geral`; `telas_administracao.py:66`, `:87-88` (`if not eh_admin_geral: return`) |
+| RF-AUD-16 | Atualização automática da tabela a cada **30 s** | `telas.py:566` `ui.timer(30.0, _atualizar_tabela)` |
+| RF-AUD-17 | Aba **Observabilidade** (dashboards Grafana) só quando a stack OTel está no ar | `telas.py:408` `obs_ligado = _dd.otel_stack_rodando()` + `abas(..., observabilidade=obs_ligado)` |
+| RF-AUD-18 | Categorias de ação com **cor por tipo** (`CORES_ACAO`) na coluna Ação | `telas.py:54` `CORES_ACAO` + `telas.py:265-268` |
+
+## Requisitos não-funcionais (RNF) — garantias técnicas
+
+| RNF | Exigência | Evidência no código |
+|:---|:---|:---|
+| RNF-AUD-PERS-01 | Banco **exclusivo** da auditoria, um por módulo | `get_auditoria_connection` → `banco_conexao.conexao("auditoria")` (`bd_manipulador.py:130-146`) → `db_mod_auditoria.db` |
+| RNF-AUD-PERS-02 | `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` | `bd_manipulador.py:141-142` |
+| RNF-AUD-PERS-03 | `busy_timeout=5000` herdado do núcleo + **retry 3× em `database is locked`** com rollback seguro | `banco_conexao.py:707` + `bd_manipulador.py:37-69` `_commit_com_retry` (`_TENTATIVAS_COMMIT = 3` em `:24`, backoff `0.05 × tentativa`) |
+| RNF-AUD-PERS-04 | **Trilha nunca é perdida por contenção**: DDL só na primeira vez por sessão (fora da janela de lock) | `bd_manipulador.py:350-354` (`if tabela not in _TABELAS_GARANTIDAS`) |
+| RNF-AUD-PERF-01 | 3 índices por tabela — `modulo`, `usuario`, `timestamp` | `bd_manipulador.py:207-211` |
+| RNF-AUD-PERF-02 | Teto de página configurável (`auditoria_limite`, piso 10, default 1000) | `telas.py:144-146` |
+| RNF-AUD-PERF-03 | Leitura **curta** (1 `COUNT` + 1 `SELECT`), sem carregar a tabela inteira | `bd_manipulador.py:525-530` |
+| RNF-AUD-COMP-01 | Paridade SQLite ↔ PostgreSQL | `_sgbd()` (`:27-34`) escolhe o backend; `_tabela_existe` (`:72-96`) usa `information_schema.tables` no PG e `sqlite_master` no SQLite; `_sql_hora` (`:99-107`) → `to_char(...,'HH24:MI')` vs `strftime('%H:%M')`; `_sql_data_formatada` (`:110-118`) → `to_char(...,'DD/MM/YYYY HH24:MI:SS')`; `datetime('now','localtime')` → `LOCALTIMESTAMP` (proxy, `banco_conexao.py:471`); `cur.executescript` de 3 `CREATE INDEX` emulado no proxy (`banco_conexao.py:604-608`) |
+| RNF-AUD-SEG-01 | Nome de tabela sempre derivado de `_nome_tabela()` (hífen→`_`), nunca input cru — com `# nosec B608` documentando o porquê | `bd_manipulador.py:127`, `:359`, `:206`, `:211` |
+| RNF-AUD-SEG-01b | Tabelas do `UNION ALL` vêm de `get_modulos_com_auditoria()` (whitelist do próprio banco), não de string do usuário | `bd_manipulador.py:558-561`, `:562-566` (todos com `# nosec B608`) |
+| RNF-AUD-SEG-02 | `Filtros parametrizados` (`?`) em toda a cláusula `WHERE`, inclusive `LIKE` e intervalo de datas | `bd_manipulador.py:505-522` |
+| RNF-AUD-SEG-03 | Leitura da trilha é **read-only**: a tela não expõe escrita/edição/exclusão de registro | `telas.py:94-566` — só `buscar_logs`, `contar_registros`, `podar_registros` (esta última só via painel do admin) |
+| RNF-AUD-RES-01 | `try/except` em toda função, com `log.exception` + retorno neutro (`0`, `[]`, `None`, `( [], 0 )`) — a trilha **nunca derruba** a tela nem o `try/except` do chamador | `bd_manipulador.py:29-34`, `:37-69`, `:90-96`, `:144-146`, `:157-161`, `:174-180`, `:221-227`, `:405-436`, `:494-498`, `:572-578`; `telas.py:379-389`, `:392-399`, `:283-318`, `:321-339` |
+| RNF-AUD-UX-01 | `data-testid` nas ações de QA | `telas.py:411` (`auditoria-busca`), `telas.py:501` (`auditoria-exportar`) |
+| RNF-AUD-UX-02 | Calendário em **popup** (abre só ao clicar) em vez de sempre aberto | `telas.py:447-483` `_campo_data` (`ui.menu` + `campo.on('click', _abrir)`) |
+| RNF-AUD-UX-03 | Descrição truncada em 100 caracteres com reticências na tabela (tabela enxuta; o texto completo fica no CSV) | `telas.py:270-272` |
+| RNF-AUD-I18N-01 | Docstring bilíngue EN/PT-BR nas telas; **exceção** no `bd_manipulador.py` (só PT-BR) | `telas.py:1-10` e `telas_administracao.py:1-5` são bilíngues; `bd_manipulador.py:1-8` **não** tem o bloco EN (ver DIV-AUD-01) |
+| RNF-AUD-I18N-02 | Toda a UI em PT-BR; rótulos de campo derivados de `CAMPOS`/`_LABEL` | `telas.py:409-503` |
+
+## Divergências e riscos
+
+### Código faz, doc não diz
+
+| # | Achado | Evidência |
+|:---|:---|:---|
+| DIV-AUD-01 | O docstring de módulo de `bd_manipulador.py` **não** segue o padrão bilíngue EN-topo/PT-BR-abaixo exigido pelo AGENTS.md (é PT-BR puro) | `bd_manipulador.py:1-8` |
+| DIV-AUD-02 | `_TABELAS_GARANTIDAS` é um cache de sessão que só é invalidado quando o `INSERT` falha com "no such table" — se o DDL for feito por fora (restauração de backup, `psql`), a primeira escrita da sessão já cai no caminho de recuperação | `bd_manipulador.py:21`, `:352-354`, `:363-373` |
+| DIV-AUD-03 | A aba Observabilidade (Grafana) é condicional à stack OTel, mas a doc da tela de auditoria não descreve o comportamento quando a stack está **fora** | `telas.py:408` |
+| DIV-AUD-04 | `check_auditoria.py` (`main()`) é um verificador standalone de integridade da trilha que **não** é chamado por nenhum fluxo do sistema | `mod_auditoria/check_auditoria.py:26` — sem referência em `main.py` nem em `rotinas.py` |
+
+### Doc diz, código não faz
+
+| # | Alegação da doc | Estado real |
+|:---|:---|:---|
+| DIV-AUD-05 | Doc descreve a trilha como "somente `administrador_geral`" | A **rota** `/auditoria` só exige acesso ao módulo (`main.py:601-605` → `pagina_restrita(..., chave_modulo="auditoria")`); o `eh_admin_geral` de `telas.py:104` controla **cores/aparência e a aba de Administração**, não a leitura da trilha. Um `administrador` do módulo com papel `comum` **lê a trilha** e só não gerencia. |
+| DIV-AUD-06 | Doc cita "retenção LGPD 90 dias" como padrão | Confirmado: `telas.py:147` `retencao_dias = _cfg("retencao_dias", "90")` — mas é **texto de config**, e quem efetivamente executa a poda é `_job_poda_auditoria` (`mod_intranet/rotinas.py:288`), que precisa ler essa chave. |
+
+### Riscos
+
+| # | Risco | Severidade | Evidência |
+|:---|:---|:---|:---|
+| **RISCO-AUD-01** | ~~**`v-html` sem escape na coluna "Ação"**~~ **Corrigido 26/09/2026.** A coluna montava `<span style="color:...">{raw["acao"]}</span>` e o slot `body-cell-acao` renderiza por `v-html`; `acao` é uma string livre em `_audit(usuario, acao, ...)`, então qualquer valor fora de `CORES_ACAO` caía direto no HTML. Agora `html.escape()` é aplicado ao `acao` (e só ele — `descricao` e `hash` são renderizados como texto pelo Quasar, que já escapa). | ✅ **Corrigido 26/09/2026** | `telas.py:266-276` |
+| **RISCO-AUD-02** | **`contar_registros()` sem tabela faz N+1**: um `COUNT(*)` por tabela de módulo | `bd_manipulador.py:415-426` — com ~12 módulos são 12 `COUNT`s a cada montagem do dashboard |
+| **RISCO-AUD-03** | **`_exportar_csv` exporta só `_ultimos_logs`** (a página atual, ≤ `auditoria_limite` = 1000), mas a dica da UI não avisa disso. Quem filtrou 50 mil registros e exportou recebe 1 000 linhas sem indicação. | 🟡 Baixa | `telas.py:323-336` |
+| **RISCO-AUD-04** | **Zero `async` / `run.io_bound` / `spinner`** no módulo. `_atualizar_tabela` (chamada pelo `ui.timer(30.0)` e por cada clique em "Buscar") roda `COUNT` + `SELECT` + `UNION ALL` de N tabelas direto no event-loop. Com trilha grande, o poll de 30 s por auditor累积 e derruba o WebSocket — viola AGENTS.md §5.1. | 🟠 Média | `telas.py:566` + ausência de `async def` em `mod_auditoria/*.py` |
+| **RISCO-AUD-05** | `buscar_logs` sem `tabela` monta o `UNION ALL` por chamada (string concatenada a partir de N tabelas) — o **plano de consulta é re-parseado a cada busca**, e `COUNT` roda sobre o mesmo `UNION` (2 varreduras). Em PostgreSQL isso é o pior caso do planejador. | 🟡 Baixa | `bd_manipulador.py:557-570` |
+| **RISCO-AUD-06** | `check_auditoria.py` não é executado por nenhum job — a verificação de integridade da trilha depende de alguém rodar o script à mão. | 🟡 Baixa | `mod_auditoria/check_auditoria.py:26` |

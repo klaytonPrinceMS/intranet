@@ -19,9 +19,10 @@ Piramide: E2E de clique seguro (poucos, topo da piramide); sem escrita real.
 Confinado a C:\\opencode, localhost http://localhost:8080, headless,
 sequencial, 1 contexto (fixture `page` do pytest-playwright); nunca derruba
 o servidor (tudo com skip amigavel se fora do ar).
-Troca forcada ciente: senha 123456 e provisoria e pode ja ter sido trocada;
-se o dialogo "Troca de senha obrigatoria" abrir ou o login nao sair do
-/login, faz skip. Sem sys.exit, sem massa, sem tocar db/backup/logs/site,
+Troca forcada EXECUTADA: quando o dialogo "Troca de senha obrigatoria" abre,
+o teste CONCLUI a troca (mesma senha de origem) em vez de pular — antes ele
+fazia skip e os cliques rodavam majoritariamente pulados. So ha skip para
+infra real (servidor fora). Sem sys.exit, sem massa, sem tocar db/backup/logs/site,
 sem segredos alem do seed de QA (qamaster).
 
 Como rodar (Windows):
@@ -31,15 +32,27 @@ So cliques:
 """
 
 import os
+import sys
 
 import pytest
 from playwright.sync_api import expect
+
+# `qa_login_helper` e irmao deste arquivo: entra no path explicitamente para
+# nao depender do modo de import do pytest.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 pytestmark = pytest.mark.e2e
 
 BASE_URL = os.environ.get("INTRANET_BASE_URL", "http://localhost:8080")
 QA_USUARIO = "qamaster"
 QA_SENHA = "123456"
+
+# Login/troca em UM lugar so (ver qa_login_helper): a copia local era o que
+# mantinha a cobertura pulada, porque fazia skip em vez de trocar a senha.
+from qa_login_helper import (  # noqa: E402
+    _dialogo_troca_visivel,
+    concluir_troca as _concluir_troca,
+)
 
 # Botoes que exigem selecao previa de linha/lote: nao ha o que clicar sem
 # contexto — pula com skip documentado em vez de forcar escrita.
@@ -60,19 +73,13 @@ NUNCA_CONFIRMAR = frozenset({
 })
 
 
-def _dialogo_troca_visivel(page) -> bool:
-    """Detecta o dialogo de troca obrigatoria (troca forcada ciente)."""
-    try:
-        for texto in ("Troca de senha obrigatória", "Credenciais obrigatórias"):
-            if page.get_by_text(texto, exact=False).count() > 0:
-                return True
-        return False
-    except Exception:
-        return False
-
-
 def fazer_login(page, usuario: str, senha: str) -> bool:
-    """Faz login via data-testid e retorna True se saiu do /login."""
+    """Faz login e CONCLUI a troca de senha obrigatoria, se aparecer.
+
+    Antes: `pytest.skip` quando o dialogo de troca abria — o que fazia os
+    cliques rodarem pulados. Agora a troca e feita com a MESMA senha de
+    origem e o `forcar_troca` e zerado.
+    """
     try:
         try:
             page.goto(f"{BASE_URL}/login", wait_until="domcontentloaded", timeout=15000)
@@ -95,18 +102,20 @@ def fazer_login(page, usuario: str, senha: str) -> bool:
             page.wait_for_timeout(1500)
         except Exception:
             pass
-        try:
-            url = page.url
-        except Exception:
-            url = ""
-        if "/login" in (url or "") and not _dialogo_troca_visivel(page):
-            return False
-        return True
     except pytest.skip.Exception:
         raise
     except Exception as exc:
         pytest.skip(f"falha de infra no login — pule: {exc}")
         return False
+
+    if _dialogo_troca_visivel(page):
+        _concluir_troca(page, senha, senha)
+        return not _dialogo_troca_visivel(page)
+    try:
+        url = page.url
+    except Exception:
+        url = ""
+    return "/login" not in (url or "")
 
 
 def _rota_para_botao(testid: str) -> str:
@@ -197,9 +206,11 @@ def _clicar_seguro(page, testid: str) -> None:
         rota = _rota_para_botao(testid)
         ok = fazer_login(page, QA_USUARIO, QA_SENHA)
         if not ok:
-            pytest.skip("senha do qamaster já foi trocada (provisória) — ciente, sem falhar")
+            pytest.skip("login do qamaster não abriu sessão (credencial "
+                        "inválida ou infraestrutura instável)")
         if _dialogo_troca_visivel(page):
-            pytest.skip("troca obrigatória pendente — tela bloqueada pelo diálogo")
+            pytest.fail("troca de senha obrigatória NÃO foi concluída pelo "
+                        "login — o diálogo continua bloqueando a tela")
         try:
             page.goto(f"{BASE_URL}{rota}", wait_until="domcontentloaded", timeout=15000)
         except Exception:
@@ -318,15 +329,17 @@ class TestCliqueSeguroAgregador:
             pytest.skip(f"pule por infra: {exc}")
 
     def test_clique_agregador_atualizar(self, page):
-        """Clica em agregador-atualizar e garante lista recarregada."""
-        try:
-            _clicar_seguro(page, "agregador-atualizar")
-        except pytest.skip.Exception:
-            raise
-        except AssertionError:
-            raise
-        except Exception as exc:
-            pytest.skip(f"pule por infra: {exc}")
+        """A grade é atualizada SOZINHA — o botão 'Atualizar' foi removido.
+
+        Removido em 26/09/2026: a atualização virou automática (ui.timer com
+        atualização parcial). Este teste fica como REGRA DE NEGÓCIO: se o
+        botão voltar, é porque alguém quebrou a atualização automática.
+        """
+        page.goto(f"{BASE_URL}/agregador-noticias", wait_until="domcontentloaded", timeout=15000)
+        page.wait_for_timeout(1500)
+        assert page.get_by_test_id("agregador-atualizar").count() == 0, (
+            "o botão 'Atualizar' foi removido de propósito — a grade se "
+            "atualiza sozinha; se ele voltou, revise a atualização automática")
 
     def test_clique_agregador_coletar(self, page):
         """Clica em agregador-coletar e garante permanencia na rota."""

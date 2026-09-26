@@ -73,7 +73,7 @@ CONFIG_PADRAO = {
 
 STATUS_VALIDOS = (
     "pendente", "aguardando_autorizacao", "autorizado",
-    "excedente_cota", "impresso", "recusado", "cancelado",
+    "excedente_cota", "impressao_iniciada", "impresso", "recusado", "cancelado",
 )
 
 
@@ -3144,6 +3144,75 @@ def recusar_grupo(grupo_id, autor, motivo):
         return False, "Erro interno. Tente novamente."
 
 
+def registrar_impressao_iniciada(grupo_id, user_nome, ator="sistema"):
+    """EN: Records that printing STARTED — status `impressao_iniciada`.
+
+    PT-BR: Registra que a impressão INICIOU — status `impressao_iniciada`.
+
+    Chamado no clique de "Imprimir", ANTES de o navegador mandar os arquivos
+    para a impressora. Serve para:
+      • retomar um pedido que o usuário já imprimiu mas não confirmou (o
+        job `expirar_rascunhos_e_impressos` reconcilia depois do prazo), e
+      • auditar QUEM mandou imprimir, já que o papel de impressão é de
+        admin do módulo ou responsável autorizado.
+
+    NÃO desconta cota aqui: a contabilidade é feita em `imprimir_grupo`
+    (ao confirmar), para não cobrar duas vezes. Retorna
+    (ok, msg, excedente, detalhe_excedente) — o chamador informa o excedente
+    graficamente mas NÃO impede a impressão.
+    """
+    try:
+        arquivos = listar_arquivos_grupo(grupo_id)
+        if not arquivos:
+            return False, "Pedido não encontrado", False, ""
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT DISTINCT status, secretaria_id, setor_id FROM tb_solicitacoes "
+                "WHERE grupo_id=?", (int(grupo_id),))
+            rows = cur.fetchall()
+        finally:
+            conn.close()
+        if not rows:
+            return False, "Pedido não encontrado", False, ""
+        status_atual = rows[0][0]
+        if status_atual not in ("autorizado", "pendente", "excedente_cota",
+                                "impressao_iniciada"):
+            return False, f"Status '{status_atual}' não permite impressão " \
+                          "(é necessário autorizar antes)", False, ""
+        secr = rows[0][1]
+        setor = rows[0][2]
+        paginas_total = sum(a[4] for a in arquivos)
+        # avisa se a impressão VAI estourar a cota — mas deixa imprimir
+        excedente, detalhe = (False, "")
+        try:
+            excedente, detalhe = verificar_excedente(secr, setor, paginas_total)
+        except Exception:
+            pass
+        if status_atual != "impressao_iniciada":
+            _atualizar_status_grupo(grupo_id, "impressao_iniciada",
+                                    campos={"impresso_por": user_nome,
+                                            "data_atualizacao": "datetime('now','localtime')"})
+            _audit(ator if ator else user_nome, "impressao_iniciada",
+                   f"grupo #{grupo_id} paginas={paginas_total} "
+                   f"excedente={'sim' if excedente else 'nao'}", None)
+        return True, f"Impressão do pedido #{grupo_id} iniciada", excedente, detalhe
+    except Exception:
+        try:
+            _log().exception("registrar_impressao_iniciada falhou")
+        except NameError:
+            try:
+                log.exception("registrar_impressao_iniciada falhou")
+            except NameError:
+                from mod_intranet import observabilidade as _obs_fail
+                _obs_fail.get_logger("solicita_impressao").exception(
+                    "registrar_impressao_iniciada falhou")
+        except Exception:
+            pass
+        return False, "Erro interno. Tente novamente.", False, ""
+
+
 def imprimir_grupo(grupo_id, admin_user, ator="sistema"):
     """Marks ALL files as printed, deducts the quota and DELETES the files from
     the server immediately (the printed pedido leaves the admin's active view).
@@ -3168,7 +3237,8 @@ def imprimir_grupo(grupo_id, admin_user, ator="sistema"):
         if not rows:
             return False, "Pedido não encontrado"
         status_atual = rows[0][0]
-        if status_atual not in ("autorizado", "pendente", "excedente_cota"):
+        if status_atual not in ("autorizado", "pendente", "excedente_cota",
+                                "impressao_iniciada"):
             return False, f"Status '{status_atual}' não permite impressão (é necessário autorizar antes)"
         secr = rows[0][1]
         setor = rows[0][2]
@@ -3279,6 +3349,88 @@ def cancelar_grupo(grupo_id, usuario, ator="sistema"):
         except Exception:
             pass
         return False, "Erro interno. Tente novamente."
+
+
+def reconciliar_impressoes_iniciadas(horas=24) -> int:
+    """EN: Closes print requests that STARTED but were never confirmed.
+
+    PT-BR: Fecha pedidos de impressão que INICIARAM e nunca foram confirmados.
+
+    O clique em "Imprimir" marca `impressao_iniciada`. Se o usuário não
+    confirmar (esqueceu, fechou a tela, a impressora falhou), o pedido
+    ficaria órfão para sempre: **cota nunca descontada e PDF nunca removido
+    do servidor** — o job de limpeza só varre `status='impresso'`.
+
+    Este reconciliador, após `horas` (mesmo prazo de retenção do arquivo),
+    assume a impressão como efetivada: desconta a cota, marca `impresso`,
+    agenda a remoção do arquivo e audita. É o que fecha a lacuna de
+    controle de gasto. Retorna quantos pedidos foram reconciliados.
+    """
+    try:
+        prazo = datetime.timedelta(hours=max(1, int(horas or 24)))
+        limite = (hora_servidor() - prazo).strftime("%Y-%m-%d %H:%M:%S")
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT DISTINCT grupo_id FROM tb_solicitacoes "
+                "WHERE status='impressao_iniciada' AND data_atualizacao < ? "
+                "AND grupo_id IS NOT NULL", (limite,))
+            grupos = [r[0] for r in cur.fetchall()]
+        finally:
+            conn.close()
+        reconciliados = 0
+        for gid in grupos:
+            try:
+                conn = get_connection()
+                try:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "SELECT DISTINCT status, secretaria_id, setor_id FROM tb_solicitacoes "
+                        "WHERE grupo_id=?", (int(gid),))
+                    rows = cur.fetchall()
+                finally:
+                    conn.close()
+                if not rows or rows[0][0] != "impressao_iniciada":
+                    continue
+                secr, setor = rows[0][1], rows[0][2]
+                arquivos = listar_arquivos_grupo(gid)
+                paginas = sum(a[4] for a in arquivos) if arquivos else 0
+                if secr and paginas:
+                    _incrementar_consumo(secr, 0, paginas)
+                    if setor:
+                        _incrementar_consumo(secr, setor, paginas)
+                minutos = tempo_exclui_impresso_min()
+                exclui_em = (hora_servidor() + datetime.timedelta(minutes=minutos)).strftime(
+                    "%Y-%m-%d %H:%M:%S")
+                _atualizar_status_grupo(gid, "impresso", campos={
+                    "data_impressao": "datetime('now','localtime')",
+                    "excluir_arquivo_em": exclui_em,
+                    "data_atualizacao": "datetime('now','localtime')"})
+                _audit("sistema", "impressao_reconciliada",
+                       f"grupo #{gid} paginas={paginas} — impressão iniciada há mais "
+                       f"de {horas}h e nunca confirmada; cota contabilizada", None)
+                reconciliados += 1
+            except Exception:
+                _log().exception(f"reconciliar_impressoes_iniciadas: falha no grupo {gid}")
+        if reconciliados:
+            _log().info(
+                f"reconciliação de impressão: {reconciliados} pedido(s) contabilizado(s) "
+                f"por terem iniciado impressão sem confirmação")
+        return reconciliados
+    except Exception:
+        try:
+            _log().exception("reconciliar_impressoes_iniciadas falhou")
+        except NameError:
+            try:
+                log.exception("reconciliar_impressoes_iniciadas falhou")
+            except NameError:
+                from mod_intranet import observabilidade as _obs_fail
+                _obs_fail.get_logger("solicita_impressao").exception(
+                    "reconciliar_impressoes_iniciadas falhou")
+        except Exception:
+            pass
+        return 0
 
 
 def reenviar_grupo(grupo_id, usuario, ator="sistema"):

@@ -200,6 +200,16 @@ def _tela_nova(usuario_logado, eh_admin):
             with ui.card_section().classes("gap-2 w-full"):
                 rascunhos = []                       # {rid, nome, paginas, expira, sel, _exp_label}
                 MAX_ARQ = 10
+                # Teto por arquivo. `ao_upload` faz `await f.read()`, que joga o
+                # PDF INTEIRO na RAM: sem teto, 10 arquivos grandes derrubam o
+                # processo (medido: 3,7 GB de RAM no servidor da prefeitura).
+                # Configurável pelo admin em Configurações do módulo.
+                try:
+                    MAX_MB = int(bd.obter_config("tamanho_maximo_mb", "50") or 50)
+                except Exception:
+                    MAX_MB = 50
+                MAX_MB = max(1, min(MAX_MB, 500))
+                MAX_BYTES = MAX_MB * 1024 * 1024
                 info_arq = ui.label("Nenhum arquivo enviado ainda.").classes(
                     "text-caption text-grey-7")
                 lista = ui.column().classes("w-full gap-1")
@@ -317,6 +327,17 @@ def _tela_nova(usuario_logado, eh_admin):
                             except Exception as ex:
                                 ui.notify(f"Falha ao ler {f.name}: {ex}", type="negative")
                                 continue
+                            # Rede de segurança do SERVIDOR: a proteção de
+                            # verdade é `max_file_size`/`max_total_size` do
+                            # `ui.upload` (o Quasar recusa no navegador, sem
+                            # trafegar). Isto cobre o POST direto no endpoint,
+                            # que passaria por essa regra.
+                            if conteudo and len(conteudo) > MAX_BYTES:
+                                ui.notify(
+                                    f"{f.name}: {len(conteudo) / 1048576:.1f} MB excede o "
+                                    f"teto de {MAX_MB} MB por arquivo.", type="negative")
+                                up.reset()
+                                return
                             try:
                                 rid, nome_servidor, n, caminho = bd.registrar_rascunho(
                                     usuario_logado, conteudo, f.name)
@@ -356,8 +377,13 @@ def _tela_nova(usuario_logado, eh_admin):
                         return None
 
                 up = ui.upload(
-                    label=f"Anexar PDFs (até {MAX_ARQ} por solicitação)*",
+                    label=f"Anexar PDFs (até {MAX_ARQ} por solicitação, "
+                          f"{MAX_MB} MB cada)*",
                     multiple=True, max_files=MAX_ARQ, auto_upload=True,
+                    # Teto aplicado pelo Quasar NO NAVEGADOR: o arquivo acima
+                    # do limite nem chega ao servidor, então o `f.read()` de
+                    # baixo nunca segura PDF grande na RAM.
+                    max_file_size=MAX_BYTES, max_total_size=MAX_BYTES * MAX_ARQ,
                     on_multi_upload=ao_upload).props("accept=.pdf").classes("w-full")
 
                 with ui.row().classes("w-full gap-2 flex-wrap items-end"):
@@ -803,6 +829,9 @@ def _card_grupo(g, usuario_logado, eh_admin, pode_cancelar=False,
          dt_cri, sec_nome, sec_sig, st_nome, num_arq, pag_calc_total, pag_arq_total) = g
         arquivos = bd.listar_arquivos_grupo(grupo_id)
         selecionados = {}   # fid -> bool
+        # trava de reentrância do ZIP: sem ela, clique repetido durante a
+        # compressão dispara vários ZIPs concorrentes no mesmo event-loop
+        _zip_ocupado = False
 
         def _selecionados_fisicos():
             try:
@@ -857,7 +886,18 @@ def _card_grupo(g, usuario_logado, eh_admin, pode_cancelar=False,
                     pass
                 return None
 
-        def baixar_selecionados_zip():
+        async def baixar_selecionados_zip():
+            """Zip dos arquivos selecionados, em thread (anti-disconnect §5.1).
+
+            `ZIP_DEFLATED` comprime o PDF INTEIRO em disco dentro do
+            event-loop: um lote grande (dezenas de MB) segura o loop por
+            segundos e derruba o WebSocket ("servidor desconectado").
+            O ZIP é montado em `run.io_bound`, com spinner, botão
+            desabilitado e trava de reentrância.
+            """
+            nonlocal _zip_ocupado
+            if _zip_ocupado:
+                return
             try:
                 alvos = _selecionados_fisicos()
                 if not alvos:
@@ -865,11 +905,28 @@ def _card_grupo(g, usuario_logado, eh_admin, pode_cancelar=False,
                     return
                 import zipfile
                 import tempfile
-                with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
-                    with zipfile.ZipFile(tmp.name, "w", zipfile.ZIP_DEFLATED) as zf:
-                        for fid, caminho, nome in alvos:
-                            zf.write(caminho, arcname=nome)
-                    ui.download(tmp.name, filename=f"pedido_{grupo_id}.zip")
+                from nicegui import run as _run_zip
+
+                def _montar_zip(_alvos):
+                    """Corpo do I/O — roda em thread, fora do event-loop."""
+                    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
+                        with zipfile.ZipFile(tmp.name, "w", zipfile.ZIP_DEFLATED) as zf:
+                            for _fid, _caminho, _nome in _alvos:
+                                zf.write(_caminho, arcname=_nome)
+                        return tmp.name
+
+                _zip_ocupado = True
+                _spin = ui.spinner(size="24px").props('aria-label=Gerando ZIP')
+                try:
+                    caminho_zip = await _run_zip.io_bound(_montar_zip, alvos)
+                    ui.download(caminho_zip, filename=f"pedido_{grupo_id}.zip")
+                    ui.notify(f"Download de {len(alvos)} arquivo(s) iniciado", type="positive")
+                finally:
+                    _zip_ocupado = False
+                    try:
+                        _spin.delete()
+                    except Exception:
+                        pass
             except Exception:
                 try:
                     try:
@@ -884,7 +941,7 @@ def _card_grupo(g, usuario_logado, eh_admin, pode_cancelar=False,
                     pass
                 try:
                     from mod_intranet.tema_modulo import notificar as _notificar_fail
-                    _notificar_fail("Erro interno. Tente novamente.", tipo="error")
+                    _notificar_fail("Erro interno ao gerar o ZIP. Tente novamente.", tipo="error")
                 except Exception:
                     pass
                 return None
@@ -1482,11 +1539,13 @@ def _card_admin_grupo(g, usuario_logado, atualizar):
                           on_click=lambda gr=grupo_id: _recusar_grupo(gr, usuario_logado, atualizar),
                           variante="perigo", compacto=True,
                           chave_modulo="solicita_impressao")
-                elif status == "autorizado":
+                elif status in ("autorizado", "impressao_iniciada"):
                     botao("Imprimir", icone="print",
                           on_click=lambda gr=grupo_id: _imprimir_grupo(gr, usuario_logado, atualizar),
                           variante="texto", compacto=True,
                           chave_modulo="solicita_impressao").tooltip("Enviar à impressora / abrir o PDF")
+                    if status == "impressao_iniciada":
+                        ui.label("impressão iniciada").classes("text-caption text-orange-7")
                     botao("Confirmar impressão", icone="done_all",
                           on_click=lambda gr=grupo_id: _confirmar_impressao_grupo(gr, usuario_logado, atualizar),
                           variante="texto", compacto=True, cor="green-8",
@@ -1526,11 +1585,42 @@ def _card_admin_grupo(g, usuario_logado, atualizar):
         return None
 
 
+def _pode_imprimir(usuario_logado, perfil_global="", grupo_id=None):
+    """EN: Only module admins and AUTHORIZED staff may print.
+
+    PT-BR: Somente administradores do módulo e pessoas AUTORIZADAS imprimem.
+
+    Quem tem poder de autorizar também pode imprimir (mesmo vínculo de
+    secretaria/setor). Sem este gate, qualquer solicitante comum dispararia
+    a impressão do próprio pedido sem passar pela autorização. Devolve
+    (ok, motivo).
+    """
+    try:
+        from mod_intranet import autenticacao as _aut
+        if perfil_global == "administrador_geral":
+            return True, ""
+        if _aut.eh_admin_do_modulo(usuario_logado, "solicita_impressao"):
+            return True, ""
+        pedidos = bd.listar_pedidos_responsavel(usuario_logado, limite=1)
+        if pedidos:
+            return True, ""
+        return False, ("Apenas administradores do módulo e responsáveis "
+                       "autorizados podem imprimir.")
+    except Exception:
+        try:
+            _log().exception("_pode_imprimir falhou")
+        except NameError:
+            pass
+        return False, "Não foi possível verificar sua permissão de impressão."
+
+
 def _imprimir_grupo(grupo_id, usuario, atualizar):
     """Opens the printer picker for a PEDIDO, then sends each file to print.
 
-    Mantém o JS nativo (diálogo do SO). NÃO marca como impresso — o desconto
-    de cota e a remoção dos arquivos ocorrem em 'Confirmar impressão'."""
+    Mantém o JS nativo (diálogo do SO). Registra `impressao_iniciada` no
+    clique — o desconto de cota e a remoção dos arquivos seguem em
+    'Confirmar impressão'; se o usuário nunca confirmar, o job reconcilia
+    após o prazo (cota é controle de gasto, não pode ficar sem baixa)."""
     try:
         from mod_solicita_impressao import bd_manipulador as bd
         arquivos = bd.listar_arquivos_grupo(grupo_id)
@@ -1542,7 +1632,8 @@ def _imprimir_grupo(grupo_id, usuario, atualizar):
             if p[0] == grupo_id:
                 status_atual = p[12]
                 break
-        if status_atual not in ("autorizado", "pendente", "excedente_cota"):
+        if status_atual not in ("autorizado", "pendente", "excedente_cota",
+                                "impressao_iniciada"):
             ui.notify("Situação não permite imprimir — é necessário autorizar antes.",
                       type="negative")
             return
@@ -1566,6 +1657,14 @@ def _imprimir_grupo(grupo_id, usuario, atualizar):
                     ui.notify("Selecione uma impressora", type="warning")
                     return
                 dlg.close()
+                # Registra que a impressão INICIOU (reconciliação por prazo) e
+                # avisa se vai estourar a cota — o aviso é informativo, a
+                # impressão NAO é bloqueada (regra do módulo).
+                _ok_reg, msg_reg, excedeu, detalhe_exc = bd.registrar_impressao_iniciada(
+                    grupo_id, usuario, ator=usuario)
+                if not _ok_reg:
+                    ui.notify(msg_reg, type="negative")
+                    return
                 ui.notify(f"Enviando para impressora: {escolhida[1]}", type="info")
                 # Exceção intencional de "sem JS direto": impressão via diálogo nativo do SO
                 # (`window.imprimirPdf` injetado por /solicita-impressao/src/impressao.js).
@@ -1573,6 +1672,12 @@ def _imprimir_grupo(grupo_id, usuario, atualizar):
                     ui.run_javascript(
                         f"if (window.imprimirPdf) window.imprimirPdf('/solicita-impressao/pdf/{a[0]}',"
                         f" {escolhida[1]!r});")
+                if excedeu:
+                    with ui.column().classes("w-full items-center"):
+                        ui.icon("warning", size="32px").classes("text-orange-6")
+                        ui.label("IMPRESSÃO ACIMA DA COTA").classes("text-subtitle2 font-bold text-orange-8")
+                        ui.label(detalhe_exc or "O consumo ultrapassa a cota da unidade.").classes("text-caption text-grey-7 text-center")
+                        ui.label("A impressão será realizada e o excedente registrado.").classes("text-caption text-grey-6 text-center")
                 ui.notify("Impressão enviada. Confirme após concluir para marcar como impresso.",
                           type="info", position="bottom")
             except Exception:

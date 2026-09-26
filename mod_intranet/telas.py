@@ -32,7 +32,9 @@ _login_erro_logger = None
 
 
 def _login_erro_log():
-    """Retorna o logger do fluxo de login (loguru, fail-soft).
+    """EN: Returns the login-flow logger (loguru, fail-soft).
+
+    PT-BR: Retorna o logger do fluxo de login (loguru, fail-soft).
 
     Memoriza o logger na primeira chamada. Nunca levanta: se a observabilidade
     falhar, devolve o logger padrão do loguru para o `except` do chamador

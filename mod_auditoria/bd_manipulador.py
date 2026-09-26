@@ -326,6 +326,66 @@ def _extrair_modulo(tabela: str) -> str:
     return tabela.replace("tb_auditoria_", "").replace("_", "-")
 
 
+def aquecer_auditoria(modulos=None) -> int:
+    """EN: Pre-creates the audit tables off the event-loop (boot warm-up).
+
+    PT-BR: Pré-cria as tabelas de auditoria FORA do event-loop (aquecimento
+    do boot).
+
+    `registrar_auditoria` roda `_garantir_tabela_auditoria` (DDL) na
+    PRIMEIRA gravação de cada módulo — medido em **73,9 s** na primeira
+    chamada num banco recém-criado. Como o handler de tela roda no
+    event-loop, essa espera congelava a tela por mais de um minuto e
+    derrubava o WebSocket ("servidor desconectado").
+
+    Aquecendo no boot, o preço é pago uma vez ANTES de o servidor aceitar
+    requisições, então nenhuma ação de usuário paga por ele e não há
+    event-loop a bloquear. Chamadas seguintes ficam em ~145 ms.
+    Devolve quantas tabelas foram garantidas.
+    """
+    try:
+        # `run.io_bound` é async — não dá para usar daqui (função síncrona,
+        # e o boot não pode ficar esperando). Executamos direto: esta função
+        # só roda no boot, ANTES de o servidor aceitar requisições, então
+        # não há event-loop a bloquear.
+        return _aquecer_auditoria_sync(modulos)
+    except Exception:
+        return 0
+
+
+def _aquecer_auditoria_sync(modulos=None) -> int:
+    """Corpo síncrono do aquecimento (roda em thread, fora do event-loop)."""
+    try:
+        if not modulos:
+            try:
+                from mod_intranet.autenticacao import modulos_registrados
+                modulos = [l[0] for l in (modulos_registrados() or []) if l and l[0]]
+            except Exception:
+                modulos = []
+        if not modulos:
+            modulos = ["intranet", "usuarios", "auditoria", "blog", "solicita_impressao",
+                       "empenhos", "tecnico", "filas", "lista_telefonica",
+                       "agregador_noticias"]
+        conn = get_auditoria_connection()
+        try:
+            for modulo in modulos:
+                tabela = _nome_tabela(modulo)
+                if tabela in _TABELAS_GARANTIDAS:
+                    continue
+                _garantir_tabela_auditoria(conn, tabela, modulo)
+                _TABELAS_GARANTIDAS.add(tabela)
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+        log.info(f"auditoria aquecida: {len(_TABELAS_GARANTIDAS)} tabela(s) prontas")
+        return len(_TABELAS_GARANTIDAS)
+    except Exception as exc:
+        log.warning(f"aquecer_auditoria falhou (fail-soft): {exc}")
+        return 0
+
+
 def registrar_auditoria(usuario, modulo, acao, descricao, hash_arquivo=None,
                         ip=None, user_agent=None, client_hostname=None,
                         timestamp=None):

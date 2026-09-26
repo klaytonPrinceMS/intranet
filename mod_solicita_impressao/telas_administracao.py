@@ -915,6 +915,15 @@ def _admin_configuracoes(usuario_logado):
                 "Minutos para excluir o arquivo após a impressão*",
                 value=int(bd.obter_config("tempo_exclui_impresso_min", "10")),
                 min=1, max=120).props("outlined dense").classes("w-full")
+            tam_max = ui.number(
+                "Teto de tamanho por arquivo (MB)*",
+                value=int(bd.obter_config("tamanho_maximo_mb", "50")),
+                min=1, max=500).props("outlined dense").classes("w-full")
+            ui.label("O teto é recusado no navegador do usuário, antes de o "
+                     "arquivo trafegar — é o que impede que um PDF muito "
+                     "grande segure a memória do servidor. PDFs escaneados "
+                     "de alta resolução passam fácil de 50 MB.").classes(
+                         "text-caption text-grey-6")
             with ui.row().classes("w-full gap-4"):
                 p_pad_papel = ui.select({"A4": "A4", "A3": "A3"}, label="Papel padrão",
                                         value=bd.obter_config("padrao_papel", "A4")).props(

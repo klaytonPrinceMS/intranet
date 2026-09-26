@@ -1029,12 +1029,20 @@ def page_admin_modulo(chave_modulo: str):
             mostrar_administracao(nome, pode_pub)
 
         elif chave_modulo == "usuarios":
+            # Gestão de usuários é ADMINISTRATIVA: sem o gate, um `comum`
+            # alterava a política de senha do sistema (usuarios_senha_min).
+            eh_admin = (perfil == "administrador_geral"
+                        or autenticacao.eh_admin_do_modulo(nome, "usuarios"))
             from mod_gest_cad_usuario.telas_administracao import mostrar_administracao
             from mod_intranet.tema_modulo import ler_tema
             tema = ler_tema("usuarios", cor_botao="#000000", cor_texto_botao="#FFFFFF")
             ui.colors(primary=tema["cor_botao"])
-            with ui.column().classes("w-full p-6"):
-                mostrar_administracao(nome)
+            if not eh_admin:
+                notificar("Acesso restrito a administradores", type="negative")
+                ui.navigate.to("/users")
+            else:
+                with ui.column().classes("w-full p-6"):
+                    mostrar_administracao(nome)
 
         elif chave_modulo == "auditoria":
             eh_admin = perfil == "administrador_geral"
@@ -1083,7 +1091,12 @@ def page_admin_modulo(chave_modulo: str):
             from mod_tecnico.telas_administracao import mostrar_administracao
             from mod_intranet.tema_modulo import ler_tema
             ui.colors(primary=ler_tema("tecnico", cor_botao="#000000")["cor_botao"])
-            mostrar_administracao(nome)
+            # admin requer papel; sem ele, aviso + volta para a tela do módulo
+            if not eh_admin:
+                notificar("Acesso restrito a administradores", type="negative")
+                ui.navigate.to("/tecnico")
+            else:
+                mostrar_administracao(nome)
 
         elif chave_modulo == "filas":
             eh_admin = (perfil == "administrador_geral"
@@ -1091,7 +1104,11 @@ def page_admin_modulo(chave_modulo: str):
             from mod_filas.telas_administracao import mostrar_administracao
             from mod_intranet.tema_modulo import ler_tema
             ui.colors(primary=ler_tema("filas", cor_botao="#000000")["cor_botao"])
-            mostrar_administracao(nome)
+            if not eh_admin:
+                notificar("Acesso restrito a administradores", type="negative")
+                ui.navigate.to("/filas")
+            else:
+                mostrar_administracao(nome)
 
         elif chave_modulo == "lista_telefonica":
             eh_admin = (perfil == "administrador_geral"
@@ -1161,6 +1178,24 @@ if __name__ in ("__main__", "__mp_main__"):
     def _passo_agendador():
         return iniciar_agendador()
 
+    def _passo_auditoria():
+        """Pre-cria as tabelas de auditoria ANTES do servidor atender.
+
+        A 1a gravação de cada módulo paga um DDL caro (medido: 73,9 s num
+        banco recém-criado). Dentro do event-loop isso congelava a tela e
+        derrubava o WebSocket. Aquecendo no boot, nenhuma ação de usuário
+        paga o preço (fica em ~145 ms)."""
+        try:
+            from mod_auditoria.bd_manipulador import aquecer_auditoria
+            n = aquecer_auditoria()
+            observabilidade.get_logger("intranet").info(
+                f"auditoria aquecida no boot: {n} tabela(s)")
+            return True
+        except Exception as e:
+            observabilidade.get_logger("intranet").warning(
+                f"aquecimento da auditoria falhou (fail-soft): %s", e)
+            return False
+
     def _passo_docs():
         try:
             from mod_intranet.documentacao import (
@@ -1179,6 +1214,7 @@ if __name__ in ("__main__", "__mp_main__"):
             raise
 
     ativacao.progresso_boot([
+        ("Auditoria (pre-cria tabelas)", _passo_auditoria),
         ("Agendadores (backup/limpeza/monitor)", _passo_agendador),
         (f"Documentação MkDocs (http://localhost:"
          f"{_cfg.get('porta_documentacao', 8000)})", _passo_docs),

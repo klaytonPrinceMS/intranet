@@ -280,3 +280,89 @@ Importa `autenticacao.validar_acesso_modulo`/`perfil_global_de`, `banco_conexao.
 | tecnico | Sem `CrudBase`; sem quebra PG localizada (varredura fina pendente) | `mod_tecnico/bd_manipulador.py` (sem `CrudBase` — verificado por busca) | Migrar para `CrudBase` + `conexao("tecnico")`; varredura `GROUP BY`/`COLLATE`/`strftime` SQL no módulo | Baixo-médio (ZIP + backup `YYYYMMDD_HHMM_nomePc_ip_SS`) |
 
 Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+
+---
+
+# RF e RNF verificados no código — lote 1 (26/09/2026)
+
+> Auditoria de requisitos **funcionais** (o que o sistema faz) e **não
+> funcionais** (qualidade e restrições), com evidência `arquivo:linha` conferida
+> no código em 26/09/2026.
+
+## Requisitos funcionais (RF) — mapa código ↔ doc
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-TEC-01 | Acesso à tela só para `administrador_geral` **ou** usuário com liberação no módulo `tecnico` | `telas.py:24-34` `_pode_acessar` (admin geral retorna `True`; senão `autenticacao.validar_acesso_modulo`); negação visual em `telas.py:44-49` |
+| RF-TEC-02 | Abas **Software** \| **Backup** com `ui.tabs` + `ui.tab_panels` | `telas.py:62-70` |
+| RF-TEC-03 | Listagem recursiva de `software/` com pastas intermediárias derivadas e dedupe estável | `telas.py:101-116` (`listar_software_recursivo` + `pastas` + `vistos`); `bd_manipulador.py:292` |
+| RF-TEC-04 | Seleção múltipla (arquivo **ou** pasta marcada baixa tudo dentro) por `data-testid` estável | `telas.py:132-135` (checkbox `data-testid=tecnico-soft-<rel sanitizado>`) + `_safe_id` em `telas.py:179-184` |
+| RF-TEC-05 | Tamanho em arquivo exibido como B/KB/MB/GB/TB | `telas.py:126-130` (`os.path.getsize`) + `_fmt_bytes` em `telas.py:163-176` |
+| RF-TEC-06 | **Baixar selecionados** gera ZIP no servidor e dispara `ui.download`; recusa seleção vazia com aviso | `telas.py:141-152` (`criar_zip_selecionados` → `ui.download`); `bd_manipulador.py:315` |
+| RF-TEC-07 | Limite de tamanho do ZIP configurável (`tecnico_max_zip_mb`, 10–10000 MB, fallback 1024) | `bd_manipulador.py:144-153` `_obter_max_zip_mb`; painel em `telas_administracao.py:50-59` |
+| RF-TEC-08 | Criar pasta de backup com nome automático `YYYYMMDD_HHMM_nomePc_ip` (+ sufixo `_SS` de segundos) e prévia ao vivo enquanto o usuário digita | `bd_manipulador.py:393` `nome_pasta_backup` + `:424` `criar_pasta_backup`; prévia em `telas.py:222-230` |
+| RF-TEC-09 | Upload 1-clique do PC a formatar via `webkitdirectory` (multi-pasta, estrutura preservada) | `telas.py:268-289` `ao_upload` (lê bytes e usa `f.name` com caminho relativo) + `telas.py:294-302` `run_javascript` fail-soft aplicando `webkitdirectory` |
+| RF-TEC-10 | Seletor de pasta destino do upload, populado só com backups **do próprio usuário** | `telas.py:245-258` (`listar_backups(owner=user_nome, apenas_owner=True)`) |
+| RF-TEC-11 | **Baixar pasta (zip)** de um backup, com spinner, trava de reentrância e I/O fora do event-loop | `telas.py:316-344` `async _baixar` + `run.io_bound(tec.criar_zip_backup)` + `ui.spinner` + `_occ["sim"]` |
+| RF-TEC-12 | Prévia do conteúdo da pasta em diálogo (até 200 arquivos + "… e mais N") | `telas.py:358-388` `_dlg_listar` (`os.walk` + `sorted(arquivos)[:200]`) |
+| RF-TEC-13 | `/admin/tecnico`: aparência (cores, tamanho de botão, cabeçalho), limite de ZIP, backups recentes (todos os usuários, 30) e painel de backup | `telas_administracao.py:17-78` (`bloco_aparencia` + card config + `listar_backups(owner=None, apenas_owner=False)` + `painel_backup`) |
+| RF-TEC-14 | Painéis de backup: "Atualizar" (re-render) e "Atualizar" na aba Software | `telas.py:92`, `:158`, `:353` |
+| RF-TEC-15 | Falha de backup **nunca** derruba o handler — `OSError`→`None` e retorno `(ok, msg)` | `bd_manipulador.py:592-620` (`salvar_arquivos_backup` devolve tupla) + `telas.py:287` (`notificar` com `positive`/`negative` conforme `ok`) |
+| RF-TEC-16 | Hash **SHA-256** por arquivo enviado (rastreabilidade do conteúdo) | `bd_manipulador.py:89-101` `_hash_sha256`; gravado em `tb_backup_arquivo.hash_sha256` |
+| RF-TEC-17 | LGPD: exclusão/renomeio de usuário limpa os vínculos de backup (filhos antes dos pais) | `bd_manipulador.py:790` `remover_vinculos_usuario` + `:853` `renomear_usuario` |
+| RF-TEC-18 | Auditoria de todos os eventos do módulo na tabela do próprio módulo (`tb_auditoria_tecnico`) | `bd_manipulador.py:61-73` `_audit` → `mod_intranet.bd_manipulador.audit_log` |
+
+## Requisitos não-funcionais (RNF) — garantias técnicas
+
+| RNF | Exigência | Evidência no código |
+|:---|:---|:---|
+| RNF-TEC-PERS-01 | Banco próprio, um `db_mod_<chave>.db` por módulo | `get_connection` → `banco_conexao.conexao("tecnico")` (`bd_manipulador.py:41-59`) → `caminho_db("tecnico")` |
+| RNF-TEC-PERS-02 | `PRAGMA journal_mode=WAL` + `foreign_keys=ON` | `bd_manipulador.py:50-51` (falha de PRAGMA só gera `warning`, não derruba) |
+| RNF-TEC-PERS-03 | `busy_timeout=5000` + `synchronous=NORMAL` herdados do núcleo | `banco_conexao.py:705-708`; `mod_tecnico` não repete (herda) |
+| RNF-TEC-PERS-04 | Retry em `database is locked` nas transações curtas de upload | `bd_manipulador.py:597-601` (docstring) — 3 tentativas + rollback + **compensação no FS** |
+| RNF-TEC-PERS-05 | DDL idempotente e import-safe (`init_db` nunca levanta) | `bd_manipulador.py:156-243` (`CREATE TABLE IF NOT EXISTS`, seed com fallback se `INSERT OR IGNORE` falhar, `except` → `log.exception` + `return`) |
+| RNF-TEC-COMP-01 | Paridade SQLite ↔ PostgreSQL (proxy `_CursorPostgres`) | DDL só `IF NOT EXISTS` (`:172-206`); `INSERT OR IGNORE` com **fallback explícito** `SELECT`+`INSERT` (`:206-212`); `REFERENCES ... ON DELETE CASCADE` traduzido |
+| RNF-TEC-SEG-01 | Blindagem de **path traversal** em toda pasta física | `bd_manipulador.py:557-589` `_pasta_backup_path`: `os.path.basename` + regex `^[\w.-]+$` + **`os.path.commonpath`** revalidado, com fallback seguro para dentro de `PASTA_BACKUP` |
+| RNF-TEC-SEG-02 | Sanitização de `nomePc`/`ip` (só `[A-Za-z0-9_-]`, 40 chars) | `bd_manipulador.py:76-86` `_sanitizar_nome` |
+| RNF-TEC-SEG-03 | **Só o dono** envia arquivo; `administrador_geral` é exceção | `bd_manipulador.py:607-614` (`row[2] != owner` → `perfil_global_de(owner) != "administrador_geral"` → recusa) |
+| RNF-TEC-SEG-04 | **Isolamento por dono** na listagem (`apenas_owner=True` como default) | `bd_manipulador.py:504-517` `listar_backups`; chamada da tela em `telas.py:245` |
+| RNF-TEC-SEG-05 | Autorização de escrita auditada | `bd_manipulador.py:61-73` `_audit` (falha de auditoria só gera `warning`, não bloqueia a ação) |
+| RNF-TEC-RES-01 | `try/except` obrigatório em função, com `notificar` + `log` (AGENTS.md §3.2) | 100 % das funções de `bd_manipulador.py` e `telas.py` protegem; **zero** `ui.notify` cru (só `tema_modulo.notificar`) |
+| RNF-TEC-RES-02 | Fail-soft: falha de auditoria/conexão/config não derruba a operação | `_audit` (`:69-73`), `_hash_sha256` → `""` (`:100-101`), `_obter_config_tecnico` → central e depois fallback local e depois `padrao` (`:104-141`) |
+| RNF-TEC-UX-01 | Anti-disconnect: I/O pesado em `async` + `run.io_bound` + spinner + trava (§5.1) | ✅ `telas.py:316-344` (ZIP do backup) — referência canônica do módulo |
+| RNF-TEC-UX-02 | `data-testid` via `.props('data-testid=...')` em todas as ações | `telas.py:134` (checkbox), `:157` (Baixar), `:216`/`:218` (Nome do PC / IP), `:242` (Criar pasta), `:256` (select), `:292` (upload), `:346` (Baixar pasta) |
+| RNF-TEC-UX-03 | `aria-label` no spinner de I/O pesado | `telas.py:329-330` (`aria-label=Gerando ZIP de <pasta>`) |
+| RNF-TEC-UX-04 | Rótulos PT-BR e docstrings bilíngue EN (topo) / PT-BR (abaixo) | `telas.py:1-4`, `telas_administracao.py:1-4`, `bd_manipulador.py:1-10` |
+| RNF-TEC-PERF-01 | Sem N+1: listagem em 2 consultas (`listar_software` + `listar_software_recursivo`) | `telas.py:88-89`, `:101` |
+| RNF-TEC-PERF-02 | Teto de renderização no diálogo de prévia (200 arquivos) | `telas.py:382-385` |
+| RNF-TEC-RESP-01 | Responsividade com `flex-wrap` + `min-w-[220px]` nos campos | `telas.py:215-218` |
+| RNF-TEC-CFG-01 | Configuração dual com fonte única de verdade (central) e fallback local | `bd_manipulador.py:104-141`; escrita só no central (`telas_administracao.py:53`, `:57`) |
+
+## Divergências e riscos
+
+### Código faz, doc não diz
+
+| # | Achado | Evidência |
+|:---|:---|:---|
+| DIV-TEC-01 | Sufixo `_SS` (segundos) no nome da pasta **e** a variante `YYYYMMDD_HHMM_SS_pc_ip` são aceitos na blindagem — a doc só cita `YYYYMMDD_HHMM_nomePc_ip` | `bd_manipulador.py:569-572` (regex com `(_[0-9]{2})?` nos dois formatos) |
+| DIV-TEC-02 | O `run_javascript` que injeta `webkitdirectory` é uma **dependência de JS direto**, que o AGENTS.md §5 proíbe; está em `try/except` e é fail-soft, mas é JS no caminho crítico do upload 1-clique | `telas.py:294-302` |
+| DIV-TEC-03 | `telas.py:196-203` importa `nicegui.client.Client` e **não usa** — o comentário diz *"Não há acesso síncrono ao request aqui; usaremos placeholder"*, então `ip_sugerido` é **sempre vazio** e o campo IP nasce em branco. Código morto. | `telas.py:196-203` |
+| DIV-TEC-04 | `tecnico_quota_gb` é semeada em `tb_config_tecnico` e **nunca lida** (já registrado como "não implementada" na seção Status) | `bd_manipulador.py:201` (seed) — nenhuma leitura no módulo |
+| DIV-TEC-05 | `/admin/tecnico` é alcançável por **qualquer usuário com acesso ao módulo**, não só por administrador | ver RISCO-TEC-01 |
+| DIV-TEC-06 | `telas_administracao.py:42-48` mostra os dois caminhos de pasta em campos **desabilitados** (`inp_soft.disable()`), com tooltip explicando que são fixos — a doc não registra que a edição é impossível por design | `telas_administracao.py:42-48` |
+
+### Doc diz, código não faz
+
+| # | Alegação da doc | Estado real |
+|:---|:---|:---|
+| DIV-TEC-07 | "Configuração dual com fonte única de verdade" (implica que o local é só cache) | Correto no caminho de **leitura**, mas `_obter_config_tecnico` continua able to ler o local — se alguém escrever direto em `tb_config_tecnico`, o valor local ganha. Não há job de reconciliação. |
+
+### Riscos
+
+| # | Risco | Severidade | Evidência |
+|:---|:---|:---|:---|
+| **RISCO-TEC-01** | **`/admin/tecnico` sem gate de administrador.** `main.py:1080-1086` calcula `eh_admin` (geral **ou** admin do módulo) e **não usa**: chama `mostrar_administracao(nome)` sem o flag e **sem** o `if not eh_admin: notificar + navigate` que `lista_telefonica` (`main.py:1102-1105`) e `agregador_noticias` (`main.py:1115-1117`) têm. `telas_administracao.py:17` também não recebe nem checa perfil. Efeito: um usuário `comum` com liberação do módulo Técnico **altera `tecnico_max_zip_mb` e o tema** e **vê a lista de backups de todos os usuários** (card "Backups recentes (todos os usuários)"). | 🔴 Alta | `main.py:1080-1086` + `mod_tecnico/telas_administracao.py:17`
+| **RISCO-TEC-02** | **`baixar()` do ZIP de software é `def` síncrono** (`telas.py:141`) e chama `criar_zip_selecionados` (walk + `zipfile` de N arquivos) direto no event-loop — exatamente o padrão que o AGENTS.md §5.1 proíbe e que o próprio módulo já corrige em `_baixar` (`telas.py:316`). Zip grande ⇒ derruba o WebSocket do cliente. | 🟠 Média | `telas.py:141-152` vs. `telas.py:316-344` |
+| **RISCO-TEC-03** | `salvar_arquivos_backup` grava **bytes em memória** (`arquivos = [(nome, conteudo)]`, `telas.py:274-280`) antes de tocar o disco. Backup de usuário com GB vira RAM do servidor. Sem teto de tamanho por arquivo nem total. | 🟠 Média | `telas.py:268-286` |
+| **RISCO-TEC-04** | Sem `CrudBase`: o módulo faz SQL cru via `conn.cursor()`. Funciona (o proxy traduz), mas não usa a transação atômica `crud.transacao()` que o AGENTS.md §4 oferece, e a "atomicidade FS+DB" é **compensação manual** (remove o que gravou) — janela em que FS e DB divergem se o processo cair entre os dois passos. | 🟡 Baixa | `bd_manipulador.py:597-601` + ausência de `CrudBase` |
+| **RISCO-TEC-05** | `tb_backup.status` só tem **dois** estados reais: `'criado'` (default, `bd_manipulador.py:177`) e `'em_envio'` (gravado em `bd_manipulador.py:682` no fim da fase 2). Não existe estado "concluído"/"restaurado", então a coluna mostrada em `telas.py:311` fica presa em `em_envio` mesmo depois que o backup terminou — o usuário não tem como saber se a cópia ficou completa. | 🟡 Baixa | `bd_manipulador.py:177` + `:682` |

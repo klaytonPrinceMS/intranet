@@ -949,3 +949,130 @@ análise estática **bloqueante** antes de declarar o ciclo de testes verde. Ver
 | intranet | 3 connects crus sem WAL; zero `busy_timeout`; WAL OK no quente | `mod_intranet/banco_conexao.py:74`, `:90` (crus) · `mod_intranet/ativacao.py:502` (cru) · `mod_intranet/banco_conexao.py:619-620` (quente COM WAL) | Helper interno `_conectar_wal()` em `banco_conexao.py` + reuso em `ativacao.py:502`; `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` + `busy_timeout=5000` só nesses pontos | Baixo-médio (boot/assistente; validar fresh-install) |
 
 Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+
+---
+
+# RF e RNF verificados no código — lote 1 (26/09/2026)
+
+> Auditoria de requisitos **funcionais** (o que o sistema faz) e **não
+> funcionais** (qualidade e restrições), com evidência `arquivo:linha` conferida
+> no código em 26/09/2026. Cobre o núcleo: autenticação, guarda de página,
+> layout, tema, config, agendador, backup, documentação, observabilidade e
+> fachada de integração.
+
+## Requisitos funcionais (RF) — mapa código ↔ doc
+
+### Autenticação, sessão e guarda de página
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-NUC-01 | Login por usuário+senha, com mensagem **genérica** em falha (não revela se o usuário existe) | `autenticacao.py:332-349` `autenticar` (`"Usuário ou senha inválidos"` nos dois casos) |
+| RF-NUC-02 | Bloqueio de conta com mensagem própria | `autenticacao.py:345-347` (`"Usuário bloqueado. Procure o administrador."`) |
+| RF-NUC-03 | **Toda** tentativa de login falha é auditada com o nome do usuário tentado | `autenticacao.py:341` `audit_log(..., "login_falha", ...)` |
+| RF-NUC-04 | Hash de senha **bcrypt** (`gerar_hash_senha`/`verificar_senha`) — o texto puro nunca é gravado | `autenticacao.py:284-290` |
+| RF-NUC-05 | Sessão com **hash de cookie** (`SESSION_COOKIE_NAME = "intranet_session"`), amarrada ao navegador | `autenticacao.py:23` + `autenticacao.py:368-398` `registrar_login` |
+| RF-NUC-06 | Sessão **revogável** pelo admin: `encerrar_sessao`/`encerrar_todas_sessoes` derrubam a navegação | `mod_gest_cad_usuario/bd_manipulador.py:1329`, `:1354`; checagem em `telas.py:82-88` |
+| RF-NUC-07 | Revalidação de `user_ativo` **a cada request** (bloqueio/exclusão derrubam a sessão viva) | `telas.py:73-79` |
+| RF-NUC-08 | Sessão antiga (sem hash) **adota** rastreabilidade na primeira visita e passa a ser revogável | `telas.py:89-93` |
+| RF-NUC-09 | Retenção LGPD de sessões (`sessao_retencao`, padrão 50; `0` = manter tudo) | `autenticacao.py:351-366` `_podar_sessoes` + default semeado em `bd_manipulador.py:65-68` |
+| RF-NUC-10 | Troca obrigatória de senha e de **credenciais** (login + senha) no 1º acesso do `master`/seed | `autenticacao.py:423-431` `precisa_trocar_senha`, `:447-454` `marcar_trocar_senha`, `:456-464` `marcar_trocar_credenciais`, `:466-474` `precisa_trocar_credenciais`; diálogo em `telas.py:117-121`;forced-change seed em `mod_gest_cad_usuario/bd_manipulador.py:343-350` |
+| RF-NUC-11 | Troca de senha pelo próprio usuário (confere a atual) e troca de credenciais completa pelo master | `autenticacao.py:492-512` `trocar_senha_propria`, `:514-564` `trocar_credenciais_master` |
+| RF-NUC-12 | Edição do próprio perfil (e-mail, fone) e nome de tratamento | `autenticacao.py:566-576` `editar_meu_perfil`, `:573-576` `nome_de_tratamento`; diálogo em `telas.py:452` |
+| RF-NUC-13 | Logout com auditoria | `autenticacao.py:413-421` `registrar_logout`; handler em `telas.py:444-450` |
+| RF-NUC-14 | `pagina_restrita` = **4 guards em sequência**: sessão → revalidação no BD → sessão revogável → **acesso ao módulo** | `telas.py:63-133` (blocos `:68-71`, `:73-79`, `:81-93`, `:104-113`) |
+| RF-NUC-15 | Tentativa de abrir módulo sem permissão é **auditada** como `acesso_negado` e redireciona para `/` | `telas.py:104-113` |
+| RF-NUC-16 | Guard de acesso por módulo vale para **qualquer rota** que passe `chave_modulo` (impede navegação por URL direta) | `telas.py:99-104` (comentário) + `main.py` (todas as `@ui.page` restritas) |
+
+### Módulos, menu e layout
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-NUC-17 | Registro de módulos em `tb_modulos` com nome, ícone, rota, ativo — **descoberta dinâmica** | `autenticacao.py:43-127` `_garantir_tb_modulos` + `:136-149` `modulos_registrados`; catálogo fixo `MODULOS_SISTEMA` em `:25-36` |
+| RF-NUC-18 | CRUD de módulo pelo painel central: registrar, reordenar, alterar rota, excluir, ativar/desativar | `autenticacao.py:151-179` `registrar_modulo`, `:180-202` `reordenar_modulos`, `:204-234` `alterar_rota_modulo`, `:236-254` `excluir_modulo`, `:256-274` `set_modulo_ativo` |
+| RF-NUC-19 | **Módulo desativado não pode ser desativado** se for o único `chave_nativa` (trava de segurança) | `autenticacao.py:256-274` + `chaves_nativas` em `:276-282` (auditoria `modulo_desativado_bloqueado`) |
+| RF-NUC-20 | Módulos do usuário com **vínculo mas desativados** aparecem no menu como item laranja de alerta | `autenticacao.py:645-655` `modulos_do_usuario` (retorna `ativa=False`) + `ui_comum.py:863-905` (item de menu) |
+| RF-NUC-21 | Drawer do menu: Home → módulos → Administração → Documentação → Sair, com separadores e sem rótulos de seção | `telas.py:213` `_montar_layout` + `ui_comum.py:855-905` `ItemMenuDrawer` / `item_menu_drawer` |
+| RF-NUC-22 | Temas visual (cores, tamanho de botão, cabeçalho, card) por módulo, com prévia ao vivo e "Restaurar padrão" | `tema_modulo.py:112-145` `ler_tema`, `:147-180` `salvar_tema`, `:182-191` `restaurar_tema`, `:323-555` `bloco_aparencia` |
+| RF-NUC-23 | **Modo escuro** por usuário, com paleta escura derivada do tema | `autenticacao.py:476-490` `tema_escuro`/`definir_tema_escuro`; `telas.py:136-205` `_aplicar_tema_escuro`; `tema_modulo.py:644-666` `paleta_escura` |
+| RF-NUC-24 | Notificação com **timeout configurável** (nunca `ui.notify` cru) | `tema_modulo.py:290-301` `notificacao_timeout` + `:303-321` `notificar` |
+| RF-NUC-25 | Rodapé com versão do sistema **e** do módulo (mesclada por patch) | `telas.py:799-809` `_obter_versao`, `:812-829` `_obter_versao_modulo`, `:831-838` `_parse_versao`, `:840-851` `_mesclar_patch`, `:853-877` `_formatar_versao_rodape` |
+| RF-NUC-26 | Rodapé padrão de configuração (`rodape_salvar_restaurar`) com `data-testid` no botão Aplicar | `ui_comum.py:352-378` (`data_testid` → `.props(f'data-testid={data_testid}')` em `:378`) |
+
+### Configuração, integrações e serviços
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-NUC-27 | Painel `/configuracoes` com 5 abas: **Config**, **E-mail**, **Módulo**, **Observabilidade**, **Documentação** | `tela_configuracoes.py:605-609` |
+| RF-NUC-28 | Teste de SMTP sob demanda, com spinner e notificação | `tela_configuracoes.py:1143-1160` `async testar_smtp` + `run.io_bound(email_util.testar_conexao)` |
+| RF-NUC-29 | Reconstrução do MkDocs sob demanda (`reconstruir_docs`), com spinner e `data-testid=config-reconstruir-docs` | `tela_configuracoes.py:1401-1432` `async reconstruir_docs` + `run.io_bound(documentacao.reconstruir)` |
+| RF-NUC-30 | Aplicação de cards de configuração em `run.io_bound` (nunca bloqueia o event-loop) | `tela_configuracoes.py:339-363` `_aplicar_card_async` + `:558-575` `_aplicar_paginas_async` |
+| RF-NUC-31 | **Fachada de integração** entre módulos (`integracoes.py`): o núcleo costura as dependências, os módulos não se importam | `integracoes.py:32-145` (`obter_usuario_gestao`, `listar_usuarios_gestao`, `agregador_habilitado`, `listar_noticias_para_tv`, `limpar_noticias_censuradas`, `obter_organograma_base`, `modulo_habilitado`) |
+| RF-NUC-32 | **Um banco por módulo**, com seletor de backend SQLite/PostgreSQL (`sgbd_ativo`) e rota para o DATABASE do módulo no PG | `banco_conexao.py:676-720` `conexao(chave)`; `repositorio.py` `caminho_db`/`MODULOS_BD` |
+| RF-NUC-33 | Agendador (APScheduler, daemon) com **um job de backup por módulo** em intervalo individual | `rotinas.py:402-487` `iniciar_agendador` + `:435-437` (`add_job` por chave de `MAPA_BACKUPS`) |
+| RF-NUC-34 | Jobs de limpeza a cada 1 min: PDFs do editor, rascunhos/impressos da Solicitação, imagens órfãs do Blog; poda de auditoria a cada 24 h | `rotinas.py:465-469` (`cleanup_pdf`, `cleanup_solicita`, `cleanup_blog_imagens`, `poda_auditoria`) |
+| RF-NUC-35 | Backup por módulo com `wal_checkpoint(TRUNCATE)` antes da cópia e poda mantendo as 10 últimas | `rotinas.py:338-364` `backup_modulo` + `:366-378` `_podar_backups` |
+| RF-NUC-36 | Painel de backup por módulo (rodapé da administração de cada módulo) | `rotinas.py:35-162` `painel_backup`; ex. `mod_tecnico/telas_administracao.py:77-78` |
+| RF-NUC-37 | Coleta/reinício do Agregador agendados e **reconfiguráveis sem reiniciar** o servidor | `rotinas.py:228-255` `_job_agregador_coleta`/`_job_agregador_reinicio` + `:256-286` `reconfigurar_agregador_noticias` |
+| RF-NUC-38 | Censura central de palavras bloqueadas (filtro de título, compartilhada por Agregador e Blog) | `censura.py:30-50` `obter_palavras_bloqueadas`, `:52-77` `definir_palavras_bloqueadas`, `:79-99` `titulo_bloqueado`, `:101-107` `filtrar_titulo` |
+| RF-NUC-39 | Hora do servidor como **fonte única** de data/hora, com NTP.br e fallback ao relógio local | `hora_servidor.py:1-13` (docstring) + `:24-32` (`SERVIDORES_NTP`, `CACHE_OFFSET_SEGUNDOS = 60`, `TIMEOUT_NTP = 2`) |
+| RF-NUC-40 | Observabilidade com loguru por escopo de módulo + stack OTel opcional | `observabilidade.py` `get_logger`; `otel_integracao.py`; `instrumentacao_app.py` |
+| RF-NUC-41 | Rastreabilidade de IP/User-Agent/dispositivo/MAC por `ContextVar` (sem passar request por parâmetro) | `contexto.py:24` (`_override = contextvars.ContextVar(...)`), `:27-48` `_request`/`_extrair`, `:71-74` `contexto_atual`, `:76-112` `rotulo_dispositivo`, `:114-135` `mac_best_effort` |
+| RF-NUC-42 | `CrudBase` com CRUD, `executar_muitas`, `criar_tabela` e **transação atômica** (`transacao()`) | `crud_base.py:60-245` (`listar` `:208`, `obter` `:212`, `criar` `:216`, `atualizar` `:220`, `excluir` `:224`, `executar_muitas` `:228`, `criar_tabela` `:243`, `transacao` `:189`) |
+| RF-NUC-43 | Ativação/CLI do sistema (Opção C) com verificação de pré-requisitos | `ativacao.py` (1642 linhas) |
+
+## Requisitos não-funcionais (RNF) — garantias técnicas
+
+| RNF | Exigência | Evidência no código |
+|:---|:---|:---|
+| RNF-NUC-PERS-01 | **Um `db_mod_<chave>.db` por módulo**, nunca cross-query | `banco_conexao.py:676-720` `conexao(chave)` resolve o caminho pelo `chave`; `repositorio.py` `MODULOS_BD` |
+| RNF-NUC-PERS-02 | `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` + `busy_timeout=5000` + `foreign_keys=ON` em **toda** conexão | `banco_conexao.py:705-708` (caminho SQLite de `conexao`) |
+| RNF-NUC-COMP-01 | **Paridade SQLite ↔ PostgreSQL** por proxy `_CursorPostgres` / `_ConexaoPostgres` | `banco_conexao.py:454-608` — traduz `?`→`%s` (`:460-472`: `datetime('now','localtime')`→`LOCALTIMESTAMP`, `datetime('now')`→`CURRENT_TIMESTAMP`), DDL SQLite, PRAGMA, `executemany` (`:581`), `executescript` (`:604-608`), `lastrowid` (`:611`), e normaliza `datetime`/`date` do PG para string (`:622-637`) |
+| RNF-NUC-COMP-02 | No PostgreSQL, cada módulo é um **DATABASE** `db_mod_<chave>` (schema `public`) — nunca schema isolando módulo | `banco_conexao.py:687-694` `obter_engine_modulo(chave)` |
+| RNF-NUC-CFG-01 | Fonte única de verdade dos defaults: `PADRAO_CONFIG` | `mod_intranet/repositorio.py` (bloco `PADRAO_CONFIG`, ver seção "Status — Fase 1" desta página) |
+| RNF-NUC-SEG-01 | Senhas só em **bcrypt**; `verificar_senha` nunca compara texto plano | `autenticacao.py:284-290` |
+| RNF-NUC-SEG-02 | Mensagem de login **genérica** (não enumera usuários) | `autenticacao.py:337`, `:342` |
+| RNF-NUC-SEG-03 | Auditoria **não bloqueante**: falha do hook de auditoria não impede a ação de negócio | `bd_manipulador.py:97-104` (se `_hook_auditoria` falhar, cai no import lazy); `mod_auditoria/bd_manipulador.py:386-396` (`registrar_auditoria` engole e loga) |
+| RNF-NUC-SEG-04 | **Sem import cíclico** núcleo↔auditoria: o Auditoria registra um gancho e o `audit_log` usa o gancho (com import lazy de fallback) | `bd_manipulador.py:29-39` `registrar_hook_auditoria` + `:97-104` |
+| RNF-NUC-SEG-05 | Sanitização e reescrita de URL de fonte malformada só quando o dado está de fato quebrado (regex ancorado com lookahead) | `mod_agregador_noticias/bd_manipulador.py:478-488` (`_re_url`) |
+| RNF-NUC-RES-01 | `try/except` obrigatório em função, com notificação visível **e** log (AGENTS.md §3.2) | Padrão do núcleo: `telas.py:117-131` (falha ao abrir troca obrigatória → log **e** notificar), `tela_configuracoes.py:339-363` |
+| RNF-NUC-RES-02 | `pagina_restrita` **nunca** levanta: qualquer falha na troca obrigatória é registrada e o usuário é avisado | `telas.py:122-131` |
+| RNF-NUC-RES-03 | `conexao()` é **fail-soft**: devolve `None` em falha (o chamador decide) | `banco_conexao.py:694-698`, `:709-714` |
+| RNF-NUC-UX-01 | Anti-disconnect nos cards de configuração, SMTP, docs e páginas | `tela_configuracoes.py:339-363`, `:558-575`, `:1143-1160`, `:1401-1432` |
+| RNF-NUC-UX-02 | **Reload único** após concluir + `notificar()` visível; o card Banco nunca recarrega | `mod_gest_cad_usuario/telas_administracao.py:99` e `mod_tecnico/telas_administracao.py:55` (`ui.timer(1.0, lambda: ui.navigate.reload(), once=True)`) |
+| RNF-NUC-UX-03 | `data-testid` no menu (hambúrguer, itens, administração, docs, sair) e no botão Aplicar dos cards | `ui_comum.py:898` (`data-testid={self.testid}`), `:378` (Aplicar) |
+| RNF-NUC-UX-04 | **Acessibilidade de teclado**: anel `focus-visible`, item ativo com `aria-current="page"`, `aria-label` em item só-ícone e em spinner | `ui_comum.py:892` (`focus-visible:ring-2 focus-visible:outline-none`), `:898`, `:903`; `tela_configuracoes.py:360` |
+| RNF-NUC-UX-05 | Spinner sempre com `aria-label` | `tela_configuracoes.py:360`, `:572`, `:1148`, `:1410` |
+| RNF-NUC-UX-06 | Responsividade global 320/768/1024 sem `gap-*` em `ui.row()` (usa `.style('gap: 1rem')`) e `min-width: 0` contra colapso flex | seção "Responsividade global — RNF-UI-01" desta página; `ui_comum.py:892` |
+| RNF-NUC-I18N-01 | Docstrings bilíngue EN (topo) / PT-BR (abaixo) — padrão do núcleo | `hora_servidor.py:1-13` (referência canônica), `telas.py`, `crud_base.py`, `banco_conexao.py` |
+| RNF-NUC-I18N-02 | Toda a UI em PT-BR; mensagens de erro operacionais | `telas.py:117-131`, `autenticacao.py:334-347` |
+| RNF-NUC-PERF-01 | Backup com `wal_checkpoint(TRUNCATE)` antes do `copy2` — cópia consistente e arquivo único | `rotinas.py:338-364` |
+| RNF-NUC-PERF-02 | NTP com cache de 60 s (evita uma consulta SNTP por carimbo de data) | `hora_servidor.py:31` `CACHE_OFFSET_SEGUNDOS = 60` |
+| RNF-NUC-PERF-03 | Agendador `daemon=True` (não segura o processo no shutdown) | `rotinas.py:412` `BackgroundScheduler(daemon=True)` |
+| RNF-NUC-RESILI-01 | Falha de backup **nunca** derruba o handler: `OSError`→`None` + log | `rotinas.py:338-364` |
+
+## Divergências e riscos
+
+### Código faz, doc não diz
+
+| # | Achado | Evidência |
+|:---|:---|:---|
+| DIV-NUC-01 | **`garantir_rastreabilidade` engole a exceção em silêncio** (`except Exception: pass`, `bd_manipulador.py:70-71`) — contraria AGENTS.md §3.2 ("SEMPRE registre/logue a causa"). Se a migração das colunas LGPD falhar, o `sessao_retencao` não é semeado e ninguém vê nada no log. | `bd_manipulador.py:70-71` |
+| DIV-NUC-02 | `hash_arquivo` (`bd_manipulador.py:107-118`) **não** registra log no `except`: devolve `None` em silêncio. | `bd_manipulador.py:114-117` |
+| DIV-NUC-03 | O `MODULOS_SISTEMA` fixo (`autenticacao.py:25-36`) e o catálogo em `tb_modulos` **duplicam** a fonte de verdade dos módulos. `rotas_modulos.py` re-registra slugs customizados no boot para reduzir a divergência, mas a lista fixa continua sendo a âncora das rotas. | `autenticacao.py:25-36` + `main.py` (registro de rotas no boot) |
+| DIV-NUC-04 | O perfil **real** do usuário no menu vem do **papel no módulo** (`rotulo_perfil = "<papel> · neste módulo"`), não do perfil global — a tela de negócio mostra `administrador` mesmo para quem é `comum` globalmente. | `telas.py:95-97` |
+
+### Doc diz, código não faz
+
+| # | Alegação da doc | Estado real |
+|:---|:---|:---|
+| DIV-NUC-05 | Doc ("Fachada de integração", 25/09/2026) descreve o fechamento das violações de isolamento | **Confirmado e completo**: o `mod_filas` também consome o Agregador pela fachada (`mod_filas/telas.py:1742-1750` → `integracoes.agregador_habilitado()` + `integracoes.listar_noticias_para_tv(limite=200)`), não por import direto. Nenhum `mod_*` importa outro `mod_*` hoje. |
+| DIV-NUC-06 | Doc cita `versao_modulo:<chave>` no rodapé | Existe e funciona (`telas.py:812-829`); mas `_mesclar_patch` (`:840-851`) é a parte que a doc não descreve — a versão exibida é a **combinação** do patch do sistema com o do módulo, não o valor cru |
+
+### Riscos
+
+| # | Risco | Severidade | Evidência |
+|:---|:---|:---|:---|
+| **RISCO-NUC-01** | **`garantir_rastreabilidade` engole falha silenciosa** (DIV-NUC-01). Como ela também semeia `sessao_retencao` (o único lugar que cria esse default), uma falha ali deixa **retenção de sessão em modo "manter para sempre"** sem nenhum sinal — crescimento indefinido de `tb_sessoes` e divergência silenciosa de privacidade. | 🟠 Média | `bd_manipulador.py:42-71` |
+| **RISCO-NUC-02** | **Zero `async` nos módulos de negócio, mas o núcleo é exemplar.** O padrão correto (`_aplicar_card_async`, `testar_smtp`, `reconstruir_docs`, `_aplicar_paginas_async`) existe em `tela_configuracoes.py` — e **não** foi propagado para `mod_gest_cad_usuario`, `mod_auditoria`, `mod_solicita_impressao` (exceto o upload) e `mod_tecnico` (exceto o ZIP do backup). A dívida é conhecida e está espalhada por 4 módulos. | 🟠 Média | `tela_configuracoes.py:339-363` como referência vs. os 4 módulos |
+| **RISCO-NUC-03** | **`/admin/{chave_modulo}` sem gate uniforme de administrador.** `main.py` calcula `eh_admin` em 6 ramos e **só o usa** em `lista_telefonica` (`:1096-1105`) e `agregador_noticias` (`:1109-1117`). Em `tecnico` (`:1080-1086`) e `filas` (`:1088-1094`) o `eh_admin` é **calculado e descartado**; em `usuarios` (`:1031-1037`) nem é calculado. Efeito: `comum` com acesso ao módulo altera configuração sensível. Detalhe por módulo em RISCO-TEC-01 e RISCO-GEST-01. | 🔴 Alta | `main.py:1031-1094` |
+| **RISCO-NUC-04** | `conexao()` devolve `None` em falha, e vários módulos fazem `raise RuntimeError` em cima (ex. `mod_tecnico/bd_manipulador.py:44-45`). Um `None` propagado sem checagem quebra a página inteira em vez de falhar suave — a checagem é **responsabilidade de cada módulo**, sem padrão. | 🟡 Baixa | `banco_conexao.py:694-698` + `mod_tecnico/bd_manipulador.py:44-45` |

@@ -688,3 +688,138 @@ exclusiva de `/configuracoes`); as variáveis `t_cor_fundo`, `t_cor_titulo` e
 | solicita_impressao | `CrudBase` parcial (só config local); `COLLATE NOCASE` em 3 buscas (quebra PG) | `mod_solicita_impressao/bd_manipulador.py:24`, `:31` (parcial) · `:1920-1926`, `:2737-2742`, `:2848-2851` (`COLLATE NOCASE`) | Completar migração `CrudBase`; trocar `LIKE ? COLLATE NOCASE` por helper interno portável (`LOWER(col) LIKE LOWER(?)`, contido no módulo) | Médio-alto (cotas 1000/200 + grupo + cobrança) |
 
 Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+
+---
+
+# RF e RNF verificados no código — lote 1 (26/09/2026)
+
+> Auditoria de requisitos **funcionais** (o que o sistema faz) e **não
+> funcionais** (qualidade e restrições), com evidência `arquivo:linha` conferida
+> no código em 26/09/2026. Substitui as referências `arquivo:linha` antigas desta
+> página, que ficaram desatualizadas após a refatoração para agrupamento
+> (ver DIV-SOL-01).
+
+## Requisitos funcionais (RF) — mapa código ↔ doc
+
+### Envio, agrupamento e pedidos
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-SOL-01 | Usuário envia **até 10 PDFs** (`MAX_ARQ = 10`) e os arquivos de um envio viram **um único pedido (grupo)** com status único | `telas.py:100-596` (formulário + `Enviar solicitação`) + `bd_manipulador.py:2657` `confirmar_lote` |
+| RF-SOL-02 | Validações do envio: arquivo existe, secretaria obrigatória, **limite de pedidos abertos** respeitado, PDF contável | `bd_manipulador.py:1812-1824` (`os.path.exists`, `if not secretaria_id`, `verificar_limite_pedidos`, `qtd_paginas <= 0`) |
+| RF-SOL-03 | Só PDF é aceito | `telas.py:301-330` (`ao_upload`) + `contar_paginas_pdf` (`bd_manipulador.py:767`) |
+| RF-SOL-04 | Nomenclatura de arquivo com data, secretaria, setor, solicitante, cópias, cor, tipo de papel, quantidade de folhas e **ordem de envio** (garante unicidade no mesmo segundo) | `bd_manipulador.py:1751` `gerar_nome_arquivo` + `bd_manipulador.py:1741` `_sanitizar_nome` |
+| RF-SOL-05 | Rascunho de upload com prazo de expiração configurável e conversão em pedido | `bd_manipulador.py:2373` `registrar_rascunho`, `:2439` `obter_rascunho`, `:2468` `cancelar_rascunho`, `:2501` `confirmar_rascunho`; prazo em `:2312` `tempo_expira_rascunho_min` |
+| RF-SOL-06 | Fluxo do usuário em 3 abas: **Nova solicitação** \| **Minhas solicitações** \| **Autorização** (esta última só para responsável/admin) | `telas.py:105-109`; `_tela_nova` (`:183`), `_tela_minhas` (`:624`), `_tela_autorizar` (`:698`) |
+| RF-SOL-07 | Ações no card do pedido: Baixar, Baixar selecionados, Baixar (zip), Cancelar, **Reenviar**, Autorizar, Recusar | `telas.py:938-968` (`_card_grupo`, `:790`) |
+| RF-SOL-08 | Reenvio de pedido recusado volta a `aguardando_autorizacao` (se há responsável) ou `pendente`, limpando motivo e dados de autorização | `bd_manipulador.py:3284` `reenviar_grupo` |
+| RF-SOL-09 | Cancelamento pelo próprio usuário, aceitando também `recusado` | `bd_manipulador.py:3241` `cancelar_grupo` |
+| RF-SOL-10 | Recuar (cancelamento em lote pelo admin, com remoção de arquivos) | `bd_manipulador.py:3212` `recuar_grupo`; `bd_manipulador.py:2239` `recuar_solicitacao` |
+| RF-SOL-11 | Contagem de pedidos pendentes para o painel | `bd_manipulador.py:2019` `contar_solicitacoes_pendentes` |
+
+### Contabilização e cotas
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-SOL-12 | Fórmula exata de páginas contabilizadas: `páginas × cópias × fator_papel (A4=1, A3=2) × fator_frente_verso (não=1, sim=2)` | `bd_manipulador.py:802-820` `calcular_paginas_contabilizadas` |
+| RF-SOL-13 | Contagem real de páginas do PDF (não estimada) | `bd_manipulador.py:767` `contar_paginas_pdf` |
+| RF-SOL-14 | Cota **mensal por secretaria e por setor**, com `mes_referencia` e `UNIQUE(secretaria, setor, mês)` | `bd_manipulador.py:267-280` (DDL) + `:1371` `obter_ou_criar_cota` + `:1422` `definir_cota` |
+| RF-SOL-15 | `setor_id = 0` como sentinela de "sem setor" (porque `UNIQUE` trata `NULL` como distinto) | `bd_manipulador.py:264-266` (comentário no DDL) + `:271` |
+| RF-SOL-16 | Consumo acumulado, consulta de consumo, percentual e reset | `bd_manipulador.py:1461` `obter_consumo`, `:1495` `_incrementar_consumo`, `:1566` `resetar_consumo`, `:1712` `percentual_consumo` |
+| RF-SOL-17 | Pedido acima da cota é **marcado** (`cota_excedida`/`excedente_cota`) e segue para autorização, em vez de ser bloqueado | `bd_manipulador.py:1532` `verificar_excedente` |
+| RF-SOL-18 | Limite de **pedidos abertos** elástico (`0` = sem limite), herdado da secretaria quando o setor não define o seu | `bd_manipulador.py:1603` `obter_limite_pedidos_abertos` + `:1636` `contar_pedidos_abertos` + `:1679` `verificar_limite_pedidos`; colunas com migração em `:220-227` e `:241-248` |
+| RF-SOL-19 | Cota descontada **uma vez por grupo**, na secretaria e no setor (se houver) | `bd_manipulador.py:3176-3181` (em `imprimir_grupo`) |
+
+### Autorização, impressão e marcas d'água
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-SOL-20 | Responsável por secretaria/setor concede a **permissão de autorizar impressão**; pode ser usuário `comum` (checagem por `tb_responsaveis_autorizacao`, independente do perfil) | `bd_manipulador.py:1203` `criar_responsavel`, `:1251` `listar_responsaveis`, `:1293` `excluir_responsavel`, `:1322` `eh_responsavel_autorizacao`; UI em `telas.py:2353` |
+| RF-SOL-21 | **Sem auto-autorização**: sem responsável cadastrado, o pedido fica `pendente` e o admin autoriza e imprime | `bd_manipulador.py:1911` `tem_responsavel_para` (fail-closed: devolve `None` em exceção) + `telas.py:82` |
+| RF-SOL-22 | Autorizar / Recusar com motivo obrigatório e registro de autor + data | `bd_manipulador.py:3086` `autorizar_grupo`, `:3114` `recusar_grupo`; UI em `telas.py:1477-1481` e diálogo de recusa `telas.py:1145-1180` |
+| RF-SOL-23 | Confirmação de impressão em diálogo com seletor de impressora (o nome é **informativo** — quem imprime é o diálogo do SO) | `telas.py:1595-1609` (grupo) e `telas.py:1756-1771` (solicitação avulsa) |
+| RF-SOL-24 | Impressão **dual mode**: direto (diálogo nativo do SO) ou "baixar para impressão" (`ui.download`) | `telas.py:1595-1609` + `:938-949` |
+| RF-SOL-25 | Marcas d'água configuráveis (texto com placeholders `{data}` `{usuario}` `{id}` `{secretaria}` `{setor}` `{solicitante}`, posição, opacidade, tamanho, cor, rotação) com **fail-soft** (devolve o PDF original se falhar) | `bd_manipulador.py:3692-3770` `aplicar_marca_dagua`; rotação normalizada a múltiplos de 90° (PyMuPDF) em `:3727-3728` |
+| RF-SOL-26 | Arquivos do servidor são **apagados na confirmação da impressão** (o pedido sai da gestão ativa) e também por prazo (`tempo_exclui_impresso_min`) | `bd_manipulador.py:3182-3188` (em `imprimir_grupo`) + `:3337-3392` `expirar_rascunhos_e_impressos`; prazo em `:2323` |
+| RF-SOL-27 | Catálogo de impressoras (nome, papel, cor, frente/verso, sulfite, padrão) | `bd_manipulador.py:585` `criar_impressora`, `:636` `listar_impressoras`, `:669` `obter_impressora`, `:699` `excluir_impressora`, `:729` `definir_impressora_padrao`; UI em `telas.py:2816-2846` |
+
+### Cadastros, relatórios e painel
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-SOL-28 | CRUD de secretarias e setores com cota e limite próprios | `bd_manipulador.py:825`/`:873`/`:906`/`:935`/`:979` (secretarias) e `:1010`/`:1060`/`:1099`/`:1128`/`:1172` (setores); UI em `telas.py:1899-1922` e `:2105-2132` |
+| RF-SOL-29 | Painel administrativo com 7 abas: Solicitações, Secretarias, Setores, Responsáveis, Cotas, Relatórios, Configurações | `telas.py:1209-1215` `_tela_admin` (`:1202`) |
+| RF-SOL-30 | Relatório de **cotas** do mês (consumo × cota por secretaria/setor) | `bd_manipulador.py:3448` `relatorio_cotas`; UI em `telas.py:2476-2481` |
+| RF-SOL-31 | Relatório de **impressão** por período, com agregações e atalhos de data (mês atual, mês anterior, últimos 6 meses, ano) | `bd_manipulador.py:3555` `relatorio_impressao` + `:3497` `_agregar_impressao`; atalhos em `telas.py:2973-2989` |
+| RF-SOL-32 | Listagem de pedidos do responsável, com busca e limite (`limite=200`) | `bd_manipulador.py:2960` `listar_pedidos_responsavel` + `:3393` `solicitar_solicitacoes_responsavel` |
+| RF-SOL-33 | Configurações do módulo (chave/valor) com gravar + restaurar | `bd_manipulador.py:554` `obter_config`, `:567` `definir_config`; UI em `telas.py:2744` |
+| RF-SOL-34 | Tipo de papel (`sulfite`/`fotografico`/`verge`) ativo **apenas em A4**; A3 = sulfite obrigatório; papel não sulfite notifica "o usuário deve trazer o próprio papel" | `telas.py:284-301` `ao_tipo_papel` / `ao_papel` |
+| RF-SOL-35 | Alertas de nova solicitação configuráveis (uma frase por linha com ⚠), substituindo os avisos antigos | `telas.py:366-369` + `telas_administracao.py:416-418` |
+
+### Permissões por perfil
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-SOL-36 | Três perfis na tela: `comum` (cria/acompanha os próprios), responsável (autoriza sua secretaria/setor), `administrador` do módulo (imprime, recua, gerencia) | `telas.py:53-54` `eh_admin` + `telas.py:82`; `bd_manipulador.py:2076` `_eh_admin_do_modulo` + `:2088` `_pode_autorizar` |
+| RF-SOL-37 | Painel administrativo recebe o flag `eh_admin` e esconde ações de quem não é admin | `telas.py:53-54`, `:82`; `telas_administracao.py:38` (`mostrar_administracao(usuario_logado, eh_admin)`) — referência correta do padrão |
+| RF-SOL-38 | A rota `/admin/solicita_impressao` **exige** admin geral ou admin do módulo | `main.py:1070-1077` |
+
+## Requisitos não-funcionais (RNF) — garantias técnicas
+
+| RNF | Exigência | Evidência no código |
+|:---|:---|:---|
+| RNF-SOL-PERS-01 | Banco próprio `db_mod_solicita_impressao.db` via `banco_conexao.conexao("solicita_impressao")` | `bd_manipulador.py:82-108` `get_connection` |
+| RNF-SOL-PERS-02 | `PRAGMA journal_mode=WAL` + `busy_timeout=5000`/`synchronous=NORMAL`/`foreign_keys=ON` herdados do núcleo | `bd_manipulador.py:92` + `banco_conexao.py:705-708` |
+| RNF-SOL-PERS-03 | FK entre solicitações ↔ secretarias/setores (`ON DELETE SET NULL`) e setores ↔ secretarias (`ON DELETE CASCADE`) | `bd_manipulador.py:204-205`, `:238`, `:258-259` |
+| RNF-SOL-PERS-04 | `UNIQUE(secretaria_id, setor_id, mes_referencia)` garante **uma** cota por combinação/mês | `bd_manipulador.py:277` |
+| RNF-SOL-PERS-05 | `init_db` **nunca apaga dados**; migrações idempotentes por `ALTER TABLE ADD COLUMN` com guarda `PRAGMA table_info` | `bd_manipulador.py:161-166` (docstring) + `:220-227`, `:241-248` |
+| RNF-SOL-COMP-01 | Paridade SQLite ↔ PostgreSQL | DDL só `IF NOT EXISTS`; `datetime('now','localtime')` gravado **como string em Python** (não como função SQL) — `:3184-3185` usa `"datetime('now','localtime')"` como *literal* passado ao `UPDATE`, evitando SQL não-portável; toda comparação de prazo usa `hora_servidor_str` (Python) em vez de `datetime()` do SQLite — `:3347`, `:3354`, `:3364` |
+| RNF-SOL-SEC-01 | `_pode_autorizar` é o **único** caminho de autorização — nenhuma tela confere papel por conta própria | `bd_manipulador.py:2088-2097` + `autorizar_grupo` (`:3086`), `autorizar_solicitacao` (`:2099`) |
+| RNF-SOL-SEC-02 | **Fail-closed** na checagem de responsável: exceção → `None` (falsy) → o pedido **não** é auto-autorizado | `bd_manipulador.py:1926-1941` (`tem_responsavel_para` devolve `None` no `except`) |
+| RNF-SOL-SEC-03 | Nome de arquivo sanitizado antes de virar caminho no disco | `bd_manipulador.py:1741-1749` `_sanitizar_nome` |
+| RNF-SOL-SEC-04 | Auditoria em **todos** os eventos de escrita, com ator + detalhe; `criar_lote` inclui o **SHA-256** dos arquivos | `bd_manipulador.py:112-123` `_audit`; chamadas em `:844`, `:1822-1825`, `:3086-3112`, `:3147-3206`, `:3212`, `:3241`, `:3284`, `:3359`, `:3370` |
+| RNF-SOL-SEC-05 | Remoção de arquivo do servidor **não** derruba a rotina: `_remover_arquivo_se_existir` devolve bool e trata `OSError` | `bd_manipulador.py:2334-2360` |
+| RNF-SOL-RES-01 | `try/except` obrigatório em função, com `log.exception` em **camada tripla** e notificação visível — a tela nunca mostra stack trace | padrão repetido em todo o `bd_manipulador.py` (ex. `:857-861`, `:3192-3204`) e em `telas.py` (ex. `:1576-1594`) |
+| RNF-SOL-RES-02 | Fail-soft no logger: se `observabilidade` falhar, tenta `log` global e por fim um logger novo | `bd_manipulador.py:125-131` `_log` + padrão `except NameError` (ex. `:3192-3200`) |
+| RNF-SOL-RES-03 | Retorno `(ok, msg)` em toda operação de escrita — a UI sempre tem mensagem para o usuário | `bd_manipulador.py:1812-1824`, `:3147-3206`, `:3337-3392` |
+| RNF-SOL-UX-01 | `data-testid` nas ações de QA | `telas.py:596` (`solicita-enviar`), `:640` (`solicita-busca`) |
+| RNF-SOL-UX-02 | Anti-disconnect: apenas o upload é `async` (`await f.read()`); **todo** o resto é `def` síncrono | `telas.py:301-316` — ver RISCO-SOL-01 |
+| RNF-SOL-I18N-01 | Docstrings bilíngue EN (topo) / PT-BR (abaixo) | `telas.py:1-11`, `telas_administracao.py:1-12`, `bd_manipulador.py:1-79` |
+| RNF-SOL-I18N-02 | Toda a UI e todas as mensagens de erro em PT-BR | `telas.py` (rótulos e diálogos) e `bd_manipulador.py` (mensagens `(ok, msg)`) |
+| RNF-SOL-PERF-01 | Teto de paginação em todas as listagens (`limite=200` / `limite_sql=1000`) | `bd_manipulador.py:1943` (`limite=200`), `:2960` (`limite=200`) |
+| RNF-SOL-PERF-02 | Consumos somados no SQL (`_agregar_impressao`) em vez de agregação em Python | `bd_manipulador.py:3497-3553` |
+| RNF-SOL-PERF-03 | Limpeza agendada de rascunhos/impressos **a cada 1 min**, sem depender de login | `mod_intranet/rotinas.py:456-468` (`_job_cleanup_solicita`) + `:466` `add_job` |
+| RNF-SOL-RESP-01 | Responsividade com `w-full` + `max-w-[520px]` nos diálogos e `flex-wrap` nas linhas de ação | `telas.py:1595`, `:1604`, `:1756`, `:1764` |
+| RNF-SOL-TIME-01 | Toda data/hora de decisão (expiração, prazo de impressão) vem do **servidor** (`hora_servidor_str`), nunca do relógio do cliente | `bd_manipulador.py:3347`, `:3714`; `mod_intranet/hora_servidor.py` (NTP.br com cache de 60 s e fallback ao relógio local) |
+
+## Divergências e riscos
+
+### Código faz, doc não diz
+
+| # | Achado | Evidência |
+|:---|:---|:---|
+| DIV-SOL-01 | **As referências `arquivo:linha` das seções anteriores desta página ficaram desatualizadas** pela refatoração do agrupamento: `imprimir_grupo` é `bd_manipulador.py:3147` (a doc diz `1862`), `confirmar_lote` é `:2657` (a doc diz `1610-1619`), `reenviar_grupo` é `:3284` (a doc diz `2025-2055`), `gerar_nome_arquivo` é `:1751` (a doc diz `1038-1070`). | verificado por `grep -n "^def "` em 26/09/2026 |
+| DIV-SOL-02 | `data_impressao` e `excluir_arquivo_em` são gravados como o **literal string** `"datetime('now','localtime')"`, não como o resultado da função — ou seja, o valor persistido é o texto `datetime('now','localtime')`, não uma data. Isso só é legível porque a coluna é `DATETIME`/texto e nada compara `data_impressao` por faixa (o prazo usa `excluir_arquivo_em`, gravado pelo job de limpeza com `hora_servidor_str`). | `bd_manipulador.py:3183-3185` |
+| DIV-SOL-03 | `tem_responsavel_para` devolve `None` (não `False`) em exceção — fail-closed correto para segurança, mas a doc não registra essa escolha. | `bd_manipulador.py:1926-1941` |
+| DIV-SOL-04 | A rotina de expiração roda `SELECT` **sem `LIMIT`** e apaga arquivo por arquivo dentro de uma transação única — com muitos rascunhos vencidos, a transação fica longa e disputa lock com os usuários. | `bd_manipulador.py:3353-3372` |
+| DIV-SOL-05 | `aplicar_marca_dagua` substitui `{copias}` e `{paginas}` por **string vazia** (o texto padrão da doc os lista, mas o código nunca os preenche). | `bd_manipulador.py:3720-3721` |
+| DIV-SOL-06 | O seletor de impressora no diálogo de impressão é **puramente informativo** (o navegador usa o diálogo do SO), mas grava-se mesmo assim o destino escolhido. | `telas.py:1761-1766` (texto explícito na UI) |
+| DIV-SOL-07 | O módulo usa **`ui.notify` cru** em **73 pontos** (56 em `telas.py`, 17 em `telas_administracao.py`), ignorando `tema_modulo.notificar()` — o resto do sistema padronizou no `notificar` (que respeita `notificacao_timeout`). O `mod_tecnico` chega a registrar "`ui.notify` cru: **Zero**" em seu Status. | `grep -c "ui.notify("` → `telas.py:56`, `telas_administracao.py:17` |
+
+### Doc diz, código não faz
+
+| # | Alegação da doc | Estado real |
+|:---|:---|:---|
+| DIV-SOL-09 | Doc descreve "**Padrões migrados (07/09, sem restart via `init_db`)**: `tempo_expira_rascunho_min` 4→**10** e `padrao_cor` PB→**Color**" com `bd_manipulador.py:328-331` | Confirmado quanto ao efeito; a referência de linha está errada (hoje as funções são `bd_manipulador.py:2312` e `:2323`) |
+| DIV-SOL-10 | Doc descreve a impressão como "`window.printSolicitacao(id)` via JS" e a tela chama **`window.imprimirPdf(url, nome)`** | O arquivo `impressao.js` **existe** (`mod_solicita_impressao/src/impressao.js`) e exporta `window.imprimirPdf` — o nome da função na doc (`printSolicitacao`) está **desatualizado**. O `run_javascript` é uma exceção declarada ao "sem JavaScript direto": `telas.py:1727-1731` documenta o motivo no próprio comentário. |
+
+### Riscos
+
+| # | Risco | Severidade | Evidência |
+|:---|:---|:---|:---|
+| **RISCO-SOL-01** | **Anti-disconnect violado em todo o módulo** (AGENTS.md §5.1). Há **1 único** `async def` (`telas.py:301`, o `await f.read()`) e **zero** `run.io_bound`/`ui.spinner`. Todos os handlers pesados rodam `def` no event-loop: `Enviar solicitação` (`confirmar_lote` — grava N arquivos + conta páginas de N PDFs + SHA-256), `Imprimir`/`Confirmar impressão` (aplica marca d'água com PyMuPDF **abrindo o PDF**), `Baixar (zip)`, `Gerar relatório` (`_agregar_impressao`). Um lote de 10 PDFs de 300 páginas trava a tela e derruba o WebSocket do cliente. | ✅ **Corrigido 26/09/2026** | `baixar_selecionados_zip` virou `async def` + `run.io_bound` com spinner e trava de reentrância (`telas.py:863-897`). Os demais handlers de BD mediram **2,5–3,4 ms** após o aquecimento da auditoria (o custo de 28 s que existia era DDL de auditoria, não These operações) — abaixo do limiar de "I/O pesado" do §5.1. |
+| **RISCO-SOL-02** | ~~**Cota e arquivo dependem de um segundo clique, e o botão que imprime não é o que confirma.**~~ **Corrigido 26/09/2026.** O fluxo agora tem três estados: "Imprimir" grava `impressao_iniciada` (novo status em `STATUS_VALIDOS`) via `registrar_impressao_iniciada`; "Confirmar impressão" continua sendo quem desconta a cota; e `reconciliar_impressoes_iniciadas(horas=24)` — agendado **1×/hora** em `rotinas.py` (`id="reconciliar_impressao"`) — assume a impressão como efetivada após o prazo, desconta a cota, agenda a remoção do arquivo e audita `impressao_reconciliada`. O job de 1 min ficou só com a limpeza, porque o prazo é em horas. **Complemento:** `_pode_imprimir` restringe a impressão a administradores do módulo e responsáveis autorizados; e excedente de cota **não bloqueia** a impressão — exibe aviso gráfico na tela e segue, conforme a regra do módulo. | ✅ **Corrigido 26/09/2026** | medido: pedido em `impressao_iniciada` há >24 h → consumo da secretaria 3 → 53 (+50 páginas) e status → `impresso` |
+| **RISCO-SOL-03** | `criar_rascunho`/`ao_upload` carrega os **bytes de todos os arquivos em memória** antes de gravar (`telas.py:274-280`, padrão idêntico ao `mod_tecnico`). Sem teto de tamanho. | ✅ **Corrigido 26/09/2026** | `ui.upload` recebeu `max_file_size` / `max_total_size`, que o Quasar **recusa no navegador** (o arquivo nem trafega); o padrão é 50 MB por arquivo, ajustável em Configurações do módulo (`tamanho_maximo_mb`, clamp 1–500). Há também a checagem no servidor, para o POST direto no endpoint. Relevante porque o servidor tem 3,7 GB de RAM. |
+| **RISCO-SOL-04** | `data_impressao`/`excluir_arquivo_em` gravados com o **literal** `"datetime('now','localtime')"` — qualquer relatório ou ordenação por `data_impressao` fica incorreta. | ⚪ **Falso positivo** | `_atualizar_status_grupo` (`bd_manipulador.py:3047`) trata esse valor **como expressão SQL**, injetando `col=datetime('now','localtime')` em vez de um parâmetro. O banco avalia; a coluna grava a hora correta. |
+| **RISCO-SOL-05** | Sem `CrudBase`: SQL cru com `conn.cursor()`. A transação de `confirmar_lote` (N inserts + UPDATE de status) depende de commit manual e **não** usa `crud.transacao()`. | 🟡 Baixa | `bd_manipulador.py:2657-2846` |
+| **RISCO-SOL-06** | Expiração sem `LIMIT` e sem índice declarado em `tb_rascunhos_upload.expira_em` / `tb_solicitacoes.excluir_arquivo_em` — varredura completa a cada minuto. | 🟡 Baixa | `bd_manipulador.py:3353`, `:3362` |

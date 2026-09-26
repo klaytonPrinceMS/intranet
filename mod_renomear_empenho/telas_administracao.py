@@ -484,14 +484,41 @@ def mostrar_administracao(
                     extra_classes="mt-2", grade=False):
         ui.label("Falhas de leitura/extração vão para a quarentena com motivo. Clique na linha para reprocessar individualmente (com regex alternativa) ou use o lote abaixo. Separe múltiplos documentos quando o motivo indicar 2+ empenhos.").classes("text-caption text-grey-6")
         with ui.row().classes("w-full gap-2 mt-1 mb-1"):
-            def _reprocessar_fila_admin():
+            # trava de reentrância de _reprocessar_fila_admin (AGENTS.md §5.1)
+            _reproc_ocupado = {"sim": False}
+
+            async def _reprocessar_fila_admin():
+                """Reprocessa a fila da quarentena (admin) sem travar a tela.
+
+                `reprocessar_fila()` é pesado (regex por PDF): em `def` no
+                event-loop derrubava o WebSocket ("servidor desconectado").
+                Agora em `run.io_bound`, com spinner e trava de reentrância
+                (AGENTS.md §5.1)."""
+                from nicegui import run as _run_rpf
+                if _reproc_ocupado["sim"]:
+                    notificar("Reprocessamento em andamento…", type="warning")
+                    return
+                _reproc_ocupado["sim"] = True
+                _status = ui.row().classes("w-full items-center justify-center") \
+                    .style("gap: 0.5rem")
+                with _status:
+                    ui.spinner(size="lg").props("aria-label=Reprocessando fila")
+                    ui.label("Reprocessando a fila… (pode levar alguns minutos)") \
+                        .classes("text-caption text-grey-7")
                 try:
-                    ok, msg, _det = reprocessar_fila(usuario=usuario_logado)
-                    ui.notify(msg, type="positive" if ok else "warning")
+                    ok, msg, _det = await _run_rpf.io_bound(
+                        lambda: reprocessar_fila(usuario=usuario_logado))
+                    notificar(msg, type="positive" if ok else "warning")
                     _refresh_q()
-                except Exception:
-                    _log.exception("erro ao reprocessar fila da quarentena em lote (admin)")
-                    ui.notify("Falha ao reprocessar fila", type="negative")
+                except Exception as e:
+                    _log.exception(f"erro ao reprocessar fila da quarentena em lote (admin): {e}")
+                    notificar(f"Falha ao reprocessar fila: {e}", type="negative")
+                finally:
+                    _reproc_ocupado["sim"] = False
+                    try:
+                        _status.clear()
+                    except Exception:
+                        pass
             botao("Reprocessar fila", icone="replay", on_click=_reprocessar_fila_admin, variante="solido", chave_modulo="empenhos").tooltip("Tenta reprocessar todos os pendentes com as regex ativas, sem reiniciar").props('data-testid=empenhos-reprocessar-fila-admin')
             botao("Atualizar", icone="refresh", on_click=lambda: _refresh_q(), variante="contorno", chave_modulo="empenhos")
         colunas_q = [

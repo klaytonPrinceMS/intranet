@@ -10,9 +10,10 @@ PT: Cobre os PRIMEIROS 85 data-testid de all_testids.txt (linhas 1-85) com um
     destrutivo; botao de escrita apenas verifica visible/enabled, NUNCA clica.
 
 Piramide: E2E de leitura (presenca liberada); sem escrita, sem upload.
-Troca forcada ciente: senha 123456 e provisoria e pode ja ter sido trocada;
-se o dialogo "Troca de senha obrigatoria" abrir ou o login nao sair do
-/login, o teste faz skip amigavel. Servidor fora tambem faz skip (sem derrubar).
+Troca forcada EXECUTADA: quando o dialogo "Troca de senha obrigatoria" abre,
+o teste CONCLUI a troca (com a mesma senha de origem) em vez de pular — antes
+ele fazia skip e a cobertura rodava majoritariamente pulada, sem ninguem ver.
+So ha skip para infra real (servidor fora). Servidor fora tambem faz skip (sem derrubar).
 Sem sys.exit, sem tocar db/backup/logs/site, sem segredos alem do seed de QA.
 
 Como rodar (Windows):
@@ -22,9 +23,14 @@ Tudo vis_:
 """
 
 import os
+import sys
 
 import pytest
 from playwright.sync_api import expect
+
+# O dir do teste entra no path explicitamente: `qa_login_helper` e irmao deste
+# arquivo, e sem isso a resolucao dependeria do modo de import do pytest.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 pytestmark = pytest.mark.e2e
 
@@ -32,20 +38,24 @@ BASE_URL = os.environ.get("INTRANET_BASE_URL", "http://localhost:8080")
 QA_USUARIO = "qamaster"
 QA_SENHA = "123456"
 
-
-def _dialogo_troca_visivel(page) -> bool:
-    """Detecta o dialogo de troca obrigatoria (troca forcada ciente)."""
-    try:
-        for texto in ("Troca de senha obrigatória", "Credenciais obrigatórias"):
-            if page.get_by_text(texto, exact=False).count() > 0:
-                return True
-        return False
-    except Exception:
-        return False
+# O login/troca vive num ÚNICO lugar (qa_login_helper) porque foi duplicado
+# aqui e no pw_click_extra_qa, e a duplicata é o que deixou a cobertura
+# Playwright rodando pulada: os dois faziam `pytest.skip` quando a troca
+# obrigatória aparecia, em vez de CONCLUIR a troca.
+from qa_login_helper import (  # noqa: E402
+    _dialogo_troca_visivel,
+    concluir_troca as _concluir_troca,
+)
 
 
 def fazer_login(page, usuario: str, senha: str) -> bool:
-    """Faz login via data-testid e retorna True se saiu do /login."""
+    """Faz login e CONCLUI a troca de senha obrigatória, se aparecer.
+
+    Antes: `pytest.skip` quando o diálogo de troca abria — o que fazia a
+    suíte passar sem verificar quase nada. Agora a troca é feita com a
+    MESMA senha de origem (o fluxo só exige que a troca aconteça) e o
+    `forcar_troca` é zerado, então a próxima execução já entra direto.
+    """
     try:
         try:
             page.goto(f"{BASE_URL}/login", wait_until="domcontentloaded", timeout=15000)
@@ -68,48 +78,96 @@ def fazer_login(page, usuario: str, senha: str) -> bool:
             page.wait_for_timeout(1500)
         except Exception:
             pass
-        try:
-            url = page.url
-        except Exception:
-            url = ""
-        if "/login" in (url or "") and not _dialogo_troca_visivel(page):
-            return False
-        return True
     except Exception as exc:
-        if "skip" in str(type(exc).__name__).lower():
-            raise
         try:
             pytest.skip(f"falha de infra no login — pule: {exc}")
         except Exception:
             return False
         return False
 
+    if _dialogo_troca_visivel(page):
+        # CONCLUI a troca (mesma senha de origem) em vez de pular
+        _concluir_troca(page, senha, senha)
+    assert not _dialogo_troca_visivel(page), (
+        "troca de senha obrigatória NÃO foi concluída pelo login — o "
+        "diálogo continua bloqueando a tela")
+    try:
+        url = page.url
+    except Exception:
+        url = ""
+    return "/login" not in (url or "")
+
+
+# Arquivo-fonte -> rota. O mesmo módulo tem TELA PÚBLICA e PAINEL ADMIN
+# com testids de prefixo IGUAL (`agregador-busca` é público, `agregador-termo`
+# é admin), então um mapa por prefixo erra metade. O mapa tem que ser por
+# ARQUIVO, não por nome de testid.
+_ARQUIVO_ROTA = {
+    "mod_agregador_noticias/telas.py": "/agregador-noticias",
+    "mod_agregador_noticias/telas_administracao.py": "/admin/agregador_noticias",
+    "mod_blog/telas.py": "/blog",
+    "mod_blog/telas_administracao.py": "/admin/blog",
+    "mod_renomear_empenho/telas.py": "/renomear-empenho",
+    "mod_edit_pdf/telas.py": "/edit-pdf",
+    "mod_lista_telefonica/telas.py": "/lista-telefonica",
+    "mod_lista_telefonica/telas_administracao.py": "/admin/lista_telefonica",
+    "mod_gest_cad_usuario/telas.py": "/users",
+    "mod_auditoria/telas.py": "/auditoria",
+    "mod_filas/telas.py": "/filas",
+    "mod_tecnico/telas.py": "/tecnico",
+    "mod_solicita_impressao/telas.py": "/solicita-impressao",
+    "mod_solicita_impressao/telas_administracao.py": "/admin/solicita_impressao",
+    "mod_intranet/telas.py": "/",
+}
+
+# Fallback por prefixo, só para o que não achamos no fonte (menu/login, que
+# são criados por `ui_comum`/`main` e não por `.props('data-testid=...')`).
+_PREFIXO_ROTA = {
+    "admin-": "/admin/lista_telefonica",
+    "login-": "/login",
+    "menu-": "/",
+    "rodape-": "/",
+    "header-": "/",
+}
+
+
+def _arquivo_do_testid(testid: str) -> str:
+    """Descobre em qual arquivo-fonte o testid é declarado."""
+    try:
+        from pathlib import Path
+        raiz = Path(__file__).resolve().parents[2]
+        for arquivo in sorted(raiz.glob("mod_*/**/*.py")):
+            if "__pycache__" in str(arquivo):
+                continue
+            try:
+                texto = arquivo.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            if f"data-testid={testid}" in texto:
+                return str(arquivo.relative_to(raiz)).replace("\\", "/")
+    except Exception:
+        return ""
+    return ""
+
 
 def _rota_para_testid(testid: str) -> str:
-    """Mapeia o prefixo do testid para a rota dona do modulo."""
+    """Resolve a rota dona do testid LENDO O CÓDIGO-FONTE.
+
+    O mapa manual por prefixo já apodreceu uma vez: `agregador-busca`
+    (público) e `agregador-termo` (admin) compartilham prefixo, e metade
+    dos testes falhava por rota errada — não por elemento faltando.
+    Descobrindo o arquivo que declara o testid, a rota vem junto e não
+    precisa de manutenção quando o elemento muda de tela.
+    """
     try:
-        if testid.startswith("admin-"):
-            return "/admin/lista_telefonica"
-        if testid.startswith("agregador-"):
-            return "/agregador-noticias"
-        if testid.startswith("auditoria-"):
-            return "/auditoria"
-        if testid.startswith("blog-"):
-            return "/blog"
-        if testid.startswith("editar_pdf-"):
-            return "/edit-pdf"
-        if testid.startswith("editpdf-"):
-            return "/edit-pdf"
-        if testid.startswith("empenhos-"):
-            return "/renomear-empenho"
-        if testid.startswith("lista-"):
-            return "/lista-telefonica"
-        if testid.startswith("login-"):
-            return "/login"
-        if testid.startswith("menu-"):
-            return "/"
-        if testid.startswith("usuarios-"):
-            return "/users"
+        arquivo = _arquivo_do_testid(testid)
+        if arquivo and arquivo in _ARQUIVO_ROTA:
+            return _ARQUIVO_ROTA[arquivo]
+        for prefixo, rota in _PREFIXO_ROTA.items():
+            if testid.startswith(prefixo):
+                return rota
+        return "/"
+    except Exception:
         return "/"
     except Exception:
         return "/"
@@ -130,6 +188,69 @@ def _eh_escrita(testid: str) -> bool:
         return False
 
 
+# Testid -> rótulo da aba que precisa estar aberta para ele existir.
+# O módulo de Empenhos abre sempre na aba "Navegar"; a "Fila Renomeação"
+# guarda os botões por linha (editar/processar), que só existem depois do
+# clique na aba.
+ABA_PARA_TESTID = {
+    "empenhos-fila-editar": "Fila Renomeação",
+    "empenhos-fila-processar": "Fila Renomeação",
+}
+
+
+def _abrir_aba_se_precisar(page, testid: str) -> None:
+    """Clica na aba que contém o testid, se ele não estiver na tela."""
+    try:
+        if page.get_by_test_id(testid).count() > 0:
+            return
+        rotulo = ABA_PARA_TESTID.get(testid)
+        if not rotulo:
+            return
+        aba = page.get_by_role("tab", name=rotulo)
+        if aba.count() == 0:
+            aba = page.get_by_text(rotulo, exact=True)
+        if aba.count() > 0:
+            aba.first.click()
+            page.wait_for_timeout(2000)
+    except Exception:
+        pass
+
+
+# Testids por LINHA: só existem se houver item na fila/lista. Sem dado, não
+# há botão — e forjar dado aqui sobrescreveria a massa de teste do módulo.
+PRECISA_DE_ITEM = {
+    "empenhos-fila-editar": "a aba 'Fila Renomeação' precisa ter ao menos um item",
+    "empenhos-fila-processar": "a aba 'Fila Renomeação' precisa ter ao menos um item",
+    # CONFIRMAÇÃO dentro do diálogo de exclusão em lote: exige selecionar
+    # posts e abrir o diálogo antes. É botão DESTRUTIVO — a suíte de leitura
+    # nunca dispara a confirmação, então aqui só se documenta a exigência.
+    "blog-confirmar-excluir-lote": "é o confirmar do diálogo de exclusão em "
+                                  "lote (exige seleção prévia; destrutivo)",
+}
+
+# O Blog abre no modo CARROSSEL (padrão `blog_modo_exibicao`), que mostra um
+# post por vez; as ações de editar/excluir só entram no DOM quando o post está
+# EXPANDIDO. Expandir é só interface — não grava nada — então é seguro aqui.
+PRECISA_EXPANDIR_POST = {
+    "blog-editar", "blog-excluir", "blog-despublicar", "blog-confirmar-excluir-lote",
+}
+
+
+def _expandir_post_do_blog(page) -> None:
+    """Clica no post para revelar as ações de publicação (sem escrita)."""
+    try:
+        if page.get_by_test_id("blog-editar").count() > 0:
+            return
+        for texto in ("Leitura completa", "Ler completa", "leia"):
+            alvo = page.get_by_text(texto, exact=False).first
+            if alvo.count() > 0:
+                alvo.click()
+                page.wait_for_timeout(2500)
+                return
+    except Exception:
+        pass
+
+
 def _verificar_presenca(page, testid: str) -> None:
     """Login qamaster, navega a rota dona e asserta presenca sem clique destrutivo."""
     try:
@@ -137,9 +258,10 @@ def _verificar_presenca(page, testid: str) -> None:
         if rota != "/login":
             ok = fazer_login(page, QA_USUARIO, QA_SENHA)
             if not ok:
-                pytest.skip("senha do qamaster já foi trocada (provisória) — ciente, sem falhar")
-            if _dialogo_troca_visivel(page):
-                pytest.skip("troca obrigatória pendente — tela bloqueada pelo diálogo")
+                # Sem sessão utilizável depois de TENTAR a troca: aí é infra
+                # (credencial inválida de verdade), não a troca pendente.
+                pytest.skip("login do qamaster não abriu sessão (credencial "
+                            "inválida ou infraestrutura instável)")
         try:
             page.goto(f"{BASE_URL}{rota}", wait_until="domcontentloaded", timeout=15000)
         except Exception:
@@ -148,11 +270,20 @@ def _verificar_presenca(page, testid: str) -> None:
             page.wait_for_timeout(2000)
         except Exception:
             pass
+        # Alguns testids só existem numa ABA secundária (o Empenhos abre em
+        # "Navegar"; a "Fila Renomeação" precisa ser clicada). Sem abrir a aba,
+        # a contagem daria 0 e o teste culparia o elemento inexistente.
+        _abrir_aba_se_precisar(page, testid)
+        if testid in PRECISA_EXPANDIR_POST:
+            _expandir_post_do_blog(page)
         try:
             total = page.get_by_test_id(testid).count()
         except Exception:
             total = 0
-        assert total >= 0, f"contagem inválida para {testid}"
+        if total == 0 and testid in PRECISA_DE_ITEM:
+            pytest.skip(f"{testid}: {PRECISA_DE_ITEM[testid]} — botão por "
+                        f"linha, sem dado não há o que verificar")
+        assert total >= 1, f"testid {testid} ausente na tela (contagem={total})"
         if total > 0 and _eh_escrita(testid):
             try:
                 expect(page.get_by_test_id(testid).first).to_be_visible(timeout=10000)
@@ -324,9 +455,15 @@ def test_vis_agregador_anterior(page):
 
 
 def test_vis_agregador_atualizar(page):
-    """Verifica agregador-atualizar (escrita: so visible/enabled, sem clicar)."""
+    """O botão 'Atualizar' NÃO deve existir (grade se atualiza sozinha).
+
+    Virou regra de negócio: se o botão reaparecer, a atualização automática
+    foi quebrada."""
     try:
-        _verificar_presenca(page, "agregador-atualizar")
+        page.goto(f"{BASE_URL}/agregador-noticias", wait_until="domcontentloaded", timeout=15000)
+        page.wait_for_timeout(1500)
+        assert page.get_by_test_id("agregador-atualizar").count() == 0, (
+            "botão 'Atualizar' deveria ter sido removido — atualização é automática")
     except pytest.skip.Exception:
         raise
     except AssertionError:
@@ -947,28 +1084,39 @@ def test_vis_blog_selecionar_todos(page):
         pytest.skip(f"pule por infra: {exc}")
 
 
-def test_vis_blog_selecionar_pid(page):
-    """Verifica presenca de blog-selecionar-{pid} em /blog (template por id, sem clicar)."""
+def _ler(caminho_rel: str) -> str:
+    """Lê um arquivo do repositório a partir da raiz do projeto."""
     try:
-        _verificar_presenca(page, "blog-selecionar-{pid}")
-    except pytest.skip.Exception:
-        raise
-    except AssertionError:
-        raise
-    except Exception as exc:
-        pytest.skip(f"pule por infra: {exc}")
+        from pathlib import Path
+        raiz = Path(__file__).resolve().parents[2]
+        return (raiz / caminho_rel).read_text(encoding="utf-8")
+    except Exception:
+        return ""
+
+
+def test_vis_blog_selecionar_pid(page):
+    """`blog-selecionar-{pid}` é TEMPLATE, não testid concreto.
+
+    O gerador de `all_testids.txt` leu o código e capturou a f-string
+    `f"blog-selecionar-{pid}"` como se fosse literal — esse testid NUNCA
+    existe no DOM. Verificar no código-fonte é a checagem honesta: o que
+    importa é que a construção dinâmica continue lá.
+    """
+    fonte = _ler("mod_blog/telas.py")
+    assert 'blog-selecionar-' in fonte, (
+        "mod_blog/telas.py perdeu a construção dos testids blog-selecionar-<id>")
+    assert "blog-selecionar-todos" in fonte, "seleção em bloco sumiu"
 
 
 def test_vis_blog_selecionar_post_0(page):
-    """Verifica presenca de blog-selecionar-{post[0 em /blog (template, sem clicar)."""
-    try:
-        _verificar_presenca(page, "blog-selecionar-{post[0")
-    except pytest.skip.Exception:
-        raise
-    except AssertionError:
-        raise
-    except Exception as exc:
-        pytest.skip(f"pule por infra: {exc}")
+    """`blog-selecionar-{post[0` é resíduo do gerador (id truncado).
+
+    Mesma origem de `test_vis_blog_selecionar_pid`: o scraper cortou a
+    f-string. Aqui a checagem real é que os dois testids CONCRETOS que
+    existem de fato (5 e 10 posts) estão presentes no blog.
+    """
+    for tid in ("blog-selecionar-5", "blog-selecionar-10"):
+        _verificar_presenca(page, tid)
 
 
 def test_vis_blog_titulo(page):
@@ -1140,9 +1288,15 @@ def test_vis_empenhos_atualizar(page):
 
 
 def test_vis_empenhos_busca(page):
-    """Verifica presenca de empenhos-busca em /renomear-empenho."""
+    """A busca do Empenhos é `empenhos-navegar-pesquisa` (aba Navegar).
+
+    O `empenhos-busca` pertencia à aba "Pesquisar", que foi REMOVIDA — a busca
+    migrou para o Navegar e a função `_tela_pesquisar` (107 linhas) saiu do
+    código por estar morta. Este teste fixa o nome ATUAL, para o próximo que
+    renomear descubra aqui.
+    """
     try:
-        _verificar_presenca(page, "empenhos-busca")
+        _verificar_presenca(page, "empenhos-navegar-pesquisa")
     except pytest.skip.Exception:
         raise
     except AssertionError:

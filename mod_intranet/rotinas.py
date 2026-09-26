@@ -226,7 +226,7 @@ def _job_monitor_empenho():
 
 
 def _job_agregador_coleta():
-    """Coleta do Agregador de Notícias (scrapy-like) — intervalo 10min–6h."""
+    """Coleta do Agregador de Notícias (scrapy-like) — intervalo 1h–6,5 dias."""
     try:
         from mod_agregador_noticias.bd_manipulador import coletar_todas, habilitado
         if not habilitado():
@@ -449,10 +449,29 @@ def iniciar_agendador():
                 pass
             limpar_editor_pdf(minutos=10)
 
+    def _job_reconciliar_impressao():
+        """Reconcilia impressões iniciadas e nunca confirmadas (1x/hora).
+
+        Roda separado do cleanup de 1 min porque o prazo é em HORAS — sem
+        isso, cada minuto varria a tabela inteira à toa."""
+        try:
+            from mod_solicita_impressao.bd_manipulador import reconciliar_impressoes_iniciadas
+            reconciliar_impressoes_iniciadas(horas=24)
+        except Exception as ex:
+            try:
+                from mod_intranet import observabilidade
+                observabilidade.get_logger().error(f"reconciliar_impressao falhou: {ex}")
+            except Exception:
+                pass
+
     def _job_cleanup_solicita():
         """Solicitação de Impressão: a cada 1 min remove rascunhos não confirmados
         (prazo tempo_expira_rascunho_min) e arquivos de solicitações impressas já
-        vencidos (prazo tempo_exclui_impresso_min)."""
+        vencidos (prazo tempo_exclui_impresso_min).
+
+        Também reconcilia pedidos que INICIARAM impressão e nunca foram
+        confirmados: sem isso a cota nunca era descontada e o PDF ficava órfão
+        no servidor. Roda 1x/hora (o prazo de reconciliação é em horas)."""
         try:
             from mod_solicita_impressao.bd_manipulador import expirar_rascunhos_e_impressos
             expirar_rascunhos_e_impressos()
@@ -465,11 +484,12 @@ def iniciar_agendador():
 
     sched.add_job(_job_cleanup_pdfs, "interval", minutes=1, id="cleanup_pdf")
     sched.add_job(_job_cleanup_solicita, "interval", minutes=1, id="cleanup_solicita")
+    sched.add_job(_job_reconciliar_impressao, "interval", hours=1, id="reconciliar_impressao")
     sched.add_job(_job_cleanup_blog_imagens, "interval", minutes=1, id="cleanup_blog_imagens")
     sched.add_job(_job_poda_auditoria, "interval", hours=24, id="poda_auditoria")
     sched.add_job(_job_monitor_empenho, "interval", seconds=intervalo_monitor_empenho(),
                   id="monitor_empenho")
-    # Agregador de Notícias — coleta com intervalo 10min–6h e reinício diário às horas da manhã (zerar tudo)
+    # Agregador de Notícias — coleta AUTOMÁTICA com intervalo 1h–6,5 dias e reinício diário às horas da manhã (zerar tudo)
     try:
         from mod_agregador_noticias.bd_manipulador import intervalo_min, habilitado, obter_hora_reinicio
         _int_ag = intervalo_min() if habilitado() else 60

@@ -3,7 +3,7 @@
 EN: News aggregator with own DB db_mod_agregador_noticias.db (WAL). Table
     tb_noticia (title/source/theme/url UNIQUE/image/description/dates), sources
     Google News + BBC + JFP + generic RSS configurable by admin, httpx+parsel
-    collection interval 10min–6h with enabled flag, daily recycle at 09:00,
+    automatic collection (60min–6.5 days), manual on-demand collection for admins only,
     censorship via titulo_bloqueado (conteudo_palavras_bloqueadas).
 
 Agregador de Notícias — BD próprio, coleta multi-fonte, limpeza 24h.
@@ -11,7 +11,7 @@ Agregador de Notícias — BD próprio, coleta multi-fonte, limpeza 24h.
 BD: db_mod_agregador_noticias.db (WAL)
 Tabelas: tb_noticia (titulo, fonte, tema, url UNIQUE, imagem_url, descricao, data_publicacao, data_coleta)
 Fontes: Google News + BBC + JFP + RSS genérico, configuráveis pelo admin (conteúdo da pesquisa).
-Coleta via httpx+parsel (scrapy-like) com intervalo 10min–9360min (teto 6,5 dias), habilitado por flag.
+Coleta via httpx+parsel (scrapy-like) com intervalo 60min–9360min (piso 1h, teto 6,5 dias), automatica e habilitada por flag; coleta manual sob demanda so pelo administrador.
 Limpeza: DELETE WHERE data_coleta < corte Python (portável SQLite/PG, sem datetime() com bind).
 Reinício diário padrão 09:00 (config hora_reinicio).
 Integração: API listar_para_tv() usada pelo mod_filas TV (filtra censura).
@@ -27,7 +27,26 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 # Temas padrão alinhados ao Noticia/main.py
-TEMAS_PADRAO = ["Brasil", "Internacional", "Economia", "Saúde", "Ciência e Tecnologia", "Entretenimento", "Esporte", "Monte Santo", "Geral"]
+# "Tribunais de Contas" (26/09/2026): foco dos CONTROLADORES DA PREFEITURA —
+# acompanhamento do TCU e dos tribunais estaduais, com destaque para MG.
+# Temas de PÚBLICO RESTRITO: somem da listagem padrão do Agregador e só
+# aparecem quando o usuário escolhe o tema na barra ou acha por pesquisa.
+# Notícia de tribunal de contas é dirigida a um público específico (os
+# controladores), não ao público geral que abre a tela. A diferença para
+# `_TEMAS_SEM_TV` é que ali o tema é EXCLUÍDO de vez (TV do Filas); aqui
+# ele fica acessível sob demanda.
+_TEMAS_RESTRITOS = ("Tribunais de Contas",)
+
+# Temas que NÃO vão para o carrossel da TV do mod_filas.
+# A TV é o painel de atendimento ao público: notícia de julgamento de
+# tribunal de contas ali é ruído para quem está esperando ser chamado. As
+# notícias de controle seguem disponíveis na tela do Agregador, onde os
+# controladores as consultam de propósito.
+_TEMAS_SEM_TV = ("Tribunais de Contas",)
+
+TEMAS_PADRAO = ["Brasil", "Internacional", "Economia", "Saúde", "Ciência e Tecnologia",
+                "Entretenimento", "Esporte", "Monte Santo", "Geral",
+                "Tribunais de Contas"]
 
 # Default antigo (3 fontes) — usado só para migrar quem nunca customizou (ver init_db)
 _FONTES_PADRAO_LEGADO = [
@@ -48,12 +67,66 @@ _FONTES_PADRAO_V1 = _FONTES_PADRAO_LEGADO + [
     {"tipo": "rss", "nome": "Folha de S.Paulo", "url": "https://s.folha.uol.com.br/emcimadahora/rss091.xml", "tema": "Brasil"},
 ]
 
-# Default atual = V1 + cobertura dos temas vazios (Internacional/Entretenimento/Esporte/MSM)
-FONTES_PADRAO = _FONTES_PADRAO_V1 + [
+# Default de 20/09/2026 (V1) e de 20–25/09/2026 (V2) — CONGELADOS: mantidos
+# só para reconhecer e migrar quem nunca customizou as fontes (ver init_db).
+# NÃO editar mais estas listas.
+_FONTES_PADRAO_V2 = _FONTES_PADRAO_V1 + [
     {"tipo": "rss", "nome": "G1 - Mundo", "url": "https://g1.globo.com/rss/g1/mundo/", "tema": "Internacional"},
     {"tipo": "rss", "nome": "G1 - Pop e Arte", "url": "https://g1.globo.com/rss/g1/pop-arte/", "tema": "Entretenimento"},
     {"tipo": "rss", "nome": "GE - Esporte", "url": "https://ge.globo.com/rss/ge/", "tema": "Esporte"},
     {"tipo": "rss", "nome": "JFP - Monte Santo de Minas", "url": "https://jfpnoticias.com.br", "tema": "Monte Santo de Minas"},
+]
+
+# Default atual (13 fontes) = V1 sem as 2 fontes mortas, Folha no host real e
+# JFP com o tema que existe de fato no filtro. Mantém a cobertura de temas do
+# V2: Internacional/Entretenimento/Esporte/Monte Santo.
+#
+# Auditoria de 26/09/2026 (cada fonte verificada com requisição real):
+#   - "Agência Brasil" REMOVIDA — /rss/ultimasnoticias.xml responde 404 e o
+#     único feed alcançável (/rss.xml) está abandonado desde 2020 (itens de
+#     fev–jun/2020): entraria e seria apagado pela limpeza de 24h.
+#   - "Poder9360" REMOVIDA — www.poder9360.com.br devolve NXDOMAIN no DNS
+#     público (1.1.1.1): o domínio não existe mais, nunca vai coletar.
+#   - "Folha de S.Paulo" URL CORRIGIDA — s.folha.uol.com.br também é NXDOMAIN;
+#     o host real é feeds.folha.uol.com.br (100 itens, atualizado).
+#   - "JFP - Monte Santo de Minas" MANTIDA no endereço raiz porque é scraper
+#     (CSS .td-module-title), não RSS — a raiz já traz 44 elementos. Tema
+#     corrigido de "Monte Santo de Minas" (inexistente em TEMAS_PADRAO, logo
+#     a fonte sumia do filtro) para "Monte Santo".
+_TC = "Tribunais de Contas"
+
+FONTES_PADRAO = _FONTES_PADRAO_LEGADO + [
+    {"tipo": "rss", "nome": "Senado Federal", "url": "https://www12.senado.leg.br/noticias/rss", "tema": "Brasil"},
+    {"tipo": "rss", "nome": "G1 - Últimas", "url": "https://g1.globo.com/rss/g1/", "tema": "Geral"},
+    {"tipo": "rss", "nome": "G1 - Economia", "url": "https://g1.globo.com/rss/g1/economia/", "tema": "Economia"},
+    {"tipo": "rss", "nome": "G1 - Saúde", "url": "https://g1.globo.com/rss/g1/saude/", "tema": "Saúde"},
+    {"tipo": "rss", "nome": "G1 - Tecnologia", "url": "https://g1.globo.com/rss/g1/tecnologia/", "tema": "Ciência e Tecnologia"},
+    {"tipo": "rss", "nome": "Folha de S.Paulo", "url": "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml", "tema": "Brasil"},
+    {"tipo": "rss", "nome": "G1 - Mundo", "url": "https://g1.globo.com/rss/g1/mundo/", "tema": "Internacional"},
+    {"tipo": "rss", "nome": "G1 - Pop e Arte", "url": "https://g1.globo.com/rss/g1/pop-arte/", "tema": "Entretenimento"},
+    {"tipo": "rss", "nome": "GE - Esporte", "url": "https://ge.globo.com/rss/ge/", "tema": "Esporte"},
+    {"tipo": "rss", "nome": "JFP - Monte Santo de Minas", "url": "https://jfpnoticias.com.br", "tema": "Monte Santo"},
+    # ---------- TRIBUNais DE CONTAS (foco dos controladores da Prefeitura) ----------
+    # TCU tem RSS OFICIAL (portal.tcu.gov.br/rss.xml, 30 itens, atualizado).
+    # Os estaduais não publicam RSS estável, então entram pela busca do Google
+    # News com o nome do tribunal — traz a notícia E a fonte original
+    # (item <source>), que vira o "fonte_icon"/nome no card.
+    {"tipo": "rss", "nome": "TCU", "url": "https://portal.tcu.gov.br/rss.xml", "tema": _TC},
+    # TCE-MG: WEBSCRAPING SOB MEDIDA (`_coletar_tcemg`). O tribunal não
+    # publica RSS; pela busca do Google News só viriam notícias de
+    # terceiros e perderíamos as comunicações oficiais do próprio TCE.
+    # A lista dá data/link/título e a miniatura sai do padrão
+    # /ImagemDestaque/<id>.png.
+    {"tipo": "tcemg", "nome": "TCE-MG", "url": "https://www.tce.mg.gov.br/Noticia/", "tema": _TC},
+    {"tipo": "google", "nome": "TCE-SP", "url": "https://news.google.com/rss/search?q=Tribunal+de+Contas+de+S%C3%A3o+Paulo&hl=pt-BR&gl=BR&ceid=BR:pt-419", "tema": _TC},
+    {"tipo": "google", "nome": "TCE-RS", "url": "https://news.google.com/rss/search?q=Tribunal+de+Contas+do+Rio+Grande+do+Sul&hl=pt-BR&gl=BR&ceid=BR:pt-419", "tema": _TC},
+    {"tipo": "google", "nome": "TCE-PR", "url": "https://news.google.com/rss/search?q=Tribunal+de+Contas+do+Paran%C3%A1&hl=pt-BR&gl=BR&ceid=BR:pt-419", "tema": _TC},
+    {"tipo": "google", "nome": "TCE-BA", "url": "https://news.google.com/rss/search?q=Tribunal+de+Contas+da+Bahia&hl=pt-BR&gl=BR&ceid=BR:pt-419", "tema": _TC},
+    {"tipo": "google", "nome": "TCE-RJ", "url": "https://news.google.com/rss/search?q=Tribunal+de+Contas+do+Estado+do+Rio+de+Janeiro&hl=pt-BR&gl=BR&ceid=BR:pt-419", "tema": _TC},
+    {"tipo": "google", "nome": "TCE-GO", "url": "https://news.google.com/rss/search?q=Tribunal+de+Contas+de+Goi%C3%A1s&hl=pt-BR&gl=BR&ceid=BR:pt-419", "tema": _TC},
+    {"tipo": "google", "nome": "TCE-PE", "url": "https://news.google.com/rss/search?q=Tribunal+de+Contas+de+Pernambuco&hl=pt-BR&gl=BR&ceid=BR:pt-419", "tema": _TC},
+    {"tipo": "google", "nome": "TCE-CE", "url": "https://news.google.com/rss/search?q=Tribunal+de+Contas+do+Cear%C3%A1&hl=pt-BR&gl=BR&ceid=BR:pt-419", "tema": _TC},
+    {"tipo": "google", "nome": "TCE-SC", "url": "https://news.google.com/rss/search?q=Tribunal+de+Contas+de+Santa+Catarina&hl=pt-BR&gl=BR&ceid=BR:pt-419", "tema": _TC},
 ]
 
 def _log():
@@ -129,19 +202,52 @@ def definir_habilitado(valor: bool, ator="sistema"):
 
 
 def intervalo_min() -> int:
-    """Intervalo de coleta em minutos, clamp 10–9360 (teto 9360min = 6,5 dias)."""
+    """Intervalo de coleta em minutos, clamp 60–9360 (mín. 1h, teto 6,5 dias).
+
+    Piso de 1 hora desde 26/09/2026: a coleta é AUTOMÁTICA (não depende de
+    clique humano) e cada ciclo varre as 13 fontes + baixa miniatura por
+    notícia. Intervalos curtos viravam carga sobre as fontes e sobre a
+    própria tela, sem ganho. Para buscar na hora, só o ADMINISTRADOR usa a
+    coleta manual (`coletar_todas(forcar=True)`)."""
     try:
         v = int((_get_config("intervalo_min", "60") or "60").strip() or 60)
     except Exception:
         v = 60
-    return max(10, min(9360, v))
+    return max(60, min(9360, v))
 
 
 def definir_intervalo(minutos: int, ator="sistema"):
-    v = max(10, min(9360, int(minutos)))
+    v = max(60, min(9360, int(minutos)))
     ok = _set_config("intervalo_min", str(v))
     if ok:
         _audit(ator, "configurar", "intervalo_min", str(v))
+    return ok, v
+
+
+def refresh_seg() -> int:
+    """EN: Screen auto-refresh in seconds — how often the news grid checks for new items.
+
+    PT-BR: Atualização automática da tela em segundos — de quanto em quanto
+    a grade checa se apareceu notícia nova.
+
+    É o INTERVALO DE EXIBIÇÃO, diferente de `intervalo_min()` (que é o
+    intervalo de COLETA, mínimo 1 h). O polling é barato: um único SELECT
+    com agregados (`marca_ultimo_coletado`), e só busca linhas quando a
+    marca d'água mudou. Clamp 15–600 s (ajustável pelo admin no slider da
+    aba Administração do módulo)."""
+    try:
+        v = int((_get_config("refresh_seg", "60") or "60").strip() or 60)
+    except Exception:
+        v = 60
+    return max(15, min(600, v))
+
+
+def definir_refresh_seg(segundos: int, ator="sistema"):
+    """Grava o intervalo de atualização automática da tela (slider do admin)."""
+    v = max(15, min(600, int(segundos)))
+    ok = _set_config("refresh_seg", str(v))
+    if ok:
+        _audit(ator, "configurar", "refresh_seg", str(v))
     return ok, v
 
 
@@ -313,8 +419,13 @@ def init_db():
         pass
     # seeds de config central (idempotente)
     for k, v in [
-        ("agregador_noticias_habilitado", "0"),
+        # Coleta AUTOMÁTICA por padrão desde 26/09/2026: o serviço de busca
+        # não deve depender de clique humano. Intervalo de coleta com piso
+        # de 1h; `refresh_seg` é o intervalo de ATUALIZAÇÃO DA TELA
+        # (slider do admin), que é bem menor porque o polling é barato.
+        ("agregador_noticias_habilitado", "1"),
         ("agregador_noticias_intervalo_min", "60"),
+        ("agregador_noticias_refresh_seg", "60"),
         ("agregador_noticias_termo_pesquisa", ""),
         ("agregador_noticias_temas_json", json.dumps(TEMAS_PADRAO, ensure_ascii=False)),
         ("agregador_noticias_fontes_json", json.dumps(FONTES_PADRAO, ensure_ascii=False)),
@@ -340,7 +451,25 @@ def init_db():
                 _dados = json.loads(_atual)
             except Exception:
                 _dados = None
-            if _dados == _FONTES_PADRAO_LEGADO or _dados == _FONTES_PADRAO_V1:
+            # O TCE-MG entrou no default como `tcemg` (webscraping oficial) DEPOIS
+            # de `_dados` ser lido, então o replace do TCE-MG precisa vir antes
+            # da comparação com o default atual — senão quem já tem a versão
+            # anterior (TCE-MG via Google News) nunca seria atualizado.
+            if isinstance(_dados, list):
+                _migrado = False
+                for _fonte in _dados:
+                    if (isinstance(_fonte, dict) and _fonte.get("nome") == "TCE-MG"
+                            and _fonte.get("tipo") == "google"):
+                        _fonte["tipo"] = "tcemg"
+                        _fonte["url"] = "https://www.tce.mg.gov.br/Noticia/"
+                        _migrado = True
+                if _migrado:
+                    _setc("agregador_noticias_fontes_json",
+                          json.dumps(_dados, ensure_ascii=False))
+                    _log().info(
+                        "agregador: TCE-MG migrado para o webscraping oficial "
+                        "(antes vinha via busca do Google News = terceiros)")
+            if _dados in (_FONTES_PADRAO_LEGADO, _FONTES_PADRAO_V1, _FONTES_PADRAO_V2):
                 _setc("agregador_noticias_fontes_json", json.dumps(FONTES_PADRAO, ensure_ascii=False))
                 _log().info("agregador: fontes RSS oficiais adicionadas ao default")
     except Exception:
@@ -381,16 +510,104 @@ def init_db():
 # ============ CRUD ============
 
 def contar_noticias(tema=None):
+    """Conta as notícias, aplicando a mesma regra de público restrito de
+    `listar_noticias` (tema de uso interno só entra quando pedido)."""
     conn = get_connection()
     try:
         cur = conn.cursor()
         if tema:
             cur.execute("SELECT COUNT(*) FROM tb_noticia WHERE tema=?", (tema,))
+        elif _TEMAS_RESTRITOS:
+            _neg = ",".join("?" * len(_TEMAS_RESTRITOS))
+            cur.execute(f"SELECT COUNT(*) FROM tb_noticia WHERE tema NOT IN ({_neg})",
+                        tuple(_TEMAS_RESTRITOS))
         else:
             cur.execute("SELECT COUNT(*) FROM tb_noticia")
         return cur.fetchone()[0]
+    except Exception:
+        return 0
     finally:
         conn.close()
+
+
+def marca_ultimo_coletado() -> tuple:
+    """EN: Cheap watermark of the table — `(total, max_id, max_coleta)`.
+
+    PT-BR: Marca d'água barata da tabela — `(total, max_id, max_coleta)`.
+
+    Usada pelo `ui.timer` da tela para saber se apareceu notícia nova **sem
+    carregar linhas**: um único SELECT com agregados (sem `ORDER BY`, sem
+    payload de texto/imagem). É o que permite atualizar só o card novo em
+    vez de redesenhar a grade inteira — o polling não pesa. Falha devolve
+    `None` (fail-soft) para o timer simplesmente não atualizar."""
+    try:
+        conn = get_connection()
+    except Exception:
+        return None
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*), COALESCE(MAX(id), 0), COALESCE(MAX(data_coleta), '') "
+                    "FROM tb_noticia")
+        linha = cur.fetchone() or (0, 0, "")
+        return (int(linha[0] or 0), int(linha[1] or 0), str(linha[2] or ""))
+    except Exception:
+        return None
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+def listar_novas(apos_id: int, limite: int = 12, tema=None) -> list:
+    """EN: Rows with `id` greater than `apos_id`, newest first.
+
+    PT-BR: Linhas com `id` maior que `apos_id`, mais recentes primeiro.
+
+    Complementa `marca_ultimo_coletado`: o timer detecta a marca d'água e
+    busca SÓ as linhas novas, para prependê-las na grade já montada.
+
+    Aplica a mesma regra de público restrito de `listar_noticias`: com
+    `tema=None`, os temas em `_TEMAS_RESTRITOS` não entram — senão a
+    atualização automática (que roda sem o usuário pedir nada) injetaria
+    notícia de tribunal na tela de quem não pediu.
+    """
+    try:
+        conn = get_connection()
+    except Exception:
+        return []
+    try:
+        cur = conn.cursor()
+        if tema:
+            cur.execute(
+                "SELECT id, titulo, fonte, tema, url, imagem_url, fonte_icon_url, "
+                "descricao, data_publicacao, data_coleta FROM tb_noticia "
+                "WHERE id > ? AND tema = ? "
+                "ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC "
+                "LIMIT ?", (int(apos_id or 0), tema, int(limite)))
+        elif _TEMAS_RESTRITOS:
+            _neg = ",".join("?" * len(_TEMAS_RESTRITOS))
+            cur.execute(
+                "SELECT id, titulo, fonte, tema, url, imagem_url, fonte_icon_url, "
+                "descricao, data_publicacao, data_coleta FROM tb_noticia "
+                f"WHERE id > ? AND tema NOT IN ({_neg}) "
+                "ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC "
+                "LIMIT ?", (int(apos_id or 0), *_TEMAS_RESTRITOS, int(limite)))
+        else:
+            cur.execute(
+                "SELECT id, titulo, fonte, tema, url, imagem_url, fonte_icon_url, "
+                "descricao, data_publicacao, data_coleta FROM tb_noticia "
+                "WHERE id > ? "
+                "ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC "
+                "LIMIT ?", (int(apos_id or 0), int(limite)))
+        return cur.fetchall() or []
+    except Exception:
+        return []
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def _parse_data_pub(raw: str):
@@ -440,16 +657,37 @@ def _parse_data_pub(raw: str):
     return None
 
 
-def listar_noticias(tema=None, limite=30, offset=0):
+def listar_noticias(tema=None, limite=30, offset=0, excluir_restritos=True):
+    """Lista as notícias mais recentes.
+
+    **Público restrito:** os temas em `_TEMAS_RESTRITOS` (Tribunais de
+    Contas) ficam FORA da listagem padrão e SÓ aparecem em dois casos, ambos
+    deliberados do usuário:
+      1. selecionar o tema na barra de temas (`tema=` explícito), ou
+      2. achá-las pela pesquisa (`excluir_restritos=False`).
+    Notícia de tribunal é dirigida a um público específico (os
+    controladores), não ao público geral que abre a tela — por isso não
+    ocupa a listagem geral. Selecionar o tema já é uma escolha explícita, e
+    por isso o filtro de restrito não se aplica nesse caminho.
+    """
     conn = get_connection()
     try:
         cur = conn.cursor()
-        # ordena por tempo real da postagem (data_publicacao) com fallback data_coleta
+        cols = ("SELECT id, titulo, fonte, tema, url, imagem_url, fonte_icon_url, "
+                "descricao, data_publicacao, data_coleta FROM tb_noticia")
+        ordem = " ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC"
         if tema:
-            cur.execute("SELECT id, titulo, fonte, tema, url, imagem_url, fonte_icon_url, descricao, data_publicacao, data_coleta FROM tb_noticia WHERE tema=? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ? OFFSET ?", (tema, limite, offset))
+            # tema escolhido pelo usuário: o filtro de restrito não se aplica
+            cur.execute(f"{cols} WHERE tema=?{ordem} LIMIT ? OFFSET ?", (tema, limite, offset))
+        elif excluir_restritos and _TEMAS_RESTRITOS:
+            _neg = ",".join("?" * len(_TEMAS_RESTRITOS))
+            cur.execute(f"{cols} WHERE tema NOT IN ({_neg}){ordem} LIMIT ? OFFSET ?",
+                        (*_TEMAS_RESTRITOS, limite, offset))
         else:
-            cur.execute("SELECT id, titulo, fonte, tema, url, imagem_url, fonte_icon_url, descricao, data_publicacao, data_coleta FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ? OFFSET ?", (limite, offset))
-        return cur.fetchall()
+            cur.execute(f"{cols}{ordem} LIMIT ? OFFSET ?", (limite, offset))
+        return cur.fetchall() or []
+    except Exception:
+        return []
     finally:
         conn.close()
 
@@ -489,6 +727,11 @@ def _linha_tv_para_dict(r):
             "fonte": r[4], "tema": r[5], "fonte_icon": r[6] if len(r) > 6 else ""}
 
 
+# (as duas constantes de tema foram movidas para o topo do módulo — as
+# funções `listar_noticias`, `listar_novas` e `contar_noticias` já as
+# referenciam, e depender da resolução em tempo de chamada era frágil)
+
+
 def listar_para_tv(limite=10, por_tema=False, horas=None):
     """API para mod_filas TV — carrossel título+descrição (filtra censuradas, ordena por tempo real).
 
@@ -498,6 +741,8 @@ def listar_para_tv(limite=10, por_tema=False, horas=None):
     horas=N prioriza notícias com COALESCE(data_publicacao, data_coleta) das
     últimas N horas — no modo por_tema cada categoria sem novidade usa a mais
     recente disponível (fallback por categoria).
+    Temas em `_TEMAS_SEM_TV` (Tribunais de Contas) são SEMPRE excluídos: a TV
+    é o painel de atendimento, não o painel de controle.
     Leitura curta: LIMIT*3 compensa descarte da censura (filtra até limite sem perder slots);
     busy_timeout herdado de get_connection + retry locked; sem escrita (sem rollback salvo fechar).
     """
@@ -517,6 +762,7 @@ def listar_para_tv(limite=10, por_tema=False, horas=None):
                     temas = temas_config()
                 except Exception:
                     temas = []
+                temas = [t for t in temas if t not in _TEMAS_SEM_TV]
                 if not temas:
                     temas = []
                 coletadas = []
@@ -566,11 +812,13 @@ def listar_para_tv(limite=10, por_tema=False, horas=None):
                 return coletadas
             # modo geral (legado): mais recentes primeiro, com filtro opcional de horas
             try:
+                # exclui os temas sem TV (ver _TEMAS_SEM_TV)
+                _excluir = " AND tema NOT IN (%s)" % ",".join("?" * len(_TEMAS_SEM_TV))
                 if corte:
-                    cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE COALESCE(data_publicacao, data_coleta) >= ? ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (corte, limite * 3))
+                    cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE COALESCE(data_publicacao, data_coleta) >= ?" + _excluir + " ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (corte, *_TEMAS_SEM_TV, limite * 3))
                 else:
                     # pega mais que limite para filtrar censuradas sem perder slots, ordena por data real da postagem
-                    cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (limite * 3,))
+                    cur.execute("SELECT titulo, descricao, url, imagem_url, fonte, tema, fonte_icon_url FROM tb_noticia WHERE 1=1" + _excluir + " ORDER BY COALESCE(data_publicacao, data_coleta) DESC, data_coleta DESC LIMIT ?", (*_TEMAS_SEM_TV, limite * 3))
                 rows = cur.fetchall()
             except Exception as e:
                 ultimo_erro = e
@@ -956,8 +1204,60 @@ def _normalizar_imagem_url(url: str, base: str = "https://news.google.com") -> s
     return url
 
 
+def _coletar_google_rss(url: str, fonte_nome: str, tema: str) -> int:
+    """EN: Collects a Google News **search** RSS (`/rss/search?q=…`).
+
+    PT-BR: Coleta o RSS de **busca** do Google News (`/rss/search?q=…`).
+
+    Usado pelas fontes de tema (Tribunais de Contas), onde não existe RSS
+    próprio do órgão: a busca entrega a notícia, a data e a fonte original
+    no item `<source>` — que vira o nome/fonte exibido no card. Retorna 0 em
+    falha (fail-soft) e nunca levanta."""
+    try:
+        xml = _get_html(url)
+        if not xml:
+            return 0
+        import parsel
+        sel = parsel.Selector(text=xml, type="xml")
+        n = 0
+        for item in sel.css("item"):
+            titulo = (item.css("title::text").get() or "").strip()
+            href = (item.css("link::text").get() or "").strip()
+            if not titulo or not href:
+                continue
+            fonte_real = (item.css("source::text").get() or "").strip()
+            # título do Google vem como "Headline - Fonte"; usa a fonte real
+            # como rótulo e limpa o sufixo duplicado
+            rotulo = fonte_real or fonte_nome
+            if fonte_real and titulo.endswith(f" - {fonte_real}"):
+                titulo = titulo[: -(len(fonte_real) + 3)].strip()
+            partes = [t.strip() for t in item.css("description ::text").getall() if (t or "").strip()]
+            desc = re.sub(r"\s+", " ", " ".join(partes)).strip()
+            if "<" in desc:
+                try:
+                    import html as _html
+                    desc = _html.unescape(desc)
+                    desc = re.sub(r"<[^>]+>", " ", desc)
+                    desc = re.sub(r"\s+", " ", desc).strip()
+                except Exception:
+                    pass
+            data_pub = _parse_data_pub(
+                (item.css("pubDate::text").get() or "").strip()) or None
+            if inserir_noticia(titulo, rotulo, tema, href, "", desc, data_pub):
+                n += 1
+            if n >= 15:
+                break
+        return n
+    except Exception as e:
+        _log().warning(f"_coletar_google_rss {fonte_nome}: {e}")
+        return 0
+
+
 def _coletar_google(url: str, fonte_nome: str, tema: str) -> int:
     import time
+    # RSS de busca do Google News (`/rss/search?q=`) tem parser próprio
+    if "/rss/search" in (url or ""):
+        return _coletar_google_rss(url, fonte_nome, tema)
     if time.monotonic() < _GOOGLE_HTML_BLOQUEADO_ATE["t"]:
         _log().warning(f"_coletar_google {fonte_nome}: pulado (cooldown 429 ativo)")
         return 0
@@ -1144,6 +1444,84 @@ def _coletar_jfp(url: str, tema: str) -> int:
         return 0
 
 
+def _coletar_tcemg(url: str, tema: str) -> int:
+    """EN: Custom scraper for TCE-MG (Tribunal de Contas de Minas Gerais).
+
+    PT-BR: Webscraping sob medida do TCE-MG (Tribunal de Contas de Minas).
+
+    O TCE-MG **não publica RSS**, então a coleta é feita na página de
+    notícias. Estrutura observada em 26/09/2026 (verificada por requisição):
+
+        <span class="data-noticia-internas">25/09/2026 - </span>
+        <a href="/Slug-da-noticia.html/Noticia/1111629205" title="Título">
+        Título
+        </a>
+        <p><a ...><span class="cliqueaqui">Clique aqui</span></a></p>
+
+    • A LISTA entrega data (dd/mm/aaaa), link e título completo — 20 itens
+      por página, sem paginação.
+    • O `title` vem em HTML entities (`&#231;`), por isso o unescape.
+    • O resumo sai do `<p>` que segue o item, descartando o "Clique aqui".
+    • **Sem miniatura**: testado em 26/09/2026 — o padrão deduzido
+      `/ImagemDestaque/<id>.png` devolve 404 na maioria dos itens e a
+      página de detalhe só traz o logo institucional. Preferimos gravar sem
+      imagem (o card mostra o 🖼 e o `_og_image` do módulo tenta depois)
+      a gravar URL quebrada, que apareceria como imagem corrompida.
+    • Retorna 0 em falha (fail-soft) e nunca levanta.
+    """
+    try:
+        html = _get_html(url)
+        if not html:
+            return 0
+        import re as _re
+        from html import unescape as _unescape
+        from urllib.parse import urljoin as _urljoin
+        # data dd/mm/aaaa + link + title num único item
+        padrao = _re.compile(
+            r'<span class="data-noticia-internas">\s*(\d{2}/\d{2}/\d{4})\s*-\s*</span>'
+            r'\s*<a href="([^"]+)"\s+title="([^"]*)"[^>]*>(.*?)</a>'
+            r'(.*?)</h2>', _re.S | _re.I)
+        achados = padrao.findall(html or "")
+        if not achados:
+            _log().warning(
+                "_coletar_tcemg: nenhum item encontrado — o layout do site "
+                "pode ter mudado (verificar .data-noticia-internas)")
+            return 0
+        base = (url or "").rstrip("/")
+        base = base[: base.rfind("/")] if "/Noticia" in base else base
+        n = 0
+        for data_br, href, title_attr, _corpo, cauda in achados:
+            titulo = _unescape((title_attr or "").strip())
+            if not titulo:
+                continue
+            link = _urljoin(base + "/", href)
+            # Miniatura: verificado em 26/09/2026 que o padrão deduzido
+            # /ImagemDestaque/<id>.png NÃO é confiável (a maioria devolve
+            # 404) e a página de detalhe só tem o logo institucional.
+            # Então fica SEM imagem e o `_og_image` (padrão do módulo) trata.
+            img = ""
+            # resumo: primeiro <p> útil do item, sem o "Clique aqui"
+            resumo = ""
+            for p in _re.findall(r"<p[^>]*>(.*?)</p>", cauda or "", _re.S | _re.I):
+                limpo = _unescape(_re.sub(r"<[^>]+>", " ", p))
+                limpo = _re.sub(r"\s+", " ", limpo).replace("Clique aqui", "").strip()
+                if len(limpo) > 40:
+                    resumo = limpo
+                    break
+            if not resumo:
+                resumo = titulo
+            dia, mes, ano = (data_br.split("/") + ["", "", ""])[:3]
+            data_pub = f"{ano}-{mes}-{dia}" if ano else None
+            if inserir_noticia(titulo, "TCE-MG", tema, link, img, resumo, data_pub):
+                n += 1
+            if n >= 20:
+                break
+        return n
+    except Exception as e:
+        _log().warning(f"_coletar_tcemg {tema}: {e}")
+        return 0
+
+
 def _og_image(url: str, timeout=6) -> str:
     """Busca miniatura via og:image/twitter:image da página (RSS não traz imagem).
     Fail-soft: qualquer falha retorna '' (notícia é salva mesmo sem imagem).
@@ -1295,6 +1673,8 @@ def coletar_todas(ator="sistema", forcar: bool = False):
                 total += _coletar_bbc(url, tema)
             elif tipo == "jfp":
                 total += _coletar_jfp(url, tema)
+            elif tipo == "tcemg":
+                total += _coletar_tcemg(url, tema)
             elif tipo == "rss":
                 total += _coletar_rss(url, nome, tema)
             else:

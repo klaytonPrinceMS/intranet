@@ -310,13 +310,43 @@ def _painel_backup(user_nome: str):
                                 ui.label(pasta_nome).classes("font-bold text-grey-9")
                                 ui.label(f"Dono: {owner} • IP: {ip} • Host: {host} • {data[:16] if data else ''} • {tam} bytes • {status}").classes("text-caption text-grey-6")
                             with ui.row().classes("gap-2"):
-                                def _baixar(p=pasta_nome):
+                                # trava de reentrância por pasta (AGENTS.md §5.1)
+                                _zip_ocupado = {"sim": False}
+
+                                async def _baixar(p=pasta_nome, _occ=_zip_ocupado):
+                                    """Gera o ZIP da pasta sem travar a tela.
+
+                                    `criar_zip_backup()` percorre a pasta e
+                                    comprime: em `def` no event-loop derrubava o
+                                    WebSocket ("servidor desconectado"). Agora
+                                    em `run.io_bound`, com spinner e trava de
+                                    reentrância (AGENTS.md §5.1)."""
+                                    from nicegui import run as _run_zip
+                                    if _occ["sim"]:
+                                        notificar("Gerando o ZIP… aguarde", type="warning")
+                                        return
+                                    _occ["sim"] = True
+                                    _st = ui.spinner(size="lg").props(
+                                        f"aria-label=Gerando ZIP de {p}")
                                     try:
-                                        zp = tec.criar_zip_backup(p, owner=user_nome)
+                                        zp = await _run_zip.io_bound(
+                                            lambda: tec.criar_zip_backup(p, owner=user_nome))
                                         ui.download(zp, filename=f"{p}.zip")
                                         notificar(f"Download de {p} iniciado", type="positive")
                                     except Exception as ex:
-                                        notificar(str(ex), type="negative")
+                                        # AGENTS.md §3.2: registrar E notificar
+                                        try:
+                                            log.exception(f"_baixar: falha ao gerar o ZIP de {p}: {ex}")
+                                        except Exception:
+                                            pass
+                                        notificar(f"Erro ao gerar o ZIP de {p}: {ex}",
+                                                  type="negative")
+                                    finally:
+                                        _occ["sim"] = False
+                                        try:
+                                            _st.delete()
+                                        except Exception:
+                                            pass
                                 botao("Baixar pasta (zip)", icone="folder_zip", on_click=_baixar, variante="secundario", chave_modulo="tecnico",
                                       extra_classes="shrink-0").props(f'data-testid=tecnico-baixar-{_safe_id(pasta_nome)}')
                                 # Listar arquivos da pasta (preview)

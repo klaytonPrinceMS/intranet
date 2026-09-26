@@ -1,17 +1,17 @@
-# Graph Report - intranet  (2026-09-25)
+# Graph Report - intranet  (2026-09-26)
 
 ## Corpus Check
-- 289 files · ~684,816 words
+- 291 files · ~706,389 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 84 file(s) not represented in the graph (top: .css 28, (none) 13, .eot 11)
+- Unclassified: 83 file(s) not represented in the graph (top: .css 28, (none) 13, .eot 11)
 
 ## Summary
-- 5524 nodes · 13634 edges · 425 communities (209 shown, 216 thin omitted)
-- Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 1645 edges (avg confidence: 0.91)
+- 5625 nodes · 13876 edges · 440 communities (223 shown, 217 thin omitted)
+- Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 1666 edges (avg confidence: 0.91)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d6cca077`
+- Built from commit: `351f8818`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,54 +19,54 @@
 - os
 - test_tema.py
 - home_visual.py
-- _log
+- _tela_navegar
 - mod_filas/bd_manipulador.py
 - jquery-2.1.3.min.js
-- mod_solicita_impressao/telas_administracao.py
-- abrir_dialogo
-- mod_auditoria/bd_manipulador.py
-- _log
-- _conn
-- mostrar_tela
 - botao
-- mod_gest_cad_usuario/bd_manipulador.py
-- wrapper
-- _tela_organizador
-- Fluxo da tela
+- ler_tema
+- listar_para_tv
 - _log
-- _executar_e_persistir
-- Repositorio
+- botao_icone
+- audit_log
+- _log
+- _conexao_segura
+- decoradores.py
+- mod_renomear_empenho/telas.py
+- mod_filas/telas.py
+- get_logger
+- teste_fluxo_blog.py
+- _log
 - liberar_acesso
 - set_config
 - confirmar_rascunho
 - App
 - banco_conexao.py
 - mod_solicita_impressao/__init__.py
-- _tela_navegar
+- Regras de negócio relevantes
 - Auditoria — mod_auditoria
-- test_rodape_testid.py
+- main
 - get_config
-- mod_renomear_empenho/telas.py
-- get_logger
-- visual.py
-- teste_carrossel_blog.py
-- nome_padronizado
+- _conn
+- main.py
+- mostrar_tela
+- set_config_local
+- Fluxo da tela
 - _dialogo_troca_credenciais_completo
-- listar_arquivos_grupo
+- get_connection
 - _log
-- mod_blog/bd_manipulador.py
-- Requisitos funcionais (RF) — mapa código ↔ doc
+- mod_blog/telas.py
+- Banco próprio
 - FormularioBuilder
-- Relatório de Execução de QA — Intranet Modular (25/09/2026)
-- docker_detector.py
+- page_admin_modulo
+- test_otel.py
 - _detectar_otel_rodando
 - iniciar_stack_otel
-- pdf_operacoes.py
+- _log
 - otel_integracao.py
 - CSS Frameworks Embarcados (README)
-- _log
+- visual.py
 - test_ativacao.py
-- GeradorMassaNomes
+- massa_nomes_teste.py
 - mostrar_tela
 - telefone.py
 - mod_agregador_noticias/bd_manipulador.py
@@ -76,15 +76,15 @@
 - teste_fluxo_renomeador.py
 - CrudBase
 - _log
-- obter_usuario
-- _ler_bd
-- contexto.py
+- _dlg_duplicar_seguro
+- mod_auditoria/bd_manipulador.py
+- teste_carrossel_blog.py
 - gerar_senha
 - docker_instalado
-- salvar_arquivos_backup
+- _migrar_dados_existentes_seguro
 - ativacao.py
 - port_scanner.py
-- test_navegar_pesquisa_empenhos.py
+- abrir_dialogo
 - mostrar_tela
 - _log
 - fabrica_documentos.py
@@ -92,12 +92,12 @@
 - PainelLista
 - requirements-dev.txt (dependências de dev/teste/segurança)
 - AGENTS.md — Diretrizes de Desenvolvimento Assistido por Agente
-- mod_edit_pdf/bd_manipulador.py
-- Dialogo
+- _executar_e_persistir
+- _dlg_sessoes_seguro
 - Gestão de Usuários — mod_gest_cad_usuario
 - _log
-- instrumentacao_app.py
-- _tela_nova
+- docker_detector.py
+- _admin_configuracoes
 - helpers.js
 - _fazer_login
 - _ler_telas
@@ -115,27 +115,27 @@
 - _El
 - mostrar_tv
 - requirements.py
-- ler_tema
-- Banco de dados
+- tema_modulo.py
+- init_db
 - _El
 - mod_solicita_impressao
 - Intranet Modular — Referência de API e Código
 - install_devtools
-- _clicar_seguro
+- TestCliqueSeguroEmpenhos
 - _porta_valida
 - iniciar
 - _clicar_seguro
 - pw_cobertura_extra_qa.py
 - Ferramentas e Práticas de Segurança (DevSecOps)
-- _ler_admin
+- get_auditoria_connection
 - _FormatadorBlog
-- mod_solicita_impressao/bd_manipulador.py
-- _parse_data_pub
-- _verificar_presenca
+- hora_servidor.py
+- mostrar_administracao
+- _ler
 - verify-credentials.sh
 - test/package.json
-- _pasta_backup_path
-- teste_aba_config_intranet.py
+- docs/index.md
+- _construir_dashboard
 - _log
 - start.sh
 - _servidor_ativo
@@ -144,7 +144,7 @@
 - Banco próprio db_mod_filas.db (8 tabelas, sem seed)
 - kbp-doc — Audita /docs, estrutura.md, MkDocs readthedocs
 - tb_noticia
-- aplicar_modelo
+- get_modulos_com_auditoria
 - Servico Grafana (3000, admin master/master via env)
 - instalar_excepthook
 - setup-grafana-credentials.sh
@@ -152,22 +152,23 @@
 - _SMTPOk
 - requirements.py — Instalação Complementar de Dependências (dev-only)
 - mod_intranet — Núcleo Intranet
-- tem_flag
-- listar_usuarios
+- mod_gest_cad_usuario/bd_manipulador.py
+- Correção aplicada 24/09/2026 — gest_cad_usuario (código já corrigido, lote só-documentação)
 - TestCliqueSeguroAgregador
 - Editor de PDF — mod_edit_pdf
-- Aba Software — download multi-seleção com zip recursivo
+- modulos_registrados
 - Graphify Query BFS DFS
 - _global_setup.js
 - configurar
-- _markdown_em_html
+- mod_blog/bd_manipulador.py
 - tb_solicitacoes
-- _dialogo_troca_visivel
+- provision_dashboard
 - Rota /tv
-- limpar_censuradas
-- obter_backup
+- _encerrar
+- titulo_bloqueado
+- relatorio_impressao
 - opencode.json
-- test_seg_novos_modulos.py
+- _rodar_standalone
 - Configurações e Variáveis de Ambiente
 - Organizador admin
 - tb_postagens
@@ -175,13 +176,14 @@
 - intro-bg Hero Background Image
 - 02_varredura.spec.js
 - _SrvFalso
-- get_auditoria_connection
+- fallback_attachments
 - tb_backup
+- page_login
 - Rota /filas
-- _dialogo_troca_visivel
-- _dialogo_troca_visivel
+- aquecer_auditoria
+- registrar_hook_config
 - iniciar.sh
-- _dialogo_troca_visivel
+- .test_clique_agregador_coletar_agora
 - _eh_admin_do_modulo
 - .opencode/package.json
 - _instalar_binarios_externos
@@ -189,9 +191,9 @@
 - IcoMoon Icon Font SVG
 - Favicon Noticia
 - Background JPG Abstract Woven Architecture Facade
-- _dialogo_troca_visivel
+- _abrir_aba_se_precisar
 - ORGANOGRAMA_BASE
-- _dialogo_troca_visivel
+- _eh_escrita
 - Aba Navegar
 - _ler
 - get_tracer
@@ -219,14 +221,14 @@
 - mod_auditoria/__init__.py
 - _ler
 - mod_filas/bd_criador.py
-- test_editor_pdf.py
+- test_vis_blog_selecionar_5
 - _ler
 - mod_lista_telefonica/bd_criador.py
-- test_server.py
+- test_vis_editpdf_upload
 - autenticacao.py
-- audit_log
+- render
 - mod_tecnico/bd_criador.py
-- _botao_padrao
+- test_vis_empenhos_busca
 - Wiki Export Agent Crawlable
 - Cross Repo Merge
 - Whisper Transcription
@@ -261,11 +263,11 @@
 - Módulo Agregador de Notícias
 - Paginação 12 notícias
 - servir_assets_noticia
-- pesquisar
+- test_navegar_pesquisa_empenhos.py
 - tb_auditoria_meta
 - mod_edit_pdf/__init__.py
 - Rota /blog
-- Banco de dados
+- test_vis_empenhos_fila_processar
 - Módulo Filas
 - Função duplicar_usuario
 - Sessões Ativas (tb_sessoes central)
@@ -299,66 +301,69 @@
 - mod_edit_pdf_bd_manipulador_op_verificar
 - Renomear Empenhos — mod_renomear_empenho
 - mod_intranet/models/__init__.py
-- listar_para_tv
+- integracoes.py
 - _ler
-- pw_click_extra_qa.py
+- _clicar_seguro
 - dataclasses
 - _ler
 - _ler
 - test_suite.py
 - mod_gest_cad_usuario/__init__.py
-- docs/index.md
-- rotinas.py
-- cancelar_rascunho
-- smoke_senha_ui_comum.py
-- modulos_registrados
-- criar_postagens_blog.py
+- Padrões de Codificação
+- iniciar_agendador
+- test_e2e_agregador_card_dom.py
+- _n_colunas
+- test_vis_empenhos_filtro_icone
+- test_vis_admin_unidade_tipo
+- _log
 - mod_lista_telefonica/__init__.py
 - mod_renomear_empenho/__init__.py
 - _ArquivoFake
-- auto_iniciar_otel
+- _run_command
 - mod_renomear_empenho/bd_manipulador.py
 - mod_tecnico/__init__.py
 - TestCliqueSeguroAdmin
+- test_vis_agregador_anterior
 - dialogo_editar_fila
-- teste_classes_crud.py
-- _dialogo_troca_visivel
+- test_vis_agregador_coletar
+- test_vis_agregador_filtro_tema
+- CampoBase
+- test_vis_agregador_habilitado
 - TestFabricaCoberturaCampos
 - TestFabricaDeterministica
-- test_e2e_click_extra_sec.py
+- _dialogo_troca_visivel
+- test_vis_agregador_hora_reinicio
+- test_vis_agregador_primeira
+- eh_admin_do_modulo
+- _mostrar_tela_segura
+- test_vis_blog_aplicar_unica
+- test_vis_blog_imagem_selecionar
 - test_fabrica_documentos.py
 - test_vis_editar_pdf_baixar_zip
 - test_vis_editar_pdf_cortar
 - test_vis_editar_pdf_dividir
-- test_vis_editar_pdf_enviar
-- test_vis_editar_pdf_modo_reduzir
-- test_vis_editar_pdf_reduzir
-- test_vis_editar_pdf_verificar
+- test_vis_blog_quebra_quadrado
+- _verificar_presenca
+- test_vis_editar_pdf_atualizar
+- test_vis_editar_pdf_baixar_pdfs
 - test_vis_empenhos_atualizar
 - test_vis_empenhos_fila_editar
-- test_vis_empenhos_filtro_icone
-- test_vis_admin_contato_busca
+- test_vis_editar_pdf_juntar
+- test_vis_blog_quebra_supinf
 - test_vis_admin_contato_nome
-- test_vis_admin_contato_tel
-- test_vis_admin_contato_unidade
-- test_vis_admin_contato_user
+- _log
+- mod_intranet/__init__.py
 - test_vis_admin_criar_contato
-- test_vis_admin_criar_unidade
 - test_vis_admin_unidade_nome
 - test_vis_admin_unidade_pai
-- test_vis_agregador_add_fonte
 - test_vis_agregador_busca
 - test_vis_agregador_coletar_agora
 - test_vis_agregador_fonte_nome
-- test_vis_agregador_fonte_tema
 - test_vis_agregador_fonte_tipo
 - test_vis_agregador_fonte_url
-- test_vis_agregador_intervalo
 - test_vis_agregador_limpar_censuradas
 - test_vis_agregador_palavras_bloqueadas
 - test_vis_agregador_proxima
-- test_vis_agregador_reiniciar_agora
-- test_vis_agregador_temas
 - test_vis_agregador_termo
 - test_vis_agregador_ultima
 - test_vis_auditoria_busca
@@ -371,14 +376,9 @@
 - test_vis_blog_despublicar
 - test_vis_blog_editar
 - test_vis_blog_excluir
-- test_vis_blog_excluir_selecionados
-- test_vis_blog_imagem_enviar
-- test_vis_blog_img_centro
 - test_vis_blog_img_dir
 - test_vis_blog_img_esq
 - test_vis_blog_img_largura
-- test_vis_blog_limpar_selecao
-- test_vis_blog_palavras_bloqueadas
 - test_vis_blog_publicar
 - test_vis_blog_quebra_atras
 - test_vis_blog_quebra_atraves
@@ -388,10 +388,7 @@
 - _rota_para_testid
 - test_vis_blog_selecionados_contador
 - test_vis_blog_selecionar_10
-- test_vis_blog_selecionar_todos
 - test_vis_blog_selecionar_post_0
-- test_vis_blog_titulo
-- test_vis_editar_pdf_atualizar
 - .test_seg_filas_midia_som
 - .test_seg_filas_tv_pausar
 - .test_seg_lista_ligar
@@ -437,30 +434,48 @@
 - .test_seg_filas_importar_submit
 - .test_seg_filas_importar_texto
 - .test_seg_filas_midia_fundo
+- _m
+- Modulo
+- _imprimir_grupo
+- test_altura_computada_250px
+- test_marca_agua_absolute_opacidade_050
+- test_miniatura_60x60
+- test_resumo_justificado
+- test_rolagem_e_descendente_do_card
+- test_titulo_e_resumo_dentro_da_rolagem
+- browser_type_launch_args
+- browser_type_launch_args
+- browser_type_launch_args
+- browser_type_launch_args
+- browser_type_launch_args
+- browser_type_launch_args
+- browser_type_launch_args
+- .definir_config
+- .podar_sessoes
 
 ## God Nodes (most connected - your core abstractions)
-1. `notificar()` - 423 edges
-2. `get_logger()` - 152 edges
+1. `notificar()` - 424 edges
+2. `get_logger()` - 155 edges
 3. `audit_log()` - 139 edges
 4. `botao()` - 129 edges
 5. `usuario_logado()` - 127 edges
-6. `get_config()` - 114 edges
+6. `get_config()` - 112 edges
 7. `set_config()` - 99 edges
 8. `_verificar_testid_seguro()` - 95 edges
 9. `_log()` - 94 edges
-10. `_verificar_presenca()` - 91 edges
+10. `_verificar_presenca()` - 89 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Banco de dados (reuso)` --references--> `listar_noticias()`  [INFERRED]
-  docs/modulos/agregador_noticias_puro.md → mod_agregador_noticias/bd_manipulador.py
+- `2. Tempo relativo — `_tempo_relativo`` --references--> `Z()`  [INFERRED]
+  docs/analise_mod_agregador_noticias.md → assets/noticia/js/jquery-2.1.3.min.js
+- `Divergências detectadas nesta atualização` --references--> `intervalo_min()`  [INFERRED]
+  docs/analise_mod_agregador_noticias.md → mod_agregador_noticias/bd_manipulador.py
+- `Quem orquestra a purga — e por que o Blog` --references--> `limpar_censuradas()`  [INFERRED]
+  docs/analise_mod_agregador_noticias.md → mod_agregador_noticias/bd_manipulador.py
 - `Anatomia do card (`li` do `info-list`)` --references--> `inserir_noticia()`  [INFERRED]
   docs/analise_mod_agregador_noticias_puro.md → mod_agregador_noticias/bd_manipulador.py
-- `Tela `/agregador-noticias` — grid responsivo 3→2→1 + paginação 12 + altura padronizada` --references--> `_abrir()`  [INFERRED]
-  docs/modulos/agregador_noticias.md → mod_auditoria/telas.py
-- `Status` --references--> `avancar()`  [INFERRED]
-  docs/analise_mod_filas.md → mod_blog/telas.py
-- `Permissões` --references--> `liberar_acesso()`  [INFERRED]
-  docs/modulos/filas.md → mod_filas/bd_manipulador.py
+- `Tela pura (`telas_puro.py`)` --references--> `Noticia`  [INFERRED]
+  docs/analise_mod_agregador_noticias.md → mod_agregador_noticias/models/__init__.py
 
 ## Import Cycles
 - None detected.
@@ -490,175 +505,175 @@
 - **Trilha de auditoria central LGPD** — docs_analise_mod_auditoria_registrar_auditoria, docs_analise_mod_intranet_audit_log, docs_analise_mod_edit_pdf_auditoria_sha256 [INFERRED 0.85]
 - **fluxo de auditoria LGPD (escrita audit_log → trilha tb_auditoria_<modulo>)** — docs_analise_mod_blog_mod_blog, docs_analise_mod_edit_pdf_mod_edit_pdf, docs_analise_mod_solicita_impressao_mod_solicita_impressao [INFERRED 0.95]
 
-## Communities (425 total, 216 thin omitted)
+## Communities (440 total, 217 thin omitted)
 
 ### Community 0 - "os"
 Cohesion: 0.03
-Nodes (91): mostra(), QA Diagnostico: fluxo salvar_configs -> reload -> ler valores. Testa se…, Garante as credenciais dos usuários QA usados nos testes E2E. EN: Ensures the…, mostra(), Teste de papéis/validacão de acesso do ator (mod_intranet/autenticacao.py).…, Teste do Dashboard mobile-first (Fase 1, item 6) + padrão de exibição. Script…, browser_type_launch_args(), fixture (+83 more)
+Nodes (101): Grafana Dashboard Provisioning - Intranet Modular Provisions dashboards into…, Seed of "how-to" blog posts for the common user (Editor PDF, Print Request,…, mostra(), QA Diagnostico: fluxo salvar_configs -> reload -> ler valores. Testa se…, mostra(), Teste de papéis/validacão de acesso do ator (mod_intranet/autenticacao.py).…, E2E Agregador Noticias — /agregador-noticias + puro (kbp-devSecOps). EN —…, E2E Click Extra Sec — clique seguro nos ultimos 27 botoes (linhas 29-55) (kbp-… (+93 more)
 
 ### Community 1 - "test_tema.py"
-Cohesion: 0.15
-Nodes (15): checar(), main(), Teste standalone do helper central de tema (mod_intranet/tema_modulo.py).…, _conteudo(), restaurar(), _mudou(), _mudou_tamanho(), _previa() (+7 more)
+Cohesion: 0.23
+Nodes (11): checar(), main(), Teste standalone do helper central de tema (mod_intranet/tema_modulo.py).…, btn_cls(), btn_style(), ler_cartao(), prefixo_da_chave(), CSS width classes for buttons by size (single visual standard). Classes CSS de… (+3 more)
 
 ### Community 2 - "home_visual.py"
-Cohesion: 0.17
-Nodes (12): classes_card_resumo(), classes_stat(), classes_wrap_resumo(), _get_config_safe(), ler_modelo(), Visual switcher for Home dashboard — uma tela por CSS disponível. Módulo de…, Lê o modelo visual atual (pic|framework), fail-soft para 'pic'., Grava o modelo em tb_config; retorna True se gravou. (+4 more)
+Cohesion: 0.11
+Nodes (22): aplicar_framework(), aplicar_modelo(), classes_card_resumo(), classes_stat(), classes_wrap_resumo(), _get_config_safe(), injetar_pic_suave(), injetar_resumo_overrides() (+14 more)
 
-### Community 3 - "_log"
-Cohesion: 0.06
-Nodes (68): test_tipos_especiais(), _campos_busca_ativos(), _commit_com_retry(), detectar_documentos_no_pdf(), detectar_tipo_especial(), editar_campos_empenho(), _eh_erro_bloqueio(), eh_multiplo_documento() (+60 more)
+### Community 3 - "_tela_navegar"
+Cohesion: 0.08
+Nodes (51): obter_email_usuario(), E-mail cadastrado do usuário ("" quando ausente). Delega ao módulo de gestão de…, arquivo_ja_processado(), _arquivo_registrado_no_bd(), listar_navegacao(), pasta_monitorada(), pasta_navegavel(), pastas_monitoradas() (+43 more)
 
 ### Community 4 - "mod_filas/bd_manipulador.py"
 Cohesion: 0.06
-Nodes (75): Regras de negócio relevantes, Complementos auditados (lote 3), Rota e integrações, adicionar_midia(), atualizar_etapa(), atualizar_fila(), atualizar_midia(), _audit() (+67 more)
+Nodes (64): Complementos auditados (lote 3), Complementos auditados (lote 3), atualizar_etapa(), atualizar_midia(), consumir_comando_tv(), contar_nomes_pendentes(), definir_estado_tv(), definir_etapa_nome() (+56 more)
 
 ### Community 5 - "jquery-2.1.3.min.js"
 Cohesion: 0.06
 Nodes (67): Ac(), D(), G(), gb(), hb(), b(), I(), ib() (+59 more)
 
-### Community 6 - "mod_solicita_impressao/telas_administracao.py"
-Cohesion: 0.06
-Nodes (54): listar_usuarios_ativos(), Lista usuários ativos para seleção nas telas dos módulos. Delega ao módulo de…, _admin_configuracoes(), salvar(), _admin_cotas(), atualizar(), _admin_relatorio(), gerar() (+46 more)
+### Community 6 - "botao"
+Cohesion: 0.05
+Nodes (81): c(), Returns the text styled with rich (ANSI no terminal, plano se não-TTY)., listar_usuarios_ativos(), Lista usuários ativos para seleção nas telas dos módulos. Delega ao módulo de…, botao(), Builds the single standardized button (delegates to `BotaoFabrica`). Wrapper…, _admin_cotas(), atualizar() (+73 more)
 
-### Community 7 - "abrir_dialogo"
-Cohesion: 0.14
-Nodes (17): abrir_dialogo(), grade(), rodar_agora(), salvar_intervalo(), Opens the module backup dialog. Abre o diálogo de backup do módulo informado., backup_modulo(), _job_backup(), _job_todos() (+9 more)
+### Community 7 - "ler_tema"
+Cohesion: 0.09
+Nodes (44): Integrações com o núcleo, Integrações com o núcleo, Fluxo da tela, Integrações com o núcleo, Administração (`/admin/tecnico`), baixar_pdf_impressao(), Rota de download do PDF da solicitação (com marca d'água se ativa). Protegida:…, mostrar_administracao() (+36 more)
 
-### Community 8 - "mod_auditoria/bd_manipulador.py"
-Cohesion: 0.08
-Nodes (43): Correção aplicada 24/09/2026 — auditoria (código já corrigido, lote só-documentação), Tabela consolidada — módulo | achado | arquivo:linha | correção proposta contida no módulo | risco regressão, _orquestrar_resumo_dados(), Coleta os 9 contadores do Resumo — 5 base + fila impressão, quarentena, pdf…, buscar_logs(), _commit_com_retry(), contar_registros(), _extrair_modulo() (+35 more)
+### Community 8 - "listar_para_tv"
+Cohesion: 0.10
+Nodes (35): Agregador de Notícias — `mod_agregador_noticias`, Agregador de Notícias — `mod_agregador_noticias`, Atualização 25/09/2026 — censura compartilhada orquestrada pelo núcleo, Banco próprio, Complemento — coleta multi-fonte, grid, tela pura e limpeza 24 h, Diagrama da censura compartilhada, Grid responsivo 3 → 2 → 1, card de altura fixa e paginação 12, Integrações com o núcleo (+27 more)
 
 ### Community 9 - "_log"
-Cohesion: 0.06
-Nodes (109): Administração (`telas_administracao.py`), Banco próprio, Complemento — organograma, busca, `tel:` e administração, Contatos e busca, Fluxo da tela, Hierarquia e navegação, Lista Telefônica — `mod_lista_telefonica`, `ORGANOGRAMA_BASE` é a **fonte compartilhada** de cotas do sistema (+101 more)
+Cohesion: 0.05
+Nodes (111): Administração (`telas_administracao.py`), Banco próprio, Complemento — organograma, busca, `tel:` e administração, Contatos e busca, Correção 25/09/2026 — usuários via fachada `mod_intranet.integracoes` (AGENTS.md §2), Fluxo da tela, Hierarquia e navegação, Lista Telefônica — `mod_lista_telefonica` (+103 more)
 
-### Community 10 - "_conn"
-Cohesion: 0.06
-Nodes (69): test_campos_busca(), alternar_regra(), _conn(), excluir_campo_busca(), listar_arquivos_auditoria(), listar_campos_busca(), listar_quarentena(), listar_regras() (+61 more)
-
-### Community 11 - "mostrar_tela"
-Cohesion: 0.08
-Nodes (38): cfg_expiracao_min(), contar_uploads_ativos(), deletar_arquivo(), _eh_locked(), expirar_antigos(), pasta_usuario(), File lifetime in minutes inside editorPDF (`editar_pdf_expiracao_min`, min 1).…, Returns (and creates if missing) the user's folder inside editorPDF/. Retorna… (+30 more)
-
-### Community 12 - "botao"
-Cohesion: 0.04
-Nodes (112): c(), Returns the text styled with rich (ANSI no terminal, plano se não-TTY)., botao(), Builds the single standardized button (delegates to `BotaoFabrica`). Wrapper…, _admin_configuracoes(), salvar(), _admin_cotas(), atualizar() (+104 more)
-
-### Community 13 - "mod_gest_cad_usuario/bd_manipulador.py"
+### Community 10 - "botao_icone"
 Cohesion: 0.07
-Nodes (71): alterar_senha_admin(), _audit(), bloquear_usuario(), _central(), _commit_com_retry(), _conexao_segura(), contar_sessoes_ativas(), criar_usuario() (+63 more)
+Nodes (64): test_campos_busca(), botao_icone(), Icon-only row-action button (themed or white header variants). Atalho para…, alternar_regra(), excluir_campo_busca(), listar_campos_busca(), listar_quarentena(), listar_regras() (+56 more)
 
-### Community 14 - "wrapper"
-Cohesion: 0.10
-Nodes (20): admin_tela(), decorator(), wrapper(), decorator(), wrapper(), decorator(), decorator(), wrapper() (+12 more)
+### Community 11 - "audit_log"
+Cohesion: 0.04
+Nodes (137): check(), main(), n_paginas(), pdf_sintetico(), Teste do módulo Editor de PDF (Fase 5.6) — rodar manualmente: python…, mod_edit_pdf, _cfg(), cfg_expiracao_min() (+129 more)
 
-### Community 15 - "_tela_organizador"
-Cohesion: 0.09
-Nodes (34): hash_arquivo(), Retorna hash SHA-256 de um arquivo., ferramenta_cortar(), ferramenta_fontes(), ferramenta_juntar(), _ferramenta_nome(), ferramenta_reduzir(), gerar_matriz_organizador() (+26 more)
+### Community 12 - "_log"
+Cohesion: 0.05
+Nodes (78): _admin_relatorio(), gerar(), _prazo_fixo(), ao_secr(), ao_aba(), ao_secretaria(), atualizar(), _autorizar_grupo() (+70 more)
 
-### Community 16 - "Fluxo da tela"
+### Community 13 - "_conexao_segura"
+Cohesion: 0.13
+Nodes (32): alterar_senha_admin(), _audit(), bloquear_usuario(), _commit_com_retry(), _conexao_segura(), criar_usuario(), definir_acesso(), definir_flags() (+24 more)
+
+### Community 14 - "decoradores.py"
+Cohesion: 0.06
+Nodes (46): _eco_regex(), _soma(), _dummy(), Flags finas de permissão (JSON) — catálogo, grant, bypass e decorador. EN:…, _pode_publicar(), Regra do módulo: usuário COMUM só LÊ o blog. Publicar/comentar/excluir é…, pode_publicar_no_blog(), Usuário comum só lê o blog; publicar/comentar/excluir é de administradores. (+38 more)
+
+### Community 15 - "mod_renomear_empenho/telas.py"
 Cohesion: 0.08
-Nodes (54): Fluxo da tela, Administração (`/admin/filas`), Funcionalidades, Painel `/filas` — gestor multi-filas (próprias + liberadas), obter_fila(), tipo_por_extensao(), mostrar_administracao(), _confirmar_todas_admin() (+46 more)
+Nodes (40): hash_arquivo(), Retorna hash SHA-256 de um arquivo., campo_cor(), Standard color field (delegates to `CampoCor`). Wrapper fino da classe…, ferramenta_cortar(), ferramenta_fontes(), ferramenta_juntar(), _ferramenta_nome() (+32 more)
 
-### Community 17 - "_log"
+### Community 16 - "mod_filas/telas.py"
+Cohesion: 0.08
+Nodes (35): Administração (`/admin/filas`), mod_filas, mostrar_administracao(), _confirmar_todas_admin(), _on_upload(), Filas admin panel — multi-queues, steps and TV media. EN: Administration panel…, EN: Admin panel /admin/filas (all queues, steps, voice/texts, names, media,…, bloco_controle_tv() (+27 more)
+
+### Community 17 - "get_logger"
 Cohesion: 0.05
-Nodes (72): teste_cadastros_e_cotas(), _agregar_impressao(), _audit(), cancelar_solicitacao(), contar_solicitacoes_pendentes(), criar_impressora(), criar_responsavel(), criar_secretaria() (+64 more)
+Nodes (125): teste_cadastros_e_cotas(), get_logger(), Retorna o logger. Se `modulo` for informado, o registro é marcado para ir…, _atualizar_status_grupo(), _audit(), autorizar_grupo(), cancelar_grupo(), cancelar_rascunho() (+117 more)
 
-### Community 18 - "_executar_e_persistir"
-Cohesion: 0.15
-Nodes (16): aplicar_banco(), _dir_docker(), _executar_e_persistir(), _garantir_tb_config(), iniciar_postgres(), _motivo_legivel(), _porta_livre(), Starts PostgreSQL (or REUSES an already-running container) and waits until it… (+8 more)
+### Community 18 - "teste_fluxo_blog.py"
+Cohesion: 0.16
+Nodes (26): _admin_disponivel(), main(), ok(), Teste do módulo Blog (mod_blog) — teste_fluxo_blog. Valida: sanitização XSS…, teste_auditoria_central(), teste_carrossel(), teste_config_local(), teste_conversores() (+18 more)
 
-### Community 19 - "Repositorio"
-Cohesion: 0.05
-Nodes (36): precisa_trocar_credenciais(), Fecha a sessão deste navegador; sem hash, fecha todas (comportamento antigo)., Conjunto de usuários com senha provisória ainda não trocada. Usa `Repositorio`…, True se o usuário precisa trocar usuário E senha no primeiro acesso. Aplicável…, Compatibilidade: define quais chaves ficam desativadas; demais reativadas.…, registrar_logout(), set_chaves_desativadas(), usuarios_com_troca_pendente() (+28 more)
+### Community 19 - "_log"
+Cohesion: 0.11
+Nodes (14): _log(), Runs a SELECT on the bound database; returns rows as dicts. Executa SQL de…, Runs a DML statement on the bound database; returns rowcount. Executa SQL de…, Returns the last autoincrement id inserted on the bound database. SQLite:…, Returns the value for a configuration key or `padrao` if not found. EN: Reads a…, True if an active session exists for this user+hash. EN: Checks session…, Soft-closes a session by setting logout_timestamp. EN: Sets…, Closes ALL open sessions for a user. EN: Sets logout_timestamp on all open… (+6 more)
 
 ### Community 20 - "liberar_acesso"
-Cohesion: 0.11
-Nodes (25): Contrato das funções consumidas (`mod_intranet/integracoes.py`), Correção 25/09/2026 — usuários via fachada `mod_intranet.integracoes` (AGENTS.md §2), Os dois pontos corrigidos, Por que a fachada e não um import, _ator_eh_dono_ou_admin(), definir_estado_tv(), _eh_erro_locked(), _esperar_retry() (+17 more)
+Cohesion: 0.24
+Nodes (10): Permissões, _ator_eh_dono_ou_admin(), _esperar_retry(), liberar_acesso(), _log(), EN: Check actor is queue owner or admin (DB-level, not only screen). PT-BR:…, EN: Grant queue access to a registered user (owner/admin only). PT-BR: Libera…, EN: Short backoff between lock retries. PT-BR: Espera curta (backoff) entre… (+2 more)
 
 ### Community 21 - "set_config"
-Cohesion: 0.10
-Nodes (30): Seeds the module version key (`versao_modulo:auditoria`) in tb_config. Semeia a…, _semear_versao_modulo(), Gravação de configuração via Repositorio (SQLAlchemy ORM). Delega para…, set_config(), mostrar_tela(), _alertar_restart(), aplicar_banco(), _aplicar_cor() (+22 more)
+Cohesion: 0.05
+Nodes (58): Persiste as alterações do card 'Configurações específicas' e recarrega. Grava…, Restaura os valores padrão do card 'Configurações específicas'. Grava os…, _resetar_configs(), _salvar_configs(), resetar(), salvar(), Gravação de configuração via Repositorio (SQLAlchemy ORM). Delega para…, set_config() (+50 more)
 
 ### Community 22 - "confirmar_rascunho"
 Cohesion: 0.10
-Nodes (48): criar_pdf_teste(), main(), Teste do módulo Solicitação de Impressão (mod_solicita_impressao). Valida:…, Gera um PDF simples de n_paginas para teste (PyMuPDF)., teste_contagem_e_formula(), teste_excedente(), teste_fluxo(), teste_fluxo_grupo() (+40 more)
+Nodes (50): criar_pdf_teste(), main(), Teste do módulo Solicitação de Impressão (mod_solicita_impressao). Valida:…, Gera um PDF simples de n_paginas para teste (PyMuPDF)., teste_contagem_e_formula(), teste_excedente(), teste_fluxo(), teste_fluxo_grupo() (+42 more)
 
 ### Community 23 - "App"
 Cohesion: 0.08
 Nodes (21): App, arquivo_esta_estavel(), buscar_campo(), extrair_dados(), extrair_texto_primeira_pagina(), montar_novo_nome(), obter_prefixo(), Renomeador de Empenhos - Prefeitura de Monte Santo de Minas… (+13 more)
 
 ### Community 24 - "banco_conexao.py"
-Cohesion: 0.04
-Nodes (63): Teste unitário da paridade SQLite/PostgreSQL (mod_intranet/banco_conexao.py).…, Cobertura total: smoke de import + contrato de TODAS as funcoes/classes usadas.…, _sempre_falha(), _soma(), Ordem do menu hambúrguer — padrão + persistência após reorder + restart. EN:…, functools, importlib, banco_modulo() (+55 more)
+Cohesion: 0.03
+Nodes (76): Teste unitário da paridade SQLite/PostgreSQL (mod_intranet/banco_conexao.py).…, Cobertura total: smoke de import + contrato de TODAS as funcoes/classes usadas.…, Ordem do menu hambúrguer — padrão + persistência após reorder + restart. EN:…, iniciar_servidor(), main(), Teste de viabilidade: ui.mermaid no NiceGUI 3.15 (renderização em navegador).…, datetime, functools (+68 more)
 
-### Community 26 - "_tela_navegar"
-Cohesion: 0.10
-Nodes (43): obter_email_usuario(), E-mail cadastrado do usuário ("" quando ausente). Delega ao módulo de gestão de…, listar_navegacao(), pasta_monitorada(), pasta_navegavel(), _path_real(), raizes_navegacao(), Pasta monitorada principal do módulo (primeira da lista). Legado: usado pela… (+35 more)
+### Community 26 - "Regras de negócio relevantes"
+Cohesion: 0.11
+Nodes (35): Regras de negócio relevantes, Requisitos funcionais (RF) — mapa código ↔ doc, Status, Ordem da fala (`normalizar_voz_ordem` — `bd_manipulador.py`), Rota e integrações, atualizar_fila(), _audit(), avancar_chamada() (+27 more)
 
 ### Community 27 - "Auditoria — mod_auditoria"
 Cohesion: 0.07
 Nodes (30): Aba Observabilidade (Grafana, stack OTel), Função buscar_logs (filtros + paginação server-side), Config auditoria_limite (tamanho da página, default 1000), Config auditoria_retencao_dias (default 90), Banco exclusivo db_mod_auditoria.db (WAL), Exportação CSV da página filtrada (campos/ordem do auditor), Auditoria — mod_auditoria, Função podar_registros + job poda_auditoria (retenção LGPD) (+22 more)
 
-### Community 28 - "test_rodape_testid.py"
-Cohesion: 0.19
-Nodes (10): _botoes_testid(), check(), clicar(), main(), Teste de integração headless do rodapé padrão (ui_comum) — delta a1b1650. Cobre…, _varrer(), asyncio, collections (+2 more)
+### Community 28 - "main"
+Cohesion: 0.12
+Nodes (9): check(), clicar(), main(), Dialogo, Standard dialog + themed card as a context-manager class. Classe gerenciadora…, Enters dialog + card contexts; returns `(dlg, card)`. Sequência de criação…, Closes the card and dialog contexts (reverse order)., Opens the dialog (no-op quando o contexto ainda não entrou). (+1 more)
 
 ### Community 29 - "get_config"
-Cohesion: 0.05
-Nodes (37): Testes de seguranca do Aplicar async + superficies criticas (standalone).…, Documentação sob demanda — trava de boot e subida manual. EN: Docs on demand —…, Shutdown gracioso — agendador e servidor de documentação. EN: Graceful shutdown…, glob, loguru, Fetch a theme config value, returning default on failure. Lê um valor de tema…, _tema(), Blog module — posts and comments with nh3 sanitization (route /blog). Módulo… (+29 more)
+Cohesion: 0.04
+Nodes (59): achar_botoes(), achar_campos(), check(), clicar(), clicar_seguro(), main(), Teste da aba CONFIG do menu_mod em /configuracoes (módulo Intranet). Script…, Elementos da tela em ORDEM do DOM (BFS — índices = ordem de render). (+51 more)
 
-### Community 30 - "mod_renomear_empenho/telas.py"
-Cohesion: 0.11
-Nodes (36): test_solicitacoes(), agrupar_solicitacoes_em_lote(), criar_solicitacao(), enviar_solicitacao_por_email(), gerar_zip_solicitacoes(), listar_solicitacoes(), listar_solicitacoes_acao_pendente(), marcar_solicitacao_enviada() (+28 more)
-
-### Community 31 - "get_logger"
+### Community 30 - "_conn"
 Cohesion: 0.06
-Nodes (76): atexit, inicializar_bancos, iniciar_agendador, get, _ao_sinal(), _construir_dashboard(), _contar_fila_para_autorizar(), _eh_autorizador_impressao() (+68 more)
+Nodes (52): test_solicitacoes(), agrupar_solicitacoes_em_lote(), anonimizar_usuario(), anotar_arquivos(), _conn(), contar_quarentena_pendente(), criar_solicitacao(), enviar_solicitacao_por_email() (+44 more)
 
-### Community 32 - "visual.py"
-Cohesion: 0.07
-Nodes (29): PIC - visual padrao (Quasar nativo suave, sem CSS externo), mostrar_tela(), _btn_cls(), _btn_style(), _gerar_25_temp(), _criar(), _tema(), Renders the Empenhos screen with its 6 internal tabs. Monta a tela:… (+21 more)
+### Community 31 - "main.py"
+Cohesion: 0.10
+Nodes (44): atexit, inicializar_bancos, iniciar_agendador, fastapi_responses, iniciar_agendador(), page_agregador_noticias(), page_agregador_noticias_puro(), page_auditoria() (+36 more)
 
-### Community 33 - "teste_carrossel_blog.py"
-Cohesion: 0.22
-Nodes (8): achar_botoes(), check(), Teste do modo de exibição CARROSSEL do Blog (mod_blog/telas.py). Renderiza a…, _varrer(), nicegui_elements_checkbox, nicegui_elements_label, nicegui_elements_number, nicegui_elements_select
+### Community 32 - "mostrar_tela"
+Cohesion: 0.12
+Nodes (21): PIC - visual padrao (Quasar nativo suave, sem CSS externo), menu_modulo(), Builds the module menu tabs (icon above, label below). Cria a barra de abas de…, mostrar_tela(), _btn_cls(), _btn_style(), _tema(), Reads a theme key from tb_config, falling back to the default (fail-soft). (+13 more)
 
-### Community 34 - "nome_padronizado"
-Cohesion: 0.25
-Nodes (14): nome_padronizado(), Builds the standardized file name: dataHora_usuario_operacao_nome.pdf. O nome…, _alvos(), _auditar_hash(), baixar_zip(), _op_cortar_sel(), _op_dividir(), _op_juntar() (+6 more)
+### Community 33 - "set_config_local"
+Cohesion: 0.10
+Nodes (31): achar_botoes(), check(), main(), _varrer(), _cards_blog(), check(), main(), Post cards do blog (borda colorida border-left) presentes no DOM. (+23 more)
+
+### Community 34 - "Fluxo da tela"
+Cohesion: 0.15
+Nodes (28): Fluxo da tela, Contrato das funções consumidas (`mod_intranet/integracoes.py`), Painel `/filas` — gestor multi-filas (próprias + liberadas), obter_fila(), tipo_por_extensao(), bloco_liberar_acesso(), _buscar(), _lib() (+20 more)
 
 ### Community 35 - "_dialogo_troca_credenciais_completo"
-Cohesion: 0.24
-Nodes (13): _dialogo_troca_credenciais(), _dialogo_troca_credenciais_completo(), confirmar(), _fone_valor(), _v(), _dialogo_troca_credenciais_minimo(), confirmar(), _v() (+5 more)
+Cohesion: 0.18
+Nodes (16): _dialogo_troca_credenciais(), _dialogo_troca_credenciais_completo(), confirmar(), _fone_valor(), _v(), _dialogo_troca_credenciais_minimo(), confirmar(), _v() (+8 more)
 
-### Community 36 - "listar_arquivos_grupo"
-Cohesion: 0.14
-Nodes (18): _atualizar_status_grupo(), autorizar_grupo(), cancelar_grupo(), imprimir_grupo(), listar_arquivos_grupo(), Cancels an already authorized/printed request (status=cancelado). Cancela…, Removes the physical file of a request (on refuse/recall/cancel). Remove o…, Lists the files of one PEDIDO (group). Lista os arquivos de um pedido (grupo):… (+10 more)
+### Community 36 - "get_connection"
+Cohesion: 0.19
+Nodes (13): 1. Público restrito — `_TEMAS_RESTRITOS`, 2. Tempo relativo — `_tempo_relativo`, 3. Modo escuro do card de notícia, Atualização 26/09/2026 — público restrito, tempo relativo e modo escuro, Divergências detectadas nesta atualização, RF-AGR-xx — caminhos de leitura, contar_noticias(), get_connection() (+5 more)
 
 ### Community 37 - "_log"
 Cohesion: 0.11
 Nodes (25): _cookie_sem_segredo(), _fazer_login(), _fechar_dialogos(), _garantir_localhost(), _ler(), _log(), unit, EN: Cookie must never expose password. PT-BR: cookie nunca expoe senha. (+17 more)
 
-### Community 38 - "mod_blog/bd_manipulador.py"
-Cohesion: 0.03
-Nodes (149): Editor WYSIWYG do Blog — upload de imagens e expiração de órfãs. EN: Blog…, Controles de imagem do editor do Blog — alinhar/esticar. EN: Blog editor image…, Markdown dentro do editor WYSIWYG do Blog. EN: Markdown inside the WYSIWYG…, Mermaid sempre ao fim da postagem — padrão do Blog. EN: Mermaid diagrams always…, main(), _admin_disponivel(), main(), ok() (+141 more)
+### Community 38 - "mod_blog/telas.py"
+Cohesion: 0.07
+Nodes (50): _sempre_falha(), montar_pagina(), page, atualizar_postagem(), criar_comentario(), despublicar_postagem(), excluir_postagem(), excluir_postagens_em_lote() (+42 more)
 
-### Community 39 - "Requisitos funcionais (RF) — mapa código ↔ doc"
-Cohesion: 0.08
-Nodes (52): Banco próprio, Complementos auditados (lote 3), Filas — `mod_filas` (Multi-filas + TV por etapa + Mídia por fila + Lista única + Ordem da fala + Papel de fundo), Filas — `mod_filas` (Multi-filas + TV por etapa + Mídia por fila + Lista única + Ordem da fala + Papel de fundo), Pontos de atenção, Propósito, Requisitos funcionais (RF) — mapa código ↔ doc, Requisitos não-funcionais (RNF) — garantias técnicas (+44 more)
+### Community 39 - "Banco próprio"
+Cohesion: 0.14
+Nodes (25): Banco próprio, Filas — `mod_filas` (Multi-filas + TV por etapa + Mídia por fila + Lista única + Ordem da fala + Papel de fundo), Filas — `mod_filas` (Multi-filas + TV por etapa + Mídia por fila + Lista única + Ordem da fala + Papel de fundo), Pontos de atenção, Propósito, Funcionalidades, Módulo Filas — `mod_filas` (Mídia por fila + Lista única + Ordem da fala + Papel de fundo), Pontos de atenção (+17 more)
 
 ### Community 40 - "FormularioBuilder"
-Cohesion: 0.10
-Nodes (18): Rota e integrações, FormularioBuilder, criar(), criar(), criar(), criar(), _log(), Registers a numeric field (`ui.number` com min/max/step). Mesmo padrão visual… (+10 more)
+Cohesion: 0.09
+Nodes (20): Rota e integrações, montar_rotas_ativas(), Re-registers persisted custom routes from tb_modulos (idempotent). Lê…, FormularioBuilder, criar(), criar(), criar(), criar() (+12 more)
 
-### Community 41 - "Relatório de Execução de QA — Intranet Modular (25/09/2026)"
-Cohesion: 0.14
-Nodes (16): 1. Contexto e escopo, 2. Resumo dos gates, 3. Os 10 scripts que falhavam — causa e tipo, 4. Os 8 bugs de produção corrigidos, 5.2 `check_integridade.py`: 5 falhas → 13/13, 5.3 `mkdocs.yml` + links quebrados, 5.5 `gitleaks detect`: no leaks found, 5.6 `pytest-env` declarado em `requirements-dev.txt` (+8 more)
+### Community 41 - "page_admin_modulo"
+Cohesion: 0.11
+Nodes (18): 1. Contexto e escopo, 2. Resumo dos gates, 3. Os 10 scripts que falhavam — causa e tipo, 4. Os 8 bugs de produção corrigidos, 5.2 `check_integridade.py`: 5 falhas → 13/13, 5.3 `mkdocs.yml` + links quebrados, 5.5 `gitleaks detect`: no leaks found, 5.6 `pytest-env` declarado em `requirements-dev.txt` (+10 more)
 
-### Community 42 - "docker_detector.py"
-Cohesion: 0.10
-Nodes (37): main(), Test script for OTel LGTM stack integration. Script de teste para verificar se…, Test Docker detection., Test OTel stack status., Test OTel info display., Test OTel integration import., test_docker_detection(), test_otel_import() (+29 more)
+### Community 42 - "test_otel.py"
+Cohesion: 0.12
+Nodes (28): main(), Test script for OTel LGTM stack integration. Script de teste para verificar se…, Test Docker detection., Test OTel stack status., Test OTel info display., Test OTel integration import., test_docker_detection(), test_otel_import() (+20 more)
 
 ### Community 43 - "_detectar_otel_rodando"
 Cohesion: 0.09
@@ -668,33 +683,33 @@ Nodes (23): _detectar_otel_rodando(), _detectar_postgres_rodando(), _msg_porta_e
 Cohesion: 0.11
 Nodes (21): 5.4 `bandit`: HIGH 1 → 0, MEDIUM 5 → 0, abrir_terminal(), _cmd(), _formatar_achados_otel(), _garantir_sdk_otel(), iniciar_stack_otel(), _mascarar_comando(), _pre_pull() (+13 more)
 
-### Community 45 - "pdf_operacoes.py"
+### Community 45 - "_log"
 Cohesion: 0.10
-Nodes (32): _op_verificar(), _extrair_paginas(), _libs_da_preferencia(), _log(), op_cortar(), op_dividir(), op_dividir_partes(), op_reduzir() (+24 more)
+Nodes (18): _dlg_senha(), _dlg_senha_seguro(), salvar(), Password reset dialog: sets a new provisional password. Diálogo de redefinição…, Body of `_dlg_senha`, isolated so the entry point can protect it., BotaoFabrica, Cartao, _log() (+10 more)
 
 ### Community 46 - "otel_integracao.py"
 Cohesion: 0.08
-Nodes (26): Any, configurar_log_otel(), inicializar_otel(), obter_endpoint(), obter_handler_log(), Exception, OpenTelemetry integration for Intranet Modular. This module provides…, Initialize OpenTelemetry SDK. Inicializa o SDK do OpenTelemetry. Com… (+18 more)
+Nodes (24): Any, configurar_log_otel(), criar_gauge(), obter_handler_log(), Exception, OpenTelemetry integration for Intranet Modular. This module provides…, Register an error in a span. Registra um erro em um span., Create a gauge metric. Cria uma metrica gauge. (+16 more)
 
 ### Community 47 - "CSS Frameworks Embarcados (README)"
 Cohesion: 0.10
 Nodes (20): CSS Frameworks Embarcados (README), Bootstrap 5.3.8 (rota dedicada, MIT), Bulma 1.0.2 (mantido em disco, pode colidir com Quasar, MIT), Chota 0.8.0 (rota dedicada, leve, MIT), DaisyUI 5.6.8 + themes (sobre Tailwind v4, MIT), Foundation 6.8.1 (rota dedicada, pesado, MIT), Materialize 1.0.0 (rota dedicada, pesado, MIT), Milligram 1.4.1 (rota dedicada, leve, MIT) (+12 more)
 
-### Community 48 - "_log"
-Cohesion: 0.15
-Nodes (28): _conn(), contar_arquivos_ativos(), _falha_conexao(), _fechar_seguro(), init_db_pdf(), _log(), _notificar_falha(), obter_meus_arquivos() (+20 more)
+### Community 48 - "visual.py"
+Cohesion: 0.11
+Nodes (13): _cfg(), _botao(), Reads one central `tb_config` key as stripped text (fail-soft). Lê uma chave de…, eh_bootstrap(), eh_framework(), eh_hibrido(), eh_pic(), _get_config_safe() (+5 more)
 
 ### Community 49 - "test_ativacao.py"
 Cohesion: 0.07
 Nodes (4): Testes funcionais do assistente de ativação (`mod_intranet/ativacao.py`).…, Relógio fake: avança 1 s por chamada (simula o tempo real do loop)., _Relogio, io
 
-### Community 50 - "GeradorMassaNomes"
-Cohesion: 0.13
-Nodes (14): contar_distribuicao(), GeradorMassaNomes, _completar_sobrenome(), _tem_sobrenome(), gerar_massa_teste(), main(), Monta as 70 linhas (nome + tags) com distribuição exata e embaralhada., Salva a massa em mod_filas/midia/ e retorna o caminho final. (+6 more)
+### Community 50 - "massa_nomes_teste.py"
+Cohesion: 0.12
+Nodes (17): argparse, contar_distribuicao(), GeradorMassaNomes, _completar_sobrenome(), _tem_sobrenome(), gerar_massa_teste(), main(), Test name-mass generator for the single queue name list (mod_filas). EN: On-… (+9 more)
 
 ### Community 51 - "mostrar_tela"
-Cohesion: 0.14
-Nodes (26): mostrar_tela(), _adicionar_campo(), _atualizar_tabela(), _buscar_logs(), _campo_data(), _abrir(), _ao_escolher(), _campos_ativos() (+18 more)
+Cohesion: 0.15
+Nodes (24): mostrar_tela(), _adicionar_campo(), _atualizar_tabela(), _buscar_logs(), _campo_data(), _abrir(), _ao_escolher(), _campos_ativos() (+16 more)
 
 ### Community 52 - "telefone.py"
 Cohesion: 0.13
@@ -702,22 +717,22 @@ Nodes (27): Telefones — DDI +55 via `mod_intranet.telefone`, apenas_digitos(),
 
 ### Community 53 - "mod_agregador_noticias/bd_manipulador.py"
 Cohesion: 0.12
-Nodes (39): Coleta multi-fonte (`httpx` + `parsel`), Coleta scrapy-like (espelho `klaytonPrinceMS/Noticia`), _aguardar_cortezia(), _coletar_bbc(), _coletar_google(), _coletar_jfp(), _coletar_pesquisa_google(), _coletar_rss() (+31 more)
+Nodes (42): Coleta multi-fonte (`httpx` + `parsel`), Pontos de atenção, _aguardar_cortezia(), _audit(), _coletar_bbc(), _coletar_google(), _coletar_google_rss(), _coletar_jfp() (+34 more)
 
 ### Community 54 - "grafana_sync.py"
-Cohesion: 0.12
-Nodes (22): Teste do Config do módulo Intranet: Aplicar por card, aparência, avisos e…, _api_autorizada(), atualizar_senha_grafana(), grafana_aguardar_pronto(), grafana_rodando(), obter_grafana_url(), obter_senha_master(), obter_status_grafana() (+14 more)
+Cohesion: 0.11
+Nodes (24): Teste do Config do módulo Intranet: Aplicar por card, aparência, avisos e…, get_connection(), Opens a connection to the module's own database (FKs enabled). Conexão via…, _api_autorizada(), atualizar_senha_grafana(), grafana_aguardar_pronto(), grafana_rodando(), obter_grafana_url() (+16 more)
 
 ### Community 55 - "_render_seguro"
-Cohesion: 0.07
-Nodes (33): _dlg_duplicar(), _dlg_editar(), _dlg_excluir(), _dlg_excluir_definitivo(), _dlg_excluir_definitivo_seguro(), excluir(), _dlg_excluir_seguro(), excluir() (+25 more)
+Cohesion: 0.16
+Nodes (14): _dlg_duplicar(), _dlg_editar(), _gest_bloq(), _norm(), _painel_usuarios(), _chave_ordenacao(), _filtrar(), render() (+6 more)
 
 ### Community 56 - "_CursorPostgres"
-Cohesion: 0.09
-Nodes (11): Banco de dados, Achados transversais (valem para todos), _ConexaoPostgres, _CursorPostgres, _ddl_postgres(), Translates SQLite CREATE TABLE DDL into PostgreSQL-compatible DDL. Lida com os…, psycopg2 cursor proxy: translates `?`→`%s`, SQLite DDL/PRAGMA and captures…, Batched writes with `?`→`%s` translation (portable SQLite→PG). Corrige paridade… (+3 more)
+Cohesion: 0.10
+Nodes (10): Achados transversais (valem para todos), _ConexaoPostgres, _CursorPostgres, _ddl_postgres(), Translates SQLite CREATE TABLE DDL into PostgreSQL-compatible DDL. Lida com os…, psycopg2 cursor proxy: translates `?`→`%s`, SQLite DDL/PRAGMA and captures…, Batched writes with `?`→`%s` translation (portable SQLite→PG). Corrige paridade…, Splits a script on ';' and runs each statement (SQLite emulation). (+2 more)
 
 ### Community 57 - "teste_fluxo_renomeador.py"
-Cohesion: 0.12
+Cohesion: 0.13
 Nodes (24): _isolamento_pytest(), main(), _pdf(), fixture, Teste do fluxo do módulo Renomear Empenhos. Valida: identificação dos campos…, Aponta o banco e a pasta monitorada do módulo para um ambiente temporário,…, Sob pytest, isola banco + pasta monitorada em temp (igual ao main()), para não…, re_sub_nao_digitos() (+16 more)
 
 ### Community 58 - "CrudBase"
@@ -728,29 +743,29 @@ Nodes (18): bd_criador.py legado/morto (schema real em bd_manipulador), Escopo e
 Cohesion: 0.10
 Nodes (25): _cookie_sem_segredo(), _fazer_login(), _fechar_dialogos(), _garantir_localhost(), _ler(), _log(), unit, EN: Cookie must never expose password. PT-BR: cookie nunca expoe senha. (+17 more)
 
-### Community 60 - "obter_usuario"
-Cohesion: 0.14
-Nodes (22): listar_acessos(), nome_de_tratamento(), obter_usuario(), Fetches one user row (incl. senha/perfil/ativo/deletado/nome_completo). Retorna…, Display name for greetings/screens — full or social name. Nome usado para…, Lists the user's per-module grants (modulo_chave, papel, liberado_por, data)., _aplicar_acessos(), _dlg_duplicar_seguro() (+14 more)
+### Community 60 - "_dlg_duplicar_seguro"
+Cohesion: 0.15
+Nodes (20): listar_acessos(), Minimum password length (characters) configured for the module. Política de…, Lists the user's per-module grants (modulo_chave, papel, liberado_por, data)., senha_minima(), _aplicar_acessos(), _dlg_duplicar_seguro(), _fone_dup_valor(), salvar() (+12 more)
 
-### Community 61 - "_ler_bd"
-Cohesion: 0.21
-Nodes (5): _ler_bd(), tb_levantamento + FTS no banco do módulo, fallback LIKE, presença., renomear_manual converte string EE→int para EC_0024 etc., TestUnidadeLevantamento, TestUnidadeRenomearManual
+### Community 61 - "mod_auditoria/bd_manipulador.py"
+Cohesion: 0.17
+Nodes (18): Correção aplicada 24/09/2026 — auditoria (código já corrigido, lote só-documentação), Tabela consolidada — módulo | achado | arquivo:linha | correção proposta contida no módulo | risco regressão, Testes e veredito, buscar_logs(), Audit module — exclusive database (db_mod_auditoria.db) with one table per…, Expressão SQL portável para extrair 'HH:MI' de coluna timestamp., Expressão SQL portável para formatar timestamp em 'dd/mm/AAAA HH:MM:SS'., Devolve o SGBD ativo ('sqlite'|'postgres') com fallback seguro. (+10 more)
 
-### Community 62 - "contexto.py"
-Cohesion: 0.11
-Nodes (23): Fase 1: autenticacao master/master, gravacao de sessao em tb_sessoes (cookie…, test_login_e_sessao_em_banco(), contextvars, _podar_sessoes(), precisa_trocar_senha(), Retenção LGPD: mantém as N sessões mais recentes por usuário. Configuração…, Registra sessão e devolve o cookie_hash. Usa `Repositorio` (SQLAlchemy ORM)…, True se existe linha de sessão ABERTA com esse hash no banco central. Usado… (+15 more)
+### Community 62 - "teste_carrossel_blog.py"
+Cohesion: 0.06
+Nodes (23): Editor WYSIWYG do Blog — upload de imagens e expiração de órfãs. EN: Blog…, Mermaid sempre ao fim da postagem — padrão do Blog. EN: Mermaid diagrams always…, Nome do usuário no menu superior — botão único sempre visível. EN: Header user-…, Rodapé escondido com reveal no hover — bloco FOOTER. EN: Auto-hide footer —…, _botoes_testid(), Teste de integração headless do rodapé padrão (ui_comum) — delta a1b1650. Cobre…, _varrer(), Testes de seguranca do Aplicar async + superficies criticas (standalone).… (+15 more)
 
 ### Community 63 - "gerar_senha"
-Cohesion: 0.12
-Nodes (19): `gerar_senha` + `_proxima_senha` (`bd_manipulador.py`), Revezamento + Manchester (`_escolher_proximo_nome` — `bd_manipulador.py`), 4.1 Detalhamento por bug, contar_nomes_pendentes(), _emitir_senha(), _escolher_proximo_nome(), espera_etapa(), gerar_senha() (+11 more)
+Cohesion: 0.13
+Nodes (18): `gerar_senha` + `_proxima_senha` (`bd_manipulador.py`), Revezamento + Manchester (`_escolher_proximo_nome` — `bd_manipulador.py`), 4.1 Detalhamento por bug, _eh_erro_locked(), _emitir_senha(), _escolher_proximo_nome(), gerar_senha(), _primeira_etapa() (+10 more)
 
 ### Community 64 - "docker_instalado"
 Cohesion: 0.09
 Nodes (24): _aguardar_container(), barra(), _container_existe(), docker_instalado(), fim_barra(), _imagem_baixada(), instalar_docker(), _otel_docker_ativo() (+16 more)
 
-### Community 65 - "salvar_arquivos_backup"
-Cohesion: 0.22
-Nodes (13): Pontos de atenção, Propósito, Regras de negócio relevantes, Status, Técnico — `mod_tecnico`, _audit(), criar_pasta_backup(), criar_zip_selecionados() (+5 more)
+### Community 65 - "_migrar_dados_existentes_seguro"
+Cohesion: 0.14
+Nodes (18): _aquecer_auditoria_sync(), _commit_com_retry(), _garantir_tabela_auditoria(), init_db_auditoria(), migrar_dados_existentes(), _migrar_dados_existentes_seguro(), _nome_tabela(), Returns the audit table name for a module (`tb_auditoria_<modulo>`). Sanitiza o… (+10 more)
 
 ### Community 66 - "ativacao.py"
 Cohesion: 0.11
@@ -760,13 +775,13 @@ Nodes (23): _abre_fecha(), aplicar_portas(), _compose_cmd(), configurar_docker_w
 Cohesion: 0.13
 Nodes (20): concurrent_futures, escanear_portas(), _executar(), portas_com_servico(), _portas_docker(), _portas_por_lsof(), _portas_por_netstat_windows(), _portas_por_ss_linux() (+12 more)
 
-### Community 68 - "test_navegar_pesquisa_empenhos.py"
-Cohesion: 0.20
-Nodes (7): browser_type_launch_args(), _ler(), _ler_rotinas(), fixture, QA Renomear Empenhos — pirâmide de testes com evidência headless. EN — Full QA…, Switch admin renomeação automática — rótulo, config, gate., TestUnidadeSwitchAutomatica
+### Community 68 - "abrir_dialogo"
+Cohesion: 0.14
+Nodes (17): abrir_dialogo(), grade(), rodar_agora(), salvar_intervalo(), Opens the module backup dialog. Abre o diálogo de backup do módulo informado., backup_modulo(), _job_backup(), _job_todos() (+9 more)
 
 ### Community 69 - "mostrar_tela"
-Cohesion: 0.09
-Nodes (31): _nome_usuario_seguro(), Normalizes login for filenames ([a-z0-9_-] only). Normaliza o login para uso no…, Salva uma imagem do editor em `img_postagens` (JPG/PNG, até 5 MB). Nome padrão…, salvar_imagem_postagem(), mostrar_tela(), _ajustar_imagem(), ao_editar(), ao_toggle_selecao() (+23 more)
+Cohesion: 0.17
+Nodes (20): mostrar_tela(), ao_editar(), ao_toggle_selecao(), _aplicar_carrossel_exib(), _aplicar_historico_exib(), _aplicar_unica_exib(), atualizar(), _atualizar_contador() (+12 more)
 
 ### Community 70 - "_log"
 Cohesion: 0.11
@@ -774,15 +789,15 @@ Nodes (25): _cookie_sem_segredo(), _fazer_login(), _fechar_dialogos(), _garantir
 
 ### Community 71 - "fabrica_documentos.py"
 Cohesion: 0.11
-Nodes (30): criar_lote_demo(), criar_lote_principal(), criar_pdf_empenho(), gerar_dados_empenho(), _nome_empresa(), nome_impressora(), _nome_pessoa(), Fábrica de documentos fictícios do módulo Renomear Empenhos. Factory of… (+22 more)
+Nodes (29): criar_lote_demo(), criar_lote_principal(), criar_pdf_empenho(), gerar_dados_empenho(), _nome_empresa(), nome_impressora(), _nome_pessoa(), Fábrica de documentos fictícios do módulo Renomear Empenhos. Factory of… (+21 more)
 
 ### Community 72 - "mod_intranet/telas.py"
-Cohesion: 0.07
-Nodes (29): Nome do usuário no menu superior — botão único sempre visível. EN: Header user-…, Rodapé escondido com reveal no hover — bloco FOOTER. EN: Auto-hide footer —…, Piloto @ui.refreshable no Blog — feed, carrossel, preview e despublicadas. EN:…, inspect, _obter_config(), Reads tb_config with fallback (lowest layer — no circular imports). Lê…, _alternar_tema(), _aplicar_tema_escuro() (+21 more)
+Cohesion: 0.10
+Nodes (29): True se o usuário prefere o tema escuro (config per-usuário). Preferência de…, tema_escuro(), favicon_versao(), mtime do favicon atual — muda quando o .ico é trocado (cache-busting da aba)., _obter_config(), Reads tb_config with fallback (lowest layer — no circular imports). Lê…, _alternar_tema(), _aplicar_tema_escuro() (+21 more)
 
 ### Community 73 - "PainelLista"
-Cohesion: 0.15
-Nodes (9): GradeTabela, _log(), PainelLista, Builds the panel (search field + body); returns the container.…, Re-renders the body (count/pagination/grade) from the first page. Deve ser…, Returns the loguru logger bound to the core module ("intranet"). Logger loguru…, Standard `ui.grid` table (caption header + cells + action column). Tabela em…, Renders header + one row per item; returns the grid element. `dados` é uma… (+1 more)
+Cohesion: 0.14
+Nodes (10): GradeTabela, _log(), PainelLista, Standardized listing panels: GradeTabela (ui.grid) and PainelLista. Componentes…, Builds the panel (search field + body); returns the container.…, Re-renders the body (count/pagination/grade) from the first page. Deve ser…, Returns the loguru logger bound to the core module ("intranet"). Logger loguru…, Standard `ui.grid` table (caption header + cells + action column). Tabela em… (+2 more)
 
 ### Community 74 - "requirements-dev.txt (dependências de dev/teste/segurança)"
 Cohesion: 0.14
@@ -792,13 +807,13 @@ Nodes (20): kbp-commit (definição do subagente), Subagente kbp-commit, kbp-dev
 Cohesion: 0.18
 Nodes (17): AGENTS.md — Diretrizes de Desenvolvimento Assistido por Agente, Anti-disconnect — handlers nunca bloqueiam o event-loop, Convenções de codificação (PascalCase/snake_case/MAIUSCULAS_SNAKE), CrudBase (acesso a dados), DDD — Língua Ubíqua em Português BR, Formato de commit AAMMDD HHMM, Isolamento total de bancos de dados (sem cross-query), Entry point main.py (+9 more)
 
-### Community 76 - "mod_edit_pdf/bd_manipulador.py"
-Cohesion: 0.23
-Nodes (11): _cfg(), cfg_lote_arquivos(), cfg_lote_mb(), cfg_tema(), cfg_usuario_gb(), PDF Editor module — own database, quotas, operations and automatic cleanup.…, Reads an `editar_pdf_<chave>` key from the central tb_config (fail-soft). Lê a…, Maximum number of files per upload batch (`editar_pdf_lote_arquivos`, min 1).… (+3 more)
+### Community 76 - "_executar_e_persistir"
+Cohesion: 0.15
+Nodes (16): aplicar_banco(), _dir_docker(), _executar_e_persistir(), _garantir_tb_config(), iniciar_postgres(), _motivo_legivel(), _porta_livre(), Starts PostgreSQL (or REUSES an already-running container) and waits until it… (+8 more)
 
-### Community 77 - "Dialogo"
-Cohesion: 0.18
-Nodes (6): Dialogo, Standard dialog + themed card as a context-manager class. Classe gerenciadora…, Enters dialog + card contexts; returns `(dlg, card)`. Sequência de criação…, Closes the card and dialog contexts (reverse order)., Opens the dialog (no-op quando o contexto ainda não entrou)., Closes the dialog (no-op quando o contexto ainda não entrou).
+### Community 77 - "_dlg_sessoes_seguro"
+Cohesion: 0.28
+Nodes (9): nome_de_tratamento(), Display name for greetings/screens — full or social name. Nome usado para…, _dlg_sessoes(), _dlg_sessoes_seguro(), _duracao(), _pintar_sessoes(), refresh_interno(), User traceability dialog: active sessions + recent history. Diálogo de… (+1 more)
 
 ### Community 78 - "Gestão de Usuários — mod_gest_cad_usuario"
 Cohesion: 0.14
@@ -808,13 +823,13 @@ Nodes (15): Hash bcrypt + senha provisória forcar_troca, Banco próprio db_mod_
 Cohesion: 0.11
 Nodes (25): _cookie_sem_segredo(), _fazer_login(), _fechar_dialogos(), _garantir_localhost(), _ler(), _log(), unit, EN: Cookie must never expose password. PT-BR: cookie nunca expoe senha. (+17 more)
 
-### Community 80 - "instrumentacao_app.py"
-Cohesion: 0.17
-Nodes (15): fastapi, fastapi_responses, logging, _contadores(), OpenTelemetry application instrumentation for Intranet Modular. This module…, Cria e retorna os objetos de metricas (no-op se OTel indisponivel)., criar_contador(), criar_gauge() (+7 more)
+### Community 80 - "docker_detector.py"
+Cohesion: 0.16
+Nodes (15): fastapi, logging, linux_com_docker(), Docker and OTel detection module for Intranet Modular. This module detects if…, Check if running on Linux with Docker available. Verifica se esta rodando no…, _contadores(), OpenTelemetry application instrumentation for Intranet Modular. This module…, Cria e retorna os objetos de metricas (no-op se OTel indisponivel). (+7 more)
 
-### Community 81 - "_tela_nova"
-Cohesion: 0.27
-Nodes (11): New-request tab: multi-PDF drafts with countdown + form + submission. Upload…, _tela_nova(), ao_papel(), ao_tipo_papel(), ao_upload(), enviar(), rebuild(), _remover_selecionados() (+3 more)
+### Community 81 - "_admin_configuracoes"
+Cohesion: 0.18
+Nodes (14): _admin_configuracoes(), salvar(), _editar_secretaria(), salvar(), _editar_setor(), _painel_impressoras(), atualizar(), criar() (+6 more)
 
 ### Community 82 - "helpers.js"
 Cohesion: 0.18
@@ -825,8 +840,8 @@ Cohesion: 0.25
 Nodes (8): _abrir_navegar(), _aguardar_contagem(), _fazer_login(), _fechar_dialogos_bloqueadores(), Fluxo real headless: login → /renomear-empenho → digitar no campo., Admin: switch automática; lote spinner — só localhost., TestE2EAdminELote, TestE2ENavegarPesquisa
 
 ### Community 84 - "_ler_telas"
-Cohesion: 0.18
-Nodes (6): _definicoes_filtrar(), _ler_telas(), Pesquisa Navegar assíncrona — fiação estática sem servidor., Lote solicitar sem disconnect — spinner e trava., TestUnidadeLoteAsync, TestUnidadeNavegarPesquisa
+Cohesion: 0.07
+Nodes (18): _definicoes_filtrar(), _ler(), _ler_admin(), _ler_bd(), _ler_rotinas(), _ler_telas(), Pesquisa Navegar assíncrona — fiação estática sem servidor., tb_levantamento + FTS no banco do módulo, fallback LIKE, presença. (+10 more)
 
 ### Community 85 - "_renderizar_carrossel"
 Cohesion: 0.20
@@ -837,12 +852,12 @@ Cohesion: 0.29
 Nodes (9): Spectre 0.5.9 (rota dedicada, leve, MIT), caminho_css(), injetar_framework(), _log(), montar_rotas_static(), Serves the embedded CSS frameworks (Bootstrap, Bulma, DaisyUI, Pico, Picnic)…, Makes /css/frameworks/* serve the local CSS files for the whole app. Registra a…, Return HTTP URL of the CSS file (None lists the available frameworks). Devolve… (+1 more)
 
 ### Community 87 - "Pontos de atenção"
-Cohesion: 0.13
-Nodes (32): Z(), Fluxo da tela, Pontos de atenção, Regras de negócio relevantes, Status, Pontos de atenção, _audit(), definir_fontes() (+24 more)
+Cohesion: 0.14
+Nodes (27): Fluxo da tela, Pontos de atenção, Status, _normalizar_imagem_url(), Pré-checagem para NÃO buscar og:image de notícia repetida (economiza…, _url_ja_coletada(), render_fontes(), mostrar_tela() (+19 more)
 
 ### Community 88 - "notificar"
-Cohesion: 0.04
-Nodes (87): Administração (`/admin/agregador_noticias`), mostrar_administracao(), adicionar(), _coletar_agora(), _limpar(), _limpar_agora(), _reiniciar_agora(), restaurar_censura_ag() (+79 more)
+Cohesion: 0.05
+Nodes (72): _coletar_agora(), _reiniciar_agora(), restaurar_censura_ag(), _resetar(), _salvar(), restaurar_censura(), restaurar_especificas(), salvar_censura() (+64 more)
 
 ### Community 89 - "_log"
 Cohesion: 0.11
@@ -862,7 +877,7 @@ Nodes (19): _fazer_login(), _fechar_dialogos(), _garantir_localhost(), _prefixo_
 
 ### Community 93 - "Tela Pura de Notícias — `mod_agregador_noticias/telas_puro.py` (`/agregador-noticias-puro`)"
 Cohesion: 0.07
-Nodes (37): Complemento — coleta multi-fonte, grid, tela pura e limpeza 24 h, Grid responsivo 3 → 2 → 1, card de altura fixa e paginação 12, Anatomia da função (`telas_puro.py:48-145`), Anatomia do card (`li` do `info-list`), Banco de dados (reuso — nenhum banco novo), Conteúdo de `assets/noticia/` (4,9 MB, originais do `Noticia`), Diferenças em relação à tela principal, Docstring bilíngue (`telas_puro.py:1-8`) (+29 more)
+Nodes (36): Anatomia da função (`telas_puro.py:48-145`), Anatomia do card (`li` do `info-list`), Banco de dados (reuso — nenhum banco novo), Conteúdo de `assets/noticia/` (4,9 MB, originais do `Noticia`), Diferenças em relação à tela principal, Docstring bilíngue (`telas_puro.py:1-8`), Funcionalidades — `telas_puro.py:mostrar_tela_pura`, Helper `_tempo_relativo(s)` (`telas_puro.py:19-45`) (+28 more)
 
 ### Community 94 - "check_integridade.py"
 Cohesion: 0.16
@@ -877,20 +892,20 @@ Cohesion: 0.14
 Nodes (3): _El, _fab(), _cria()
 
 ### Community 97 - "mostrar_tv"
-Cohesion: 0.20
-Nodes (17): Ordem da fala (`normalizar_voz_ordem` — `bd_manipulador.py`), obter_extras_fila(), EN: Extra queue config: voice flags/order/repeat plus editable TV texts. PT-BR:…, _fundo_rodape_escuro(), mostrar_tv(), _atualizar_lateral(), _dur_fala(), _falar_fila() (+9 more)
+Cohesion: 0.19
+Nodes (23): Requisitos não-funcionais (RNF) — garantias técnicas, Painel `/tv` + `/tv/{fila_id}` + `?grupo=` + `?etapa=` — display com voz serializada e mídia, chave_tv(), chave_tv_etapa(), Chave do estado da TV: 'grupo:<slug>' (compartilhada) ou 'fila:<id>' (isolada)., Chave por etapa/sala: mesma TV, fila de anúncio independente por etapa., _estilo_manchester(), mostrar_tv() (+15 more)
 
 ### Community 98 - "requirements.py"
 Cohesion: 0.16
 Nodes (13): bandit, Chromium, gitleaks, install_playwright, k6, Playwright, abrir_downloads(), _caminho_chromium_playwright() (+5 more)
 
-### Community 99 - "ler_tema"
+### Community 99 - "tema_modulo.py"
 Cohesion: 0.03
-Nodes (131): csv, Integrações com o núcleo, Integrações com o núcleo, Fluxo da tela, Administração (`/admin/tecnico`), json, math, mod_agregador_noticias (+123 more)
+Nodes (72): estado(), Real-NiceGUI smoke test for password fields via `ui_comum.campo_texto`. Smoke…, Visual state of a real NiceGUI element (props/classes/style/children). Estado…, Teste do Dashboard mobile-first (Fase 1, item 6) + padrão de exibição. Script…, QA do FLUXO FILAS — testids, CSV, rotas e papel do ator (kbp-qa). Cobre as…, Testes de segurança dos NOVOS módulos…, index(), page (+64 more)
 
-### Community 100 - "Banco de dados"
-Cohesion: 0.25
-Nodes (8): Banco de dados, _colunas_tabela(), _garantir_coluna(), _migrar_midia_para_imagem(), Migra CHECK antigo de tb_midia (só audio/video) para aceitar imagem. Portável…, Chamada, Fila, Models package for mod_filas — partial dataclasses (imperative mapping…
+### Community 100 - "init_db"
+Cohesion: 0.18
+Nodes (12): Banco de dados, adicionar_midia(), _colunas_tabela(), duracao_real_arquivo(), _garantir_coluna(), init_db(), _migrar_midia_para_imagem(), Migra CHECK antigo de tb_midia (só audio/video) para aceitar imagem. Portável… (+4 more)
 
 ### Community 101 - "_El"
 Cohesion: 0.15
@@ -908,9 +923,9 @@ Nodes (12): Intranet Modular — Referência de API e Código, audit_log — aud
 Cohesion: 0.17
 Nodes (13): 3.1 Instalação completa (tudo), 3.2 Só Playwright, 3.3 Só ferramentas de segurança (DevTools), 3. Como executar, 6. Fluxo de execução, _chrome_sistema_ok(), install_devtools(), install_playwright() (+5 more)
 
-### Community 105 - "_clicar_seguro"
+### Community 105 - "TestCliqueSeguroEmpenhos"
 Cohesion: 0.11
-Nodes (15): _clicar_seguro(), Login qamaster, goto rota dona, click seguro e fecha sem confirmar., Cliques seguros dos empenhos (linhas 18-28)., Clica em empenhos-atualizar e garante lista recarregada., Pula empenhos-fila-editar: exige linha da fila selecionada., Pula empenhos-fila-processar: exige linha e escreve de verdade., Clica em empenhos-filtro-icone e garante filtro sem sair da rota., Clica em empenhos-lote-baixar sem lote e garante sem download. (+7 more)
+Nodes (10): Cliques seguros dos empenhos (linhas 18-28)., Clica em empenhos-atualizar e garante lista recarregada., Pula empenhos-fila-editar: exige linha da fila selecionada., Pula empenhos-fila-processar: exige linha e escreve de verdade., Clica em empenhos-filtro-icone e garante filtro sem sair da rota., Clica em empenhos-lote-baixar sem lote e garante sem download., Clica em empenhos-lote-limpar e garante lista recarregada., Clica em empenhos-lote-marcar e garante lista recarregada. (+2 more)
 
 ### Community 106 - "_porta_valida"
 Cohesion: 0.17
@@ -926,31 +941,31 @@ Nodes (25): _clicar_seguro(), _cookie_sem_segredo(), _eh_abrir_fechar(), _eh_fin
 
 ### Community 109 - "pw_cobertura_extra_qa.py"
 Cohesion: 0.08
-Nodes (23): Cobertura extra QA — primeiros 85 data-testid (pytest-playwright, headless).…, Verifica editar_pdf-juntar (escrita: so visible/enabled, sem clicar)., Verifica presenca de editpdf-upload em /edit-pdf (sem upload, sem clicar)., Verifica presenca de empenhos-busca em /renomear-empenho., Verifica empenhos-fila-processar (escrita: so visible/enabled, sem clicar)., Verifica presenca de admin-unidade-tel em /admin/lista_telefonica., Verifica presenca de admin-unidade-tipo em /admin/lista_telefonica., Verifica agregador-coletar (escrita: so visible/enabled, sem clicar). (+15 more)
+Nodes (25): Cobertura extra QA — primeiros 85 data-testid (pytest-playwright, headless).…, Verifica presenca de blog-selecionar-todos em /blog (sem clicar)., Verifica editar_pdf-excluir (escrita: so visible/enabled, sem clicar)., Verifica presenca de editar_pdf-verificar em /edit-pdf (sem clicar)., Verifica presenca de admin-contato-tel em /admin/lista_telefonica., Verifica presenca de admin-contato-unidade em /admin/lista_telefonica., Verifica presenca de admin-contato-user em /admin/lista_telefonica., Verifica presenca de admin-unidade-tel em /admin/lista_telefonica. (+17 more)
 
 ### Community 110 - "Ferramentas e Práticas de Segurança (DevSecOps)"
-Cohesion: 0.14
-Nodes (18): CrudBase (único ponto de acesso ao banco), graphify (grafo de conhecimento dev-only), Auditoria de Segurança do Menu Hambúrguer (12/09/2026), bandit 1.9.4 (SAST Python), Ferramentas e Práticas de Segurança (DevSecOps), gitleaks 8.24.3 (segredos no histórico git), pip-audit 2.10.1 (CVEs de dependências), safety 3.8.1 (CVEs conhecidas) (+10 more)
+Cohesion: 0.21
+Nodes (13): risco storage_secret placeholder (main.py), Auditoria de Segurança do Menu Hambúrguer (12/09/2026), bandit 1.9.4 (SAST Python), Ferramentas e Práticas de Segurança (DevSecOps), gitleaks 8.24.3 (segredos no histórico git), pip-audit 2.10.1 (CVEs de dependências), safety 3.8.1 (CVEs conhecidas), semgrep 1.176.1 (SAST multi-regra) (+5 more)
 
-### Community 111 - "_ler_admin"
-Cohesion: 0.29
-Nodes (3): _ler_admin(), Auditoria só no menu Auditoria + quarentena/fila/template/campos., TestUnidadeAuditoriaQuarentenaFilaTemplateCampos
+### Community 111 - "get_auditoria_connection"
+Cohesion: 0.36
+Nodes (11): check(), main(), Teste funcional do módulo Auditoria (rastreabilidade LGPD). Roda manualmente:…, _testar_acesso(), _testar_audit_log(), _testar_indices(), _testar_poda(), _testar_prefs_campos() (+3 more)
 
 ### Community 112 - "_FormatadorBlog"
 Cohesion: 0.20
 Nodes (5): HTMLParser, _FormatadorBlog, _merge_style(), Merges CSS declarations without duplicating ';'. Concatena estilos CSS sem…, Reescreve HTML sanitizado aplicando o padrão visual do Blog: - h1/h2/h3:…
 
-### Community 113 - "mod_solicita_impressao/bd_manipulador.py"
-Cohesion: 0.06
-Nodes (58): datetime, definir_ntp_ativa(), hora_servidor(), hora_servidor_str(), _ler_ntp_ativa(), _log(), _obter_offset_ntp(), offset_ntp() (+50 more)
+### Community 113 - "hora_servidor.py"
+Cohesion: 0.16
+Nodes (18): definir_ntp_ativa(), hora_servidor(), hora_servidor_str(), _ler_ntp_ativa(), _log(), _obter_offset_ntp(), offset_ntp(), Hora do servidor com sincronização opcional via NTP.br (RFC 5905). EN —… (+10 more)
 
-### Community 114 - "_parse_data_pub"
-Cohesion: 0.24
-Nodes (10): Agregador de Notícias — `mod_agregador_noticias`, Agregador de Notícias — `mod_agregador_noticias`, Banco próprio, Propósito, Funcionalidades, Tela `/agregador-noticias` — grid responsivo 3→2→1 + paginação 12 + altura padronizada, Tela `/agregador-noticias-puro` — pura estilo Noticia com cards atuais, _parse_data_pub() (+2 more)
+### Community 114 - "mostrar_administracao"
+Cohesion: 0.14
+Nodes (32): Regras de negócio relevantes, Administração (`/admin/agregador_noticias`), Coleta scrapy-like (espelho `klaytonPrinceMS/Noticia`), Rota e integrações, fontes_config(), _get_config(), habilitado(), intervalo_criar_job() (+24 more)
 
-### Community 115 - "_verificar_presenca"
-Cohesion: 0.08
-Nodes (24): _eh_escrita(), Verifica editar_pdf-excluir (escrita: so visible/enabled, sem clicar)., Heuristica de botao de escrita (nunca clicar; so verificar)., Login qamaster, navega a rota dona e asserta presenca sem clique destrutivo., Verifica presenca de agregador-anterior em /agregador-noticias., Verifica agregador-atualizar (escrita: so visible/enabled, sem clicar)., Verifica presenca de agregador-habilitado em /agregador-noticias., Verifica presenca de agregador-primeira em /agregador-noticias. (+16 more)
+### Community 115 - "_ler"
+Cohesion: 0.50
+Nodes (4): _ler(), Lê um arquivo do repositório a partir da raiz do projeto., `blog-selecionar-{pid}` é TEMPLATE, não testid concreto. O gerador de…, test_vis_blog_selecionar_pid()
 
 ### Community 116 - "verify-credentials.sh"
 Cohesion: 0.35
@@ -960,13 +975,13 @@ Nodes (10): check_docker(), check_grafana(), check_loki(), check_mimir(), check_
 Cohesion: 0.18
 Nodes (10): description, devDependencies, @playwright/test, name, private, scripts, e2e:headed, e2e:report (+2 more)
 
-### Community 118 - "_pasta_backup_path"
-Cohesion: 0.14
-Nodes (18): Aba Backup — pasta nomeada `YYYYMMDD_HHMM_nomePc_ip` + upload owner-isolated + `webkitdirectory`, Config tecnico_max_zip_mb (1024), Funcionalidades, Módulo Técnico — `mod_tecnico`, Pasta mod_tecnico/software/, Permissões, Pontos de atenção, Propósito (+10 more)
+### Community 118 - "docs/index.md"
+Cohesion: 0.39
+Nodes (9): Métricas de Software, Plano de Projeto, Registro de Mudanças, Testes — Casos, Testes — Plano, Testes — Relatórios, QA Execution Report — Intranet Modular (2026-09-25), Versionamento (+1 more)
 
-### Community 119 - "teste_aba_config_intranet.py"
-Cohesion: 0.19
-Nodes (16): achar_botoes(), achar_campos(), check(), clicar(), clicar_seguro(), main(), Teste da aba CONFIG do menu_mod em /configuracoes (módulo Intranet). Script…, Elementos da tela em ORDEM do DOM (BFS — índices = ordem de render). (+8 more)
+### Community 119 - "_construir_dashboard"
+Cohesion: 0.18
+Nodes (12): _construir_dashboard(), _contar_fila_para_autorizar(), _eh_autorizador_impressao(), _orquestrar_resumo_dados(), Coleta os 9 contadores do Resumo — 5 base + fila impressão, quarentena, pdf…, Card de métrica do Resumo — ícone ampliado + número lateral (4 dígitos, >9999)…, Constrói o conteúdo da Home (banner + feed + resumo dinâmico)., Verifica se o usuário é responsável por autorizar impressão (qualquer… (+4 more)
 
 ### Community 120 - "_log"
 Cohesion: 0.08
@@ -1000,9 +1015,9 @@ Nodes (10): Seed master/qacomum/qamaster (troca forçada + auto-cura), Responsab
 Cohesion: 0.20
 Nodes (10): Config agregador_noticias_habilitado, Coleta scrapy-like httpx parsel, Assets noticia originais, Rota /agregador-noticias-puro, Tela Pura de Notícias, Rota /agregador-noticias, tb_noticia, Perfil administrador_geral auditoria (+2 more)
 
-### Community 128 - "aplicar_modelo"
-Cohesion: 0.20
-Nodes (10): aplicar_framework(), aplicar_modelo(), injetar_pic_suave(), injetar_resumo_overrides(), injetar_water_card(), Injeta o CSS local do framework (str) ou compat bool (True=bootstrap)., Aplica o modelo completo — water é escopado só no card Resumo., Water.css escopado — estiliza APENAS o card Resumo (sem reset global) + sombra… (+2 more)
+### Community 128 - "get_modulos_com_auditoria"
+Cohesion: 0.17
+Nodes (12): contar_registros(), _extrair_modulo(), get_modulos_com_auditoria(), get_tabelas_auditoria(), podar_registros(), Lists the per-module audit tables found in the audit database. Retorna os nomes…, Lists modules that produce audit records: [(modulo, tabela)]. Lê…, Extracts the module key from an audit table name (reverse of _nome_tabela).… (+4 more)
 
 ### Community 129 - "Servico Grafana (3000, admin master/master via env)"
 Cohesion: 0.47
@@ -1028,25 +1043,25 @@ Nodes (9): 1. Para que serve, 2. Quando usar, 4.1 No Windows, 4.2 No Linux, 4. D
 Cohesion: 0.28
 Nodes (9): Armadilha hidden sm:*/md:* no NiceGUI 3.15, Backend duplo SQLite/PostgreSQL (um database por módulo), Layout padrão de 4 partes (header/drawer/rodapé/área), mod_intranet — Núcleo Intranet, MODULOS_BD (7 bancos, um por módulo), Anti-disconnect (handlers async + run.io_bound + spinner + ocupado), RNF-UI-01 responsividade mobile-first 320/768/1024, telas_administracao.py (painel admin standalone /admin/{chave}) (+1 more)
 
-### Community 136 - "tem_flag"
-Cohesion: 0.25
-Nodes (8): obter_papel_no_modulo(), Effective role in a module ('administrador'|'comum'|None). Retorna…, True if the user may access the module (used by the core page guard). RF-35: o…, True when the user holds a fine-grained flag (admins pass by role). True se o…, Backward-compatible alias of `validar_acesso_modulo`., tem_flag(), validar_acesso_modulo(), validar_acesso_modulo_compat()
+### Community 136 - "mod_gest_cad_usuario/bd_manipulador.py"
+Cohesion: 0.08
+Nodes (41): _central(), contar_sessoes_ativas(), _eh_bloqueio_banco(), encerrar_sessao(), encerrar_todas_sessoes(), excluir_usuario_definitivo(), _fechar_sessoes_central(), _flags_validas() (+33 more)
 
-### Community 137 - "listar_usuarios"
-Cohesion: 0.40
-Nodes (6): Correção aplicada 24/09/2026 — gest_cad_usuario (código já corrigido, lote só-documentação), Testes e veredito, listar_usuarios(), _normalizar_data(), Normalizes a date value to 'YYYY-MM-DD HH:MM:SS' string. No SQLite…, Lists users with per-module access aggregated (GROUP_CONCAT). Retorna tuplas…
+### Community 137 - "Correção aplicada 24/09/2026 — gest_cad_usuario (código já corrigido, lote só-documentação)"
+Cohesion: 0.50
+Nodes (4): Correção aplicada 24/09/2026 — gest_cad_usuario (código já corrigido, lote só-documentação), Testes e veredito, _normalizar_data(), Normalizes a date value to 'YYYY-MM-DD HH:MM:SS' string. No SQLite…
 
 ### Community 138 - "TestCliqueSeguroAgregador"
-Cohesion: 0.09
-Nodes (12): Cliques seguros do agregador (linhas 3-12)., Clica em agregador-add-fonte sem cadastrar (fecha sem salvar)., Clica em agregador-anterior e garante paginacao sem sair da rota., Clica em agregador-atualizar e garante lista recarregada., Clica em agregador-coletar e garante permanencia na rota., Clica em agregador-coletar-agora e fecha sem confirmar duplicado., Verifica agregador-limpar-censuradas sem apagar (definitivo)., Clica em agregador-primeira e garante paginacao sem sair da rota. (+4 more)
+Cohesion: 0.10
+Nodes (11): Cliques seguros do agregador (linhas 3-12)., Clica em agregador-add-fonte sem cadastrar (fecha sem salvar)., Clica em agregador-anterior e garante paginacao sem sair da rota., A grade é atualizada SOZINHA — o botão 'Atualizar' foi removido. Removido em…, Clica em agregador-coletar e garante permanencia na rota., Verifica agregador-limpar-censuradas sem apagar (definitivo)., Clica em agregador-primeira e garante paginacao sem sair da rota., Clica em agregador-proxima e garante paginacao sem sair da rota. (+3 more)
 
 ### Community 139 - "Editor de PDF — mod_edit_pdf"
-Cohesion: 0.22
-Nodes (9): Auditoria com SHA-256 origem/destino, Cotas em 4 níveis (global, usuário, lote, estoque), Banco próprio db_mod_edit_pdf.db, Expiração agendada cleanup_pdf (1 min, ator sistema), Editor de PDF — mod_edit_pdf, Rota /edit-pdf (chave editar_pdf), Tabela tb_arquivos (operacao upload/saida/zip), Tabela tb_cota_disco (uso por usuário) (+1 more)
+Cohesion: 0.17
+Nodes (10): Auditoria com SHA-256 origem/destino, Cotas em 4 níveis (global, usuário, lote, estoque), Banco próprio db_mod_edit_pdf.db, Expiração agendada cleanup_pdf (1 min, ator sistema), Editor de PDF — mod_edit_pdf, Rota /edit-pdf (chave editar_pdf), Tabela tb_arquivos (operacao upload/saida/zip), Tabela tb_cota_disco (uso por usuário) (+2 more)
 
-### Community 140 - "Aba Software — download multi-seleção com zip recursivo"
-Cohesion: 0.40
-Nodes (5): Aba Software — download multi-seleção com zip recursivo, listar_software(), listar_software_recursivo(), EN: Recursive listing of files/folders in software/ (relative to software/).…, EN: List all leaf files in software/ recursively (ignore .gitkeep). PT-BR:…
+### Community 140 - "modulos_registrados"
+Cohesion: 0.22
+Nodes (9): _nomes_modulos(), Mapa chave → (nome, icone) dos módulos registrados — populado na primeira…, chaves_ativas(), chaves_desativadas(), modulos_registrados(), [(chave, nome, icone, rota, ativo)] — ALL registered modules, ordered. Retorna…, Chaves de módulos marcados como removidos/desativados., modulo_habilitado() (+1 more)
 
 ### Community 141 - "Graphify Query BFS DFS"
 Cohesion: 0.29
@@ -1060,37 +1075,45 @@ Nodes (6): { execSync }, path, root, script, venvPython, ref_child_process
 Cohesion: 0.33
 Nodes (5): configurar(), _console_valido(), _nivel_valido(), Validates the console mode (auto/sempre/nunca), defaulting to auto. Valida o…, (Re)configura os sinks do loguru conforme tb_config. - Arquivo core…
 
+### Community 144 - "mod_blog/bd_manipulador.py"
+Cohesion: 0.05
+Nodes (40): Controles de imagem do editor do Blog — alinhar/esticar. EN: Blog editor image…, Markdown dentro do editor WYSIWYG do Blog. EN: Markdown inside the WYSIWYG…, html, html_parser, ajustar_imagem_html(), contar_postagens(), formatar_conteudo_para_exibicao(), _garantir_carrossel_padrao() (+32 more)
+
 ### Community 145 - "tb_solicitacoes"
 Cohesion: 0.33
 Nodes (6): confirmar_lote, hora_servidor, imprimir_grupo, relatorio_impressao, tb_solicitacoes, tipo_papel
 
-### Community 146 - "_dialogo_troca_visivel"
-Cohesion: 0.17
-Nodes (12): _abrir_menu(), _dialogo_troca_visivel(), fazer_login(), E2E headless, sequencial, 1 contexto por teste, sem carga., Admin entra e vê header + saudação (ou diálogo de troca ciente)., Comum entra e vê header sem área restrita de admin., Senha errada não sai do /login (validação do ator)., Drawer expõe menu-home e menu-sair após login admin. (+4 more)
+### Community 146 - "provision_dashboard"
+Cohesion: 0.32
+Nodes (8): ensure_folder(), main(), provision_dashboard(), Perform an HTTP request to Grafana with basic auth., Ensure the target folder exists and return its UID., Upload a single dashboard JSON., _request(), Path
 
 ### Community 147 - "Rota /tv"
 Cohesion: 0.33
 Nodes (6): listar_para_tv, Carrossel notícias TV, Rota /tv, tb_midia, tb_tv_estado, tv_grupo slug
 
-### Community 149 - "limpar_censuradas"
-Cohesion: 0.15
-Nodes (21): Atualização 25/09/2026 — censura compartilhada orquestrada pelo núcleo, Censura de conteúdo — palavras bloqueadas (central `mod_intranet/censura.py`), Diagrama da censura compartilhada, `mod_intranet/censura.py` — o núcleo compartilhado, Os três consumidores, Quem orquestra a purga — e por que o Blog, Precedente: `mod_intranet/censura.py`, Censura de conteúdo — palavras bloqueadas (central `mod_intranet/censura.py`) (+13 more)
+### Community 148 - "_encerrar"
+Cohesion: 0.25
+Nodes (8): _ao_sinal(), _encerrar(), parar_servidor(), Para o servidor de documentação (idempotente, fail-soft). Encerra o…, finalizar_otel(), Shutdown OpenTelemetry SDK. Finaliza o SDK do OpenTelemetry., encerrar_agendador(), Para o agendador de forma ordenada (idempotente, fail-soft). Desliga o…
 
-### Community 150 - "obter_backup"
-Cohesion: 0.40
-Nodes (5): obter_backup(), EN: Fetch one backup row by pasta_nome (None when absent). PT-BR: Busca uma…, _dlg_listar(), _listar(), EN: Preview dialog listing up to 200 files of a backup folder. PT-BR: Diálogo…
+### Community 149 - "titulo_bloqueado"
+Cohesion: 0.21
+Nodes (15): Censura de conteúdo — palavras bloqueadas (central `mod_intranet/censura.py`), `mod_intranet/censura.py` — o núcleo compartilhado, Precedente: `mod_intranet/censura.py`, Censura de conteúdo — palavras bloqueadas (central `mod_intranet/censura.py`), _filtrar_censura_tv(), Filtra linhas censuradas pelo título, preservando no máximo limite itens., filtrar_titulo(), _normalizar() (+7 more)
+
+### Community 150 - "relatorio_impressao"
+Cohesion: 0.36
+Nodes (8): _agregar_impressao(), Runs a print aggregation (status='impresso') over a period. `agrupar_por`:…, Builds the print report (status='impresso') for a period. Dicionário com totais…, relatorio_impressao(), _por_autorizador(), _por_impressor(), _por_secretaria(), _por_setor()
 
 ### Community 151 - "opencode.json"
 Cohesion: 0.33
 Nodes (5): git *, permission, bash, plugin, $schema
 
-### Community 152 - "test_seg_novos_modulos.py"
-Cohesion: 0.17
-Nodes (6): QA do FLUXO FILAS — testids, CSV, rotas e papel do ator (kbp-qa). Cobre as…, Testes de segurança dos NOVOS módulos…, mod_filas, mod_tecnico, unicodedata, wave
+### Community 152 - "_rodar_standalone"
+Cohesion: 0.18
+Nodes (13): _abrir_agregador(), browser_type_launch_args(), card_logado(), _fazer_login(), fixture, EN: True when localhost:8080 answers. PT-BR: True se localhost:8080 responde., EN: Login as the QA admin seed user. PT-BR: login com o usuário seed de QA., EN: Open the news screen and wait for cards. PT-BR: abre a tela e espera os… (+5 more)
 
 ### Community 153 - "Configurações e Variáveis de Ambiente"
 Cohesion: 0.09
-Nodes (24): Tela Pura de Notícias — `mod_agregador_noticias/telas_puro.py` (`/agregador-noticias-puro`), Lista Telefônica — `mod_lista_telefonica`, Técnico — `mod_tecnico`, Intranet Modular — Arquitetura, Configurações e Variáveis de Ambiente, hora_ntp_ativa, notificacao_timeout, porta 8080 (+16 more)
+Nodes (23): Tela Pura de Notícias — `mod_agregador_noticias/telas_puro.py` (`/agregador-noticias-puro`), Lista Telefônica — `mod_lista_telefonica`, Intranet Modular — Arquitetura, Configurações e Variáveis de Ambiente, hora_ntp_ativa, notificacao_timeout, porta 8080, storage_secret (+15 more)
 
 ### Community 154 - "Organizador admin"
 Cohesion: 0.40
@@ -1112,33 +1135,29 @@ Nodes (4): intro-bg Hero Background Image, Intro hero background for agregador-n
 Cohesion: 0.50
 Nodes (3): { login, coletarErros, errosFatais }, ROTAS, { test, expect }
 
-### Community 160 - "get_auditoria_connection"
-Cohesion: 0.36
-Nodes (11): check(), main(), Teste funcional do módulo Auditoria (rastreabilidade LGPD). Roda manualmente:…, _testar_acesso(), _testar_audit_log(), _testar_indices(), _testar_poda(), _testar_prefs_campos() (+3 more)
+### Community 160 - "fallback_attachments"
+Cohesion: 0.50
+Nodes (4): get, fallback_attachments(), EN: Fallback for broken /api/attachments/* exported from Trello/Notion. Serves…, servir_js_impressao()
 
 ### Community 161 - "tb_backup"
 Cohesion: 0.50
 Nodes (4): criar_pasta_backup, salvar_arquivos_backup, tb_backup, tb_backup_arquivo
 
+### Community 162 - "page_login"
+Cohesion: 0.50
+Nodes (4): page_login(), tentar_login(), Placeholder hook para metricas de login via OTel. Sobrescrita dinamicamente por…, registrar_login_observabilidade()
+
 ### Community 163 - "Rota /filas"
 Cohesion: 0.50
 Nodes (4): Rota /filas, tb_chamada, tb_fila, voz_ordem
 
-### Community 164 - "_dialogo_troca_visivel"
-Cohesion: 0.22
-Nodes (10): _dialogo_troca_visivel(), fazer_login(), E2E headless, sequencial, sem carga., qamaster vê busca do feed em /blog., qamaster vê título + publicar (controles do editor WYSIWYG)., 1 write com cleanup: publica rascunho QA e exclui em seguida., qacomum não vê o botão publicar (ou é barrado no /blog)., Detecta troca obrigatória. (+2 more)
-
-### Community 165 - "_dialogo_troca_visivel"
-Cohesion: 0.24
-Nodes (9): _dialogo_troca_visivel(), fazer_login(), E2E headless, sequencial, sem upload (sem carga)., qamaster vê atualizar + enviar + juntar., qacomum (com editar_pdf liberado) vê o painel sem poder admin., Clicar Atualizar recarrega a lista sem erro fatal (só leitura)., Detecta troca obrigatória., Login via data-testid; True se saiu do /login. (+1 more)
+### Community 164 - "aquecer_auditoria"
+Cohesion: 0.50
+Nodes (4): _passo_auditoria(), Pre-cria as tabelas de auditoria ANTES do servidor atender. A 1a gravação de…, aquecer_auditoria(), EN: Pre-creates the audit tables off the event-loop (boot warm-up). PT-BR: Pré-…
 
 ### Community 166 - "iniciar.sh"
 Cohesion: 0.50
 Nodes (4): INTRANET_FORCE_SQLITE, INTRANET_SEM_OTEL, mostrar_ips(), iniciar.sh script
-
-### Community 167 - "_dialogo_troca_visivel"
-Cohesion: 0.24
-Nodes (9): _dialogo_troca_visivel(), fazer_login(), E2E headless, sequencial, sem processar lote., qamaster vê busca + atualizar + processar., qacomum (com empenhos liberado) vê o painel., Digitar na busca filtra sem renomear nada (só leitura)., Detecta troca obrigatória., Login via data-testid; True se saiu do /login. (+1 more)
 
 ### Community 168 - "_eh_admin_do_modulo"
 Cohesion: 0.50
@@ -1168,17 +1187,9 @@ Nodes (3): Favicon Noticia, Proposito Favicon Tema Noticias, Uso Agregador Notic
 Cohesion: 0.67
 Nodes (3): Background JPG Abstract Woven Architecture Facade, High-contrast black-and-white abstract modern facade with curved woven metallic panels and dramatic light shadow, Subtle dark textured page background for news aggregator puro page providing modern professional aesthetic
 
-### Community 175 - "_dialogo_troca_visivel"
-Cohesion: 0.24
-Nodes (9): _dialogo_troca_visivel(), fazer_login(), E2E headless, sequencial, sem carga; leitura + diálogo sem escrita., qamaster vê busca, botão Novo e ao menos o próprio usuário., Abrir 'Novo usuário' e fechar não cria nada (cleanup implícito)., qacomum vê 'Acesso restrito' em /users (papel validado)., Detecta troca obrigatória (troca forçada ciente)., Login via data-testid; True se saiu do /login. (+1 more)
-
 ### Community 176 - "ORGANOGRAMA_BASE"
 Cohesion: 0.67
 Nodes (3): ORGANOGRAMA_BASE, tb_secretarias, tb_setores
-
-### Community 177 - "_dialogo_troca_visivel"
-Cohesion: 0.27
-Nodes (8): _dialogo_troca_visivel(), fazer_login(), E2E headless, sequencial, 1 contexto, sem carga., qamaster vê busca e botão exportar (somente leitura)., qacomum é barrado: cai em / com 'Acesso negado' (papel antes de tudo)., Detecta troca obrigatória., Login via data-testid; True se saiu do /login., TestAuditoriaAcessoE2E
 
 ### Community 178 - "Aba Navegar"
 Cohesion: 0.67
@@ -1186,11 +1197,11 @@ Nodes (3): Aba Navegar, Pesquisa FTS5 integrada, tb_levantamento
 
 ### Community 179 - "_ler"
 Cohesion: 0.21
-Nodes (8): _ler(), Três modos de exibição implementados., Lê fonte (somente leitura)., Unitários rápidos sem servidor., Feed (busca/titulo/conteudo/publicar) e carrossel via .props., Rota /blog registrada., Só admin geral/admin do blog publica (papel antes da escrita)., TestBlogEstatico
+Nodes (8): _ler(), Unitários rápidos sem servidor., Feed (busca/titulo/conteudo/publicar) e carrossel via .props., Rota /blog registrada., Só admin geral/admin do blog publica (papel antes da escrita)., Três modos de exibição implementados., Lê fonte (somente leitura)., TestBlogEstatico
 
 ### Community 180 - "get_tracer"
-Cohesion: 0.19
-Nodes (13): Dashboards Intranet (Visao Geral/Mimir, Traces/Tempo, Logs/Loki), dashboards.yml - provider 'Intranet Dashboards' (update 30s), postgres/docker-compose.yml - backend opcional PostgreSQL 16, Docker - Stack OTel LGTM (README), Credenciais master/master compartilhadas com admin da Intranet, Grafana OTel LGTM stack (Grafana + Loki + Tempo + Mimir + OTel Collector), instrumentar_aplicacao(), _observer_requisicoes() (+5 more)
+Cohesion: 0.16
+Nodes (15): Dashboards Intranet (Visao Geral/Mimir, Traces/Tempo, Logs/Loki), dashboards.yml - provider 'Intranet Dashboards' (update 30s), postgres/docker-compose.yml - backend opcional PostgreSQL 16, Docker - Stack OTel LGTM (README), Credenciais master/master compartilhadas com admin da Intranet, Grafana OTel LGTM stack (Grafana + Loki + Tempo + Mimir + OTel Collector), auto_iniciar_otel(), Auto-start OTel stack if Docker is available. Auto-inicia a stack OTel se o… (+7 more)
 
 ### Community 181 - "Subagente kbp-web-design"
 Cohesion: 0.67
@@ -1204,57 +1215,45 @@ Nodes (7): Cliques seguros do blog (linhas 13-17)., Pula blog-confirmar-excluir-
 Cohesion: 0.21
 Nodes (8): _ler(), Asserts rápidos sem servidor (topo da pirâmide)., login-usuario/senha/entrar expostos via .props('data-testid=...')., Rotas /login e / registradas no entry point., Drawer expõe menu-hamburguer/home/sair via data-testid., Papel/credencial validado antes de registrar sessão (autenticar)., Lê um arquivo do projeto em UTF-8 (somente leitura)., TestLoginEstatico
 
-### Community 205 - "test_editor_pdf.py"
-Cohesion: 0.13
-Nodes (18): check(), main(), n_paginas(), pdf_sintetico(), Teste do módulo Editor de PDF (Fase 5.6) — rodar manualmente: python…, mod_edit_pdf, _cota_global_bytes(), _log_exc() (+10 more)
-
 ### Community 206 - "_ler"
 Cohesion: 0.21
-Nodes (8): _ler(), Manipulador expõe listar_usuarios (leitura da lista)., Lê fonte do projeto (somente leitura)., Unitários rápidos: testids, rota e papel do ator., Busca e botão Novo via .props('data-testid=...')., Rota /users registrada no entry point., Somente admin geral/admin do módulo escreve; demais barrados., TestUsuariosEstatico
+Nodes (8): _ler(), Unitários rápidos: testids, rota e papel do ator., Busca e botão Novo via .props('data-testid=...')., Rota /users registrada no entry point., Somente admin geral/admin do módulo escreve; demais barrados., Manipulador expõe listar_usuarios (leitura da lista)., Lê fonte do projeto (somente leitura)., TestUsuariosEstatico
 
 ### Community 209 - "autenticacao.py"
-Cohesion: 0.07
-Nodes (48): garantir(), Idempotently fixes QA users' passwords, profiles and change flag., bcrypt, Integrações com o núcleo, Permissões, Permissões, baixar_pdf_impressao(), Rota de download do PDF da solicitação (com marca d'água se ativa). Protegida:… (+40 more)
+Cohesion: 0.04
+Nodes (87): garantir(), Garante as credenciais dos usuários QA usados nos testes E2E. EN: Ensures the…, Idempotently fixes QA users' passwords, profiles and change flag., bcrypt, contextvars, _init_db_seguro(), Runs the real init_db bootstrap inside a protected wrapper. Executa o bootstrap…, alterar_rota_modulo() (+79 more)
 
-### Community 210 - "audit_log"
-Cohesion: 0.14
-Nodes (19): 1. Imports **lazy** (dentro da função), 2. Contrato **fail-soft** (valor neutro + `logger.warning`), As duas regras de implementação, Testes e veredito, resetar(), salvar(), audit_log(), Registra ação na auditoria com rastreabilidade. A gravação ocorre no banco… (+11 more)
-
-### Community 212 - "_botao_padrao"
-Cohesion: 0.22
-Nodes (11): _botao_padrao(), _campo_empilhado(), _campo_icone(), confirmar(), _mover(), refresh_modulos(), refresh_orfaos(), registrar() (+3 more)
+### Community 210 - "render"
+Cohesion: 0.12
+Nodes (18): _fmt_bytes(), mostrar_tela(), _painel_backup(), render(), ao_upload(), _baixar(), criar(), _painel_software() (+10 more)
 
 ### Community 241 - "mod_tecnico/bd_manipulador.py"
-Cohesion: 0.15
-Nodes (20): get_connection(), _hash_sha256(), init_db(), listar_backups(), _log(), _obter_config_tecnico(), _obter_max_zip_mb(), EN: Technical module — own DB, files and backups (db_mod_tecnico.db, WAL). PT-… (+12 more)
+Cohesion: 0.05
+Nodes (70): Banco próprio, Pontos de atenção, Propósito, Regras de negócio relevantes, Status, Técnico — `mod_tecnico`, Aba Backup — pasta nomeada `YYYYMMDD_HHMM_nomePc_ip` + upload owner-isolated + `webkitdirectory`, Aba Software — download multi-seleção com zip recursivo (+62 more)
 
-### Community 249 - "pesquisar"
-Cohesion: 0.11
-Nodes (18): Backend sem browser — FTS 1 letra, levantamento presença, EE string., TestIntegracaoBackend, _fts_escape(), _fts_query_prefixada(), listar_empenhos(), pesquisar(), pesquisar_levantamento(), Busca no levantamento: FTS5 (nome+campos+conteúdo) com fallback LIKE. Cobre… (+10 more)
-
-### Community 253 - "Banco de dados"
-Cohesion: 0.38
-Nodes (6): Banco próprio, Banco de dados, Backup, BackupArquivo, Models package for mod_tecnico — dataclasses + SQLAlchemy imperative. EN:…, File inside a backup.
+### Community 249 - "test_navegar_pesquisa_empenhos.py"
+Cohesion: 0.10
+Nodes (17): Levantamento do Renomear Empenhos — leitura anexada à listagem. EN: Empenhos…, browser_type_launch_args(), fixture, QA Renomear Empenhos — pirâmide de testes com evidência headless. EN — Full QA…, Backend sem browser — FTS 1 letra, levantamento presença, EE string., TestIntegracaoBackend, mod_renomear_empenho, _fts_escape() (+9 more)
 
 ### Community 286 - "Renomear Empenhos — mod_renomear_empenho"
 Cohesion: 0.12
 Nodes (18): Banco próprio db_mod_renomear_empenho.db, Renomear Empenhos — mod_renomear_empenho, Job monitor_empenho APScheduler (multi-pasta local/UNC), Organizador físico (caixas, capa.pdf/txt, matrizDeDocumentos), Tabela tb_empenhos (numero, parcela, tipo_especial EC/EE/EG/AE), Tabela FTS5 tb_indexador_pesquisa_fts5 (59 colunas), Tabela tb_quarentena (motivo + reprocessamento sem restart), Manual de Uso Renomeador de Empenho (+10 more)
 
 ### Community 287 - "mod_intranet/models/__init__.py"
-Cohesion: 0.25
-Nodes (7): Configuracao, Models package for mod_intranet — dataclasses + SQLAlchemy ORM. Provides type-…, Key-value configuration entry (tb_config). EN: Represents a single key=value…, User session entry (tb_sessoes) with LGPD tracking fields. EN: Represents an…, Sessao, sqlalchemy, sqlalchemy_orm
+Cohesion: 0.17
+Nodes (9): Configuracao, Models package for mod_intranet — dataclasses + SQLAlchemy ORM. Provides type-…, Key-value configuration entry (tb_config). EN: Represents a single key=value…, User session entry (tb_sessoes) with LGPD tracking fields. EN: Represents an…, Sessao, Returns all configuration entries. EN: Returns all rows from tb_config as…, Returns the active session for a user+hash pair. EN: Returns the session row…, sqlalchemy (+1 more)
 
-### Community 288 - "listar_para_tv"
-Cohesion: 0.10
-Nodes (31): `listar_para_tv` — o carrossel da TV de Filas, Integrações, A regra adotada (25/09/2026), As 7 funções e onde cada uma é usada, Como adicionar uma função nova na fachada, Exceção documentada: cascata LGPD, Fachada de Integração — `mod_intranet/integracoes.py`, O problema que a fachada resolve (+23 more)
+### Community 288 - "integracoes.py"
+Cohesion: 0.12
+Nodes (30): Por que a fachada e não um import, 1. Imports **lazy** (dentro da função), 2. Contrato **fail-soft** (valor neutro + `logger.warning`), A regra adotada (25/09/2026), As 7 funções e onde cada uma é usada, As duas regras de implementação, Como adicionar uma função nova na fachada, Exceção documentada: cascata LGPD (+22 more)
 
 ### Community 289 - "_ler"
 Cohesion: 0.24
-Nodes (7): _ler(), Lê fonte (somente leitura)., Unitários rápidos sem servidor., Busca e exportar via .props('data-testid=...')., Rota /auditoria registrada., Exclusivo do administrador_geral (leitura; sem escrita pela UI)., TestAuditoriaEstatico
+Nodes (7): _ler(), Unitários rápidos sem servidor., Busca e exportar via .props('data-testid=...')., Rota /auditoria registrada., Exclusivo do administrador_geral (leitura; sem escrita pela UI)., Lê fonte (somente leitura)., TestAuditoriaEstatico
 
-### Community 290 - "pw_click_extra_qa.py"
-Cohesion: 0.22
-Nodes (9): _dialogo_troca_visivel(), fazer_login(), _fechar_dialogo_se_aberto(), Clique seguro QA — botoes 1-28 de all_buttons.txt (pytest-playwright,…, Mapeia cada botao (linhas 1-28) para a rota dona do modulo., Fecha dialog Quasar aberto sem confirmar; retorna True se havia dialog., Detecta o dialogo de troca obrigatoria (troca forcada ciente)., Faz login via data-testid e retorna True se saiu do /login. (+1 more)
+### Community 290 - "_clicar_seguro"
+Cohesion: 0.17
+Nodes (9): _clicar_seguro(), _fechar_dialogo_se_aberto(), Mapeia cada botao (linhas 1-28) para a rota dona do modulo., Fecha dialog Quasar aberto sem confirmar; retorna True se havia dialog., Login qamaster, goto rota dona, click seguro e fecha sem confirmar., Verifica empenhos-processar sem processar a pasta (definitivo)., Clica em empenhos-raiz-dot e garante navegacao na mesma rota., Verifica empenhos-reprocessar-fila sem reprocessar (definitivo). (+1 more)
 
 ### Community 291 - "dataclasses"
 Cohesion: 0.29
@@ -1262,86 +1261,158 @@ Nodes (6): dataclasses, Banco de dados, EN: Models package for mod_agregador_not
 
 ### Community 292 - "_ler"
 Cohesion: 0.24
-Nodes (7): _ler(), Lê fonte (somente leitura)., Unitários rápidos sem servidor., Painel expõe testids via .props('data-testid=...')., Rota /edit-pdf registrada., Acesso validado antes de upload/juntar/excluir (papel + dono)., TestEditPdfEstatico
+Nodes (7): _ler(), Unitários rápidos sem servidor., Painel expõe testids via .props('data-testid=...')., Rota /edit-pdf registrada., Acesso validado antes de upload/juntar/excluir (papel + dono)., Lê fonte (somente leitura)., TestEditPdfEstatico
 
 ### Community 293 - "_ler"
 Cohesion: 0.24
-Nodes (7): _ler(), Lê fonte (somente leitura)., Unitários rápidos sem servidor., Navegação/busca/processar via .props('data-testid=...')., Rota /renomear-empenho registrada., Renomear/processar valida papel antes de escrever., TestEmpenhosEstatico
+Nodes (7): _ler(), Unitários rápidos sem servidor., Navegação/busca/processar via .props('data-testid=...')., Rota /renomear-empenho registrada., Renomear/processar valida papel antes de escrever., Lê fonte (somente leitura)., TestEmpenhosEstatico
 
 ### Community 294 - "test_suite.py"
 Cohesion: 0.31
 Nodes (8): _env_limpo(), Run the whole standalone test suite from a single pytest entrypoint. EN —…, Environment without pytest markers (NiceGUI's is_pytest would demand…, Runs every standalone test script and asserts all exit 0., Executes every script, optionally printing live progress. Executa cada script e…, _rodar_suite(), _scripts(), test_suite_standalone()
 
-### Community 296 - "docs/index.md"
-Cohesion: 0.13
-Nodes (25): perfis de usuário (comum, administrador_modulo, administrador_geral), risco storage_secret placeholder (main.py), agendadores em segundo plano (APScheduler), autenticação e sessões (cookie HTTP-Only), padrão de acesso a dados (bd_manipulador.py), inicializar_bancos (bootstrap do banco central), Validação ast.parse UTF-8 (integridade de arquivos), Lições Aprendidas (+17 more)
+### Community 296 - "Padrões de Codificação"
+Cohesion: 0.11
+Nodes (21): perfis de usuário (comum, administrador_modulo, administrador_geral), agendadores em segundo plano (APScheduler), autenticação e sessões (cookie HTTP-Only), padrão de acesso a dados (bd_manipulador.py), CrudBase (único ponto de acesso ao banco), graphify (grafo de conhecimento dev-only), inicializar_bancos (bootstrap do banco central), Validação ast.parse UTF-8 (integridade de arquivos) (+13 more)
 
-### Community 297 - "rotinas.py"
-Cohesion: 0.08
-Nodes (41): Integrações com o núcleo, Limpeza 24 h e reciclagem diária, Módulo Agregador de Notícias — `mod_agregador_noticias`, News Aggregator Module — `mod_agregador_noticias`, Propósito, Rota e integrações, Testes, habilitado() (+33 more)
+### Community 297 - "iniciar_agendador"
+Cohesion: 0.25
+Nodes (9): expirar_imagens_orfas(), Remove imagens não concretizadas em postagem (órfãs há +5 min). Uma imagem é…, iniciar_agendador(), _job_cleanup_blog_imagens(), _job_cleanup_solicita(), _job_reconciliar_impressao(), _job_monitor_empenho(), Varredura automática da pasta monitorada de empenhos (RF-40). (+1 more)
 
-### Community 298 - "cancelar_rascunho"
-Cohesion: 0.33
-Nodes (6): cancelar_rascunho(), obter_rascunho(), Removes a file from disk if it exists (fail-soft). Returns True if removed.…, Fetches one upload draft as a dict (all columns) or None. Busca um rascunho de…, Removes the draft and its server file (user gave up before confirming). Remove…, _remover_arquivo_se_existir()
+### Community 298 - "test_e2e_agregador_card_dom.py"
+Cohesion: 0.24
+Nodes (9): checar_nao_truncado(), checar_um_scroll(), EN: DOM regression tests for the mod_agregador_noticias card (Playwright).…, EN: title/summary never clamped. PT-BR: título/resumo nunca truncados., EN: exactly one scroll container per card. PT-BR: UM container de scroll por…, EN: Title and summary are never clamped. PT-BR: nunca truncados., EN: Exactly one scroll container per card. PT-BR: UM container de scroll por…, test_titulo_e_resumo_nao_truncados() (+1 more)
 
-### Community 299 - "smoke_senha_ui_comum.py"
-Cohesion: 0.40
-Nodes (3): estado(), Real-NiceGUI smoke test for password fields via `ui_comum.campo_texto`. Smoke…, Visual state of a real NiceGUI element (props/classes/style/children). Estado…
+### Community 299 - "_n_colunas"
+Cohesion: 0.20
+Nodes (10): checar_altura_220_celular(), _n_colunas(), EN: Number of grid columns. PT-BR: número de colunas da grade., EN: computed height 220px on mobile. PT-BR: altura 220px no celular., EN: Grid is 3 columns on desktop. PT-BR: grade com 3 colunas no desktop., EN: Grid is 2 columns at <=1024px. PT-BR: grade com 2 colunas no tablet., EN: Grid is 1 column and card is 220px at <=640px. PT-BR: grade com 1 coluna e…, test_grade_1_coluna_e_altura_220_celular() (+2 more)
 
-### Community 301 - "modulos_registrados"
-Cohesion: 0.07
-Nodes (29): alterar_rota_modulo(), chaves_ativas(), chaves_desativadas(), chaves_nativas(), excluir_modulo(), _garantir_tb_modulos(), modulos_registrados(), nome_do_modulo() (+21 more)
-
-### Community 302 - "criar_postagens_blog.py"
-Cohesion: 0.40
-Nodes (5): _log(), main(), Seed of "how-to" blog posts for the common user (Editor PDF, Print Request,…, Logger do seed (loguru) — arquivo dedicado logs/blog_<data>.log., Runs the seed, creating each how-to post and reporting the result. Executa o…
-
-### Community 306 - "auto_iniciar_otel"
+### Community 302 - "_log"
 Cohesion: 0.50
-Nodes (4): auto_iniciar_otel(), iniciar_otel_stack(), Start the OTel LGTM stack. Inicia a stack OTel LGTM. Retorna (sucesso,…, Auto-start OTel stack if Docker is available. Auto-inicia a stack OTel se o…
+Nodes (4): _log(), main(), Logger do seed (loguru) — arquivo dedicado logs/blog_<data>.log., Runs the seed, creating each how-to post and reporting the result. Executa o…
+
+### Community 306 - "_run_command"
+Cohesion: 0.22
+Nodes (12): _compose_command(), _get_compose_path(), iniciar_otel_stack(), parar_otel_stack(), Get the path to docker-compose.yml. Retorna o caminho para o docker-compose.yml., Get the appropriate docker compose command. Retorna o comando apropriado para…, Start the OTel LGTM stack. Inicia a stack OTel LGTM. Retorna (sucesso,…, Stop the OTel LGTM stack. Para a stack OTel LGTM. Retorna (sucesso, mensagem). (+4 more)
 
 ### Community 307 - "mod_renomear_empenho/bd_manipulador.py"
 Cohesion: 0.05
-Nodes (52): _eco_regex(), Validate regex before execution (ReDoS guard). Valida regex do arg antes de…, valida_regex(), anonimizar_usuario(), anotar_arquivos(), arquivo_ja_processado(), arquivo_pendente(), _arquivo_registrado_no_bd() (+44 more)
+Nodes (93): arquivo_pendente(), atualizar_levantamento_renomeado(), _basename_sem_ext(), _campos_busca_ativos(), _commit_com_retry(), detectar_documentos_no_pdf(), detectar_tipo_especial(), editar_campos_empenho() (+85 more)
 
 ### Community 309 - "TestCliqueSeguroAdmin"
 Cohesion: 0.33
 Nodes (4): Cliques seguros dos botoes admin (linhas 1-2)., Clica em admin-criar-contato e fecha o dialog sem salvar., Clica em admin-criar-unidade e fecha o dialog sem salvar., TestCliqueSeguroAdmin
 
 ### Community 311 - "dialogo_editar_fila"
-Cohesion: 0.40
-Nodes (6): Gaps conhecidos (código ↔ docs), Gaps conhecidos (código ↔ docs), dialogo_editar_fila(), _grupo_final(), _salvar(), EN: Edit queue dialog (all creation fields). Reused in /filas and /admin/filas.…
+Cohesion: 0.33
+Nodes (7): Gaps conhecidos (código ↔ docs), Gaps conhecidos (código ↔ docs), listar_grupos_tv(), dialogo_editar_fila(), _grupo_final(), _salvar(), EN: Edit queue dialog (all creation fields). Reused in /filas and /admin/filas.…
 
-### Community 314 - "teste_classes_crud.py"
-Cohesion: 0.03
-Nodes (40): _campo_impar(), Verificação das classes novas do núcleo (CrudBase, ui_painel, ui_form, ui_comum…, _bruto(), _campo_ordem(), Verificação da fábrica central de UI (`ui_comum` + helpers de tela). Script…, Visual state tuple of a stub element (props/classes/style/tooltip/cb). Tupla de…, hashlib, BotaoFabrica (+32 more)
+### Community 314 - "CampoBase"
+Cohesion: 0.09
+Nodes (16): CampoBase, CampoCor, CampoSelecao, item_menu_drawer(), ItemMenuDrawer, Base class for config fields (`tb_config` resolution + finishing). Base dos…, Resolves the initial value (`tb_config` via `chave` or `valor`)., Applies props/classes/style/tooltip/`ao_mudar` to the element. Sequência fixa… (+8 more)
 
-### Community 315 - "_dialogo_troca_visivel"
-Cohesion: 0.50
-Nodes (4): _dialogo_troca_visivel(), fazer_login(), Detecta o dialogo de troca obrigatoria (troca forcada ciente)., Faz login via data-testid e retorna True se saiu do /login.
-
-### Community 318 - "test_e2e_click_extra_sec.py"
+### Community 318 - "_dialogo_troca_visivel"
 Cohesion: 0.04
-Nodes (48): argparse, ensure_folder(), main(), provision_dashboard(), Grafana Dashboard Provisioning - Intranet Modular Provisions dashboards into…, Perform an HTTP request to Grafana with basic auth., Ensure the target folder exists and return its UID., Upload a single dashboard JSON. (+40 more)
+Nodes (70): fazer_login(), Auditoria /auditoria — somente administrador_geral (pytest-playwright). EN:…, E2E headless, sequencial, 1 contexto, sem carga., qamaster vê busca e botão exportar (somente leitura)., qacomum é barrado: cai em / com 'Acesso negado' (papel antes de tudo)., Faz login e CONCLUI a troca de senha obrigatória, se aparecer. Antes:…, TestAuditoriaAcessoE2E, fazer_login() (+62 more)
+
+### Community 321 - "eh_admin_do_modulo"
+Cohesion: 0.28
+Nodes (9): Z(), Funcionalidades, Permissões, Tela `/agregador-noticias` — grid responsivo 3→2→1 + paginação 12 + altura padronizada, Tela `/agregador-noticias-puro` — pura estilo Noticia com cards atuais, Permissões, refresh(), eh_admin_do_modulo() (+1 more)
+
+### Community 322 - "_mostrar_tela_segura"
+Cohesion: 0.17
+Nodes (12): _acesso_negado(), _dlg_novo(), mostrar_tela(), _mostrar_tela_segura(), ao_digitar(), novo_usuario(), _painel_sessoes(), Active sessions tab with per-row terminate actions. Aba Sessões Ativas:… (+4 more)
 
 ### Community 325 - "test_fabrica_documentos.py"
-Cohesion: 0.17
-Nodes (6): assets_test, Levantamento do Renomear Empenhos — leitura anexada à listagem. EN: Empenhos…, Testes da fábrica de documentos fictícios (faker + pytest). Validam:…, TestFabricaNomesImpressora, TestFabricaPontaAPonta, mod_renomear_empenho
+Cohesion: 0.25
+Nodes (4): assets_test, Testes da fábrica de documentos fictícios (faker + pytest). Validam:…, TestFabricaNomesImpressora, TestFabricaPontaAPonta
+
+### Community 330 - "_verificar_presenca"
+Cohesion: 0.08
+Nodes (26): Verifica presenca de blog-titulo em /blog., Verifica editar_pdf-enviar (escrita: so visible/enabled, sem clicar)., Verifica editar_pdf-modo-reduzir (escrita: so visible/enabled, sem clicar)., Verifica editar_pdf-reduzir (escrita: so visible/enabled, sem clicar)., Login qamaster, navega a rota dona e asserta presenca sem clique destrutivo., Verifica presenca de admin-contato-busca em /admin/lista_telefonica., Verifica admin-criar-unidade (escrita: so visible/enabled, sem clicar)., Verifica presenca de agregador-intervalo em /agregador-noticias. (+18 more)
+
+### Community 384 - "_rota_para_testid"
+Cohesion: 0.50
+Nodes (4): _arquivo_do_testid(), Descobre em qual arquivo-fonte o testid é declarado., Resolve a rota dona do testid LENDO O CÓDIGO-FONTE. O mapa manual por prefixo…, _rota_para_testid()
+
+### Community 436 - "_m"
+Cohesion: 0.33
+Nodes (6): checar_card_tem_filhos(), _m(), EN: Card metrics from the DOM. PT-BR: métricas do card vindas do DOM., EN: .card-noticia has children. PT-BR: .card-noticia tem FILHOS., EN: .card-noticia has children — not an empty shell. PT-BR: .card-noticia tem…, test_card_tem_filhos_nao_e_casca_vazia()
+
+### Community 437 - "Modulo"
+Cohesion: 0.33
+Nodes (4): Modulo, Module registry entry (tb_modulos). EN: Represents a registered module in the…, Returns all registered modules, ordered by `ordem` then name. EN: Returns…, Returns the module with the given key or None if not found. EN: Single module…
+
+### Community 439 - "_imprimir_grupo"
+Cohesion: 0.20
+Nodes (12): listar_impressoras(), obter_config(), Minutes before the file is deleted after printing (default 10, min 1). Minutos…, Reads a module-local config key (tb_configuracoes_modulo, via CrudBase). Lê uma…, Lists registered printers (id, nome, papel, cor, fv, sulf, driver, ativo).…, tempo_exclui_impresso_min(), _imprimir(), disparar() (+4 more)
+
+### Community 442 - "test_altura_computada_250px"
+Cohesion: 0.50
+Nodes (4): checar_altura_250(), EN: computed height 250px. PT-BR: altura computada 250px., EN: Card computed height is 250px on desktop. PT-BR: altura computada 250px., test_altura_computada_250px()
+
+### Community 443 - "test_marca_agua_absolute_opacidade_050"
+Cohesion: 0.50
+Nodes (4): checar_marca_agua(), EN: watermark absolute, opacity .5, 20x20. PT-BR: marca d'água absolute, .5,…, EN: Source watermark position:absolute, opacity 0.5, 20x20. PT-BR: marca d'água…, test_marca_agua_absolute_opacidade_050()
+
+### Community 444 - "test_miniatura_60x60"
+Cohesion: 0.50
+Nodes (4): checar_miniatura_60(), EN: thumbnail frame/image 60x60. PT-BR: moldura e foto 60x60., EN: Thumbnail frame and image are 60x60. PT-BR: moldura e imagem 60x60., test_miniatura_60x60()
+
+### Community 445 - "test_resumo_justificado"
+Cohesion: 0.50
+Nodes (4): checar_resumo_justificado(), EN: summary text-align justify. PT-BR: resumo com text-align justify., EN: Summary uses text-align: justify. PT-BR: resumo com text-align justify., test_resumo_justificado()
+
+### Community 447 - "test_rolagem_e_descendente_do_card"
+Cohesion: 0.50
+Nodes (4): checar_rolagem_descendente(), EN: rolagem is a descendant of card. PT-BR: rolagem é descendente do card., EN: .card-noticia__rolagem is a descendant of .card-noticia. PT-BR: .card-…, test_rolagem_e_descendente_do_card()
+
+### Community 448 - "test_titulo_e_resumo_dentro_da_rolagem"
+Cohesion: 0.50
+Nodes (4): checar_texto_dentro_da_rolagem(), EN: title and summary inside the scroll container. PT-BR: título/resumo dentro…, EN: Title and summary live inside the scroll container. PT-BR: título e resumo…, test_titulo_e_resumo_dentro_da_rolagem()
+
+### Community 451 - "browser_type_launch_args"
+Cohesion: 0.67
+Nodes (3): browser_type_launch_args(), fixture, EN: Chromium flags for CI. PT-BR: flags do Chromium para CI.
+
+### Community 452 - "browser_type_launch_args"
+Cohesion: 0.67
+Nodes (3): browser_type_launch_args(), fixture, EN: Chromium flags for CI. PT-BR: flags do Chromium para CI.
+
+### Community 453 - "browser_type_launch_args"
+Cohesion: 0.67
+Nodes (3): browser_type_launch_args(), fixture, EN: Chromium flags for CI. PT-BR: flags do Chromium para CI.
+
+### Community 454 - "browser_type_launch_args"
+Cohesion: 0.67
+Nodes (3): browser_type_launch_args(), fixture, EN: Chromium flags for CI. PT-BR: flags do Chromium para CI.
+
+### Community 455 - "browser_type_launch_args"
+Cohesion: 0.67
+Nodes (3): browser_type_launch_args(), fixture, EN: Chromium flags for CI. PT-BR: flags do Chromium para CI.
+
+### Community 456 - "browser_type_launch_args"
+Cohesion: 0.67
+Nodes (3): browser_type_launch_args(), fixture, EN: Chromium flags for CI. PT-BR: flags do Chromium para CI.
+
+### Community 457 - "browser_type_launch_args"
+Cohesion: 0.67
+Nodes (3): browser_type_launch_args(), fixture, EN: Chromium flags for CI. PT-BR: flags do Chromium para CI.
 
 ## Knowledge Gaps
-- **374 isolated node(s):** `$schema`, `plugin`, `git *`, `@opencode-ai/plugin`, `@opencode-ai/plugin` (+369 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2404 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **216 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **375 isolated node(s):** `$schema`, `plugin`, `git *`, `@opencode-ai/plugin`, `@opencode-ai/plugin` (+370 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2448 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **217 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `notificar()` connect `notificar` to `os`, `_log`, `mod_solicita_impressao/telas_administracao.py`, `abrir_dialogo`, `_log`, `_conn`, `mostrar_tela`, `botao`, `_tela_organizador`, `Fluxo da tela`, `liberar_acesso`, `limpar_censuradas`, `set_config`, `obter_backup`, `_tela_navegar`, `get_config`, `mod_renomear_empenho/telas.py`, `get_logger`, `visual.py`, `nome_padronizado`, `_dialogo_troca_credenciais_completo`, `mod_blog/bd_manipulador.py`, `rotinas.py`, `Relatório de Execução de QA — Intranet Modular (25/09/2026)`, `pdf_operacoes.py`, `_log`, `mostrar_tela`, `dialogo_editar_fila`, `_render_seguro`, `obter_usuario`, `mostrar_tela`, `mod_intranet/telas.py`, `mod_edit_pdf/bd_manipulador.py`, `autenticacao.py`, `audit_log`, `_tela_nova`, `_botao_padrao`, `_renderizar_carrossel`, `Pontos de atenção`, `ler_tema`, `_parse_data_pub`, `pesquisar`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
-- **Why does `get_logger()` connect `get_logger` to `os`, `_log`, `mod_auditoria/bd_manipulador.py`, `_log`, `botao`, `mod_gest_cad_usuario/bd_manipulador.py`, `wrapper`, `_log`, `_executar_e_persistir`, `Repositorio`, `liberar_acesso`, `confirmar_rascunho`, `banco_conexao.py`, `get_config`, `_dialogo_troca_credenciais_completo`, `listar_arquivos_grupo`, `_log`, `mod_blog/bd_manipulador.py`, `FormularioBuilder`, `rotinas.py`, `cancelar_rascunho`, `modulos_registrados`, `criar_postagens_blog.py`, `pdf_operacoes.py`, `_log`, `mod_agregador_noticias/bd_manipulador.py`, `_log`, `mostrar_tela`, `_log`, `PainelLista`, `_log`, `autenticacao.py`, `_renderizar_carrossel`, `tema_css.py`, `_log`, `iniciar_servidor`, `Tela Pura de Notícias — `mod_agregador_noticias/telas_puro.py` (`/agregador-noticias-puro`)`, `ler_tema`, `_clicar_seguro`, `mod_solicita_impressao/bd_manipulador.py`, `mod_tecnico/bd_manipulador.py`, `_log`?**
-  _High betweenness centrality (0.060) - this node is a cross-community bridge._
-- **Why does `get_config()` connect `get_config` to `os`, `home_visual.py`, `mod_auditoria/bd_manipulador.py`, `_conn`, `mostrar_tela`, `Aba Software — download multi-seleção com zip recursivo`, `mod_gest_cad_usuario/bd_manipulador.py`, `botao`, `_tela_organizador`, `Fluxo da tela`, `Repositorio`, `limpar_censuradas`, `set_config`, `_tela_navegar`, `mod_renomear_empenho/telas.py`, `get_logger`, `get_auditoria_connection`, `listar_para_tv`, `visual.py`, `mod_blog/bd_manipulador.py`, `rotinas.py`, `Relatório de Execução de QA — Intranet Modular (25/09/2026)`, `otel_integracao.py`, `mostrar_tela`, `mod_renomear_empenho/bd_manipulador.py`, `mod_agregador_noticias/bd_manipulador.py`, `grafana_sync.py`, `teste_classes_crud.py`, `ativacao.py`, `test_navegar_pesquisa_empenhos.py`, `mod_intranet/telas.py`, `mod_edit_pdf/bd_manipulador.py`, `iniciar_servidor`, `mostrar_tv`, `ler_tema`, `_porta_valida`, `mod_solicita_impressao/bd_manipulador.py`, `mod_tecnico/bd_manipulador.py`, `teste_aba_config_intranet.py`, `pesquisar`?**
-  _High betweenness centrality (0.045) - this node is a cross-community bridge._
+- **Why does `notificar()` connect `notificar` to `os`, `_tela_navegar`, `botao`, `ler_tema`, `listar_para_tv`, `_log`, `botao_icone`, `audit_log`, `_log`, `mod_renomear_empenho/telas.py`, `mod_blog/bd_manipulador.py`, `mod_filas/telas.py`, `teste_fluxo_blog.py`, `titulo_bloqueado`, `set_config`, `get_config`, `_conn`, `main.py`, `mostrar_tela`, `set_config_local`, `Fluxo da tela`, `page_login`, `_dialogo_troca_credenciais_completo`, `mod_blog/telas.py`, `page_admin_modulo`, `_log`, `mostrar_tela`, `mod_renomear_empenho/bd_manipulador.py`, `dialogo_editar_fila`, `_render_seguro`, `teste_fluxo_renomeador.py`, `_imprimir_grupo`, `_dlg_duplicar_seguro`, `eh_admin_do_modulo`, `_mostrar_tela_segura`, `abrir_dialogo`, `mostrar_tela`, `mod_intranet/telas.py`, `_dlg_sessoes_seguro`, `_admin_configuracoes`, `render`, `_renderizar_carrossel`, `Pontos de atenção`, `tema_modulo.py`, `mod_tecnico/bd_manipulador.py`, `mostrar_administracao`, `_construir_dashboard`?**
+  _High betweenness centrality (0.081) - this node is a cross-community bridge._
+- **Why does `get_logger()` connect `get_logger` to `os`, `get_modulos_com_auditoria`, `ler_tema`, `listar_para_tv`, `mod_gest_cad_usuario/bd_manipulador.py`, `_log`, `audit_log`, `_log`, `decoradores.py`, `teste_fluxo_blog.py`, `_log`, `_encerrar`, `liberar_acesso`, `relatorio_impressao`, `confirmar_rascunho`, `banco_conexao.py`, `main.py`, `fallback_attachments`, `set_config_local`, `page_login`, `_dialogo_troca_credenciais_completo`, `aquecer_auditoria`, `_log`, `mod_blog/telas.py`, `FormularioBuilder`, `page_admin_modulo`, `iniciar_agendador`, `_log`, `_log`, `mod_renomear_empenho/bd_manipulador.py`, `mod_agregador_noticias/bd_manipulador.py`, `_imprimir_grupo`, `_log`, `_log`, `PainelLista`, `_executar_e_persistir`, `_log`, `autenticacao.py`, `_log`, `_renderizar_carrossel`, `tema_css.py`, `_log`, `iniciar_servidor`, `Tela Pura de Notícias — `mod_agregador_noticias/telas_puro.py` (`/agregador-noticias-puro`)`, `tema_modulo.py`, `_clicar_seguro`, `hora_servidor.py`, `mod_tecnico/bd_manipulador.py`, `_construir_dashboard`, `_log`?**
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._
+- **Why does `set_config()` connect `set_config` to `os`, `home_visual.py`, `ler_tema`, `listar_para_tv`, `botao_icone`, `audit_log`, `mod_renomear_empenho/telas.py`, `mod_blog/bd_manipulador.py`, `titulo_bloqueado`, `get_config`, `main.py`, `integracoes.py`, `page_admin_modulo`, `visual.py`, `mostrar_tela`, `mod_renomear_empenho/bd_manipulador.py`, `mod_agregador_noticias/bd_manipulador.py`, `grafana_sync.py`, `mod_auditoria/bd_manipulador.py`, `_migrar_dados_existentes_seguro`, `ativacao.py`, `abrir_dialogo`, `_executar_e_persistir`, `autenticacao.py`, `Pontos de atenção`, `notificar`, `tema_modulo.py`, `get_auditoria_connection`, `hora_servidor.py`, `mostrar_administracao`, `test_navegar_pesquisa_empenhos.py`?**
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
 - **Are the 14 inferred relationships involving `notificar()` (e.g. with `Fluxo da tela` and `Integrações com o núcleo`) actually correct?**
   _`notificar()` has 14 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 3 inferred relationships involving `get_logger()` (e.g. with `Integrações com o núcleo` and `Integrações com o núcleo`) actually correct?**
@@ -1349,4 +1420,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 18 inferred relationships involving `audit_log()` (e.g. with `Censura de conteúdo — palavras bloqueadas (central `mod_intranet/censura.py`)` and `Integrações com o núcleo`) actually correct?**
   _`audit_log()` has 18 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `$schema`, `plugin`, `git *` to the rest of the system?**
-  _374 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _375 weakly-connected nodes found - possible documentation gaps or missing edges._

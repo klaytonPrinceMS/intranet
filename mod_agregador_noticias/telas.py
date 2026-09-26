@@ -1,30 +1,49 @@
-"""EN: Aggregator screen — fixed-height 3-column grid, tema filter + busca, 120x120 thumbnail, TV integration.
+"""EN: Aggregator screen — fixed-height 3-column grid, ONE scroll per card, TV integration.
 
-PT-BR: Tela do Agregador de Notícias — grid de 3 colunas com card de altura fixa, filtro tema + busca, miniatura 120×120, integração TV.
+PT-BR: Tela do Agregador de Notícias — grid de 3 colunas, card de altura
+fixa com UM scroll só, integração TV.
 
-Barra com filtro tema e busca lado a lado (sem badge Coleta) e grid
-responsivo 3→2→1 colunas com card de ALTURA FIXA (300px desktop/260px
-celular — `height`, nunca `min/max-height`, para todos os cards ficarem
-uniformes). Cada card traz: badge do tema + tempo relativo no topo;
-miniatura da notícia em 120×120 px (`object-fit: cover`) que, ao clicar
-(ou ENTER), abre a AMPLIAÇÃO em diálogo `dialogo_card` com a imagem em
-60vw×60vh (`object-fit: contain`, fecha por ESC); o logo da fonte
-(`fonte_icon_url` faviconV2) aparece como MARCA D'ÁGUA no rodapé da
-imagem (inferior direito, 32×32, opacidade 0.65, `pointer-events: none`
-e `drop-shadow` para destacar sobre qualquer foto) — sem imagem, cai
-como ícone 16×16 ao lado do badge; título em link externo; e o resumo
-(descrição) em caixa de altura fixa com `overflow-y: auto`, ou seja, o
-texto NÃO é mais truncado com reticências. A moldura da imagem é irmã
-do link do título (nunca ancestral) e o clique usa o modificador nativo
-`.stop` (Vue.withModifiers), logo ampliar nunca navega para o site
-original. Paginação 12 por página com busca em memória (500 limite,
-NFKD lower).
+Barra com filtro de tema e busca (sem botão "Atualizar": a grade se
+atualiza sozinha) e grid responsivo 3 colunas (≤1024px: 2; ≤640px: 1).
+
+CARD — altura FIXA de 250px (220px no celular; `height`, nunca
+`min/max-height`, para todos ficarem uniformes). Estrutura de DUAS colunas
+dentro de UM ÚNICO container com scroll (`.card-noticia__rolagem`):
+  · ESQUERDA, `position: sticky` (não rola): foto 60×60 (`object-fit:
+    cover`) que, ao clicar (ou ENTER), abre a AMPLIAÇÃO em diálogo
+    `dialogo_card` com a imagem em 60vw×60vh (`object-fit: contain`, fecha
+    por ESC); o logo da fonte (`fonte_icon_url`) como MARCA D'ÁGUA no
+    rodapé da foto (inferior direito, 20×20, opacidade .50,
+    `pointer-events: none` e `drop-shadow` duplo) — para fins de auditoria
+    de direitos; abaixo, o tema ABREVIADO e o tempo de publicação.
+  · DIREITA: título em link externo e o resumo (descrição) completo.
+Como foto, título e resumo estão no MESMO container de scroll, rolar leva
+os três juntos e não há caixa sobrepondo outra — o título nunca é tapado.
+NENHUM texto é truncado: sem `-webkit-line-clamp`, o que não couber é
+rolado. Resumo com `text-align: justify` + `hyphens: auto` para leitura
+comfortável. A moldura da foto é IRMÃ do link do título (nunca ancestral)
+e o clique usa o modificador nativo `.stop` (Vue.withModifiers), então
+ampliar nunca navega para o site original.
+
+MODO ESCURO: bloco `body.intranet-dark .card-noticia` inverte o contraste
+(fundo escuro + texto claro) usando as variáveis do núcleo —
+contraste medido 9.28:1 (WCAG AA exige 4.5:1).
+
+TEMA RESTRITO: "Tribunais de Contas" fica fora da listagem geral e só
+aparece se o usuário escolher o tema ou achá-lo pela pesquisa.
+
+TEMPO RELATIVO: <15min "agora"; 15–59min "N min atrás"; 1–24h "Nh" /
+"NhMm atrás"; >24h "N dias atrás".
+
+"Todos os temas" mostra UMA notícia por tema, para a grade não virar um
+bloco só de Esporte/Economia. Paginação com busca em memória (500
+limite, NFKD lower).
 """
 
 import sys, os, re
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-from nicegui import ui
+from nicegui import ui, run
 from mod_intranet import autenticacao
 from mod_intranet.aba_modulo import cabecalho
 from mod_intranet.tema_modulo import ler_tema, notificar
@@ -60,10 +79,35 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
 
     # Filtro por tema + busca
     temas = ag.temas_config()
-    estado = {"tema": "", "busca": "", "pagina": 1}
+    estado = {"tema": "", "busca": "", "pagina": 1, "max_id": 0}
+
+    # `_eh_admin` decide o que só o administrador vê/usa: a coleta manual
+    # ("Coletar agora"). A atualização da tela NÃO é privilégio — é automática
+    # para qualquer usuário (ui.timer, atualização parcial).
+    _eh_admin = bool(
+        perfil_global == "administrador_geral"
+        or autenticacao.eh_admin_do_modulo(user_nome, "agregador_noticias")
+    )
+
+    # Fração de segundo para a próxima checagem automática
+    _REFRESCO_SEG_MIN = 15
+    _REFRESCO_SEG_MAX = 600
+    _REFRESCO_SEG_PADRAO = 60
 
     def _tempo_relativo(data_str: str) -> str:
-        """Converte data ISO para texto relativo: 3 minutos atrás, 2 semanas etc."""
+        """EN: Publication age — "agora" / "20 min atrás" / "1h40 atrás" / "5 dias atrás".
+
+        PT-BR: Tempo desde a publicação — "agora" / "20 min atrás" /
+        "1h40 atrás" / "5 dias atrás".
+
+        Regras (pedido do usuário, 26/09/2026):
+        • < 15 min  → "agora" (só conta como "de agora" o que é bem recente)
+        • 15 min–24h → contagem em minutos até 59, depois "Nh Mm atrás"
+          (ex.: "20 min atrás", "30 min atrás", "1h40 atrás")
+        • > 24h    → só DIAS: "1 dia atrás", "5 dias atrás" (sem horas nem
+          semanas/meses — no Agregador a notícia vive 24h, então granularidade
+          maior só poluiria o rótulo)
+        """
         if not data_str:
             return ""
         try:
@@ -84,30 +128,28 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             seg = int(delta.total_seconds())
             if seg < 0:
                 seg = 0
-            if seg < 60:
+            # até 15 min é "agora" — a partir daí já conta o tempo
+            if seg < 900:
                 return "agora"
             if seg < 3600:
                 m = seg // 60
-                return f"{m} minuto atrás" if m == 1 else f"{m} minutos atrás"
+                return f"{m} min atrás"
             if seg < 86400:
                 h = seg // 3600
-                return f"{h} hora atrás" if h == 1 else f"{h} horas atrás"
-            if seg < 604800:
-                d = seg // 86400
-                return f"{d} dia atrás" if d == 1 else f"{d} dias atrás"
-            if seg < 2592000:
-                sem = seg // 604800
-                return f"{sem} semana atrás" if sem == 1 else f"{sem} semanas atrás"
-            if seg < 31536000:
-                meses = seg // 2592000
-                return f"{meses} mês atrás" if meses == 1 else f"{meses} meses atrás"
-            anos = seg // 31536000
-            return f"{anos} ano atrás" if anos == 1 else f"{anos} anos atrás"
+                mins = (seg % 3600) // 60
+                if mins:
+                    return f"{h}h{mins:02d} atrás"
+                return f"{h}h atrás"
+            # a partir de 1 dia: só dias
+            d = seg // 86400
+            return f"{d} dia atrás" if d == 1 else f"{d} dias atrás"
         except Exception:
             return (data_str or "")[:16]
 
     def _desempacotar_noticia(n):
-        """Normaliza o registro da notícia nos 10 campos de `tb_noticia`.
+        """EN: Normalizes a news row into the 10 `tb_noticia` fields.
+
+        PT-BR: Normaliza o registro da notícia nos 10 campos de `tb_noticia`.
 
         Recebe a linha desempacotada do `bd_manipulador` (id, titulo,
         fonte, tema, url, imagem_url, fonte_icon_url, descricao,
@@ -129,7 +171,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         return tuple((campos + [""] * 10)[:10])
 
     def _criar_dialogo_noticia(img, titulo, fonte):
-        """Cria (sem abrir) o diálogo de ampliação; devolve o `ui.dialog` ou `None`.
+        """EN: Builds (without opening) the zoom dialog; returns the `ui.dialog` or `None`.
+
+        PT-BR: Cria (sem abrir) o diálogo de ampliação; devolve o `ui.dialog` ou `None`.
 
         Diálogo padronizado do projeto (`dialogo_card`: cartão com o estilo
         do módulo, fecha por ESC e por clique fora) contendo a imagem em
@@ -162,7 +206,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             return None
 
     def _abrir_dialogo_noticia(cache, img, titulo, fonte):
-        """Abre a ampliação da notícia, memoizando o diálogo no `cache` do card.
+        """EN: Opens the news zoom, memoizing the dialog in the card's `cache`.
+
+        PT-BR: Abre a ampliação da notícia, memoizando o diálogo no `cache` do card.
 
         O diálogo só é montado no PRIMEIRO clique (evita baixar a imagem
         grande para as 12 notícias da página) e reaproveitado nos cliques
@@ -180,7 +226,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             notificar("Não foi possível ampliar a imagem da notícia.", type="negative")
 
     def _midia_noticia(img, fonte_icon, titulo, fonte, testeid=""):
-        """Moldura 120×120 da miniatura + marca d'água da fonte (clique amplia).
+        """EN: 120×120 thumbnail frame + source watermark (click zooms).
+
+        PT-BR: Moldura 120×120 da miniatura + marca d'água da fonte (clique amplia).
 
         A miniatura (`imagem_url`) ocupa 120×120 px com `object-fit: cover`
         e o logo da fonte (`fonte_icon_url`) fica como marca d'água no
@@ -225,20 +273,44 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         alvo.tooltip("Ampliar imagem")
         return alvo
 
-    def _noticia_card(n):
-        """Monta o card da notícia: altura fixa, miniatura 120×120 e resumo com scroll.
+    def _tema_curto(tema):
+        """Abrevia o tema para caber no badge da coluna esquerda.
 
-        Card de ALTURA FIXA (300px desktop / 260px celular, via CSS
-        `.card-noticia`), para que todos os cards da linha fiquem
-        idênticos: topo com badge do tema + tempo relativo, corpo com a
-        miniatura 120×120 (marca d'água da fonte, clique amplia em
-        diálogo) ao lado da coluna de texto com o título em link externo
-        e o RESUMO completo em caixa de altura fixa com `overflow-y: auto`
-        — a descrição nunca mais é truncada com reticências. A moldura da
-        imagem é irmã do link (nunca o contém) e o clique usa o
-        modificador nativo `.stop`, então o clique na imagem só abre a
-        ampliação. Falha ao montar registra no log e avisa via
-        `notificar` (fail-soft).
+        Temas compostos viram sigla ("Ciência e Tecnologia" → "C&T",
+        "Tribunais de Contas" → "Trib. Contas") e o resto é cortado em 14
+        caracteres. Sem isso o badge quebrava em duas linhas e empurrava
+        o tempo de publicação para fora do card."""
+        t = str(tema or "Geral").strip() or "Geral"
+        if len(t) <= 14:
+            return t
+        # abrevia palavras compostas conhecidas antes de cortar no meio
+        sub = {"Ciência e Tecnologia": "C&T", "Entretenimento": "Entretenim.",
+               "Tribunais de Contas": "Trib. Contas",
+               "Internacional": "Internac.", "Economia": "Economia"}
+        if t in sub:
+            return sub[t]
+        return t[:13].rstrip() + "…"
+
+    def _noticia_card(n):
+        """EN: Fixed-height news card — 2 columns, ONE scroll for everything.
+
+        PT-BR: Card de notícia de altura fixa — 2 colunas, UM scroll só.
+
+        Estrutura: coluna ESQUERDA fixa (foto ampliável com a marca d'água
+        da fonte de origem, abaixo o tema abreviado e o tempo de
+        publicação) e coluna DIREITA (título em link externo + resumo
+        completo). Tudo — foto, título e resumo — está dentro de UM único
+        container com `overflow-y: auto`: quem rolar leva os três juntos,
+        e por não haver caixas sobrepostas o título nunca é tapado.
+        Nenhum texto é truncado: o que não couber é rolado.
+
+        A moldura da foto é irmã do link do título (nunca ancestral) e o
+        clique usa o modificador nativo `.stop`, então ampliar nunca
+        navega para o site original. A marca d'água da fonte fica no
+        rodapé direito da foto com opacidade .50 — identifica a origem
+        para fins de auditoria sem atrapalhar a leitura da imagem.
+        Falha ao montar registra no log e avisa via `notificar`
+        (fail-soft).
         """
         try:
             nid, titulo, fonte, tema_n, url, img, fonte_icon, desc, data_pub, data_col = _desempacotar_noticia(n)
@@ -246,23 +318,34 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             texto = str(titulo or "").strip() or "Notícia sem título"
             # data-testid estável por notícia (QA/kbp-qa)
             tid = f"agregador-ampliar-{nid}" if str(nid).strip().isalnum() else "agregador-ampliar"
-            with ui.card().classes("w-full hover:shadow-lg transition-shadow card-noticia"):
-                # ---- topo: tema + tempo relativo (ícone da fonte só quando não há imagem) ----
-                with ui.card_section().classes("card-noticia__topo"):
-                    with ui.row().classes("w-full items-center justify-between").style("gap: 0.5rem"):
-                        with ui.row().classes("items-center").style("gap: 0.375rem"):
-                            if fonte_icon and not img:
-                                try:
-                                    ui.image(fonte_icon).classes("card-noticia__fonte").props("fit=contain")
-                                except Exception:
-                                    pass
-                            ui.badge(tema_n or "Geral", color="blue-grey-2").props("outline dense")
-                        ui.label(_tempo_relativo(data_pub or data_col)).classes("text-caption text-grey-5")
-                # ---- corpo: miniatura 120×120 (ampliável) + título + resumo com scroll ----
-                with ui.card_section().classes("card-noticia__corpo"):
-                    if img:
-                        _midia_noticia(img, fonte_icon, texto, fonte, testeid=tid)
-                    with ui.column().classes("card-noticia__texto"):
+            # O `with ui.card() as _card:` precisa ENVOLVER o corpo INTEIRO:
+            # é ele que torna o card o slot pai. Se as seções forem criadas
+            # DEPOIS do bloco, saem irmãs do card (fora dele) e o CSS
+            # `.card-noticia .card-noticia__*` deixa de casar — aí a
+            # miniatura fica com o tamanho nativo da imagem e o resumo
+            # herda fundo escuro com texto escuro (ilegível).
+            with ui.card() as _card:
+                _card.classes("w-full hover:shadow-lg transition-shadow card-noticia")
+                # ---- ÚNICO container com scroll: imagem + título + resumo rolam
+                # juntos, então não há caixa sobrepondo outra (o título nunca
+                # é tapado). Duas colunas: ESQUERDA fixa (foto + tema + tempo),
+                # DIREITA rola (título + resumo).
+                with ui.element("div").classes("card-noticia__rolagem"):
+                    # ---- coluna ESQUERDA: foto (ampliável) + tema + tempo ----
+                    with ui.column().classes("card-noticia__esq").style("gap: 0.25rem"):
+                        if img:
+                            _midia_noticia(img, fonte_icon, texto, fonte, testeid=tid)
+                        elif fonte_icon:
+                            # sem foto: o logo da fonte ocupa o lugar, com a
+                            # marca d'água de origem preservada
+                            try:
+                                ui.image(fonte_icon).classes("card-noticia__fonte-slot").props("fit=contain")
+                            except Exception:
+                                pass
+                        ui.badge(_tema_curto(tema_n), color="blue-grey-2").props("outline dense no-wrap")
+                        ui.label(_tempo_relativo(data_pub or data_col)).classes("text-caption text-grey-5 no-wrap")
+                    # ---- coluna DIREITA: título + resumo ----
+                    with ui.column().classes("card-noticia__dir").style("gap: 0.25rem"):
                         try:
                             ui.link(texto, target=href, new_tab=True).classes(
                                 "card-noticia__titulo hover:text-primary")
@@ -273,9 +356,11 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                             ui.label(str(desc)).classes("card-noticia__resumo")
                         else:
                             ui.label("Sem resumo disponível.").classes("card-noticia__resumo text-grey-5")
+            return _card
         except Exception:
             log.exception(f"_noticia_card: falha ao montar card da notícia {n!r}")
             notificar("Não foi possível montar o card desta notícia.", type="negative")
+            return None
 
     with ui.column().classes("w-full p-6 gap-4"):
         cabecalho("Agregador de Notícias", t_texto_header, chave_modulo="agregador_noticias",
@@ -286,10 +371,11 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             sel_tema = ui.select({"": "Todos os temas"} | {t: t for t in temas}, value="", label="Filtrar por tema").props("outlined dense").classes("min-w-[200px]").props('data-testid=agregador-filtro-tema')
             inp_busca = ui.input(placeholder="Buscar palavra…", value="").props("outlined dense clearable debounce='300'").classes("min-w-[220px] flex-1").props('data-testid=agregador-busca')
             inp_busca.tooltip("Pesquisar em todos os temas por palavra no título/descrição/fonte")
-            def _atualizar():
-                grid.refresh()
-            botao("Atualizar", icone="refresh", on_click=_atualizar, variante="texto", chave_modulo="agregador_noticias").props('data-testid=agregador-atualizar')
-            if _pode_ver(user_nome, perfil_global) and (perfil_global == "administrador_geral" or autenticacao.eh_admin_do_modulo(user_nome, "agregador_noticias")):
+            # SEM botão "Atualizar": desde 26/09/2026 a grade se atualiza SOZINHA
+            # (ui.timer com atualização parcial — só o card novo entra). O
+            # administrador não precisa mais clicar para ver novidade.
+            lbl_auto = ui.label().classes("text-caption text-grey-6")
+            if _eh_admin:
                 _estado_coleta = {"ocupado": False}
                 async def _coletar():
                     if _estado_coleta["ocupado"]:
@@ -301,8 +387,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         from nicegui import run as _run
                         n = await _run.io_bound(lambda: ag.coletar_todas(ator=user_nome, forcar=True))
                         notificar(f"Coleta concluída: {n} novas", type="positive" if n else "info")
-                        grid.refresh()
+                        _reforcar_grid()
                     except Exception as e:
+                        log.exception("_coletar: falha na coleta manual")
                         notificar(f"Falha na coleta: {e}", type="negative")
                     finally:
                         try:
@@ -321,37 +408,84 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         <style>
         .grid-noticias { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
         /* card de ALTURA FIXA: todos os cards da linha idênticos (nunca min/max) */
-        .card-noticia { height: 300px; display: flex; flex-direction: column; }
+        .card-noticia { height: 250px; display: flex; flex-direction: column; background: #ffffff !important; }
         .card-noticia .q-card__section { min-height: 0; padding: 0; }
-        /* prefixo `.card-noticia` para vencer o `.column` do Quasar (mesma
-           especificidade) sem depender da ordem de injeção dos <style> */
-        .card-noticia .card-noticia__topo { flex: 0 0 auto; display: flex; flex-direction: column; padding: 12px 16px 6px; }
-        .card-noticia .card-noticia__corpo { flex: 1 1 auto; display: flex; flex-direction: row; align-items: stretch; padding: 0 16px 14px; gap: 0.75rem; }
-        .card-noticia .card-noticia__texto { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 0.375rem; }
-        .card-noticia .card-noticia__titulo { font-weight: 700; color: #212121; line-height: 1.25; word-break: break-word; min-width: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        /* resumo: caixa de ALTURA FIXA com scroll — o texto nunca é cortado */
-        .card-noticia .card-noticia__resumo { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 4px; font-size: 0.75rem; line-height: 1.35; color: #616161; white-space: pre-wrap; scrollbar-width: thin; }
-        .card-noticia .card-noticia__resumo::-webkit-scrollbar { width: 5px; }
-        .card-noticia .card-noticia__resumo::-webkit-scrollbar-thumb { background: #bdbdbd; border-radius: 4px; }
-        .card-noticia .card-noticia__resumo::-webkit-scrollbar-track { background: transparent; }
-        /* miniatura 120x120 */
-        .card-noticia .card-noticia__midia { position: relative; flex: 0 0 120px; width: 120px; height: 120px; align-self: flex-start; }
+        /* UM ÚNICO container de scroll: foto, título e resumo rolam juntos.
+           Sem caixas sobrepostas, o título nunca é tapado (o bug anterior). */
+        .card-noticia .card-noticia__rolagem { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: row; align-items: flex-start; gap: 0.6rem; padding: 10px 12px 12px; scrollbar-width: thin; }
+        .card-noticia .card-noticia__rolagem::-webkit-scrollbar { width: 5px; }
+        .card-noticia .card-noticia__rolagem::-webkit-scrollbar-thumb { background: #bdbdbd; border-radius: 4px; }
+        .card-noticia .card-noticia__rolagem::-webkit-scrollbar-track { background: transparent; }
+        /* ---- MODO ESCURO (body.intranet-dark) ----
+           Sem isto o card ficava com `background:#ffffff !important` e texto
+           #212121/#424242 (cores do tema claro) sobre fundo escuro: o título
+           sumia e o resumo ficava apagado. Aqui o contraste é invertido de
+           verdade — fundo escuro + texto claro, usando as variáveis que o
+           núcleo (`mod_intranet/telas.py::_aplicar_tema_escuro`) publica. */
+        body.intranet-dark .card-noticia { background: var(--fundo-card, #1e1e1e) !important; color: var(--texto-card, #e8e8e8); border: 1px solid rgba(255,255,255,0.10); }
+        body.intranet-dark .card-noticia .card-noticia__titulo { color: var(--cor-titulo, #ffffff) !important; }
+        body.intranet-dark .card-noticia .card-noticia__resumo { color: var(--texto-modulo, #c9c9c9) !important; }
+        body.intranet-dark .card-noticia .card-noticia__resumo a,
+        body.intranet-dark .card-noticia .card-noticia__resumo span { color: var(--texto-modulo, #c9c9c9) !important; }
+        body.intranet-dark .card-noticia .card-noticia__titulo:hover { color: #90caf9 !important; }
+        body.intranet-dark .card-noticia .card-noticia__rolagem::-webkit-scrollbar-thumb { background: #6a6a6a; }
+        body.intranet-dark .card-noticia .card-noticia__foto { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18); }
+        body.intranet-dark .card-noticia .card-noticia__sem-foto { opacity: .5; }
+        /* coluna ESQUERDA: foto + tema + tempo. Fixa: NÃO rola com o texto. */
+        .card-noticia .card-noticia__esq { flex: 0 0 72px; width: 72px; position: sticky; top: 0; align-items: flex-start; }
+        /* coluna DIREITA: título + resumo (rolam com o container único) */
+        .card-noticia .card-noticia__dir { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+        /* título: NUNCA truncado nem rolado sozinho — o scroll é do card
+           inteiro, então o título sempre aparece e rola junto do resumo.
+           `hyphens: auto` + entrelinha 1.3 evitam palavras quebradas. */
+        .card-noticia .card-noticia__titulo { font-weight: 700; font-size: 0.9rem; color: #212121 !important; background: transparent; line-height: 1.3; word-break: normal; overflow-wrap: break-word; hyphens: auto; min-width: 0; max-width: 100%; margin: 0; }
+        /* resumo: leitura confortável — fonte maior, entrelinha ampla e
+           alinhamento justified (as bordas ficam retas, sem "rio de
+           palavras"). `hyphens: auto` evita buracos Huge AO breakar.
+           Cor explícita: o fundo do card é branco (sem isso o texto herdava
+           fundo escuro do tema e ficava preto sobre preto). */
+        .card-noticia .card-noticia__resumo { font-size: 0.78rem; line-height: 1.5; color: #424242 !important; background: transparent; white-space: pre-wrap; word-break: normal; overflow-wrap: break-word; hyphens: auto; text-align: justify; text-justify: inter-word; margin: 0; min-width: 0; max-width: 100%; }
+        .card-noticia .card-noticia__resumo a, .card-noticia .card-noticia__resumo span { color: #424242 !important; }
+        /* miniatura 60x60 na coluna esquerda */
+        .card-noticia .card-noticia__midia { position: relative; flex: 0 0 60px; width: 60px; height: 60px; }
         .card-noticia .card-noticia__midia:focus-visible { outline: 2px solid #1565C0; outline-offset: 2px; border-radius: 8px; }
-        .card-noticia .card-noticia__foto { display: block; width: 100%; height: 100%; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.10); }
+        .card-noticia .card-noticia__foto { display: block; width: 100%; height: 100%; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.10); }
         .card-noticia .card-noticia__foto .q-img__image img { object-fit: cover; }
-        .card-noticia .card-noticia__sem-foto { font-size: 32px; opacity: .35; }
-        .card-noticia .card-noticia__fonte { width: 16px; height: 16px; flex: 0 0 16px; }
-        .card-noticia .card-noticia__fonte .q-img__image img { object-fit: contain; }
-        /* marca d'água: logo da fonte no rodapé da imagem (inferior direito) */
-        .card-noticia .card-noticia__marca { position: absolute; right: 4px; bottom: 4px; width: 32px; height: 32px; opacity: .65; pointer-events: none; z-index: 2; }
+        .card-noticia .card-noticia__sem-foto { font-size: 20px; opacity: .35; }
+        /* logo da fonte quando a notícia não tem foto */
+        .card-noticia .card-noticia__fonte-slot { width: 28px; height: 28px; opacity: .8; }
+        .card-noticia .card-noticia__fonte-slot .q-img__image img { object-fit: contain; }
+        /* marca d'água: logo da fonte no rodapé da foto (inferior direito).
+           opacidade .50 — dá para identificar a fonte sem atrapalhar a
+           leitura da imagem (o drop-shadow duplo garante contraste em
+           foto clara e em foto escura). */
+        .card-noticia .card-noticia__marca { position: absolute; right: 2px; bottom: 2px; width: 20px; height: 20px; opacity: .5; pointer-events: none; z-index: 2; }
         .card-noticia .card-noticia__marca .q-img__image img { object-fit: contain; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.95)) drop-shadow(0 0 1px rgba(255,255,255,0.85)); }
-        /* diálogo de ampliação: imagem em ~60% da tela */
+        /* diálogo de ampliação: imagem em ~60% da tela (o tamanho grande só
+           aparece aqui — no card ela é 60×60) */
         .dlg-noticia__img { display: block; width: 60vw; height: 60vh; max-width: 94vw; border-radius: 8px; }
         .dlg-noticia__img .q-img__image img { object-fit: contain; }
         @media (max-width: 1024px) { .grid-noticias { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 640px) { .grid-noticias { grid-template-columns: 1fr; } .card-noticia { height: 260px; } .dlg-noticia__img { width: 88vw; height: 58vh; } }
+        @media (max-width: 640px) { .grid-noticias { grid-template-columns: 1fr; } .card-noticia { height: 220px; } .dlg-noticia__img { width: 88vw; height: 58vh; } }
         </style>
         """)
+
+        # ================================================================
+        # GRADE com containers PERSISTENTES
+        # O `@ui.refreshable` é mantido só como API para busca/filtro/
+        # paginação. A grade em si vive em `grid_box`, que o `ui.timer`
+        # consegue PREPENDER sem redesenhar tudo (atualização parcial).
+        # ================================================================
+        grid_box = ui.element("div").classes("grid-noticias w-full")
+        pag_box = ui.element("div").classes("w-full")
+        vazio_box = ui.element("div").classes("w-full")
+
+        def _reforcar_grid():
+            """Redesenha a grade inteira (busca/filtro/paginação/coleta manual)."""
+            try:
+                grid.refresh()
+            except Exception:
+                log.exception("grid: falha ao redesenhar a grade")
 
         @ui.refreshable
         def grid():
@@ -359,9 +493,12 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             busca = (estado.get("busca") or "").strip()
             # total para paginação (com busca)
             if busca:
-                # busca global: ignora o filtro de tema (vale para todos os temas,
-                # pois notícias de termo livre caem em "Geral" e sumiriam do resultado)
-                todas = ag.listar_noticias(tema=None, limite=500, offset=0)
+                # Busca do usuário: ÚNICO caso, junto com a seleção do tema,
+                # em que o público restrito (Tribunais de Contas) pode
+                # aparecer. A busca é deliberada — sem `excluir_restritos`
+                # ela vasculha a base toda, temas restritos inclusive.
+                todas = ag.listar_noticias(tema=None, limite=500, offset=0,
+                                           excluir_restritos=False)
                 # filtra por palavra no título/descrição/fonte/tema/fonte_icon (normaliza sem acentos)
                 import unicodedata
                 def _norm(s):
@@ -384,7 +521,14 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 total = len(filtradas)
             else:
                 total = ag.contar_noticias(tema=tema_f)
-            por_pagina = 12
+            if tema_f:
+                por_pagina = 12
+            else:
+                # "Todos os temas": UMA notícia por tema, para a grade não virar
+                # um bloco só de Esporte/Economia com as demais soterradas.
+                # O teto de 12 dá no máximo 1 card por tema; se houver mais
+                # temas que 12, a paginação leva o restante.
+                por_pagina = max(12, len(temas))
             total_pag = max(1, (total + por_pagina) // por_pagina)
             if estado["pagina"] > total_pag:
                 estado["pagina"] = total_pag
@@ -395,43 +539,160 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 # pagina sobre filtradas
                 noticias = filtradas[offset:offset+por_pagina]
             else:
-                noticias = ag.listar_noticias(tema=tema_f, limite=por_pagina, offset=offset)
+                if tema_f:
+                    noticias = ag.listar_noticias(tema=tema_f, limite=por_pagina, offset=offset)
+                else:
+                    # AMOSTRA POR TEMA (1 por tema): agrupa a lista geral
+                    # preservando a ordem cronológica e fica só com a primeira
+                    # ocorrência de cada tema. Contagem/paginação seguem pelo
+                    # total real, então os próximos temas entram na página 2.
+                    _vistos, _amostra = set(), []
+                    for _n in ag.listar_noticias(tema=None, limite=600, offset=0):
+                        _t = _n[3]
+                        if _t in _vistos:
+                            continue
+                        _vistos.add(_t)
+                        _amostra.append(_n)
+                    noticias = _amostra[offset:offset + 12]
             if not noticias:
-                with ui.card().classes("w-full p-8 items-center"):
-                    ui.icon("article", size="48px").classes("text-grey-4")
-                    if busca:
-                        ui.label(f'Nenhuma notícia para "{busca}" (busca em todos os temas).').classes("text-grey-6")
-                    else:
-                        ui.label("Nenhuma notícia ainda. Ative a coleta nas Configurações.").classes("text-grey-6")
-                    if tema_f and not busca:
-                        ui.label(f"Tema: {tema_f}").classes("text-caption text-grey-5")
+                with vazio_box:
+                    vazio_box.clear()
+                    with ui.card().classes("w-full p-8 items-center"):
+                        ui.icon("article", size="48px").classes("text-grey-4")
+                        if busca:
+                            ui.label(f'Nenhuma notícia para "{busca}" (busca em todos os temas).').classes("text-grey-6")
+                        else:
+                            ui.label("Nenhuma notícia ainda. A coleta é automática — aguarde o primeiro ciclo ou peça ao administrador.").classes("text-grey-6")
+                            ui.label(f"Coleta a cada {ag.intervalo_min()} min.").classes("text-caption text-grey-5")
+                        if tema_f and not busca:
+                            ui.label(f"Tema: {tema_f}").classes("text-caption text-grey-5")
                 return
+            # marca d'água da tela: o timer compara contra isso para saber
+            # se apareceu notícia nova sem carregar linhas
+            _marca = ag.marca_ultimo_coletado()
+            if _marca:
+                estado["max_id"] = max(estado["max_id"], _marca[1])
             # 3 colunas desktop / 2 tablet / 1 celular — responsivo + card de ALTURA FIXA
             # (o CSS é injetado uma única vez, fora do @ui.refreshable, logo abaixo)
-            with ui.element("div").classes("grid-noticias w-full"):
+            with grid_box:
+                grid_box.clear()
                 for n in noticias:
                     with ui.element("div"):
                         _noticia_card(n)
             # Paginação: anterior / próxima / última
-            with ui.row().classes("w-full items-center justify-between mt-3 flex-wrap gap-2"):
-                with ui.row().classes("items-center gap-1"):
-                    ui.button(icon="first_page", on_click=lambda: (estado.__setitem__("pagina", 1), grid.refresh())).props("flat dense").tooltip("Primeira página").props('data-testid=agregador-primeira')
-                    ui.button(icon="chevron_left", on_click=lambda: (estado.__setitem__("pagina", max(1, estado["pagina"]-1)), grid.refresh())).props("flat dense").tooltip("Anterior").props('data-testid=agregador-anterior')
-                    ui.label(f"Página {estado['pagina']} de {total_pag} • {total} notícias").classes("text-caption text-grey-7 mx-2")
-                    ui.button(icon="chevron_right", on_click=lambda: (estado.__setitem__("pagina", min(total_pag, estado["pagina"]+1)), grid.refresh())).props("flat dense").tooltip("Próxima").props('data-testid=agregador-proxima')
-                    ui.button(icon="last_page", on_click=lambda: (estado.__setitem__("pagina", total_pag), grid.refresh())).props("flat dense").tooltip("Última página").props('data-testid=agregador-ultima')
-                ui.label(f"Exibindo {len(noticias)} de {total}").classes("text-caption text-grey-5")
+            with pag_box:
+                pag_box.clear()
+                with ui.row().classes("w-full items-center justify-between mt-3 flex-wrap gap-2"):
+                    with ui.row().classes("items-center gap-1"):
+                        ui.button(icon="first_page", on_click=lambda: (estado.__setitem__("pagina", 1), _reforcar_grid())).props("flat dense").tooltip("Primeira página").props('data-testid=agregador-primeira')
+                        ui.button(icon="chevron_left", on_click=lambda: (estado.__setitem__("pagina", max(1, estado["pagina"]-1)), _reforcar_grid())).props("flat dense").tooltip("Anterior").props('data-testid=agregador-anterior')
+                        ui.label(f"Página {estado['pagina']} de {total_pag} • {total} notícias").classes("text-caption text-grey-7 mx-2")
+                        ui.button(icon="chevron_right", on_click=lambda: (estado.__setitem__("pagina", min(total_pag, estado["pagina"]+1)), _reforcar_grid())).props("flat dense").tooltip("Próxima").props('data-testid=agregador-proxima')
+                        ui.button(icon="last_page", on_click=lambda: (estado.__setitem__("pagina", total_pag), _reforcar_grid())).props("flat dense").tooltip("Última página").props('data-testid=agregador-ultima')
+                    ui.label(f"Exibindo {len(noticias)} de {total}").classes("text-caption text-grey-5")
 
         def _on_tema(e):
             estado["tema"] = e.value or ""
             estado["pagina"] = 1
-            grid.refresh()
+            _reforcar_grid()
         sel_tema.on_value_change(_on_tema)
 
         def _on_busca(e):
             estado["busca"] = e.value or ""
             estado["pagina"] = 1
-            grid.refresh()
+            _reforcar_grid()
         inp_busca.on_value_change(_on_busca)
+
+        # ================================================================
+        # ATUALIZAÇÃO AUTOMÁTICA (parcial) — o usuário não clica em nada
+        # ================================================================
+        def _rotulo_auto(texto):
+            try:
+                lbl_auto.set_text(texto)
+            except Exception:
+                pass
+
+        def _prepender_novas(novas):
+            """Insere SÓ os cards novos no topo da grade, sem redesenhar.
+
+            É a atualização parcial pedida: nada é recriado, o scroll e o
+            foco do usuário permanecem, e o custo é proporcional ao que
+            chegou — não ao tamanho da página."""
+            inseridos = 0
+            for n in novas:
+                try:
+                    _celula = ui.element("div")
+                    with _celula:
+                        _card = _noticia_card(n)
+                    if _card is not None:
+                        # nasce no slot atual; move para a PRIMEIRA posição
+                        # da grade (índice 0) sem reconstruir o resto
+                        _card.move(grid_box, target_index=0)
+                    else:
+                        _celula.delete()
+                    inseridos += 1
+                except Exception:
+                    log.exception("_prepender_novas: falha ao inserir card novo")
+            return inseridos
+
+        async def _checar_novidades():
+            """Polling barato: 1 SELECT de agregados. Se mudou, traz só as
+            linhas novas e prepende. Nunca redesenha a página inteira."""
+            if estado.get("busca") or estado.get("tema"):
+                # com filtro/busca ativa, a ordem/quantidade muda -> redesenha
+                return
+            try:
+                _marca = await run.io_bound(ag.marca_ultimo_coletado)
+            except Exception:
+                return
+            if not _marca:
+                return
+            _total, _max_id, _coleta = _marca
+            if _max_id <= estado["max_id"]:
+                _rotulo_auto(f"Sem novidade • próxima checagem em {ag.refresh_seg()}s")
+                return
+            try:
+                novas = await run.io_bound(
+                    lambda: ag.listar_novas(apos_id=estado["max_id"], limite=12))
+            except Exception:
+                return
+            if novas:
+                estado["max_id"] = max(estado["max_id"], _max_id)
+                _n = _prepender_novas(novas)
+                _rotulo_auto(f"{_n} notícia(s) nova(s) • atualiza sozinho")
+            else:
+                estado["max_id"] = _max_id
+
+        def _intervalo_refresh():
+            try:
+                v = int(ag.refresh_seg() or _REFRESCO_SEG_PADRAO)
+            except Exception:
+                v = _REFRESCO_SEG_PADRAO
+            return max(_REFRESCO_SEG_MIN, min(_REFRESCO_SEG_MAX, v))
+
+        _rotulo_auto(f"Atualização automática a cada {_intervalo_refresh()}s")
+        ui.timer(_intervalo_refresh(), _checar_novidades)
+
+        # Primeira notícia ASSÍNCRONA: se a grade nasce vazia, dispara a
+        # coleta em thread e desenha assim que a primeira chegar — a tela
+        # não espera o I/O de rede (nada de event-loop bloqueado).
+        if not (ag.contar_noticias(tema=estado["tema"] or None) or 0):
+            async def _primeira_noticia():
+                _spin = ui.spinner(size="lg").props("aria-label=Buscando notícias")
+                with ui.row().classes("w-full items-center justify-center gap-2"):
+                    ui.label("Buscando a primeira notícia…").classes("text-caption text-grey-6")
+                try:
+                    from nicegui import run as _run
+                    await _run.io_bound(lambda: ag.coletar_todas(ator="sistema"))
+                except Exception:
+                    log.exception("_primeira_noticia: falha na coleta inicial")
+                finally:
+                    try:
+                        _spin.delete()
+                    except Exception:
+                        pass
+                _reforcar_grid()
+
+            ui.timer(0.6, _primeira_noticia, once=True)
 
         grid()

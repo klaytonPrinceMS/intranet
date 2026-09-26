@@ -358,3 +358,89 @@ Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_
 | `assets/test/teste_flags_permissao.py` (catálogo `FLAGS_PERMISSAO`, grant/revoke em `qacomum@blog`, bypass admin, decorador `requer_flag`) | 20/20 OK |
 
 **Veredito: APROVADO — sem regressão.** Pendência WAL+paridade do `gest_cad_usuario` (linha da tabela acima) considerada **superada**; demais módulos do plano permanecem pendentes conforme o arquivo consolidado.
+
+---
+
+# RF e RNF verificados no código — lote 1 (26/09/2026)
+
+> Auditoria de requisitos **funcionais** (o que o sistema faz) e **não
+> funcionais** (qualidade e restrições), com evidência `arquivo:linha` conferida
+> no código em 26/09/2026.
+
+## Requisitos funcionais (RF) — mapa código ↔ doc
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-GEST-01 | Tela da Gestão de Usuários só para `administrador_geral` **ou** admin do módulo `usuarios` | `telas.py:85-87`; negação em `telas.py:154-161` `_acesso_negado` |
+| RF-GEST-02 | **Soft CRUD**: criar, editar, bloquear/desbloquear, excluir lógico, duplicar e excluir definitivo | `telas.py:73` `_mostrar_tela_segura` → `_painel_usuarios` (`:233`), `_dlg_novo` (`:623`), `_dlg_editar` (`:712`), `_dlg_duplicar` (`:974`), `_dlg_excluir` (`:857`), `_dlg_excluir_definitivo` (`:914`); backend em `bd_manipulador.py:558`, `:613`, `:782`, `:819`, `:920`, `:977` |
+| RF-GEST-03 | Coluna de ex soft-delete (`user_deletado`) + aba **1.5 Excluídos** com restauração/duplicação | `bd_manipulador.py:306-308` (migração da coluna) + `telas.py:972` |
+| RF-GEST-04 | **Motivo de exclusão lógica** registrado no momento da exclusão | `bd_manipulador.py:319-321` (migração `user_motivo_exclusao`) + `soft_delete_usuario(..., motivo)` em `bd_manipulador.py:819` |
+| RF-GEST-05 | Senha **provisória** obrigatória:_hash bcrypt_, troca forçada no 1º acesso | `bd_manipulador.py:558-611` `criar_usuario` (valida `senha_minima()`, grava `gerar_hash_senha`, chama `marcar_trocar_senha(..., True)`); `mod_intranet/autenticacao.py:447` |
+| RF-GEST-06 | Tamanho mínimo da senha **configurável** (clamp 4–32, default 6), aplicado sem restart | `bd_manipulador.py:159-172` `senha_minima`; painel em `telas_administracao.py:78-122` |
+| RF-GEST-07 | `administrador_geral` **não pode rebaixar nem bloquear o último** admin geral ativo (RF-26) | `bd_manipulador.py:626-640` (dentro de `editar_usuario`) |
+| RF-GEST-08 | Nome de exibição / nome social (Decreto 8.727/2016) separado do login, com `nome_de_tratamento` | `bd_manipulador.py:309-315` (migração) + `:507-519` `nome_de_tratamento` |
+| RF-GEST-09 | **Papel por módulo** (`tb_acesso_usuario.papel`): conceder, remover, consultar, validar | `bd_manipulador.py:1022-1055` `definir_acesso`, `:1057-1076` `remover_acesso`, `:1078-1102` `obter_papel_no_modulo`, `:1104-1119` `validar_acesso_modulo` |
+| RF-GEST-10 | **Flags finas** de permissão por módulo (JSON em `tb_acesso_usuario.flags`) com whitelist de flags válidas | `bd_manipulador.py:1130-1143` `_flags_validas`, `:1145-1173` `obter_flags`, `:1175-1206` `definir_flags`, `:1208-1219` `tem_flag`; migração em `:266-272` |
+| RF-GEST-11 | **Sessões ativas** listadas, contadas, agrupadas por usuário, com histórico e encerramento (individual ou todas) | `bd_manipulador.py:1234-1261`, `:1263-1280`, `:1282-1299`, `:1301-1327`, `:1329-1352` `encerrar_sessao`, `:1354-1363` `encerrar_todas_sessoes`; UI em `telas.py:1074` `_painel_sessoes` + `telas.py:510`/`525` diálogo |
+| RF-GEST-12 | Sessão revogável: o `pagina_restrita` do núcleo revalida sessão e `user_ativo` **a cada request** | `mod_intranet/telas.py:74-93` (corta sessão e manda pro `/login`) |
+| RF-GEST-13 | Renomear usuário propaga para **todos** os módulos (única limpeza cruzada de negócio→negócio autorizada) | `bd_manipulador.py:690-749` `renomear_usuario` + `:895-918` `_vinculos_cruzados_renomear` (filhos antes dos pais) |
+| RF-GEST-14 | Excluir definitivamente remove os vínculos dos outros módulos antes dos próprios | `bd_manipulador.py:920-975` + `:857-893` `_vinculos_cruzados_excluir` |
+| RF-GEST-15 | Detecção de **vínculos órfãos** (módulos que ainda referenciam o usuário) | `bd_manipulador.py:1367-1385` `listar_vinculos_orfaos` |
+| RF-GEST-16 | Recusa de duplicidade de nome com mensagem amigável (não stack trace) | `bd_manipulador.py:47-69` `_eh_violacao_unicidade` + `:601-604` (`"Nome de usuário já existe"`) |
+| RF-GEST-17 | Redesenhar senha pelo admin (`alterar_senha_admin`) com troca forçada | `bd_manipulador.py:751-780`; UI em `telas.py:814`/`830` |
+| RF-GEST-18 | Fonte única do cadastro: os módulos consomem o Gestor por `mod_intranet/integracoes.py` (fachada), nunca import direto | `mod_intranet/integracoes.py:32-61` `obter_usuario_gestao` / `listar_usuarios_gestao`; `mod_intranet/autenticacao.py:292-294` `_gest()` |
+| RF-GEST-19 | Seed idempotente `master` / `qacomum` / `qamaster` (AGENTS.md §8.2) com troca de senha e de credenciais forçada no 1º login | `bd_manipulador.py:339-420` (auto-cura do `master` em `:343-350`; `master` em `:353-373`; `qacomum`/`qamaster` em `:375-420`) |
+| RF-GEST-20 | Reconciliação idempotente do `qacomum` (garante os 3 acessos comuns e remove o `blog` legado concedido por `sistema`, preservando concessão manual do admin) | `bd_manipulador.py:394-404` |
+
+## Requisitos não-funcionais (RNF) — garantias técnicas
+
+| RNF | Exigência | Evidência no código |
+|:---|:---|:---|
+| RNF-GEST-PERS-01 | Banco próprio `db_mod_gest_cad_usuario.db` via `banco_conexao.conexao("gest_cad_usuario")` | `bd_manipulador.py:26-45` `get_connection` |
+| RNF-GEST-PERS-02 | `PRAGMA journal_mode=WAL` + `foreign_keys=ON`; `busy_timeout=5000`/`synchronous=NORMAL` herdados do núcleo | `bd_manipulador.py:39-40`; docstring em `:31` |
+| RNF-GEST-PERS-03 | **Retry 3×** em `database is locked` com rollback seguro, em **toda** transação de escrita | `bd_manipulador.py:91-119` `_commit_com_retry` + `:71-77` `_eh_bloqueio_banco` + `:79-89` `_rollback_seguro`; ex. `:228`, `:299`, `:362`, `:392` |
+| RNF-GEST-PERS-04 | `init_db` **import-safe**: nunca levanta no import, erro só vai para o log | `bd_manipulador.py:174-187` `init_db` → `:189` `_init_db_seguro` (re-levanta para o chamador) com `finally` sempre fechando a conexão (`:332-337`) |
+| RNF-GEST-PERS-05 | FK com `ON UPDATE CASCADE` para renomeio, reconstruída de forma **idempotente e só no SQLite** | `bd_manipulador.py:237-264` (guarda `sgbd_ativo() != "postgres"`, detecta ausência de `ON UPDATE` em `sqlite_master`, rebuild em 4 passos) |
+| RNF-GEST-COMP-01 | Paridade SQLite ↔ PostgreSQL | DDL só `IF NOT EXISTS` (`:204-227`); migrações por **check-then-add** com `PRAGMA table_info` traduzido para `information_schema` no proxy (`:268`, `:304`, `:310`, `:317`); `INSERT OR IGNORE` traduzido; no PG a integridade da FK é gerida na aplicação (UPDATE manual em `renomear_usuario` + limpeza de órfãos) — comentário explícito em `:230-236` |
+| RNF-GEST-SEG-01 | Senhas **nunca** em texto puro: só hash bcrypt | `bd_manipulador.py:360`, `:385`, `:408` (`gerar_hash_senha`); nenhuma coluna `user_senha` em claro |
+| RNF-GEST-SEG-02 | Autorização de escrita auditada com ator + detalhe (perfil, nome de exibição) | `bd_manipulador.py:143-151` `_audit` → `tb_auditoria_gest_cad_usuario`; ex. `:600` `criar_usuario` |
+| RNF-GEST-SEG-03 | **Isolamento de banco**: o módulo só toca o próprio `db_mod_gest_cad_usuario.db`; o acesso ao BD central é **exclusivamente de leitura** e só na migração do legado | `bd_manipulador.py:133-141` `_central()`; única leitura em `:280-301` (migração única) |
+| RNF-GEST-SEG-04 | Sem `cross-query` entre bancos de negócio: a propagação para outros módulos é por **API pública** de cada módulo | `bd_manipulador.py:857-893` e `:895-918` chamam `remover_vinculos_usuario`/`renomear_usuario` de cada `mod_*` |
+| RNF-GEST-RES-01 | `try/except` obrigatório em função, com retorno `(ok, msg)` + `log` — a UI sempre tem o que notificar | 100 % das funções de escrita retornam tupla; ex. `:573-577` (falha de conexão), `:601-604` (duplicidade), `:605-609` (erro inesperado) |
+| RNF-GEST-RES-02 | **Fail-soft** nas leituras: `obter_papel_no_modulo`/`validar_acesso_modulo` devolvem `None`/`False` em exceção (nunca levantam), então uma falha de permissão **fecha** o acesso em vez de abrir | `bd_manipulador.py:1104-1119`, e o espelho no núcleo `mod_intranet/autenticacao.py:604-609`, `:629-633` |
+| RNF-GEST-RES-03 | Toda tela/dialogo tem wrapper `*_seguro` com notificação de erro (fail-soft de UI) | `telas.py:73`, `:525`, `:639`, `:729`, `:830`, `:874`, `:931`, `:990`; `telas_administracao.py:53` |
+| RNF-GEST-RES-04 | Sem `ui.notify` cru: só `tema_modulo.notificar` (respeita `notificacao_timeout`) | `grep ui.notify` → 0 ocorrências em `mod_gest_cad_usuario/*.py` |
+| RNF-GEST-UX-01 | `data-testid` nas ações de QA | `telas.py:141` (`usuarios-busca`), `:145` (`usuarios-novo`), `:345` (`usuarios-filtro-situacao`) |
+| RNF-GEST-I18N-01 | Docstrings bilíngue EN (topo) / PT-BR (abaixo) | `telas.py:1-4` (EN no topo), `telas_administracao.py:1-15` (bloco EN no **meio/fim**, não no topo — ver DIV-GEST-02), `bd_manipulador.py:1-24` |
+| RNF-GEST-I18N-02 | Toda a UI em PT-BR, com mensagens de erro operacionais (não stack traces) | `bd_manipulador.py:572-609`, `telas.py:154-161` |
+| RNF-GEST-PERF-01 | Consultas de lista **paginate/limitadas** e sem N+1 no painel de sessões | `bd_manipulador.py:438-480` `listar_usuarios` (1 consulta) + `:1234-1261` (1 consulta) |
+| RNF-GEST-PERF-02 | `_conexao_segura()` evita abrir conexão quando a anterior está sob lock | `bd_manipulador.py:121-131` |
+| RNF-GEST-RESP-01 | Responsividade com `flex-wrap` e `min-w` nos campos | `telas.py:165-206` (`_seletores_de_acesso`) |
+
+## Divergências e riscos
+
+### Código faz, doc não diz
+
+| # | Achado | Evidência |
+|:---|:---|:---|
+| DIV-GEST-01 | `_vinculos_cruzados_excluir`/`_vinculos_cruzados_renomear` tocam os módulos **por lista explícita de funções importadas** — a lista de módulos participantes está hardcoded no arquivo. Um módulo novo que guarde `user_nome` **não** entra na propagação sem editar este arquivo. | `bd_manipulador.py:857-918` |
+| DIV-GEST-02 | `telas_administracao.py` põe o bloco **EN depois** do PT-BR (linhas 11-14), contrariando o padrão "EN no topo" do AGENTS.md | `telas_administracao.py:1-15` |
+| DIV-GEST-03 | `validar_acesso_modulo_compat` existe como **alias de compatibilidade** (`bd_manipulador.py:1387-1395`) e é usada por `mod_intranet/autenticacao.py:607-631` — a doc não registra essa camada de indireção | `bd_manipulador.py:1387-1400` |
+| DIV-GEST-04 | A migração do legado lê `sqlite_master` da tabela `tb_usuarios` **no banco central** — se `banco_tipo=postgres`, o proxy devolve vazio e a migração é pulada silenciosamente (há `finally` fechando, mas sem `log` explícito do pulo) | `bd_manipulador.py:283-284` |
+
+### Doc diz, código não faz
+
+| # | Alegação da doc | Estado real |
+|:---|:---|:---|
+| DIV-GEST-05 | "`telas_administracao.mostrar_administracao` — **exclusivo do admin geral**" (docstring em `telas_administracao.py:3-4` e `:14`) | A função **não recebe nem checa perfil** (`telas_administracao.py:30`). O gate real é só a rota: `main.py:1031-1037` chama `pagina_restrita(nome_modulo, chave_modulo="usuarios")`, que exige **acesso ao módulo** — não papel de admin. Ver RISCO-GEST-01. |
+| DIV-GEST-06 | Doc sugere que "admin do módulo" e "admin geral" são equivalentes para a aba Administração | Não são: a tela de negócio (`telas.py:85-87`) aceita os dois; o painel `/admin/usuarios` aceita **qualquer** um dos dois, **e também um `comum` com acesso ao módulo**. |
+
+### Riscos
+
+| # | Risco | Severidade | Evidência |
+|:---|:---|:---|:---|
+| **RISCO-GEST-01** | **`/admin/usuarios` sem gate de administrador.** `main.py:1031-1037` chama `mostrar_administracao(nome)` sem o flag `eh_admin` (ao contrário de `auditoria` e `solicita_impressao`, que o recebem). Efeito: um usuário `comum` com liberação do módulo `usuarios` **altera `usuarios_senha_min` (4–32) e o tema** e vê o painel de backup. Alterar o tamanho mínimo da senha é uma mudança de política de segurança de contas. | 🔴 Alta | `main.py:1031-1037` + `mod_gest_cad_usuario/telas_administracao.py:30` + `:84-102` |
+| **RISCO-GEST-02** | **Zero `async` / `run.io_bound` / `ui.spinner`** no módulo (0 ocorrências). Todos os handlers são `def` síncrono e fazem I/O de banco (`criar_usuario`, `editar_usuario`, `renomear_usuario`, `excluir_usuario_definitivo`, `encerrar_todas_sessoes`, `duplicar_usuario`) diretamente no event-loop. some walks sobre nomes de usuário + dezenas de `UPDATE`s cross-módulo no caso de `renomear_usuario`/`excluir_usuario_definitivo`. Viola AGENTS.md §5.1. | 🟠 Média | ausência de `async def` em `mod_gest_cad_usuario/*.py` |
+| **RISCO-GEST-03** | `except Exception: pass` engole erro **em silêncio** em pontos de migração, contrariando AGENTS.md §3.2 ("SEMPRE registre/logue a causa"). | 🟡 Baixa | `bd_manipulador.py:220-221`, `:242-243` (blocos de migração de `limite`/`cota` com `except Exception: pass`, sem `log`) |
+| **RISCO-GEST-04** | `modulo_acesso TEXT` (coluna CSV legada) permanece em `tb_usuarios` e continua sendo lido/escrito, ao mesmo tempo que `tb_acesso_usuario` é a fonte de verdade. Duas fontes para a mesma informação. | 🟡 Baixa | `bd_manipulador.py:214` (DDL) + `:285-298` (migração converte CSV→linhas, mas não zera a coluna) |
+| **RISCO-GEST-05** | Sem `CrudBase`: SQL cru com `conn.cursor()`. A atomicidade depende de `_commit_com_retry` manual, e a propagação cross-módulo (RF-GEST-13/14) **não é transacional** — se o módulo 3 de 8 falhar, os 2 anteriores já foram alterados e não há compensação. | 🟠 Média | `bd_manipulador.py:690-749` e `:920-975` |

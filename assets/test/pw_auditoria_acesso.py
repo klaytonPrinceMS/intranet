@@ -7,8 +7,10 @@ PT: Auditoria é somente-leitura e exclusiva do administrador_geral;
 
 Pirâmide: estáticos (fonte/rota/papel) + E2E de leitura; nenhuma escrita
 (auditoria nunca escreve pela UI — só filtros e exportação).
-Troca forçada ciente: 123456 provisória; skip amigável se trocada ou se o
-diálogo persistente abrir.
+Troca forçada EXECUTADA: quando o diálogo "Troca de senha obrigatória" abre,
+o login CONCLUI a troca (mesma senha de origem) em vez de pular — antes a
+cobertura rodava majoritariamente pulada, sem ninguém ver. Só há skip para
+infra real (servidor fora / credencial inválida).
 
 Como rodar:
     .venv\\Scripts\\python -m pytest assets/test/pw_auditoria_acesso.py -v
@@ -16,9 +18,14 @@ Como rodar:
 
 import os
 import pathlib
+import sys
 
 import pytest
 from playwright.sync_api import expect
+
+# `qa_login_helper` e irmao deste arquivo: entra no path explicitamente para
+# nao depender do modo de import do pytest.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 pytestmark = pytest.mark.e2e
 
@@ -30,6 +37,16 @@ COMUM_SENHA = "123456"
 
 RAIZ = pathlib.Path(__file__).resolve().parents[2]
 
+# Login/troca em UM lugar so (ver qa_login_helper). A copia local detectava a
+# troca por TEXTO solto e a copia do login fazia `pytest.skip` quando o
+# dialogo abria — por isso a cobertura Playwright rodava majoritariamente
+# pulada. `zerar_forcar_troca` nao e importado aqui de proposito: quem chama
+# e `fazer_login_com_troca`, e importar sem usar quebra o pyflakes.
+from qa_login_helper import (  # noqa: E402
+    _dialogo_troca_visivel,
+    concluir_troca as _concluir_troca,
+)
+
 
 def _ler(rel: str) -> str:
     """Lê fonte (somente leitura)."""
@@ -39,43 +56,52 @@ def _ler(rel: str) -> str:
         return ""
 
 
-def _dialogo_troca_visivel(page) -> bool:
-    """Detecta troca obrigatória."""
-    try:
-        for texto in ("Troca de senha obrigatória", "Credenciais obrigatórias"):
-            if page.get_by_text(texto, exact=False).count() > 0:
-                return True
-        return False
-    except Exception:
-        return False
-
-
 def fazer_login(page, usuario: str, senha: str) -> bool:
-    """Login via data-testid; True se saiu do /login."""
+    """Faz login e CONCLUI a troca de senha obrigatória, se aparecer.
+
+    Antes: `pytest.skip` quando o diálogo de troca abria — o que fazia a
+    suíte passar sem verificar quase nada. Agora a troca é feita com a
+    MESMA senha de origem (o fluxo só exige que a troca aconteça) e o
+    `forcar_troca` é zerado, então a próxima execução já entra direto.
+    """
     try:
-        page.goto(f"{BASE_URL}/login", wait_until="domcontentloaded", timeout=15000)
-    except Exception:
-        pytest.skip(f"servidor live indisponível em {BASE_URL}")
-    page.get_by_test_id("login-usuario").fill(usuario)
-    page.get_by_test_id("login-senha").fill(senha)
-    page.get_by_test_id("login-entrar").click()
-    try:
-        page.wait_for_function(
-            "() => !location.pathname.startsWith('/login')", timeout=20000)
-    except Exception:
-        pass
-    try:
-        page.wait_for_load_state("domcontentloaded", timeout=10000)
-    except Exception:
-        pass
-    page.wait_for_timeout(1500)
+        try:
+            page.goto(f"{BASE_URL}/login", wait_until="domcontentloaded", timeout=15000)
+        except Exception:
+            pytest.skip(f"servidor live indisponível em {BASE_URL} — pule (sem derrubar)")
+        page.get_by_test_id("login-usuario").fill(usuario)
+        page.get_by_test_id("login-senha").fill(senha)
+        page.get_by_test_id("login-entrar").click()
+        try:
+            page.wait_for_function(
+                "() => !location.pathname.startsWith('/login')", timeout=20000)
+        except Exception:
+            pass
+        try:
+            page.wait_for_load_state("domcontentloaded", timeout=10000)
+        except Exception:
+            pass
+        try:
+            page.wait_for_timeout(1500)
+        except Exception:
+            pass
+    except pytest.skip.Exception:
+        raise
+    except Exception as exc:
+        pytest.skip(f"falha de infra no login — pule: {exc}")
+        return False
+
+    if _dialogo_troca_visivel(page):
+        # CONCLUI a troca (mesma senha de origem) em vez de pular
+        _concluir_troca(page, senha, senha)
+    assert not _dialogo_troca_visivel(page), (
+        "troca de senha obrigatória NÃO foi concluída pelo login — o "
+        "diálogo continua bloqueando a tela")
     try:
         url = page.url
     except Exception:
         url = ""
-    if "/login" in (url or "") and not _dialogo_troca_visivel(page):
-        return False
-    return True
+    return "/login" not in (url or "")
 
 
 class TestAuditoriaEstatico:
@@ -105,9 +131,11 @@ class TestAuditoriaAcessoE2E:
         """qamaster vê busca e botão exportar (somente leitura)."""
         ok = fazer_login(page, ADMIN_USUARIO, ADMIN_SENHA)
         if not ok:
-            pytest.skip("senha do qamaster trocada (provisória) — ciente")
-        if _dialogo_troca_visivel(page):
-            pytest.skip("troca obrigatória pendente")
+            pytest.skip("login do qamaster não abriu sessão (credencial "
+                        "inválida ou infraestrutura instável)")
+        assert not _dialogo_troca_visivel(page), (
+            "troca de senha obrigatória NÃO foi concluída pelo login — o "
+            "diálogo continua bloqueando a tela")
         page.goto(f"{BASE_URL}/auditoria", wait_until="domcontentloaded", timeout=15000)
         page.wait_for_timeout(2000)
         expect(page.get_by_test_id("auditoria-busca")).to_be_visible(timeout=15000)
@@ -117,9 +145,11 @@ class TestAuditoriaAcessoE2E:
         """qacomum é barrado: cai em / com 'Acesso negado' (papel antes de tudo)."""
         ok = fazer_login(page, COMUM_USUARIO, COMUM_SENHA)
         if not ok:
-            pytest.skip("senha do qacomum trocada (provisória) — ciente")
-        if _dialogo_troca_visivel(page):
-            pytest.skip("troca obrigatória pendente")
+            pytest.skip("login do qacomum não abriu sessão (credencial "
+                        "inválida ou infraestrutura instável)")
+        assert not _dialogo_troca_visivel(page), (
+            "troca de senha obrigatória NÃO foi concluída pelo login — o "
+            "diálogo continua bloqueando a tela")
         page.goto(f"{BASE_URL}/auditoria", wait_until="domcontentloaded", timeout=15000)
         page.wait_for_timeout(2500)
         url = ""
