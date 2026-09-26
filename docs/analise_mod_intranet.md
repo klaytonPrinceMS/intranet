@@ -681,7 +681,7 @@ Novo subsistema central em `mod_intranet/observabilidade.py` (validado com `ast.
 #### Observabilidade remota e destino de logs (05/09) — endpoint OTLP, stack remota, Grafana
 
 - **Telemetria OTel configurável** (`otel_integracao.py`): `obter_endpoint()` resolve o destino OTLP com prioridade env `OTEL_ENDPOINT` > `tb_config` (`otel_endpoint`, padrão `localhost:4317`) > padrão local; `inicializar_otel(auto_stack=False)` pula Docker/`compose up` e conecta direto (modo servidor dedicado). `obter_info_otel()` reporta o endpoint resolvido.
-- **Boot com gate** (`main.py`): `otel_ativo=0` desliga a telemetria; `otel_auto_start_stack=0` usa stack remota (sem gerenciar Docker local); o sync de credenciais Grafana via `docker exec` só roda com stack local (remota usa token/API — Fase 3).
+- **Boot com gate** (`main.py:75-98`): `otel_ativo=0` desliga a telemetria; `otel_auto_start_stack=0` usa stack remota (sem gerenciar Docker local); o sync de credenciais Grafana via `docker exec` só roda com stack local (remota usa token/API — Fase 3). A flag `_otel_auto_stack` é lida **antes** do bloco que a consome — ver a correção de `NameError` em [Correções de `NameError` no boot e no login (25/09/2026)](#correcoes-de-nameerror-no-boot-e-no-login-25092026).
 - **Grafana configurável** (`grafana_sync.py`): `obter_grafana_url()` com prioridade env `GRAFANA_URL` > `tb_config` (`grafana_url`, padrão `http://localhost:3000`); health-check, API e status usam a URL resolvida.
 - **Bridge loguru→Loki com filtro**: `log_otel_envio=0` mantém o log só local; `log_otel_nivel` define o nível mínimo enviado ao Loki.
 - **Seed**: todas as chaves novas estão em `bd_conexao.PADRAO_CONFIG` (propagadas via `INSERT OR IGNORE`, cobrindo bancos existentes).
@@ -847,6 +847,98 @@ Inventário real: `__init__`, `banco_conexao` (dual SQLite/PostgreSQL, `conexao(
 Correções aplicadas: docstring bilíngue EN/PT-BR em `autenticacao.py` (estava sem cabeçalho), `telas.usuario_logado` e `documentacao._build`/`montar` (estavam PT-only).
 
 Helpers do núcleo já cobertos acima e mantidos: `contexto` (ContextVar IP/UA LGPD), `censura` (palavras bloqueadas — **precedente da fachada `integracoes`**, ver seção própria), `hora_servidor` (NTP.br), `rotas_modulos` (slugs custom), `tema_css` (frameworks locais), `email_util` (SMTP RF-58), `port_scanner` (`--scan-ports`), `home_visual` (modelo Water). Arquivos auxiliares sem seção própria (intencionais, sem docs dedicadas): `decoradores`, `dialogo_backup` (legado, substituído por `rotinas.painel_backup`), `docker_detector`, `instrumentacao_app`, `otel_integracao`, `pdf_operacoes`, `nicegui_patch`, `telefone`, `ui_form`, `ui_painel`, `hora_servidor` detalhada em `modulos/intranet.md`. **`grafana_sync`** tem seção própria acima (validação de esquema da URL, 25/09/2026).
+
+## Correções de `NameError` no boot e no login (25/09/2026)
+
+Duas falhas do núcleo que afetavam **todo o sistema** (não um módulo), ambas
+encontradas por `pyflakes` e ambas mascaradas pelo `try/except` do AGENTS.md §3.2.
+
+### 1. `_otel_auto_stack` indefinido — `python main.py --otel` nunca ligava o OTel
+
+```python
+# main.py:75-98 — ANTES: `_otel_auto_stack` só era lido, nunca era definido
+_otel_ativo = _cfg.get("otel_ativo", True) and \
+    get_config("otel_ativo", "1") == "1" and not _sem_otel_env
+if _sem_otel_env:
+    ...
+elif not _otel_ativo:
+    ...
+# …mais abaixo, dentro do bloco:
+if _otel_auto_stack:          # → NameError
+```
+
+| Item | Detalhe |
+|:---|:---|
+| Sintoma | `python main.py --otel` e `python main.py --config` **nunca** inicializavam o OTel. O `NameError` caía no `except Exception` do **fim do bloco** e imprimia só `[otel] Aviso: não foi possível inicializar OTel` — que parece um problema de ambiente, não de código |
+| Por que passava | a flag é lida **antes** de ser escrita, e o `try` que a envolve é largo demais para dar pista; a mensagem do `except` descreve o sintoma (OTel não subiu) e não a causa |
+| Correção | `_otel_auto_stack = get_config("otel_auto_start_stack", "1") == "1"` **antes** do bloco que a consome, com comentário explicando que `otel_auto_start_stack=0` usa stack remota/dedicada (pula `compose up` e as checagens de Docker) |
+| Efeito colateral | `import sqlite3` que estava no topo de `main.py` **não era mais usado** e foi removido |
+
+O nome da chave de configuração é `otel_auto_start_stack` (em `tb_config`, exposta no
+card Observabilidade). A variável local é `_otel_auto_stack` e **precisa** ser atribuída
+antes do `if` que a lê — esse é justamente o ponto do bug: o nome da config e o da
+variável não são iguais, o que torna o erro de leitura fácil de passar despercebido.
+
+### 2. `_login_erro_log()` não existia — erros de login não iam para o log
+
+`mod_intranet/telas.py` chamava `_login_erro_log()` em **11 call sites** (fluxo de
+login, troca de senha e troca de credenciais) e a função **nunca foi definida**. Cada
+chamada levantava `NameError` dentro do `try/except` do próprio `except` — ou seja,
+**quando algo dava errado no login, o código que deveria registrar o erro era
+exatamente o que quebrava**, e o `except Exception: pass` final engolia tudo.
+
+Correção: criação da função em `mod_intranet/telas.py:27-51`.
+
+```python
+_login_erro_logger = None      # memorizado no 1º uso (não é constante)
+
+def _login_erro_log():
+    """Retorna o logger do fluxo de login (loguru, fail-soft).
+
+    Memoriza o logger na primeira chamada. Nunca levanta: se a observabilidade
+    falhar, devolve o logger padrão do loguru para o `except` do chamador
+    seguir funcionando."""
+```
+
+Por que uma **função** e não uma constante: o logger só pode ser resolvido **depois**
+que `mod_intranet.observabilidade` estiver configurado (o que acontece durante o boot,
+depois do import do módulo). Um `import` no topo do arquivo abriria o `observabilidade`
+antes da hora. A função é *fail-soft* em três níveis: `observabilidade.get_logger("intranet")`
+→ `loguru.logger` → `None`, e nunca levanta.
+
+!!! warning "Docstring fora do padrão bilíngue"
+    `_login_erro_log` é a única função nova desta sessão com docstring **só em PT-BR**
+    — o padrão do repositório é **EN no topo, PT-BR abaixo**. A mesma coisa ocorre com
+    os cinco helpers aninhados criados no redesenho do card do Agregador
+    (`_desempacotar_noticia`, `_criar_dialogo_noticia`, `_abrir_dialogo_noticia`,
+    `_midia_noticia`, `_noticia_card`). Registrado como pendência; a correção é em
+    `mod_*/`, fora do escopo deste lote de documentação.
+
+### 3. Mensagem `[documentacao] OK` duplicada no boot
+
+Não era `NameError`, mas o mesmo tipo de falha silenciosa: a linha saía **duas vezes**.
+
+`iniciar_servidor()` já imprime `[documentacao] OK: servindo em http://localhost:<porta>`
+quando sobe; `construir_e_montar_documentacao()` imprimia a mesma informação outra
+vez depois de `montar()`. Agora só imprime no caminho de **fallback** — quando a porta
+documentada ficou ocupada e a doc é servida pela rota interna:
+
+```python
+ok_serve = iniciar_servidor(porta or PORTA_PADRAO)
+if montar():
+    if logar and not ok_serve:      # era `if logar: if ok_serve: ... else: ...`
+        print(f"[documentacao] montado em /documentacao "
+              f"(porta {porta} ocupada, docs via rota interna)")
+```
+
+### Como esses três bugs escaparam
+
+Os quatro módulos com `NameError` (`solicita_impressao`, `filas`, `renomear_empenho`,
+`intranet`) compartilham o mesmo padrão: **`except Exception: pass`** no caminho de
+erro, exatamente onde o AGENTS.md §3.2 manda não derrubar o servidor. A regra continua
+sendo obrigatória — o que mudou foi a **barreira de detecção**: `pyflakes` como
+análise estática **bloqueante** antes de declarar o ciclo de testes verde. Ver
+[Convenções de Criação de Código — Análise estática obrigatória](convencoes_codigo.md#analise-estatica-obrigatoria-pyflakes).
 
 ## Pendência QA — WAL + paridade SQLite↔Postgres (24/09/2026, sem correção aplicada)
 

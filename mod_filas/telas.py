@@ -328,7 +328,10 @@ def bloco_nomes_fila(fila_id: int, user_nome: str, recarregar):
                             recarregar()
                         ui.button(icon="healing", on_click=_trocar_m).props("dense flat color=negative").tooltip("Salvar cor")
                         try:
-                            _ets = [e[3] for e in filas.listar_etapas(fid)]
+                            # `fila_id` (não `fid`/`nid`): listar_etapas filtra por
+                            # fila_id. Antes o NameError caía no `except Exception`
+                            # e o seletor de etapa nunca listava as etapas.
+                            _ets = [e[3] for e in filas.listar_etapas(fila_id)]
                         except Exception:
                             _ets = []
                         sel_e = ui.select(["(geral)"] + _ets, value=etapa_n if etapa_n in _ets else "(geral)").props("outlined dense").classes("w-[140px]")

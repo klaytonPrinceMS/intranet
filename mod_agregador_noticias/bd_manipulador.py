@@ -45,7 +45,7 @@ _FONTES_PADRAO_V1 = _FONTES_PADRAO_LEGADO + [
     {"tipo": "rss", "nome": "G1 - Saúde", "url": "https://g1.globo.com/rss/g1/saude/", "tema": "Saúde"},
     {"tipo": "rss", "nome": "G1 - Tecnologia", "url": "https://g1.globo.com/rss/g1/tecnologia/", "tema": "Ciência e Tecnologia"},
     {"tipo": "rss", "nome": "Poder9360", "url": "https://www.poder9360.com.br/", "tema": "Brasil"},
-    {"tipo": "rss", "nome": "Folha de S.Paulo", "url": "https:/s.folha.uol.com.br/emcimadahora/rss091.xml", "tema": "Brasil"},
+    {"tipo": "rss", "nome": "Folha de S.Paulo", "url": "https://s.folha.uol.com.br/emcimadahora/rss091.xml", "tema": "Brasil"},
 ]
 
 # Default atual = V1 + cobertura dos temas vazios (Internacional/Entretenimento/Esporte/MSM)
@@ -343,6 +343,35 @@ def init_db():
             if _dados == _FONTES_PADRAO_LEGADO or _dados == _FONTES_PADRAO_V1:
                 _setc("agregador_noticias_fontes_json", json.dumps(FONTES_PADRAO, ensure_ascii=False))
                 _log().info("agregador: fontes RSS oficiais adicionadas ao default")
+    except Exception:
+        pass
+    # migração 26/09/2026: repara URL de fonte com o esquema malformado
+    # ("https:/host/..." com uma barra só) — a requisição falhava com
+    # "Request URL is missing an 'http://' or 'https://' protocol". Só toca
+    # em URL realmente quebrada, então NÃO sobrescreve fontes customizadas.
+    # Idempotente: se nada mudou, não reescreve a config.
+    try:
+        import re as _re_url
+        from mod_intranet.bd_conexao import get_config as _getc, set_config as _setc
+        _atual = _getc("agregador_noticias_fontes_json", "")
+        if _atual:
+            _dados = json.loads(_atual)
+            if isinstance(_dados, list) and _dados:
+                _mudou = False
+                for _f in _dados:
+                    if not isinstance(_f, dict):
+                        continue
+                    _u = _f.get("url") or ""
+                    _corr = _re_url.sub(r"^(https?:)/(?!/)", r"\1//", _u.strip(), count=1)
+                    if _corr and _corr != _u:
+                        _f["url"] = _corr
+                        _mudou = True
+                        _log().warning(
+                            f"agregador: URL de fonte reparada "
+                            f"({_f.get('nome', '?')}): {_u} -> {_corr}")
+                if _mudou:
+                    _setc("agregador_noticias_fontes_json",
+                          json.dumps(_dados, ensure_ascii=False))
     except Exception:
         pass
     conn.commit()

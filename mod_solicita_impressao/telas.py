@@ -21,6 +21,11 @@ from mod_intranet.aba_modulo import cabecalho
 from mod_intranet.bd_manipulador import audit_log
 from mod_intranet.ui_comum import botao, botao_icone
 from mod_intranet import observabilidade
+# `bd` e `ler_tema`/`bloco_aparencia` usados no ESCOPO DE MÓDULO: sem estes
+# imports o NameError caía no `except Exception` das próprias funções e a
+# tela/admin truncava em silêncio (botão "Salvar" nunca era criado).
+from mod_solicita_impressao import bd_manipulador as bd
+from mod_intranet.tema_modulo import ler_tema, bloco_aparencia
 
 MOD_DIR = os.path.dirname(os.path.abspath(__file__))
 

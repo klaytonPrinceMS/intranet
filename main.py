@@ -8,7 +8,6 @@ aplica o tema de cada módulo via `tema_modulo.ler_tema` antes de renderizar
 o `mostrar_administracao` dedicado de cada `mod_<nome>/telas_administracao.py`."""
 import sys
 import os
-import sqlite3
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -76,6 +75,11 @@ try:
     _sem_otel_env = (os.environ.get("INTRANET_SEM_OTEL") or "").strip() == "1"
     _otel_ativo = _cfg.get("otel_ativo", True) and \
         get_config("otel_ativo", "1") == "1" and not _sem_otel_env
+    # `otel_auto_start_stack=0` usa stack remota/dedicada (pula `compose up`
+    # e as checagens de Docker). Precisa ser lido ANTES do bloco: a variável
+    # não existia e o NameError caía no `except Exception` do fim, desligando
+    # o OTel silenciosamente em `python main.py --otel` / `--config`.
+    _otel_auto_stack = get_config("otel_auto_start_stack", "1") == "1"
     if _sem_otel_env:
         print("[otel] Telemetria OTel desativada (INTRANET_SEM_OTEL=1)")
     elif not _otel_ativo:

@@ -39,6 +39,10 @@ from mod_intranet import email_util
 from mod_intranet.bd_manipulador import audit_log
 from mod_intranet.aba_modulo import cabecalho, menu_modulo
 from mod_intranet.ui_comum import botao, botao_icone, campo_cor, campo_selecao
+# `notificar` no ESCOPO DE MÓDULO: são ~60 call sites na tela que usavam o
+# nome puro sem import. O NameError caía no `except Exception: pass` do
+# fallback, então TODO erro do Renomeador sumia sem log e sem notificação.
+from mod_intranet.tema_modulo import notificar
 
 from mod_intranet.autenticacao import eh_admin_do_modulo
 import zipfile, shutil
@@ -284,17 +288,17 @@ def _tela_navegar(usuario_logado, eh_admin, autorizado, _btn_cls, _btn_style):
             try:
                 return _visual.eh_bootstrap(get_config)
             except Exception:
-                return _bootstrap
+                return False
         def _eh_hibrido():
             try:
                 return _visual.eh_hibrido(get_config)
             except Exception:
-                return _hibrido
+                return False
         def _modelo_atual():
             try:
                 return _visual.ler_modelo(get_config)
             except Exception:
-                return _modelo
+                return _visual.MODELO_PADRAO
 
         def _baixar(caminho):
             try:

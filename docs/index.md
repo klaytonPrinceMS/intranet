@@ -42,7 +42,7 @@
 - [Técnico](analise_mod_tecnico.md) — software + backup `YYYYMMDD_HHMM_nomePc_ip`, owner-isolation, `webkitdirectory`
 - [Filas (TV, multi-filas)](analise_mod_filas.md) — gestor de chamadas com TV (`/filas` + `/tv` pública) + **carrossel de notícias** do Agregador + ordem da fala `voz_ordem` + papel de fundo
 - [Lista Telefônica (organograma)](analise_mod_lista_telefonica.md) — **novo** (19/09/2026) organograma 12 secretarias `Secretaria→Setor→Subsetor`, contatos alfabéticos, busca sem acentos, `tel:` no celular
-- [Agregador de Notícias](analise_mod_agregador_noticias.md) — **novo** (19/09/2026) `httpx+parsel` scrapy-like (Google/BBC/JFP/RSS), 3 colunas masonry, 24h retenção, integração TV `listar_para_tv`
+- [Agregador de Notícias](analise_mod_agregador_noticias.md) — **novo** (19/09/2026) `httpx+parsel` scrapy-like (Google/BBC/JFP/RSS), grid 3→2→1 com card de altura fixa e miniatura `120×120` ampliável, 24h retenção, integração TV `listar_para_tv`
 
 ## Módulos (resumo)
 
@@ -56,11 +56,21 @@
 - [Técnico](modulos/tecnico.md) — **novo** (18/09/2026)
 - [Filas (TV, multi-filas)](modulos/filas.md) — multi-filas + TV por etapa + **carrossel Agregador** + ordem da fala + papel de fundo (volume 40)
 - [Lista Telefônica (organograma)](modulos/lista_telefonica.md) — **novo** (19/09/2026) `Secretaria→Setor→Subsetor`, `tel:` clicável, admin com excluir ramo/mover/elevar
-- [Agregador de Notícias](modulos/agregador_noticias.md) — **novo** (19/09/2026) `httpx+parsel` multi-fonte (Google/BBC/JFP/RSS), 3 colunas masonry `window.open`, TV `listar_para_tv` 7s/120s
+- [Agregador de Notícias](modulos/agregador_noticias.md) — **novo** (19/09/2026) `httpx+parsel` multi-fonte (Google/BBC/JFP/RSS), grid 3→2→1 com card de altura fixa `300px`, miniatura `120×120` ampliável em diálogo, marca d'água da fonte, resumo com scroll, TV `listar_para_tv` 7s/120s
 
 ## Documentos-raiz de apoio
 
 - `README.md` (cartão de visitas) · `PLANO.md` (checklist por fases) · `analise.md` (requisitos/roadmap) · `../AGENTSadf.md` (regras de edição/IA)
+
+## Qualidade — verificação obrigatória antes de fechar um ciclo
+
+| Barreira | Comando | Regra |
+|:---|:---|:---|
+| **Análise estática** | `.venv/bin/python -m pyflakes main.py mod_*/*.py mod_*/*/*.py` | **`undefined name` é bloqueante** — igual a teste vermelho. O `try/except` obrigatório do AGENTS.md §3.2 engole o `NameError` e a suíte passa com a funcionalidade quebrada (7 casos reais em 25/09/2026) |
+| **Documentação** | `.venv/bin/mkdocs build --strict` | Sem novos avisos; padrão MkDocs tema `readthedocs`, docstrings bilíngue EN no topo / PT-BR abaixo |
+| **Segurança** | `.venv/bin/bandit -r mod_*/` | HIGH e MEDIUM zerados |
+
+Detalhes em [Convenções de Criação de Código](convencoes_codigo.md#analise-estatica-obrigatoria-pyflakes).
 
 ## Convenção
 

@@ -21,6 +21,15 @@ pytest-cov>=7.0.0
 pytest-env>=1.1.0
 faker>=22.0
 
+# --- Lint / análise estática de código Python ---
+# pyflakes: checker PASSIVO de Python — detecta "undefined name" (variável
+# usada antes de existir no escopo), redefinition e f-string sem placeholder.
+# Foi o que revelou `_otel_auto_stack` indefinido em main.py (OTel nunca
+# subia) e `_login_erro_log` indefinido em mod_intranet/telas.py.
+# Uso: .venv/bin/python -m pyflakes main.py mod_*/*.py mod_*/*/*.py
+#   | grep "undefined name"
+pyflakes>=3.2.0
+
 # --- SAST (Static Application Security Testing) ---
 bandit>=1.9.0
 semgrep>=1.176.0

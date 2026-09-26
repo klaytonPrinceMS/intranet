@@ -17,14 +17,15 @@ O uso de **Português BR** em funções, tabelas e documentação segue o **Doma
 1. [Visão geral](#visao-geral)
 2. [Nomenclatura](#nomenclatura)
 3. [Estilo de código](#estilo-de-codigo)
-4. [Modelo de classes e objetos](#modelo-de-classes-e-objetos)
-5. [Estrutura de um novo módulo `mod_*`](#estrutura-de-um-novo-modulo-mod_)
-6. [Padrão de manipulador de banco](#padrao-de-manipulador-de-banco)
-7. [Padrão de tela NiceGUI](#padrao-de-tela-nicegui)
-8. [PostgreSQL opcional](#postgresql-opcional-0809)
-9. [Configurabilidade (regra de projeto)](#configurabilidade-regra-de-projeto)
-10. [Auditoria e versionamento](#auditoria-e-versionamento)
-11. [Checklist de aceite](#checklist-de-aceite)
+4. [Análise estática obrigatória (pyflakes)](#analise-estatica-obrigatoria-pyflakes)
+5. [Modelo de classes e objetos](#modelo-de-classes-e-objetos)
+6. [Estrutura de um novo módulo `mod_*`](#estrutura-de-um-novo-modulo-mod_)
+7. [Padrão de manipulador de banco](#padrao-de-manipulador-de-banco)
+8. [Padrão de tela NiceGUI](#padrao-de-tela-nicegui)
+9. [PostgreSQL opcional](#postgresql-opcional-0809)
+10. [Configurabilidade (regra de projeto)](#configurabilidade-regra-de-projeto)
+11. [Auditoria e versionamento](#auditoria-e-versionamento)
+12. [Checklist de aceite](#checklist-de-aceite)
 
 ## Visão geral
 
@@ -53,10 +54,33 @@ A Intranet Modular é um projeto **funcional/procedural** em Python: as regras d
 - **Funcional/procedural**: prefira funções a classes. Cada tela é uma função; cada regra de banco é uma função no `bd_manipulador.py`.
 - **Interface de tela obrigatória**: `telas.py` **DEVE** expor `mostrar_tela(usuario_logado, perfil)` (nome do parâmetro pode variar: `user_nome`, `usuario_logado`).
 - Sem comentários supérfluos — o padrão do projeto mantém docstrings curtos em funções de núcleo e cabeçalhos de arquivo.
+- **Docstrings bilíngue — EN no topo, PT-BR abaixo.** Vale para o **docstring de módulo** e para as **funções** (inclusive as aninhadas dentro de `mostrar_tela`). O repositório usa **duas formas aceitas**, ambas com a mesma ordem:
+
+    ```python
+    # forma 1 — rótulos explícitos
+    """EN: Single name list of the queue (import, priority, transfer within same TV).
+
+    PT-BR: Lista ÚNICA da fila (só visível nela): importa, ajusta prioridade e envia
+    p/ outra fila da mesma TV."""
+
+    # forma 2 — frase EN, linha em branco, parágrafo PT-BR
+    """Zeros the month's consumption for the department/unit.
+
+    Zera o consumo do mês para a secretaria/setor."""
+    ```
+
+    ❌ Não conforma: docstring só em PT-BR (sem a linha de cima em inglês). É a forma
+    mais comum de desvio, e passa despercebida porque o conteúdo está certo — falta
+    apenas o par de idiomas. Divergências conhecidas estão registradas em
+    [Agregador de Notícias](analise_mod_agregador_noticias.md#fluxo-da-tela) (cinco
+    helpers do card + `_tempo_relativo`) e
+    [Intranet](analise_mod_intranet.md#correcoes-de-nameerror-no-boot-e-no-login-25092026) (`_login_erro_log`).
+
 - **Validação obrigatória** após alterar qualquer `.py`:
 
 ```bash
 .venv/bin/python -c "import ast; ast.parse(open('<arquivo>', encoding='utf-8').read())"
+.venv/bin/python -m pyflakes <arquivo>   # undefined name é bloqueante (ver seção própria)
 ```
 
 - Histórico de **caracteres corrompidos** em `main.py` (edição via PowerShell): evite ferramentas que reescrevam encoding por fora; confira imports (`get_config`, `get_connection`) ao mexer no topo dos arquivos.
@@ -74,6 +98,65 @@ A Intranet Modular é um projeto **funcional/procedural** em Python: as regras d
 ### Suíte de testes — pytest
 
 A suíte é **baseada em scripts standalone** em `assets/test/*.py` (checagens/asserts próprios; rodam com `.venv/bin/python assets/test/<arquivo>.py`). O comando oficial de validação é `.venv/bin/pytest`: o `pytest.ini` (raiz) limita a coleta do pytest ao runner `assets/test/test_suite.py` (`testpaths = assets/test/test_suite.py`, `pytest.ini:2`) — sem isso, o pytest tentava coletar os scripts standalone e quebrava (`INTERNALERROR` por `sys.exit` no import de `test_dashboard.py`). O runner executa TODA a suíte em subprocessos (`test_suite_standalone()`, `assets/test/test_suite.py:50`), falha se algum script retornar código ≠ 0 (≈3–5 min) e limpa as variáveis `PYTEST_*` do ambiente (`_env_limpo()`, `assets/test/test_suite.py:34`). `addopts = -p no:cacheprovider` (`pytest.ini:3`) desativa o cache `.pytest_cache/`. Detalhes e exclusões: [Testes — Plano](testes_plano/index.md).
+
+## Análise estática obrigatória (pyflakes)
+
+!!! danger "`undefined name` é erro BLOQUEANTE, igual a teste vermelho"
+    Rodar a análise estática **antes** de declarar o ciclo de testes verde não é
+    opcional neste repositório. A regra está viva na spec do subagente de QA
+    (`.opencode/agent/kbp-qa.md`, seção "Análise estática obrigatória") e no
+    [Checklist de aceite](#checklist-de-aceite) desta página.
+
+```bash
+# obrigatório antes de fechar o ciclo
+.venv/bin/python -m pyflakes main.py mod_*/*.py mod_*/*/*.py
+.venv/bin/python -m pyflakes main.py mod_*/*.py mod_*/*/*.py | grep "undefined name"
+```
+
+| Item | Detalhe |
+|:---|:---|
+| Ferramenta | `pyflakes` — checker **passivo** (analisa a AST, não importa o módulo): pega `undefined name`, `redefinition of unused`, `local variable ... assigned to but never used`, `f-string is missing placeholders` |
+| Dependência | `requirements-dev.txt`, seção **"Lint / análise estática"** — `pyflakes>=3.2.0`. **Nunca** em `requirements.txt` (é dev-only) |
+| Instalação | `.venv/bin/pip install -r requirements-dev.txt` |
+| Verificação de import | ao mexer numa tela, `.venv/bin/python -c "import mod_<nome>.telas"` confirma que o módulo carrega isolado |
+
+### Por que é obrigatório aqui — `try/except` esconde `NameError`
+
+O padrão obrigatório do AGENTS.md §3.2 manda **envolver toda função em
+`try/except`** para nunca derrubar o servidor. Isso é correto e não muda. Mas o
+`except` do caminho de erro costuma terminar em `pass` (ou só em notificação), e
+uma referência a um nome inexistente no escopo levanta `NameError` **exatamente ali**.
+Resultado: **a suíte passa, o terminal fica limpo, e a funcionalidade está
+quebrada**. O `pyflakes` é a única barreira que enxerga isso antes do usuário.
+
+Foi exatamente o que aconteceu em 25/09/2026: **7 `undefined name` em 5 arquivos**,
+cada um com efeito funcional real e nenhum sinal visível. O relatório por módulo está
+nas páginas de análise — por exemplo
+[Solicitação de Impressão — Correções de `NameError`](analise_mod_solicita_impressao.md#correcoes-de-nameerror-25092026).
+
+| Onde | Nome ausente | Efeito silencioso |
+|:---|:---|:---|
+| `main.py:86-98` | `_otel_auto_stack` | `python main.py --otel` / `--config` **nunca** subia o OTel — o `NameError` caía no `except` do fim e imprimia só um aviso |
+| `mod_solicita_impressao/telas.py` | `bd` | botão **"Resetar"** da cota não fazia nada |
+| `mod_solicita_impressao/telas.py` | `ler_tema`, `bloco_aparencia` | aba **Admin › Configurações** truncava antes do botão "Salvar" |
+| `mod_filas/telas.py` | `fid` (o escopo usa `fila_id`) | seletor de etapa da fila **sempre vazio** |
+| `mod_renomear_empenho/telas.py` | `notificar` (~60 call sites) | **todo** erro do Renomeador sumia sem log e sem notificação |
+| `mod_intranet/telas.py` | `_login_erro_log` (11 call sites) | erros de login/troca de credenciais **não iam para o log** |
+
+### Regra de correção
+
+Ao encontrar um `undefined name`, corrija **na fonte** — o import certo no escopo do
+módulo ou a definição da função. **Nunca** silencie com um `except Exception: pass`
+novinho: isso reintroduz o mesmo bug escondido, só que agora com aparência de
+tratamento de erro.
+
+!!! warning "Imports de escopo de módulo, não só dentro da função"
+    O padrão que emerge dos 7 casos acima: quando um nome é usado por **mais de uma**
+    função do arquivo (ou por muitas), ele vai no **escopo de módulo**, no topo —
+    não repetido dentro de cada função. `mod_renomear_empenho/telas.py` chegou a
+    usar `notificar` em ~60 call sites sem nunca ter o import; o
+    `mod_solicita_impressao/telas.py` importava `bd` em uma função e usava em outra.
+    Escopo de módulo é o que o `pyflakes` valida sem complaint.
 
 ## Modelo de classes e objetos
 
@@ -334,6 +417,8 @@ O `main.py` + `mod_intranet/ativacao.py` é o padrão de linha de comando do pro
 - [ ] `versao_modulo:<chave>` semeada e log rotulado com `get_logger("<modulo>")`.
 - [ ] Auditoria em todas as escritas; hash SHA-256 em operações com arquivos.
 - [ ] `ast.parse` passou em todos os arquivos alterados.
+- [ ] **Análise estática limpa (BLOQUEANTE)**: `.venv/bin/python -m pyflakes main.py mod_*/*.py mod_*/*/*.py` sem nenhum `undefined name` (ver [Análise estática obrigatória](#analise-estatica-obrigatoria-pyflakes)). Um `undefined name` aqui significa funcionalidade quebrada e invisível, porque o `try/except` do AGENTS.md §3.2 engole o `NameError`.
+- [ ] Todo `try/except` novo registra a causa (`logger.exception`/`traceback`) **e** notifica — nenhum `except Exception: pass` encobrindo `NameError` novo.
 - [ ] Valores ajustáveis (cores, tempos, textos, pastas…) em `tb_config` + cupê Administração — nada de literais hardcoded (ver [Configurabilidade](#configurabilidade-regra-de-projeto)).
 - [ ] Componentes de UI via `mod_intranet/ui_comum` (`botao`/`botao_icone`/`CORES`/`dialogo_card`/`rodape_dialogo`/`notificar`/`item_menu_drawer`) — sem `ui.button`/`ui.item` cru nem hexes soltos; itens do drawer SEMPRE pela fábrica `item_menu_drawer` (com `testid="menu-*"`); **todos os botões centralizados** em linhas `w-full justify-center flex-wrap` com `.style('gap: 0.75rem')` + `.style('min-width: 0')`, **mesmo formato** `size=md` `min-w-[180px]` e **cor única** por módulo via `chave_modulo` (`RNF-UI-01`, 06/09; ref. botão `Aplicar configurações`/`Aplicar`); botões UPPERCASE legados do Quasar usam `no_caps=False` (o edit_pdf padronizou todos em `primario` sem `no_caps` em 06/09 — sem exceções cruas).
 - [ ] **Anti-disconnect AGENTS.md §5.1 (12/09/2026)**: `on_click` rápido pode ser `sync`; I/O pesado (`subprocess` mkdocs, SMTP, `copy2`, `observabilidade.configurar()`, `rodar_monitor`) DEVE usar `await run.io_bound(fn)` em handler `async` com spinner + botão desabilitado + trava `ocupado`; reload único (`ui.timer(1.0, ui.navigate.reload())`) após `notificar()`; card Banco nunca recarrega; Aplicar com `data-testid` (`config-aplicar-<card>`); avisos via `tema_modulo.notificar()`.

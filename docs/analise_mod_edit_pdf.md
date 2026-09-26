@@ -44,6 +44,31 @@ A tela foi migrada para os padrões centrais (`mod_intranet/ui_comum.py` + `tema
 | Reset de aparência | `PADROES_CFG` com `editar_pdf_cor_*` (nunca lidas) | `editpdf_*` — prefixo real lido por `ler_tema` (`telas.py:572-576`) |
 | Cupês de Administração | montagem própria | `bloco_aparencia` reusando o tema único (`telas_administracao.py:175-176`, `com_card=True` — card padrão "Configurações de cores") — o `campo_modulo` foi **removido (06/09)** |
 
+### Código morto removido (25/09/2026) — `salvar_configs` / `resetar_configs`
+
+Duas funções e uma constante foram **removidas de `mod_edit_pdf/telas.py`** por serem
+resíduo de um refactor anterior:
+
+| Removido | Motivo |
+|:---|:---|
+| `salvar_configs()` (~46 linhas) | **Nunca chamada** — a UI real de configuração vive em `mod_edit_pdf/telas_administracao.py`. Referenciava **10 nomes `inp_*` inexistentes** (`inp_cota_global`, `inp_lote_arq`, `inp_lote_mb`, `inp_usuario_gb`, `inp_expira_min`, `inp_txt_titulo`, `inp_txt_hint`, `inp_txt_label`, `inp_txt_header` e os rótulos `lbl_up_titulo`/`lbl_up_hint`/`lbl_header_sub`) |
+| `resetar_configs()` (~52 linhas) | **Nunca chamada** — mesma origem; lia e escrevia os mesmos `inp_*` inexistentes |
+| `PADROES_CFG` (14 chaves) | Só existia para alimentar `resetar_configs()`. Note que os prefixos eram `editar_pdf_*` (cota/lote/expiração/texto), enquanto as chaves de tema reales lidas por `ler_tema` são `editpdf_*` (sem "ar") — a lista nunca teve efeito sobre o tema |
+
+Como o `try/except` do AGENTS.md §3.2 involve a função inteira, os `NameError` dos
+`inp_*` ficavam **engolidos** e o código parecia inofensivo: um def que ninguém chama
+não executa, e ninguém vê o erro. Remover o que não é chamado é a correção correta —
+não "consertar" as referências, porque a UI que elas controlavam **não existe mais
+neste arquivo**.
+
+!!! note "Como saber se um handler está realmente morto"
+    `pyflakes` **não** detecta função morta (ele aponta o oposto: nome usado sem
+    definição). Para isso, o caminho é `grep` do nome no módulo inteiro: se o
+    `def` existe e nenhuma chamada aparece, é código morto. No caso das
+    `salvar_configs`/`resetar_configs`, a verificação cruzada de que a UI real está
+    em `telas_administracao.py` veio da ausência de qualquer binding `on_click`
+    apontando para elas.
+
 **Padronização total dos botões**: "Excluir selecionados" deixou `variante="perigo"` (outline vermelho) e virou `primario` igual aos demais (`telas.py:743-744`); "Enviar agora" deixou `variante="solido"` (`telas.py:754-756`); o botão de atualizar deixou de ser `botao_icone` e virou `botao("Atualizar", ...)` (`telas.py:671-673`). Os helpers locais `cls_btn`/`estilo_btn` foram removidos — o tema é aplicado pela fábrica `ui_comum.botao(chave_modulo="editar_pdf")`. Com o padrão do módulo (chaves `editpdf_*` vazias), os botões usam `PADROES_TEMA` (todos os módulos em `#000000`, a cor do intranet) — **mudança visual intencional**: antes o azul era fixo (`#1565C0`); o override por módulo continua possível no cupê "Aparência".
 
 **Admin padronizado** (`../mod_edit_pdf/telas_administracao.py`): `bloco_aparencia` com card padrão "Configurações de cores" (`com_card=True`); "Configurações específicas" e "Manutenção" como `card_admin` recolhíveis com o rodapé padrão de 2 botões (`rodape_salvar_restaurar` — Restaurar padrão + Aplicar, recarregando após 1 s); `painel_backup` ao final.

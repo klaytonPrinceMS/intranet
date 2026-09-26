@@ -509,6 +509,34 @@ contabilizadas**, e não arquivos.
 - **O fallback de 6 secretarias não tem setores**: se o `mod_lista_telefonica` estiver ausente,
   o sistema sobe com as 6 secretarias de cota 1000 e **nenhum setor** — os setores precisam ser
   cadastrados manualmente pelo admin.
+- **`bd`, `ler_tema` e `bloco_aparencia` precisam estar no escopo de módulo (25/09/2026)**: ver
+  [Correções de `NameError`](#correcoes-de-nameerror-25092026) — sem esses imports de
+  módulo, o botão "Resetar" da cota e a aba de Configurações do admin truncavam em silêncio.
+
+## Correções de `NameError` (25/09/2026)
+
+Duas funcionalidades deste módulo estavam **quebradas em produção sem nenhum erro
+visível**, porque o padrão obrigatório do AGENTS.md §3.2 (`try/except` em toda função)
+tinha `except Exception: pass` no caminho de erro, e o `NameError` caía exatamente ali.
+
+| Sintoma | Causa | Correção |
+|:---|:---|:---|
+| Botão **"Resetar"** da cota (`_resetar_cota`, `telas.py:2582-2607`) **nunca zerava o consumo** — ao clicar, nada acontecia e nenhuma notificação saía | `bd` era usado dentro de `_resetar_cota`, mas o `from mod_solicita_impressao import bd_manipulador as bd` só existia **na outra função** do arquivo | Import no **escopo de módulo** (`telas.py:25`) |
+| Aba **Admin › Solicita Impressão › Configurações** (`_admin_configuracoes`, `telas.py:2612-2766`) **truncava antes de criar o botão "Salvar configurações"** — a tela aparecia, mas sem os campos de retenção, marca d'água, impressoras e tema | `ler_tema` e `bloco_aparencia` eram usados sem nenhum import no arquivo; o `NameError` caía no `except Exception` do **corpo inteiro** da função, que só registrava log | Imports no **escopo de módulo** (`telas.py:28`) |
+
+Detalhe importante: a cópia de `_resetar_cota` em `telas_administracao.py:853-880` **já
+tinha** o import local do `bd` dentro da função e nunca foi afetada — só a versão de
+`telas.py` estava quebrada. As duas cópias da sub-aba `_admin_configuracoes` continuam
+duplicadas por desenho (a de `telas.py` é a aba embutida em `/solicita-impressao`; a de
+`telas_administracao.py` é a de `/admin/solicita_impressao`).
+
+!!! note "Como esse tipo de bug sobrevive à suíte de testes"
+    O `try/except` que o AGENTS.md §3.2 exige é a **melhor defesa contra derrubar o
+    servidor** e a **pior inimiga contra `NameError`**: a exceção é capturada, nada é
+    logado no caminho feliz e o teste passa. Por isso a análise estática com
+    `pyflakes` é **bloqueante** no ciclo de QA (ver
+    [Convenções de Criação de Código](convencoes_codigo.md#analise-estatica-obrigatoria-pyflakes)):
+    `undefined name` é erro de runtime, não estilo.
 
 ## Hora do servidor (fonte da verdade de data/hora)
 
@@ -588,7 +616,12 @@ central — ver [Análise do Núcleo](analise_mod_intranet.md#hora-do-servidor-n
 - **Novo wrapper `_reenviar_grupo`** (`telas.py:613-619`).
 - **Admin config** (`_admin_configuracoes`): campo único **"Alertas da nova solicitação (uma
   frase por linha)"** e select **"Tipo de papel padrão"** (sulfite/fotográfico/vergê) —
-  `telas.py:1359-1390` e `telas_administracao.py:416-447`.
+  `telas.py:2612-2766` e `telas_administracao.py:884-1041` (cópia duplicada da sub-aba
+  existe nos dois arquivos; a de `telas_administracao.py` é a que `/admin/solicita_impressao`
+  renderiza, a de `telas.py` é a aba embutida em `/solicita-impressao`). Ambas terminam em
+  `botao("Salvar configurações", icone="save", on_click=salvar)` (`telas.py:2744`,
+  `telas_administracao.py:1016`) e ambas montam o rodapé de aparência com
+  `ler_tema("solicita_impressao", …)` + `bloco_aparencia(…, com_card=False)`.
 
 ### Adições recentes (09/2026) — responsividade global RNF-UI-01
 

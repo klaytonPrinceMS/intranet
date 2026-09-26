@@ -138,11 +138,11 @@ def construir_e_montar_documentacao(logar=True, porta=None) -> bool:
         return False
     ok_serve = iniciar_servidor(porta or PORTA_PADRAO)
     if montar():
-        if logar:
-            if ok_serve:
-                print(f"[documentacao] OK: servindo em http://localhost:{porta_documentacao()}")
-            else:
-                print(f"[documentacao] montado em /documentacao (porta {porta} ocupada, docs via rota interna)")
+        if logar and not ok_serve:
+            # `iniciar_servidor` JÁ loga "[documentacao] OK: servindo em ..."
+            # quando sobe (linha 85) — repetir aqui duplicava a linha no boot.
+            # Só resta avisar o fallback quando a porta ficou ocupada.
+            print(f"[documentacao] montado em /documentacao (porta {porta} ocupada, docs via rota interna)")
     elif logar:
         print("[documentacao] build OK, mas nao foi possivel montar a rota agora")
     return True

@@ -746,53 +746,6 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                         pass
                 return None
 
-        def salvar_configs():
-            nonlocal lote_max, lote_bytes_max, usuario_gb, vida_pdf_s
-            nonlocal txt_upload_titulo, txt_upload_hint, txt_upload_label, txt_header_sub
-            try:
-                gb_g = max(1, int(inp_cota_global.value or 10))
-                lot_a = max(1, int(inp_lote_arq.value or 10))
-                lot_mb = max(1, int(inp_lote_mb.value or 1024))
-                usr_g = max(1, int(inp_usuario_gb.value or 1))
-                exp_m = max(1, int(inp_expira_min.value or 10))
-                set_config("cotadisco_global_gb", gb_g)
-                set_config("editar_pdf_lote_arquivos", lot_a)
-                set_config("editar_pdf_lote_mb", lot_mb)
-                set_config("editar_pdf_usuario_gb", usr_g)
-                set_config("editar_pdf_expiracao_min", exp_m)
-                lote_max = lot_a
-                lote_bytes_max = lot_mb * 1024**2
-                usuario_gb = usr_g
-                vida_pdf_s = exp_m * 60
-                txt_upload_titulo = (inp_txt_titulo.value or "").strip() or "Envie um ou mais PDFs"
-                txt_upload_hint = (inp_txt_hint.value or "").strip()
-                txt_upload_label = (inp_txt_label.value or "").strip() or "Clique ou arraste PDFs aqui"
-                txt_header_sub = (inp_txt_header.value or "").strip() \
-                    or "Reduza, junte, corte, divida e verifique seus documentos."
-                set_config("editar_pdf_texto_upload_titulo", txt_upload_titulo)
-                set_config("editar_pdf_texto_upload_hint", txt_upload_hint)
-                set_config("editar_pdf_texto_upload_label", txt_upload_label)
-                set_config("editar_pdf_texto_header_sub", txt_header_sub)
-                _app_tema()
-            except Exception as ex:
-                log.exception("erro ao salvar configurações do editor PDF")
-                notificar(f"Erro ao salvar configurações: {ex}", type="negative")
-                return
-            try:
-                lbl_up_titulo.set_text(f"1. {txt_upload_titulo}")
-                lbl_up_hint.set_text(_montar_hint())
-                lbl_header_sub.set_text(txt_header_sub)
-            except Exception:
-                pass
-            try:
-                audit_log(usuario_logado, "edit-pdf", "configuracao",
-                          f"cota_global={gb_g}GB lote={lot_a}arq/{lot_mb}MB "
-                          f"cota_usuario={usr_g}GB expiracao={exp_m}min")
-            except Exception:
-                pass
-            notificar("Configurações salvas — valem imediatamente, sem restart.",
-                      type="positive")
-
         def expirar_agora():
             try:
                 n = expirar_antigos(minutos=cfg_expiracao_min())
@@ -811,58 +764,6 @@ def mostrar_tela(usuario_logado: str, perfil: str):
                     except Exception:
                         pass
                 return None
-
-        PADROES_CFG = {
-            "cotadisco_global_gb": "10",
-            "editar_pdf_lote_arquivos": "10",
-            "editar_pdf_lote_mb": "1024",
-            "editar_pdf_usuario_gb": "1",
-            "editar_pdf_expiracao_min": "10",
-            "editar_pdf_texto_upload_titulo": "Envie um ou mais PDFs",
-            "editar_pdf_texto_upload_hint": "",
-            "editar_pdf_texto_upload_label": "Clique ou arraste PDFs aqui",
-            "editar_pdf_texto_header_sub": "Reduza, junte, corte, divida e verifique seus documentos.",
-            "editpdf_cor_botao": "#000000",
-            "editpdf_cor_texto_botao": "#FFFFFF",
-            "editpdf_cor_fundo": "",
-            "editpdf_cor_titulo": "#212121",
-            "editpdf_btn_tamanho": "medium",
-        }
-
-        def resetar_configs():
-            nonlocal lote_max, lote_bytes_max, usuario_gb, vida_pdf_s
-            nonlocal txt_upload_titulo, txt_upload_hint, txt_upload_label, txt_header_sub
-            try:
-                for chave, valor in PADROES_CFG.items():
-                    set_config(chave, valor)
-                lote_max = 10
-                lote_bytes_max = 1024 * 1024**2
-                usuario_gb = 1
-                vida_pdf_s = 10 * 60
-                txt_upload_titulo = "Envie um ou mais PDFs"
-                txt_upload_hint = ""
-                txt_upload_label = "Clique ou arraste PDFs aqui"
-                txt_header_sub = "Reduza, junte, corte, divida e verifique seus documentos."
-                inp_cota_global.value = 10
-                inp_lote_arq.value = 10
-                inp_lote_mb.value = 1024
-                inp_usuario_gb.value = 1
-                inp_expira_min.value = 10
-                inp_txt_titulo.value = txt_upload_titulo
-                inp_txt_hint.value = txt_upload_hint
-                inp_txt_label.value = txt_upload_label
-                inp_txt_header.value = txt_header_sub
-                lbl_up_titulo.set_text(f"1. {txt_upload_titulo}")
-                lbl_up_hint.set_text(_montar_hint())
-                lbl_header_sub.set_text(txt_header_sub)
-                _app_tema()
-                audit_log(usuario_logado, "edit-pdf", "configuracao",
-                          "reset para padroes de fabrica")
-                notificar("Configurações restauradas para o padrão de fábrica.",
-                          type="positive")
-            except Exception as ex:
-                log.exception("erro ao resetar configurações do editor PDF")
-                notificar(f"Erro ao resetar configurações: {ex}", type="negative")
 
         # ================= UI =================
 

@@ -24,6 +24,32 @@ from mod_intranet.bd_conexao import get_config as _obter_config
 from mod_intranet.tema_modulo import botao as _botao_tema
 from mod_intranet.tema_modulo import notificar
 
+# Logger do fluxo de LOGIN/troca de credenciais. A função (e não uma
+# constante) porque é resolvida no 1º uso e memorizada: os call sites já
+# usavam `_login_erro_log()`, que nunca foi definida — o NameError caía no
+# `except Exception: pass` e TODOS os erros de login sumiam sem log.
+_login_erro_logger = None
+
+
+def _login_erro_log():
+    """Retorna o logger do fluxo de login (loguru, fail-soft).
+
+    Memoriza o logger na primeira chamada. Nunca levanta: se a observabilidade
+    falhar, devolve o logger padrão do loguru para o `except` do chamador
+    seguir funcionando."""
+    global _login_erro_logger
+    if _login_erro_logger is None:
+        try:
+            from mod_intranet import observabilidade as _obs
+            _login_erro_logger = _obs.get_logger("intranet")
+        except Exception:
+            try:
+                from loguru import logger as _logger_padrao
+                _login_erro_logger = _logger_padrao
+            except Exception:
+                return None
+    return _login_erro_logger
+
 
 def usuario_logado():
     """Returns the session user dict or None.

@@ -245,7 +245,7 @@ chamava "Ana, João, Maria" — o usuário lia a lista na ordem inversa à da fi
 ### Complemento 25/09/2026 — `data-testid` no botão "Enviar" da linha de etapa
 
 O botão de transferência de um nome para outra fila da mesma TV
-(`telas.py:349`, em `bloco_nomes_fila`) era **clicável sem `data-testid`**:
+(`telas.py:352`, em `bloco_nomes_fila`) era **clicável sem `data-testid`**:
 
 ```python
 # ANTES
@@ -267,6 +267,49 @@ passa a ser o **canônico** do fluxo de transferência por etapa.
     que abre o slider 0–100), usado por 2 outras suítes. O `test_filas_testids.py`
     esperava `filas-midia-mutar` e foi corrigido em 25/09/2026 — usar sempre
     `filas-midia-som`.
+
+### Complemento 25/09/2026 — `fid` × `fila_id` no seletor de etapa (bug `NameError`)
+
+O seletor de etapa da linha de nome — em `bloco_nomes_fila`, junto aos seletores de
+grupo e de cor — **nunca listava as etapas**. O `select` abria só com `["(geral)"]`,
+sem nenhum nome de etapa, e o botão "Salvar etapa" (`meeting_room`, `tooltip "Salvar
+etapa"`) não tinha o que gravar.
+
+```python
+# ANTES — `fid` não existe neste escopo (o parâmetro chama-se `fila_id`;
+# `nid` é o id do NOME, closure do `_trocar_m`/`_trocar_e` abaixo)
+try:
+    _ets = [e[3] for e in filas.listar_etapas(fid)]   # NameError
+except Exception:
+    _ets = []                                          # silencioso
+
+# DEPOIS — `telas.py:334`
+try:
+    # `fila_id` (não `fid`/`nid`): listar_etapas filtra por fila_id.
+    _ets = [e[3] for e in filas.listar_etapas(fila_id)]
+except Exception:
+    _ets = []
+```
+
+Por que ninguém percebeu: o `try/except Exception` local (que existe para a chamada
+realmente poder falhar) **capturava o `NameError` e caía no `_ets = []`** — o mesmo
+caminho do "não tem etapa cadastrada". O sintoma era indistinguível de "a fila
+realmente não tem etapas", e o terminal ficava limpo. O nome certo (`fila_id`, o
+parâmetro da função) está ao lado do `except` que mascarava o erro: os dois
+`listar_*` vizinhos no mesmo bloco já usavam `fila_id` (`obter_fila(fila_id)`,
+`listar_nomes(fila_id)`, `listar_midias(fila_id=fila_id)`), só esta chamada ficou
+para trás.
+
+| Ponto | Detalhe |
+|:---|:---|
+| Onde | `mod_filas/telas.py:334`, dentro de `bloco_nomes_fila(fila_id, user_nome, recarregar)` (`telas.py:266`) |
+| Sintoma | `ui.select(["(geral)"] + _ets, value=etapa_n if etapa_n in _ets else "(geral)")` só com `"(geral)"` — o `value` caía no fallback e um nome já com etapa aparecia como "(geral)" |
+| Correção | `fid` → `fila_id` |
+| Prevenção | `pyflakes` como análise estática **bloqueante** — ver [Convenções — Análise estática obrigatória](convencoes_codigo.md#analise-estatica-obrigatoria-pyflakes) |
+
+O `except Exception: _ets = []` foi **mantido de propósito**: ele agora cobre
+apenas a falha legítima de `listar_etapas` (fila removida entre a leitura e a
+renderização), que é o comportamento fail-soft correto.
 
 ### Complemento — o módulo em números
 

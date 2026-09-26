@@ -103,9 +103,9 @@ Acesso pela chave do módulo `empenhos`; perfil define o que é visível (abas a
 - **Solicitações**: `pendente → (email) enviado | (ZIP) zip_gerado → confirmar | recusado`; agrupadas por `lote_id`; ZIP em `mod_renomear_empenho/downloads/solic_*.zip`.
 - **Auditoria**: ações `processar`, `revisao_manual`, `solicitacao*`, `configuracao`, `quarentena`, `separar_documentos` na trilha central **com hash SHA-256**; + trilha por arquivo local (`tb_arquivos_auditoria`/`tb_eventos_arquivos`).
 
-## Correções registradas (25/09/2026 — commit `624c9d5`)
+## Correções registradas (25/09/2026 — lote 1, commit `624c9d5`)
 
-Duas falhas de produção e uma padronização de UI, todas no mesmo lote.
+Duas falhas de produção e uma padronização de UI, todas no mesmo lote. (O `NameError` de `notificar` e os fallbacks de tema do **lote 2** estão na seção seguinte.)
 
 ### Bug 1 — a busca de 1 letra não filtrava nada
 
@@ -250,6 +250,64 @@ tela estreita) **não** é reposto pelo helper — ver "Pontos de atenção".
     código não usava o helper. Além disso, a política do projeto é a de **um único lugar para o
     padrão visual** — barra de abas, cabeçalho, botão e campo de busca saem de `aba_modulo` /
     `ui_comum`, nunca de construção local.
+
+## Correções registradas (25/09/2026 — lote 2)
+
+### Bug 3 — `notificar` nunca importado: todo erro do Renomeador sumia
+
+Além dos dois bugs acima, o `pyflakes` (análise estática obrigatória) revelou que
+`mod_renomear_empenho/telas.py` chamava **`notificar` em cerca de 60 call sites sem
+nunca ter o import no arquivo**. Cada chamada levantava `NameError` — e como quase
+todas estavam dentro de um `except Exception: pass` (o caminho de erro padrão do
+AGENTS.md §3.2), o efeito era:
+
+- o usuário **não via nenhuma notificação** quando algo dava errado;
+- **nada ia para o log** — o nome nem existia para o `logger.exception` chamar;
+- o `try/except` do fallback mascarava tudo e a suíte de testes passava.
+
+Correção: `from mod_intranet.tema_modulo import notificar` no **escopo de módulo**
+(`telas.py:42-43`), com comentário explicando o motivo. É o mesmo padrão dos demais
+casos do lote — nome usado por muitas funções vai no topo do arquivo, não repetido
+dentro de cada uma.
+
+### Fallbacks de tema que referenciavam nomes inexistentes
+
+No mesmo arquivo, três helpers de fallback usavam nomes que **não existiam** no
+escopo:
+
+```python
+# ANTES — `_bootstrap`, `_hibrido` e `_modelo` nunca foram definidos
+def _eh_bootstrap():
+    try:
+        return _visual.eh_bootstrap(get_config)
+    except Exception:
+        return _bootstrap        # → NameError dentro do tratamento de erro
+
+# DEPOIS
+def _eh_bootstrap():
+    try:
+        return _visual.eh_bootstrap(get_config)
+    except Exception:
+        return False             # fallback semânticamente correto
+```
+
+| Helper | Antes | Depois | Por quê |
+|:---|:---|:---|:---|
+| `_eh_bootstrap` | `return _bootstrap` | `return False` | "não é Bootstrap" é o default seguro; `True` deixaria o tema errado sem nenhum sinal |
+| `_eh_hibrido` | `return _hibrido` | `return False` | idem para o modo híbrido |
+| `_modelo_atual` | `return _modelo` | `return _visual.MODELO_PADRAO` | aqui o fallback **tem** de ser um valor de verdade: `MODELO_PADRAO` existe em `mod_renomear_empenho/visual.py` e é o modelo documentado como padrão |
+
+O caso de `_modelo_atual` é o mais perigoso dos três: o `except` era justamente o
+caminho tomado quando a leitura da config falhava, e ali a tela ficaria sem modelo
+nenhum.
+
+!!! note "Padrão que emerge: o `except` também é código"
+    Nenhum desses três `except` executava com frequência — por isso o bug passou
+    despercebido. Mas o `except` é o **caminho mais crítico** do código, porque é
+    onde os bugs de escopo se escondem: quando ele é executado, já há um problema em
+    curso, e o `NameError` do próprio tratamento de erro transforma um incidente
+    pequeno em uma tela silenciosamente quebrada. Todo `except` deve ser revisto com
+    a mesma atenção que o caminho feliz.
 
 ## Referência funcional — monitor, regex, FTS5, quarentena, organizador e solicitações
 

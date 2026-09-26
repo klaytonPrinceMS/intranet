@@ -46,6 +46,23 @@ principal.
 | Colunas consumidas | `fonte_icon_url` (16×16 `contain`), `imagem_url` (30×30 `cover`), `tema`, `titulo`, `url`, `descricao`, `data_publicacao`, `data_coleta`, `fonte` |
 | Escrita | **nenhuma** — a tela pura é read-only |
 
+!!! note "O redesenho do card (25/09/2026) NÃO atingiu esta tela"
+    O redesenho do card de `/agregador-noticias` (miniatura `30×30` → **`120×120`
+    ampliável em diálogo**, descrição truncada `desc[:160]…` → **texto completo**,
+    card de **altura fixa** `300px`, logo da fonte como **marca d'água `32×32`**)
+    foi feito **apenas em `mod_agregador_noticias/telas.py`**. O
+    `mod_agregador_noticias/telas_puro.py` **não foi alterado** e **continua
+    exatamente como está documentado aqui**: miniatura `30×30` `cover`, ícone de
+    fonte `16×16` `contain` e `desc[:160] + "…"`.
+
+    Isso é deliberado: a tela pura é uma **réplica fiel do modelo visual
+    `klaytonPrinceMS/Noticia`**, e o CSS original (`base.css`/`vendor.css`/`main.css`)
+    define o tamanho dos itens da `info-list`. Alterar o tamanho da miniatura ali
+    quebraria a fidelidade ao modelo de referência. Se a tela pura for
+    reprojetada no futuro, esta página precisa ser atualizada **junto** — não
+    assuma que ela acompanha o card da tela principal. Detalhes do redesenho em
+    [Agregador de Notícias — Fluxo da tela](analise_mod_agregador_noticias.md#fluxo-da-tela).
+
 Detalhe completo do schema em
 [Agregador de Notícias — Banco próprio](analise_mod_agregador_noticias.md#banco-proprio)
 e em [Resumo do módulo](modulos/agregador_noticias.md).
