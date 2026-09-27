@@ -37,7 +37,10 @@ import { WebSocket } from 'k6/experimental/websockets';
 import { check, sleep } from 'k6';
 import { Trend, Rate, Counter } from 'k6/metrics';
 
-const BASE = 'http://localhost:8080';
+// Base pela variável de ambiente, para rodar em outra máquina/porta:
+//   k6 run -e INTRANET_BASE_URL=http://192.168.0.10:8080 assets/k6/login_carga.js
+const BASE = (__ENV.INTRANET_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
+const WS_BASE = BASE.replace(/^http/, 'ws');
 const SENHA = '123456';
 const SEGURAR_MS = 15000;   // tempo com o socket aberto por ciclo
 
@@ -142,7 +145,7 @@ export default function () {
   }
 
   // --- passo 2/3: WebSocket + Engine.IO + handshake do NiceGUI ------------
-  const url = 'ws://localhost:8080/_nicegui_ws/socket.io/'
+  const url = WS_BASE + '/_nicegui_ws/socket.io/'
     + '?EIO=4&transport=websocket&client_id=' + clientId;
   let handshake = false;
   let contaEventos = 0;

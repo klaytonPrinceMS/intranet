@@ -1,4 +1,4 @@
-"""E2E Agregador Noticias — /agregador-noticias + puro (kbp-devSecOps).
+"""E2E Agregador de Noticias — /agregador-noticias (kbp-devSecOps).
 
 EN — Playwright checks for mod_agregador_noticias on localhost only:
 agregador-busca + agregador-filtro-tema, pure screen by direct URL,
@@ -165,13 +165,28 @@ class TestUnidadeAgregador:
             raise
 
     @pytest.mark.unit
-    def test_rotas_agregador_e_puro_registradas(self):
-        """EN: Both routes registered. PT-BR: ambas rotas registradas."""
+    def test_rota_agregador_registrada_e_puro_removida(self):
+        """EN: main route registered; the pure test screen is GONE.
+
+        PT-BR: rota principal registrada; a tela pura de teste foi REMOVIDA.
+
+        A tela pura (`/agregador-noticias-puro` + `telas_puro.py`) era réplica
+        de teste do modelo `Noticia` e saiu em 26/09/2026. Este teste fixa a
+        remoção: se alguém reintroduzir a rota, ele falha — que é o
+        comportamento desejado, como já acontece com o `agregador-atualizar`
+        que virou regra de negócio.
+        """
         try:
             main = _ler("main.py")
             assert '@ui.page("/agregador-noticias")' in main
-            assert '@ui.page("/agregador-noticias-puro")' in main
+            # a rota pura NÃO deve mais existir
+            assert '@ui.page("/agregador-noticias-puro")' not in main, (
+                "a tela pura foi removida de propósito — se a rota voltou, "
+                "revise se a réplica de teste do Noticia é necessária")
+            # a rota de assets continua, agora servindo SÓ o favicon placeholder
             assert '@app.get("/assets/noticia/{caminho:path}")' in main
+            assert "favicon.png" in main, (
+                "o placeholder de imagem quebrada (TV/Blog) depende do favicon")
             assert "startswith" in main, "anti-traversal deveria usar startswith"
         except Exception:
             try:
@@ -236,24 +251,33 @@ class TestE2EAgregador:
                 pass
             raise
 
-    def test_tela_pura_por_url_direta(self, page):
-        """EN: Pure screen opens by direct URL. PT-BR: tela pura abre por URL direta."""
+    def test_tela_pura_foi_removida(self, page):
+        """EN: the pure test screen is gone (route 404 / redirects home).
+
+        PT-BR: a tela pura de teste foi removida (rota 404 / redireciona).
+
+        Virou **regra de negócio**: a réplica do modelo `Noticia` não é mais
+        necessária, e o Agregador de Notícias normal é o que permanece. Se a
+        rota voltar, este teste falha.
+        """
         try:
             if not _servidor_ativo():
                 pytest.skip("servidor localhost:8080 fora do ar")
             _fazer_login(page, USUARIO_LEITURA, SENHA_QA)
             _garantir_localhost(BASE_URL)
-            page.goto(BASE_URL + "/agregador-noticias-puro", wait_until="domcontentloaded")
-            page.wait_for_timeout(4000)
-            corpo = page.locator("body").inner_text()
-            assert "Notícia" in corpo or "Noticia" in corpo or "notícia" in corpo.lower()
+            page.goto(BASE_URL + "/agregador-noticias-puro",
+                      wait_until="domcontentloaded")
+            page.wait_for_timeout(3000)
+            # a URL não pode continuar servindo a tela pura
+            assert "/agregador-noticias-puro" not in page.url, (
+                "a tela pura foi removida de propósito — a rota ainda responde")
             assert SENHA_QA not in page.content()
             _cookie_sem_segredo(page)
         except Exception:
             try:
                 lg = _log()
                 if lg is not None:
-                    lg.exception("agregador E2E: pura falhou")
+                    lg.exception("agregador E2E: verificacao da remocao da pura falhou")
             except Exception:
                 pass
             raise

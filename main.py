@@ -924,21 +924,6 @@ if rotas_modulos is not None:
     rotas_modulos.REGISTRO_MODULOS["agregador_noticias"] = page_agregador_noticias
 
 
-@ui.page("/agregador-noticias-puro")
-def page_agregador_noticias_puro():
-    try:
-        from mod_intranet.telas import pagina_restrita
-        user = pagina_restrita("Agregador de Notícias — Puro", chave_modulo="agregador_noticias")
-        if not user:
-            return
-        from mod_agregador_noticias.telas_puro import mostrar_tela_pura
-        mostrar_tela_pura(user["nome"], user.get("perfil", ""))
-    except Exception as e:
-        observabilidade.get_logger("intranet").exception(
-            "page_agregador_noticias_puro: erro ao renderizar o Agregador puro: %s", e)
-        notificar("Erro ao carregar o Agregador de Notícias.", tipo="error")
-
-
 @app.get("/api/attachments/{caminho:path}")
 def fallback_attachments(caminho: str):
     """EN: Fallback for broken /api/attachments/* exported from Trello/Notion.
@@ -965,11 +950,22 @@ def fallback_attachments(caminho: str):
 
 @app.get("/assets/noticia/{caminho:path}")
 def servir_assets_noticia(caminho: str):
+    """Serve APENAS o placeholder `favicon.png` da pasta de assets do Noticia.
+
+    A tela pura `/agregador-noticias-puro` foi removida em 26/09/2026 (era
+    réplica de teste do modelo `Noticia`). Sobrou só o `favicon.png`, que o
+    fallback de `/api/attachments/` usa como imagem de substituição quando a
+    TV ou o Blog apontam para anexo externo quebrado — sem ele, essas telas
+    passam a pedir um 404 por imagem.
+    """
     try:
         base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "noticia")
         # segurança: normaliza e garante dentro da base
         caminho_abs = os.path.normpath(os.path.join(base, caminho))
         if not caminho_abs.startswith(os.path.abspath(base)):
+            return Response(status_code=404)
+        # só o favicon.png é servido; o resto da pasta foi removido
+        if os.path.basename(caminho_abs) != "favicon.png":
             return Response(status_code=404)
         if not os.path.isfile(caminho_abs):
             return Response(status_code=404)
