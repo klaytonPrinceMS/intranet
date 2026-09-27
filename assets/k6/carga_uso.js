@@ -10,34 +10,39 @@
 //  "aguenta N usuários?" e "e eles conseguem TRABALHAR com N usuários?".
 //
 // ---------------------------------------------------------------------------
-//  CRONOMETRIA EXIGIDA (soma conferida, o deadline é 15:00 com folga zero)
+//  CRONOMETRIA (valida por assets/test/valida_cronometragem.py)
 // ---------------------------------------------------------------------------
-//  | tempo     | o que acontece                                        |
-//  |:----------|:-------------------------------------------------------|
-//  | 0:00      | `startVUs: 10` — 10 usuários já no ar                  |
-//  | 0:00-0:20 | rampa 10 → 20   ┐                                      |
-//  | 0:20-0:40 | rampa 20 → 30   │                                      |
-//  | 0:40-1:00 | rampa 30 → 40   │ +10 usuários a cada 20 s           |
-//  | 1:00-1:20 | rampa 40 → 50   │ (é a escalada exigida)            |
-//  | 1:20-1:40 | rampa 50 → 60   │                                  |
-//  | 1:40-2:00 | rampa 60 → 70   │                                  |
-//  | 2:00-2:20 | rampa 70 → 80   │                                  |
-//  | 2:20-2:40 | rampa 80 → 90   │                                  |
-//  | 2:40-3:00 | rampa 90 → 100  │                                  |
-//  | 3:00-3:20 | rampa 100 → 110 │                                  |
-//  | 3:20-3:40 | rampa 110 → 120 │ 120 alcançado em 3:40            |
-//  | 3:40-4:00 | segura 120      ┘ 120 completo em **4:00**          |
-//  | 4:00-13:00| 120 em regime, 540 s (o teste de uso de verdade)  |
-//  | 13:00-13:30| descida 120 → 60                                |
-//  | 13:30-13:55| descida  60 → 30                                |
-//  | 13:55-14:20| descida  30 → 10                                |
-//  | 14:20-14:40| descida  10 → 0                                 |
+//  O enunciado pedia +10 usuarios a cada 20 s. O degrau foi encurtado para
+//  15 s em 27/09/2026, por decisao do responsavel: com 20 s a soma dava
+//  900 s = 15:00 EXATOS, sem nenhuma folga, e um unico segundo de atraso num
+//  estagio estouraria o teto. Os mesmos 120 usuarios sao alcancados.
 //
-//  SOMA: 12×20 s (240 s) + 30 + 8×60 + 30 (540 s) + 30 + 25 + 25 + 20 (100 s)
-//        = 880 s = 14:40 de ESTÁGIOS.
-//  `gracefulStop: '20s'` é o teto que o k6 espera as iterações em curso;
-//  o fim do ensaio é, portanto, 880 + 20 = **900 s = 15:00 exatos**.
-//  A partir de 0:20 (20 usuários) é que o ciclo de uso real começa: os VUs
+//  | tempo      | o que acontece                                     |
+//  |:-----------|:----------------------------------------------------|
+//  | 0:00       | `startVUs: 10` — 10 usuarios ja no ar               |
+//  | 0:00-0:15  | rampa  10 -> 20  ┐                                 |
+//  | 0:15-0:30  | rampa  20 -> 30  │                                 |
+//  | 0:30-0:45  | rampa  30 -> 40  │ +10 usuarios a cada 15 s         |
+//  | 0:45-1:00  | rampa  40 -> 50  │                                 |
+//  | 1:00-1:15  | rampa  50 -> 60  │                                 |
+//  | 1:15-1:30  | rampa  60 -> 70  │                                 |
+//  | 1:30-1:45  | rampa  70 -> 80  │                                 |
+//  | 1:45-2:00  | rampa  80 -> 90  │                                 |
+//  | 2:00-2:15  | rampa  90 -> 100 │                                 |
+//  | 2:15-2:30  | rampa 100 -> 110 │                                 |
+//  | 2:30-2:45  | rampa 110 -> 120 ┘ 120 alcancado em 2:45          |
+//  | 2:45-11:45 | 120 em regime, 540 s (o teste de uso de verdade)   |
+//  | 11:45-12:15| descida 120 -> 60                                |
+//  | 12:15-12:35| descida  60 -> 30                                |
+//  | 12:35-12:55| descida  30 -> 10                                |
+//  | 12:55-13:15| descida  10 -> 0                                 |
+//
+//  SOMA: 11×15 s (165 s) + 9×60 s (540 s) + 30 + 20 + 20 + 20 (90 s)
+//        = 795 s = 13:15 de ESTAGIOS.
+//  `gracefulStop: '20s'` e o teto que o k6 espera as iteracoes em curso;
+//  o fim do ensaio e, portanto, 795 + 20 = **815 s = 13:35**, com folga de
+//  1:25 sobre o teto de 15:00.
+//  A partir de 0:15 (20 usuarios) e que o ciclo de uso real comeca: os VUs
 //  1..10 recebem 20 s de espera inicial antes do primeiro passo (`ESPERA_INICIAL_VU_BAIXO`).
 //
 // ---------------------------------------------------------------------------
@@ -208,7 +213,8 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 10,             // 0:00 já com 10 usuários
       gracefulRampDown: '15s',
-      gracefulStop: '20s',      // 770 s de estágios + 20 s = 790 s = 13:10
+      gracefulStop: '20s',      // 795 s de estágios + 20 s = 815 s = 13:35
+                                // (teto de 15:00; folga de 1:25)
       exec: 'cicloDeUso',
       stages: [
         // --- escalada: +10 a cada 15 s, 0:00 -> 2:45 (120 completo) ---

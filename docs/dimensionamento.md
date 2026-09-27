@@ -28,7 +28,8 @@ bcrypt é **CPU-bound puro**: `2^custo` iterações, as mesmas em qualquer
 processador. Então o custo medido (721 ms a 1,5 GHz = 1.082 M-ciclos) vira
 ciclos, e os ciclos viram segundos no clock novo. Isso é defensável.
 
-O modelo **não** é benchmark de fabricante, e o script se autoconfere:
+O modelo **não** é benchmark de fabricante, e o script se autoconfere. Saída
+do autoteste (transcrita com vírgula decimal):
 
 ```text
 vazao prevista @ 1,5 GHz x 2 nucleos: 5,5 logins/s
@@ -36,6 +37,10 @@ vazao MEDIDA nesta maquina ..........: 4,2 logins/s
 erro ...............................: 32%
 margem aplicada na tabela ..........: 1,35x
 ```
+
+Os valores conferem com a execução real do script; o block acima está
+transcrito em PT-BR, o script imprime ponto decimal. O autoteste falha se o
+erro passar de 50 %.
 
 O modelo **superestima em 32 %**. Dimensionar por ele sem margem daria
 hardware insuficiente, então a contagem de núcleos é inflada por 1,35×. O
@@ -58,26 +63,39 @@ segundo**, com o login mais antigo da rajada terminando em até 5 s. Login é a
 .venv/bin/python assets/test/dimensiona_servidor.py
 ```
 
+**Trecho** da tabela (o script sai com os 50 degraus, de 40 a 2.000, em passos
+de 40 — por isso 1.520 aparece e 1.500 não):
+
 | usuários | RAM | núcleos | instâncias | banda (Mbit) | +10 % | burst de login | situação medida |
 |---:|---:|---:|---:|---:|---:|---:|:---|
-| 40 | 2 GB | 2 | 1 | 0,4 | 0,4 | 1,2 | **latência reprovada** |
-| 80 | 2 GB | 4 | 1 | 0,8 | 0,8 | 2,4 | **reprovado (10,7 % falha)** |
-| 120 | 2 GB | 6 | 1 | 1,1 | 1,2 | 3,6 | **reprovado (10,7 % falha)** |
-| 160 | 2 GB | 8 | 2 | 1,5 | 1,7 | 4,8 | não medido além de 120 |
-| 200 | 2 GB | 10 | 2 | 1,9 | 2,1 | 6,0 | não medido além de 120 |
-| 240 | 2 GB | 12 | 2 | 2,3 | 2,5 | 7,2 | não medido além de 120 |
-| 280 | 2 GB | 14 | 2 | 2,6 | 2,9 | 8,4 | não medido além de 120 |
-| 320 | 2 GB | 16 | 4 | 3,0 | 3,3 | 9,6 | não medido além de 120 |
-| 400 | 2 GB | 20 | 4 | 3,8 | 4,1 | 12,0 | não medido além de 120 |
-| 480 | 2 GB | 24 | 4 | 4,5 | 5,0 | 14,4 | não medido além de 120 |
-| 600 | 2 GB | 30 | 4 | 5,7 | 6,2 | 18,0 | não medido além de 120 |
-| 800 | 2 GB | 39 | 8 | 7,5 | 8,3 | 24,0 | não medido além de 120 |
-| 1.000 | 2 GB | 49 | 8 | 9,4 | 10,4 | 29,9 | não medido além de 120 |
-| 1.200 | 2 GB | 59 | 8 | 11,3 | 12,4 | 35,9 | não medido além de 120 |
-| 1.500 | 3 GB | 74 | 16 | 14,3 | 15,8 | 45,5 | não medido além de 120 |
-| 2.000 | 3 GB | 98 | 16 | 18,8 | 20,7 | 59,9 | não medido além de 120 |
+| 40 | 2 GB | 2 | 1 | 0,4 | 0,4 | 1,2 | **medido: reprovado na latência (sonda 1.676 ms)** |
+| 80 | 2 GB | 4 | 1 | 0,8 | 0,8 | 2,4 | não medido (interpolação) |
+| 120 | 2 GB | 6 | 1 | 1,1 | 1,2 | 3,6 | **medido: reprovado (10,7 % falha)** |
+| 160 | 2 GB | 8 | 2 | 1,5 | 1,7 | 4,8 | não medido |
+| 200 | 2 GB | 10 | 2 | 1,9 | 2,1 | 6,0 | não medido |
+| 240 | 2 GB | 12 | 2 | 2,3 | 2,5 | 7,2 | não medido |
+| 280 | 2 GB | 14 | 2 | 2,6 | 2,9 | 8,4 | não medido |
+| 320 | 2 GB | 16 | 4 | 3,0 | 3,3 | 9,6 | não medido |
+| 400 | 2 GB | 20 | 4 | 3,8 | 4,1 | 12,0 | não medido |
+| 480 | 2 GB | 24 | 4 | 4,5 | 5,0 | 14,4 | não medido |
+| 600 | 2 GB | 30 | 4 | 5,7 | 6,2 | 18,0 | não medido |
+| 800 | 2 GB | 39 | 8 | 7,5 | 8,3 | 24,0 | não medido |
+| 1.000 | 2 GB | 49 | 8 | 9,4 | 10,4 | 29,9 | não medido |
+| 1.200 | 2 GB | 59 | 8 | 11,3 | 12,4 | 35,9 | não medido |
+| 1.520 | 3 GB | 74 | 16 | 14,3 | 15,8 | 45,5 | não medido |
+| 2.000 | 3 GB | 98 | 16 | 18,8 | 20,7 | 59,9 | não medido |
 
-A tabela completa, com todos os 50 degraus, sai do script.
+!!! warning "Só três pontos da coluna de situação são medido de verdade"
+    A coluna `situacao medida` do script marca 40, 80 e 120, mas **só 40 e 120
+    foram ensaiados**. Os 10,7 % de falha são a medição da carga a **120
+    usuários**; a linha de 80 herdou esse rótulo por Ser o único outro degrau
+    abaixo de 120, e não porque existisse um ensaio a 80. Aqui a linha de 80
+    está corrigida para "não medido" — e o `dimensiona_servidor.py` também
+    precisa ser corrigido, senão volta a gerar o rótulo errado na próxima
+    execução (é o `nota` em `tabela()`, ramo `elif u <= 120`).
+
+Os valores de RAM, núcleos, instâncias, banda e burst **são todos gerados** —
+não há número escrito à mão nesta tabela.
 
 ### Como ler as colunas
 
@@ -96,10 +114,15 @@ A tabela completa, com todos os 50 degraus, sai do script.
 | 120 | Core i5-12400 (6c) | Ryzen 5 5600 (6c) | 2 GB | 1 |
 | 160 | Core i5-13400 (8c) | Ryzen 7 7700X (8c) | 2 GB | 2 |
 | 320 | Core i7-14700K (20c) | Ryzen 9 7950X (16c) | 2 GB | 4 |
-| 480 | Core i9-14900K (24c) | Ryzen 9 9950X (16c) | 2 GB | 4 |
+| 480 | Core i9-14900K (24c) | **EPYC 9354 (32c)** | 2 GB | 4 |
 | 640 | Xeon W-3400 (32c) | EPYC 9354 (32c) | 2 GB | 8 |
 | 1.000 | Xeon W-3400 (32c) | EPYC 9554 (64c) | 2 GB | 8 |
 | 2.000 | Xeon W-3400 (32c) | EPYC 9554 (64c) | 3 GB | 16 |
+
+A escolha de AMD a 480 usuários não é "o mais rápido": é o **primeiro do
+catálogo com ≥ 24 núcleos**, porque `_melhor_para` filtra por contagem de
+núcleos antes de clock. Ryzen 9 9950X (16c) tem clock maior e não serve para
+24 núcleos.
 
 **Aviso honesto:** estes não são benchmarks de fabricante. São clock ×
 núcleos cruzados com a constante medida aqui. A extrapolação por clock é
@@ -147,7 +170,9 @@ O consumo de banda é **irrelevante** nesta escala. Medido:
 - O **switch precisa de backplane** de pelo menos 1 Gbit/s para 2.000 clientes
   somando 20 Mbit/s em regime — mas 60 Mbit/s no burst de login, se todos
   entrarem juntos, é burst de 1 segundo, não carga sustentada.
-- O gargalo **não é a rede**. Numa rede de 1 Gbit/s sobrariam 940 Mbit/s.
+- O gargalo **não é a rede**. Numa rede de 1 Gbit/s sobrariam **940 Mbit/s** no
+  pior caso (1.000 − 59,9 do burst de login) e 979 Mbit/s em regime
+  (1.000 − 20,7).
 
 ## O que esta tabela NÃO resolve
 

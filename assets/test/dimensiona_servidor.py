@@ -147,14 +147,24 @@ def tabela(usuarios_max=2000, passo=40, ghz_alvo=3.0):
         nucleos_por_inst = max(2, int(-(-nucleos // inst)))
 
         # --- veredito honesto, ancorado na medicao de latencia ---
-        if u <= 22:
-            nota = "medido aprovado"
-        elif u <= 40:
-            nota = "limiar: medido REPROVADO na latencia"
-        elif u <= 120:
-            nota = "REPROVADO (10,7% de falha)"
+        # Rótulo por FAIXA, e nao por faixa-com-benzinho: o texto precisa dizer
+        # exatamente o que foi medido NAQUELE numero de usuarios. Antes o ramo
+        # `elif u <= 120` rotulava 80 e 100 usuarios como "REPROVADO (10,7% de
+        # falha)", mas 10,7% e a medicao de 120 — 80 e 100 nunca foram
+        # ensaiados, e a tabela ficava afirmando um ensaio que nao aconteceu.
+        # so o numero EXATO que foi ensaiado recebe o rotulo da medicao;
+        # os vizinhos ficam marcados como nao medidos, porque afirmar que
+        # "80 reprovou com 10,7% de falha" seria inventar ensaio.
+        if u == 22:
+            nota = "medido: aprovado (sonda 911 ms)"
+        elif u == 40:
+            nota = "medido: REPROVADO na latencia (sonda 1.676 ms)"
+        elif u == 120:
+            nota = "medido: REPROVADO (10,7% de falha, sonda 10.001 ms)"
+        elif u == 20:
+            nota = "medido: 6/20 logins no navegador real (o limiar do enunciado)"
         else:
-            nota = "nao medido alem de 120"
+            nota = "NAO MEDIDO (interpolacao)"
 
         linhas.append({
             "usuarios": u,

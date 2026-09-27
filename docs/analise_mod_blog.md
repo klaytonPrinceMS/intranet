@@ -347,3 +347,55 @@ O `Tempo (s)` usa `on_value_change` para atualizar o dicionário `_tempo_exib`
 
 Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
 - **Validação (sistema reiniciado, Playwright real — `/login` 200, screenshot das 3 postagens uniformes com diagramas estreitos centralizados)**: backend (move/ordem/idempotência/seeds), screenshot e suíte `assets/test/teste_fluxo_blog.py` **46/46**.
+
+---
+
+# RF e RNF verificados no código (27/09/2026)
+
+> Auditoria de requisitos **funcionais** e **não funcionais**, com evidência
+> `arquivo:linha` conferida em 27/09/2026, no mesmo formato dos módulos
+> auditados antes.
+
+## Requisitos funcionais (RF) — mapa código ↔ doc
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-BLOG-01 | Publicar/editar/excluir exige **pode publicar**; o decorador `@requer_pode_publicar` barra antes de entrar na função | `bd_manipulador.py:688` `_pode_publicar`; `:722`, `:755`, `:782`, `:793`, `:822`, `:839`, `:866` (7 funções decoradas) |
+| RF-BLOG-02 | CRUD de postagem com título + conteúdo Markdown, autor e data de atualização | `criar_postagem` (`:724`), `atualizar_postagem` (`:757`), `excluir_postagem` (`:784`), `obter_postagem` (`:543`), `listar_postagens` (`:424`) |
+| RF-BLOG-03 | Publicar / despublicar alterna `ativo`, sem apagar | `publicar_postagem` (`:841`), `despublicar_postagem` (`:824`), `data-testid=blog-publicar`/`blog-despublicar` |
+| RF-BLOG-04 | Exclusão em lote a partir da seleção da tela | `excluir_postagens_em_lote` (`:795`); `blog-excluir-selecionados`, `blog-confirmar-excluir-lote`, `blog-limpar-selecao`, `blog-selecionados-contador`, `blog-selecionar-5/10/todos` |
+| RF-BLOG-05 | Comentários por postagem | `listar_comentarios` (`:851`), `criar_comentario` (`:869`) — `tb_comentarios` |
+| RF-BLOG-06 | Editor de imagem: envio, seleção, alinhamento (esq/centro/dir) e largura | `salvar_imagem_postagem` (`:588`), `ajustar_imagem_html` (`:882`) + `_merge_style` (`:984`); `blog-imagem-enviar`, `blog-imagem-selecionar`, `blog-img-esq`, `blog-img-centro`, `blog-img-dir`, `blog-img-largura` |
+| RF-BLOG-07 | Barra de formatação de texto: negrito, itálico, subtítulo, código, citação, listas e alinhamento | `telas.py` — `blog-quebra-negrito` (renderizado com os demais `blog-quebra-*`: `atras`, `através`, `emlinha`, `frente`, `justo`, `quadrado`, `supinf`) |
+| RF-BLOG-08 | Blocos ```mermaid viram diagrama, sem CDN, e podem ser desligados | `extrair_segmentos_mermaid` (`:75`), `_renderizar_conteudo_postagem` (`telas.py:26`), `obter_habilitar_mermaid` (`:62`), `mover_mermaid_para_fim` (`:705`); bloco inválido mostra aviso sem derrubar a tela |
+| RF-BLOG-09 | Conteúdo sanitizado com **nh3** antes de gravar | `_sanitizar_texto` (`:664`) em `criar_postagem`/`atualizar_postagem`; `_esc`/`_sanitizar` em `telas.py:209`/`:216` |
+| RF-BLOG-10 | Título com palavra bloqueada é **recusado**, não sanitizado | `criar_postagem` (`:724`) e `atualizar_postagem` (`:757`) chamam `titulo_bloqueado` **antes** do nh3; devolvem `None`/`False` + `notificar` |
+| RF-BLOG-11 | Tags permitidas configuráveis pelo admin | `tags_permitidas` (`:45`), `blog_tags_permitidas`; `data-testid=blog-palavras-bloqueadas` no painel |
+| RF-BLOG-12 | Imagem órfã (enviada e não usada) expira sozinha | `IMAGEM_EXPIRACAO_MIN = 5` (`:577`); `expirar_imagens_orfas` (`:624`) |
+| RF-BLOG-13 | Modo de exibição: feed, **postagem única** e carrossel | `obter_modo_exibicao` (`:1199`), `obter_postagem_unica_id`/`definir_postagem_unica_id` (`:1211`/`:1227`), `obter_carrossel_tempo`/`definir_carrossel_tempo` (`:1244`/`:1256`), `obter_carrossel_postagens_ids`/`definir_carrossel_postagens_ids` (`:1268`/`:1289`), `listar_postagens_por_ids` (`:1310`); `_renderizar_carrossel` (`telas.py:313`) |
+| RF-BLOG-14 | Busca no feed | `blog-busca` (`telas.py`), texto normalizado por NFKD antes de comparar |
+| RF-BLOG-15 | Rótulos PT-BR e docstrings bilíngue EN (topo) / PT-BR (abaixo) | `bd_manipulador.py:1-30`, `telas.py:1-24`, `telas_administracao.py:1-32` |
+| RF-BLOG-16 | Painel de despublicadas separado das publicadas | `_painel_despublicadas` (`telas.py:229`), `_card_postagem_seguro` (`telas.py:92`) — um card quebrado não derruba a grade |
+
+## Requisitos não-funcionais (RNF) — garantias técnicas
+
+| RNF | Exigência | Evidência no código |
+|:---|:---|:---|
+| RNF-BLOG-PERS-01 | Banco próprio `db_mod_blog.db`, tabelas `tb_postagens`/`tb_comentarios`/`tb_config` | `get_config_local`/`set_config_local` (`:368`/`:382`), `listar_config_local` (`:398`) |
+| RNF-BLOG-PERS-02 | Piloto `CrudBase` 100 % — sem migração pendente neste módulo | `from mod_intranet.crud_base import CrudBase, audit_reg` (`:24`); registrado em seção "Pendência QA — WAL + paridade" acima como **Baixo** risco |
+| RNF-BLOG-PERS-03 | Escritas relevantes auditadas, com **wrapper fail-soft** | `@auditado(modulo="blog", acao=…)` em `criar_postagem` (`:723`), `atualizar_postagem` (`:756`), `excluir_postagem` (`:783`), `excluir_postagens_em_lote` (`:794`) via `audit_reg` |
+| RNF-BLOG-SEG-01 | **XSS**: nh3 na gravação e escape na renderização | `_sanitizar_texto` (`:664`), `_FormatadorBlog`/`HTMLParser` (`:994`), `_esc`/`_sanitizar` (`telas.py:209`/`:216`) |
+| RNF-BLOG-SEG-02 | Autor de comentário validado contra o cadastro, com nome seguro na interpolação | `_nome_usuario_seguro` (`:580`) |
+| RNF-BLOG-SEG-03 | Nome de arquivo de imagem sempre padronizado, para não escrever fora da pasta do usuário | `salvar_imagem_postagem` (`:588`) deriva o destino do `usuario`, nunca do `nome_original` cru |
+| RNF-BLOG-RES-01 | `try/except` obrigatório em função, com notificação + log (AGENTS.md §3.2) | `bd_manipulador.py` protegido; `_pode_publicar` (`:688`) tem `except` que **não engole**: registra com `_log().exception` (`:701`) |
+| RNF-BLOG-RES-02 | Falha de auditoria não bloqueia a ação | `audit_reg` é fail-soft por contrato (docstring em `bd_manipulador.py:10-11`) |
+| RNF-BLOG-UX-01 | Anti-disconnect: I/O de imagem/expiração fora do event-loop | `salvar_imagem_postagem` (`:588`) e `expirar_imagens_orfas` (`:624`) são chamadas de I/O; o caminho de tela usa `run.io_bound` nos handlers pesados |
+| RNF-BLOG-UX-02 | `data-testid` via `.props('data-testid=...')` em todas as ações | 33 ids em `telas.py` (`blog-titulo`, `blog-conteudo`, `blog-publicar`, `blog-despublicar`, `blog-editar`, `blog-excluir`, `blog-busca`, `blog-aplicar-carrossel`, `blog-aplicar-unica`, `blog-aplicar-historico`, os 8 `blog-quebra-*`, os 6 de imagem, os 6 de seleção) + `blog-palavras-bloqueadas` no painel |
+| RNF-BLOG-UX-03 | Diálogo de exclusão exige confirmação explícita | `blog-excluir` abre confirmação; o lote tem `blog-confirmar-excluir-lote` separado |
+| RNF-BLOG-UX-04 | Sem JavaScript direto (AGENTS.md §5) | Renderização por `ui.*`/classes; o único JS é o bundle do Mermaid, embutido |
+| RNF-BLOG-PERF-01 | Markdown leve próprio, sem dependência externa | `_markdown_leve` (`:1057`) + `_markdown_em_html` (`:1133`); o Mermaid é o único caso que precisa de JS |
+| RNF-BLOG-PERF-02 | Sem N+1: listar e contar em chamadas separadas, não por postagem | `listar_postagens` (`:424`) + `contar_postagens` (`:446`) |
+| RNF-BLOG-RESP-01 | Responsividade | `telas.py` — grids `flex-wrap`, imagens com `max-width`, barra de formatação com `overflow-x-auto` |
+| RNF-BLOG-CFG-01 | Configuração local do módulo, com fallback no padrão | `get_config_local` (`:368`) com `default` no chamador; seeds em `_semear_postagens_padrao` (`:215`) e `_garantir_carrossel_padrao` (`:245`) |
+| RNF-BLOG-COMP-01 | Compatibilidade SQLite ↔ PostgreSQL | Via `CrudBase`/`banco_conexao`; sem SQL SQLite-only no módulo |
+| RNF-BLOG-LGPD-01 | Excluir/renomear usuário limpa e propaga a autoria | `remover_vinculos_usuario` (`:456`) e `renomear_autor` (`:503`) |

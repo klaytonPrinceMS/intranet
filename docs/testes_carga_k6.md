@@ -65,16 +65,19 @@ O número que mais pesa, e que **não** aparece no k6, é o custo do bcrypt — 
 | item | valor |
 |:---|:---|
 | processador | **Intel® Core™ i3-2375M @ 1,50 GHz** |
-| núcleos / threads | 4 / 2 por núcleo (4 lógicos) |
-| frequência | 800 MHz – 1.500 MHz |
-| memória total | **3,7 GiB** |
-| swap | 5,6 GiB (1,0 GiB em uso) |
+| núcleos / threads | 2 físicos / 4 lógicos (2 threads por núcleo) — `lscpu`: `CPU(s): 4`, `Thread(s) per núcleo: 2` |
+| frequência | 800 MHz – 1.500 MHz (`CPU MHz` mín/máx) |
+| memória total | **3,7 GiB** (`MemTotal` 3.886.268 kB = 3,71 GiB) |
+| swap | 5,6 GiB (`SwapTotal` 5.833.304 kB) |
 | sistema | Linux, container Docker |
-| bancos de dados | 11 SQLite, 3,2 MB no total |
+| bancos de dados | 11 SQLite, **4,53 MiB** no total em 27/09/2026 — era 3,2 MB em 26/09; o crescimento é do `db_mod_agregador_noticias.db` (2,92 MiB sozinho) |
 
 ### Memória: o que está em uso
 
-Medido com o servidor no ar e **sem** carga:
+Medido com o servidor no ar e **sem** carga, em **26/09/2026** (as quatro
+primeiras linhas são dessa sessão; o total do sistema varia com a ferramenta de
+desenvolvimento aberta, e a medição de 27/09 em outra hora deu 2.184 MB, ver
+[testes_carga_uso](testes_carga_uso.md#a-maquina)):
 
 | processo | RAM | observação |
 |:---|---:|:---|
@@ -133,8 +136,10 @@ Componentes de **um** login aquecido (melhor de 3):
   atende uma prefeitura com folga, desde que as entradas não coincidam.
 
 A causa é o **fator de custo 12 do bcrypt**, escolhido por segurança. Baixar
-para 10 daria ~3× mais vazão e continua acima do mínimo recomendado de 10, mas
-é uma decisão de segurança — **não foi alterada aqui**.
+para 10 dá **4× mais vazão** (2² iterações a menos: a tabela abaixo mede 11,1
+bcrypt/s por núcleo a 3 GHz no custo 10 contra 2,8 no custo 12 — 3,96×) e
+continua acima do mínimo recomendado de 10, mas é uma decisão de segurança —
+**não foi alterada aqui**.
 
 ## Aviso sobre como medir
 
@@ -239,20 +244,42 @@ k6 run --stage "10s:10" --stage "15s:0" assets/k6/login_carga.js
 Cada VU entra com um login **distinto** (`user001`…`user120`), como pessoas
 reais — não a mesma conta repetida.
 
-| etapa | VUs | espera |
-|:---|---:|---:|
-| 1 | 10 | 20 s |
-| 2 | 30 | 20 s |
-| 3 | **40** | **30 s** ← limiar de aprovação |
-| 4 | 60 | 20 s |
-| 5 | 80 | 20 s |
-| 6 | 90 | 20 s |
-| 7 | 100 | 20 s |
-| 8 | 110 | 20 s |
-| 9 | 120 | 30 s |
+`startVUs: 0`, `gracefulRampDown: 10s`, `gracefulStop: 40s`. A escalada é uma
+subida até 120, uma **pausa** em cada patamar e uma descida final. São **19
+estágios**, e não 9: cada patamar tem um degrau de subida de 15 s e um de
+espera. Custo total: **345 s de estágios (5:45) + 40 s de `gracefulStop` =
+385 s (6:25)**. A sonda do event-loop roda em paralelo, cenário separado, por
+`5m30s` (`+5s` de `gracefulStop` = 335 s), cobrindo os 345 s de estágios.
+
+| # | estágio | VUs no fim | o que é |
+|---:|:---|---:|:---|
+| 1 | 15 s | 10 | degrau de subida |
+| 2 | 20 s | 10 | **segura 10** |
+| 3 | 15 s | 30 | degrau de subida |
+| 4 | 20 s | 30 | **segura 30** |
+| 5 | 15 s | 40 | degrau de subida |
+| 6 | 30 s | 40 | **segura 40** ← limiar de aprovação |
+| 7 | 15 s | 60 | degrau de subida |
+| 8 | 20 s | 60 | segura 60 |
+| 9 | 15 s | 80 | degrau de subida |
+| 10 | 20 s | 80 | segura 80 |
+| 11 | 15 s | 90 | degrau de subida |
+| 12 | 20 s | 90 | segura 90 |
+| 13 | 15 s | 100 | degrau de subida |
+| 14 | 20 s | 100 | segura 100 |
+| 15 | 15 s | 110 | degrau de subida |
+| 16 | 20 s | 110 | segura 110 |
+| 17 | 15 s | 120 | degrau de subida |
+| 18 | 30 s | 120 | **segura 120** |
+| 19 | 10 s | 0 | descida |
+
+O resumo de uma linha por patamar é o que a tabela de
+[Resultado](#resultado-da-execucao-de-26092026) mostra: `10 · 30 · 40 · 60 ·
+80 · 90 · 100 · 110 · 120`.
 
 Cada ciclo de VU: `GET /login` → WebSocket (Engine.IO `OPEN`/`PONG`/`CONNECT`)
-→ evento `handshake` do NiceGUI → **segura a conexão 15 s** → desconecta.
+→ evento `handshake` do NiceGUI → **segura a conexão 15 s** (`SEGURAR_MS`) →
+desconecta.
 
 ## O que significam as métricas
 
@@ -264,7 +291,7 @@ Cada ciclo de VU: `GET /login` → WebSocket (Engine.IO `OPEN`/`PONG`/`CONNECT`)
 | `carga_login_http` | latência do `GET /login`, que cria o `Client` e a sessão. |
 | `carga_ws_conexao` | tempo entre o `GET` e o handshake concluído. |
 | `carga_ws_segurou` | tempo com o socket efetivamente aberto. |
-| `http_req_duration` (p95) | **a métrica decisiva**, medida pela *sonda do event-loop*. |
+| `http_req_duration` (p95) | **a métrica decisiva** — mas atenção ao que ela agrega: o threshold é `http_req_duration` **sem seletor**, e este script só faz **duas** requisições, o `GET /login` e o `GET /favicon.ico` da sonda. O p95 dos 955,6 ms é a mistura das duas, não a sonda sozinha. Para isolar a sonda com threshold próprio, use os seletores por classe de `carga_uso.js`. |
 
 ### Por que a sonda do event-loop é a que decide
 
@@ -274,9 +301,9 @@ grave: a primeira gravação de auditoria de cada módulo rodava DDL dentro do
 event-loop e levava **73,9 s**; com a tela congelada, o WebSocket caía.
 
 Enquanto N sockets estão abertos, um request leve tem de continuar rápido. Se o
-event-loop travar, a sonda do event-loop sobe e o teste reprova **antes** de
-qualquer usuário perceber. É por isso que a sonda roda em cenário separado,
-durante toda a escalada.
+event-loop travar, o `GET /favicon.ico` da sonda sobe e o p95 agregado sobe
+junto — e o teste reprova **antes** de qualquer usuário perceber. É por isso que
+a sonda roda em cenário separado, durante toda a escalada.
 
 ## Limite conhecido, e deliberado
 
@@ -290,18 +317,27 @@ própria, descrita acima.
 
 ## Saída esperada
 
+Transcrição literal do `handleSummary` de `assets/k6/login_carga.js`, na ordem
+em que ele imprime (11 linhas):
+
 ```text
 ================= CARGA k6 — INTRANET =================
 reqs............: N  (falhas 0.0000)
-GET /login......: p95 ... ms
+GET /login......: p95 ... ms  | max ... ms
 conexao WS......: p95 ... ms
+socket vivo.....: p95 ... ms
 handshake ok....: 1.0000
 desconectou.....: 1.0000
-latencia geral..: p95 ... ms
+eventos/pagina...: N
+latencia geral..: p95 ... ms  | p99 ... ms
 checks..........: 1.0000
-VUs (max).......: 120
+VUs (max).......: 121
 ======================================================
 ```
+
+O `VUs (max)` esperado é **121**, não 120: os 120 VUs do cenário `usuarios`
+somam 1 VU do cenário `sonda_eventloop` (`vus: 1`), e o k6 reporta o máximo
+global. Foi exatamente 121 na execução de 26/09.
 
 Os avisos `setTimeout N was stopped because the VU iteration was interrupted`
 no fim da execução são esperados: são as conexões em curso durante a rampa de

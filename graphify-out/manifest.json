@@ -474,9 +474,9 @@
     "semantic_hash": ""
   },
   "main.py": {
-    "mtime": 1790430049.9327734,
-    "seen": 1790461236.2769823,
-    "ast_hash": "3612e3aed2af64de9e273bf880b28cc5",
+    "mtime": 1790472482.9294019,
+    "seen": 1790521220.2192657,
+    "ast_hash": "05f58e6cf9a4152b5b88d676c0da15f0",
     "semantic_hash": ""
   },
   "mod_auditoria/__init__.py": {
@@ -492,9 +492,9 @@
     "semantic_hash": ""
   },
   "mod_auditoria/telas.py": {
-    "mtime": 1790431004.2596872,
-    "seen": 1790461236.2770598,
-    "ast_hash": "866ffe0eea244d915e600d5c4b72f80b",
+    "mtime": 1790465737.0272458,
+    "seen": 1790521220.219317,
+    "ast_hash": "dd89a55d3177ae7404d8f466dc5f453a",
     "semantic_hash": ""
   },
   "mod_auditoria/telas_administracao.py": {
@@ -1044,15 +1044,15 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_blog.md": {
-    "mtime": 1790380480.1925766,
-    "seen": 1790387687.6668754,
-    "ast_hash": "8c21fd20f87222a9f92d5ba82eecbb22",
+    "mtime": 1790520228.1346328,
+    "seen": 1790521220.220058,
+    "ast_hash": "3f97772c525c2eb509e2fed59e38a3b1",
     "semantic_hash": ""
   },
   "docs/analise_mod_edit_pdf.md": {
-    "mtime": 1790388202.6570284,
-    "seen": 1790388574.984134,
-    "ast_hash": "20e6342d4a80f776742a8e794dace20e",
+    "mtime": 1790520288.0569885,
+    "seen": 1790521220.2200634,
+    "ast_hash": "40b566f64363acfa07b4dcdef6e5e66c",
     "semantic_hash": ""
   },
   "docs/analise_mod_gest_cad_usuario.md": {
@@ -1068,9 +1068,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_renomear_empenho.md": {
-    "mtime": 1790464521.3602018,
-    "seen": 1790465418.5829825,
-    "ast_hash": "a906078b8db59bf16e5bae9451929531",
+    "mtime": 1790520402.3077006,
+    "seen": 1790521220.2200944,
+    "ast_hash": "4d2a603c91f7896ec9bd7c182b250b4a",
     "semantic_hash": ""
   },
   "docs/analise_mod_solicita_impressao.md": {
@@ -1080,15 +1080,15 @@
     "semantic_hash": ""
   },
   "docs/api_referencia.md": {
-    "mtime": 1790388022.3105383,
-    "seen": 1790388574.9841638,
-    "ast_hash": "5baa6608a52d8a6673c9af003cf501f1",
+    "mtime": 1790515271.5285892,
+    "seen": 1790521220.2201135,
+    "ast_hash": "78f2e74c64712c4eab27b15c397a3ae6",
     "semantic_hash": ""
   },
   "docs/arquitetura.md": {
-    "mtime": 1790388022.296174,
-    "seen": 1790388574.984167,
-    "ast_hash": "85ceeadc498117e2dc4e8654a9872ded",
+    "mtime": 1790515271.5006835,
+    "seen": 1790521220.220119,
+    "ast_hash": "4b4031f9e1c396955e479193e902f974",
     "semantic_hash": ""
   },
   "docs/arquitetura_de_software_das/index.md": {
@@ -1098,9 +1098,9 @@
     "semantic_hash": ""
   },
   "docs/configuracoes.md": {
-    "mtime": 1790388022.313024,
-    "seen": 1790388574.9841793,
-    "ast_hash": "c748fd7af7ddc8c3f84ae802636222f3",
+    "mtime": 1790515271.5625947,
+    "seen": 1790521220.2201385,
+    "ast_hash": "be4d1ed472aa2cbe15bdfebd859d86ee",
     "semantic_hash": ""
   },
   "docs/contribuicoes/index.md": {
@@ -1248,9 +1248,9 @@
     "semantic_hash": ""
   },
   "docs/requisitos.md": {
-    "mtime": 1790388452.542828,
-    "seen": 1790388574.984461,
-    "ast_hash": "9b1db8c57eff5ca521f3807244a7793f",
+    "mtime": 1790515271.5157523,
+    "seen": 1790521220.2203534,
+    "ast_hash": "9ecadf8b1f549f6e686442eb10013d34",
     "semantic_hash": ""
   },
   "docs/seguranca/auditoria_menu_2026-09-12.md": {
@@ -1314,15 +1314,15 @@
     "semantic_hash": ""
   },
   "docs/visao_geral.md": {
-    "mtime": 1790388022.3113618,
-    "seen": 1790388574.9845471,
-    "ast_hash": "647479911a311b0025ec33ed46ad4df1",
+    "mtime": 1790515271.5385895,
+    "seen": 1790521220.2204416,
+    "ast_hash": "a54c2925c1d31c7daa15e08ee5feec32",
     "semantic_hash": ""
   },
   "mkdocs.yml": {
-    "mtime": 1790465215.6225219,
-    "seen": 1790465418.5837421,
-    "ast_hash": "7ef283518378c6fc872fe5b0d30272c3",
+    "mtime": 1790516476.4850228,
+    "seen": 1790521220.220447,
+    "ast_hash": "73bd36d2f70f67d2a75b8bd9e99b5980",
     "semantic_hash": ""
   },
   "requirements-dev.txt": {
@@ -1530,9 +1530,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_lista_telefonica.md": {
-    "mtime": 1790380480.2005765,
-    "seen": 1790387687.6668937,
-    "ast_hash": "519562c42a317c199bb44556cabb2e03",
+    "mtime": 1790520456.0750492,
+    "seen": 1790521220.2200892,
+    "ast_hash": "0a457d47fbe6dcda24b8ee5d7f36f31c",
     "semantic_hash": ""
   },
   "docs/analise_mod_tecnico.md": {
@@ -1602,45 +1602,15 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_agregador_noticias.md": {
-    "mtime": 1790427561.687226,
-    "seen": 1790428286.9273632,
-    "ast_hash": "89a0c93d8e2cc374ff547b3294a320ab",
+    "mtime": 1790520456.0841544,
+    "seen": 1790521220.2200441,
+    "ast_hash": "21f4ff749f020c7e34099ee2feeb0bdf",
     "semantic_hash": ""
   },
   "docs/modulos/agregador_noticias.md": {
-    "mtime": 1790388659.8163414,
-    "seen": 1790388737.9415903,
-    "ast_hash": "ac0481b6c12c8057368bd2252e02e8d2",
-    "semantic_hash": ""
-  },
-  "assets/noticia/js/jquery-2.1.3.min.js": {
-    "mtime": 1790119490.5989945,
-    "seen": 1790387687.6660473,
-    "ast_hash": "32015dd42e9582a80a84736f5d9a44d7",
-    "semantic_hash": ""
-  },
-  "assets/noticia/js/main.js": {
-    "mtime": 1790119490.5999947,
-    "seen": 1790387687.666052,
-    "ast_hash": "735a214cc0f934b8d7c20fc2def1ad82",
-    "semantic_hash": ""
-  },
-  "assets/noticia/js/modernizr.js": {
-    "mtime": 1790119490.5999947,
-    "seen": 1790387687.666056,
-    "ast_hash": "0bbb8b987eed0472d54106aaa85dba61",
-    "semantic_hash": ""
-  },
-  "assets/noticia/js/pace.min.js": {
-    "mtime": 1790119490.5999947,
-    "seen": 1790387687.6660595,
-    "ast_hash": "874d8be9cd6d6b72f1d63a5435edf2c3",
-    "semantic_hash": ""
-  },
-  "assets/noticia/js/plugins.js": {
-    "mtime": 1790119490.6009946,
-    "seen": 1790387687.6660628,
-    "ast_hash": "282351c029a423e31cfe3b6c6e70c519",
+    "mtime": 1790521027.1931362,
+    "seen": 1790521220.22025,
+    "ast_hash": "2ea6822a7ee8184fd928b19ca88724d3",
     "semantic_hash": ""
   },
   "mod_intranet/censura.py": {
@@ -1649,89 +1619,11 @@
     "ast_hash": "3e2b6ad3b49297f33c464c716cb36703",
     "semantic_hash": ""
   },
-  "assets/noticia/css/font-awesome/fonts/fontawesome-webfont.svg": {
-    "mtime": 1790119490.5509942,
-    "seen": 1790387687.6671016,
-    "ast_hash": "65bcbc899f379216109acd0b6c494618",
-    "semantic_hash": ""
-  },
-  "assets/noticia/css/micons/fonts/icomoon.svg": {
-    "mtime": 1790119490.5579941,
-    "seen": 1790387687.6671052,
-    "ast_hash": "81edc20628720a70eec4bb593dc06041",
-    "semantic_hash": ""
-  },
   "assets/noticia/favicon.png": {
     "mtime": 1790119490.5609941,
     "seen": 1790387687.667109,
     "ast_hash": "8499e5e91f2b99f562a471a40dc6e2f3",
     "semantic_hash": "8499e5e91f2b99f562a471a40dc6e2f3"
-  },
-  "assets/noticia/fonts/lora/lora-bold-webfont.svg": {
-    "mtime": 1790119490.5619943,
-    "seen": 1790387687.6671124,
-    "ast_hash": "980daf324e301d456acc1251460a1bc7",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/lora/lora-bolditalic-webfont.svg": {
-    "mtime": 1790119490.5649943,
-    "seen": 1790387687.667116,
-    "ast_hash": "e30d63912d9a716b75b40903a22bad7e",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/lora/lora-italic-webfont.svg": {
-    "mtime": 1790119490.5679944,
-    "seen": 1790387687.6671195,
-    "ast_hash": "51f319fe6f9569843f9eece7f743ba14",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/lora/lora-regular-webfont.svg": {
-    "mtime": 1790119490.5699942,
-    "seen": 1790387687.6671228,
-    "ast_hash": "65873b44e2940ed66d5a8b12e5597615",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/poppins/poppins-bold-webfont.svg": {
-    "mtime": 1790119490.573049,
-    "seen": 1790387687.6671262,
-    "ast_hash": "794eab2be996e11c11bc539525c9f11b",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/poppins/poppins-light-webfont.svg": {
-    "mtime": 1790119490.5739944,
-    "seen": 1790387687.6671298,
-    "ast_hash": "709be76c3a24a3ecbaa7f46946a797c4",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/poppins/poppins-medium-webfont.svg": {
-    "mtime": 1790119490.5759943,
-    "seen": 1790387687.667133,
-    "ast_hash": "c4814d6b70494e9f7282cd9ac4b41859",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/poppins/poppins-regular-webfont.svg": {
-    "mtime": 1790119490.5769944,
-    "seen": 1790387687.6671364,
-    "ast_hash": "3509cfd5819b8cf878a79ab52dc9a01b",
-    "semantic_hash": ""
-  },
-  "assets/noticia/fonts/poppins/poppins-semibold-webfont.svg": {
-    "mtime": 1790119490.5789943,
-    "seen": 1790387687.66714,
-    "ast_hash": "a55f17e069c24c24f1b97dd99f98bf79",
-    "semantic_hash": ""
-  },
-  "assets/noticia/images/bg.jpg": {
-    "mtime": 1790119490.5909946,
-    "seen": 1790387687.6671436,
-    "ast_hash": "b9a80947f7a55c7259525732b933d2b3",
-    "semantic_hash": "b9a80947f7a55c7259525732b933d2b3"
-  },
-  "assets/noticia/images/intro-bg.jpg": {
-    "mtime": 1790119490.5979946,
-    "seen": 1790387687.6671486,
-    "ast_hash": "40ba31e2271e6c361b786236ce09186f",
-    "semantic_hash": "40ba31e2271e6c361b786236ce09186f"
   },
   ".opencode/package.json": {
     "mtime": 1790380480.114577,
@@ -1745,22 +1637,10 @@
     "ast_hash": "526ae842ef69ff79bdd696e34f4968f6",
     "semantic_hash": ""
   },
-  "mod_agregador_noticias/telas_puro.py": {
-    "mtime": 1790380480.310576,
-    "seen": 1790387687.666428,
-    "ast_hash": "065c13d5a1cfdd07892567a24cd634da",
-    "semantic_hash": ""
-  },
   "mod_filas/massa_nomes_teste.py": {
     "mtime": 1790380480.316576,
     "seen": 1790387687.666499,
     "ast_hash": "c9ad01d2e1058cf88f8cbb15f1287e9b",
-    "semantic_hash": ""
-  },
-  "docs/modulos/agregador_noticias_puro.md": {
-    "mtime": 1790380480.2135766,
-    "seen": 1790387687.6669786,
-    "ast_hash": "15b3b34107d523156cc504febea9f8c8",
     "semantic_hash": ""
   },
   "mod_intranet/telefone.py": {
@@ -1836,9 +1716,9 @@
     "semantic_hash": ""
   },
   "assets/test/test_e2e_agregador_noticias.py": {
-    "mtime": 1790380480.138577,
-    "seen": 1790387687.6662285,
-    "ast_hash": "1283d512af67102483f96a7a62a19bf8",
+    "mtime": 1790477502.6262038,
+    "seen": 1790521220.2190228,
+    "ast_hash": "f99a6db7a947da9e01ef811c3c19293e",
     "semantic_hash": ""
   },
   "assets/test/test_e2e_click_extra_sec.py": {
@@ -1889,12 +1769,6 @@
     "ast_hash": "7d44c9ae4561ed79d7e8b5a327603d60",
     "semantic_hash": ""
   },
-  "docs/analise_mod_agregador_noticias_puro.md": {
-    "mtime": 1790387920.1041644,
-    "seen": 1790388574.9841216,
-    "ast_hash": "3f13016dc514579b7d635bc0dc27b492",
-    "semantic_hash": ""
-  },
   "docs/arquitetura_de_software_das/fachada_integracoes.md": {
     "mtime": 1790380480.2055767,
     "seen": 1790387687.6669147,
@@ -1920,9 +1794,93 @@
     "semantic_hash": ""
   },
   "docs/registro_de_mudancas/sessao_2026-09-26.md": {
-    "mtime": 1790465512.3615675,
-    "seen": 1790465567.2724302,
-    "ast_hash": "6046466cd01d9a79b584f79fb3ec04f6",
+    "mtime": 1790465740.3982716,
+    "seen": 1790521220.220341,
+    "ast_hash": "60851f245267338f0adfaa7343653299",
+    "semantic_hash": ""
+  },
+  "assets/k6/carga_uso.js": {
+    "mtime": 1790521065.5811357,
+    "seen": 1790521220.2187788,
+    "ast_hash": "aa87dba6bfddd302840b00464a898004",
+    "semantic_hash": ""
+  },
+  "assets/k6/login_carga.js": {
+    "mtime": 1790472380.3743694,
+    "seen": 1790521220.2187858,
+    "ast_hash": "3fa85f008d550e38bd1e18e3d7a29e2e",
+    "semantic_hash": ""
+  },
+  "assets/test/carga_uso_navegador.py": {
+    "mtime": 1790519007.7528214,
+    "seen": 1790521220.2187963,
+    "ast_hash": "f18247502c600e8c94c547a818ac7541",
+    "semantic_hash": ""
+  },
+  "assets/test/dimensiona_servidor.py": {
+    "mtime": 1790520616.8501327,
+    "seen": 1790521220.2188244,
+    "ast_hash": "71d35d6ebc2d80a1b263f96fbe6ae5fb",
+    "semantic_hash": ""
+  },
+  "assets/test/guarda_recursos.py": {
+    "mtime": 1790472265.0761802,
+    "seen": 1790521220.2188838,
+    "ast_hash": "1ae09731fb4e4b19ac3bce310bf547c9",
+    "semantic_hash": ""
+  },
+  "assets/test/libera_modulos_carga.py": {
+    "mtime": 1790472720.4437244,
+    "seen": 1790521220.218888,
+    "ast_hash": "1687668dabbeaa131daf6577d49c548c",
+    "semantic_hash": ""
+  },
+  "assets/test/mede_custo_login.py": {
+    "mtime": 1790467785.9588583,
+    "seen": 1790521220.218892,
+    "ast_hash": "d79e4914e24d42e67de8906b4763b049",
+    "semantic_hash": ""
+  },
+  "assets/test/orquestra_bateria.sh": {
+    "mtime": 1790515695.7013056,
+    "seen": 1790521220.2188966,
+    "ast_hash": "9a15a0cfadc03bd160edc1771a049d72",
+    "semantic_hash": ""
+  },
+  "assets/test/popula_usuarios_carga.py": {
+    "mtime": 1790468464.7204983,
+    "seen": 1790521220.21891,
+    "ast_hash": "a44331f2f759db36431d6ace5914dfe1",
+    "semantic_hash": ""
+  },
+  "assets/test/renomeia_usuarios_carga.py": {
+    "mtime": 1790466563.0628443,
+    "seen": 1790521220.218959,
+    "ast_hash": "0595e3c90f371d324554d0b9b415ff33",
+    "semantic_hash": ""
+  },
+  "assets/test/valida_cronometragem.py": {
+    "mtime": 1790475111.6629388,
+    "seen": 1790521220.2192426,
+    "ast_hash": "4954959a6ca95bd84866362a90841369",
+    "semantic_hash": ""
+  },
+  "docs/dimensionamento.md": {
+    "mtime": 1790520640.1351223,
+    "seen": 1790521220.2201586,
+    "ast_hash": "1f5d83ee267036be3dbc3f6a7cbc71bc",
+    "semantic_hash": ""
+  },
+  "docs/testes_carga_k6.md": {
+    "mtime": 1790519968.4212828,
+    "seen": 1790521220.2203789,
+    "ast_hash": "48c686a505e0423f87b630768efdddac",
+    "semantic_hash": ""
+  },
+  "docs/testes_carga_uso.md": {
+    "mtime": 1790519968.4442828,
+    "seen": 1790521220.2203844,
+    "ast_hash": "590af00ec1ac052f606ca8bfd2db7e10",
     "semantic_hash": ""
   }
 }

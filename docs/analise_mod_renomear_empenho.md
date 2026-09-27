@@ -523,3 +523,64 @@ O campo de busca da tela chama-se hoje `empenhos-navegar-pesquisa`. A suíte
 Playwright ainda referenciava o id antigo e falhou — o que expôs que o teste
 estava **pulado** desde a troca de senha forçada e nunca havia rodado contra a
 tela real.
+
+---
+
+# RF e RNF verificados no código (27/09/2026)
+
+> Auditoria de requisitos **funcionais** e **não funcionais**, com evidência
+> `arquivo:linha` conferida em 27/09/2026, no mesmo formato dos módulos
+> auditados antes. Este módulo já tinha uma seção de RF/RNF num formato
+> diferente (RF-01…RF-N, "Requisitos funcionais (RF)" na parte superior do
+> arquivo); a de baixo é a versão **verificada no código**, com `arquivo:linha`.
+> As duas não substituem uma à outra — a de cima é o requisito declarado, a de
+> baixo é o requisito que o código cumpre.
+
+## Requisitos funcionais (RF) — mapa código ↔ doc
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-EMP-01 | Monitorar **pastas configuráveis**, validando que existem e são acessíveis | `pastas_monitoradas` (`:152`), `pasta_acessivel` (`:216`), `salvar_pastas_monitoradas` (`:224`), `pasta_monitorada` (`:207`), `_normalizar_pasta` (`:190`) |
+| RF-EMP-02 | Processar um PDF: extrair, numerar, renomear e **registrar** o antes/depois | `processar_pdf` (`:1429`) orquestra; `registrar_arquivo_detectado` (`:1669`), `registrar_arquivo_renomeado` (`:1710`), `registrar_arquivo_erro` (`:1754`), `registrar_arquivo_removido` (`:1764`) |
+| RF-EMP-03 | Template de nome configurável, com contador e campos extraídos | `template_nome_atual` (`:1384`), `montar_nome_final` (`:1394`), `_proximo_contador` (`:1285`), `extrair_numero` (`:1249`) |
+| RF-EMP-04 | Extração de **número, ficha, ano, parcela e tipo** do texto do PDF | `extrair_dados_empenho` (`:1334`) + `extrair_texto_pdf` (`:959`) |
+| RF-EMP-05 | Tipos especiais (ex.: despesa extra, folha,etc.) com parser dedicado | `detectar_tipo_especial` (`:328`), `extrair_dados_tipo_especial` (`:359`), `montar_nome_tipo_especial` (`:266`) |
+| RF-EMP-06 | **Regex dinâmica** configurável pelo admin, por campo de destino | `salvar_regra` (`:2594`), `listar_regras` (`:2616`), `extrair_campos_regex` (`:2334`), `_campos_busca_ativos` (`:1313`) |
+| RF-EMP-07 | **Quarentena**: arquivo que não pôde ser processado vai para `mod_renomear_empenho/quarentena/` e fica na fila de reprocessamento | `PASTA_QUARENTENA` (`:147`), `mover_quarentena` (`:2231`), `listar_quarentena` (`:2485`), `reprocessar_quarentena` (`:2500`), `promover_quarentena` (`:2534`), `reprocessar_fila` (:`2547`) |
+| RF-EMP-08 | PDF **multi-documento** detectado, separado e cada parte reprocessada | `detectar_documentos_no_pdf` (`:1044`), `eh_multiplo_documento` (`:1103`), `separar_pdf_por_documentos` (`:1129`), `separar_documentos_quarentena` (`:1181`), `_inicio_documento` (`:1021`) |
+| RF-EMP-09 | **Levantamento** do que existe na pasta, com nome, número, ficha, ano, tipo e conteúdo pesquisável | `levantar_arquivos` (`:1970`), `_levantamento_gravar` (`:1934`), `_levantamento_consultar` (`:1914`), `atualizar_levantamento_renomeado` (`:2147`), `listar_levantamento` |
+| RF-EMP-10 | Pesquisa full-text de empenhos e de levantamento | `pesquisar` (`:2439`), `pesquisar_levantamento` (`:2180`), `_fts_escape` (`:2310`), `_fts_query_prefixada` (`:2319`) |
+| RF-EMP-11 | Reindexar um empenho ou reconstruir o índice inteiro | `reindexar_empenho` (`:2360`), `rebuild_fts` (`:2425`) |
+| RF-EMP-12 | Navegar, filtrar e editar empenhos pela tela | `telas.py:264` `_tela_navegar`; `empenhos-navegar-pesquisa`, `-pesquisa`, `-contagem`, `-editar`, `-processar` |
+| RF-EMP-13 | Fila de processamento com edição, reprocessamento e marcação | `telas.py:1290` `_tela_fila`; `empenhos-fila-editar`, `-processar`, `empenhos-reprocessar-fila`, `empenhos-filtro-*` |
+| RF-EMP-14 | Organizador de pasta (mover, disparate em lote) | `telas.py:1544` `_tela_organizador`; `empenhos-lote-marcar`, `-contador`, `-limpar`, `-confirmar`, `-baixar`, `-email`, `-solicitar` |
+| RF-EMP-15 | Revisão de campos extraídos (ano, ficha, parcela, tipo) antes de renomear | `telas.py:1853` `_tela_solicitacao`; `empenhos-revisar-ano`, `-ficha`, `-parcela`, `-tipo`, `-empenho` |
+| RF-EMP-16 | Configuração do módulo (tema, modelo visual, regras) | `telas.py:2137` `_tela_config`; `visual.py` `ler_modelo`/`salvar_modelo`/`aplicar_modelo` |
+| RF-EMP-17 | Auditoria de arquivo: o que foi detectado, renomeado, erro ou removido, com os eventos por arquivo | `listar_arquivos_auditoria` (`:1792`), `listar_eventos_arquivo` (`:1812`), tabelas `tb_arquivos_auditoria`/`tb_eventos_arquivos` |
+| RF-EMP-18 | Rótulos PT-BR e docstrings bilíngue EN (topo) / PT-BR (abaixo) | `bd_manipulador.py:1-22`, `telas.py:1-50`, `telas_administracao.py:1-29`, `visual.py:1-54` |
+
+## Requisitos não-funcionais (RNF) — garantias técnicas
+
+| RNF | Exigência | Evidência no código |
+|:---|:---|:---|
+| RNF-EMP-PERS-01 | Banco próprio `db_mod_renomear_empenho.db`; 9 tabelas do módulo | `init_db_empenho` (`:649`): `tb_empenhos`, `tb_levantamento`, `tb_quarentena`, `tb_regex_regras`, `tb_campos_busca`, `tb_solicitacoes`, `tb_arquivos_auditoria`, `tb_eventos_arquivos`, `tb_indexador_pesquisa` |
+| RNF-EMP-PERS-02 | `database is locked` é erro tratado, com retry no commit | `_eh_erro_bloqueio` (`:61`), `_commit_com_retry(conn, contexto, tentativas=5)` (`:76`), `_fechar_seguro` (`:113`), `_sem_conexao` (`:122`) |
+| RNF-EMP-PERS-03 | Migração de coluna idempotente, sem perder dado | `_migrar_coluna` (`:639`) |
+| RNF-EMP-PERS-04 | Escrita de levantamento em transação com retry próprio | `_levantamento_gravar(operacao, contexto, tentativas=5)` (`:1934`) |
+| RNF-EMP-SEG-01 | Pasta monitorada **validada** antes de qualquer operação de arquivo | `pasta_acessivel` (`:216`) + `_normalizar_pasta` (`:190`) |
+| RNF-EMP-SEG-02 | Nada é apagado em silêncio: arquivo processado sai do monitor e é registrado como `removido` | `registrar_arquivo_removido` (`:1764`) + `_registrar_removidos_monitor` (`:1826`) |
+| RNF-EMP-SEG-03 | Falha no meio do processamento vai para a **quarentena**, não se perde | `mover_quarentena` (`:2231`) chamado no caminho de erro de `processar_pdf` (`:1429`) |
+| RNF-EMP-SEG-04 | Autorização de escrita validada no servidor antes de processar | `telas.py:60` `mostrar_tela(usuario_logado, perfil)` com `eh_admin`/`autorizado` propagados para as sub-telas |
+| RNF-EMP-RES-01 | `try/except` obrigatório em função, com log (AGENTS.md §3.2) | Todo `bd_manipulador` protegido, com `_log()` (`:24`); `_fechar_seguro` (`:113`) garante o fechamento mesmo no erro |
+| RNF-EMP-RES-02 | Falha de PDF nunca derruba a tela: o item vai para a quarentena e a fila segue | `registrar_arquivo_erro` (`:1754`) + `reprocessar_fila` (`:2547`) |
+| RNF-EMP-UX-01 | Anti-disconnect: processar PDF é I/O pesado e sai do event-loop | `telas.py` conduz `processar_pdf`/upload/zip por `run.io_bound`, com `ui.spinner` e trava de reentrância |
+| RNF-EMP-UX-02 | `data-testid` via `.props('data-testid=...')` em todas as ações | 30 ids em `telas.py` (`empenhos-navegar-*`, `empenhos-fila-*`, `empenhos-lote-*`, `empenhos-revisar-*`, `empenhos-reprocessar-fila`, `empenhos-pasta-`, `empenhos-selecionar`, `empenhos-processar`, `empenhos-raiz-dot`, `empenhos-filtro-*`, `empenhos-atualizar`, `empenhos-gerar-25-temp`, `empenhos-solicitar-email`) |
+| RNF-EMP-UX-03 | O caminho de pesquisa é **um só** | A aba "Pesquisar" foi descontinuada e `_tela_pesquisar` (107 linhas) foi removida em 26/09/2026; o campo chama-se `empenhos-navegar-pesquisa` |
+| RNF-EMP-UX-04 | Sem JavaScript direto (AGENTS.md §5) | `visual.py` trabalha por classes Tailwind/Bootstrap injetadas, sem JS autoral |
+| RNF-EMP-PERF-01 | Busca por full-text, não `LIKE` em varredura | `tb_levantamento_fts` (`:821`) + `tb_indexador_pesquisa_fts5` (`:923`) com trigger; `_fts_query_prefixada` (`:2319`) |
+| RNF-EMP-PERF-02 | FTS5 é **SQLite-only** e o módulo sabe disso | comentário em `bd_manipulador.py:139` registra que o proxy `_CursorPostgres` não traduz `CREATE VIRTUAL TABLE`; o INSERT tem ramo próprio por backend em `_fts_insert_sql` (`:2299`) |
+| RNF-EMP-PERF-03 | Reindexação pode ser feita por empenho ou inteira, sem bloquear a tela | `reindexar_empenho` (`:2360`) e `rebuild_fts` (`:2425`) |
+| RNF-EMP-RESP-01 | Responsividade e 4 modelos visuais (PIC, Híbrido, Bootstrap, frameworks) | `visual.py` `eh_pic`/`eh_hibrido`/`eh_bootstrap`/`eh_framework` (`:80`–`:104`), `injetar_pic_suave`/`injetar_hibrido`/`injetar_bootstrap_overrides` (`:177`–`:237`), `classes_card_pdf`/`classes_card_lote`/`classes_badge_bootstrap` (`:257`–`:314`) |
+| RNF-EMP-CFG-01 | Configuração com fallback em cadeia, sem quebrar a tela se faltar chave | `visual.py:55` `_get_config_safe`; `telas_administracao.py:30` `_tema` |
+| RNF-EMP-COMP-01 | Compatibilidade SQLite ↔ PostgreSQL — **com uma ressalva declarada** | DDL só `IF NOT EXISTS`; o índice FTS5 é a exceção conhecida e está documentada em `bd_manipulador.py:139` e no [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md) |
+| RNF-EMP-DISC-01 | Nenhum passo destrutivo é silencioso: o original só sai do monitor depois de registrado | `registrar_arquivo_detectado` → `registrar_arquivo_renomeado` → `registrar_arquivo_removido`, nessa ordem |

@@ -30,14 +30,21 @@ tempo, por 15 minutos, com um vigia que interrompe tudo se a máquina passar de
 
 ## A máquina
 
-| item | valor |
-|:---|:---|
-| processador | Intel® Core™ i3-2375M @ 1,50 GHz (4 threads) |
-| memória | **3,7 GiB** (3.795 MB), swap 5,6 GiB |
-| consumo base com o servidor no ar | **~2.184 MB (58 %)** |
-| consumo do OpenCode sozinho | ~1,1 GiB (é ele, não a intranet) |
-| RSS do servidor, sem carga | 105 MB |
-| RSS do servidor, **depois** de 120 VUs | 201 MB (medido) |
+| item | valor | quando |
+|:---|:---|:---|
+| processador | Intel® Core™ i3-2375M @ 1,50 GHz (2 núcleos / 4 threads) | 26/09 |
+| memória | **3,7 GiB** (3.795 MB), swap 5,6 GiB | 26/09 |
+| consumo base com o servidor no ar | **~2.184 MB (58 %)** | 26/09 |
+| consumo do OpenCode sozinho | ~1,1 GiB (é ele, não a intranet) | 26/09 |
+| RSS do servidor, sem carga | 105 MB | 27/09 |
+| RSS do servidor, sem carga | 108 MB | 26/09 |
+| RSS do servidor, **depois** de 120 VUs | 201 MB (medido) | 26/09 |
+
+Duas medições de RSS em repouso, 105 e 108 MB, em dias e sessões diferentes:
+são leituras honestas de duas horas, não um número corrigido. O que alimenta a
+tabela de [dimensionamento](dimensionamento.md) é a de **26/09, 108 MB** — é o
+valor em `MEDICOES["rss_base_mb"]` do `assets/test/dimensiona_servidor.py`, e
+é dele que sai `0,83 MB` por cliente (100 MB ÷ 120).
 
 O consumo alto da máquina vem das **ferramentas de desenvolvimento** da sessão,
 não do sistema sob teste. Isso é decisivo para entender o guarda de 90 %.
@@ -75,7 +82,7 @@ publica a métrica `carga_uso_render_modulo`, que deve marcar ~0,1 (só `/tv`):
 | `carga_uso_handshake_ok` | fração de clientes que o **servidor assumiu** (passou a transmitir a tela). É a prova de que o cliente ficou vivo, não só que o socket abriu. |
 | `carga_uso_ciclo_completo` | fração de ciclos que percorrem o roteiro inteiro de uso |
 | `carga_uso_pensamento` | think time de cada passo — o threshold `min>10000` **impõe** a exigência dos 10 s |
-| `carga_uso_leitura_blog` | tempo de leitura do post; threshold `min>55000` impõe o minuto |
+| `carga_uso_leitura_blog` | **não é threshold e não é medida nesta camada.** O k6 não clica em "Entrar", o blog não renderiza e o tempo daria sempre 0 — um threshold impossível, que reprovaria sem defeito. A exigência de 1 min de leitura é medida na camada de navegador real (20 navegadores). No relatório do k6 a linha sai como `leitura blog.....: NAO MEDIDA NESTA CAMADA`. |
 | `carga_uso_rota_200` | fração de rotas que responderam 200 |
 | `carga_uso_render_modulo` | fração de páginas que renderizaram de verdade (só `/tv` — ver acima) |
 | `carga_uso_desconectou` | sockets fechados sem erro |
@@ -225,6 +232,11 @@ o teste:
 | Xorg | 19 % |
 | **soma da ferramenta, antes do teste** | **~112 %** |
 
+(Com a bateria já em andamento, a mesma ferramenta chegou a ~122 % — é por
+isso que os dois números aparecem: 112 % é a base em repouso, 122 % é sob
+carga. Os dois estão acima de 90 % num total que o limiar de CPU mede contra
+4 núcleos.)
+
 Em 4 núcleos, ~112 % já é carga de base. Um gatilho único de 90 % de CPU
 **dispararia em segundos**, derrubando a bateria antes de ela medir qualquer
 coisa — e o relatório culparia o sistema por um problema que é da própria
@@ -271,10 +283,11 @@ faz isso por conta própria.
 ### Atenção: o gatilho de CPU precisa ser separado nesta máquina
 
 Medido na validação integrada (2 VUs do k6 + 2 navegadores, carga mínima): a
-**CPU passou de 90 % várias vezes** — 87,9 %, 98,3 %, 99,5 %, 95,7 % — e boa
-parte desse consumo era da ferramenta de desenvolvimento da sessão, não do
-teste. Com 120 VUs + 20 navegadores, um gatilho único de 90 % mataria a
-bateria em minutos por causa de ruído.
+**CPU passou de 90 % várias vezes** — 98,3 %, 99,5 %, 95,7 % (e 87,9 %, que
+ficou **abaixo** de 90 e por isso não conta como estouro). Boa parte desse
+consumo era da ferramenta de desenvolvimento da sessão, não do teste. Com
+120 VUs + 20 navegadores, um gatilho único de 90 % mataria a bateria em
+minutos por causa de ruído.
 
 O argumento dos 90 % é de **memória** (OOM killer, página trocando). O de CPU é
 mais frágil porque a CPU é o recurso compartilhado com o resto da sessão. Por
@@ -293,7 +306,10 @@ dispara quando ela está realmente saturada.
 
 ### Navegador real — 20 usuários, SOZINHOS (sem o k6): REPROVADO
 
-A camada que faltava, rodada sem o k6 junto, para isolar a variável:
+A camada que faltava, rodada sem o k6 junto, para isolar a variável. Ensaio de
+**306,8 s** (14:07:22 → 14:12:29 UTC), 20 contextos em **1** Chromium
+(`--renderer-process-limit=4`), `--rampa-s 3`, blog de 60 s, 2 usuários
+enviando:
 
 ```text
 logins ok.......: 6/20
@@ -306,10 +322,23 @@ duração.........: 306.8 s
 gate: permitidas=['/configuracoes'] bloqueadas=['/auditoria','/tecnico','/users']
 ```
 
-**Os 8 erros são todos o mesmo:** `login: Page.goto: Timeout 30000ms
-exceeded` — e o JSON mostra **14 dos 20** sem login, todos pelo mesmo motivo.
-O servidor não conseguia responder a página de login em 30 s para 14 browsers
-simultâneos.
+**14 dos 20 nãogartaram sessão — e foram por dois motivos diferentes, não um.**
+Lendo usuário por usuário no JSON:
+
+| grupo | usuários | o que aconteceu | erro registrado |
+|:---|---:|:---|---:|
+| entraram | `user001`, `user002`, `user010`–`user013` | ciclo inteiro, 25 e 22 passos | 0 |
+| página de login voltou, sessão não abriu | `user003`–`user008` (6) | `Page.goto` **respondeu**, mas o formulário de login re-renderizou: 0 passos, 0 erros | 0 |
+| estourou o `timeout` | `user009`, `user014`–`user020` (8) | `login: login falhou: Page.goto: Timeout 30000ms exceeded.` | 1 cada |
+
+Só os **8** do terceiro grupo geraram erro — a verbatim é
+`login: login falhou: Page.goto: Timeout 30000ms exceeded. Call log: -
+navigating to "http://localhost:8080/login", waiting until "domcontentloaded"`.
+Os outros **6** não estouraram nada: a página chegou, e o login não fechou
+sessão. Portanto a frase "o servidor não conseguia responder a página de login
+em 30 s para 14 browsers" **está errada** — o timeout é de 8, e para 6 o
+servidor respondeu a tempo. O que os dois grupos têm em comum é a sessão não
+abrir; o motivo do não-abertura é que ainda não foi isolado.
 
 De novo: **zero ERROR, zero Traceback no servidor**, e ele seguiu no ar com
 5/5 rotas respondendo 200 sob carga. Não foi queda — foi saturação.
@@ -320,18 +349,48 @@ O gate de acesso funcionou: `/auditoria`, `/tecnico` e `/users` bloquearam
 para o perfil comum, e `/configuracoes` passou — que é o comportamento real,
 porque `pagina_restrita` é chamada sem `chave_modulo` ali.
 
+!!! warning "O guarda disparou **dentro** deste ensaio — e matou o alvo errado"
+    Este NÃO foi um ensaio sem vigia. Um segundo guarda subiu às **14:07:32
+    UTC** e **disparou às 14:08:35** — 63 s depois do início — com **CPU 99,25 %**
+    (pico da série: **99,75 %**) e RAM em 67,98 %. Só que o PID que ele vigiava
+    era o `8145`, um **`bash`**, e não o processo do Playwright: o SIGTERM
+    matou o shell e o ensaio seguiu até o fim, sem interrupção.
+
+    Duas consequências honestas:
+
+    1. Os 14 logins perdidos **não** podem ser atribuídos só a "muito
+       tráfego para a máquina": a CPU estava saturada a 63 s do ensaio, com 20
+       navegadores subindo, o que é consistente com a hipótese de saturação —
+       mas o guarda não registrou a série completa desse trecho por
+       intervenção, e o número não está no relatório.
+    2. `guarda_recursos.py` confia no PID que recebe. Passar o PID de um
+       *wrapper* em vez do processo que se quer proteger faz o guarda
+       disparar, registrar e **não proteger nada**. Vale passar o PID do
+       processo real (`$!` do lançamento direto, como faz
+       `orquestra_bateria.sh`) e conferir com `kill -0`.
+
 ### A bateria combinada (k6 + 20 navegadores) NÃO roda nesta máquina
 
 O guarda de recursos a interrompeu **duas vezes**, e está certo:
 
 | tentativa | o que aconteceu |
 |:---|:---|
-| 1ª | 20 browsers abertos de uma vez → **CPU 99,8 % em 2 s** → guarda matou em 4 s |
-| 2ª | entrada escalonada (2 s por usuário, 19 subiram sem pico) → **CPU 98–99 %** → guarda matou em 45 s |
+| 1ª | 20 browsers abertos de uma vez (`--rampa-s 0`) → 1ª amostra acima do limite aos **2 s** (CPU 98,5 %), pico de **99,76 %** aos 4 s → guarda matou em **4 s** |
+| 2ª | entrada escalonada (`--rampa-s 2`, o padrão) → pico de **99,26 %** → guarda matou em **45 s** |
 
-Na segunda, a **RAM ficou em 67 %** — folga de sobra. O recurso esgotado é
-**CPU**: 4 núcleos divididos entre o servidor, 20 Chromium, k6 e a ferramenta
-de sessão desta própria bateria (que sozinha consome ~122 %).
+Nenhuma das duas interrompidas por RAM: na 1ª a RAM estava em **68,95 %** e na
+2ª em **67,63 %** — folga de sobra nas duas. O recurso esgotado é **CPU**: 4
+núcleos divididos entre o servidor, 20 Chromium, k6 e a ferramenta de sessão
+desta própria bateria (que sozinha consome ~122 %).
+
+!!! note "O número 99,8 % do primeiro disparo, e de onde ele vem"
+    A 1ª tentativa foi registrada com **99,76 %** de CPU, não "99,8 % em 2 s".
+    Os dois números estavam certaininhos, mas atribuídos a instantes
+    diferentes: aos 2 s a leitura era 98,5 % (foi quando o gatilho foi
+    cruzado pela 1ª vez — bastando 3 amostras consecutivas); o pico de
+    99,76 % veio aos 4 s, no mesmo instante em que o guarda matou os dois
+    processos. Usar "99,8 % em 2 s" junta o pico de um instante ao horário
+    de outro.
 
 Corrigido o que era defeito do teste (a entrada simultânea), o combinado
 continua acima do teto. **Numa máquina com 4 núcleos e a ferramenta de
@@ -339,15 +398,15 @@ desenvolvimento ligada, 40 VUs de protocolo + 20 navegadores reais não
 cabem em 98 % de CPU.** Isso é limitação do ambiente de teste, não do
 sistema — e por isso as camadas foram medidas **separadamente**.
 
-### A soma das três medições
+### A soma das cinco medições
 
-| camada | volume | resultado |
-|:---|---:|:---|
-| protocolo, carga leve | 120 VUs | ✅ aprovado, p95 955 ms |
-| protocolo, ciclo de uso | 40 VUs | ✅ funcional · ❌ latência |
-| protocolo, ciclo de uso | 120 VUs | ❌ 10,7 % de falha |
-| navegador real | 20 usuários | ❌ 6/20 logins |
-| navegador + protocolo | 40 + 20 | ⚠️ não roda nesta máquina (CPU) |
+| camada | volume | resultado | artefato que sobrou |
+|:---|---:|:---|:---|
+| protocolo, carga leve (`login_carga.js`) | 120 VUs | ✅ aprovado, p95 955,6 ms | só em prosa (esta doc) |
+| protocolo, ciclo de uso | 40 VUs | ✅ funcional · ❌ latência | só em prosa (esta doc) |
+| protocolo, ciclo de uso | 120 VUs | ❌ 10,7 % de falha | só em prosa (esta doc) |
+| navegador real | 20 usuários | ❌ 6/20 logins | `logs/carga_uso_navegador.json` (**não versionado**) |
+| navegador + protocolo | 40 + 20 | ⚠️ não roda nesta máquina (CPU) | `/tmp/guarda_comb.log` (**fora do repo**) |
 
 **Veredito: REPROVADO no critério de 40 usuários.** O sistema não atende 20
 usuários com navegador real nesta configuração, e a 40 VUs de protocolo já
@@ -355,6 +414,57 @@ excede o teto de latência. O caminho não é trocar de processador — ver
 [Dimensionamento](dimensionamento.md): o gargalo medido **não é CPU de
 cálculo** (o servidor estava ocioso, com 4–15 %, enquanto a latência ia a
 7 s), e sim um ponto de serialização, provavelmente a escrita no SQLite.
+
+## Limitação de auditoria: o que não sobrevive no repositório
+
+Esta seção existe porque os números acima são **prosa**, e prosa não é
+auditável. Três fatos, verificados contra o código e contra o que sobrou no
+disco:
+
+**1. O JSON do navegador não é versionado.** `logs/*` está no `.gitignore`
+(linha `logs/*`), e `carga_uso_navegador.py` grava por padrão em
+`logs/carga_uso_navegador.json`. A evidência primária da medição de 20
+navegadores — o JSON com um objeto por usuário e cada passo — **existe só
+nesta máquina**. Quem clonar o repositório lê os totais (6/20, 138/8, 306,8 s)
+e não consegue conferir nenhum deles contra o artefato.
+
+**2. O JSON do guarda é sobrescrito a cada execução; o log `.log` não.** São
+dois comportamentos diferentes, e confundi-los mudaria a conclusão:
+
+| arquivo | escrita | efeito |
+|:---|:---|:---|
+| `logs/carga_recursos.log` (padrão `--log`) | `open(..., "a")` — **append** | as execuções se acumulam; nada se perde |
+| `logs/carga_recursos.json` (padrão `--json`) | `Path.write_text` — **sobrescreve** | só a **última** execução sobrevive |
+
+Ou seja: o log de texto **teria** preservado as duas interrupções. Não
+preservou porque as duas tentativas usaram `--log /tmp/guarda_comb.log` e
+`--json /tmp/serie_comb.json` (é o que `orquestra_bateria.sh` faz), e `/tmp`
+não é versionado. E o `logs/carga_recursos.json` que está na árvore hoje é de
+uma execução **sem gatilho nenhum**: 41 amostras, 40 s, `--so-observar`, pico de
+39,48 % de CPU, vigiando um `bash` — ou seja, ele **não** é o registro da
+bateria. Quem procurar as interrupções nele não vai achar, e não deve concluir
+que elas não aconteceram.
+
+**3. O log do k6 combinado também foi sobrescrito.** `orquestra_bateria.sh`
+faz `> /tmp/k6_comb.log`; a tentativa seguinte truncou o arquivo. Sobrou o
+k6 **abortado** aos 45 s (sonda p95 1226 ms, `GET /login` p95 1160 ms, 41
+VUs), que **não** é o ensaio de 40 VUs de 13:35 citado nos resultados. Os
+números da tabela de 40 VUs (sonda 1.676 ms, `GET /login` 11.008 ms) vieram da
+saída de terminal daquela sessão e não têm artefato sobrevivente.
+
+### Correção sugerida
+
+| ação | onde | efeito |
+|:---|:---|:---|
+| Anexar um log por tentativa (`--log logs/guarda_<tentativa>.log`) | `orquestra_bateria.sh` | as interrupções param de depender do stdout do terminal |
+| Versionar o relatório do navegador, ou um resumo assinado dele | `.gitignore` + `carga_uso_navegador.py` | a evidência de 20 navegadores passa a ser auditável |
+| Sobrescrever o JSON é correto; **o que falta é um índice** | `guarda_recursos.py` | gravar `meta.json` acumulando uma linha por execução (`início`, `fim`, `pids`, `max_mem_pct`, `max_cpu_pct`, `disparou`) resolve sem mudar o comportamento do `--json` |
+| Gravar o relatório do k6 num arquivo datado | `orquestra_bateria.sh` | o ensaio de 40 VUs sobrevive à tentativa seguinte |
+
+Enquanto essas correções não existirem, os números de
+[Resultados medidos](#resultados-medidos-27092026) devem ser lidos como
+**transcrição fiel de uma sessão**, não como dado reproduzível. É por isso que
+esta doc cita o instante de cada medição.
 
 ## Como rodar
 
@@ -417,11 +527,14 @@ propósito). **Nunca use a escala no ensaio de 15 minutos.**
 
 ### 3. Relatórios
 
-| arquivo | quem escreve |
-|:---|:---|
-| `logs/carga_uso_navegador.json` | o script Playwright (um objeto por usuário, com cada passo) |
-| `logs/carga_recursos.json` | o guarda (série temporal de RAM/CPU, 1 amostra/s) |
-| `logs/carga_recursos.log` | o guarda (log incremental) |
+| arquivo | quem escreve | escrita |
+|:---|:---|:---|
+| `logs/carga_uso_navegador.json` | o script Playwright (um objeto por usuário, com cada passo) | **sobrescreve** |
+| `logs/carga_recursos.json` | o guarda (série temporal de RAM/CPU, 1 amostra/s) | **sobrescreve** |
+| `logs/carga_recursos.log` | o guarda (log incremental) | **append** |
+
+Nenhum desses três é versionado (`logs/*` no `.gitignore`). Ver
+[Limitação de auditoria](#limitacao-de-auditoria-o-que-nao-sobrevive-no-repositorio).
 
 ## As armadilhas desta sessão
 
@@ -516,18 +629,35 @@ reqs.............: N  (falhas 0.0000)
 GET /login.......: p95 ... ms  | max ... ms
 conexao WS.......: p95 ... ms
 ciclo de uso.....: p95 ... s  (em 9 passos, ~171 s de think time)
+socket vivo......: p95 ... s
 ciclo completo...: ...
 handshake ok.....: ...
+rotas 200........: ...
 render real......: ...  (so /tv: as demais sao stub, o k6 nao clica em Entrar)
+HTML servido.....: p95 ... B  (stub de redirecionamento = 9000 B)
 desconectou......: ...
+passos com falha.: ...
 --- uso ---
 pensamento min...: ... ms  (exigido >= 10000 ms na escala 1)
-leitura blog.....: min ... ms  (exigido ~60000 ms = 1 min na escala 1)
+pensamento p95...: ... s
+leitura blog.....: NAO MEDIDA NESTA CAMADA  (o k6 nao clica em Entrar, o blog
+                    nao renderiza; medido no navegador real)
+latencia pagina...: p95 ... ms  | max ... ms
 --- sonda do event-loop (a decisiva) ---
-sonda /favicon...: p95 ... ms  (teto: 1000 ms)
-VUs (max)........: 120
+sonda /favicon...: p95 ... ms  | max ... ms  (teto: 1000 ms)
+latencia geral...: p95 ... ms  | p99 ... ms
+checks...........: ...
+VUs (max)........: 121
+eventos/pagina...: N
 =========================================================
 ```
+
+`VUs (max)` sai **121** com o ensaio cheio (120 VUs de uso + 1 VU da sonda) e
+**41** com `-e K6_MAX_VU=40`. As linhas `socket vivo`, `rotas 200`,
+`HTML servido`, `passos com falha`, `pensamento p95`, `latencia pagina`,
+`latencia geral`, `checks` e `eventos/pagina` **sempre** saem: se aparecer `-`
+no lugar, a métrica ficou sem amostra (o que é legítimo num ensaio curto, em que
+o ciclo de uso não chegou ao fim).
 
 Os avisos `setTimeout N was stopped because the VU iteration was interrupted` no
 fim são **esperados**: são as cadeias em curso durante a rampa de descida.
@@ -540,10 +670,12 @@ fim são **esperados**: são as cadeias em curso durante a rampa de descida.
 | `carga_uso_ciclo_completo` | > 0,90 |
 | `carga_uso_rota_200` | > 0,99 |
 | `carga_uso_desconectou` | > 0,95 |
+| `carga_uso_falhas` | < 10 passos que estouraram |
 | `carga_uso_pensamento` | `min` > 10 000 ms |
 | `http_req_duration{classe:sonda}` | p95 < 1 000 ms |
 | `http_req_duration{classe:login}` | p95 < 2 000 ms |
 | `http_req_duration{classe:pagina}` | p95 < 3 000 ms |
+| `http_req_duration{rota:tv}` | p95 < 8 000 ms (`/tv` é a rota mais pesada) |
 | `http_req_failed` | < 0,02 |
 | `checks` | > 0,95 |
 
@@ -665,6 +797,8 @@ de `assets/test/pdf/`, que não são apagados.
 | `assets/k6/carga_uso.js` | o ensaio de 120 usuários (protocolo) |
 | `assets/test/carga_uso_navegador.py` | os 20 navegadores reais |
 | `assets/test/guarda_recursos.py` | o vigia de 90 % |
+| `assets/test/valida_cronometragem.py` | relê o `carga_uso.js` e reprova se a soma de estágios estourar o teto de 15 min |
+| `assets/test/orquestra_bateria.sh` | sobe k6 + 20 navegadores + guarda com os PIDs vindos de `$!` (nunca `pgrep -f`) |
 | `assets/test/libera_modulos_carga.py` | libera blog/notícias/filas/lista para os usuários de carga |
 | `assets/k6/login_carga.js` | o outro teste (sockets abertos, sem uso) — **não editar** |
 | `assets/test/popula_usuarios_carga.py` | cria os 120 usuários |

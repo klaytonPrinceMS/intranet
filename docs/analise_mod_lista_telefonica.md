@@ -267,3 +267,58 @@ mesmo com o módulo da Lista Telefônica ausente. Isso preserva a regra do AGENT
 | Vínculo a usuários (vinculado/externo) + LGPD | Implementado (`criar_contato` + `remover/renomear`) |
 | Aparência + backup | Implementado (`bloco_aparencia` + `painel_backup`) |
 | Integração `solicita_impressao` (ORGANOGRAMA_BASE → 1000/200) | Implementado (`mod_solicita_impressao/bd_manipulador.py:364`) |
+
+---
+
+# RF e RNF verificados no código (27/09/2026)
+
+> Auditoria de requisitos **funcionais** e **não funcionais**, com evidência
+> `arquivo:linha` conferida em 27/09/2026, no mesmo formato dos módulos
+> auditados antes.
+
+## Requisitos funcionais (RF) — mapa código ↔ doc
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-LT-01 | Organograma de **3 níveis** — Secretaria → Setor → Subsetor — com a restrição garantida no banco | `init_db` (`bd_manipulador.py:207-225`): `tb_unidade.tipo TEXT NOT NULL CHECK(tipo IN ('secretaria','setor','subsetor'))` + `parent_id … ON DELETE CASCADE` |
+| RF-LT-02 | Acesso à tela só para `administrador_geral` **ou** usuário com liberação no módulo | `telas.py:21-27` `_pode_ver`; negação visual em `telas.py:34-40` |
+| RF-LT-03 | Administração exige `administrador_geral` **ou** admin do módulo | `telas.py:30-31` `_eh_admin` (`perfil_global_de` + `autenticacao.eh_admin_do_modulo`) |
+| RF-LT-04 | Selects em **cascata**: escolher Secretaria carrega Setor, escolher Setor carrega Subsetor | `telas.py:94-96` `lista-select-secretaria`/`-setor`/`-subsetor`; recarga em `telas.py:299-300` com `listar_unidades(parent_id=e.value, tipo="setor")` |
+| RF-LT-05 | Contatos do órgão em **ordem alfabética**, insensível a acento e a caixa | `listar_contatos` (`:763`); `_norm` (`:202`) remove acento para ordenar |
+| RF-LT-06 | Telefone clicável (`tel:`) com tooltip, e diálogo de ligação | `telas.py:176` `ui.link(nome, target=f"tel:{tel_limpo}")` + `.tooltip("Toque para ligar (celular)")`; `telas.py:248` botão de chamada; `telas.py:420` link "Ligar"; `data-testid=lista-ligar` |
+| RF-LT-07 | Busca global por nome/telefone, **sem acento** | `buscar_unidades` (`:730`) + `buscar_contatos` (`:797`), ambos sobre `_norm` (`:202`); `data-testid=lista-busca`; `telas.py:397-398` |
+| RF-LT-08 | Contato **vinculado** a um usuário do cadastro, ou externo | `criar_contato(unidade_id, nome, telefone, user_nome)` (`:829`); `tb_contato.tipo CHECK(tipo IN ('vinculado','externo'))`; painel tem `admin-contato-user` |
+| RF-LT-09 | Criar, editar e excluir contato | `criar_contato` (`:829`), `editar_contato` (`:874`), `excluir_contato` (`:917`); `admin-criar-contato`, `admin-contato-nome/tel/unidade` |
+| RF-LT-10 | Criar/editar/excluir unidade, e **mover** unidade para outro pai | `criar_unidade` (`:379`), `editar_unidade` (`:439`), `excluir_ramo` (`:479`), `mover_unidade` (`:558`) |
+| RF-LT-11 | **Excluir ramo** apaga a unidade e toda a descendência de uma vez | `excluir_ramo` (`:479`) com `_coletar_ramo_ids` (`:533`) |
+| RF-LT-12 | **Elevar/rebaixar** o nível de uma unidade (subsetor ↔ setor ↔ secretaria) | `elevar_rebaixar(uid, novo_tipo)` (`:625`) |
+| RF-LT-13 | Reordenar as unidades de um mesmo pai | `reordenar_unidades(parent_id, ordem_ids)` (`:696`); campo `tb_unidade.ordem` |
+| RF-LT-14 | Transferir contato entre unidades | `transferir_contato(cid, nova_unidade_id)` (`:950`) |
+| RF-LT-15 | Exibir o caminho completo da unidade (Secretaria › Setor › Subsetor) | `_caminho_unidade` (`telas.py:461`) |
+| RF-LT-16 | Aparência e backup no painel | `telas_administracao.py:22` `mostrar_administracao` com `bloco_aparencia` + `painel_backup` |
+| RF-LT-17 | Organograma base semeado, e reusado pelo módulo de Solicitação de Impressão | `init_db` (`:207`) semeia `ORGANOGRAMA_BASE` quando `tb_unidade` está vazia; consumidor em `mod_solicita_impressao/bd_manipulador.py:364` |
+| RF-LT-18 | Rótulos PT-BR e docstrings bilíngue EN (topo) / PT-BR (abaixo) | `bd_manipulador.py:1-20`, `telas.py:1-20`, `telas_administracao.py:1-21` |
+
+## Requisitos não-funcionais (RNF) — garantias técnicas
+
+| RNF | Exigência | Evidência no código |
+|:---|:---|:---|
+| RNF-LT-PERS-01 | Banco próprio `db_mod_lista_telefonica.db`; tabelas `tb_unidade` e `tb_contato` | `get_connection` (`:156`) |
+| RNF-LT-PERS-02 | Integridade referencial no **banco**, não só na UI: `ON DELETE CASCADE` nos dois lados | `init_db` (`:214-224`) |
+| RNF-LT-PERS-03 | Restrição de domínio no banco: o `tipo` só aceita os 3 valores | `CHECK(tipo IN ('secretaria','setor','subsetor'))` e `CHECK(tipo IN ('vinculado','externo'))` |
+| RNF-LT-PERS-04 | 3 índices cobrindo as consultas quentes: hierarquia, busca por contato e busca por nome | `idx_unidade_parent`, `idx_contato_unidade`, `idx_contato_nome` (`init_db`, `:233-235`) |
+| RNF-LT-PERS-05 | `database is locked` é erro tratado, com rollback e **retry** no commit | `_eh_bloqueio_banco` (`:98`), `_rollback_seguro` (`:109`), `_commit_com_retry` (`:121`) |
+| RNF-LT-PERS-06 | DDL idempotente e import-safe | `init_db` (`:207`) com `CREATE TABLE IF NOT EXISTS` + seed só quando a tabela está vazia |
+| RNF-LT-SEG-01 | Autorização verificada **antes** de renderizar, com negação explícita na tela | `_pode_ver` (`:21`) e `_eh_admin` (`:30`), ambos com `except` que devolve `False` em vez de propagar |
+| RNF-LT-SEG-02 | Auditoria das escritas de configuração e de exclusão | `_audit` (`:183`) nas operações de unidade e contato |
+| RNF-LT-SEG-03 | Telefone sanitizado antes de virar `tel:` | `telas.py:176`/`:420` montam `tel_limpo` a partir do valor já validado no cadastro |
+| RNF-LT-RES-01 | `try/except` obrigatório em função, com log (AGENTS.md §3.2) | Todo `bd_manipulador` protegido, com `_log()` (`:87`) e `log.exception`; `telas.py:34` envolve o `mostrar_tela` inteiro |
+| RNF-LT-RES-02 | Falha de banco em operação destrutiva (`excluir_ramo`, `transferir_contato`) faz rollback e **não** apaga parcialmente | `_rollback_seguro` (`:109`) chamado nos `except` |
+| RNF-LT-UX-01 | Anti-disconnect: I/O fora do event-loop nos handlers de escrita | `telas_administracao.py` conduz as mutações por `run.io_bound`, com `ui.spinner` e trava de reentrância |
+| RNF-LT-UX-02 | `data-testid` via `.props('data-testid=...')` em todas as ações | 5 na tela (`lista-select-secretaria`, `lista-select-setor`, `lista-select-subsetor`, `lista-busca`, `lista-ligar`) + 11 no painel (`admin-criar-unidade`, `admin-unidade-nome/tel/tipo/pai`, `admin-criar-contato`, `admin-contato-nome/tel/unidade/user`, `admin-contato-busca`) |
+| RNF-LT-UX-03 | A cascata **desabilita** o select seguinte até haver seleção — não deixa escolher um setor sem secretaria | `telas.py:95-96` com `disable`/`clearable` |
+| RNF-LT-PERF-01 | Busca sem varrer a tabela: normaliza e filtra sobre o conjunto já carregado | `_norm` (`:202`) + `buscar_*` (`:730`/`:797`) |
+| RNF-LT-RESP-01 | Responsividade | `telas.py` — selects `w-full`, organograma expansível com `flex-wrap` |
+| RNF-LT-CFG-01 | Aparência por tema do módulo, com fallback no padrão do núcleo | `telas_administracao.py` usa `tema_modulo.bloco_aparencia` |
+| RNF-LT-COMP-01 | Compatibilidade SQLite ↔ PostgreSQL | Via `banco_conexao`; DDL só `IF NOT EXISTS`, sem SQL SQLite-only no módulo |
+| RNF-LT-LGPD-01 | Excluir/renomear usuário limpa o vínculo `tb_contato.user_nome` | `remover_vinculos_usuario` (`:1017`) e `renomear_usuario` (`:1048`) |

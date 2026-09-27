@@ -294,3 +294,55 @@ standalone).
 | edit_pdf | Sem `CrudBase`; `strftime` só em Python (sem quebra); auditar `GROUP BY`/`COLLATE` | `mod_edit_pdf/bd_manipulador.py:215`, `:423` (`strftime` Python — OK) | Migrar para `CrudBase` + `conexao("editar_pdf")`; varredura `GROUP BY`/`COLLATE` interna | Médio (cotas 1 GB/10 GB + expiração 10 min + ZIP) |
 
 Detalhe consolidado em [Plano WAL + Paridade](registro_de_mudancas/wal_paridade_pendente_2026-09-24.md).
+
+---
+
+# RF e RNF verificados no código (27/09/2026)
+
+> Auditoria de requisitos **funcionais** e **não funcionais**, com evidência
+> `arquivo:linha` conferida em 27/09/2026, no mesmo formato dos módulos
+> auditados antes.
+
+## Requisitos funcionais (RF) — mapa código ↔ doc
+
+| RF | Descrição | Evidência no código |
+|:---|:---|:---|
+| RF-EPDF-01 | Enviar PDF para a pasta do usuário, com nome padronizado | `registrar_arquivo` (`:394`) grava o que já está em disco; `nome_padronizado(usuario, operacao, nome_original)` (`:328`) monta `datahora_operacao_nome`; `pasta_usuario` (`:296`); `data-testid=editpdf-upload` |
+| RF-EPDF-02 | Listar "meus arquivos" só do próprio usuário | `obter_meus_arquivos` (`:527`); `editar_pdf-atualizar` |
+| RF-EPDF-03 | **Juntar** vários PDFs em um | `data-testid=editar_pdf-juntar` |
+| RF-EPDF-04 | **Dividir** um PDF em partes | `data-testid=editar_pdf-dividir` |
+| RF-EPDF-05 | **Cortar** (extrair intervalo de páginas) | `data-testid=editar_pdf-cortar` |
+| RF-EPDF-06 | **Reduzir** tamanho, com modo "reduzir" explícito | `data-testid=editar_pdf-reduzir` e `editar_pdf-modo-reduzir` |
+| RF-EPDF-07 | **Verificar** o arquivo (ler/validar) antes de operar | `data-testid=editar_pdf-verificar` |
+| RF-EPDF-08 | Baixar um PDF, ou todos em ZIP | `editar_pdf-baixar-pdfs`; `zip_do_usuario` (`:628`) e `zip_por_ids` (`:640`) com `_zipar` (`:682`) |
+| RF-EPDF-09 | Excluir arquivo, devolvendo a cota | `deletar_arquivo` (`:711`); `editar_pdf-excluir` |
+| RF-EPDF-10 | Cota **global** de disco (`cotadisco_global_gb`, padrão 10 GB) verificada **antes** de gravar | `_cota_global_bytes` (`:342`) + `verificar_quota` (`:359-390`), que soma `tb_arquivos WHERE ativo=1` e compara com a cota; `QUOTA_GLOBAL_BYTES_DEFAULT = 10 * 1024**3` (`:121`) |
+| RF-EPDF-11 | Cota **por usuário** (`editar_pdf_usuario_gb`, padrão 1 GB) com o mesmo caminho | `cfg_usuario_gb` (`:157`) + `verificar_quota` (`:377-380`) lendo `tb_cota_disco.total_usado_bytes`; `QUOTA_USUARIO_BYTES` legado (`:122`) |
+| RF-EPDF-12 | Cota excedida devolve recusa legível, não exceção | `verificar_quota` (`:359`) devolve `(False, "Cota global excedida (10 GB)")` / `(False, "Sua cota de N GB foi excedida")` |
+| RF-EPDF-13 | Upload em lote limitado por **quantidade** de arquivos e por **MB** por lote | `cfg_lote_arquivos` (`:137`), `cfg_lote_mb` (`:147`), `contar_uploads_ativos` (`:566`); os dois com piso de 1 |
+| RF-EPDF-14 | Arquivos antigos expiram sozinhos | `cfg_expiracao_min` (`:167`), `expirar_antigos(minutos)` (`:914`), botão "Expirar agora" no painel (`_expirar_agora`, `telas_administracao.py:288`) |
+| RF-EPDF-15 | Painel administrativo: cotas, expiração, aparência e lista global | `mostrar_administracao` (`telas_administracao.py:62`), `_salvar_configs` (`:200`), `_resetar_configs` (`:245`), `_expirar_agora` (`:288`) |
+| RF-EPDF-16 | Uso total em disco exibido na tela, com tempo restante | `uso_global_bytes` (`:309`) + `_fmt_resta`/`_cor_resta` (`telas.py:63`/`:83`) |
+| RF-EPDF-17 | Rótulos PT-BR e docstrings bilíngue EN (topo) / PT-BR (abaixo) | `bd_manipulador.py:1-16`, `telas.py:1-38`, `telas_administracao.py:1-37` |
+
+## Requisitos não-funcionais (RNF) — garantias técnicas
+
+| RNF | Exigência | Evidência no código |
+|:---|:---|:---|
+| RNF-EPDF-PERS-01 | Banco próprio `db_mod_edit_pdf.db`; tabelas `tb_arquivos` (arquivo + cota por usuário) e `tb_cota_disco` (uso acumulado) | `init_db_pdf` (`:220`); `get_connection`/`_conn` (`:190`) |
+| RNF-EPDF-PERS-02 | **Atomicidade da cota**: `tb_arquivos` + `tb_cota_disco` na mesma transação curta, com rollback para a cota nunca estourar | docstring de `registrar_arquivo` (`:394-404`) descreve o commit único e o rollback |
+| RNF-EPDF-PERS-03 | Bloqueio de banco é erro **tratado**, não crash | `_eh_locked` (`:80`) classifica o erro; `_falha_conexao` (`:64`) e `_log_exc` (`:98`) registram; `iniciar`/`_init_db_seguro` nunca levantam |
+| RNF-EPDF-SEG-01 | Falha de cota **nunca** deixa o arquivo gravado sem registro, nem registra sem o arquivo | transação única em `registrar_arquivo` (`:394`) |
+| RNF-EPDF-SEG-02 | Nome de arquivo sempre padronizado — o `nome_original` do cliente não vira caminho | `nome_padronizado` (`:328`) + `pasta_usuario` (`:296`) |
+| RNF-EPDF-SEG-03 | Autorização de escrita é por cota, não por papel: quem estourou não grava | `verificar_quota` (`:359`) antes de `registrar_arquivo` |
+| RNF-EPDF-RES-01 | `try/except` obrigatório em função, com notificação + log (AGENTS.md §3.2) | Todo `bd_manipulador` protegido; `_notificar_falha` (`:38`) e `ui_notify_erro` (`:505`) centralizam o aviso; **zero** `ui.notify` cru — `ui_notify_erro` existe justamente para **não acoplar** UI na lógica |
+| RNF-EPDF-RES-02 | Banco indisponível devolve recusa, não derruba a tela | `verificar_quota` (`:363-366`) e `registrar_arquivo` testam `conn is None` e retornam `False` com mensagem |
+| RNF-EPDF-UX-01 | Anti-disconnect: operações de PDF são I/O pesado e saem do event-loop | `telas.py:106` `mostrar_tela` conduz as operações por `run.io_bound`, com `ui.spinner` e trava de reentrância |
+| RNF-EPDF-UX-02 | `data-testid` via `.props('data-testid=...')` em todas as ações | 12 ids: `editpdf-upload`, `editar_pdf-enviar`, `-atualizar`, `-juntar`, `-dividir`, `-cortar`, `-verificar`, `-reduzir`, `-modo-reduzir`, `-baixar-pdfs`, `-baixar-zip`, `-excluir` |
+| RNF-EPDF-UX-03 | Sem JavaScript direto (AGENTS.md §5) | Tudo por `ui.*`;o único JS é o de upload, injetado pelo próprio NiceGUI |
+| RNF-EPDF-PERF-01 | Verificação de cota em 2 consultas, sem N+1 | `verificar_quota` (`:368-372`): um `SUM` global + uma leitura da cota do usuário |
+| RNF-EPDF-PERF-02 | ZIP montado em memória com lista de ids, não varrendo a pasta inteira | `zip_por_ids` (`:640`) → `_zipar` (`:682`) |
+| RNF-EPDF-RESP-01 | Responsividade | `telas.py:106` — grids `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`, `overflow-x-auto` nas tabelas, `scroll_area` com altura explícita; auditado em 320/768/1024 sem pendência P0 |
+| RNF-EPDF-CFG-01 | Configuração com fonte única de verdade e piso explícito | `_cfg` (`:127`) + `cfg_*` (`:137-167`), todas com mínimo 1 — nunca valor 0 que o usuário não pediu |
+| RNF-EPDF-COMP-01 | Compatibilidade SQLite ↔ PostgreSQL | Via `banco_conexao`; `strftime` aparece **só em Python** (`:215`, `:423`), não em SQL — registrado na Pendência QA acima como risco **Médio** (falta migração para `CrudBase`) |
+| RNF-EPDF-LGPD-01 | Excluir/renomear usuário remove os arquivos e zera a cota | `remover_vinculos_usuario` (`:783`), `renomear_usuario` (`:856`) |
