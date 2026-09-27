@@ -74,8 +74,11 @@ evento de WebSocket não há resposta para anexá-lo.
      dizer "verde" seria mentir sobre quem escolheu a cor;
    - a hierarquia de resolução **encolhe** de três degraus para um só, e a função
      que existia para dar o padrão do administrador (`estilo_padrao_sistema()`)
-     fica **código morto** — e perigoso, porque ainda devolve um estilo, se alguém
-     voltar a chamá-la;
+     ficou **código morto** — e perigoso, porque ainda devolvia um estilo. Como
+     uma função morta desse tipo é convite para alguém voltar a chamá-la, ela
+     foi **removida** (junto de `CONFIG_PADRAO_SISTEMA`, `aplicar_se_escolhido()`
+     e `aplicar_para_usuario()`): a guarda `if estilo_visual_usuario:` ficou em
+     `telas.py`, ao lado de quem monta a tela;
    - a chave no banco que existia para isso passou a ser semeada com o **nome da
      opção** (`'padrao'`), que é o valor que não impõe nada.
 

@@ -41,7 +41,7 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` (`bd_cone
 1. Sem usuário → redireciona `/login`.
 2. Revalida existência/situação ativa contra o BD → aviso "Sua sessão foi encerrada pelo administrador."
 3. Valida `sessao_ativa()`; sessões antigas sem hash são adotadas automaticamente.
-4. Monta o layout de 4 partes: header (hambúrguer, botão de backup do módulo quando autorizado, "Meu Perfil" em botão único sempre visível `header-nome-usuario` com nome completo + tooltip completo — sem toggles `hidden sm:*`, badge de perfil sempre visível, logout), drawer lateral (módulos liberados; vínculo a módulo inativo vira item laranja de alerta; Configurações só ao administrador geral), rodapé escondido com reveal no hover/focus (`rodape-sistema`, `mod_intranet/telas.py:346-359` — `opacity:0 + translateY(calc(100% - 5px))`, faixa de 5px como pista, `:hover`/`:focus-within` → `opacity:1 + transform:none`; conteúdo/cores `bg-grey-8` inalterados), área principal. Detalhe em [Módulos (resumo)](modulos/intranet.md) ("Header — botão único sempre visível", correção final 14/09/2026, `mod_intranet/telas.py:225-260`).
+4. Monta o layout de 4 partes: header (hambúrguer, botão de backup do módulo quando autorizado, "Meu Perfil" em botão único sempre visível `header-nome-usuario` com nome completo + tooltip completo — sem toggles `hidden sm:*`, badge de perfil sempre visível, logout), drawer lateral (módulos liberados; vínculo a módulo inativo vira item laranja de alerta; Configurações só ao administrador geral), rodapé escondido com reveal no hover/focus (`rodape-sistema`, `mod_intranet/telas.py:432-476` — `opacity:0 + translateY(calc(100% - 5px))`, faixa de 5px como pista, `:hover`/`:focus-within` → `opacity:1 + transform:none`; conteúdo/cores `bg-grey-8` inalterados), área principal. Detalhe em [Módulos (resumo)](modulos/intranet.md) ("Header — botão único sempre visível", correção final 14/09/2026, `mod_intranet/telas.py:225-260`).
 5. Se `precisa_trocar_senha()`, abre diálogo persistent de troca obrigatória.
 
 ### Drawer — ordenação do menu hambúrguer (2026-09-19, `mod_intranet/telas.py:_montar_layout` ~283–367)
@@ -747,7 +747,7 @@ Novo subsistema central em `mod_intranet/observabilidade.py` (validado com `ast.
 #### Padrão próprio do tema de botões — vazio = padrão do módulo (06/09)
 
 - **Regra**: a chave de tema de **botão** do módulo **VAZIA** usa o padrão do PRÓPRIO módulo —
-  precedência em `ler_tema` (`tema_modulo.py:94-126`): (1) chave do módulo
+  precedência em `ler_tema` (`tema_modulo.py:115-148`): (1) chave do módulo
   (`<prefixo>_cor_botao`/`cor_texto_botao`/`btn_tamanho`) não vazia → (2) default do parâmetro
 (quando o chamador informa) → (3) `PADROES_TEMA` — mapa único com **TODOS os módulos em
    `#000000`** (blog, usuarios, auditoria, editar_pdf, empenhos, solicita_impressao, intranet — a cor
@@ -879,7 +879,7 @@ Pilotos migrados:
 
 #### Rodapé — escondido com reveal no hover/focus (14/09/2026)
 
-- **`mod_intranet/telas.py:346-359`** (bloco FOOTER, parte 4 do layout): rodapé escondido com reveal no hover — CSS escopado via `ui.add_head_html` (padrão `home_visual.injetar_water_card`), seletor `[data-testid="rodape-sistema"]` (novo `testid` no `ui.footer`, `bg-grey-8 w-full`), sem vazamento global. Oculto por padrão com `opacity:0 + translateY(calc(100% - 5px))` e transição `.25s` (faixa de 5px como pista visual); reveal em `:hover`/`:focus-within` → `opacity:1 + transform:none`.
+- **`mod_intranet/telas.py:432-476`** (bloco FOOTER, parte 4 do layout): rodapé escondido com reveal no hover — CSS escopado via `ui.add_head_html` (padrão `home_visual.injetar_water_card`), seletor `[data-testid="rodape-sistema"]` (novo `testid` no `ui.footer`, `bg-grey-8 w-full`), sem vazamento global. Oculto por padrão com `opacity:0 + translateY(calc(100% - 5px))` e transição `.25s` (faixa de 5px como pista visual); reveal em `:hover`/`:focus-within` → `opacity:1 + transform:none`.
 - **Conteúdo, tamanho, labels e cores inalterados** (`"{titulo} Básica — {texto_rodape}"` + rótulo único de versão global/módulo com tooltip detalhado — ver "Versionamento no rodapé" acima); sem JS, sem `hidden`.
 - **Validação Playwright real** (sistema reiniciado, `/login` 200): opacity inicial `0`, após hover `1` + transform `none`, screenshots desktop; texto preservado (`"INTRANET Básica — uso interno"`, `"v1.0.260913"`).
 - **Ressalvas:** no touch o reveal ocorre no toque na faixa (rodapé só informativo, sem focáveis); se o CSS falhar, degrada para sempre visível (fail-soft visual).

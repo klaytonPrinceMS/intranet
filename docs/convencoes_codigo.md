@@ -357,11 +357,11 @@ Servidores simples seguem com **SQLite** (padrão universal, zero dependências 
 **Toda e qualquer configuração passável de alteração** (cores, padrões, tamanhos, tempos, pastas, textos…) deve ser pensada como **configurável pelo usuário** na área de configuração do módulo — chaves em `tb_config` (prefixo `<modulo>_*`) + cupê "Administração" do próprio módulo (ou o painel central `/configuracoes`) — e aplicada **sem restart** sempre que possível. Não fixe em código valores que o administrador possa querer ajustar.
 
 - Chaves de aparência por módulo: `<chave>_cor_botao`, `cor_texto_botao`, `cor_fundo`, `cor_titulo`, `btn_tamanho`, `texto_header` (lidas por `tema_modulo.ler_tema`, valem sem restart).
-- **Padrão próprio do tema de BOTÕES (06/09)**: chave do módulo **VAZIA = padrão do PRÓPRIO módulo** — o tema do sistema (`intranet_*`) **NÃO é herdado**. Precedência para `cor_botao`, `cor_texto_botao` e `btn_tamanho` (`tema_modulo.py:94-126`):
+- **Padrão próprio do tema de BOTÕES (06/09)**: chave do módulo **VAZIA = padrão do PRÓPRIO módulo** — o tema do sistema (`intranet_*`) **NÃO é herdado**. Precedência para `cor_botao`, `cor_texto_botao` e `btn_tamanho` (`tema_modulo.py:115-148`):
 
   1. Chave do módulo (`<prefixo>_cor_botao` etc.) **não vazia** → usa o valor do módulo;
   2. Default do parâmetro em `ler_tema` (quando o chamador informa);
-  3. Padrão do módulo — mapa `PADROES_TEMA` (`tema_modulo.py:53-68`): **TODOS os módulos em `#000000`** — blog, usuarios, auditoria, editar_pdf, empenhos, solicita_impressao e intranet (a cor do intranet; texto `#FFFFFF`, título `#212121`, tamanho `medium`).
+  3. Padrão do módulo — mapa `PADROES_TEMA` (`tema_modulo.py:65-88`): **TODOS os 11 módulos em `#000000`** — intranet, blog, usuarios, auditoria, editar_pdf, empenhos, solicita_impressao, tecnico, filas, lista_telefonica e agregador_noticias (texto `#FFFFFF`, título `#212121`, tamanho `medium`). Paleta **preta desde 27/09/2026** — ver [Estilo Visual e Tema do Sistema](estilo_visual.md).
 
   `cor_fundo`, `cor_titulo` e `texto_header` seguem a mesma regra (vazio = default do parâmetro). Com isso, **todos os módulos usam a cor do intranet (`#000000`)** por padrão; o override por módulo continua possível no cupê "Aparência" da Administração de cada módulo — os inputs exibem o valor **resolvido** (rótulo "vazio = padrão do módulo"), e o "Restaurar padrão" grava `""` para voltar ao padrão do módulo. O card "Botões do sistema" (`intranet_*`) vale apenas para o próprio módulo `intranet`.
 - Config específica de comportamento: `usuarios_senha_min`, `empenhos_pasta_monitorada`, `blog_tags_permitidas`, `log_*`, `smtp_*`, `backup_horas:<modulo>` etc.

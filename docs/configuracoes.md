@@ -307,7 +307,7 @@ O padrão do `notificacao_timeout` é **4 s** (antes 10 s, antes 2 s) — os toa
 
 ### Padrão próprio do tema do módulo — "Cor geral do módulo" (06/09)
 
-As chaves de tema de **botão** dos módulos (`<prefixo>_cor_botao`, `<prefixo>_cor_texto_botao`, `<prefixo>_btn_tamanho`, lidas por `tema_modulo.ler_tema` — `mod_intranet/tema_modulo.py:94-126`) seguem precedência:
+As chaves de tema de **botão** dos módulos (`<prefixo>_cor_botao`, `<prefixo>_cor_texto_botao`, `<prefixo>_btn_tamanho`, lidas por `tema_modulo.ler_tema` — `mod_intranet/tema_modulo.py:115-148`) seguem precedência:
 
 1. **Chave do módulo não vazia** (ex.: `usuarios_cor_botao`, gravada no cupê "Aparência" da Administração do módulo);
 2. **Default do parâmetro** em `ler_tema` — quando o chamador informa (ex.: `ler_tema("editar_pdf", cor_botao="#000000")`);

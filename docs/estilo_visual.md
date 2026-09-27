@@ -30,8 +30,8 @@ tinha antes da experiência, e o WhatsApp virou apenas **uma opção** do menu.
 
 | Onde | O que vale | Origem |
 |:---|:---|:---|
-| **Login** (`/login`) | **sempre `verde`** (WhatsApp), para todo mundo | constante `PADRAO_LOGIN` (`preview_estilos.py:116`) — **não** segue preferência nem `?estilo=` |
-| **Módulos internos** (todas as telas com `pagina_restrita`) | escolha do usuário no cookie **ou** `""` (nada imposto) | `estilo_efetivo()` (`preview_estilos.py:503`) |
+| **Login** (`/login`) | **sempre `verde`** (WhatsApp), para todo mundo | constante `PADRAO_LOGIN` (`preview_estilos.py:117`) — **não** segue preferência nem `?estilo=` |
+| **Módulos internos** (todas as telas com `pagina_restrita`) | escolha do usuário no cookie **ou** `""` (nada imposto) | `estilo_efetivo()` (`preview_estilos.py:482`) |
 | **Com `""`** | a **cor do módulo** — o que o administrador configurou | `tema_modulo.ler_tema(chave_modulo)` + `ui.colors(primary=cores)` em `telas.py:240` |
 | **Paleta de botões/títulos** (independente do estilo) | **preto** em todos os 11 módulos | `PADROES_TEMA` (`tema_modulo.py:65-88`) |
 
@@ -60,8 +60,8 @@ aro de avatar), e a identidade vem de custom properties `--pe-*` injetadas no
 
 Derivados: `CHAVES` (tupla das 4 chaves), `ROTULOS` e `DESCRICOES`
 (`preview_estilos.py:94-96`). A paleta completa (com `escuro`, `superficie`,
-`primaria_texto`, `sombra`) está em `_CORES` (`preview_estilos.py:131-168`); a
-entrada `preto` é `_CORES["preto"]` (`preview_estilos.py:161-167`).
+`primaria_texto`, `sombra`) está em `_CORES` (`preview_estilos.py:132-169`); a
+entrada `preto` é `_CORES["preto"]` (`preview_estilos.py:162-168`).
 
 ### 2.1 Por que `light` virou `preto`
 
@@ -75,23 +75,23 @@ numa etiqueta de menu. A correção foi só de nomenclatura: chave `preto`, rót
 (`preview_estilos.py:91-92`). A paleta em si **não** mudou.
 
 Tudo que acompanha a chave mudou junto: a classe CSS `pe-preto` (era `pe-light`),
-a função de layout `_login_preto` (`preview_estilos.py:365`, era `_login_light`), o
-item de `_LAYOUTS` (`preview_estilos.py:388`) e o `data-testid` `estilo-preto`.
+a função de layout `_login_preto` (`preview_estilos.py:366`, era `_login_light`), o
+item de `_LAYOUTS` (`preview_estilos.py:389`) e o `data-testid` `estilo-preto`.
 
 !!! warning "O valor `#111111` é escuro, mas o FUNDO continua claro"
     A paleta `preto` é "monocromático" no sentido de **interface sem cor de marca**,
     não de "tela escura": `fundo` é `#fafafa` e `superficie` é `#ffffff`
-    (`preview_estilos.py:163`). O que é `#111111` é a cor de **ação** (botão e
+    (`preview_estilos.py:164`). O que é `#111111` é a cor de **ação** (botão e
     `--q-primary`). Ou seja, o estilo não impõe tema escuro — `escuro` é `False` em
     todas as 4 paletas.
 
 ### 2.2 A opção "Padrão" NÃO é um estilo
 
-`OPCAO_PADRAO` (`preview_estilos.py:98-105`) não é um quinto estilo — é a
+`OPCAO_PADRAO` (`preview_estilos.py:102-106`) não é um quinto estilo — é a
 **ausência de escolha pessoal**:
 
 ```python
-# preview_estilos.py:101-105
+# preview_estilos.py:102-106
 CHAVE_PADRAO = "padrao"
 OPCAO_PADRAO = {
     "chave": CHAVE_PADRAO, "rotulo": "Padrão",
@@ -99,7 +99,7 @@ OPCAO_PADRAO = {
 }
 ```
 
-Fica no **fim** da lista (`preview_estilos.py:625`, `tuple(PADROES) + (OPCAO_PADRAO,)`)
+Fica no **fim** da lista (`preview_estilos.py:591`, `tuple(PADROES) + (OPCAO_PADRAO,)`)
 para os quatro estilos ficarem juntos no começo. Ao clicar nela, o cookie passa a
 guardar `padrao`, e `ler_estilo()` normaliza esse valor para `""` — assim o código
 tem **um único jeito** de dizer "não escolheu" (ver
@@ -113,9 +113,9 @@ tem **um único jeito** de dizer "não escolheu" (ver
 ### 2.3 Defaults do protótipo e o que sobrou
 
 ```python
-PADRAO_PADRAO = "verde"   # preview_estilos.py:109 — fallback interno de aplicar()/tela_login()
-PADRAO_LOGIN  = "verde"   # preview_estilos.py:116 — estilo FIXO do login
-PADRAO_ADM    = None      # preview_estilos.py:124
+PADRAO_PADRAO = "verde"   # preview_estilos.py:110 — fallback interno de aplicar()/tela_login()
+PADRAO_LOGIN  = "verde"   # preview_estilos.py:117 — estilo FIXO do login
+PADRAO_ADM    = None      # preview_estilos.py:125
 ```
 
 Com a virada de semântica, o papel desses defaults mudou:
@@ -123,10 +123,10 @@ Com a virada de semântica, o papel desses defaults mudou:
 - **`PADRAO_LOGIN`** continua valendo e é o que faz o login aparecer sempre no
   WhatsApp (`main.py:248`).
 - **`PADRAO_PADRAO`** virou apenas a **rede de segurança interna** de
-  `aplicar()` (`:241`) e `tela_login()` (`:405`), para um `padrao` fora da lista
+  `aplicar()` (`:242`) e `tela_login()` (`:406`), para um `padrao` fora da lista
   nunca deixar a tela sem estilo. **Não** é mais o "padrão do sistema" no sentido
   do menu — ver [§4.2](#42-o-que-sobrou-de-estilo_padrao_sistema-removido).
-- **`PADRAO_ADM` = `None`** (`:124`) é o que mantém a cor do administrador **fora**
+- **`PADRAO_ADM` = `None`** (`:125`) é o que mantém a cor do administrador **fora**
   da paleta de qualquer estilo. Continua `None` de propósito: se fosse ligado a um
   estilo, a cor da prefeitura (`#000000`) entraria na paleta e zeraria a identidade
   do estilo escolhido. É a constante que **materializa** a decisão do responsável.
@@ -141,11 +141,11 @@ Com a virada de semântica, o papel desses defaults mudou:
 
 | Item | Valor | Onde |
 |:---|:---|:---|
-| Nome do cookie | `estilo_visual` | `COOKIE_ESTILO` (`preview_estilos.py:443`) |
-| Rota de troca | `GET /estilo-visual/{chave}?volta=<caminho>` | `ROTA_TROCA` (`preview_estilos.py:444`) + `montar_rota_troca()` (`:541`) |
+| Nome do cookie | `estilo_visual` | `COOKIE_ESTILO` (`preview_estilos.py:439`) |
+| Rota de troca | `GET /estilo-visual/{chave}?volta=<caminho>` | `ROTA_TROCA` (`preview_estilos.py:444`) + `montar_rota_troca()` (`:507`) |
 | Registro no boot | `_pv_rotas.montar_rota_troca()` | `main.py:160` (junto de `montar_rotas_static()` em `main.py:159`, bloco `main.py:152-162`) |
-| Validade | 365 dias (`max_age=60*60*24*365`), `samesite=lax`, `path=/` | `montar_rota_troca()` (`preview_estilos.py:568-570`) |
-| Resposta | `303 See Other` com `Set-Cookie` | `montar_rota_troca()` (`preview_estilos.py:555-571`) |
+| Validade | 365 dias (`max_age=60*60*24*365`), `samesite=lax`, `path=/` | `montar_rota_troca()` (`preview_estilos.py:534-536`) |
+| Resposta | `303 See Other` com `Set-Cookie` | `montar_rota_troca()` (`preview_estilos.py:512-537`) |
 | Chave legada no banco | `estilo_visual_padrao_sistema` (valor `'padrao'`) `CONFIG_PADRAO_SISTEMA` foi **removida**, ver [§4.2](#42-o-que-sobrou-de-estilo_padrao_sistema-removido) |
 
 ### 3.1 Por que cookie e não `localStorage`
@@ -171,16 +171,16 @@ no destino.
 módulo em que estava**. A rota aceita **somente caminho interno**:
 
 ```python
-# preview_estilos.py:566 (dentro de trocar_estilo)
+# preview_estilos.py:532 (dentro de trocar_estilo)
 alvo = urlparse(volta).path if volta.startswith("/") else "/"
 ```
 
 Um `volta` externo viraria um **redirecionamento aberto** (o usuário cairia numa
-página controlada por quem montou o link). `link_troca()` (`preview_estilos.py:527`)
+página controlada por quem montou o link). `link_troca()` (`preview_estilos.py:493`)
 também normaliza o destino para `/` quando não começa com `/`.
 
 Chave fora de `CHAVES` é normalizada para `CHAVE_PADRAO` e gravada assim
-(`preview_estilos.py:561-562`): o cookie guarda a **intenção** ("sem escolha
+(`preview_estilos.py:527-528`): o cookie guarda a **intenção** ("sem escolha
 pessoal"), e o estilo em vigor é resolvido na renderização. É por isso que um
 `estilo-visual/lixo` não quebra nada — ele devolve o usuário à tela anterior sem
 imposição de cor.
@@ -204,9 +204,9 @@ flowchart TD
 
 | Função | Arquivo:linha | Devolve |
 |:---|:---|:---|
-| `ler_estilo()` | `preview_estilos.py:483` | a **escolha pessoal** (uma de `CHAVES`) ou `""` (= sem escolha). `padrao` e valor fora da lista viram `""` |
-| `estilo_efetivo()` | `preview_estilos.py:503` | `ler_estilo()` — o estilo em vigor **agora**, ou `""` |
-| `aplicar(padrao, ...)` | `preview_estilos.py:233` | só é chamado **quando há estilo**; devolve a paleta efetiva |
+| `ler_estilo()` | `preview_estilos.py:462` | a **escolha pessoal** (uma de `CHAVES`) ou `""` (= sem escolha). `padrao` e valor fora da lista viram `""` |
+| `estilo_efetivo()` | `preview_estilos.py:482` | `ler_estilo()` — o estilo em vigor **agora**, ou `""` |
+| `aplicar(padrao, ...)` | `preview_estilos.py:234` | só é chamado **quando há estilo**; devolve a paleta efetiva |
 
 !!! note "A diferença entre `""` e um estilo"
     `ler_estilo()` devolvendo `""` significa literalmente "**não imposedor**" — nenhum
@@ -245,8 +245,8 @@ Três consequências diretas desse `if`:
    vindo de `_obter_cor_principal()` (a `cor_principal` do módulo). Nada depois
    sobrescreve o token.
 3. O `cor_principal` passado para `aplicar()` é usado **apenas** para pintar o
-   botão ativo do menu; como `PADRAO_ADM` é `None` (`preview_estilos.py:124`), ele
-   **não** entra na paleta (`preview_estilos.py:244-246`, guarda `if p == PADRAO_ADM`,
+   botão ativo do menu; como `PADRAO_ADM` é `None` (`preview_estilos.py:125`), ele
+   **não** entra na paleta (`preview_estilos.py:245-247`, guarda `if p == PADRAO_ADM`,
    que nunca é verdadeira).
 
 A **Home** usa o mesmo caminho, mas **não** decide mais o estilo
@@ -285,7 +285,7 @@ impor e o tema do módulo passa a valer.
 !!! tip "Onde o `padrao` ficou visível de verdade"
     O texto da opção (`OPCAO_PADRAO["descricao"]` = "segue o padrão definido pelo
     administrador") e o `ROTULOS.get(padrao) or "cor do módulo"`
-    (`preview_estilos.py:651`) é o que traduz a ausência em linguagem de tela.
+    (`preview_estilos.py:617`) é o que traduz a ausência em linguagem de tela.
 
 ## 5. O menu de estilo no rodapé do sistema
 
@@ -320,7 +320,7 @@ continuam todos presentes** — o menu é o terceiro item, não uma substituiç�
     **fluxo normal** de layout. O motivo está no próprio código: com o menu flutuando
     por cima, ele cobria o rodapé antigo em vez de se compor com ele, e o padrão
     "título à esquerda, versão à direita" deixava de valer. A docstring de
-    `barra_alternador` (`preview_estilos.py:606-609`) registra a regra: *"a barra
+    `barra_alternador` (`preview_estilos.py:572-575`) registra a regra: *"a barra
     NUNCA é posicionada de forma fixa: ela fica no fluxo, entre os itens que o
     rodapé ja tinha"*.
 
@@ -388,13 +388,13 @@ nos dois casos.
 
 ### 5.4 O que fica marcado como ativo
 
-Só o que o **usuário escolheu** é marcado (`preview_estilos.py:616-631`):
+Só o que o **usuário escolheu** é marcado (`preview_estilos.py:580-582` e `:597`):
 
 ```python
-# preview_estilos.py:616 e 627-631
+# preview_estilos.py:582 e 597
 escolhido = ler_estilo() or CHAVE_PADRAO
 ...
-ativo = chave == escolher
+ativo = chave == escolhido
 ```
 
 Quando ele não escolheu, quem fica marcado é **"Padrão"** — mesmo que a cor que
@@ -403,7 +403,7 @@ contrário mentiria.
 
 !!! tip "O rótulo `estilo-atual` mostra a PROCEDÊNCIA, não um nome"
     ```python
-    # preview_estilos.py:651-653
+    # preview_estilos.py:617-619
     ui.label(ROTULOS.get(padrao) or "cor do módulo").props(
         'data-testid="estilo-atual"').classes("pe-alt-texto text-caption q-px-sm")
     ```
@@ -542,7 +542,7 @@ seletor universal. Tudo isso é regra fora de camada e perde.
 ### 7.1 A saída correta — mexer no token
 
 ```python
-# preview_estilos.py:225-230 (_defs_css) — trecho
+# preview_estilos.py:226-231 (_defs_css) — trecho
 q_primaria = paleta.get("primaria_q", paleta["primaria"])
 return (f":root {{\n{linhas}\n  }}\n"
         f"  .pe-{paleta['chave']},\n"
@@ -563,7 +563,7 @@ Três detalhes que importam:
 
 !!! info "`aplicar()` só é chamado com estilo válido"
     `aplicar()` faz `p = padrao if padrao in CHAVES else PADRAO_PADRAO`
-    (`preview_estilos.py:241`), então `_defs_css()` **nunca** roda com `padrao` vazio
+    (`preview_estilos.py:242`), então `_defs_css()` **nunca** roda com `padrao` vazio
     pela via normal — quem garante isso é o `if estilo_visual_usuario:` de
     `telas.py:231`, e não o fallback. As duas defesas são independentes e ambas
     importam.
@@ -627,11 +627,11 @@ pode é ser a cor de **texto branco sobre ele**.
 ## 9. NiceGUI 3.15 — `context.request` não existe mais
 
 O NiceGUI 3 removeu `context.request`; o request está em
-**`context.client.request`**. O helper `_request_atual()` (`preview_estilos.py:464`)
+**`context.client.request`**. O helper `_request_atual()` (`preview_estilos.py:443`)
 faz a cadeia — **novo primeiro, antigo como reserva**:
 
 ```python
-# preview_estilos.py:475-478 (trecho)
+# preview_estilos.py:453-457 (trecho)
 from nicegui import context
 req = getattr(context, "request", None)
 if req is None:
@@ -648,7 +648,7 @@ return req
 
 ## 10. Referência de API
 
-`mod_intranet/preview_estilos.py` (670 linhas):
+`mod_intranet/preview_estilos.py` (636 linhas):
 
 | Símbolo | Linha | Assinatura / valor | Papel |
 |:---|---:|:---|:---|
@@ -656,36 +656,36 @@ return req
 | `_versao_arquivo()` | 71 | `-> str` | cache-buster por `mtime` (a folha muda várias vezes por sessão) |
 | `PADROES` | 84-93 | tupla de 4 dicts | os estilos nomeados (`azul`/`verde`/`roxo`/`preto`) |
 | `CHAVES` / `ROTULOS` / `DESCRICOES` | 94-96 | tupla / 2 dicts | derivados |
-| `CHAVE_PADRAO` / `OPCAO_PADRAO` | 101-105 | `"padrao"` | opção "sem escolha pessoal" |
-| `PADRAO_PADRAO` | 109 | `"verde"` | fallback interno de `aplicar()`/`tela_login()` |
-| `PADRAO_LOGIN` | 116 | `"verde"` | estilo **fixo** do login |
-| `PADRAO_ADM` | 124 | `None` | chave que absorveria a cor do admin (desativada) |
-| `_CORES` | 131-168 | dict de 4 paletas | fundos/primárias/raio/sombra (inclui `preto` em 161-167) |
-| `montar_rotas_static()` | 174 | `-> bool` | mount de `/assets/css` (chamado no boot) |
-| `_defs_css(paleta)` | 202 | `-> str` | `:root` com `--pe-*` + `--q-primary` no `.q-layout` |
+| `CHAVE_PADRAO` / `OPCAO_PADRAO` | 102-106 | `"padrao"` | opção "sem escolha pessoal" |
+| `PADRAO_PADRAO` | 110 | `"verde"` | fallback interno de `aplicar()`/`tela_login()` |
+| `PADRAO_LOGIN` | 117 | `"verde"` | estilo **fixo** do login |
+| `PADRAO_ADM` | 125 | `None` | chave que absorveria a cor do admin (desativada) |
+| `_CORES` | 132-169 | dict de 4 paletas | fundos/primárias/raio/sombra (inclui `preto` em 162-168) |
+| `montar_rotas_static()` | 175 | `-> bool` | mount de `/assets/css` (chamado no boot) |
+| `_defs_css(paleta)` | 203 | `-> str` | `:root` com `--pe-*` + `--q-primary` no `.q-layout` |
 | `aplicar(...)` | 234 | `-> dict` | injeta o `<style>`/`<link>`; devolve a paleta efetiva |
 | `_login_preto(...)` | 366 | — | layout do estilo `preto` (era `_login_light`) |
-| `_LAYOUTS` | 384-389 | dict 4→função | um layout por padrão (um por função, de propósito) |
+| `_LAYOUTS` | 385-390 | dict 4→função | um layout por padrão (um por função, de propósito) |
 | `tela_login(...)` | 393 | — | invólucro visual do login; **não** sabe autenticar |
-| `COOKIE_ESTILO` | 443 | `"estilo_visual"` | nome do cookie |
-| `ROTA_TROCA` | 444 | `"/estilo-visual"` | prefixo da rota |
+| `COOKIE_ESTILO` | 439 | `"estilo_visual"` | nome do cookie |
+| `ROTA_TROCA` | 440 | `"/estilo-visual"` | prefixo da rota |
 | `CONFIG_PADRAO_SISTEMA` | — | — | ✅ **removida** — ver [§4.2](#42-o-que-sobrou-de-estilo_padrao_sistema-removido) |
 | `estilo_padrao_sistema()` | — | — | ✅ **removida** — ver [§4.2](#42-o-que-sobrou-de-estilo_padrao_sistema-removido) |
-| `montar_rota_troca()` | 541 | `-> bool` | registra `GET /estilo-visual/{chave}` |
-| `_request_atual()` | 464 | `-> request \| None` | cadeia NiceGUI 3/2 |
-| `ler_estilo()` | 483 | `-> str` | escolha pessoal ou `""` |
-| `estilo_efetivo()` | 503 | `-> str` | `ler_estilo()` — o que vale agora, **pode ser `""`** |
-| `link_troca(chave, volta)` | 527 | `-> str` | URL de troca |
-| `_caminho_atual()` | 584 | `-> str` | `volta` a partir do request |
-| `barra_alternador(padrao, discreto)` | 593 | — | o menu de estilo (rodapé) |
+| `montar_rota_troca()` | 507 | `-> bool` | registra `GET /estilo-visual/{chave}` |
+| `_request_atual()` | 443 | `-> request \| None` | cadeia NiceGUI 3/2 |
+| `ler_estilo()` | 462 | `-> str` | escolha pessoal ou `""` |
+| `estilo_efetivo()` | 482 | `-> str` | `ler_estilo()` — o que vale agora, **pode ser `""`** |
+| `link_troca(chave, volta)` | 493 | `-> str` | URL de troca |
+| `_caminho_atual()` | 550 | `-> str` | `volta` a partir do request |
+| `barra_alternador(padrao, discreto)` | 559 | — | o menu de estilo (rodapé) |
 | `barra_home(...)` | 629 | — | assinatura antiga; delega a `barra_alternador` |
-| `resumo_padroes()` | 668 | `-> str` | linha-resumo para relatório de QA |
+| `resumo_padroes()` | 634 | `-> str` | linha-resumo para relatório de QA |
 
 ## 11. Como reverter a feature
 
 O login **não pode** quebrar: se o layout do padrão falhar,
 `tela_login()` cai no login mínimo — os campos aparecem **sem nenhum enfeite**,
-em vez da tela ficar branca (`preview_estilos.py:409-421`).
+em vez da tela ficar branca (`preview_estilos.py:410-422`).
 
 Para remover a **troca de estilo** mantendo o tema atual (preto):
 
@@ -693,10 +693,10 @@ Para remover a **troca de estilo** mantendo o tema atual (preto):
    `assets/css/preview-estilos-v1.css`.
 2. Em `main.py`, apagar o bloco `montar_rotas_static()`/`montar_rota_troca()` do
    boot (`main.py:152-162`) e os blocos `# ===== PROVISÓRIO =====` em
-   `page_login` (`main.py:242-251`) e em `_construir_dashboard`
+   `page_login` (`main.py:240-251`) e em `_construir_dashboard`
    (`main.py:658-661`).
 3. Em `mod_intranet/telas.py`, remover o `estilo_visual_usuario` e a guarda
-   `if estilo_visual_usuario:` da `_montar_layout` (`telas.py:227-238`) e a
+   `if estilo_visual_usuario:` da `_montar_layout` (`telas.py:227-239`) e a
    chamada `_pv_estilos.barra_alternador(...)` do rodapé (`telas.py:457-466`).
 4. **Manter**: `PADROES_TEMA`, `ui_comum.CORES` e as duas migrações
    (`migracao_tema_whatsapp_260927` e `migracao_padrao_por_modulo_260927`) — o
@@ -721,7 +721,7 @@ Registrados com honestidade, **sem alterar código de produção**:
 | 3 | Bloco **morto** no CSS que selecionava `[data-testid="estilo-facebook"]`, `estilo-whatsapp`, `estilo-messenger`, `estilo-instagram` — `data-testid` que **não existem** (os reais são `estilo-azul`, `estilo-verde`, `estilo-roxo`, `estilo-preto`) | era lixo inerte: o botão ativo já é pintado por `.pe-alt--ativo` | ✅ **RESOLVIDO** — bloco removido. Busca por `estilo-facebook`/`estilo-light` no CSS e no Python não retorna **nenhuma** ocorrência |
 | 4 | **Nenhum teste automatizado** cobre os `data-testid` `estilo-*` / `estilo-atual` nem a rota `/estilo-visual/{chave}` | a feature entrou sem cobertura de QA | ⚠️ **aberta** — `kbp-qa` pode fechar com Playwright |
 | 5 | `docs/configuracoes.md` descrevia `PADROES_TEMA` como "todos os módulos em `#000000`" | documentação desatualizada na altura do tema WhatsApp | ✅ **corrigido** — e revertido pela decisão do responsável; as páginas que descreviam a paleta teal foram atualizadas nesta revisão |
-| 6 | `estilo_padrao_sistema()`, `CONFIG_PADRAO_SISTEMA`, `aplicar_se_escolhido()` e `aplicar_para_usuario()` **não têm chamador** | código morto; `estilo_padrao_sistema()` devolveria `"verde"` e **reintroduziria** a semântica rejeitada se alguém voltar a chamar | ⚠️ **aberta** — ver [§4.2](#42-o-que-sobrou-de-estilo_padrao_sistema-removido). Não removido aqui (regra de não tocar em produção) |
+| 6 | `estilo_padrao_sistema()`, `CONFIG_PADRAO_SISTEMA`, `aplicar_se_escolhido()` e `aplicar_para_usuario()` **não tinham chamador** | código morto; `estilo_padrao_sistema()` devolveria `"verde"` e **reintroduziria** a semântica rejeitada se alguém voltasse a chamar | ✅ **RESOLVIDO** — os quatro símbolos foram **removidos** de `preview_estilos.py`. Verificado por `hasattr()`: os quatro retornam `False`, e `grep -rn` em `mod_*/`, `main.py` e `assets/test` não devolve nenhuma ocorrência. Ver [§4.2](#42-o-que-sobrou-de-estilo_padrao_sistema-removido) |
 | 7 | `estilo_visual_padrao_sistema` **não tem campo** na tela de Config (não está em `PADRAO_CONFIG`) | o administrador não tem o que editar — hoje irrelevante, porque a chave **não participa da resolução** | ⚠️ **aberta, sem urgência** — se a chave voltar a ter efeito, precisa de campo |
 
 ## 13. Ver como está no código

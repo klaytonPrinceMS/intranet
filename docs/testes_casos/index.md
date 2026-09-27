@@ -58,13 +58,15 @@ Roteiro manual: desktop 1280 — `header-nome-usuario` visível com nome complet
 
 ## Catálogo `data-testid` — rodapé do sistema (14/09/2026)
 
-> EN — System footer (`mod_intranet/telas.py:346-359`, part 4 of the layout): hidden by default, reveals on hover/focus. Use `page.get_by_test_id(...)`, never CSS/XPath.
+> EN — System footer (`mod_intranet/telas.py:432-476`, part 4 of the layout): hidden by default, reveals on hover/focus. Use `page.get_by_test_id(...)`, never CSS/XPath.
 
-> PT — Rodapé do sistema (`mod_intranet/telas.py:346-359`, parte 4 do layout): escondido por padrão, revela no hover/foco. Use `page.get_by_test_id(...)`, nunca CSS/XPath.
+> PT — Rodapé do sistema (`mod_intranet/telas.py:432-476`, parte 4 do layout): escondido por padrão, revela no hover/foco. Use `page.get_by_test_id(...)`, nunca CSS/XPath.
 
 | `data-testid` | Onde | Quem vê | Esperado |
 |:---|:---|:---|:---|
-| `rodape-sistema` | `ui.footer` (`bg-grey-8 w-full`, `telas.py:359`), CSS escopado `[data-testid="rodape-sistema"]` via `ui.add_head_html` | todos os perfis logados | escondido por padrão (`opacity:0 + translateY(calc(100% - 5px))`, faixa de 5px como pista); `:hover`/`:focus-within` → `opacity:1 + transform:none`; conteúdo inalterado (`"INTRANET Básica — uso interno"`, `v1.0.260913`); sem JS, sem `hidden` |
+| `rodape-sistema` | `ui.footer` (`bg-grey-8 w-full`, `telas.py:448`), CSS escopado `[data-testid="rodape-sistema"]` via `ui.add_head_html` | todos os perfis logados | escondido por padrão (`opacity:0 + translateY(calc(100% - 5px))`, faixa de 5px como pista); `:hover`/`:focus-within` → `opacity:1 + transform:none`; sem JS, sem `hidden`. **Desde 27/09/2026** o rodapé é também a **3ª coluna**: título à esquerda, **menu de estilo visual** ao centro (grade de 3 colunas, `assets/css/preview-estilos-v1.css:145-161`) e versão à direita — os dois itens antigos seguem presentes |
+| `estilo-azul` · `estilo-verde` · `estilo-roxo` · `estilo-preto` · `estilo-padrao` | `ui.button` crus dentro de `barra_alternador` (`preview_estilos.py:559-626`), no rodapé | todos os perfis logados | 4 estilos nomeados + **"Padrão"** (ausência de imposição). Clicar navega para `GET /estilo-visual/{chave}?volta=<caminho>`, que grava o **cookie `estilo_visual`** e volta com `303`. Só o que o **usuário** escolheu recebe `.pe-alt--ativo`; sem escolha, o ativo é `estilo-padrao`. **Não existe** `estilo-light` (a chave antiga virou `estilo-preto`) |
+| `estilo-atual` | rótulo no rodapé (`preview_estilos.py:617-619`) | todos os perfis logados | nome do estilo em vigor (Azul/Verde/Roxo/Preto) ou **"cor do módulo"** quando o usuário escolheu "Padrão" — nesse caso a cor vem de `tema_modulo.ler_tema` + `ui.colors(primary=)` |
 
 Roteiro manual: rodapé quase invisível no carregamento (só a faixa de 5px); passar o mouse (ou focar por teclado) sobre a faixa → rodapé aparece com texto e versão; tirar o mouse → esconde de novo. No touch, tocar na faixa revela (rodapé só informativo, sem focáveis); se o CSS falhar, degrada para sempre visível.
 
