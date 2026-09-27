@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Teste de carga k6 - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Teste de carga k6";
+        var mkdocs_page_input_path = "testes_carga_k6.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/sessao_2026-09-26/">Sessão 26/09/2026</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Teste de carga k6</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#resultado-da-execucao-de-26092026">Resultado da execução de 26/09/2026</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#a-ressalva-955-ms-de-p95-esta-perto-do-teto-de-1000-ms">A ressalva: 955 ms de p95 está perto do teto de 1.000 ms</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#especificacao-da-maquina">Especificação da máquina</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#memoria-o-que-esta-em-uso">Memória: o que está em uso</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#login-simultaneo-o-limite-real">Login simultâneo: o limite real</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#o-que-isso-significa-na-pratica">O que isso significa na prática</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#aviso-sobre-como-medir">Aviso sobre como medir</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#o-que-precisa-saber-antes-de-rodar">O que precisa saber antes de rodar</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#arquivos">Arquivos</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#os-usuarios-de-carga">Os usuários de carga</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#como-rodar">Como rodar</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#a-escalada">A escalada</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#o-que-significam-as-metricas">O que significam as métricas</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#por-que-a-sonda-do-event-loop-e-a-que-decide">Por que a sonda do event-loop é a que decide</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#limite-conhecido-e-deliberado">Limite conhecido, e deliberado</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#saida-esperada">Saída esperada</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#limpeza">Limpeza</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Testes</li>
+      <li class="breadcrumb-item active">Teste de carga k6</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="teste-de-carga-k6-intranet-modular">Teste de carga k6 — Intranet Modular<a class="headerlink" href="#teste-de-carga-k6-intranet-modular" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Mede se a intranet <strong>aguenta N usuários simultâneos</strong>. Critério de aprovação
+definido pelo requisito: <strong>o sistema deve aguentar no mínimo 40 usuários</strong>.</p>
+</blockquote>
+<hr />
+<h2 id="resultado-da-execucao-de-26092026">Resultado da execução de 26/09/2026<a class="headerlink" href="#resultado-da-execucao-de-26092026" title="Permanent link">&para;</a></h2>
+<p><strong>APROVADO — com uma ressalva importante sobre login simultâneo.</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">etapa</th>
+<th style="text-align: right;">VUs</th>
+<th style="text-align: left;">resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: left;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;"><strong>40</strong></td>
+<td style="text-align: left;">✅ <strong>limiar de aprovação</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: left;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">80</td>
+<td style="text-align: left;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: right;">90</td>
+<td style="text-align: left;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: left;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: left;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: left;">✅</td>
+</tr>
+</tbody>
+</table>
+<p>Saída medida:</p>
+<div class="highlight"><pre><span></span><code>================= CARGA k6 — INTRANET =================
+reqs............: 1749  (falhas 0.0000)
+GET /login......: p95 937.2 ms  | max 1613.4 ms
+conexao WS......: p95 1949.0 ms
+socket vivo.....: p95 15946.1 ms
+handshake ok....: 1.0000
+desconectou.....: 1.0000
+eventos/pagina...: 4674
+latencia geral..: p95 955.6 ms
+checks..........: 1.0000
+VUs (max).......: 121
+======================================================
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">threshold</th>
+<th style="text-align: left;">exigido</th>
+<th style="text-align: left;">medido</th>
+<th style="text-align: center;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>carga_handshake_ok</code></td>
+<td style="text-align: left;">&gt; 0,95</td>
+<td style="text-align: left;"><strong>1,0000</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_desconectou</code></td>
+<td style="text-align: left;">&gt; 0,95</td>
+<td style="text-align: left;"><strong>1,0000</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>http_req_failed</code></td>
+<td style="text-align: left;">&lt; 0,02</td>
+<td style="text-align: left;"><strong>0,0000</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>http_req_duration</code> p95</td>
+<td style="text-align: left;">&lt; 1000 ms</td>
+<td style="text-align: left;"><strong>955,6 ms</strong></td>
+<td style="text-align: center;">⚠️</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>checks</code></td>
+<td style="text-align: left;">&gt; 0,95</td>
+<td style="text-align: left;"><strong>1,0000</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Zero erros no servidor durante toda a escalada</strong> — nenhuma exceção ASGI, nenhum
+<code>Traceback</code>, nenhuma desconexão involuntary. 1.749 requisições, 4.674 eventos de
+página entregues a 121 clientes simultâneos.</p>
+<h3 id="a-ressalva-955-ms-de-p95-esta-perto-do-teto-de-1000-ms">A ressalva: 955 ms de p95 está perto do teto de 1.000 ms<a class="headerlink" href="#a-ressalva-955-ms-de-p95-esta-perto-do-teto-de-1000-ms" title="Permanent link">&para;</a></h3>
+<p>Passou, mas com <strong>4,4 % de folga</strong>. A latência cresce com a quantidade de
+usuários, e o crescimento não é linearmente benigno: o <code>GET /login</code> (que cria
+o <code>Client</code> e a sessão) sozinho já respondeu <strong>1,6 s no pior caso</strong>. Numa máquina
+maior, ou com mais módulos habilitados, essa folga desaparece.</p>
+<p>O número que mais pesa, e que <strong>não</strong> aparece no k6, é o custo do bcrypt — ver
+<a href="#login-simultaneo-o-limite-real">Login simultâneo</a> abaixo.</p>
+<h2 id="especificacao-da-maquina">Especificação da máquina<a class="headerlink" href="#especificacao-da-maquina" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">item</th>
+<th style="text-align: left;">valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">processador</td>
+<td style="text-align: left;"><strong>Intel® Core™ i3-2375M @ 1,50 GHz</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">núcleos / threads</td>
+<td style="text-align: left;">4 / 2 por núcleo (4 lógicos)</td>
+</tr>
+<tr>
+<td style="text-align: left;">frequência</td>
+<td style="text-align: left;">800 MHz – 1.500 MHz</td>
+</tr>
+<tr>
+<td style="text-align: left;">memória total</td>
+<td style="text-align: left;"><strong>3,7 GiB</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">swap</td>
+<td style="text-align: left;">5,6 GiB (1,0 GiB em uso)</td>
+</tr>
+<tr>
+<td style="text-align: left;">sistema</td>
+<td style="text-align: left;">Linux, container Docker</td>
+</tr>
+<tr>
+<td style="text-align: left;">bancos de dados</td>
+<td style="text-align: left;">11 SQLite, 3,2 MB no total</td>
+</tr>
+</tbody>
+</table>
+<h3 id="memoria-o-que-esta-em-uso">Memória: o que está em uso<a class="headerlink" href="#memoria-o-que-esta-em-uso" title="Permanent link">&para;</a></h3>
+<p>Medido com o servidor no ar e <strong>sem</strong> carga:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">processo</th>
+<th style="text-align: right;">RAM</th>
+<th style="text-align: left;">observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong><code>python</code> (intranet)</strong></td>
+<td style="text-align: right;"><strong>108 MB</strong></td>
+<td style="text-align: left;">o servidor propriamente dito</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ai.opencode.desktop</code> (agente)</td>
+<td style="text-align: right;">796 MB em 4 processos</td>
+<td style="text-align: left;">ferramenta de desenvolvimento</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>opencode-cli</code></td>
+<td style="text-align: right;">320 MB</td>
+<td style="text-align: left;">ferramenta de desenvolvimento</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tor</code></td>
+<td style="text-align: right;">38 MB</td>
+<td style="text-align: left;">navegação do agente</td>
+</tr>
+<tr>
+<td style="text-align: left;">outros</td>
+<td style="text-align: right;">~76 MB</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>sistema total</strong></td>
+<td style="text-align: right;"><strong>2,1 GiB usados</strong></td>
+<td style="text-align: left;">1,6 GiB disponíveis</td>
+</tr>
+</tbody>
+</table>
+<p>O ponto que importa: <strong>a intranet consome 108 MB</strong>, e não 2,1 GB. O consumo
+alto da máquina vem das <strong>ferramentas de desenvolvimento</strong> desta sessão, não do
+sistema sob teste. Durante a escalada de 120 usuários, a RAM total subiu de
+2,1 GiB para 2,2 GiB — ou seja, <strong>~100 MB para 120 clientes conectados</strong>.</p>
+<p>Esse é o número que responde "aguenta 40 usuários?": 40 clientes custam cerca de
+30 MB. A memória não é o gargalo; a CPU é.</p>
+<h2 id="login-simultaneo-o-limite-real">Login simultâneo: o limite real<a class="headerlink" href="#login-simultaneo-o-limite-real" title="Permanent link">&para;</a></h2>
+<p>O teste k6 mede <strong>concorrência de clientes conectados</strong>. O login em si tem
+medição própria (<code>assets/test/mede_custo_login.py</code>), porque depende do clique no
+botão — um evento interno do NiceGUI.</p>
+<p>Com auditoria aquecida e sem contenção entre processos:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">simultâneos</th>
+<th style="text-align: right;">mediana</th>
+<th style="text-align: right;">tempo de parede</th>
+<th style="text-align: right;">logins/s</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3,7 s</td>
+<td style="text-align: right;">3,7 s</td>
+<td style="text-align: right;">0,3</td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">2,8 s</td>
+<td style="text-align: right;">3,2 s</td>
+<td style="text-align: right;">3,1</td>
+</tr>
+<tr>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">5,6 s</td>
+<td style="text-align: right;">6,1 s</td>
+<td style="text-align: right;">3,3</td>
+</tr>
+<tr>
+<td style="text-align: right;"><strong>40</strong></td>
+<td style="text-align: right;"><strong>10,0 s</strong></td>
+<td style="text-align: right;"><strong>11,7 s</strong></td>
+<td style="text-align: right;"><strong>3,4</strong></td>
+</tr>
+<tr>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">14,2 s</td>
+<td style="text-align: right;">16,5 s</td>
+<td style="text-align: right;">3,6</td>
+</tr>
+<tr>
+<td style="text-align: right;">80</td>
+<td style="text-align: right;">19,1 s</td>
+<td style="text-align: right;">21,1 s</td>
+<td style="text-align: right;">3,8</td>
+</tr>
+<tr>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">27,1 s</td>
+<td style="text-align: right;">28,9 s</td>
+<td style="text-align: right;">4,2</td>
+</tr>
+</tbody>
+</table>
+<p>Componentes de <strong>um</strong> login aquecido (melhor de 3):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">etapa</th>
+<th style="text-align: right;">custo</th>
+<th style="text-align: left;">causa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>bcrypt.checkpw</code> (custo 12)</td>
+<td style="text-align: right;"><strong>721 ms</strong></td>
+<td style="text-align: left;">CPU</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>autenticar()</code> completo</td>
+<td style="text-align: right;">726 ms</td>
+<td style="text-align: left;">≈ todo bcrypt</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>registrar_login()</code></td>
+<td style="text-align: right;">219 ms</td>
+<td style="text-align: left;">escrita de sessão + auditoria</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>login total</strong></td>
+<td style="text-align: right;"><strong>≈ 0,95 s</strong></td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<h3 id="o-que-isso-significa-na-pratica">O que isso significa na prática<a class="headerlink" href="#o-que-isso-significa-na-pratica" title="Permanent link">&para;</a></h3>
+<ul>
+<li>A vazão de login <strong>satura em ~4 por segundo</strong> e não melhora com mais threads:
+  a CPU é o gargalo, não o código. O i3 a 1,5 GHz faz <strong>1,4 verificações bcrypt
+  por segundo por núcleo</strong>.</li>
+<li>Se <strong>120 pessoas clicarem em "Entrar" no mesmo segundo</strong> (cenário de servidor
+  recém-subido, ou de queda e retorno em massa), a última espera <strong>~29 s</strong>.</li>
+<li>Para <strong>40 logins simultâneos</strong>, a última pessoa espera <strong>~11,7 s</strong>. Isso é
+  acima do aceitável para uso real, e vale registrar como <strong>risco conhecido</strong>.</li>
+<li>Em regime normal os logins são espalhados no tempo: 4 por segundo de vazão
+  atende uma prefeitura com folga, desde que as entradas não coincidam.</li>
+</ul>
+<p>A causa é o <strong>fator de custo 12 do bcrypt</strong>, escolhido por segurança. Baixar
+para 10 daria ~3× mais vazão e continua acima do mínimo recomendado de 10, mas
+é uma decisão de segurança — <strong>não foi alterada aqui</strong>.</p>
+<h2 id="aviso-sobre-como-medir">Aviso sobre como medir<a class="headerlink" href="#aviso-sobre-como-medir" title="Permanent link">&para;</a></h2>
+<p>Duas armadilhas encontradas e corrigidas, que distorcem o número se ignoradas:</p>
+<p><strong>1. Aquecimento da auditoria.</strong> A primeira escrita de auditoria de um processo
+paga o DDL de criação das tabelas — medido em <strong>73,9 s</strong>. O servidor faz isso no
+boot (<code>_passo_auditoria</code>); qualquer outro processo precisa fazer o mesmo. O
+script <code>mede_custo_login.py</code> aquece antes de medir. Sem isso, o primeiro "login"
+da tabela aparece com 3,7 s e é puro custo de setup.</p>
+<p><strong>2. Contenção entre processos.</strong> Medir com o servidor <strong>no ar</strong> faz os dois
+processos disputarem a escrita no mesmo SQLite em modo WAL: <code>audit_log</code> sobe de
+125 ms para <strong>2.027 ms</strong>, e o número medido passa a refletir essa disputa, não o
+custo do login. <strong>Meça com o servidor parado.</strong></p>
+<hr />
+<h2 id="o-que-precisa-saber-antes-de-rodar">O que precisa saber antes de rodar<a class="headerlink" href="#o-que-precisa-saber-antes-de-rodar" title="Permanent link">&para;</a></h2>
+<p>Esta intranet é <strong>NiceGUI</strong>, e isso muda o significado de "carga". Não existe
+<code>POST /login</code>: o login é um <strong>evento no WebSocket</strong>, não uma requisição HTTP.
+Não existe, portanto, um endpoint REST onde um <code>k6</code> tradicional faça <code>POST</code> de
+credenciais e leia um token.</p>
+<p>O que cada usuário consome no servidor enquanto está "conectado":</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">recurso</th>
+<th style="text-align: left;">quem mantém</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">conexão WebSocket permanente</td>
+<td style="text-align: left;">cada aba aberta</td>
+</tr>
+<tr>
+<td style="text-align: left;">objeto <code>Client</code> vivo</td>
+<td style="text-align: left;">cada cliente conectado</td>
+</tr>
+<tr>
+<td style="text-align: left;">registro de sessão (<code>tb_sessoes</code>)</td>
+<td style="text-align: left;">cada login</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tab_id</code> do armazenamento da aba</td>
+<td style="text-align: left;">cada cliente</td>
+</tr>
+</tbody>
+</table>
+<p>Manter N usuários é, portanto, <strong>manter N clientes vivos ao mesmo tempo</strong>. É
+exatamente isso que o teste exercita.</p>
+<h2 id="arquivos">Arquivos<a class="headerlink" href="#arquivos" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">arquivo</th>
+<th style="text-align: left;">papel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>assets/k6/login_carga.js</code></td>
+<td style="text-align: left;">o teste k6 (escalada 10 → 120)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/popula_usuarios_carga.py</code></td>
+<td style="text-align: left;">cria os 120 usuários de carga</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/renomeia_usuarios_carga.py</code></td>
+<td style="text-align: left;">renomeia <code>perfNNN</code> → <code>userNNN</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/mede_custo_login.py</code></td>
+<td style="text-align: left;">mede o custo do bcrypt (fora do alcance do k6)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="os-usuarios-de-carga">Os usuários de carga<a class="headerlink" href="#os-usuarios-de-carga" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">item</th>
+<th style="text-align: left;">valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">logins</td>
+<td style="text-align: left;"><code>user001</code> … <code>user120</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">senha</td>
+<td style="text-align: left;"><code>123456</code> (a provisória do seed)</td>
+</tr>
+<tr>
+<td style="text-align: left;">perfil</td>
+<td style="text-align: left;"><code>comum</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">troca de senha</td>
+<td style="text-align: left;"><strong>já realizada</strong> (<code>forcar_troca=0</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Duas decisões que mudam o resultado do teste:</p>
+<p><strong>A troca de senha já está feita.</strong> <code>criar_usuario</code> marca <code>forcar_troca=1</code> por
+desenho — o primeiro login de qualquer servidor novo abre o diálogo de troca
+obrigatória. Medir com o diálogo pendente mede o <strong>pior caso de primeiro
+acesso</strong>, não o estado normal de produção, onde o usuário já trocou a senha uma
+vez. O script <code>popula_usuarios_carga.py</code> zera a flag ao final.</p>
+<p><strong>Todos entram pela API do módulo, nunca por SQL.</strong> <code>criar_usuario</code> valida
+login, senha mínima, perfil e nome de exibição, gera o hash bcrypt e libera o
+acesso padrão — um <code>INSERT</code> direto produziria usuários que o sistema não
+reconhece. Pelo mesmo motivo, a renomeação usa <code>renomear_usuario</code>, que
+propaga para <code>tb_acesso_usuario</code> e para as autorias nos demais módulos, cada um
+pelo seu próprio <code>bd_manipulador</code> (sem <em>cross-query</em> entre bancos).</p>
+<h2 id="como-rodar">Como rodar<a class="headerlink" href="#como-rodar" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. servidor no ar</span>
+bash<span class="w"> </span>iniciar.sh
+
+<span class="c1"># 2. criar os 120 usuários (idempotente)</span>
+<span class="nv">INTRANET_FORCE_SQLITE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>.venv/bin/python<span class="w"> </span>assets/test/popula_usuarios_carga.py<span class="w"> </span>--qtd<span class="w"> </span><span class="m">120</span>
+
+<span class="c1"># 3. a escalada (servidor NO AR)</span>
+k6<span class="w"> </span>run<span class="w"> </span>assets/k6/login_carga.js
+
+<span class="c1"># 4. custo do bcrypt (servidor PARADO — ver aviso acima)</span>
+<span class="c1">#    (com o servidor desligado)</span>
+<span class="nv">INTRANET_FORCE_SQLITE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>.venv/bin/python<span class="w"> </span>assets/test/mede_custo_login.py
+</code></pre></div>
+<p>Aproximação rápida, só para validar que o teste funciona:</p>
+<div class="highlight"><pre><span></span><code>k6<span class="w"> </span>run<span class="w"> </span>--stage<span class="w"> </span><span class="s2">"10s:10"</span><span class="w"> </span>--stage<span class="w"> </span><span class="s2">"15s:0"</span><span class="w"> </span>assets/k6/login_carga.js
+</code></pre></div>
+<h2 id="a-escalada">A escalada<a class="headerlink" href="#a-escalada" title="Permanent link">&para;</a></h2>
+<p>Cada VU entra com um login <strong>distinto</strong> (<code>user001</code>…<code>user120</code>), como pessoas
+reais — não a mesma conta repetida.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">etapa</th>
+<th style="text-align: right;">VUs</th>
+<th style="text-align: right;">espera</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">20 s</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">20 s</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;"><strong>40</strong></td>
+<td style="text-align: right;"><strong>30 s</strong> ← limiar de aprovação</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">20 s</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">80</td>
+<td style="text-align: right;">20 s</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: right;">90</td>
+<td style="text-align: right;">20 s</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">20 s</td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;">20 s</td>
+</tr>
+<tr>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">30 s</td>
+</tr>
+</tbody>
+</table>
+<p>Cada ciclo de VU: <code>GET /login</code> → WebSocket (Engine.IO <code>OPEN</code>/<code>PONG</code>/<code>CONNECT</code>)
+→ evento <code>handshake</code> do NiceGUI → <strong>segura a conexão 15 s</strong> → desconecta.</p>
+<h2 id="o-que-significam-as-metricas">O que significam as métricas<a class="headerlink" href="#o-que-significam-as-metricas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">métrica</th>
+<th style="text-align: left;">o que diz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>carga_handshake_ok</code></td>
+<td style="text-align: left;">fração de clientes que o <strong>servidor assumiu</strong> (a página passou a ser transmitida). É a prova de que o cliente ficou vivo de verdade, não só que o socket abriu.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_eventos_pagina</code></td>
+<td style="text-align: left;">eventos emitidos pelo NiceGUI para cada cliente. Zero aqui = o servidor não assumiu ninguém.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_desconectou</code></td>
+<td style="text-align: left;">sockets fechados sem erro.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_login_http</code></td>
+<td style="text-align: left;">latência do <code>GET /login</code>, que cria o <code>Client</code> e a sessão.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_ws_conexao</code></td>
+<td style="text-align: left;">tempo entre o <code>GET</code> e o handshake concluído.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_ws_segurou</code></td>
+<td style="text-align: left;">tempo com o socket efetivamente aberto.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>http_req_duration</code> (p95)</td>
+<td style="text-align: left;"><strong>a métrica decisiva</strong>, medida pela <em>sonda do event-loop</em>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="por-que-a-sonda-do-event-loop-e-a-que-decide">Por que a sonda do event-loop é a que decide<a class="headerlink" href="#por-que-a-sonda-do-event-loop-e-a-que-decide" title="Permanent link">&para;</a></h3>
+<p>Nesta base de código, "aguentar usuário" quebrou repetidamente por <strong>handler
+síncrono bloqueando o event-loop</strong> — o "servidor desconectado". O caso mais
+grave: a primeira gravação de auditoria de cada módulo rodava DDL dentro do
+event-loop e levava <strong>73,9 s</strong>; com a tela congelada, o WebSocket caía.</p>
+<p>Enquanto N sockets estão abertos, um request leve tem de continuar rápido. Se o
+event-loop travar, a sonda do event-loop sobe e o teste reprova <strong>antes</strong> de
+qualquer usuário perceber. É por isso que a sonda roda em cenário separado,
+durante toda a escalada.</p>
+<h2 id="limite-conhecido-e-deliberado">Limite conhecido, e deliberado<a class="headerlink" href="#limite-conhecido-e-deliberado" title="Permanent link">&para;</a></h2>
+<p>O teste <strong>não clica no botão "Entrar"</strong>, então <strong>não mede o bcrypt</strong>. O caminho
+existe e foi verificado até o fim — o handshake do NiceGUI é concluído, o
+servidor assume o cliente e passa a transmitir o código da tela —, mas o último
+passo (despachar o evento de clique) depende de estado interno da biblioteca.
+Acoplar o teste à versão do NiceGUI faria uma atualização quebrá-lo <strong>em
+silêncio</strong>, que é resultado pior que não medir. Por isso o bcrypt tem medição
+própria, descrita acima.</p>
+<h2 id="saida-esperada">Saída esperada<a class="headerlink" href="#saida-esperada" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>================= CARGA k6 — INTRANET =================
+reqs............: N  (falhas 0.0000)
+GET /login......: p95 ... ms
+conexao WS......: p95 ... ms
+handshake ok....: 1.0000
+desconectou.....: 1.0000
+latencia geral..: p95 ... ms
+checks..........: 1.0000
+VUs (max).......: 120
+======================================================
+</code></pre></div>
+<p>Os avisos <code>setTimeout N was stopped because the VU iteration was interrupted</code>
+no fim da execução são esperados: são as conexões em curso durante a rampa de
+descida para 0 VUs.</p>
+<h2 id="limpeza">Limpeza<a class="headerlink" href="#limpeza" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nv">INTRANET_FORCE_SQLITE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>.venv/bin/python<span class="w"> </span>assets/test/popula_usuarios_carga.py<span class="w"> </span>--limpar
+</code></pre></div>
+<p>Remove os 120 usuários de carga e as permissões.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../testes_playwright/" class="btn btn-neutral float-left" title="E2E com Playwright"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../analise_mod_intranet/" class="btn btn-neutral float-right" title="Intranet (núcleo)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../testes_playwright/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../analise_mod_intranet/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
