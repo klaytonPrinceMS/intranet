@@ -465,10 +465,11 @@ def _construir_dashboard(nome: str, perfil: str, eh_admin: bool, modelo: str = "
     """Constrói o conteúdo da Home (banner + feed + resumo dinâmico).
 
     >>> PROVISÓRIO: PADRÃO VISUAL NA HOME <<< — o `modelo` é a chave do
-    estilo escolhido pelo usuário (`azul|verde|roxo|light`), lida de
-    `estilo_visual:<usuario>` pelo `_montar_layout` e repassada aqui; a Home
-    não decide mais o estilo. Também aceita `pic`/`water`, o visual anterior
-    (Resumo com o `home_visual`).
+    estilo em vigor (`azul|verde|roxo|preto`, ou "" quando o usuário escolheu
+    "Padrão" e quem manda é o administrador do módulo), resolvida do COOKIE do
+    navegador pelo `_montar_layout` e repassada aqui; a Home não decide mais o
+    estilo. Também aceita `pic`/`water`, o visual anterior (Resumo com o
+    `home_visual`).
     PARA REMOVER o protótipo: apagar
     `mod_intranet/preview_estilos.py`, `assets/css/preview-estilos-v1.css`,
     o bloco `montar_rotas_static()` no boot, a classe
