@@ -20,13 +20,13 @@ tempo, por 15 minutos, com um vigia que interrompe tudo se a máquina passar de
 | `assets/test/guarda_recursos.py` | 1 processo | a máquina está aguentando, ou o teste é que está matando o sistema? |
 
 !!! warning "O que já foi medido e o que falta"
-    O **protocolo** (k6) já rodou na cronometragem completa: a 120 usuários
-    **REPROVADO** e a 40 usuários **funcionalmente aprovado** com a latência acima
-    do teto — os dois resultados, com todos os números, estão na seção
-    **Critérios de aprovação**, mais abaixo. O que **ainda não** foi
-    medido é a camada de navegador real em paralelo (20 navegadores com os 120
-    do k6 ao mesmo tempo): o `carga_uso_navegador.py` foi validado com 1 a 4
-    usuários. Essa bateria completa é o que o **agente principal** executa.
+    **Tudo foi medido, e o veredito é REPROVADO.** O protocolo (k6) rodou na
+    cronometragem completa a 120 e a 40 usuários. A camada de navegador real
+    rodou a **20 usuários** — sozinha, sem o k6 junto — e **6 de 20
+    sequer conseguiram carregar a página de login em 30 s**. A bateria
+    *combinada* (k6 + navegadores) não roda nesta máquina: o guarda de
+    recursos a interrompe, corretamente, porque a CPU satura. Todos os
+    números estão em **Resultados medidos**, mais abaixo.
 
 ## A máquina
 
@@ -288,6 +288,73 @@ isso o guarda tem dois limiares, e a recomendação nesta máquina é:
 
 RAM continua em 90 % (que é o que protege a máquina de verdade) e a CPU só
 dispara quando ela está realmente saturada.
+
+## Resultados medidos (27/09/2026)
+
+### Navegador real — 20 usuários, SOZINHOS (sem o k6): REPROVADO
+
+A camada que faltava, rodada sem o k6 junto, para isolar a variável:
+
+```text
+logins ok.......: 6/20
+ciclos completos: 6/20
+passos..........: 138 ok / 8 falha
+PDF anexado.....: 6/20
+enviados/canc...: 2 / 2
+erros...........: 8
+duração.........: 306.8 s
+gate: permitidas=['/configuracoes'] bloqueadas=['/auditoria','/tecnico','/users']
+```
+
+**Os 8 erros são todos o mesmo:** `login: Page.goto: Timeout 30000ms
+exceeded` — e o JSON mostra **14 dos 20** sem login, todos pelo mesmo motivo.
+O servidor não conseguia responder a página de login em 30 s para 14 browsers
+simultâneos.
+
+De novo: **zero ERROR, zero Traceback no servidor**, e ele seguiu no ar com
+5/5 rotas respondendo 200 sob carga. Não foi queda — foi saturação.
+
+Os 6 que entraram fizeram o roteiro inteiro: 138 passos sem erro, anexaram
+PDF, e os 2 envios foram **cancelados** (a fila de autorização volta limpa).
+O gate de acesso funcionou: `/auditoria`, `/tecnico` e `/users` bloquearam
+para o perfil comum, e `/configuracoes` passou — que é o comportamento real,
+porque `pagina_restrita` é chamada sem `chave_modulo` ali.
+
+### A bateria combinada (k6 + 20 navegadores) NÃO roda nesta máquina
+
+O guarda de recursos a interrompeu **duas vezes**, e está certo:
+
+| tentativa | o que aconteceu |
+|:---|:---|
+| 1ª | 20 browsers abertos de uma vez → **CPU 99,8 % em 2 s** → guarda matou em 4 s |
+| 2ª | entrada escalonada (2 s por usuário, 19 subiram sem pico) → **CPU 98–99 %** → guarda matou em 45 s |
+
+Na segunda, a **RAM ficou em 67 %** — folga de sobra. O recurso esgotado é
+**CPU**: 4 núcleos divididos entre o servidor, 20 Chromium, k6 e a ferramenta
+de sessão desta própria bateria (que sozinha consome ~122 %).
+
+Corrigido o que era defeito do teste (a entrada simultânea), o combinado
+continua acima do teto. **Numa máquina com 4 núcleos e a ferramenta de
+desenvolvimento ligada, 40 VUs de protocolo + 20 navegadores reais não
+cabem em 98 % de CPU.** Isso é limitação do ambiente de teste, não do
+sistema — e por isso as camadas foram medidas **separadamente**.
+
+### A soma das três medições
+
+| camada | volume | resultado |
+|:---|---:|:---|
+| protocolo, carga leve | 120 VUs | ✅ aprovado, p95 955 ms |
+| protocolo, ciclo de uso | 40 VUs | ✅ funcional · ❌ latência |
+| protocolo, ciclo de uso | 120 VUs | ❌ 10,7 % de falha |
+| navegador real | 20 usuários | ❌ 6/20 logins |
+| navegador + protocolo | 40 + 20 | ⚠️ não roda nesta máquina (CPU) |
+
+**Veredito: REPROVADO no critério de 40 usuários.** O sistema não atende 20
+usuários com navegador real nesta configuração, e a 40 VUs de protocolo já
+excede o teto de latência. O caminho não é trocar de processador — ver
+[Dimensionamento](dimensionamento.md): o gargalo medido **não é CPU de
+cálculo** (o servidor estava ocioso, com 4–15 %, enquanto a latência ia a
+7 s), e sim um ponto de serialização, provavelmente a escrita no SQLite.
 
 ## Como rodar
 

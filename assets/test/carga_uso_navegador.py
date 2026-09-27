@@ -799,7 +799,19 @@ async def executar_async(args) -> dict:
                     viewport={"width": 1280, "height": 800},
                     ignore_https_errors=True)
                 contexts.append((ctx, login))
-            print(f"  {len(contexts)} contexto(s) aberto(s) em 1 navegador", flush=True)
+                # ESCALONAMENTO ENTRE USUARIOS. Abrir os 20 de uma vez era o
+                # que impedia o teste de rodar: 20 abas + 20 page loads no
+                # mesmo instante satura os 4 nucleos, a CPU vai a 99,8 % em
+                # 2 s e o guarda de recursos — corretamente — interrompe a
+                # bateria (medido 27/09/2026, guarda disparou em 4 s).
+                # Alem disso ninguem entra na intranet no mesmo milissegundo.
+                # `--rampa-s 0` volta ao comportamento de subir tudo junto.
+                if args.rampa_s > 0 and i < args.usuarios:
+                    print(f"  usuario {i:02d} pronto; proximo em "
+                          f"{args.rampa_s}s", flush=True)
+                    await asyncio.sleep(args.rampa_s)
+            print(f"  {len(contexts)} contexto(s) aberto(s) em 1 navegador"
+                  f" (rampa de {args.rampa_s}s)", flush=True)
 
             # Onda única: os N usuários rodam em paralelo. Um `Semaphore` maior
             # que N não seguraria nada aqui — o limite é a memória, e N já é o
@@ -870,6 +882,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Carga de uso com 20 navegadores reais")
     ap.add_argument("--usuarios", type=int, default=20,
                     help="quantidade de navegadores (padrão 20 — o teto medido)")
+    ap.add_argument("--rampa-s", type=float, default=2.0,
+                    help="segundos entre a abertura de um navegador e o "
+                         "próximo (padrão 2). 0 sobe todos de uma vez — e o "
+                         "guarda de recursos interrompe a bateria, porque 20 "
+                         "abas + 20 page loads simultâneos saturam a CPU")
     ap.add_argument("--minutos", type=float, default=14.0,
                     help="orçamento total de minutos (o k6 fecha em 15)")
     ap.add_argument("--blog-s", type=int, default=LEITURA_BLOG_PADRAO_S,
