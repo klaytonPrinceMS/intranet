@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Dimensionamento (40 a 2.000 usuários) - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Dimensionamento (40 a 2.000 usu\u00e1rios)";
+        var mkdocs_page_input_path = "dimensionamento.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/sessao_2026-09-26/">Sessão 26/09/2026</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_carga_k6/">Teste de carga k6</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_carga_uso/">Teste de carga e uso (k6 + Playwright)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Dimensionamento (40 a 2.000 usuários)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#base-de-medicao">Base de medição</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#o-modelo-e-o-quanto-ele-erra">O modelo, e o quanto ele erra</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#a-tabela">A tabela</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#como-ler-as-colunas">Como ler as colunas</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#processadores-recomendados">Processadores recomendados</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#a-alavanca-mais-forte-nao-e-o-processador">A alavanca mais forte não é o processador</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#banda-na-rede-interna">Banda na rede interna</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#o-que-esta-tabela-nao-resolve">O que esta tabela NÃO resolve</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Testes</li>
+      <li class="breadcrumb-item active">Dimensionamento (40 a 2.000 usuários)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="dimensionamento-do-servidor-40-a-2000-usuarios">Dimensionamento do servidor (40 a 2.000 usuários)<a class="headerlink" href="#dimensionamento-do-servidor-40-a-2000-usuarios" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Dimensiona hardware, RAM e banda para N usuários <strong>simultâneos</strong>, com base
+em medições feitas nesta máquina. Gerado por
+<code>assets/test/dimensiona_servidor.py</code> — os números não são escrita à mão.</p>
+</blockquote>
+<hr />
+<h2 id="base-de-medicao">Base de medição<a class="headerlink" href="#base-de-medicao" title="Permanent link">&para;</a></h2>
+<p>Toda a tabela sai de medições reais, nesta máquina:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">grandeza</th>
+<th style="text-align: right;">medida</th>
+<th style="text-align: left;">como</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">processador</td>
+<td style="text-align: right;">Intel Core i3-2375M @ 1,50 GHz, 2 núcleos (4 threads)</td>
+<td style="text-align: left;"><code>lscpu</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">memória</td>
+<td style="text-align: right;">3,7 GiB</td>
+<td style="text-align: left;"><code>free</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>bcrypt custo 12</strong></td>
+<td style="text-align: right;"><strong>721 ms</strong> por verificação</td>
+<td style="text-align: left;"><code>bcrypt.checkpw</code>, melhor de 3</td>
+</tr>
+<tr>
+<td style="text-align: left;">vazão de login</td>
+<td style="text-align: right;"><strong>4,2 /s</strong> (satura)</td>
+<td style="text-align: left;"><code>assets/test/mede_custo_login.py</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RAM do servidor</td>
+<td style="text-align: right;">108 MB em repouso</td>
+<td style="text-align: left;">RSS do processo</td>
+</tr>
+<tr>
+<td style="text-align: left;">RAM por cliente</td>
+<td style="text-align: right;">0,83 MB</td>
+<td style="text-align: left;">120 clientes → +100 MB</td>
+</tr>
+<tr>
+<td style="text-align: left;">carga de página</td>
+<td style="text-align: right;">230 KB (login) / 458 KB (agregador)</td>
+<td style="text-align: left;">Playwright, doc + assets</td>
+</tr>
+<tr>
+<td style="text-align: left;">WebSocket ocioso</td>
+<td style="text-align: right;">3,6 B/s por cliente</td>
+<td style="text-align: left;">40 s de observação</td>
+</tr>
+<tr>
+<td style="text-align: left;">sonda do event-loop</td>
+<td style="text-align: right;">911 ms a 22 us. · 1.676 ms a 40 us. · 10.001 ms a 120 us.</td>
+<td style="text-align: left;">ensaios k6</td>
+</tr>
+</tbody>
+</table>
+<h3 id="o-modelo-e-o-quanto-ele-erra">O modelo, e o quanto ele erra<a class="headerlink" href="#o-modelo-e-o-quanto-ele-erra" title="Permanent link">&para;</a></h3>
+<p>bcrypt é <strong>CPU-bound puro</strong>: <code>2^custo</code> iterações, as mesmas em qualquer
+processador. Então o custo medido (721 ms a 1,5 GHz = 1.082 M-ciclos) vira
+ciclos, e os ciclos viram segundos no clock novo. Isso é defensável.</p>
+<p>O modelo <strong>não</strong> é benchmark de fabricante, e o script se autoconfere:</p>
+<div class="highlight"><pre><span></span><code>vazao prevista @ 1,5 GHz x 2 nucleos: 5,5 logins/s
+vazao MEDIDA nesta maquina ..........: 4,2 logins/s
+erro ...............................: 32%
+margem aplicada na tabela ..........: 1,35x
+</code></pre></div>
+<p>O modelo <strong>superestima em 32 %</strong>. Dimensionar por ele sem margem daria
+hardware insuficiente, então a contagem de núcleos é inflada por 1,35×. O
+script falha alto se o erro passar de 50 %.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">custo</th>
+<th style="text-align: right;">bcrypt/s por núcleo a 3 GHz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">11,1</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">5,6</td>
+</tr>
+<tr>
+<td style="text-align: right;"><strong>12 (atual)</strong></td>
+<td style="text-align: right;"><strong>2,8</strong></td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">1,4</td>
+</tr>
+</tbody>
+</table>
+<h2 id="a-tabela">A tabela<a class="headerlink" href="#a-tabela" title="Permanent link">&para;</a></h2>
+<p>Dimensionada para o <strong>pior caso</strong>: todos os usuários entrando <strong>no mesmo
+segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Login é a
+única grandeza medida que multiplica pelo número de usuários.</p>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/dimensiona_servidor.py
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">usuários</th>
+<th style="text-align: right;">RAM</th>
+<th style="text-align: right;">núcleos</th>
+<th style="text-align: right;">instâncias</th>
+<th style="text-align: right;">banda (Mbit)</th>
+<th style="text-align: right;">+10 %</th>
+<th style="text-align: right;">burst de login</th>
+<th style="text-align: left;">situação medida</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0,4</td>
+<td style="text-align: right;">0,4</td>
+<td style="text-align: right;">1,2</td>
+<td style="text-align: left;"><strong>latência reprovada</strong></td>
+</tr>
+<tr>
+<td style="text-align: right;">80</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0,8</td>
+<td style="text-align: right;">0,8</td>
+<td style="text-align: right;">2,4</td>
+<td style="text-align: left;"><strong>reprovado (10,7 % falha)</strong></td>
+</tr>
+<tr>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1,1</td>
+<td style="text-align: right;">1,2</td>
+<td style="text-align: right;">3,6</td>
+<td style="text-align: left;"><strong>reprovado (10,7 % falha)</strong></td>
+</tr>
+<tr>
+<td style="text-align: right;">160</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1,5</td>
+<td style="text-align: right;">1,7</td>
+<td style="text-align: right;">4,8</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">200</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1,9</td>
+<td style="text-align: right;">2,1</td>
+<td style="text-align: right;">6,0</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">240</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2,3</td>
+<td style="text-align: right;">2,5</td>
+<td style="text-align: right;">7,2</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">280</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2,6</td>
+<td style="text-align: right;">2,9</td>
+<td style="text-align: right;">8,4</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">320</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">3,0</td>
+<td style="text-align: right;">3,3</td>
+<td style="text-align: right;">9,6</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">400</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">3,8</td>
+<td style="text-align: right;">4,1</td>
+<td style="text-align: right;">12,0</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">480</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4,5</td>
+<td style="text-align: right;">5,0</td>
+<td style="text-align: right;">14,4</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">600</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">32</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">5,7</td>
+<td style="text-align: right;">6,2</td>
+<td style="text-align: right;">18,0</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">800</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">51</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">7,5</td>
+<td style="text-align: right;">8,3</td>
+<td style="text-align: right;">24,0</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">9,4</td>
+<td style="text-align: right;">10,4</td>
+<td style="text-align: right;">29,9</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">1.200</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">76</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">11,3</td>
+<td style="text-align: right;">12,4</td>
+<td style="text-align: right;">35,9</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">1.500</td>
+<td style="text-align: right;">3 GB</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">14,3</td>
+<td style="text-align: right;">15,8</td>
+<td style="text-align: right;">45,5</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+<tr>
+<td style="text-align: right;">2.000</td>
+<td style="text-align: right;">3 GB</td>
+<td style="text-align: right;">126</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">18,8</td>
+<td style="text-align: right;">20,7</td>
+<td style="text-align: right;">59,9</td>
+<td style="text-align: left;">não medido além de 120</td>
+</tr>
+</tbody>
+</table>
+<p>A tabela completa, com todos os 50 degraus, sai do script.</p>
+<h3 id="como-ler-as-colunas">Como ler as colunas<a class="headerlink" href="#como-ler-as-colunas" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>RAM</strong> — folga de 1,5× sobre o medido, arredondada para cima. Não é o
+  gargalo: 2.000 usuários gastam ~1,8 GB.</li>
+<li><strong>núcleos</strong> — pelo surto de login (ver acima).</li>
+<li><strong>instâncias</strong> — acima de ~300 clientes o processo único é gargalo.</li>
+<li><strong>banda</strong> — regime: 1 recarga de página a cada 5 min + socket ocioso.</li>
+<li><strong>burst de login</strong> — todos entrando de uma vez, carga de login em 60 s.</li>
+</ul>
+<h2 id="processadores-recomendados">Processadores recomendados<a class="headerlink" href="#processadores-recomendados" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">usuários</th>
+<th style="text-align: left;">Intel</th>
+<th style="text-align: left;">AMD</th>
+<th style="text-align: right;">RAM</th>
+<th style="text-align: right;">instâncias</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">40</td>
+<td style="text-align: left;">Core i3-12100 (4c)</td>
+<td style="text-align: left;">Ryzen 5 5600 (6c)</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td style="text-align: right;">120</td>
+<td style="text-align: left;">Core i5-12400 (6c)</td>
+<td style="text-align: left;">Ryzen 5 5600 (6c)</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td style="text-align: right;">160</td>
+<td style="text-align: left;">Core i5-13400 (8c)</td>
+<td style="text-align: left;">Ryzen 7 7700X (8c)</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td style="text-align: right;">320</td>
+<td style="text-align: left;">Core i7-14700K (20c)</td>
+<td style="text-align: left;">Ryzen 9 7950X (16c)</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">480</td>
+<td style="text-align: left;">Core i9-14900K (24c)</td>
+<td style="text-align: left;">Ryzen 9 9950X (16c)</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">640</td>
+<td style="text-align: left;">Xeon W-3400 (32c)</td>
+<td style="text-align: left;">EPYC 9354 (32c)</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: left;">Xeon W-3400 (32c)</td>
+<td style="text-align: left;">EPYC 9554 (64c)</td>
+<td style="text-align: right;">2 GB</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr>
+<td style="text-align: right;">2.000</td>
+<td style="text-align: left;">Xeon W-3400 (32c)</td>
+<td style="text-align: left;">EPYC 9554 (64c)</td>
+<td style="text-align: right;">3 GB</td>
+<td style="text-align: right;">16</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Aviso honesto:</strong> estes não são benchmarks de fabricante. São clock ×
+núcleos cruzados com a constante medida aqui. A extrapolação por clock é
+defensável para o bcrypt; <strong>não</strong> é para a renderização de tela, que depende
+de IPC. Por isso a tabela recomenda <strong>clock alto</strong>, não muitos núcleos
+baratos.</p>
+<h3 id="a-alavanca-mais-forte-nao-e-o-processador">A alavanca mais forte não é o processador<a class="headerlink" href="#a-alavanca-mais-forte-nao-e-o-processador" title="Permanent link">&para;</a></h3>
+<p>Baixar o custo do bcrypt de 12 para 10 dá <strong>4× mais vazão de login</strong>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">usuários</th>
+<th style="text-align: right;">núcleos (custo 12)</th>
+<th style="text-align: right;">núcleos (custo 10)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td style="text-align: right;">400</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">16</td>
+</tr>
+<tr>
+<td style="text-align: right;">2.000</td>
+<td style="text-align: right;">126</td>
+<td style="text-align: right;">32</td>
+</tr>
+</tbody>
+</table>
+<p>Custo 10 continua acima do mínimo recomendado de segurança. <strong>Não foi
+alterado</strong> — é decisão de segurança, e a tabela mostra as duas colunas para
+a decisão ser informada.</p>
+<h2 id="banda-na-rede-interna">Banda na rede interna<a class="headerlink" href="#banda-na-rede-interna" title="Permanent link">&para;</a></h2>
+<p>O consumo de banda é <strong>irrelevante</strong> nesta escala. Medido:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">componente</th>
+<th style="text-align: right;">por usuário</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">WebSocket ocioso (ping/pong)</td>
+<td style="text-align: right;">29 bit/s</td>
+</tr>
+<tr>
+<td style="text-align: left;">recarga de página (a cada 5 min, média 344 KB)</td>
+<td style="text-align: right;">~9,3 kbit/s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>total em regime</strong></td>
+<td style="text-align: right;"><strong>~9,4 kbit/s</strong></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">usuários</th>
+<th style="text-align: right;">banda em regime</th>
+<th style="text-align: right;">+10 %</th>
+<th style="text-align: right;">burst de login (60 s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">0,4 Mbit/s</td>
+<td style="text-align: right;">0,4</td>
+<td style="text-align: right;">1,2 Mbit/s</td>
+</tr>
+<tr>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">1,1 Mbit/s</td>
+<td style="text-align: right;">1,2</td>
+<td style="text-align: right;">3,6 Mbit/s</td>
+</tr>
+<tr>
+<td style="text-align: right;">400</td>
+<td style="text-align: right;">3,8 Mbit/s</td>
+<td style="text-align: right;">4,1</td>
+<td style="text-align: right;">12,0 Mbit/s</td>
+</tr>
+<tr>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">9,4 Mbit/s</td>
+<td style="text-align: right;">10,4</td>
+<td style="text-align: right;">29,9 Mbit/s</td>
+</tr>
+<tr>
+<td style="text-align: right;">2.000</td>
+<td style="text-align: right;">18,8 Mbit/s</td>
+<td style="text-align: right;">20,7</td>
+<td style="text-align: right;">59,9 Mbit/s</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recomendação de rede:</strong></p>
+<ul>
+<li><strong>100 Mbit/s</strong> por segmento de rede é o suficiente e sobra — cobre o burst de login
+  (que é o pior caso de banda) com folga de 40 % em 2.000 usuários.</li>
+<li>O <strong>switch precisa de backplane</strong> de pelo menos 1 Gbit/s para 2.000 clientes
+  somando 20 Mbit/s em regime — mas 60 Mbit/s no burst de login, se todos
+  entrarem juntos, é burst de 1 segundo, não carga sustentada.</li>
+<li>O gargalo <strong>não é a rede</strong>. Numa rede de 1 Gbit/s sobrariam 940 Mbit/s.</li>
+</ul>
+<h2 id="o-que-esta-tabela-nao-resolve">O que esta tabela NÃO resolve<a class="headerlink" href="#o-que-esta-tabela-nao-resolve" title="Permanent link">&para;</a></h2>
+<p>O teste mediu que a <strong>latência a 40 usuários falha</strong> (sonda 1.676 ms contra
+teto de 1.000 ms) e que a <strong>CPU ficava em 4–15 %</strong> nesse momento. Servidor
+ocioso com latência alta é <strong>espera por lock</strong>, não falta de computação.</p>
+<p>O script de dimensionamento assume que o gargalo é computação. <strong>A medição
+contradiz isso.</strong> Se a causa for mesmo contenção de escrita no SQLite
+(<code>busy_timeout=5000</code>, WAL serializa writers), comprar o processador da tabela
+<strong>não resolve a latência a 40 usuários</strong> — resolve o surto de login e nada
+mais.</p>
+<p>O caminho provável é <strong>migrar para Postgres</strong> (<code>banco_tipo=postgres</code>,
+escrita concorrente) antes de investir em hardware. Isso também é
+<strong>obrigatório</strong> a partir de ~300 usuários, porque várias instâncias não
+compartilham um SQLite — o AGENTS.md §4.1 já exige paridade entre os dois
+backends.</p>
+<p><strong>Ordem recomendada:</strong></p>
+<ol>
+<li>Migrar para Postgres e medir de novo (elimina a contenção de escrita).</li>
+<li>Reexecutar o ensaio a 40 e 120 e confirmar a sonda do event-loop.</li>
+<li>Só então dimensionar o hardware — a tabela acima é válida para o surto de
+   login, mas o dimensionamento total depende do passo 1.</li>
+</ol>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../testes_carga_uso/" class="btn btn-neutral float-left" title="Teste de carga e uso (k6 + Playwright)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../analise_mod_intranet/" class="btn btn-neutral float-right" title="Intranet (núcleo)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../testes_carga_uso/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../analise_mod_intranet/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -165,6 +165,10 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_carga_k6/">Teste de carga k6</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_carga_uso/">Teste de carga e uso (k6 + Playwright)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../dimensionamento/">Dimensionamento (40 a 2.000 usuários)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
               <ul>
@@ -190,8 +194,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
-                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -216,8 +218,6 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -355,9 +355,9 @@
 <tr>
 <td style="text-align: left;"><strong>Agregador de Notícias</strong></td>
 <td style="text-align: left;"><code>agregador_noticias</code></td>
-<td style="text-align: left;"><code>/agregador-noticias</code> + <code>/agregador-noticias-puro</code> (pura) + <code>/assets/noticia/*</code> + <code>/admin/agregador_noticias</code></td>
+<td style="text-align: left;"><code>/agregador-noticias</code> + a tela pura (removida) (pura) + <code>/assets/noticia/*</code> + <code>/admin/agregador_noticias</code></td>
 <td style="text-align: left;"><code>db_mod_agregador_noticias.db</code></td>
-<td style="text-align: left;"><strong>novo</strong> (19/09/2026) — multi-fonte <code>httpx+parsel</code> (Google/BBC/JFP/RSS) espelhando <code>klaytonPrinceMS/Noticia</code>, termo livre + fontes configuráveis, 10–9360 min na API (select do admin 10–360) <strong>barra filtro tema + busca lado a lado</strong> <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> NFKD (<strong>sem badge <code>Coleta:</code></strong> removido a169c9a) (botão <code>agregador-ver-puro</code> removido 20/09/2026 — <code>/agregador-noticias-puro</code> por URL direta), grid responsivo <strong>3→2→1 via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries 1024px/640px + <code>.card-noticia {height: 300px}</code> (altura FIXA, <code>260px</code> no celular)</strong> <code>ui.link(target=href, new_tab=True)</code> + <strong>miniatura <code>120×120</code> ampliável em diálogo</strong> (<code>imagem_url</code>) + <strong>logo da fonte como marca d'água <code>32×32</code></strong> (<code>fonte_icon_url</code> <code>faviconV2</code>; ícone <code>16×16</code> ao lado do badge quando não há imagem) + <strong>descrição completa com scroll</strong>, paginação 12 + busca 500 NFKD, <strong>tela pura</strong> <code>telas_puro.py</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> (12 notícias <code>COALESCE DESC</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code>), 24h <code>limpar_antigas</code>/<code>reiniciar_banco</code> <code>09:00</code> backend (rótulos UI <code>06:00</code>) <code>CronTrigger</code>, TV <code>listar_para_tv</code> (<code>fonte_icon</code> incluso, censura filtrada) + censura central <code>conteudo_palavras_bloqueadas</code> + <code>assets/noticia/</code> 4.9M servido via rota estática</td>
+<td style="text-align: left;"><strong>novo</strong> (19/09/2026) — multi-fonte <code>httpx+parsel</code> (Google/BBC/JFP/RSS) espelhando <code>klaytonPrinceMS/Noticia</code>, termo livre + fontes configuráveis, 10–9360 min na API (select do admin 10–360) <strong>barra filtro tema + busca lado a lado</strong> <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> NFKD (<strong>sem badge <code>Coleta:</code></strong> removido a169c9a) (botão <code>agregador-ver-puro</code> removido 20/09/2026 — a tela pura (removida) por URL direta), grid responsivo <strong>3→2→1 via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries 1024px/640px + <code>.card-noticia {height: 300px}</code> (altura FIXA, <code>260px</code> no celular)</strong> <code>ui.link(target=href, new_tab=True)</code> + <strong>miniatura <code>120×120</code> ampliável em diálogo</strong> (<code>imagem_url</code>) + <strong>logo da fonte como marca d'água <code>32×32</code></strong> (<code>fonte_icon_url</code> <code>faviconV2</code>; ícone <code>16×16</code> ao lado do badge quando não há imagem) + <strong>descrição completa com scroll</strong>, paginação 12 + busca 500 NFKD, <strong>tela pura</strong> <code>telas_puro.py</code> (removido) <code>intro-overlay</code> + <code>about</code> <code>info-list</code> (12 notícias <code>COALESCE DESC</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code>), 24h <code>limpar_antigas</code>/<code>reiniciar_banco</code> <code>09:00</code> backend (rótulos UI <code>06:00</code>) <code>CronTrigger</code>, TV <code>listar_para_tv</code> (<code>fonte_icon</code> incluso, censura filtrada) + censura central <code>conteudo_palavras_bloqueadas</code> + <code>assets/noticia/</code> 4.9M (removido) servido via rota estática</td>
 </tr>
 </tbody>
 </table>

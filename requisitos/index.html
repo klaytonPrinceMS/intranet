@@ -165,6 +165,10 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../testes_carga_k6/">Teste de carga k6</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_carga_uso/">Teste de carga e uso (k6 + Playwright)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../dimensionamento/">Dimensionamento (40 a 2.000 usuários)</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
               <ul>
@@ -190,8 +194,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
-                  </li>
               </ul>
               <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
               <ul>
@@ -216,8 +218,6 @@
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias_puro/">Agregador de Notícias — Tela Pura</a>
                   </li>
               </ul>
       </div>
@@ -992,7 +992,7 @@ arquivos</strong> com efeito real e nenhum sinal. Comando:</p>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>
-<td style="text-align: left;">Paginação 12 + <strong>busca lado a lado filtro tema</strong> (<code>pagina</code> <code>por_pagina=12</code> <code>total_pag</code> <code>offset</code>, <code>ORDER BY COALESCE(data_publicacao, data_coleta) DESC</code>, botões <code>agregador-primeira/anterior/proxima/ultima</code>, <strong>busca <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> NFKD 500 <code>titulo/descricao/fonte/tema</code> lado a lado filtro tema, sem badge <code>Coleta:</code> (botão <code>Ver puro Noticia</code> <code>agregador-ver-puro</code> removido 20/09/2026 — <code>/agregador-noticias-puro</code> por URL direta)</strong>) + grid responsivo <strong>3 colunas desktop → 2 tablet (max-width 1024px) → 1 celular (max-width 640px) via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries, cards de </strong>ALTURA FIXA <code>300px</code><strong> (<code>260px</code> no celular, <code>.card-noticia</code> — nunca <code>min/max-height</code>, para todos os cards da linha ficarem idênticos)</strong> + cards (<strong>miniatura <code>120×120</code> <code>cover</code> clicável que abre a ampliação em diálogo <code>60vw×60vh</code> <code>contain</code></strong> + <strong>logo da fonte como marca d'água <code>32×32</code></strong> no rodapé da imagem, <code>badge tema</code>, <code>ui.link new_tab</code>, <code>descricao</code> <strong>completa com scroll</strong> <code>overflow-y: auto</code>, <code>_tempo_relativo</code> real) — <strong>redesenho 25/09/2026</strong> + <strong>tela pura</strong> <code>telas_puro.py</code> (<code>/agregador-noticias-puro</code> <code>intro-overlay</code> + <code>about</code> <code>info-list</code> 12 notícias <code>COALESCE DESC</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code>)</td>
+<td style="text-align: left;">Paginação 12 + <strong>busca lado a lado filtro tema</strong> (<code>pagina</code> <code>por_pagina=12</code> <code>total_pag</code> <code>offset</code>, <code>ORDER BY COALESCE(data_publicacao, data_coleta) DESC</code>, botões <code>agregador-primeira/anterior/proxima/ultima</code>, <strong>busca <code>agregador-busca</code> <code>debounce 300</code> <code>placeholder "Buscar palavra…"</code> NFKD 500 <code>titulo/descricao/fonte/tema</code> lado a lado filtro tema, sem badge <code>Coleta:</code> (botão <code>Ver puro Noticia</code> <code>agregador-ver-puro</code> removido 20/09/2026 — a tela pura (removida) por URL direta)</strong>) + grid responsivo <strong>3 colunas desktop → 2 tablet (max-width 1024px) → 1 celular (max-width 640px) via <code>.grid-noticias {display:grid; grid-template-columns: repeat(3,1fr)}</code> + media queries, cards de </strong>ALTURA FIXA <code>300px</code><strong> (<code>260px</code> no celular, <code>.card-noticia</code> — nunca <code>min/max-height</code>, para todos os cards da linha ficarem idênticos)</strong> + cards (<strong>miniatura <code>120×120</code> <code>cover</code> clicável que abre a ampliação em diálogo <code>60vw×60vh</code> <code>contain</code></strong> + <strong>logo da fonte como marca d'água <code>32×32</code></strong> no rodapé da imagem, <code>badge tema</code>, <code>ui.link new_tab</code>, <code>descricao</code> <strong>completa com scroll</strong> <code>overflow-y: auto</code>, <code>_tempo_relativo</code> real) — <strong>redesenho 25/09/2026</strong> + <strong>tela pura</strong> <code>telas_puro.py</code> (removido) (a tela pura (removida) <code>intro-overlay</code> + <code>about</code> <code>info-list</code> 12 notícias <code>COALESCE DESC</code>, <code>assets/noticia/</code> <code>base.css</code>/<code>vendor.css</code>/<code>main.css</code>/<code>font-awesome</code>/<code>micons</code>/<code>js</code>/<code>images</code> via <code>main.py:818</code> <code>@app.get("/assets/noticia/{caminho:path}")</code>)</td>
 <td style="text-align: center;">✅ Implementado</td>
 </tr>
 <tr>

@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Teste de carga e uso (k6 + Playwright) - INTRANET Modular — Documentação Técnica</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Teste de carga e uso (k6 + Playwright)";
+        var mkdocs_page_input_path = "testes_carga_uso.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> INTRANET Modular — Documentação Técnica
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Início</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Documentação Técnica</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../intro/">Introdução</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../visao_geral/">Visão Geral</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido/">Guia de Início Rápido</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../inicio_rapido_otel/">Guia Rápido OTel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../requisitos/">Requisitos do Sistema</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuracoes/">Configurações e Variáveis de Ambiente</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura/">Arquitetura</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api_referencia/">Referência de API e Código</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../convencoes_codigo/">Convenções de Criação de Código</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../visao_de_produto/">Visão de Produto</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../2_levantamento_requisitos/">Levantamento de Requisitos</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Arquitetura de Software (DAS)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../arquitetura_de_software_das/fachada_integracoes/">Fachada de Integração (mod_intranet/integracoes.py)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guia_API/">Guia de API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../padroes_codificacao/">Padrões de Codificação</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Manuais de Uso</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_instalacao/">Instalação</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_administrador/">Administrador</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_usuario_comum/">Usuário Comum</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manual_de_uso_renomear_empenho/">Renomeador de Empenho</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plano_de_projeto/">Plano de Projeto</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Registro de Mudanças</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/">Índice</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/sessao_2026-09-26/">Sessão 26/09/2026</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade (24/09/2026)</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../versionamento/">Versionamento</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../analise_de_risco/">Análise de Risco</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../metricas_software/">Métricas de Software</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licoes_aprendida/">Lições Aprendidas</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contribuicoes/">Contribuições</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Segurança</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/ferramentas_de_seguranca/">Ferramentas de Segurança</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/riscos_ia_ml/">Riscos de IA/ML</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../seguranca/auditoria_menu_2026-09-12/">Auditoria do Menu (12/09/2026)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Ferramentas (dev)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/graphify/">Graphify (grafo, dev-only)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ferramentas/requirements_py/">requirements.py (dev-only)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testes</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_casos/">Casos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_plano/">Plano</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/">Relatórios</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/seguranca_2026-09-06/">Relatório de Segurança (06/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_relatorios/qa_execucao_2026-09-25/">Relatório de QA de Execução (25/09/2026)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_playwright/">E2E com Playwright</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../testes_carga_k6/">Teste de carga k6</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Teste de carga e uso (k6 + Playwright)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#o-resumo-em-uma-frase">O resumo, em uma frase</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#a-maquina">A máquina</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#por-que-a-arquitetura-e-dividida-em-duas">Por que a arquitetura é dividida em duas</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#o-que-o-teste-mede">O que o teste mede</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#k6-assetsk6carga_usojs-120-vus">k6 — assets/k6/carga_uso.js (120 VUs)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#playwright-assetstestcarga_uso_navegadorpy-20-navegadores">Playwright — assets/test/carga_uso_navegador.py (20 navegadores)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#o-que-o-teste-nao-mede-e-por-que">O que o teste NÃO mede, e por quê</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#a-cronometragem-exigida-e-onde-ela-esta-no-codigo">A cronometragem exigida, e onde ela está no código</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#o-guarda-de-90">O guarda de 90 %</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#por-que-90-na-ram">Por que 90 % na RAM</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#por-que-a-cpu-usa-outro-limite-98">Por que a CPU usa outro limite: 98 %</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#o-que-o-guarda-nao-faz">O que o guarda não faz</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#opcoes">Opções</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#atencao-o-gatilho-de-cpu-precisa-ser-separado-nesta-maquina">Atenção: o gatilho de CPU precisa ser separado nesta máquina</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#como-rodar">Como rodar</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#0-pre-requisitos">0. Pré-requisitos</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#1-a-bateria-completa-3-terminais">1. A bateria completa (3 terminais)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-validacao-rapida-minutos-nao-15">2. Validação rápida (minutos, não 15)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-relatorios">3. Relatórios</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#as-armadilhas-desta-sessao">As armadilhas desta sessão</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-sleep-no-k6-bloqueia-a-entrega-do-websocket">1. sleep() no k6 bloqueia a entrega do WebSocket</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-deixar-o-vu-reentrar-em-laco-e-um-spin-de-299-de-cpu">2. Deixar o VU reentrar em laço é um spin de 299 % de CPU</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-a-api-nova-k6websockets-funciona-com-addeventlistener">3. A API nova k6/websockets funciona — com addEventListener</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-uma-sessao-do-protocolo-k6-nao-abre-tela-de-modulo">4. Uma sessão do protocolo k6 não abre tela de módulo</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#5-o-redirecionamento-do-gate-e-client-side">5. O redirecionamento do gate é client-side</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#6-meca-o-custo-de-login-com-o-servidor-parado">6. Meça o custo de login com o servidor parado</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#7-aqueca-a-auditoria-antes-de-medir">7. Aqueça a auditoria antes de medir</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#8-o-checkbox-do-rascunho-ja-vem-marcado-clicar-nele-desmarca">8. O checkbox do rascunho já vem marcado — clicar nele desmarca</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#9-a-notificacao-do-quasar-e-efemera">9. A notificação do Quasar é efêmera</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#10-cuidado-com-o-falso-positivo-por-texto-solto">10. Cuidado com o falso positivo por texto solto</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#11-uma-navegacao-lenta-sob-carga-e-medicao-nao-falha-de-script">11. Uma navegação lenta sob carga é medição, não falha de script</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#saida-esperada">Saída esperada</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#criterios-de-aprovacao">Critérios de aprovação</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#resultado-medido-em-26092026-a-120-usuarios-reprovado">Resultado medido em 26/09/2026 — a 120 usuários, REPROVADO</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#isolamento-da-causa">Isolamento da causa</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#o-gate-de-aprovacao-40-vus-funcionalmente-aprovado-latencia-acima-do-teto">O gate de aprovação (40 VUs) — funcionalmente APROVADO, latência acima do teto</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#a-pista-mais-util-cpu-baixa-com-latencia-alta">A pista mais útil: CPU baixa com latência alta</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#limpeza">Limpeza</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#arquivos">Arquivos</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../dimensionamento/">Dimensionamento (40 a 2.000 usuários)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (análise)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_solicita_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../analise_mod_agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Módulos (resumo)</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/intranet/">Intranet (núcleo)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/gest_cad_usuario/">Gestão de Usuários</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/blog/">Blog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/edit_pdf/">Editor de PDF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/renomear_empenho/">Renomear Empenhos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/auditoria/">Auditoria</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/solicitacao_impressao/">Solicitação de Impressão</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/tecnico/">Técnico</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/filas/">Filas (TV, multi-filas)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/lista_telefonica/">Lista Telefônica (organograma)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modulos/agregador_noticias/">Agregador de Notícias</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">INTRANET Modular — Documentação Técnica</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Testes</li>
+      <li class="breadcrumb-item active">Teste de carga e uso (k6 + Playwright)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="teste-de-carga-e-uso-intranet-modular">Teste de carga e uso — Intranet Modular<a class="headerlink" href="#teste-de-carga-e-uso-intranet-modular" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Mede se a intranet <strong>aguenta N usuários que estão de fato usando o sistema</strong>,
+não apenas N sockets abertos. É o complemento do
+<a href="../testes_carga_k6/">teste de carga k6</a>: aquele segura clientes, este faz
+gente entrar, navegar, ler e pedir impressão.</p>
+</blockquote>
+<hr />
+<h2 id="o-resumo-em-uma-frase">O resumo, em uma frase<a class="headerlink" href="#o-resumo-em-uma-frase" title="Permanent link">&para;</a></h2>
+<p><strong>120 usuários de protocolo (k6) + 20 navegadores reais (Playwright), ao mesmo
+tempo, por 15 minutos, com um vigia que interrompe tudo se a máquina passar de
+90 %.</strong></p>
+<table>
+<thead>
+<tr>
+<th>peça</th>
+<th style="text-align: right;">volume</th>
+<th>o que ela responde</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>assets/k6/carga_uso.js</code></td>
+<td style="text-align: right;">120 VUs</td>
+<td>quantos clientes o servidor segura <strong>enquanto eles usam</strong></td>
+</tr>
+<tr>
+<td><code>assets/test/carga_uso_navegador.py</code></td>
+<td style="text-align: right;">20 navegadores</td>
+<td>eles conseguem <strong>trabalhar</strong> (clique, tela, upload)</td>
+</tr>
+<tr>
+<td><code>assets/test/guarda_recursos.py</code></td>
+<td style="text-align: right;">1 processo</td>
+<td>a máquina está aguentando, ou o teste é que está matando o sistema?</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">O que já foi medido e o que falta</p>
+<p>O <strong>protocolo</strong> (k6) já rodou na cronometragem completa: a 120 usuários
+<strong>REPROVADO</strong> e a 40 usuários <strong>funcionalmente aprovado</strong> com a latência acima
+do teto — os dois resultados, com todos os números, estão na seção
+<strong>Critérios de aprovação</strong>, mais abaixo. O que <strong>ainda não</strong> foi
+medido é a camada de navegador real em paralelo (20 navegadores com os 120
+do k6 ao mesmo tempo): o <code>carga_uso_navegador.py</code> foi validado com 1 a 4
+usuários. Essa bateria completa é o que o <strong>agente principal</strong> executa.</p>
+</div>
+<h2 id="a-maquina">A máquina<a class="headerlink" href="#a-maquina" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">item</th>
+<th style="text-align: left;">valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">processador</td>
+<td style="text-align: left;">Intel® Core™ i3-2375M @ 1,50 GHz (4 threads)</td>
+</tr>
+<tr>
+<td style="text-align: left;">memória</td>
+<td style="text-align: left;"><strong>3,7 GiB</strong> (3.795 MB), swap 5,6 GiB</td>
+</tr>
+<tr>
+<td style="text-align: left;">consumo base com o servidor no ar</td>
+<td style="text-align: left;"><strong>~2.184 MB (58 %)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">consumo do OpenCode sozinho</td>
+<td style="text-align: left;">~1,1 GiB (é ele, não a intranet)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RSS do servidor, sem carga</td>
+<td style="text-align: left;">105 MB</td>
+</tr>
+<tr>
+<td style="text-align: left;">RSS do servidor, <strong>depois</strong> de 120 VUs</td>
+<td style="text-align: left;">201 MB (medido)</td>
+</tr>
+</tbody>
+</table>
+<p>O consumo alto da máquina vem das <strong>ferramentas de desenvolvimento</strong> da sessão,
+não do sistema sob teste. Isso é decisivo para entender o guarda de 90 %.</p>
+<h2 id="por-que-a-arquitetura-e-dividida-em-duas">Por que a arquitetura é dividida em duas<a class="headerlink" href="#por-que-a-arquitetura-e-dividida-em-duas" title="Permanent link">&para;</a></h2>
+<p>Esta intranet é <strong>NiceGUI</strong>, e NiceGUI não tem <code>POST /login</code>: o login é um
+<strong>evento no WebSocket</strong>. O k6 consegue abrir o WebSocket e fazer o handshake,
+mas não consegue clicar no botão "Entrar" sem acoplar o teste ao despacho
+interno da biblioteca — acoplamento que quebraria a medição <strong>em silêncio</strong> num
+upgrade, resultado pior que não medir.</p>
+<p>Medido nesta sessão, com o cookie de sessão que o k6 obtém em <code>GET /login</code>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">rota</th>
+<th style="text-align: right;">bytes devolvidos</th>
+<th style="text-align: left;">o que é</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>/</code></td>
+<td style="text-align: right;">8 761</td>
+<td style="text-align: left;">stub de redirecionamento</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/blog</code></td>
+<td style="text-align: right;"><strong>8 761</strong></td>
+<td style="text-align: left;"><strong>o mesmo stub</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/edit-pdf</code></td>
+<td style="text-align: right;">8 761</td>
+<td style="text-align: left;">o mesmo stub</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/renomear-empenho</code></td>
+<td style="text-align: right;">8 761</td>
+<td style="text-align: left;">o mesmo stub</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/tv</code></td>
+<td style="text-align: right;">14 606</td>
+<td style="text-align: left;"><strong>tela real</strong> (pública por projeto)</td>
+</tr>
+</tbody>
+</table>
+<p>Ou seja: <strong>o k6 não renderiza tela de módulo.</strong> Ele mede o número de clientes
+que o servidor segura e a saúde do event-loop; quem mede a tela renderizada,
+o clique e o upload é o Playwright com 20 navegadores. Por isso o script k6
+publica a métrica <code>carga_uso_render_modulo</code>, que deve marcar ~0,1 (só <code>/tv</code>):
+é o próprio limite do protocolo virando número, e não uma nota de rodapé.</p>
+<h2 id="o-que-o-teste-mede">O que o teste mede<a class="headerlink" href="#o-que-o-teste-mede" title="Permanent link">&para;</a></h2>
+<h3 id="k6-assetsk6carga_usojs-120-vus">k6 — <code>assets/k6/carga_uso.js</code> (120 VUs)<a class="headerlink" href="#k6-assetsk6carga_usojs-120-vus" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">métrica</th>
+<th style="text-align: left;">o que diz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>carga_uso_handshake_ok</code></td>
+<td style="text-align: left;">fração de clientes que o <strong>servidor assumiu</strong> (passou a transmitir a tela). É a prova de que o cliente ficou vivo, não só que o socket abriu.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_ciclo_completo</code></td>
+<td style="text-align: left;">fração de ciclos que percorrem o roteiro inteiro de uso</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_pensamento</code></td>
+<td style="text-align: left;">think time de cada passo — o threshold <code>min&gt;10000</code> <strong>impõe</strong> a exigência dos 10 s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_leitura_blog</code></td>
+<td style="text-align: left;">tempo de leitura do post; threshold <code>min&gt;55000</code> impõe o minuto</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_rota_200</code></td>
+<td style="text-align: left;">fração de rotas que responderam 200</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_render_modulo</code></td>
+<td style="text-align: left;">fração de páginas que renderizaram de verdade (só <code>/tv</code> — ver acima)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_desconectou</code></td>
+<td style="text-align: left;">sockets fechados sem erro</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_sonda_eventloop</code></td>
+<td style="text-align: left;"><strong>a métrica decisiva</strong>: p95 do <code>GET /favicon.ico</code>, que tem de continuar rápido com 120 sockets abertos</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_ciclo</code></td>
+<td style="text-align: left;">duração do ciclo de uso completo (p95)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="playwright-assetstestcarga_uso_navegadorpy-20-navegadores">Playwright — <code>assets/test/carga_uso_navegador.py</code> (20 navegadores)<a class="headerlink" href="#playwright-assetstestcarga_uso_navegadorpy-20-navegadores" title="Permanent link">&para;</a></h3>
+<p>Cada navegador faz login <strong>distinto</strong> (<code>user001</code>…<code>user020</code>) e percorre:</p>
+<ol>
+<li><strong>Painel</strong> — abre a inicial, lê, e clica em botões inofensivos</li>
+<li><strong>Agregador de Notícias</strong> — busca e filtro de tema (a antiga tela pura
+   <code>/agregador-noticias-puro</code> foi removida em 26/09/2026)</li>
+<li><strong>Blog</strong> — abre o feed, expande o post e <strong>lê por 60 s</strong></li>
+<li><strong>Editor de PDF</strong> — abre a biblioteca e atualiza a lista</li>
+<li><strong>Renomeador de Empenhos</strong> — busca e lê a lista</li>
+<li><strong>Solicitação de Impressão</strong> — seleciona secretaria, <strong>anexa um PDF de
+   verdade</strong> e (só para <code>--enviar</code> usuários) envia e <strong>cancela</strong> em seguida</li>
+<li><strong>Filas e Lista Telefônica</strong> — abre e filtra</li>
+<li><strong>Gate de permissões</strong> — mede para onde cada rota restrita manda o usuário</li>
+</ol>
+<p>Cada passo é conferido pela <strong>URL final</strong>: se o gate redirecionou, o relatório
+diz <code>BLOQUEADO pelo gate: /blog -&gt; /</code> em vez de dizer que abriu. (Na primeira
+versão não havia essa checagem, e o teste reportava "tela abriu" para o
+Agregador de Notícias que estava bloqueado — o relatório mentia de forma
+convincente.)</p>
+<h2 id="o-que-o-teste-nao-mede-e-por-que">O que o teste NÃO mede, e por quê<a class="headerlink" href="#o-que-o-teste-nao-mede-e-por-que" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">não mede</th>
+<th style="text-align: left;">motivo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>renderização de tela de módulo pelo k6</strong></td>
+<td style="text-align: left;">o k6 não clica em "Entrar" (limite do protocolo). Medido: 8761 bytes de stub. Quem mede é o Playwright.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>custo do bcrypt do login</strong></td>
+<td style="text-align: left;">o login exige o evento do WebSocket. Tem medição própria: <code>assets/test/mede_custo_login.py</code> (~0,95 s por login, ~4/s de vazão).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>autorização e confirmação de impressão</strong></td>
+<td style="text-align: left;"><code>_eh_responsavel</code> decide quem vê a aba "Autorização"; <code>userNNN</code> é <code>comum</code> e não tem vínculo. A aba <strong>não aparece</strong>. A aprovação exige <code>administrador_geral</code> ou responsável vinculado — então o teste <strong>mede o gate</strong> em vez de forçá-lo.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>exclusão, recusa, recuo, cancelamento definitivo</strong></td>
+<td style="text-align: left;">o filtro de cliques é por <strong>allowlist</strong> (<code>Atualizar</code>, <code>Buscar</code>, <code>Filtrar</code>, <code>Expandir</code>…) com uma denylist explícita por cima. O erro de uma denylist é clicar em "Confirmar exclusão" sem perceber que a palavra perigosa estava escrita de outro jeito.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>relatórios de 20+ navegadores</strong></td>
+<td style="text-align: left;">o limite é memória, não CPU: ~37 MB por página em 3,7 GiB. 20 é o teto medido; 120 navegadores derrubariam a máquina e o teste mediria o colapso.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>uso administrativo</strong></td>
+<td style="text-align: left;"><code>/configuracoes</code>, <code>/auditoria</code>, <code>/tecnico</code>, <code>/users</code> e <code>/admin/*</code> não são uso de servidor: são telas de administração. <code>/auditoria</code>, <code>/tecnico</code> e <code>/users</code> entram apenas como <strong>gate medido</strong>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="a-cronometragem-exigida-e-onde-ela-esta-no-codigo">A cronometragem exigida, e onde ela está no código<a class="headerlink" href="#a-cronometragem-exigida-e-onde-ela-esta-no-codigo" title="Permanent link">&para;</a></h2>
+<p>Tudo em <code>options.scenarios.uso.stages</code>, em <code>assets/k6/carga_uso.js</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">tempo</th>
+<th style="text-align: left;">o que acontece</th>
+<th style="text-align: right;">VUs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">0:00</td>
+<td style="text-align: left;"><code>startVUs: 10</code> — já começa com 10</td>
+<td style="text-align: right;">10</td>
+</tr>
+<tr>
+<td style="text-align: left;">0:00–0:15</td>
+<td style="text-align: left;">rampa</td>
+<td style="text-align: right;">10 → 20</td>
+</tr>
+<tr>
+<td style="text-align: left;">0:15–0:30</td>
+<td style="text-align: left;">rampa</td>
+<td style="text-align: right;">20 → 30</td>
+</tr>
+<tr>
+<td style="text-align: left;">0:30–0:45</td>
+<td style="text-align: left;">rampa</td>
+<td style="text-align: right;">30 → 40</td>
+</tr>
+<tr>
+<td style="text-align: left;">0:45–1:00</td>
+<td style="text-align: left;">rampa</td>
+<td style="text-align: right;">40 → 50</td>
+</tr>
+<tr>
+<td style="text-align: left;">1:00–1:15</td>
+<td style="text-align: left;">rampa</td>
+<td style="text-align: right;">50 → 60</td>
+</tr>
+<tr>
+<td style="text-align: left;">1:15–1:30</td>
+<td style="text-align: left;">rampa</td>
+<td style="text-align: right;">60 → 70</td>
+</tr>
+<tr>
+<td style="text-align: left;">1:30–1:45</td>
+<td style="text-align: left;">rampa</td>
+<td style="text-align: right;">70 → 80</td>
+</tr>
+<tr>
+<td style="text-align: left;">1:45–2:00</td>
+<td style="text-align: left;">rampa</td>
+<td style="text-align: right;">80 → 90</td>
+</tr>
+<tr>
+<td style="text-align: left;">2:00–2:15</td>
+<td style="text-align: left;">rampa</td>
+<td style="text-align: right;">90 → 100</td>
+</tr>
+<tr>
+<td style="text-align: left;">2:15–2:30</td>
+<td style="text-align: left;">rampa</td>
+<td style="text-align: right;">100 → 110</td>
+</tr>
+<tr>
+<td style="text-align: left;">2:30–2:45</td>
+<td style="text-align: left;">rampa — <strong>120 alcançado</strong></td>
+<td style="text-align: right;">110 → 120</td>
+</tr>
+<tr>
+<td style="text-align: left;">2:45–11:45</td>
+<td style="text-align: left;"><strong>regime: 9 minutos com 120</strong></td>
+<td style="text-align: right;">120</td>
+</tr>
+<tr>
+<td style="text-align: left;">11:45–12:15</td>
+<td style="text-align: left;">descida</td>
+<td style="text-align: right;">120 → 60</td>
+</tr>
+<tr>
+<td style="text-align: left;">12:15–12:35</td>
+<td style="text-align: left;">descida</td>
+<td style="text-align: right;">60 → 30</td>
+</tr>
+<tr>
+<td style="text-align: left;">12:35–12:55</td>
+<td style="text-align: left;">descida</td>
+<td style="text-align: right;">30 → 10</td>
+</tr>
+<tr>
+<td style="text-align: left;">12:55–13:15</td>
+<td style="text-align: left;">descida</td>
+<td style="text-align: right;">10 → 0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>A conta do deadline (15 min no máximo):</strong></p>
+<div class="highlight"><pre><span></span><code>11 × 15 s ....................... 165 s   escalada (0:00 → 2:45)
+9 × 60 s ........................ 540 s   regime (2:45 → 11:45)
+30 + 20 + 20 + 20 ...............  90 s   descida (11:45 → 13:15)
+                                 ─────
+                                  795 s = 13:15  de estágios
+gracefulStop ....................  20 s
+                                 ─────
+                                  815 s = 13:35      folga de 1:25
+</code></pre></div>
+<p><strong>Por que 15 s por degrau, e não os 20 s do enunciado.</strong> Com 20 s a soma
+batia <strong>900 s = 15:00 exatos, sem nenhuma folga</strong>: um único segundo de atraso
+num estágio estouraria o teto. O passo de 15 s mantém os <strong>mesmos 120
+usuários</strong> e o mesmo gate de "20 usuários por 3 min", e devolve <strong>1:25 de
+margem</strong>. A escolha foi do responsável, em 26/09/2026, ao ver a soma.</p>
+<p><code>assets/test/valida_cronometragem.py</code> confere essa conta lendo o próprio
+script k6 — se alguém mexer na cronometragem sem recalcular, ele reprova:</p>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/valida_cronometragem.py
+</code></pre></div>
+<p><strong>O uso real começa às 0:20, não às 0:00.</strong> Os VUs 1 a 10 já estão no ar às
+0:00, então eles recebem <code>ESPERA_INICIAL_VU_BAIXO</code> (20 s) antes do primeiro
+passo — é assim que os 10 primeiros entram no ciclo junto com o 11º e o 12º
+usuário. A constante é <code>ESPERA_INICIAL_VU_BAIXO_MS</code> / <code>VU_QUE_ESPERA</code>.</p>
+<p><strong>O roteiro de uso</strong> é a constante <code>PASSOS</code> (9 rotas, 171 s de think time):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">rota</th>
+<th style="text-align: left;">ação</th>
+<th style="text-align: right;">think time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>/</code></td>
+<td style="text-align: left;">abrir e ler o painel</td>
+<td style="text-align: right;">12 s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/agregador-noticias</code></td>
+<td style="text-align: left;">ler as notícias</td>
+<td style="text-align: right;">15 s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/blog</code></td>
+<td style="text-align: left;"><strong>ler o post</strong></td>
+<td style="text-align: right;"><strong>60 s</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/filas</code></td>
+<td style="text-align: left;">olhar as filas</td>
+<td style="text-align: right;">12 s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/lista-telefonica</code></td>
+<td style="text-align: left;">procurar na lista</td>
+<td style="text-align: right;">12 s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/renomear-empenho</code></td>
+<td style="text-align: left;"><strong>buscar empenhos</strong></td>
+<td style="text-align: right;">18 s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/edit-pdf</code></td>
+<td style="text-align: left;">abrir o editor</td>
+<td style="text-align: right;">15 s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/solicita-impressao</code></td>
+<td style="text-align: left;">abrir a solicitação</td>
+<td style="text-align: right;">15 s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/tv</code></td>
+<td style="text-align: left;">ver a TV das filas</td>
+<td style="text-align: right;">12 s</td>
+</tr>
+</tbody>
+</table>
+<p>O mínimo de 10 s entre eventos não é um comentário: é o threshold
+<code>'carga_uso_pensamento': ['min&gt;10000']</code>, e o minuto de leitura é o threshold
+<code>'carga_uso_leitura_blog'</code>. Se alguém encurtar o think time, o ensaio
+<strong>reprova</strong>.</p>
+<h2 id="o-guarda-de-90">O guarda de 90 %<a class="headerlink" href="#o-guarda-de-90" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/guarda_recursos.py<span class="w"> </span>--k6-pid<span class="w"> </span>&lt;PID&gt;<span class="w"> </span>--py-pid<span class="w"> </span>&lt;PID&gt;
+</code></pre></div>
+<p>Amostra RAM e CPU a cada 1 s lendo <code>/proc/meminfo</code> e <code>/proc/stat</code>, sem nenhuma
+dependência externa. Ao cruzar o limite em <strong>3 amostras consecutivas</strong>, derruba
+o k6 e o Playwright por PID (SIGTERM, depois SIGKILL para quem ignorar), imprime
+os valores medidos, grava a série temporal em JSON e <strong>sai com código 2</strong>.</p>
+<h3 id="por-que-90-na-ram">Por que 90 % na RAM<a class="headerlink" href="#por-que-90-na-ram" title="Permanent link">&para;</a></h3>
+<p>90 % é a margem entre <em>"o teste ainda mede algo real"</em> e <em>"o próprio teste vira
+a causa da indisponibilidade que ele deveria detectar"</em>.</p>
+<p>Nesta máquina de 3,7 GiB o consumo já vem quase todo de ferramenta de
+desenvolvimento: com o servidor no ar a base é ~2.184 MB de 3.795 MB (58 %),
+e o OpenCode sozinho consome ~1,1 GiB. Nessas condições, a 90 % o sistema já
+está trocando página, o Chromium headless começa a ser morto pelo OOM killer, e
+o k6 passa a reportar timeout — medido: <code>GET /login</code> com p95 de <strong>30.000 ms</strong>,
+exatamente o <code>timeout</code> configurado. A partir dali os números não descreveriam a
+intranet, descreveriam a máquina em colapso. Um guarda que deixasse passar
+mediria o próprio colapso e culparia o sistema.</p>
+<h3 id="por-que-a-cpu-usa-outro-limite-98">Por que a CPU usa outro limite: 98 %<a class="headerlink" href="#por-que-a-cpu-usa-outro-limite-98" title="Permanent link">&para;</a></h3>
+<p>O enunciado pedia 90 % para RAM <strong>e</strong> CPU. Medindo a máquina, isso inviabilizaria
+o teste:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">processo</th>
+<th style="text-align: right;">CPU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">OpenCode desktop</td>
+<td style="text-align: right;">49 %</td>
+</tr>
+<tr>
+<td style="text-align: left;">OpenCode CLI</td>
+<td style="text-align: right;">44 %</td>
+</tr>
+<tr>
+<td style="text-align: left;">Xorg</td>
+<td style="text-align: right;">19 %</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>soma da ferramenta, antes do teste</strong></td>
+<td style="text-align: right;"><strong>~112 %</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Em 4 núcleos, ~112 % já é carga de base. Um gatilho único de 90 % de CPU
+<strong>dispararia em segundos</strong>, derrubando a bateria antes de ela medir qualquer
+coisa — e o relatório culparia o sistema por um problema que é da própria
+ferramenta de teste.</p>
+<p>A decisão (responsável, 26/09/2026) foi <strong>separar os limiares</strong>: <strong>RAM a 90 %</strong>
+(é o que protege a máquina do OOM killer) e <strong>CPU a 98 %</strong>, que só dispara em
+saturação real do processador. Os dois são configuráveis:</p>
+<div class="highlight"><pre><span></span><code>--por-cento<span class="w"> </span><span class="m">90</span><span class="w"> </span>--por-cento-cpu<span class="w"> </span><span class="m">98</span>
+</code></pre></div>
+<p><strong>Por que não 70:</strong> a 70 % o guarda dispararia durante a escalada legítima de
+120 VUs + 20 navegadores, que é exatamente a carga que o teste existe para
+medir — o resultado seria sempre "reprovado" sem informação sobre a intranet.</p>
+<p><strong>Por que não 95:</strong> entre 90 e 95 % o Chromium já perde contexto e o <code>GET
+/login</code> estoura o timeout, transformando uma saturação de memória numa mentira
+sobre a latência do login.</p>
+<p><strong>Três amostras consecutivas</strong>, e não uma: um pico isolado de 1 s é alocação
+momentânea, e derrubar uma bateria de 15 minutos por causa disso seria dishonesto
+na direção oposta.</p>
+<h3 id="o-que-o-guarda-nao-faz">O que o guarda não faz<a class="headerlink" href="#o-que-o-guarda-nao-faz" title="Permanent link">&para;</a></h3>
+<p>Não toca no servidor da intranet. O alvo é o equipamento de carga. Derrubar o
+servidor invalidaria a medição em curso e exigiria reiniciá-lo — e o teste nunca
+faz isso por conta própria.</p>
+<h3 id="opcoes">Opções<a class="headerlink" href="#opcoes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">opção</th>
+<th style="text-align: left;">efeito</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>--por-cento 85</code></td>
+<td style="text-align: left;">ajusta o gatilho de <strong>RAM</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--por-cento-cpu 98</code></td>
+<td style="text-align: left;">ajusta o gatilho de <strong>CPU</strong> (0 = igual ao de RAM)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--json saida.json</code></td>
+<td style="text-align: left;">grava a série temporal (padrão <code>logs/carga_recursos.json</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--so-observar</code></td>
+<td style="text-align: left;">relata o gatilho mas <strong>não</strong> derruba nada (diagnóstico)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--segundos 900</code></td>
+<td style="text-align: left;">vigília com prazo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--temperatura</code></td>
+<td style="text-align: left;">mostra a carga do servidor a cada 5 s e sai</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--amostras-consecutivas 5</code></td>
+<td style="text-align: left;">mais tolerância a picos</td>
+</tr>
+</tbody>
+</table>
+<h3 id="atencao-o-gatilho-de-cpu-precisa-ser-separado-nesta-maquina">Atenção: o gatilho de CPU precisa ser separado nesta máquina<a class="headerlink" href="#atencao-o-gatilho-de-cpu-precisa-ser-separado-nesta-maquina" title="Permanent link">&para;</a></h3>
+<p>Medido na validação integrada (2 VUs do k6 + 2 navegadores, carga mínima): a
+<strong>CPU passou de 90 % várias vezes</strong> — 87,9 %, 98,3 %, 99,5 %, 95,7 % — e boa
+parte desse consumo era da ferramenta de desenvolvimento da sessão, não do
+teste. Com 120 VUs + 20 navegadores, um gatilho único de 90 % mataria a
+bateria em minutos por causa de ruído.</p>
+<p>O argumento dos 90 % é de <strong>memória</strong> (OOM killer, página trocando). O de CPU é
+mais frágil porque a CPU é o recurso compartilhado com o resto da sessão. Por
+isso o guarda tem dois limiares, e a recomendação nesta máquina é:</p>
+<div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/guarda_recursos.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--k6-pid<span class="w"> </span>&lt;PID_K6&gt;<span class="w"> </span>--py-pid<span class="w"> </span>&lt;PID_PY&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--por-cento<span class="w"> </span><span class="m">90</span><span class="w"> </span>--por-cento-cpu<span class="w"> </span><span class="m">98</span>
+</code></pre></div>
+<p>RAM continua em 90 % (que é o que protege a máquina de verdade) e a CPU só
+dispara quando ela está realmente saturada.</p>
+<h2 id="como-rodar">Como rodar<a class="headerlink" href="#como-rodar" title="Permanent link">&para;</a></h2>
+<h3 id="0-pre-requisitos">0. Pré-requisitos<a class="headerlink" href="#0-pre-requisitos" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># servidor no ar</span>
+.venv/bin/python<span class="w"> </span>main.py
+
+<span class="c1"># os 120 usuários de carga (idempotente)</span>
+<span class="nv">INTRANET_FORCE_SQLITE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>.venv/bin/python<span class="w"> </span>assets/test/popula_usuarios_carga.py<span class="w"> </span>--qtd<span class="w"> </span><span class="m">120</span>
+
+<span class="c1"># &gt;&gt;&gt; OBRIGATÓRIO PARA O USO SER REAL &lt;&lt;&lt;</span>
+<span class="c1"># Sem isto, blog/notícias/filas/lista redirecionam para / e o roteiro de uso</span>
+<span class="c1"># mede a tela inicial. Leva ~2,5 min para 120 usuários.</span>
+<span class="nv">INTRANET_FORCE_SQLITE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>.venv/bin/python<span class="w"> </span>assets/test/libera_modulos_carga.py
+<span class="nv">INTRANET_FORCE_SQLITE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>.venv/bin/python<span class="w"> </span>assets/test/libera_modulos_carga.py<span class="w"> </span>--listar
+</code></pre></div>
+<div class="admonition danger">
+<p class="admonition-title">Por que o <code>libera_modulos_carga.py</code> é obrigatório</p>
+<p><code>criar_usuario</code> libera por padrão <strong>três</strong> vínculos: <code>editar_pdf</code>, <code>empenhos</code>
+e <code>solicita_impressao</code>. O gate de <code>pagina_restrita</code> exige vínculo em <strong>todo</strong>
+módulo. Sem o script, <code>userNNN</code> é redirecionado para <code>/</code> em <code>/blog</code>,
+<code>/agregador-noticias</code>, <code>/filas</code>,
+<code>/lista-telefonica</code>, <code>/auditoria</code>, <code>/tecnico</code> e <code>/users</code> — <strong>medido com
+navegador real</strong>. Reverter: <code>--restaurar</code>.</p>
+</div>
+<h3 id="1-a-bateria-completa-3-terminais">1. A bateria completa (3 terminais)<a class="headerlink" href="#1-a-bateria-completa-3-terminais" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># terminal 1 — o vigia (primeiro, para não haver pico sem quem olhe).</span>
+<span class="c1"># --por-cento-cpu 98 porque a CPU é compartilhada com a ferramenta da sessão.</span>
+.venv/bin/python<span class="w"> </span>assets/test/guarda_recursos.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--k6-pid<span class="w"> </span>&lt;PID_K6&gt;<span class="w"> </span>--py-pid<span class="w"> </span>&lt;PID_PY&gt;<span class="w"> </span>--por-cento<span class="w"> </span><span class="m">90</span><span class="w"> </span>--por-cento-cpu<span class="w"> </span><span class="m">98</span><span class="w"> </span><span class="p">&amp;</span>
+
+<span class="c1"># terminal 2 — 120 usuários de protocolo, 15 minutos</span>
+k6<span class="w"> </span>run<span class="w"> </span>assets/k6/carga_uso.js
+
+<span class="c1"># terminal 3 — 20 navegadores reais, ao mesmo tempo</span>
+.venv/bin/python<span class="w"> </span>assets/test/carga_uso_navegador.py<span class="w"> </span>--usuarios<span class="w"> </span><span class="m">20</span>
+</code></pre></div>
+<p>Passar os PIDs à mão é chato; a forma prática é subir cada processo com <code>&amp;</code> e
+passar <code>$!</code>, ou usar <code>--pids</code> com a lista. Para conferir sem derrubar nada,
+comece com <code>--so-observar</code>.</p>
+<h3 id="2-validacao-rapida-minutos-nao-15">2. Validação rápida (minutos, não 15)<a class="headerlink" href="#2-validacao-rapida-minutos-nao-15" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># k6: 2 VUs, roteiro inteiro em ~5 s (think time 50× menor)</span>
+<span class="nv">K6_PENSA_ESCALA</span><span class="o">=</span><span class="m">0</span>.02<span class="w"> </span>k6<span class="w"> </span>run<span class="w"> </span>--stage<span class="w"> </span><span class="s2">"35s:2"</span><span class="w"> </span>--stage<span class="w"> </span><span class="s2">"8s:0"</span><span class="w"> </span>assets/k6/carga_uso.js
+
+<span class="c1"># Playwright: 1 usuário, leitura de blog de 8 s</span>
+.venv/bin/python<span class="w"> </span>assets/test/carga_uso_navegador.py<span class="w"> </span>--usuarios<span class="w"> </span><span class="m">1</span><span class="w"> </span>--minutos<span class="w"> </span><span class="m">3</span><span class="w"> </span>--blog-s<span class="w"> </span><span class="m">8</span><span class="w"> </span>--enviar<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<p><code>K6_PENSA_ESCALA</code> encolhe os tempos de pensar (e os thresholds junto, senão o
+ensaio de fumaça reprovaria por "pensou rápido demais", que é o que ele fez de
+propósito). <strong>Nunca use a escala no ensaio de 15 minutos.</strong></p>
+<h3 id="3-relatorios">3. Relatórios<a class="headerlink" href="#3-relatorios" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">arquivo</th>
+<th style="text-align: left;">quem escreve</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>logs/carga_uso_navegador.json</code></td>
+<td style="text-align: left;">o script Playwright (um objeto por usuário, com cada passo)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>logs/carga_recursos.json</code></td>
+<td style="text-align: left;">o guarda (série temporal de RAM/CPU, 1 amostra/s)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>logs/carga_recursos.log</code></td>
+<td style="text-align: left;">o guarda (log incremental)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="as-armadilhas-desta-sessao">As armadilhas desta sessão<a class="headerlink" href="#as-armadilhas-desta-sessao" title="Permanent link">&para;</a></h2>
+<p>Estas não são opinião; foram medidas nesta máquina, e cada uma custou um
+ensaio para ser descoberta.</p>
+<h3 id="1-sleep-no-k6-bloqueia-a-entrega-do-websocket">1. <code>sleep()</code> no k6 <strong>bloqueia</strong> a entrega do WebSocket<a class="headerlink" href="#1-sleep-no-k6-bloqueia-a-entrega-do-websocket" title="Permanent link">&para;</a></h3>
+<p>Medido: com <code>sleep(5)</code> antes de ler o estado, chegam <strong>zero</strong> mensagens; sem
+<code>sleep</code>, o mesmo código recebe 6. Não é a API — as duas se comportam igual
+(<code>k6/experimental/websockets</code> e <code>k6/websockets</code>). Por isso o ciclo de uso é
+dirigido por <strong><code>setTimeout</code></strong>, nunca por <code>sleep</code>.</p>
+<h3 id="2-deixar-o-vu-reentrar-em-laco-e-um-spin-de-299-de-cpu">2. Deixar o VU reentrar em laço é um <strong>spin de 299 % de CPU</strong><a class="headerlink" href="#2-deixar-o-vu-reentrar-em-laco-e-um-spin-de-299-de-cpu" title="Permanent link">&para;</a></h3>
+<p>Medido com 120 VUs: 62 000 iterações/s só incrementando um contador, consumindo
+<strong>299 % de CPU</strong> (3 dos 4 threads). Numa máquina de 4 threads isso <em>come</em> o
+servidor sob teste e a medição vira lixo. Com <code>sleep(1)</code>, o mesmo cenário cai
+para <strong>12 %</strong>.</p>
+<p>A saída, que é a que o script usa: a função do VU instala o WebSocket e
+<strong>devolve</strong>; enquanto o socket está aberto, o k6 mantém a iteração viva, o
+event-loop fica livre e a cadeia de <code>setTimeout</code> conduz o ciclo. Medido no
+ciclo completo: <strong>3 % de CPU</strong>, 15 304 ms de ciclo sem deriva. O socket aberto é
+o pino que impede o spin — por isso ele só fecha no fim do ciclo.</p>
+<h3 id="3-a-api-nova-k6websockets-funciona-com-addeventlistener">3. A API nova <code>k6/websockets</code> funciona — com <code>addEventListener</code><a class="headerlink" href="#3-a-api-nova-k6websockets-funciona-com-addeventlistener" title="Permanent link">&para;</a></h3>
+<p><code>login_carga.js</code> usa <code>k6/experimental/websockets</code>, que está <strong>depreciada</strong> e some
+numa versão futura. O que se acreditava é que a API nova não invocaria o
+handler. <strong>Medido: ela invoca</strong>, com <code>addEventListener('message', fn)</code> — o que
+não dispara é a atribuição <code>ws.onmessage = fn</code>. Resultado do ensaio:
+<code>onopen 1, onmessage 6, handshake 1</code>. <code>carga_uso.js</code> já nasce na API nova.</p>
+<h3 id="4-uma-sessao-do-protocolo-k6-nao-abre-tela-de-modulo">4. Uma sessão do protocolo k6 não abre tela de módulo<a class="headerlink" href="#4-uma-sessao-do-protocolo-k6-nao-abre-tela-de-modulo" title="Permanent link">&para;</a></h3>
+<p>Detalhado no início: 8761 bytes de stub em toda rota autenticada. O
+<code>render_modulo</code> do k6 só marca <code>/tv</code>.</p>
+<h3 id="5-o-redirecionamento-do-gate-e-client-side">5. O redirecionamento do gate é <strong>client-side</strong><a class="headerlink" href="#5-o-redirecionamento-do-gate-e-client-side" title="Permanent link">&para;</a></h3>
+<p><code>pagina_restrita</code> responde <strong>HTTP 200</strong> e manda <code>ui.navigate.to('/')</code> para o
+navegador. <code>curl</code> não vê nada; o k6 não vê nada. Só um navegador de verdade
+observa o gate. É por isso que a medição de gate está no Playwright.</p>
+<h3 id="6-meca-o-custo-de-login-com-o-servidor-parado">6. Meça o custo de login com o <strong>servidor parado</strong><a class="headerlink" href="#6-meca-o-custo-de-login-com-o-servidor-parado" title="Permanent link">&para;</a></h3>
+<p>Disputa de escrita no mesmo SQLite em modo WAL faz <code>audit_log</code> ir de 125 ms
+para <strong>2.027 ms</strong>, e o número medido passa a descrever a disputa, não o login.
+Detalhe em <a href="../testes_carga_k6/">testes_carga_k6</a>.</p>
+<h3 id="7-aqueca-a-auditoria-antes-de-medir">7. Aqueça a auditoria antes de medir<a class="headerlink" href="#7-aqueca-a-auditoria-antes-de-medir" title="Permanent link">&para;</a></h3>
+<p>A primeira escrita de auditoria de um processo paga o DDL de criação das
+tabelas: <strong>73,9 s</strong> medidos. Sem aquecimento, o primeiro login aparece com
+3,7 s e é puro custo de setup.</p>
+<h3 id="8-o-checkbox-do-rascunho-ja-vem-marcado-clicar-nele-desmarca">8. O checkbox do rascunho <strong>já vem marcado</strong> — clicar nele desmarca<a class="headerlink" href="#8-o-checkbox-do-rascunho-ja-vem-marcado-clicar-nele-desmarca" title="Permanent link">&para;</a></h3>
+<p>Achado do roteiro de envio: o módulo cria o rascunho com <code>sel=True</code>, e
+<code>enviar()</code> exige <code>r["sel"]</code>. A primeira versão do teste clicava no checkbox
+"para marcar" e o <strong>desmarcava</strong>; o módulo respondia <em>"Marque ao menos um
+arquivo para enviar"</em> e nada era enviado. Agora só se clica quando
+<code>aria-checked != "true"</code>.</p>
+<h3 id="9-a-notificacao-do-quasar-e-efemera">9. A notificação do Quasar é efêmera<a class="headerlink" href="#9-a-notificacao-do-quasar-e-efemera" title="Permanent link">&para;</a></h3>
+<p><code>tema_modulo.notificar()</code> respeita <code>notificacao_timeout</code>: em ~3 s a
+notificação já sumiu. A primeira versão esperava 4,5 s e lia "sem notificação"
+para um envio que <strong>tinha dado certo</strong>. Por isso a confirmação do envio é feita
+na <strong>lista</strong> ("Minhas Solicitações"), que é o estado, e não na notificação.</p>
+<h3 id="10-cuidado-com-o-falso-positivo-por-texto-solto">10. Cuidado com o falso positivo por texto solto<a class="headerlink" href="#10-cuidado-com-o-falso-positivo-por-texto-solto" title="Permanent link">&para;</a></h3>
+<p>O título da tela é "Solicitação de Impressão". Uma verificação por
+"solicitação no corpo" passa mesmo quando <strong>nada</strong> foi enviado. Use
+<code>ui.notify</code> (<code>.q-notification</code>) ou o estado na lista.</p>
+<h3 id="11-uma-navegacao-lenta-sob-carga-e-medicao-nao-falha-de-script">11. Uma navegação lenta sob carga é <strong>medição</strong>, não falha de script<a class="headerlink" href="#11-uma-navegacao-lenta-sob-carga-e-medicao-nao-falha-de-script" title="Permanent link">&para;</a></h3>
+<p>Com 4 navegadores em paralelo, um <code>page.goto</code> estourou 30 s. O script repetia
+uma vez e, se ainda assim falhasse, registrava <code>DEMORA MEDIDA (&gt;45 s)</code> em vez
+de contar como erro — porque a verdade é que a intranet demorou, e isso é
+justamente o que o teste existe para ver.</p>
+<h2 id="saida-esperada">Saída esperada<a class="headerlink" href="#saida-esperada" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>=============== CARGA E USO — INTRANET (k6) ===============
+ciclos de uso....: N  (logins distintos user001..user120)
+reqs.............: N  (falhas 0.0000)
+GET /login.......: p95 ... ms  | max ... ms
+conexao WS.......: p95 ... ms
+ciclo de uso.....: p95 ... s  (em 9 passos, ~171 s de think time)
+ciclo completo...: ...
+handshake ok.....: ...
+render real......: ...  (so /tv: as demais sao stub, o k6 nao clica em Entrar)
+desconectou......: ...
+--- uso ---
+pensamento min...: ... ms  (exigido &gt;= 10000 ms na escala 1)
+leitura blog.....: min ... ms  (exigido ~60000 ms = 1 min na escala 1)
+--- sonda do event-loop (a decisiva) ---
+sonda /favicon...: p95 ... ms  (teto: 1000 ms)
+VUs (max)........: 120
+=========================================================
+</code></pre></div>
+<p>Os avisos <code>setTimeout N was stopped because the VU iteration was interrupted</code> no
+fim são <strong>esperados</strong>: são as cadeias em curso durante a rampa de descida.</p>
+<h2 id="criterios-de-aprovacao">Critérios de aprovação<a class="headerlink" href="#criterios-de-aprovacao" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">threshold</th>
+<th style="text-align: left;">exigido</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>carga_uso_handshake_ok</code></td>
+<td style="text-align: left;">&gt; 0,95</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_ciclo_completo</code></td>
+<td style="text-align: left;">&gt; 0,90</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_rota_200</code></td>
+<td style="text-align: left;">&gt; 0,99</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_desconectou</code></td>
+<td style="text-align: left;">&gt; 0,95</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_pensamento</code></td>
+<td style="text-align: left;"><code>min</code> &gt; 10 000 ms</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>http_req_duration{classe:sonda}</code></td>
+<td style="text-align: left;">p95 &lt; 1 000 ms</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>http_req_duration{classe:login}</code></td>
+<td style="text-align: left;">p95 &lt; 2 000 ms</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>http_req_duration{classe:pagina}</code></td>
+<td style="text-align: left;">p95 &lt; 3 000 ms</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>http_req_failed</code></td>
+<td style="text-align: left;">&lt; 0,02</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>checks</code></td>
+<td style="text-align: left;">&gt; 0,95</td>
+</tr>
+</tbody>
+</table>
+<p>(A leitura de blog saiu da lista de thresholds: por protocolo o k6 não
+completa o login, então o blog não renderiza e o tempo seria sempre 0 — um
+threshold impossível, que reprovaria sem defeito. A exigência de 1 min é
+medida na camada de navegador real.)</p>
+<p>Mais, do lado do navegador: <code>logins_ok = 20/20</code>, <code>pdf_anexado ≥ 20</code>,
+<code>cancelamentos = envios</code> (a fila de autorização precisa voltar limpa) e
+<code>erros = 0</code>.</p>
+<h3 id="resultado-medido-em-26092026-a-120-usuarios-reprovado">Resultado medido em 26/09/2026 — a 120 usuários, REPROVADO<a class="headerlink" href="#resultado-medido-em-26092026-a-120-usuarios-reprovado" title="Permanent link">&para;</a></h3>
+<p>O ensaio completo com os 120 usuários <strong>falhou</strong>, e a tabela de thresholds
+diz exatamente por quê:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">métrica</th>
+<th style="text-align: left;">exigido</th>
+<th style="text-align: left;">medido a 120</th>
+<th style="text-align: center;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>http_req_failed</code></td>
+<td style="text-align: left;">&lt; 0,02</td>
+<td style="text-align: left;"><strong>0,1068</strong></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_ciclo_completo</code></td>
+<td style="text-align: left;">&gt; 0,90</td>
+<td style="text-align: left;"><strong>0,4006</strong></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_handshake_ok</code></td>
+<td style="text-align: left;">&gt; 0,95</td>
+<td style="text-align: left;"><strong>0,8368</strong></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_rota_200</code></td>
+<td style="text-align: left;">&gt; 0,99</td>
+<td style="text-align: left;"><strong>0,8822</strong></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;">sonda do event-loop p95</td>
+<td style="text-align: left;">&lt; 1 000 ms</td>
+<td style="text-align: left;"><strong>10 001 ms</strong></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>GET /login</code> p95</td>
+<td style="text-align: left;">&lt; 2 000 ms</td>
+<td style="text-align: left;"><strong>30 000 ms</strong> (timeout)</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;">latência de página p95</td>
+<td style="text-align: left;">&lt; 3 000 ms</td>
+<td style="text-align: left;"><strong>20 000 ms</strong></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_pensamento</code> min</td>
+<td style="text-align: left;">&gt; 10 000 ms</td>
+<td style="text-align: left;">12 009 ms</td>
+<td style="text-align: center;">✅</td>
+</tr>
+</tbody>
+</table>
+<p><strong>O que isso NÃO foi:</strong> não foi queda. O servidor terminou a bateria com
+<strong>zero <code>ERROR</code>, zero <code>CRITICAL</code>, zero <code>Traceback</code></strong>, stayed de pé, e respondeu
+todos os 3.679 requests que não estouraram timeout. Imediatamente depois, o
+<code>GET /login</code> ocioso voltou a <strong>135 ms</strong>. RAM ficou em ~63 % — não houve
+pressão de memória. Foi <strong>fila e latência</strong>, não indisponibilidade.</p>
+<h3 id="isolamento-da-causa">Isolamento da causa<a class="headerlink" href="#isolamento-da-causa" title="Permanent link">&para;</a></h3>
+<p>Quatro medições separam as variáveis:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">cenário</th>
+<th style="text-align: left;">resultado</th>
+<th style="text-align: left;">leitura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">120 sockets abertos, HTTP leve (<code>login_carga.js</code>)</td>
+<td style="text-align: left;">p95 <strong>937 ms</strong></td>
+<td style="text-align: left;">✅ 120 conexões cabem</td>
+</tr>
+<tr>
+<td style="text-align: left;">40 <code>GET /login</code> concorrentes, sem socket</td>
+<td style="text-align: left;">lote inteiro em <strong>4,2 s</strong></td>
+<td style="text-align: left;">✅ HTTP não é o gargalo</td>
+</tr>
+<tr>
+<td style="text-align: left;">40 VUs com ciclo de uso completo</td>
+<td style="text-align: left;">p95 de página <strong>17,7 s</strong></td>
+<td style="text-align: left;">❌ degradação de 75×</td>
+</tr>
+<tr>
+<td style="text-align: left;">120 VUs com ciclo de uso completo</td>
+<td style="text-align: left;">p95 de página <strong>20 s</strong>, 10,7 % de falha</td>
+<td style="text-align: left;">❌ colapso</td>
+</tr>
+</tbody>
+</table>
+<p>O HTTP sozinho e o socket sozinho aguentam. O que não aguenta é a <strong>combinação
+de muitos sockets abertos com recargas de página repetidas</strong> — cada VU faz 9
+navegações por ciclo, e é aí que o event-loop satura. A sonda do event-loop
+(subindo para 10 s) é exatamente esse sintoma: o loop para de atender
+requisição leve enquanto os clientes estão conectados.</p>
+<p>Isto contrasta com <code>testes_carga_k6.md</code>, onde 120 conexões passam com p95 de
+955 ms: <strong>a diferença é o trabalho por usuário</strong>, não o número de usuários.</p>
+<h3 id="o-gate-de-aprovacao-40-vus-funcionalmente-aprovado-latencia-acima-do-teto">O gate de aprovação (40 VUs) — funcionalmente APROVADO, latência acima do teto<a class="headerlink" href="#o-gate-de-aprovacao-40-vus-funcionalmente-aprovado-latencia-acima-do-teto" title="Permanent link">&para;</a></h3>
+<p>O enunciado aprova com <strong>20 usuários por 3 min</strong>. Rodando o ensaio completo com
+<code>-e K6_MAX_VU=40</code> (mesma cronometragem, com a sonda do event-loop ativa):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">threshold</th>
+<th style="text-align: left;">exigido</th>
+<th style="text-align: left;">medido a 40</th>
+<th style="text-align: center;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>http_req_failed</code></td>
+<td style="text-align: left;">&lt; 0,02</td>
+<td style="text-align: left;"><strong>0,0035</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_ciclo_completo</code></td>
+<td style="text-align: left;">&gt; 0,90</td>
+<td style="text-align: left;"><strong>1,0000</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_handshake_ok</code></td>
+<td style="text-align: left;">&gt; 0,95</td>
+<td style="text-align: left;"><strong>0,9861</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_rota_200</code></td>
+<td style="text-align: left;">&gt; 0,99</td>
+<td style="text-align: left;"><strong>1,0000</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_desconectou</code></td>
+<td style="text-align: left;">&gt; 0,95</td>
+<td style="text-align: left;"><strong>0,9861</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>carga_uso_pensamento</code> min</td>
+<td style="text-align: left;">&gt; 10 000 ms</td>
+<td style="text-align: left;"><strong>12 008 ms</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>checks</code></td>
+<td style="text-align: left;">&gt; 0,95</td>
+<td style="text-align: left;"><strong>0,9888</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">sonda do event-loop p95</td>
+<td style="text-align: left;">&lt; 1 000 ms</td>
+<td style="text-align: left;"><strong>1 676 ms</strong></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>GET /login</code> p95</td>
+<td style="text-align: left;">&lt; 2 000 ms</td>
+<td style="text-align: left;"><strong>11 008 ms</strong></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;">latência de página p95</td>
+<td style="text-align: left;">&lt; 3 000 ms</td>
+<td style="text-align: left;"><strong>6 950 ms</strong></td>
+<td style="text-align: center;">❌</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Leitura:</strong> a 40 usuários o sistema está <strong>funcionalmente íntegro</strong> — 144
+ciclos de uso completos, 1.995 requisições com 0,35 % de falha, todo mundo
+conecta, navega e desconecta, e o think time mínimo é respeitado. <strong>A
+aprovação funcional do enunciado é cumprida.</strong></p>
+<p>O que <strong>não</strong> passa é a <strong>latência</strong>: a sonda do event-loop fica em 1,68 s
+contra o teto de 1 s. A degradação é gradual entre 40 e 120, não um degrau:
+a 40 o sistema funciona com folga de correção; a 120 colapsa.</p>
+<h3 id="a-pista-mais-util-cpu-baixa-com-latencia-alta">A pista mais útil: CPU baixa com latência alta<a class="headerlink" href="#a-pista-mais-util-cpu-baixa-com-latencia-alta" title="Permanent link">&para;</a></h3>
+<p>Durante o ensaio de 40 VUs, o guarda mediu <strong>CPU entre 4 % e 15 %</strong> — a maior
+parte do tempo o servidor estava <strong>ocioso</strong>, e mesmo assim a página levava
+6,9 s. Servidor ocioso com latência alta é a assinatura de <strong>espera por lock</strong>,
+não de falta de CPU: o processo está bloqueado, não calculando.</p>
+<p>A hipótese mais provável é <strong>contenção de escrita no SQLite</strong>. O <code>banco_conexao</code>
+usa <code>busy_timeout=5000</code> (5 s) e <code>synchronous=NORMAL</code>; em modo WAL as escritas
+são serializadas. Cada navegação de página cria um <code>Client</code> no servidor e cada
+handshake grava sessão, e <code>tb_sessoes</code> já tinha 760 linhas ao fim do ensaio.
+Um writer que espera o <code>busy_timeout</code> consomeCPU zero e devolve latência de
+segundos — exatamente o observado.</p>
+<p><strong>Isso não foi confirmado.</strong> O caminho para confirmar é medir o tempo de
+espera por lock (<code>/proc/&lt;pid&gt;/wchan</code> ou <code>PRAGMA locking_mode</code>) durante a
+bateria, ou repetir o ensaio com <code>banco_tipo=postgres</code>, que não serializa
+escritas. Fica registrado como <strong>hipótese a confirmar</strong>, não como diagnóstico.</p>
+<h2 id="limpeza">Limpeza<a class="headerlink" href="#limpeza" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># devolve os usuários ao acesso padrão (só os 4 módulos de leitura)</span>
+<span class="nv">INTRANET_FORCE_SQLITE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>.venv/bin/python<span class="w"> </span>assets/test/libera_modulos_carga.py<span class="w"> </span>--restaurar
+
+<span class="c1"># remove os 120 usuários de carga</span>
+<span class="nv">INTRANET_FORCE_SQLITE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>.venv/bin/python<span class="w"> </span>assets/test/popula_usuarios_carga.py<span class="w"> </span>--limpar
+</code></pre></div>
+<p>Os rascunhos da Solicitação de Impressão expiram sozinhos
+(<code>tempo_expira_rascunho_min</code>); os PDFs de teste reaproveitados são os mesmos
+de <code>assets/test/pdf/</code>, que não são apagados.</p>
+<h2 id="arquivos">Arquivos<a class="headerlink" href="#arquivos" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">arquivo</th>
+<th style="text-align: left;">papel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>assets/k6/carga_uso.js</code></td>
+<td style="text-align: left;">o ensaio de 120 usuários (protocolo)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/carga_uso_navegador.py</code></td>
+<td style="text-align: left;">os 20 navegadores reais</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/guarda_recursos.py</code></td>
+<td style="text-align: left;">o vigia de 90 %</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/libera_modulos_carga.py</code></td>
+<td style="text-align: left;">libera blog/notícias/filas/lista para os usuários de carga</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/k6/login_carga.js</code></td>
+<td style="text-align: left;">o outro teste (sockets abertos, sem uso) — <strong>não editar</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/popula_usuarios_carga.py</code></td>
+<td style="text-align: left;">cria os 120 usuários</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/mede_custo_login.py</code></td>
+<td style="text-align: left;">mede o bcrypt, com o servidor <strong>parado</strong></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../testes_carga_k6/" class="btn btn-neutral float-left" title="Teste de carga k6"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../dimensionamento/" class="btn btn-neutral float-right" title="Dimensionamento (40 a 2.000 usuários)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../testes_carga_k6/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../dimensionamento/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
