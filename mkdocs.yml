@@ -63,6 +63,7 @@ nav:
       - Relatório de Segurança (06/09/2026): testes_relatorios/seguranca_2026-09-06.md
       - Relatório de QA de Execução (25/09/2026): testes_relatorios/qa_execucao_2026-09-25.md
       - E2E com Playwright: testes_playwright.md
+      - Teste de carga k6: testes_carga_k6.md
   - Módulos (análise):
       - Intranet (núcleo): analise_mod_intranet.md
       - Gestão de Usuários: analise_mod_gest_cad_usuario.md
