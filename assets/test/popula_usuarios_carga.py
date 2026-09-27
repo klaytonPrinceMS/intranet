@@ -31,52 +31,58 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 PREFIXO = "user"
 SENHA_PADRAO = "123456"   # provisória, como o seed do AGENTS.md §8.2
-
-
-def _conectar():
-    """Abre o banco de usuários para leitura/limpeza (o módulo cuida do resto)."""
-    import sqlite3
-    from pathlib import Path
-    raiz = Path(__file__).resolve().parents[2]
-    caminho = raiz / "db_mod_gest_cad_usuario.db"
-    if not caminho.exists():
-        return None, caminho
-    return sqlite3.connect(str(caminho), timeout=30), caminho
+# `excluir_usuario_definitivo` revalida o papel no backend: só
+# `administrador_geral` exclui. "sistema" é recusado.
+ATOR_ADMIN = "master"
 
 
 def listar_existentes() -> set:
-    """Logins de carga já cadastrados (idempotente: não duplica)."""
-    conn, caminho = _conectar()
-    if conn is None:
-        return set()
+    """Logins de carga já cadastrados (idempotente: não duplica).
+
+    Vai por `listar_usuarios`, a API do módulo, e NÃO por `sqlite3` direto:
+    com `banco_tipo=postgres` (AGENTS.md §4.1) o arquivo `db_mod_*.db` é
+    legado e a leitura por SQL passaria a consultar o banco errado.
+    """
     try:
-        linhas = conn.execute(
-            "SELECT user_nome FROM tb_usuarios WHERE user_nome LIKE ?",
-            (f"{PREFIXO}%",)).fetchall()
-        return {linha[0] for linha in linhas}
-    finally:
-        conn.close()
+        from mod_gest_cad_usuario import bd_manipulador as bd
+        linhas = bd.listar_usuarios() or []
+        return {linha[1] for linha in linhas
+                if len(linha) > 1 and str(linha[1]).startswith(PREFIXO)}
+    except Exception as exc:
+        print(f"  [aviso] não foi possível listar: {exc}")
+        return set()
 
 
 def limpar() -> int:
-    """Remove os usuários de carga e suas permissões. Devolve quantos saiu."""
-    conn, caminho = _conectar()
-    if conn is None:
-        print(f"  banco não encontrado: {caminho}")
-        return 0
+    """Remove os usuários de carga. Devolve quantos saiu.
+
+    Usa `excluir_usuario_definitivo`, que apaga acessos, encerra sessões,
+    limpa os vínculos cruzados (Blog, EditorPDF, Empenhos) e audita — o
+    mesmo caminho que o admin usa no painel. Um `DELETE` direto deixaria
+    acesso órfão e auditoria sem registro.
+
+    O ator precisa ser `administrador_geral`: a função revalida o papel no
+    backend e recusa "sistema". Usamos `master`, que o seed cria como
+    administrador geral (e que a própria função protege de exclusão).
+    """
     try:
-        cur = conn.cursor()
-        n_usuarios = cur.execute(
-            "SELECT COUNT(*) FROM tb_usuarios WHERE user_nome LIKE ?",
-            (f"{PREFIXO}%",)).fetchone()[0]
-        cur.execute("DELETE FROM tb_acesso_usuario WHERE user_nome LIKE ?",
-                    (f"{PREFIXO}%",))
-        cur.execute("DELETE FROM tb_usuarios WHERE user_nome LIKE ?",
-                    (f"{PREFIXO}%",))
-        conn.commit()
-        return n_usuarios
-    finally:
-        conn.close()
+        from mod_gest_cad_usuario import bd_manipulador as bd
+    except Exception as exc:
+        print(f"  [aviso] módulo de usuários indisponível: {exc}")
+        return 0
+    removidos, falhas = 0, 0
+    for login in sorted(listar_existentes()):
+        try:
+            ok, _msg = bd.excluir_usuario_definitivo(ATOR_ADMIN, login)
+            if ok:
+                removidos += 1
+            else:
+                falhas += 1
+        except Exception:
+            falhas += 1
+    if falhas:
+        print(f"  [aviso] {falhas} usuário(s) não puderam ser excluídos")
+    return removidos
 
 
 def marcar_ja_migraram(logins=None) -> int:
