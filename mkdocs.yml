@@ -65,6 +65,7 @@ nav:
       - E2E com Playwright: testes_playwright.md
       - Teste de carga k6: testes_carga_k6.md
       - Teste de carga e uso (k6 + Playwright): testes_carga_uso.md
+      - Dimensionamento (40 a 2.000 usuários): dimensionamento.md
   - Módulos (análise):
       - Intranet (núcleo): analise_mod_intranet.md
       - Gestão de Usuários: analise_mod_gest_cad_usuario.md
