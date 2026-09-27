@@ -197,6 +197,16 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#resultados-medidos-27092026">Resultados medidos (27/09/2026)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#navegador-real-20-usuarios-sozinhos-sem-o-k6-reprovado">Navegador real — 20 usuários, SOZINHOS (sem o k6): REPROVADO</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#a-bateria-combinada-k6-20-navegadores-nao-roda-nesta-maquina">A bateria combinada (k6 + 20 navegadores) NÃO roda nesta máquina</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#a-soma-das-tres-medicoes">A soma das três medições</a>
+    </li>
+        </ul>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#como-rodar">Como rodar</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#0-pre-requisitos">0. Pré-requisitos</a>
@@ -372,13 +382,13 @@ tempo, por 15 minutos, com um vigia que interrompe tudo se a máquina passar de
 </table>
 <div class="admonition warning">
 <p class="admonition-title">O que já foi medido e o que falta</p>
-<p>O <strong>protocolo</strong> (k6) já rodou na cronometragem completa: a 120 usuários
-<strong>REPROVADO</strong> e a 40 usuários <strong>funcionalmente aprovado</strong> com a latência acima
-do teto — os dois resultados, com todos os números, estão na seção
-<strong>Critérios de aprovação</strong>, mais abaixo. O que <strong>ainda não</strong> foi
-medido é a camada de navegador real em paralelo (20 navegadores com os 120
-do k6 ao mesmo tempo): o <code>carga_uso_navegador.py</code> foi validado com 1 a 4
-usuários. Essa bateria completa é o que o <strong>agente principal</strong> executa.</p>
+<p><strong>Tudo foi medido, e o veredito é REPROVADO.</strong> O protocolo (k6) rodou na
+cronometragem completa a 120 e a 40 usuários. A camada de navegador real
+rodou a <strong>20 usuários</strong> — sozinha, sem o k6 junto — e <strong>6 de 20
+sequer conseguiram carregar a página de login em 30 s</strong>. A bateria
+<em>combinada</em> (k6 + navegadores) não roda nesta máquina: o guarda de
+recursos a interrompe, corretamente, porque a CPU satura. Todos os
+números estão em <strong>Resultados medidos</strong>, mais abaixo.</p>
 </div>
 <h2 id="a-maquina">A máquina<a class="headerlink" href="#a-maquina" title="Permanent link">&para;</a></h2>
 <table>
@@ -872,6 +882,100 @@ isso o guarda tem dois limiares, e a recomendação nesta máquina é:</p>
 </code></pre></div>
 <p>RAM continua em 90 % (que é o que protege a máquina de verdade) e a CPU só
 dispara quando ela está realmente saturada.</p>
+<h2 id="resultados-medidos-27092026">Resultados medidos (27/09/2026)<a class="headerlink" href="#resultados-medidos-27092026" title="Permanent link">&para;</a></h2>
+<h3 id="navegador-real-20-usuarios-sozinhos-sem-o-k6-reprovado">Navegador real — 20 usuários, SOZINHOS (sem o k6): REPROVADO<a class="headerlink" href="#navegador-real-20-usuarios-sozinhos-sem-o-k6-reprovado" title="Permanent link">&para;</a></h3>
+<p>A camada que faltava, rodada sem o k6 junto, para isolar a variável:</p>
+<div class="highlight"><pre><span></span><code>logins ok.......: 6/20
+ciclos completos: 6/20
+passos..........: 138 ok / 8 falha
+PDF anexado.....: 6/20
+enviados/canc...: 2 / 2
+erros...........: 8
+duração.........: 306.8 s
+gate: permitidas=['/configuracoes'] bloqueadas=['/auditoria','/tecnico','/users']
+</code></pre></div>
+<p><strong>Os 8 erros são todos o mesmo:</strong> <code>login: Page.goto: Timeout 30000ms
+exceeded</code> — e o JSON mostra <strong>14 dos 20</strong> sem login, todos pelo mesmo motivo.
+O servidor não conseguia responder a página de login em 30 s para 14 browsers
+simultâneos.</p>
+<p>De novo: <strong>zero ERROR, zero Traceback no servidor</strong>, e ele seguiu no ar com
+5/5 rotas respondendo 200 sob carga. Não foi queda — foi saturação.</p>
+<p>Os 6 que entraram fizeram o roteiro inteiro: 138 passos sem erro, anexaram
+PDF, e os 2 envios foram <strong>cancelados</strong> (a fila de autorização volta limpa).
+O gate de acesso funcionou: <code>/auditoria</code>, <code>/tecnico</code> e <code>/users</code> bloquearam
+para o perfil comum, e <code>/configuracoes</code> passou — que é o comportamento real,
+porque <code>pagina_restrita</code> é chamada sem <code>chave_modulo</code> ali.</p>
+<h3 id="a-bateria-combinada-k6-20-navegadores-nao-roda-nesta-maquina">A bateria combinada (k6 + 20 navegadores) NÃO roda nesta máquina<a class="headerlink" href="#a-bateria-combinada-k6-20-navegadores-nao-roda-nesta-maquina" title="Permanent link">&para;</a></h3>
+<p>O guarda de recursos a interrompeu <strong>duas vezes</strong>, e está certo:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">tentativa</th>
+<th style="text-align: left;">o que aconteceu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1ª</td>
+<td style="text-align: left;">20 browsers abertos de uma vez → <strong>CPU 99,8 % em 2 s</strong> → guarda matou em 4 s</td>
+</tr>
+<tr>
+<td style="text-align: left;">2ª</td>
+<td style="text-align: left;">entrada escalonada (2 s por usuário, 19 subiram sem pico) → <strong>CPU 98–99 %</strong> → guarda matou em 45 s</td>
+</tr>
+</tbody>
+</table>
+<p>Na segunda, a <strong>RAM ficou em 67 %</strong> — folga de sobra. O recurso exhausted é
+<strong>CPU</strong>: 4 núcleos divididos entre o servidor, 20 Chromium, k6 e a ferramenta
+de sessão desta própria bateria (que sozinha consome ~122 %).</p>
+<p>Corrigido o que era defeito do teste (a entrada simultânea), o combinado
+continua acima do teto. <strong>Numa máquina com 4 núcleos e a ferramenta de
+desenvolvimento ligada, 40 VUs de protocolo + 20 navegadores reais não
+cabem em 98 % de CPU.</strong> Isso é limitação do ambiente de teste, não do
+sistema — e por isso as camadas foram medidas <strong>separadamente</strong>.</p>
+<h3 id="a-soma-das-tres-medicoes">A soma das três medições<a class="headerlink" href="#a-soma-das-tres-medicoes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">camada</th>
+<th style="text-align: right;">volume</th>
+<th style="text-align: left;">resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">protocolo, carga leve</td>
+<td style="text-align: right;">120 VUs</td>
+<td style="text-align: left;">✅ aprovado, p95 955 ms</td>
+</tr>
+<tr>
+<td style="text-align: left;">protocolo, ciclo de uso</td>
+<td style="text-align: right;">40 VUs</td>
+<td style="text-align: left;">✅ funcional · ❌ latência</td>
+</tr>
+<tr>
+<td style="text-align: left;">protocolo, ciclo de uso</td>
+<td style="text-align: right;">120 VUs</td>
+<td style="text-align: left;">❌ 10,7 % de falha</td>
+</tr>
+<tr>
+<td style="text-align: left;">navegador real</td>
+<td style="text-align: right;">20 usuários</td>
+<td style="text-align: left;">❌ 6/20 logins</td>
+</tr>
+<tr>
+<td style="text-align: left;">navegador + protocolo</td>
+<td style="text-align: right;">40 + 20</td>
+<td style="text-align: left;">⚠️ não roda nesta máquina (CPU)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Veredito: REPROVADO no critério de 40 usuários.</strong> O sistema não atende 20
+usuários com navegador real nesta configuração, e a 40 VUs de protocolo já
+excede o teto de latência. O caminho não é trocar de processador — ver
+<a href="../dimensionamento/">Dimensionamento</a>: o gargalo medido <strong>não é CPU de
+cálculo</strong> (o servidor estava ocioso, com 4–15 %, enquanto a latência ia a
+7 s), e sim um ponto de serialização, provavelmente a escrita no SQLite.</p>
 <h2 id="como-rodar">Como rodar<a class="headerlink" href="#como-rodar" title="Permanent link">&para;</a></h2>
 <h3 id="0-pre-requisitos">0. Pré-requisitos<a class="headerlink" href="#0-pre-requisitos" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># servidor no ar</span>
