@@ -713,6 +713,207 @@ standalone).</p>
 </tbody>
 </table>
 <p>Detalhe consolidado em <a href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade</a>.</p>
+<hr />
+<h1 id="rf-e-rnf-verificados-no-codigo-27092026">RF e RNF verificados no código (27/09/2026)<a class="headerlink" href="#rf-e-rnf-verificados-no-codigo-27092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Auditoria de requisitos <strong>funcionais</strong> e <strong>não funcionais</strong>, com evidência
+<code>arquivo:linha</code> conferida em 27/09/2026, no mesmo formato dos módulos
+auditados antes.</p>
+</blockquote>
+<h2 id="requisitos-funcionais-rf-mapa-codigo-doc">Requisitos funcionais (RF) — mapa código ↔ doc<a class="headerlink" href="#requisitos-funcionais-rf-mapa-codigo-doc" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-EPDF-01</td>
+<td style="text-align: left;">Enviar PDF para a pasta do usuário, com nome padronizado</td>
+<td style="text-align: left;"><code>registrar_arquivo</code> (<code>:394</code>) grava o que já está em disco; <code>nome_padronizado(usuario, operacao, nome_original)</code> (<code>:328</code>) monta <code>datahora_operacao_nome</code>; <code>pasta_usuario</code> (<code>:296</code>); <code>data-testid=editpdf-upload</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-02</td>
+<td style="text-align: left;">Listar "meus arquivos" só do próprio usuário</td>
+<td style="text-align: left;"><code>obter_meus_arquivos</code> (<code>:527</code>); <code>editar_pdf-atualizar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-03</td>
+<td style="text-align: left;"><strong>Juntar</strong> vários PDFs em um</td>
+<td style="text-align: left;"><code>data-testid=editar_pdf-juntar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-04</td>
+<td style="text-align: left;"><strong>Dividir</strong> um PDF em partes</td>
+<td style="text-align: left;"><code>data-testid=editar_pdf-dividir</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-05</td>
+<td style="text-align: left;"><strong>Cortar</strong> (extrair intervalo de páginas)</td>
+<td style="text-align: left;"><code>data-testid=editar_pdf-cortar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-06</td>
+<td style="text-align: left;"><strong>Reduzir</strong> tamanho, com modo "reduzir" explícito</td>
+<td style="text-align: left;"><code>data-testid=editar_pdf-reduzir</code> e <code>editar_pdf-modo-reduzir</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-07</td>
+<td style="text-align: left;"><strong>Verificar</strong> o arquivo (ler/validar) antes de operar</td>
+<td style="text-align: left;"><code>data-testid=editar_pdf-verificar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-08</td>
+<td style="text-align: left;">Baixar um PDF, ou todos em ZIP</td>
+<td style="text-align: left;"><code>editar_pdf-baixar-pdfs</code>; <code>zip_do_usuario</code> (<code>:628</code>) e <code>zip_por_ids</code> (<code>:640</code>) com <code>_zipar</code> (<code>:682</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-09</td>
+<td style="text-align: left;">Excluir arquivo, devolvendo a cota</td>
+<td style="text-align: left;"><code>deletar_arquivo</code> (<code>:711</code>); <code>editar_pdf-excluir</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-10</td>
+<td style="text-align: left;">Cota <strong>global</strong> de disco (<code>cotadisco_global_gb</code>, padrão 10 GB) verificada <strong>antes</strong> de gravar</td>
+<td style="text-align: left;"><code>_cota_global_bytes</code> (<code>:342</code>) + <code>verificar_quota</code> (<code>:359-390</code>), que soma <code>tb_arquivos WHERE ativo=1</code> e compara com a cota; <code>QUOTA_GLOBAL_BYTES_DEFAULT = 10 * 1024**3</code> (<code>:121</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-11</td>
+<td style="text-align: left;">Cota <strong>por usuário</strong> (<code>editar_pdf_usuario_gb</code>, padrão 1 GB) com o mesmo caminho</td>
+<td style="text-align: left;"><code>cfg_usuario_gb</code> (<code>:157</code>) + <code>verificar_quota</code> (<code>:377-380</code>) lendo <code>tb_cota_disco.total_usado_bytes</code>; <code>QUOTA_USUARIO_BYTES</code> legado (<code>:122</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-12</td>
+<td style="text-align: left;">Cota excedida devolve recusa legível, não exceção</td>
+<td style="text-align: left;"><code>verificar_quota</code> (<code>:359</code>) devolve <code>(False, "Cota global excedida (10 GB)")</code> / <code>(False, "Sua cota de N GB foi excedida")</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-13</td>
+<td style="text-align: left;">Upload em lote limitado por <strong>quantidade</strong> de arquivos e por <strong>MB</strong> por lote</td>
+<td style="text-align: left;"><code>cfg_lote_arquivos</code> (<code>:137</code>), <code>cfg_lote_mb</code> (<code>:147</code>), <code>contar_uploads_ativos</code> (<code>:566</code>); os dois com piso de 1</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-14</td>
+<td style="text-align: left;">Arquivos antigos expiram sozinhos</td>
+<td style="text-align: left;"><code>cfg_expiracao_min</code> (<code>:167</code>), <code>expirar_antigos(minutos)</code> (<code>:914</code>), botão "Expirar agora" no painel (<code>_expirar_agora</code>, <code>telas_administracao.py:288</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-15</td>
+<td style="text-align: left;">Painel administrativo: cotas, expiração, aparência e lista global</td>
+<td style="text-align: left;"><code>mostrar_administracao</code> (<code>telas_administracao.py:62</code>), <code>_salvar_configs</code> (<code>:200</code>), <code>_resetar_configs</code> (<code>:245</code>), <code>_expirar_agora</code> (<code>:288</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-16</td>
+<td style="text-align: left;">Uso total em disco exibido na tela, com tempo restante</td>
+<td style="text-align: left;"><code>uso_global_bytes</code> (<code>:309</code>) + <code>_fmt_resta</code>/<code>_cor_resta</code> (<code>telas.py:63</code>/<code>:83</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EPDF-17</td>
+<td style="text-align: left;">Rótulos PT-BR e docstrings bilíngue EN (topo) / PT-BR (abaixo)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1-16</code>, <code>telas.py:1-38</code>, <code>telas_administracao.py:1-37</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="requisitos-nao-funcionais-rnf-garantias-tecnicas">Requisitos não-funcionais (RNF) — garantias técnicas<a class="headerlink" href="#requisitos-nao-funcionais-rnf-garantias-tecnicas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RNF</th>
+<th style="text-align: left;">Exigência</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RNF-EPDF-PERS-01</td>
+<td style="text-align: left;">Banco próprio <code>db_mod_edit_pdf.db</code>; tabelas <code>tb_arquivos</code> (arquivo + cota por usuário) e <code>tb_cota_disco</code> (uso acumulado)</td>
+<td style="text-align: left;"><code>init_db_pdf</code> (<code>:220</code>); <code>get_connection</code>/<code>_conn</code> (<code>:190</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-PERS-02</td>
+<td style="text-align: left;"><strong>Atomicidade da cota</strong>: <code>tb_arquivos</code> + <code>tb_cota_disco</code> na mesma transação curta, com rollback para a cota nunca estourar</td>
+<td style="text-align: left;">docstring de <code>registrar_arquivo</code> (<code>:394-404</code>) descreve o commit único e o rollback</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-PERS-03</td>
+<td style="text-align: left;">Bloqueio de banco é erro <strong>tratado</strong>, não crash</td>
+<td style="text-align: left;"><code>_eh_locked</code> (<code>:80</code>) classifica o erro; <code>_falha_conexao</code> (<code>:64</code>) e <code>_log_exc</code> (<code>:98</code>) registram; <code>iniciar</code>/<code>_init_db_seguro</code> nunca levantam</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-SEG-01</td>
+<td style="text-align: left;">Falha de cota <strong>nunca</strong> deixa o arquivo gravado sem registro, nem registra sem o arquivo</td>
+<td style="text-align: left;">transação única em <code>registrar_arquivo</code> (<code>:394</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-SEG-02</td>
+<td style="text-align: left;">Nome de arquivo sempre padronizado — o <code>nome_original</code> do cliente não vira caminho</td>
+<td style="text-align: left;"><code>nome_padronizado</code> (<code>:328</code>) + <code>pasta_usuario</code> (<code>:296</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-SEG-03</td>
+<td style="text-align: left;">Autorização de escrita é por cota, não por papel: quem estourou não grava</td>
+<td style="text-align: left;"><code>verificar_quota</code> (<code>:359</code>) antes de <code>registrar_arquivo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-RES-01</td>
+<td style="text-align: left;"><code>try/except</code> obrigatório em função, com notificação + log (AGENTS.md §3.2)</td>
+<td style="text-align: left;">Todo <code>bd_manipulador</code> protegido; <code>_notificar_falha</code> (<code>:38</code>) e <code>ui_notify_erro</code> (<code>:505</code>) centralizam o aviso; <strong>zero</strong> <code>ui.notify</code> cru — <code>ui_notify_erro</code> existe justamente para <strong>não acoplar</strong> UI na lógica</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-RES-02</td>
+<td style="text-align: left;">Banco indisponível devolve recusa, não derruba a tela</td>
+<td style="text-align: left;"><code>verificar_quota</code> (<code>:363-366</code>) e <code>registrar_arquivo</code> testam <code>conn is None</code> e retornam <code>False</code> com mensagem</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-UX-01</td>
+<td style="text-align: left;">Anti-disconnect: operações de PDF são I/O pesado e saem do event-loop</td>
+<td style="text-align: left;"><code>telas.py:106</code> <code>mostrar_tela</code> conduz as operações por <code>run.io_bound</code>, com <code>ui.spinner</code> e trava de reentrância</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-UX-02</td>
+<td style="text-align: left;"><code>data-testid</code> via <code>.props('data-testid=...')</code> em todas as ações</td>
+<td style="text-align: left;">12 ids: <code>editpdf-upload</code>, <code>editar_pdf-enviar</code>, <code>-atualizar</code>, <code>-juntar</code>, <code>-dividir</code>, <code>-cortar</code>, <code>-verificar</code>, <code>-reduzir</code>, <code>-modo-reduzir</code>, <code>-baixar-pdfs</code>, <code>-baixar-zip</code>, <code>-excluir</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-UX-03</td>
+<td style="text-align: left;">Sem JavaScript direto (AGENTS.md §5)</td>
+<td style="text-align: left;">Tudo por <code>ui.*</code>;o único JS é o de upload, injetado pelo próprio NiceGUI</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-PERF-01</td>
+<td style="text-align: left;">Verificação de cota em 2 consultas, sem N+1</td>
+<td style="text-align: left;"><code>verificar_quota</code> (<code>:368-372</code>): um <code>SUM</code> global + uma leitura da cota do usuário</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-PERF-02</td>
+<td style="text-align: left;">ZIP montado em memória com lista de ids, não varrendo a pasta inteira</td>
+<td style="text-align: left;"><code>zip_por_ids</code> (<code>:640</code>) → <code>_zipar</code> (<code>:682</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-RESP-01</td>
+<td style="text-align: left;">Responsividade</td>
+<td style="text-align: left;"><code>telas.py:106</code> — grids <code>grid-cols-1 sm:grid-cols-2 md:grid-cols-3</code>, <code>overflow-x-auto</code> nas tabelas, <code>scroll_area</code> com altura explícita; auditado em 320/768/1024 sem pendência P0</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-CFG-01</td>
+<td style="text-align: left;">Configuração com fonte única de verdade e piso explícito</td>
+<td style="text-align: left;"><code>_cfg</code> (<code>:127</code>) + <code>cfg_*</code> (<code>:137-167</code>), todas com mínimo 1 — nunca valor 0 que o usuário não pediu</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-COMP-01</td>
+<td style="text-align: left;">Compatibilidade SQLite ↔ PostgreSQL</td>
+<td style="text-align: left;">Via <code>banco_conexao</code>; <code>strftime</code> aparece <strong>só em Python</strong> (<code>:215</code>, <code>:423</code>), não em SQL — registrado na Pendência QA acima como risco <strong>Médio</strong> (falta migração para <code>CrudBase</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EPDF-LGPD-01</td>
+<td style="text-align: left;">Excluir/renomear usuário remove os arquivos e zera a cota</td>
+<td style="text-align: left;"><code>remover_vinculos_usuario</code> (<code>:783</code>), <code>renomear_usuario</code> (<code>:856</code>)</td>
+</tr>
+</tbody>
+</table>
               
             </div>
           </div><footer>

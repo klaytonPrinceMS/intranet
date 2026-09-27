@@ -1036,6 +1036,236 @@ chamado não é erro de sintaxe. Removida em 26/09/2026.</p>
 Playwright ainda referenciava o id antigo e falhou — o que expôs que o teste
 estava <strong>pulado</strong> desde a troca de senha forçada e nunca havia rodado contra a
 tela real.</p>
+<hr />
+<h1 id="rf-e-rnf-verificados-no-codigo-27092026">RF e RNF verificados no código (27/09/2026)<a class="headerlink" href="#rf-e-rnf-verificados-no-codigo-27092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Auditoria de requisitos <strong>funcionais</strong> e <strong>não funcionais</strong>, com evidência
+<code>arquivo:linha</code> conferida em 27/09/2026, no mesmo formato dos módulos
+auditados antes. Este módulo já tinha uma seção de RF/RNF num formato
+diferente (RF-01…RF-N, "Requisitos funcionais (RF)" na parte superior do
+arquivo); a de baixo é a versão <strong>verificada no código</strong>, com <code>arquivo:linha</code>.
+As duas não substituem uma à outra — a de cima é o requisito declarado, a de
+baixo é o requisito que o código cumpre.</p>
+</blockquote>
+<h2 id="requisitos-funcionais-rf-mapa-codigo-doc">Requisitos funcionais (RF) — mapa código ↔ doc<a class="headerlink" href="#requisitos-funcionais-rf-mapa-codigo-doc" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-EMP-01</td>
+<td style="text-align: left;">Monitorar <strong>pastas configuráveis</strong>, validando que existem e são acessíveis</td>
+<td style="text-align: left;"><code>pastas_monitoradas</code> (<code>:152</code>), <code>pasta_acessivel</code> (<code>:216</code>), <code>salvar_pastas_monitoradas</code> (<code>:224</code>), <code>pasta_monitorada</code> (<code>:207</code>), <code>_normalizar_pasta</code> (<code>:190</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-02</td>
+<td style="text-align: left;">Processar um PDF: extrair, numerar, renomear e <strong>registrar</strong> o antes/depois</td>
+<td style="text-align: left;"><code>processar_pdf</code> (<code>:1429</code>) orquestra; <code>registrar_arquivo_detectado</code> (<code>:1669</code>), <code>registrar_arquivo_renomeado</code> (<code>:1710</code>), <code>registrar_arquivo_erro</code> (<code>:1754</code>), <code>registrar_arquivo_removido</code> (<code>:1764</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-03</td>
+<td style="text-align: left;">Template de nome configurável, com contador e campos extraídos</td>
+<td style="text-align: left;"><code>template_nome_atual</code> (<code>:1384</code>), <code>montar_nome_final</code> (<code>:1394</code>), <code>_proximo_contador</code> (<code>:1285</code>), <code>extrair_numero</code> (<code>:1249</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-04</td>
+<td style="text-align: left;">Extração de <strong>número, ficha, ano, parcela e tipo</strong> do texto do PDF</td>
+<td style="text-align: left;"><code>extrair_dados_empenho</code> (<code>:1334</code>) + <code>extrair_texto_pdf</code> (<code>:959</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-05</td>
+<td style="text-align: left;">Tipos especiais (ex.: despesa extra, folha,etc.) com parser dedicado</td>
+<td style="text-align: left;"><code>detectar_tipo_especial</code> (<code>:328</code>), <code>extrair_dados_tipo_especial</code> (<code>:359</code>), <code>montar_nome_tipo_especial</code> (<code>:266</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-06</td>
+<td style="text-align: left;"><strong>Regex dinâmica</strong> configurável pelo admin, por campo de destino</td>
+<td style="text-align: left;"><code>salvar_regra</code> (<code>:2594</code>), <code>listar_regras</code> (<code>:2616</code>), <code>extrair_campos_regex</code> (<code>:2334</code>), <code>_campos_busca_ativos</code> (<code>:1313</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-07</td>
+<td style="text-align: left;"><strong>Quarentena</strong>: arquivo que não pôde ser processado vai para <code>mod_renomear_empenho/quarentena/</code> e fica na fila de reprocessamento</td>
+<td style="text-align: left;"><code>PASTA_QUARENTENA</code> (<code>:147</code>), <code>mover_quarentena</code> (<code>:2231</code>), <code>listar_quarentena</code> (<code>:2485</code>), <code>reprocessar_quarentena</code> (<code>:2500</code>), <code>promover_quarentena</code> (<code>:2534</code>), <code>reprocessar_fila</code> (:<code>2547</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-08</td>
+<td style="text-align: left;">PDF <strong>multi-documento</strong> detectado, separado e cada parte reprocessada</td>
+<td style="text-align: left;"><code>detectar_documentos_no_pdf</code> (<code>:1044</code>), <code>eh_multiplo_documento</code> (<code>:1103</code>), <code>separar_pdf_por_documentos</code> (<code>:1129</code>), <code>separar_documentos_quarentena</code> (<code>:1181</code>), <code>_inicio_documento</code> (<code>:1021</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-09</td>
+<td style="text-align: left;"><strong>Levantamento</strong> do que existe na pasta, com nome, número, ficha, ano, tipo e conteúdo pesquisável</td>
+<td style="text-align: left;"><code>levantar_arquivos</code> (<code>:1970</code>), <code>_levantamento_gravar</code> (<code>:1934</code>), <code>_levantamento_consultar</code> (<code>:1914</code>), <code>atualizar_levantamento_renomeado</code> (<code>:2147</code>), <code>listar_levantamento</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-10</td>
+<td style="text-align: left;">Pesquisa full-text de empenhos e de levantamento</td>
+<td style="text-align: left;"><code>pesquisar</code> (<code>:2439</code>), <code>pesquisar_levantamento</code> (<code>:2180</code>), <code>_fts_escape</code> (<code>:2310</code>), <code>_fts_query_prefixada</code> (<code>:2319</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-11</td>
+<td style="text-align: left;">Reindexar um empenho ou reconstruir o índice inteiro</td>
+<td style="text-align: left;"><code>reindexar_empenho</code> (<code>:2360</code>), <code>rebuild_fts</code> (<code>:2425</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-12</td>
+<td style="text-align: left;">Navegar, filtrar e editar empenhos pela tela</td>
+<td style="text-align: left;"><code>telas.py:264</code> <code>_tela_navegar</code>; <code>empenhos-navegar-pesquisa</code>, <code>-pesquisa</code>, <code>-contagem</code>, <code>-editar</code>, <code>-processar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-13</td>
+<td style="text-align: left;">Fila de processamento com edição, reprocessamento e marcação</td>
+<td style="text-align: left;"><code>telas.py:1290</code> <code>_tela_fila</code>; <code>empenhos-fila-editar</code>, <code>-processar</code>, <code>empenhos-reprocessar-fila</code>, <code>empenhos-filtro-*</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-14</td>
+<td style="text-align: left;">Organizador de pasta (mover, disparate em lote)</td>
+<td style="text-align: left;"><code>telas.py:1544</code> <code>_tela_organizador</code>; <code>empenhos-lote-marcar</code>, <code>-contador</code>, <code>-limpar</code>, <code>-confirmar</code>, <code>-baixar</code>, <code>-email</code>, <code>-solicitar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-15</td>
+<td style="text-align: left;">Revisão de campos extraídos (ano, ficha, parcela, tipo) antes de renomear</td>
+<td style="text-align: left;"><code>telas.py:1853</code> <code>_tela_solicitacao</code>; <code>empenhos-revisar-ano</code>, <code>-ficha</code>, <code>-parcela</code>, <code>-tipo</code>, <code>-empenho</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-16</td>
+<td style="text-align: left;">Configuração do módulo (tema, modelo visual, regras)</td>
+<td style="text-align: left;"><code>telas.py:2137</code> <code>_tela_config</code>; <code>visual.py</code> <code>ler_modelo</code>/<code>salvar_modelo</code>/<code>aplicar_modelo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-17</td>
+<td style="text-align: left;">Auditoria de arquivo: o que foi detectado, renomeado, erro ou removido, com os eventos por arquivo</td>
+<td style="text-align: left;"><code>listar_arquivos_auditoria</code> (<code>:1792</code>), <code>listar_eventos_arquivo</code> (<code>:1812</code>), tabelas <code>tb_arquivos_auditoria</code>/<code>tb_eventos_arquivos</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-EMP-18</td>
+<td style="text-align: left;">Rótulos PT-BR e docstrings bilíngue EN (topo) / PT-BR (abaixo)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1-22</code>, <code>telas.py:1-50</code>, <code>telas_administracao.py:1-29</code>, <code>visual.py:1-54</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="requisitos-nao-funcionais-rnf-garantias-tecnicas">Requisitos não-funcionais (RNF) — garantias técnicas<a class="headerlink" href="#requisitos-nao-funcionais-rnf-garantias-tecnicas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RNF</th>
+<th style="text-align: left;">Exigência</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RNF-EMP-PERS-01</td>
+<td style="text-align: left;">Banco próprio <code>db_mod_renomear_empenho.db</code>; 9 tabelas do módulo</td>
+<td style="text-align: left;"><code>init_db_empenho</code> (<code>:649</code>): <code>tb_empenhos</code>, <code>tb_levantamento</code>, <code>tb_quarentena</code>, <code>tb_regex_regras</code>, <code>tb_campos_busca</code>, <code>tb_solicitacoes</code>, <code>tb_arquivos_auditoria</code>, <code>tb_eventos_arquivos</code>, <code>tb_indexador_pesquisa</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-PERS-02</td>
+<td style="text-align: left;"><code>database is locked</code> é erro tratado, com retry no commit</td>
+<td style="text-align: left;"><code>_eh_erro_bloqueio</code> (<code>:61</code>), <code>_commit_com_retry(conn, contexto, tentativas=5)</code> (<code>:76</code>), <code>_fechar_seguro</code> (<code>:113</code>), <code>_sem_conexao</code> (<code>:122</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-PERS-03</td>
+<td style="text-align: left;">Migração de coluna idempotente, sem perder dado</td>
+<td style="text-align: left;"><code>_migrar_coluna</code> (<code>:639</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-PERS-04</td>
+<td style="text-align: left;">Escrita de levantamento em transação com retry próprio</td>
+<td style="text-align: left;"><code>_levantamento_gravar(operacao, contexto, tentativas=5)</code> (<code>:1934</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-SEG-01</td>
+<td style="text-align: left;">Pasta monitorada <strong>validada</strong> antes de qualquer operação de arquivo</td>
+<td style="text-align: left;"><code>pasta_acessivel</code> (<code>:216</code>) + <code>_normalizar_pasta</code> (<code>:190</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-SEG-02</td>
+<td style="text-align: left;">Nada é apagado em silêncio: arquivo processado sai do monitor e é registrado como <code>removido</code></td>
+<td style="text-align: left;"><code>registrar_arquivo_removido</code> (<code>:1764</code>) + <code>_registrar_removidos_monitor</code> (<code>:1826</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-SEG-03</td>
+<td style="text-align: left;">Falha no meio do processamento vai para a <strong>quarentena</strong>, não se perde</td>
+<td style="text-align: left;"><code>mover_quarentena</code> (<code>:2231</code>) chamado no caminho de erro de <code>processar_pdf</code> (<code>:1429</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-SEG-04</td>
+<td style="text-align: left;">Autorização de escrita validada no servidor antes de processar</td>
+<td style="text-align: left;"><code>telas.py:60</code> <code>mostrar_tela(usuario_logado, perfil)</code> com <code>eh_admin</code>/<code>autorizado</code> propagados para as sub-telas</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-RES-01</td>
+<td style="text-align: left;"><code>try/except</code> obrigatório em função, com log (AGENTS.md §3.2)</td>
+<td style="text-align: left;">Todo <code>bd_manipulador</code> protegido, com <code>_log()</code> (<code>:24</code>); <code>_fechar_seguro</code> (<code>:113</code>) garante o fechamento mesmo no erro</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-RES-02</td>
+<td style="text-align: left;">Falha de PDF nunca derruba a tela: o item vai para a quarentena e a fila segue</td>
+<td style="text-align: left;"><code>registrar_arquivo_erro</code> (<code>:1754</code>) + <code>reprocessar_fila</code> (<code>:2547</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-UX-01</td>
+<td style="text-align: left;">Anti-disconnect: processar PDF é I/O pesado e sai do event-loop</td>
+<td style="text-align: left;"><code>telas.py</code> conduz <code>processar_pdf</code>/upload/zip por <code>run.io_bound</code>, com <code>ui.spinner</code> e trava de reentrância</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-UX-02</td>
+<td style="text-align: left;"><code>data-testid</code> via <code>.props('data-testid=...')</code> em todas as ações</td>
+<td style="text-align: left;">30 ids em <code>telas.py</code> (<code>empenhos-navegar-*</code>, <code>empenhos-fila-*</code>, <code>empenhos-lote-*</code>, <code>empenhos-revisar-*</code>, <code>empenhos-reprocessar-fila</code>, <code>empenhos-pasta-</code>, <code>empenhos-selecionar</code>, <code>empenhos-processar</code>, <code>empenhos-raiz-dot</code>, <code>empenhos-filtro-*</code>, <code>empenhos-atualizar</code>, <code>empenhos-gerar-25-temp</code>, <code>empenhos-solicitar-email</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-UX-03</td>
+<td style="text-align: left;">O caminho de pesquisa é <strong>um só</strong></td>
+<td style="text-align: left;">A aba "Pesquisar" foi descontinuada e <code>_tela_pesquisar</code> (107 linhas) foi removida em 26/09/2026; o campo chama-se <code>empenhos-navegar-pesquisa</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-UX-04</td>
+<td style="text-align: left;">Sem JavaScript direto (AGENTS.md §5)</td>
+<td style="text-align: left;"><code>visual.py</code> trabalha por classes Tailwind/Bootstrap injetadas, sem JS autoral</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-PERF-01</td>
+<td style="text-align: left;">Busca por full-text, não <code>LIKE</code> em varredura</td>
+<td style="text-align: left;"><code>tb_levantamento_fts</code> (<code>:821</code>) + <code>tb_indexador_pesquisa_fts5</code> (<code>:923</code>) com trigger; <code>_fts_query_prefixada</code> (<code>:2319</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-PERF-02</td>
+<td style="text-align: left;">FTS5 é <strong>SQLite-only</strong> e o módulo sabe disso</td>
+<td style="text-align: left;">comentário em <code>bd_manipulador.py:139</code> registra que o proxy <code>_CursorPostgres</code> não traduz <code>CREATE VIRTUAL TABLE</code>; o INSERT tem ramo próprio por backend em <code>_fts_insert_sql</code> (<code>:2299</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-PERF-03</td>
+<td style="text-align: left;">Reindexação pode ser feita por empenho ou inteira, sem bloquear a tela</td>
+<td style="text-align: left;"><code>reindexar_empenho</code> (<code>:2360</code>) e <code>rebuild_fts</code> (<code>:2425</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-RESP-01</td>
+<td style="text-align: left;">Responsividade e 4 modelos visuais (PIC, Híbrido, Bootstrap, frameworks)</td>
+<td style="text-align: left;"><code>visual.py</code> <code>eh_pic</code>/<code>eh_hibrido</code>/<code>eh_bootstrap</code>/<code>eh_framework</code> (<code>:80</code>–<code>:104</code>), <code>injetar_pic_suave</code>/<code>injetar_hibrido</code>/<code>injetar_bootstrap_overrides</code> (<code>:177</code>–<code>:237</code>), <code>classes_card_pdf</code>/<code>classes_card_lote</code>/<code>classes_badge_bootstrap</code> (<code>:257</code>–<code>:314</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-CFG-01</td>
+<td style="text-align: left;">Configuração com fallback em cadeia, sem quebrar a tela se faltar chave</td>
+<td style="text-align: left;"><code>visual.py:55</code> <code>_get_config_safe</code>; <code>telas_administracao.py:30</code> <code>_tema</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-COMP-01</td>
+<td style="text-align: left;">Compatibilidade SQLite ↔ PostgreSQL — <strong>com uma ressalva declarada</strong></td>
+<td style="text-align: left;">DDL só <code>IF NOT EXISTS</code>; o índice FTS5 é a exceção conhecida e está documentada em <code>bd_manipulador.py:139</code> e no <a href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-EMP-DISC-01</td>
+<td style="text-align: left;">Nenhum passo destrutivo é silencioso: o original só sai do monitor depois de registrado</td>
+<td style="text-align: left;"><code>registrar_arquivo_detectado</code> → <code>registrar_arquivo_renomeado</code> → <code>registrar_arquivo_removido</code>, nessa ordem</td>
+</tr>
+</tbody>
+</table>
               
             </div>
           </div><footer>

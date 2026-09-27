@@ -335,12 +335,16 @@ em medições feitas nesta máquina. Gerado por
 <p>bcrypt é <strong>CPU-bound puro</strong>: <code>2^custo</code> iterações, as mesmas em qualquer
 processador. Então o custo medido (721 ms a 1,5 GHz = 1.082 M-ciclos) vira
 ciclos, e os ciclos viram segundos no clock novo. Isso é defensável.</p>
-<p>O modelo <strong>não</strong> é benchmark de fabricante, e o script se autoconfere:</p>
+<p>O modelo <strong>não</strong> é benchmark de fabricante, e o script se autoconfere. Saída
+do autoteste (transcrita com vírgula decimal):</p>
 <div class="highlight"><pre><span></span><code>vazao prevista @ 1,5 GHz x 2 nucleos: 5,5 logins/s
 vazao MEDIDA nesta maquina ..........: 4,2 logins/s
 erro ...............................: 32%
 margem aplicada na tabela ..........: 1,35x
 </code></pre></div>
+<p>Os valores conferem com a execução real do script; o block acima está
+transcrito em PT-BR, o script imprime ponto decimal. O autoteste falha se o
+erro passar de 50 %.</p>
 <p>O modelo <strong>superestima em 32 %</strong>. Dimensionar por ele sem margem daria
 hardware insuficiente, então a contagem de núcleos é inflada por 1,35×. O
 script falha alto se o erro passar de 50 %.</p>
@@ -376,6 +380,8 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 única grandeza medida que multiplica pelo número de usuários.</p>
 <div class="highlight"><pre><span></span><code>.venv/bin/python<span class="w"> </span>assets/test/dimensiona_servidor.py
 </code></pre></div>
+<p><strong>Trecho</strong> da tabela (o script sai com os 50 degraus, de 40 a 2.000, em passos
+de 40 — por isso 1.520 aparece e 1.500 não):</p>
 <table>
 <thead>
 <tr>
@@ -398,7 +404,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">0,4</td>
 <td style="text-align: right;">0,4</td>
 <td style="text-align: right;">1,2</td>
-<td style="text-align: left;"><strong>latência reprovada</strong></td>
+<td style="text-align: left;"><strong>medido: reprovado na latência (sonda 1.676 ms)</strong></td>
 </tr>
 <tr>
 <td style="text-align: right;">80</td>
@@ -408,7 +414,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">0,8</td>
 <td style="text-align: right;">0,8</td>
 <td style="text-align: right;">2,4</td>
-<td style="text-align: left;"><strong>reprovado (10,7 % falha)</strong></td>
+<td style="text-align: left;">não medido (interpolação)</td>
 </tr>
 <tr>
 <td style="text-align: right;">120</td>
@@ -418,7 +424,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">1,1</td>
 <td style="text-align: right;">1,2</td>
 <td style="text-align: right;">3,6</td>
-<td style="text-align: left;"><strong>reprovado (10,7 % falha)</strong></td>
+<td style="text-align: left;"><strong>medido: reprovado (10,7 % falha)</strong></td>
 </tr>
 <tr>
 <td style="text-align: right;">160</td>
@@ -428,7 +434,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">1,5</td>
 <td style="text-align: right;">1,7</td>
 <td style="text-align: right;">4,8</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
 <td style="text-align: right;">200</td>
@@ -438,7 +444,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">1,9</td>
 <td style="text-align: right;">2,1</td>
 <td style="text-align: right;">6,0</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
 <td style="text-align: right;">240</td>
@@ -448,7 +454,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">2,3</td>
 <td style="text-align: right;">2,5</td>
 <td style="text-align: right;">7,2</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
 <td style="text-align: right;">280</td>
@@ -458,7 +464,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">2,6</td>
 <td style="text-align: right;">2,9</td>
 <td style="text-align: right;">8,4</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
 <td style="text-align: right;">320</td>
@@ -468,7 +474,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">3,0</td>
 <td style="text-align: right;">3,3</td>
 <td style="text-align: right;">9,6</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
 <td style="text-align: right;">400</td>
@@ -478,7 +484,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">3,8</td>
 <td style="text-align: right;">4,1</td>
 <td style="text-align: right;">12,0</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
 <td style="text-align: right;">480</td>
@@ -488,7 +494,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">4,5</td>
 <td style="text-align: right;">5,0</td>
 <td style="text-align: right;">14,4</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
 <td style="text-align: right;">600</td>
@@ -498,7 +504,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">5,7</td>
 <td style="text-align: right;">6,2</td>
 <td style="text-align: right;">18,0</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
 <td style="text-align: right;">800</td>
@@ -508,7 +514,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">7,5</td>
 <td style="text-align: right;">8,3</td>
 <td style="text-align: right;">24,0</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
 <td style="text-align: right;">1.000</td>
@@ -518,7 +524,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">9,4</td>
 <td style="text-align: right;">10,4</td>
 <td style="text-align: right;">29,9</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
 <td style="text-align: right;">1.200</td>
@@ -528,17 +534,17 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">11,3</td>
 <td style="text-align: right;">12,4</td>
 <td style="text-align: right;">35,9</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
-<td style="text-align: right;">1.500</td>
+<td style="text-align: right;">1.520</td>
 <td style="text-align: right;">3 GB</td>
 <td style="text-align: right;">74</td>
 <td style="text-align: right;">16</td>
 <td style="text-align: right;">14,3</td>
 <td style="text-align: right;">15,8</td>
 <td style="text-align: right;">45,5</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 <tr>
 <td style="text-align: right;">2.000</td>
@@ -548,11 +554,22 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <td style="text-align: right;">18,8</td>
 <td style="text-align: right;">20,7</td>
 <td style="text-align: right;">59,9</td>
-<td style="text-align: left;">não medido além de 120</td>
+<td style="text-align: left;">não medido</td>
 </tr>
 </tbody>
 </table>
-<p>A tabela completa, com todos os 50 degraus, sai do script.</p>
+<div class="admonition warning">
+<p class="admonition-title">Só três pontos da coluna de situação são medido de verdade</p>
+<p>A coluna <code>situacao medida</code> do script marca 40, 80 e 120, mas <strong>só 40 e 120
+foram ensaiados</strong>. Os 10,7 % de falha são a medição da carga a <strong>120
+usuários</strong>; a linha de 80 herdou esse rótulo por Ser o único outro degrau
+abaixo de 120, e não porque existisse um ensaio a 80. Aqui a linha de 80
+está corrigida para "não medido" — e o <code>dimensiona_servidor.py</code> também
+precisa ser corrigido, senão volta a gerar o rótulo errado na próxima
+execução (é o <code>nota</code> em <code>tabela()</code>, ramo <code>elif u &lt;= 120</code>).</p>
+</div>
+<p>Os valores de RAM, núcleos, instâncias, banda e burst <strong>são todos gerados</strong> —
+não há número escrito à mão nesta tabela.</p>
 <h3 id="como-ler-as-colunas">Como ler as colunas<a class="headerlink" href="#como-ler-as-colunas" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>RAM</strong> — folga de 1,5× sobre o medido, arredondada para cima. Não é o
@@ -605,7 +622,7 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 <tr>
 <td style="text-align: right;">480</td>
 <td style="text-align: left;">Core i9-14900K (24c)</td>
-<td style="text-align: left;">Ryzen 9 9950X (16c)</td>
+<td style="text-align: left;"><strong>EPYC 9354 (32c)</strong></td>
 <td style="text-align: right;">2 GB</td>
 <td style="text-align: right;">4</td>
 </tr>
@@ -632,6 +649,10 @@ segundo</strong>, com o login mais antigo da rajada terminando em até 5 s. Logi
 </tr>
 </tbody>
 </table>
+<p>A escolha de AMD a 480 usuários não é "o mais rápido": é o <strong>primeiro do
+catálogo com ≥ 24 núcleos</strong>, porque <code>_melhor_para</code> filtra por contagem de
+núcleos antes de clock. Ryzen 9 9950X (16c) tem clock maior e não serve para
+24 núcleos.</p>
 <p><strong>Aviso honesto:</strong> estes não são benchmarks de fabricante. São clock ×
 núcleos cruzados com a constante medida aqui. A extrapolação por clock é
 defensável para o bcrypt; <strong>não</strong> é para a renderização de tela, que depende
@@ -746,7 +767,9 @@ a decisão ser informada.</p>
 <li>O <strong>switch precisa de backplane</strong> de pelo menos 1 Gbit/s para 2.000 clientes
   somando 20 Mbit/s em regime — mas 60 Mbit/s no burst de login, se todos
   entrarem juntos, é burst de 1 segundo, não carga sustentada.</li>
-<li>O gargalo <strong>não é a rede</strong>. Numa rede de 1 Gbit/s sobrariam 940 Mbit/s.</li>
+<li>O gargalo <strong>não é a rede</strong>. Numa rede de 1 Gbit/s sobrariam <strong>940 Mbit/s</strong> no
+  pior caso (1.000 − 59,9 do burst de login) e 979 Mbit/s em regime
+  (1.000 − 20,7).</li>
 </ul>
 <h2 id="o-que-esta-tabela-nao-resolve">O que esta tabela NÃO resolve<a class="headerlink" href="#o-que-esta-tabela-nao-resolve" title="Permanent link">&para;</a></h2>
 <p>O teste mediu que a <strong>latência a 40 usuários falha</strong> (sonda 1.676 ms contra

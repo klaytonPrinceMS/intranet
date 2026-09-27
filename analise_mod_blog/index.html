@@ -738,6 +738,207 @@ página com o novo modo. A auditoria de <code>audit_reg</code> é ela própria <
 </table>
 <p>Detalhe consolidado em <a href="../registro_de_mudancas/wal_paridade_pendente_2026-09-24/">Plano WAL + Paridade</a>.
 - <strong>Validação (sistema reiniciado, Playwright real — <code>/login</code> 200, screenshot das 3 postagens uniformes com diagramas estreitos centralizados)</strong>: backend (move/ordem/idempotência/seeds), screenshot e suíte <code>assets/test/teste_fluxo_blog.py</code> <strong>46/46</strong>.</p>
+<hr />
+<h1 id="rf-e-rnf-verificados-no-codigo-27092026">RF e RNF verificados no código (27/09/2026)<a class="headerlink" href="#rf-e-rnf-verificados-no-codigo-27092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Auditoria de requisitos <strong>funcionais</strong> e <strong>não funcionais</strong>, com evidência
+<code>arquivo:linha</code> conferida em 27/09/2026, no mesmo formato dos módulos
+auditados antes.</p>
+</blockquote>
+<h2 id="requisitos-funcionais-rf-mapa-codigo-doc">Requisitos funcionais (RF) — mapa código ↔ doc<a class="headerlink" href="#requisitos-funcionais-rf-mapa-codigo-doc" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-BLOG-01</td>
+<td style="text-align: left;">Publicar/editar/excluir exige <strong>pode publicar</strong>; o decorador <code>@requer_pode_publicar</code> barra antes de entrar na função</td>
+<td style="text-align: left;"><code>bd_manipulador.py:688</code> <code>_pode_publicar</code>; <code>:722</code>, <code>:755</code>, <code>:782</code>, <code>:793</code>, <code>:822</code>, <code>:839</code>, <code>:866</code> (7 funções decoradas)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-02</td>
+<td style="text-align: left;">CRUD de postagem com título + conteúdo Markdown, autor e data de atualização</td>
+<td style="text-align: left;"><code>criar_postagem</code> (<code>:724</code>), <code>atualizar_postagem</code> (<code>:757</code>), <code>excluir_postagem</code> (<code>:784</code>), <code>obter_postagem</code> (<code>:543</code>), <code>listar_postagens</code> (<code>:424</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-03</td>
+<td style="text-align: left;">Publicar / despublicar alterna <code>ativo</code>, sem apagar</td>
+<td style="text-align: left;"><code>publicar_postagem</code> (<code>:841</code>), <code>despublicar_postagem</code> (<code>:824</code>), <code>data-testid=blog-publicar</code>/<code>blog-despublicar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-04</td>
+<td style="text-align: left;">Exclusão em lote a partir da seleção da tela</td>
+<td style="text-align: left;"><code>excluir_postagens_em_lote</code> (<code>:795</code>); <code>blog-excluir-selecionados</code>, <code>blog-confirmar-excluir-lote</code>, <code>blog-limpar-selecao</code>, <code>blog-selecionados-contador</code>, <code>blog-selecionar-5/10/todos</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-05</td>
+<td style="text-align: left;">Comentários por postagem</td>
+<td style="text-align: left;"><code>listar_comentarios</code> (<code>:851</code>), <code>criar_comentario</code> (<code>:869</code>) — <code>tb_comentarios</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-06</td>
+<td style="text-align: left;">Editor de imagem: envio, seleção, alinhamento (esq/centro/dir) e largura</td>
+<td style="text-align: left;"><code>salvar_imagem_postagem</code> (<code>:588</code>), <code>ajustar_imagem_html</code> (<code>:882</code>) + <code>_merge_style</code> (<code>:984</code>); <code>blog-imagem-enviar</code>, <code>blog-imagem-selecionar</code>, <code>blog-img-esq</code>, <code>blog-img-centro</code>, <code>blog-img-dir</code>, <code>blog-img-largura</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-07</td>
+<td style="text-align: left;">Barra de formatação de texto: negrito, itálico, subtítulo, código, citação, listas e alinhamento</td>
+<td style="text-align: left;"><code>telas.py</code> — <code>blog-quebra-negrito</code> (renderizado com os demais <code>blog-quebra-*</code>: <code>atras</code>, <code>através</code>, <code>emlinha</code>, <code>frente</code>, <code>justo</code>, <code>quadrado</code>, <code>supinf</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-08</td>
+<td style="text-align: left;">Blocos ```mermaid viram diagrama, sem CDN, e podem ser desligados</td>
+<td style="text-align: left;"><code>extrair_segmentos_mermaid</code> (<code>:75</code>), <code>_renderizar_conteudo_postagem</code> (<code>telas.py:26</code>), <code>obter_habilitar_mermaid</code> (<code>:62</code>), <code>mover_mermaid_para_fim</code> (<code>:705</code>); bloco inválido mostra aviso sem derrubar a tela</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-09</td>
+<td style="text-align: left;">Conteúdo sanitizado com <strong>nh3</strong> antes de gravar</td>
+<td style="text-align: left;"><code>_sanitizar_texto</code> (<code>:664</code>) em <code>criar_postagem</code>/<code>atualizar_postagem</code>; <code>_esc</code>/<code>_sanitizar</code> em <code>telas.py:209</code>/<code>:216</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-10</td>
+<td style="text-align: left;">Título com palavra bloqueada é <strong>recusado</strong>, não sanitizado</td>
+<td style="text-align: left;"><code>criar_postagem</code> (<code>:724</code>) e <code>atualizar_postagem</code> (<code>:757</code>) chamam <code>titulo_bloqueado</code> <strong>antes</strong> do nh3; devolvem <code>None</code>/<code>False</code> + <code>notificar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-11</td>
+<td style="text-align: left;">Tags permitidas configuráveis pelo admin</td>
+<td style="text-align: left;"><code>tags_permitidas</code> (<code>:45</code>), <code>blog_tags_permitidas</code>; <code>data-testid=blog-palavras-bloqueadas</code> no painel</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-12</td>
+<td style="text-align: left;">Imagem órfã (enviada e não usada) expira sozinha</td>
+<td style="text-align: left;"><code>IMAGEM_EXPIRACAO_MIN = 5</code> (<code>:577</code>); <code>expirar_imagens_orfas</code> (<code>:624</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-13</td>
+<td style="text-align: left;">Modo de exibição: feed, <strong>postagem única</strong> e carrossel</td>
+<td style="text-align: left;"><code>obter_modo_exibicao</code> (<code>:1199</code>), <code>obter_postagem_unica_id</code>/<code>definir_postagem_unica_id</code> (<code>:1211</code>/<code>:1227</code>), <code>obter_carrossel_tempo</code>/<code>definir_carrossel_tempo</code> (<code>:1244</code>/<code>:1256</code>), <code>obter_carrossel_postagens_ids</code>/<code>definir_carrossel_postagens_ids</code> (<code>:1268</code>/<code>:1289</code>), <code>listar_postagens_por_ids</code> (<code>:1310</code>); <code>_renderizar_carrossel</code> (<code>telas.py:313</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-14</td>
+<td style="text-align: left;">Busca no feed</td>
+<td style="text-align: left;"><code>blog-busca</code> (<code>telas.py</code>), texto normalizado por NFKD antes de comparar</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-15</td>
+<td style="text-align: left;">Rótulos PT-BR e docstrings bilíngue EN (topo) / PT-BR (abaixo)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1-30</code>, <code>telas.py:1-24</code>, <code>telas_administracao.py:1-32</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-BLOG-16</td>
+<td style="text-align: left;">Painel de despublicadas separado das publicadas</td>
+<td style="text-align: left;"><code>_painel_despublicadas</code> (<code>telas.py:229</code>), <code>_card_postagem_seguro</code> (<code>telas.py:92</code>) — um card quebrado não derruba a grade</td>
+</tr>
+</tbody>
+</table>
+<h2 id="requisitos-nao-funcionais-rnf-garantias-tecnicas">Requisitos não-funcionais (RNF) — garantias técnicas<a class="headerlink" href="#requisitos-nao-funcionais-rnf-garantias-tecnicas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RNF</th>
+<th style="text-align: left;">Exigência</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RNF-BLOG-PERS-01</td>
+<td style="text-align: left;">Banco próprio <code>db_mod_blog.db</code>, tabelas <code>tb_postagens</code>/<code>tb_comentarios</code>/<code>tb_config</code></td>
+<td style="text-align: left;"><code>get_config_local</code>/<code>set_config_local</code> (<code>:368</code>/<code>:382</code>), <code>listar_config_local</code> (<code>:398</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-PERS-02</td>
+<td style="text-align: left;">Piloto <code>CrudBase</code> 100 % — sem migração pendente neste módulo</td>
+<td style="text-align: left;"><code>from mod_intranet.crud_base import CrudBase, audit_reg</code> (<code>:24</code>); registrado em seção "Pendência QA — WAL + paridade" acima como <strong>Baixo</strong> risco</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-PERS-03</td>
+<td style="text-align: left;">Escritas relevantes auditadas, com <strong>wrapper fail-soft</strong></td>
+<td style="text-align: left;"><code>@auditado(modulo="blog", acao=…)</code> em <code>criar_postagem</code> (<code>:723</code>), <code>atualizar_postagem</code> (<code>:756</code>), <code>excluir_postagem</code> (<code>:783</code>), <code>excluir_postagens_em_lote</code> (<code>:794</code>) via <code>audit_reg</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-SEG-01</td>
+<td style="text-align: left;"><strong>XSS</strong>: nh3 na gravação e escape na renderização</td>
+<td style="text-align: left;"><code>_sanitizar_texto</code> (<code>:664</code>), <code>_FormatadorBlog</code>/<code>HTMLParser</code> (<code>:994</code>), <code>_esc</code>/<code>_sanitizar</code> (<code>telas.py:209</code>/<code>:216</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-SEG-02</td>
+<td style="text-align: left;">Autor de comentário validado contra o cadastro, com nome seguro na interpolação</td>
+<td style="text-align: left;"><code>_nome_usuario_seguro</code> (<code>:580</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-SEG-03</td>
+<td style="text-align: left;">Nome de arquivo de imagem sempre padronizado, para não escrever fora da pasta do usuário</td>
+<td style="text-align: left;"><code>salvar_imagem_postagem</code> (<code>:588</code>) deriva o destino do <code>usuario</code>, nunca do <code>nome_original</code> cru</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-RES-01</td>
+<td style="text-align: left;"><code>try/except</code> obrigatório em função, com notificação + log (AGENTS.md §3.2)</td>
+<td style="text-align: left;"><code>bd_manipulador.py</code> protegido; <code>_pode_publicar</code> (<code>:688</code>) tem <code>except</code> que <strong>não engole</strong>: registra com <code>_log().exception</code> (<code>:701</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-RES-02</td>
+<td style="text-align: left;">Falha de auditoria não bloqueia a ação</td>
+<td style="text-align: left;"><code>audit_reg</code> é fail-soft por contrato (docstring em <code>bd_manipulador.py:10-11</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-UX-01</td>
+<td style="text-align: left;">Anti-disconnect: I/O de imagem/expiração fora do event-loop</td>
+<td style="text-align: left;"><code>salvar_imagem_postagem</code> (<code>:588</code>) e <code>expirar_imagens_orfas</code> (<code>:624</code>) são chamadas de I/O; o caminho de tela usa <code>run.io_bound</code> nos handlers pesados</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-UX-02</td>
+<td style="text-align: left;"><code>data-testid</code> via <code>.props('data-testid=...')</code> em todas as ações</td>
+<td style="text-align: left;">33 ids em <code>telas.py</code> (<code>blog-titulo</code>, <code>blog-conteudo</code>, <code>blog-publicar</code>, <code>blog-despublicar</code>, <code>blog-editar</code>, <code>blog-excluir</code>, <code>blog-busca</code>, <code>blog-aplicar-carrossel</code>, <code>blog-aplicar-unica</code>, <code>blog-aplicar-historico</code>, os 8 <code>blog-quebra-*</code>, os 6 de imagem, os 6 de seleção) + <code>blog-palavras-bloqueadas</code> no painel</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-UX-03</td>
+<td style="text-align: left;">Diálogo de exclusão exige confirmação explícita</td>
+<td style="text-align: left;"><code>blog-excluir</code> abre confirmação; o lote tem <code>blog-confirmar-excluir-lote</code> separado</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-UX-04</td>
+<td style="text-align: left;">Sem JavaScript direto (AGENTS.md §5)</td>
+<td style="text-align: left;">Renderização por <code>ui.*</code>/classes; o único JS é o bundle do Mermaid, embutido</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-PERF-01</td>
+<td style="text-align: left;">Markdown leve próprio, sem dependência externa</td>
+<td style="text-align: left;"><code>_markdown_leve</code> (<code>:1057</code>) + <code>_markdown_em_html</code> (<code>:1133</code>); o Mermaid é o único caso que precisa de JS</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-PERF-02</td>
+<td style="text-align: left;">Sem N+1: listar e contar em chamadas separadas, não por postagem</td>
+<td style="text-align: left;"><code>listar_postagens</code> (<code>:424</code>) + <code>contar_postagens</code> (<code>:446</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-RESP-01</td>
+<td style="text-align: left;">Responsividade</td>
+<td style="text-align: left;"><code>telas.py</code> — grids <code>flex-wrap</code>, imagens com <code>max-width</code>, barra de formatação com <code>overflow-x-auto</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-CFG-01</td>
+<td style="text-align: left;">Configuração local do módulo, com fallback no padrão</td>
+<td style="text-align: left;"><code>get_config_local</code> (<code>:368</code>) com <code>default</code> no chamador; seeds em <code>_semear_postagens_padrao</code> (<code>:215</code>) e <code>_garantir_carrossel_padrao</code> (<code>:245</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-COMP-01</td>
+<td style="text-align: left;">Compatibilidade SQLite ↔ PostgreSQL</td>
+<td style="text-align: left;">Via <code>CrudBase</code>/<code>banco_conexao</code>; sem SQL SQLite-only no módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-BLOG-LGPD-01</td>
+<td style="text-align: left;">Excluir/renomear usuário limpa e propaga a autoria</td>
+<td style="text-align: left;"><code>remover_vinculos_usuario</code> (<code>:456</code>) e <code>renomear_autor</code> (<code>:503</code>)</td>
+</tr>
+</tbody>
+</table>
               
             </div>
           </div><footer>

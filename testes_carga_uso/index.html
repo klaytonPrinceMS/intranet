@@ -203,7 +203,13 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#a-bateria-combinada-k6-20-navegadores-nao-roda-nesta-maquina">A bateria combinada (k6 + 20 navegadores) NÃO roda nesta máquina</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#a-soma-das-tres-medicoes">A soma das três medições</a>
+    <li class="toctree-l3"><a class="reference internal" href="#a-soma-das-cinco-medicoes">A soma das cinco medições</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#limitacao-de-auditoria-o-que-nao-sobrevive-no-repositorio">Limitação de auditoria: o que não sobrevive no repositório</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#correcao-sugerida">Correção sugerida</a>
     </li>
         </ul>
     </li>
@@ -396,35 +402,52 @@ números estão em <strong>Resultados medidos</strong>, mais abaixo.</p>
 <tr>
 <th style="text-align: left;">item</th>
 <th style="text-align: left;">valor</th>
+<th style="text-align: left;">quando</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;">processador</td>
-<td style="text-align: left;">Intel® Core™ i3-2375M @ 1,50 GHz (4 threads)</td>
+<td style="text-align: left;">Intel® Core™ i3-2375M @ 1,50 GHz (2 núcleos / 4 threads)</td>
+<td style="text-align: left;">26/09</td>
 </tr>
 <tr>
 <td style="text-align: left;">memória</td>
 <td style="text-align: left;"><strong>3,7 GiB</strong> (3.795 MB), swap 5,6 GiB</td>
+<td style="text-align: left;">26/09</td>
 </tr>
 <tr>
 <td style="text-align: left;">consumo base com o servidor no ar</td>
 <td style="text-align: left;"><strong>~2.184 MB (58 %)</strong></td>
+<td style="text-align: left;">26/09</td>
 </tr>
 <tr>
 <td style="text-align: left;">consumo do OpenCode sozinho</td>
 <td style="text-align: left;">~1,1 GiB (é ele, não a intranet)</td>
+<td style="text-align: left;">26/09</td>
 </tr>
 <tr>
 <td style="text-align: left;">RSS do servidor, sem carga</td>
 <td style="text-align: left;">105 MB</td>
+<td style="text-align: left;">27/09</td>
+</tr>
+<tr>
+<td style="text-align: left;">RSS do servidor, sem carga</td>
+<td style="text-align: left;">108 MB</td>
+<td style="text-align: left;">26/09</td>
 </tr>
 <tr>
 <td style="text-align: left;">RSS do servidor, <strong>depois</strong> de 120 VUs</td>
 <td style="text-align: left;">201 MB (medido)</td>
+<td style="text-align: left;">26/09</td>
 </tr>
 </tbody>
 </table>
+<p>Duas medições de RSS em repouso, 105 e 108 MB, em dias e sessões diferentes:
+são leituras honestas de duas horas, não um número corrigido. O que alimenta a
+tabela de <a href="../dimensionamento/">dimensionamento</a> é a de <strong>26/09, 108 MB</strong> — é o
+valor em <code>MEDICOES["rss_base_mb"]</code> do <code>assets/test/dimensiona_servidor.py</code>, e
+é dele que sai <code>0,83 MB</code> por cliente (100 MB ÷ 120).</p>
 <p>O consumo alto da máquina vem das <strong>ferramentas de desenvolvimento</strong> da sessão,
 não do sistema sob teste. Isso é decisivo para entender o guarda de 90 %.</p>
 <h2 id="por-que-a-arquitetura-e-dividida-em-duas">Por que a arquitetura é dividida em duas<a class="headerlink" href="#por-que-a-arquitetura-e-dividida-em-duas" title="Permanent link">&para;</a></h2>
@@ -499,7 +522,7 @@ publica a métrica <code>carga_uso_render_modulo</code>, que deve marcar ~0,1 (s
 </tr>
 <tr>
 <td style="text-align: left;"><code>carga_uso_leitura_blog</code></td>
-<td style="text-align: left;">tempo de leitura do post; threshold <code>min&gt;55000</code> impõe o minuto</td>
+<td style="text-align: left;"><strong>não é threshold e não é medida nesta camada.</strong> O k6 não clica em "Entrar", o blog não renderiza e o tempo daria sempre 0 — um threshold impossível, que reprovaria sem defeito. A exigência de 1 min de leitura é medida na camada de navegador real (20 navegadores). No relatório do k6 a linha sai como <code>leitura blog.....: NAO MEDIDA NESTA CAMADA</code>.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>carga_uso_rota_200</code></td>
@@ -806,6 +829,10 @@ o teste:</p>
 </tr>
 </tbody>
 </table>
+<p>(Com a bateria já em andamento, a mesma ferramenta chegou a ~122 % — é por
+isso que os dois números aparecem: 112 % é a base em repouso, 122 % é sob
+carga. Os dois estão acima de 90 % num total que o limiar de CPU mede contra
+4 núcleos.)</p>
 <p>Em 4 núcleos, ~112 % já é carga de base. Um gatilho único de 90 % de CPU
 <strong>dispararia em segundos</strong>, derrubando a bateria antes de ela medir qualquer
 coisa — e o relatório culparia o sistema por um problema que é da própria
@@ -869,10 +896,11 @@ faz isso por conta própria.</p>
 </table>
 <h3 id="atencao-o-gatilho-de-cpu-precisa-ser-separado-nesta-maquina">Atenção: o gatilho de CPU precisa ser separado nesta máquina<a class="headerlink" href="#atencao-o-gatilho-de-cpu-precisa-ser-separado-nesta-maquina" title="Permanent link">&para;</a></h3>
 <p>Medido na validação integrada (2 VUs do k6 + 2 navegadores, carga mínima): a
-<strong>CPU passou de 90 % várias vezes</strong> — 87,9 %, 98,3 %, 99,5 %, 95,7 % — e boa
-parte desse consumo era da ferramenta de desenvolvimento da sessão, não do
-teste. Com 120 VUs + 20 navegadores, um gatilho único de 90 % mataria a
-bateria em minutos por causa de ruído.</p>
+<strong>CPU passou de 90 % várias vezes</strong> — 98,3 %, 99,5 %, 95,7 % (e 87,9 %, que
+ficou <strong>abaixo</strong> de 90 e por isso não conta como estouro). Boa parte desse
+consumo era da ferramenta de desenvolvimento da sessão, não do teste. Com
+120 VUs + 20 navegadores, um gatilho único de 90 % mataria a bateria em
+minutos por causa de ruído.</p>
 <p>O argumento dos 90 % é de <strong>memória</strong> (OOM killer, página trocando). O de CPU é
 mais frágil porque a CPU é o recurso compartilhado com o resto da sessão. Por
 isso o guarda tem dois limiares, e a recomendação nesta máquina é:</p>
@@ -884,7 +912,10 @@ isso o guarda tem dois limiares, e a recomendação nesta máquina é:</p>
 dispara quando ela está realmente saturada.</p>
 <h2 id="resultados-medidos-27092026">Resultados medidos (27/09/2026)<a class="headerlink" href="#resultados-medidos-27092026" title="Permanent link">&para;</a></h2>
 <h3 id="navegador-real-20-usuarios-sozinhos-sem-o-k6-reprovado">Navegador real — 20 usuários, SOZINHOS (sem o k6): REPROVADO<a class="headerlink" href="#navegador-real-20-usuarios-sozinhos-sem-o-k6-reprovado" title="Permanent link">&para;</a></h3>
-<p>A camada que faltava, rodada sem o k6 junto, para isolar a variável:</p>
+<p>A camada que faltava, rodada sem o k6 junto, para isolar a variável. Ensaio de
+<strong>306,8 s</strong> (14:07:22 → 14:12:29 UTC), 20 contextos em <strong>1</strong> Chromium
+(<code>--renderer-process-limit=4</code>), <code>--rampa-s 3</code>, blog de 60 s, 2 usuários
+enviando:</p>
 <div class="highlight"><pre><span></span><code>logins ok.......: 6/20
 ciclos completos: 6/20
 passos..........: 138 ok / 8 falha
@@ -894,10 +925,46 @@ erros...........: 8
 duração.........: 306.8 s
 gate: permitidas=['/configuracoes'] bloqueadas=['/auditoria','/tecnico','/users']
 </code></pre></div>
-<p><strong>Os 8 erros são todos o mesmo:</strong> <code>login: Page.goto: Timeout 30000ms
-exceeded</code> — e o JSON mostra <strong>14 dos 20</strong> sem login, todos pelo mesmo motivo.
-O servidor não conseguia responder a página de login em 30 s para 14 browsers
-simultâneos.</p>
+<p><strong>14 dos 20 nãogartaram sessão — e foram por dois motivos diferentes, não um.</strong>
+Lendo usuário por usuário no JSON:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">grupo</th>
+<th style="text-align: right;">usuários</th>
+<th style="text-align: left;">o que aconteceu</th>
+<th style="text-align: right;">erro registrado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">entraram</td>
+<td style="text-align: right;"><code>user001</code>, <code>user002</code>, <code>user010</code>–<code>user013</code></td>
+<td style="text-align: left;">ciclo inteiro, 25 e 22 passos</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;">página de login voltou, sessão não abriu</td>
+<td style="text-align: right;"><code>user003</code>–<code>user008</code> (6)</td>
+<td style="text-align: left;"><code>Page.goto</code> <strong>respondeu</strong>, mas o formulário de login re-renderizou: 0 passos, 0 erros</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;">estourou o <code>timeout</code></td>
+<td style="text-align: right;"><code>user009</code>, <code>user014</code>–<code>user020</code> (8)</td>
+<td style="text-align: left;"><code>login: login falhou: Page.goto: Timeout 30000ms exceeded.</code></td>
+<td style="text-align: right;">1 cada</td>
+</tr>
+</tbody>
+</table>
+<p>Só os <strong>8</strong> do terceiro grupo geraram erro — a verbatim é
+<code>login: login falhou: Page.goto: Timeout 30000ms exceeded. Call log: -
+navigating to "http://localhost:8080/login", waiting until "domcontentloaded"</code>.
+Os outros <strong>6</strong> não estouraram nada: a página chegou, e o login não fechou
+sessão. Portanto a frase "o servidor não conseguia responder a página de login
+em 30 s para 14 browsers" <strong>está errada</strong> — o timeout é de 8, e para 6 o
+servidor respondeu a tempo. O que os dois grupos têm em comum é a sessão não
+abrir; o motivo do não-abertura é que ainda não foi isolado.</p>
 <p>De novo: <strong>zero ERROR, zero Traceback no servidor</strong>, e ele seguiu no ar com
 5/5 rotas respondendo 200 sob carga. Não foi queda — foi saturação.</p>
 <p>Os 6 que entraram fizeram o roteiro inteiro: 138 passos sem erro, anexaram
@@ -905,6 +972,27 @@ PDF, e os 2 envios foram <strong>cancelados</strong> (a fila de autorização vo
 O gate de acesso funcionou: <code>/auditoria</code>, <code>/tecnico</code> e <code>/users</code> bloquearam
 para o perfil comum, e <code>/configuracoes</code> passou — que é o comportamento real,
 porque <code>pagina_restrita</code> é chamada sem <code>chave_modulo</code> ali.</p>
+<div class="admonition warning">
+<p class="admonition-title">O guarda disparou <strong>dentro</strong> deste ensaio — e matou o alvo errado</p>
+<p>Este NÃO foi um ensaio sem vigia. Um segundo guarda subiu às <strong>14:07:32
+UTC</strong> e <strong>disparou às 14:08:35</strong> — 63 s depois do início — com <strong>CPU 99,25 %</strong>
+(pico da série: <strong>99,75 %</strong>) e RAM em 67,98 %. Só que o PID que ele vigiava
+era o <code>8145</code>, um <strong><code>bash</code></strong>, e não o processo do Playwright: o SIGTERM
+matou o shell e o ensaio seguiu até o fim, sem interrupção.</p>
+<p>Duas consequências honestas:</p>
+<ol>
+<li>Os 14 logins perdidos <strong>não</strong> podem ser atribuídos só a "muito
+   tráfego para a máquina": a CPU estava saturada a 63 s do ensaio, com 20
+   navegadores subindo, o que é consistente com a hipótese de saturação —
+   mas o guarda não registrou a série completa desse trecho por
+   intervenção, e o número não está no relatório.</li>
+<li><code>guarda_recursos.py</code> confia no PID que recebe. Passar o PID de um
+   <em>wrapper</em> em vez do processo que se quer proteger faz o guarda
+   disparar, registrar e <strong>não proteger nada</strong>. Vale passar o PID do
+   processo real (<code>$!</code> do lançamento direto, como faz
+   <code>orquestra_bateria.sh</code>) e conferir com <code>kill -0</code>.</li>
+</ol>
+</div>
 <h3 id="a-bateria-combinada-k6-20-navegadores-nao-roda-nesta-maquina">A bateria combinada (k6 + 20 navegadores) NÃO roda nesta máquina<a class="headerlink" href="#a-bateria-combinada-k6-20-navegadores-nao-roda-nesta-maquina" title="Permanent link">&para;</a></h3>
 <p>O guarda de recursos a interrompeu <strong>duas vezes</strong>, e está certo:</p>
 <table>
@@ -917,56 +1005,73 @@ porque <code>pagina_restrita</code> é chamada sem <code>chave_modulo</code> ali
 <tbody>
 <tr>
 <td style="text-align: left;">1ª</td>
-<td style="text-align: left;">20 browsers abertos de uma vez → <strong>CPU 99,8 % em 2 s</strong> → guarda matou em 4 s</td>
+<td style="text-align: left;">20 browsers abertos de uma vez (<code>--rampa-s 0</code>) → 1ª amostra acima do limite aos <strong>2 s</strong> (CPU 98,5 %), pico de <strong>99,76 %</strong> aos 4 s → guarda matou em <strong>4 s</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;">2ª</td>
-<td style="text-align: left;">entrada escalonada (2 s por usuário, 19 subiram sem pico) → <strong>CPU 98–99 %</strong> → guarda matou em 45 s</td>
+<td style="text-align: left;">entrada escalonada (<code>--rampa-s 2</code>, o padrão) → pico de <strong>99,26 %</strong> → guarda matou em <strong>45 s</strong></td>
 </tr>
 </tbody>
 </table>
-<p>Na segunda, a <strong>RAM ficou em 67 %</strong> — folga de sobra. O recurso exhausted é
-<strong>CPU</strong>: 4 núcleos divididos entre o servidor, 20 Chromium, k6 e a ferramenta
-de sessão desta própria bateria (que sozinha consome ~122 %).</p>
+<p>Nenhuma das duas interrompidas por RAM: na 1ª a RAM estava em <strong>68,95 %</strong> e na
+2ª em <strong>67,63 %</strong> — folga de sobra nas duas. O recurso esgotado é <strong>CPU</strong>: 4
+núcleos divididos entre o servidor, 20 Chromium, k6 e a ferramenta de sessão
+desta própria bateria (que sozinha consome ~122 %).</p>
+<div class="admonition note">
+<p class="admonition-title">O número 99,8 % do primeiro disparo, e de onde ele vem</p>
+<p>A 1ª tentativa foi registrada com <strong>99,76 %</strong> de CPU, não "99,8 % em 2 s".
+Os dois números estavam certaininhos, mas atribuídos a instantes
+diferentes: aos 2 s a leitura era 98,5 % (foi quando o gatilho foi
+cruzado pela 1ª vez — bastando 3 amostras consecutivas); o pico de
+99,76 % veio aos 4 s, no mesmo instante em que o guarda matou os dois
+processos. Usar "99,8 % em 2 s" junta o pico de um instante ao horário
+de outro.</p>
+</div>
 <p>Corrigido o que era defeito do teste (a entrada simultânea), o combinado
 continua acima do teto. <strong>Numa máquina com 4 núcleos e a ferramenta de
 desenvolvimento ligada, 40 VUs de protocolo + 20 navegadores reais não
 cabem em 98 % de CPU.</strong> Isso é limitação do ambiente de teste, não do
 sistema — e por isso as camadas foram medidas <strong>separadamente</strong>.</p>
-<h3 id="a-soma-das-tres-medicoes">A soma das três medições<a class="headerlink" href="#a-soma-das-tres-medicoes" title="Permanent link">&para;</a></h3>
+<h3 id="a-soma-das-cinco-medicoes">A soma das cinco medições<a class="headerlink" href="#a-soma-das-cinco-medicoes" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">camada</th>
 <th style="text-align: right;">volume</th>
 <th style="text-align: left;">resultado</th>
+<th style="text-align: left;">artefato que sobrou</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">protocolo, carga leve</td>
+<td style="text-align: left;">protocolo, carga leve (<code>login_carga.js</code>)</td>
 <td style="text-align: right;">120 VUs</td>
-<td style="text-align: left;">✅ aprovado, p95 955 ms</td>
+<td style="text-align: left;">✅ aprovado, p95 955,6 ms</td>
+<td style="text-align: left;">só em prosa (esta doc)</td>
 </tr>
 <tr>
 <td style="text-align: left;">protocolo, ciclo de uso</td>
 <td style="text-align: right;">40 VUs</td>
 <td style="text-align: left;">✅ funcional · ❌ latência</td>
+<td style="text-align: left;">só em prosa (esta doc)</td>
 </tr>
 <tr>
 <td style="text-align: left;">protocolo, ciclo de uso</td>
 <td style="text-align: right;">120 VUs</td>
 <td style="text-align: left;">❌ 10,7 % de falha</td>
+<td style="text-align: left;">só em prosa (esta doc)</td>
 </tr>
 <tr>
 <td style="text-align: left;">navegador real</td>
 <td style="text-align: right;">20 usuários</td>
 <td style="text-align: left;">❌ 6/20 logins</td>
+<td style="text-align: left;"><code>logs/carga_uso_navegador.json</code> (<strong>não versionado</strong>)</td>
 </tr>
 <tr>
 <td style="text-align: left;">navegador + protocolo</td>
 <td style="text-align: right;">40 + 20</td>
 <td style="text-align: left;">⚠️ não roda nesta máquina (CPU)</td>
+<td style="text-align: left;"><code>/tmp/guarda_comb.log</code> (<strong>fora do repo</strong>)</td>
 </tr>
 </tbody>
 </table>
@@ -976,6 +1081,89 @@ excede o teto de latência. O caminho não é trocar de processador — ver
 <a href="../dimensionamento/">Dimensionamento</a>: o gargalo medido <strong>não é CPU de
 cálculo</strong> (o servidor estava ocioso, com 4–15 %, enquanto a latência ia a
 7 s), e sim um ponto de serialização, provavelmente a escrita no SQLite.</p>
+<h2 id="limitacao-de-auditoria-o-que-nao-sobrevive-no-repositorio">Limitação de auditoria: o que não sobrevive no repositório<a class="headerlink" href="#limitacao-de-auditoria-o-que-nao-sobrevive-no-repositorio" title="Permanent link">&para;</a></h2>
+<p>Esta seção existe porque os números acima são <strong>prosa</strong>, e prosa não é
+auditável. Três fatos, verificados contra o código e contra o que sobrou no
+disco:</p>
+<p><strong>1. O JSON do navegador não é versionado.</strong> <code>logs/*</code> está no <code>.gitignore</code>
+(linha <code>logs/*</code>), e <code>carga_uso_navegador.py</code> grava por padrão em
+<code>logs/carga_uso_navegador.json</code>. A evidência primária da medição de 20
+navegadores — o JSON com um objeto por usuário e cada passo — <strong>existe só
+nesta máquina</strong>. Quem clonar o repositório lê os totais (6/20, 138/8, 306,8 s)
+e não consegue conferir nenhum deles contra o artefato.</p>
+<p><strong>2. O JSON do guarda é sobrescrito a cada execução; o log <code>.log</code> não.</strong> São
+dois comportamentos diferentes, e confundi-los mudaria a conclusão:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">arquivo</th>
+<th style="text-align: left;">escrita</th>
+<th style="text-align: left;">efeito</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>logs/carga_recursos.log</code> (padrão <code>--log</code>)</td>
+<td style="text-align: left;"><code>open(..., "a")</code> — <strong>append</strong></td>
+<td style="text-align: left;">as execuções se acumulam; nada se perde</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>logs/carga_recursos.json</code> (padrão <code>--json</code>)</td>
+<td style="text-align: left;"><code>Path.write_text</code> — <strong>sobrescreve</strong></td>
+<td style="text-align: left;">só a <strong>última</strong> execução sobrevive</td>
+</tr>
+</tbody>
+</table>
+<p>Ou seja: o log de texto <strong>teria</strong> preservado as duas interrupções. Não
+preservou porque as duas tentativas usaram <code>--log /tmp/guarda_comb.log</code> e
+<code>--json /tmp/serie_comb.json</code> (é o que <code>orquestra_bateria.sh</code> faz), e <code>/tmp</code>
+não é versionado. E o <code>logs/carga_recursos.json</code> que está na árvore hoje é de
+uma execução <strong>sem gatilho nenhum</strong>: 41 amostras, 40 s, <code>--so-observar</code>, pico de
+39,48 % de CPU, vigiando um <code>bash</code> — ou seja, ele <strong>não</strong> é o registro da
+bateria. Quem procurar as interrupções nele não vai achar, e não deve concluir
+que elas não aconteceram.</p>
+<p><strong>3. O log do k6 combinado também foi sobrescrito.</strong> <code>orquestra_bateria.sh</code>
+faz <code>&gt; /tmp/k6_comb.log</code>; a tentativa seguinte truncou o arquivo. Sobrou o
+k6 <strong>abortado</strong> aos 45 s (sonda p95 1226 ms, <code>GET /login</code> p95 1160 ms, 41
+VUs), que <strong>não</strong> é o ensaio de 40 VUs de 13:35 citado nos resultados. Os
+números da tabela de 40 VUs (sonda 1.676 ms, <code>GET /login</code> 11.008 ms) vieram da
+saída de terminal daquela sessão e não têm artefato sobrevivente.</p>
+<h3 id="correcao-sugerida">Correção sugerida<a class="headerlink" href="#correcao-sugerida" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ação</th>
+<th style="text-align: left;">onde</th>
+<th style="text-align: left;">efeito</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Anexar um log por tentativa (<code>--log logs/guarda_&lt;tentativa&gt;.log</code>)</td>
+<td style="text-align: left;"><code>orquestra_bateria.sh</code></td>
+<td style="text-align: left;">as interrupções param de depender do stdout do terminal</td>
+</tr>
+<tr>
+<td style="text-align: left;">Versionar o relatório do navegador, ou um resumo assinado dele</td>
+<td style="text-align: left;"><code>.gitignore</code> + <code>carga_uso_navegador.py</code></td>
+<td style="text-align: left;">a evidência de 20 navegadores passa a ser auditável</td>
+</tr>
+<tr>
+<td style="text-align: left;">Sobrescrever o JSON é correto; <strong>o que falta é um índice</strong></td>
+<td style="text-align: left;"><code>guarda_recursos.py</code></td>
+<td style="text-align: left;">gravar <code>meta.json</code> acumulando uma linha por execução (<code>início</code>, <code>fim</code>, <code>pids</code>, <code>max_mem_pct</code>, <code>max_cpu_pct</code>, <code>disparou</code>) resolve sem mudar o comportamento do <code>--json</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Gravar o relatório do k6 num arquivo datado</td>
+<td style="text-align: left;"><code>orquestra_bateria.sh</code></td>
+<td style="text-align: left;">o ensaio de 40 VUs sobrevive à tentativa seguinte</td>
+</tr>
+</tbody>
+</table>
+<p>Enquanto essas correções não existirem, os números de
+<a href="#resultados-medidos-27092026">Resultados medidos</a> devem ser lidos como
+<strong>transcrição fiel de uma sessão</strong>, não como dado reproduzível. É por isso que
+esta doc cita o instante de cada medição.</p>
 <h2 id="como-rodar">Como rodar<a class="headerlink" href="#como-rodar" title="Permanent link">&para;</a></h2>
 <h3 id="0-pre-requisitos">0. Pré-requisitos<a class="headerlink" href="#0-pre-requisitos" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># servidor no ar</span>
@@ -1030,23 +1218,29 @@ propósito). <strong>Nunca use a escala no ensaio de 15 minutos.</strong></p>
 <tr>
 <th style="text-align: left;">arquivo</th>
 <th style="text-align: left;">quem escreve</th>
+<th style="text-align: left;">escrita</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;"><code>logs/carga_uso_navegador.json</code></td>
 <td style="text-align: left;">o script Playwright (um objeto por usuário, com cada passo)</td>
+<td style="text-align: left;"><strong>sobrescreve</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>logs/carga_recursos.json</code></td>
 <td style="text-align: left;">o guarda (série temporal de RAM/CPU, 1 amostra/s)</td>
+<td style="text-align: left;"><strong>sobrescreve</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>logs/carga_recursos.log</code></td>
 <td style="text-align: left;">o guarda (log incremental)</td>
+<td style="text-align: left;"><strong>append</strong></td>
 </tr>
 </tbody>
 </table>
+<p>Nenhum desses três é versionado (<code>logs/*</code> no <code>.gitignore</code>). Ver
+<a href="#limitacao-de-auditoria-o-que-nao-sobrevive-no-repositorio">Limitação de auditoria</a>.</p>
 <h2 id="as-armadilhas-desta-sessao">As armadilhas desta sessão<a class="headerlink" href="#as-armadilhas-desta-sessao" title="Permanent link">&para;</a></h2>
 <p>Estas não são opinião; foram medidas nesta máquina, e cada uma custou um
 ensaio para ser descoberta.</p>
@@ -1113,18 +1307,34 @@ reqs.............: N  (falhas 0.0000)
 GET /login.......: p95 ... ms  | max ... ms
 conexao WS.......: p95 ... ms
 ciclo de uso.....: p95 ... s  (em 9 passos, ~171 s de think time)
+socket vivo......: p95 ... s
 ciclo completo...: ...
 handshake ok.....: ...
+rotas 200........: ...
 render real......: ...  (so /tv: as demais sao stub, o k6 nao clica em Entrar)
+HTML servido.....: p95 ... B  (stub de redirecionamento = 9000 B)
 desconectou......: ...
+passos com falha.: ...
 --- uso ---
 pensamento min...: ... ms  (exigido &gt;= 10000 ms na escala 1)
-leitura blog.....: min ... ms  (exigido ~60000 ms = 1 min na escala 1)
+pensamento p95...: ... s
+leitura blog.....: NAO MEDIDA NESTA CAMADA  (o k6 nao clica em Entrar, o blog
+                    nao renderiza; medido no navegador real)
+latencia pagina...: p95 ... ms  | max ... ms
 --- sonda do event-loop (a decisiva) ---
-sonda /favicon...: p95 ... ms  (teto: 1000 ms)
-VUs (max)........: 120
+sonda /favicon...: p95 ... ms  | max ... ms  (teto: 1000 ms)
+latencia geral...: p95 ... ms  | p99 ... ms
+checks...........: ...
+VUs (max)........: 121
+eventos/pagina...: N
 =========================================================
 </code></pre></div>
+<p><code>VUs (max)</code> sai <strong>121</strong> com o ensaio cheio (120 VUs de uso + 1 VU da sonda) e
+<strong>41</strong> com <code>-e K6_MAX_VU=40</code>. As linhas <code>socket vivo</code>, <code>rotas 200</code>,
+<code>HTML servido</code>, <code>passos com falha</code>, <code>pensamento p95</code>, <code>latencia pagina</code>,
+<code>latencia geral</code>, <code>checks</code> e <code>eventos/pagina</code> <strong>sempre</strong> saem: se aparecer <code>-</code>
+no lugar, a métrica ficou sem amostra (o que é legítimo num ensaio curto, em que
+o ciclo de uso não chegou ao fim).</p>
 <p>Os avisos <code>setTimeout N was stopped because the VU iteration was interrupted</code> no
 fim são <strong>esperados</strong>: são as cadeias em curso durante a rampa de descida.</p>
 <h2 id="criterios-de-aprovacao">Critérios de aprovação<a class="headerlink" href="#criterios-de-aprovacao" title="Permanent link">&para;</a></h2>
@@ -1153,6 +1363,10 @@ fim são <strong>esperados</strong>: são as cadeias em curso durante a rampa de
 <td style="text-align: left;">&gt; 0,95</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>carga_uso_falhas</code></td>
+<td style="text-align: left;">&lt; 10 passos que estouraram</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>carga_uso_pensamento</code></td>
 <td style="text-align: left;"><code>min</code> &gt; 10 000 ms</td>
 </tr>
@@ -1167,6 +1381,10 @@ fim são <strong>esperados</strong>: são as cadeias em curso durante a rampa de
 <tr>
 <td style="text-align: left;"><code>http_req_duration{classe:pagina}</code></td>
 <td style="text-align: left;">p95 &lt; 3 000 ms</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>http_req_duration{rota:tv}</code></td>
+<td style="text-align: left;">p95 &lt; 8 000 ms (<code>/tv</code> é a rota mais pesada)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>http_req_failed</code></td>
@@ -1420,6 +1638,14 @@ de <code>assets/test/pdf/</code>, que não são apagados.</p>
 <tr>
 <td style="text-align: left;"><code>assets/test/guarda_recursos.py</code></td>
 <td style="text-align: left;">o vigia de 90 %</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/valida_cronometragem.py</code></td>
+<td style="text-align: left;">relê o <code>carga_uso.js</code> e reprova se a soma de estágios estourar o teto de 15 min</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>assets/test/orquestra_bateria.sh</code></td>
+<td style="text-align: left;">sobe k6 + 20 navegadores + guarda com os PIDs vindos de <code>$!</code> (nunca <code>pgrep -f</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>assets/test/libera_modulos_carga.py</code></td>

@@ -717,6 +717,222 @@ mudança de cota.</p>
 </tr>
 </tbody>
 </table>
+<hr />
+<h1 id="rf-e-rnf-verificados-no-codigo-27092026">RF e RNF verificados no código (27/09/2026)<a class="headerlink" href="#rf-e-rnf-verificados-no-codigo-27092026" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Auditoria de requisitos <strong>funcionais</strong> e <strong>não funcionais</strong>, com evidência
+<code>arquivo:linha</code> conferida em 27/09/2026, no mesmo formato dos módulos
+auditados antes.</p>
+</blockquote>
+<h2 id="requisitos-funcionais-rf-mapa-codigo-doc">Requisitos funcionais (RF) — mapa código ↔ doc<a class="headerlink" href="#requisitos-funcionais-rf-mapa-codigo-doc" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RF</th>
+<th style="text-align: left;">Descrição</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RF-LT-01</td>
+<td style="text-align: left;">Organograma de <strong>3 níveis</strong> — Secretaria → Setor → Subsetor — com a restrição garantida no banco</td>
+<td style="text-align: left;"><code>init_db</code> (<code>bd_manipulador.py:207-225</code>): <code>tb_unidade.tipo TEXT NOT NULL CHECK(tipo IN ('secretaria','setor','subsetor'))</code> + <code>parent_id … ON DELETE CASCADE</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-02</td>
+<td style="text-align: left;">Acesso à tela só para <code>administrador_geral</code> <strong>ou</strong> usuário com liberação no módulo</td>
+<td style="text-align: left;"><code>telas.py:21-27</code> <code>_pode_ver</code>; negação visual em <code>telas.py:34-40</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-03</td>
+<td style="text-align: left;">Administração exige <code>administrador_geral</code> <strong>ou</strong> admin do módulo</td>
+<td style="text-align: left;"><code>telas.py:30-31</code> <code>_eh_admin</code> (<code>perfil_global_de</code> + <code>autenticacao.eh_admin_do_modulo</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-04</td>
+<td style="text-align: left;">Selects em <strong>cascata</strong>: escolher Secretaria carrega Setor, escolher Setor carrega Subsetor</td>
+<td style="text-align: left;"><code>telas.py:94-96</code> <code>lista-select-secretaria</code>/<code>-setor</code>/<code>-subsetor</code>; recarga em <code>telas.py:299-300</code> com <code>listar_unidades(parent_id=e.value, tipo="setor")</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-05</td>
+<td style="text-align: left;">Contatos do órgão em <strong>ordem alfabética</strong>, insensível a acento e a caixa</td>
+<td style="text-align: left;"><code>listar_contatos</code> (<code>:763</code>); <code>_norm</code> (<code>:202</code>) remove acento para ordenar</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-06</td>
+<td style="text-align: left;">Telefone clicável (<code>tel:</code>) com tooltip, e diálogo de ligação</td>
+<td style="text-align: left;"><code>telas.py:176</code> <code>ui.link(nome, target=f"tel:{tel_limpo}")</code> + <code>.tooltip("Toque para ligar (celular)")</code>; <code>telas.py:248</code> botão de chamada; <code>telas.py:420</code> link "Ligar"; <code>data-testid=lista-ligar</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-07</td>
+<td style="text-align: left;">Busca global por nome/telefone, <strong>sem acento</strong></td>
+<td style="text-align: left;"><code>buscar_unidades</code> (<code>:730</code>) + <code>buscar_contatos</code> (<code>:797</code>), ambos sobre <code>_norm</code> (<code>:202</code>); <code>data-testid=lista-busca</code>; <code>telas.py:397-398</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-08</td>
+<td style="text-align: left;">Contato <strong>vinculado</strong> a um usuário do cadastro, ou externo</td>
+<td style="text-align: left;"><code>criar_contato(unidade_id, nome, telefone, user_nome)</code> (<code>:829</code>); <code>tb_contato.tipo CHECK(tipo IN ('vinculado','externo'))</code>; painel tem <code>admin-contato-user</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-09</td>
+<td style="text-align: left;">Criar, editar e excluir contato</td>
+<td style="text-align: left;"><code>criar_contato</code> (<code>:829</code>), <code>editar_contato</code> (<code>:874</code>), <code>excluir_contato</code> (<code>:917</code>); <code>admin-criar-contato</code>, <code>admin-contato-nome/tel/unidade</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-10</td>
+<td style="text-align: left;">Criar/editar/excluir unidade, e <strong>mover</strong> unidade para outro pai</td>
+<td style="text-align: left;"><code>criar_unidade</code> (<code>:379</code>), <code>editar_unidade</code> (<code>:439</code>), <code>excluir_ramo</code> (<code>:479</code>), <code>mover_unidade</code> (<code>:558</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-11</td>
+<td style="text-align: left;"><strong>Excluir ramo</strong> apaga a unidade e toda a descendência de uma vez</td>
+<td style="text-align: left;"><code>excluir_ramo</code> (<code>:479</code>) com <code>_coletar_ramo_ids</code> (<code>:533</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-12</td>
+<td style="text-align: left;"><strong>Elevar/rebaixar</strong> o nível de uma unidade (subsetor ↔ setor ↔ secretaria)</td>
+<td style="text-align: left;"><code>elevar_rebaixar(uid, novo_tipo)</code> (<code>:625</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-13</td>
+<td style="text-align: left;">Reordenar as unidades de um mesmo pai</td>
+<td style="text-align: left;"><code>reordenar_unidades(parent_id, ordem_ids)</code> (<code>:696</code>); campo <code>tb_unidade.ordem</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-14</td>
+<td style="text-align: left;">Transferir contato entre unidades</td>
+<td style="text-align: left;"><code>transferir_contato(cid, nova_unidade_id)</code> (<code>:950</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-15</td>
+<td style="text-align: left;">Exibir o caminho completo da unidade (Secretaria › Setor › Subsetor)</td>
+<td style="text-align: left;"><code>_caminho_unidade</code> (<code>telas.py:461</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-16</td>
+<td style="text-align: left;">Aparência e backup no painel</td>
+<td style="text-align: left;"><code>telas_administracao.py:22</code> <code>mostrar_administracao</code> com <code>bloco_aparencia</code> + <code>painel_backup</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-17</td>
+<td style="text-align: left;">Organograma base semeado, e reusado pelo módulo de Solicitação de Impressão</td>
+<td style="text-align: left;"><code>init_db</code> (<code>:207</code>) semeia <code>ORGANOGRAMA_BASE</code> quando <code>tb_unidade</code> está vazia; consumidor em <code>mod_solicita_impressao/bd_manipulador.py:364</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RF-LT-18</td>
+<td style="text-align: left;">Rótulos PT-BR e docstrings bilíngue EN (topo) / PT-BR (abaixo)</td>
+<td style="text-align: left;"><code>bd_manipulador.py:1-20</code>, <code>telas.py:1-20</code>, <code>telas_administracao.py:1-21</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="requisitos-nao-funcionais-rnf-garantias-tecnicas">Requisitos não-funcionais (RNF) — garantias técnicas<a class="headerlink" href="#requisitos-nao-funcionais-rnf-garantias-tecnicas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">RNF</th>
+<th style="text-align: left;">Exigência</th>
+<th style="text-align: left;">Evidência no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">RNF-LT-PERS-01</td>
+<td style="text-align: left;">Banco próprio <code>db_mod_lista_telefonica.db</code>; tabelas <code>tb_unidade</code> e <code>tb_contato</code></td>
+<td style="text-align: left;"><code>get_connection</code> (<code>:156</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-PERS-02</td>
+<td style="text-align: left;">Integridade referencial no <strong>banco</strong>, não só na UI: <code>ON DELETE CASCADE</code> nos dois lados</td>
+<td style="text-align: left;"><code>init_db</code> (<code>:214-224</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-PERS-03</td>
+<td style="text-align: left;">Restrição de domínio no banco: o <code>tipo</code> só aceita os 3 valores</td>
+<td style="text-align: left;"><code>CHECK(tipo IN ('secretaria','setor','subsetor'))</code> e <code>CHECK(tipo IN ('vinculado','externo'))</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-PERS-04</td>
+<td style="text-align: left;">3 índices cobrindo as consultas quentes: hierarquia, busca por contato e busca por nome</td>
+<td style="text-align: left;"><code>idx_unidade_parent</code>, <code>idx_contato_unidade</code>, <code>idx_contato_nome</code> (<code>init_db</code>, <code>:233-235</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-PERS-05</td>
+<td style="text-align: left;"><code>database is locked</code> é erro tratado, com rollback e <strong>retry</strong> no commit</td>
+<td style="text-align: left;"><code>_eh_bloqueio_banco</code> (<code>:98</code>), <code>_rollback_seguro</code> (<code>:109</code>), <code>_commit_com_retry</code> (<code>:121</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-PERS-06</td>
+<td style="text-align: left;">DDL idempotente e import-safe</td>
+<td style="text-align: left;"><code>init_db</code> (<code>:207</code>) com <code>CREATE TABLE IF NOT EXISTS</code> + seed só quando a tabela está vazia</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-SEG-01</td>
+<td style="text-align: left;">Autorização verificada <strong>antes</strong> de renderizar, com negação explícita na tela</td>
+<td style="text-align: left;"><code>_pode_ver</code> (<code>:21</code>) e <code>_eh_admin</code> (<code>:30</code>), ambos com <code>except</code> que devolve <code>False</code> em vez de propagar</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-SEG-02</td>
+<td style="text-align: left;">Auditoria das escritas de configuração e de exclusão</td>
+<td style="text-align: left;"><code>_audit</code> (<code>:183</code>) nas operações de unidade e contato</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-SEG-03</td>
+<td style="text-align: left;">Telefone sanitizado antes de virar <code>tel:</code></td>
+<td style="text-align: left;"><code>telas.py:176</code>/<code>:420</code> montam <code>tel_limpo</code> a partir do valor já validado no cadastro</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-RES-01</td>
+<td style="text-align: left;"><code>try/except</code> obrigatório em função, com log (AGENTS.md §3.2)</td>
+<td style="text-align: left;">Todo <code>bd_manipulador</code> protegido, com <code>_log()</code> (<code>:87</code>) e <code>log.exception</code>; <code>telas.py:34</code> envolve o <code>mostrar_tela</code> inteiro</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-RES-02</td>
+<td style="text-align: left;">Falha de banco em operação destrutiva (<code>excluir_ramo</code>, <code>transferir_contato</code>) faz rollback e <strong>não</strong> apaga parcialmente</td>
+<td style="text-align: left;"><code>_rollback_seguro</code> (<code>:109</code>) chamado nos <code>except</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-UX-01</td>
+<td style="text-align: left;">Anti-disconnect: I/O fora do event-loop nos handlers de escrita</td>
+<td style="text-align: left;"><code>telas_administracao.py</code> conduz as mutações por <code>run.io_bound</code>, com <code>ui.spinner</code> e trava de reentrância</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-UX-02</td>
+<td style="text-align: left;"><code>data-testid</code> via <code>.props('data-testid=...')</code> em todas as ações</td>
+<td style="text-align: left;">5 na tela (<code>lista-select-secretaria</code>, <code>lista-select-setor</code>, <code>lista-select-subsetor</code>, <code>lista-busca</code>, <code>lista-ligar</code>) + 11 no painel (<code>admin-criar-unidade</code>, <code>admin-unidade-nome/tel/tipo/pai</code>, <code>admin-criar-contato</code>, <code>admin-contato-nome/tel/unidade/user</code>, <code>admin-contato-busca</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-UX-03</td>
+<td style="text-align: left;">A cascata <strong>desabilita</strong> o select seguinte até haver seleção — não deixa escolher um setor sem secretaria</td>
+<td style="text-align: left;"><code>telas.py:95-96</code> com <code>disable</code>/<code>clearable</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-PERF-01</td>
+<td style="text-align: left;">Busca sem varrer a tabela: normaliza e filtra sobre o conjunto já carregado</td>
+<td style="text-align: left;"><code>_norm</code> (<code>:202</code>) + <code>buscar_*</code> (<code>:730</code>/<code>:797</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-RESP-01</td>
+<td style="text-align: left;">Responsividade</td>
+<td style="text-align: left;"><code>telas.py</code> — selects <code>w-full</code>, organograma expansível com <code>flex-wrap</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-CFG-01</td>
+<td style="text-align: left;">Aparência por tema do módulo, com fallback no padrão do núcleo</td>
+<td style="text-align: left;"><code>telas_administracao.py</code> usa <code>tema_modulo.bloco_aparencia</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-COMP-01</td>
+<td style="text-align: left;">Compatibilidade SQLite ↔ PostgreSQL</td>
+<td style="text-align: left;">Via <code>banco_conexao</code>; DDL só <code>IF NOT EXISTS</code>, sem SQL SQLite-only no módulo</td>
+</tr>
+<tr>
+<td style="text-align: left;">RNF-LT-LGPD-01</td>
+<td style="text-align: left;">Excluir/renomear usuário limpa o vínculo <code>tb_contato.user_nome</code></td>
+<td style="text-align: left;"><code>remover_vinculos_usuario</code> (<code>:1017</code>) e <code>renomear_usuario</code> (<code>:1048</code>)</td>
+</tr>
+</tbody>
+</table>
               
             </div>
           </div><footer>

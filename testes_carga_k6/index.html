@@ -431,19 +431,19 @@ maior, ou com mais módulos habilitados, essa folga desaparece.</p>
 </tr>
 <tr>
 <td style="text-align: left;">núcleos / threads</td>
-<td style="text-align: left;">4 / 2 por núcleo (4 lógicos)</td>
+<td style="text-align: left;">2 físicos / 4 lógicos (2 threads por núcleo) — <code>lscpu</code>: <code>CPU(s): 4</code>, <code>Thread(s) per núcleo: 2</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">frequência</td>
-<td style="text-align: left;">800 MHz – 1.500 MHz</td>
+<td style="text-align: left;">800 MHz – 1.500 MHz (<code>CPU MHz</code> mín/máx)</td>
 </tr>
 <tr>
 <td style="text-align: left;">memória total</td>
-<td style="text-align: left;"><strong>3,7 GiB</strong></td>
+<td style="text-align: left;"><strong>3,7 GiB</strong> (<code>MemTotal</code> 3.886.268 kB = 3,71 GiB)</td>
 </tr>
 <tr>
 <td style="text-align: left;">swap</td>
-<td style="text-align: left;">5,6 GiB (1,0 GiB em uso)</td>
+<td style="text-align: left;">5,6 GiB (<code>SwapTotal</code> 5.833.304 kB)</td>
 </tr>
 <tr>
 <td style="text-align: left;">sistema</td>
@@ -451,12 +451,15 @@ maior, ou com mais módulos habilitados, essa folga desaparece.</p>
 </tr>
 <tr>
 <td style="text-align: left;">bancos de dados</td>
-<td style="text-align: left;">11 SQLite, 3,2 MB no total</td>
+<td style="text-align: left;">11 SQLite, <strong>4,53 MiB</strong> no total em 27/09/2026 — era 3,2 MB em 26/09; o crescimento é do <code>db_mod_agregador_noticias.db</code> (2,92 MiB sozinho)</td>
 </tr>
 </tbody>
 </table>
 <h3 id="memoria-o-que-esta-em-uso">Memória: o que está em uso<a class="headerlink" href="#memoria-o-que-esta-em-uso" title="Permanent link">&para;</a></h3>
-<p>Medido com o servidor no ar e <strong>sem</strong> carga:</p>
+<p>Medido com o servidor no ar e <strong>sem</strong> carga, em <strong>26/09/2026</strong> (as quatro
+primeiras linhas são dessa sessão; o total do sistema varia com a ferramenta de
+desenvolvimento aberta, e a medição de 27/09 em outra hora deu 2.184 MB, ver
+<a href="../testes_carga_uso/#a-maquina">testes_carga_uso</a>):</p>
 <table>
 <thead>
 <tr>
@@ -608,8 +611,10 @@ botão — um evento interno do NiceGUI.</p>
   atende uma prefeitura com folga, desde que as entradas não coincidam.</li>
 </ul>
 <p>A causa é o <strong>fator de custo 12 do bcrypt</strong>, escolhido por segurança. Baixar
-para 10 daria ~3× mais vazão e continua acima do mínimo recomendado de 10, mas
-é uma decisão de segurança — <strong>não foi alterada aqui</strong>.</p>
+para 10 dá <strong>4× mais vazão</strong> (2² iterações a menos: a tabela abaixo mede 11,1
+bcrypt/s por núcleo a 3 GHz no custo 10 contra 2,8 no custo 12 — 3,96×) e
+continua acima do mínimo recomendado de 10, mas é uma decisão de segurança —
+<strong>não foi alterada aqui</strong>.</p>
 <h2 id="aviso-sobre-como-medir">Aviso sobre como medir<a class="headerlink" href="#aviso-sobre-como-medir" title="Permanent link">&para;</a></h2>
 <p>Duas armadilhas encontradas e corrigidas, que distorcem o número se ignoradas:</p>
 <p><strong>1. Aquecimento da auditoria.</strong> A primeira escrita de auditoria de um processo
@@ -747,64 +752,144 @@ k6<span class="w"> </span>run<span class="w"> </span>assets/k6/login_carga.js
 <h2 id="a-escalada">A escalada<a class="headerlink" href="#a-escalada" title="Permanent link">&para;</a></h2>
 <p>Cada VU entra com um login <strong>distinto</strong> (<code>user001</code>…<code>user120</code>), como pessoas
 reais — não a mesma conta repetida.</p>
+<p><code>startVUs: 0</code>, <code>gracefulRampDown: 10s</code>, <code>gracefulStop: 40s</code>. A escalada é uma
+subida até 120, uma <strong>pausa</strong> em cada patamar e uma descida final. São <strong>19
+estágios</strong>, e não 9: cada patamar tem um degrau de subida de 15 s e um de
+espera. Custo total: <strong>345 s de estágios (5:45) + 40 s de <code>gracefulStop</code> =
+385 s (6:25)</strong>. A sonda do event-loop roda em paralelo, cenário separado, por
+<code>5m30s</code> (<code>+5s</code> de <code>gracefulStop</code> = 335 s), cobrindo os 345 s de estágios.</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">etapa</th>
-<th style="text-align: right;">VUs</th>
-<th style="text-align: right;">espera</th>
+<th style="text-align: right;">#</th>
+<th style="text-align: left;">estágio</th>
+<th style="text-align: right;">VUs no fim</th>
+<th style="text-align: left;">o que é</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">15 s</td>
 <td style="text-align: right;">10</td>
-<td style="text-align: right;">20 s</td>
+<td style="text-align: left;">degrau de subida</td>
 </tr>
 <tr>
-<td style="text-align: left;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">20 s</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;"><strong>segura 10</strong></td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">15 s</td>
 <td style="text-align: right;">30</td>
-<td style="text-align: right;">20 s</td>
+<td style="text-align: left;">degrau de subida</td>
 </tr>
 <tr>
-<td style="text-align: left;">3</td>
-<td style="text-align: right;"><strong>40</strong></td>
-<td style="text-align: right;"><strong>30 s</strong> ← limiar de aprovação</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">20 s</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: left;"><strong>segura 30</strong></td>
 </tr>
 <tr>
-<td style="text-align: left;">4</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">15 s</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: left;">degrau de subida</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">30 s</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: left;"><strong>segura 40</strong> ← limiar de aprovação</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td style="text-align: left;">15 s</td>
 <td style="text-align: right;">60</td>
-<td style="text-align: right;">20 s</td>
+<td style="text-align: left;">degrau de subida</td>
 </tr>
 <tr>
-<td style="text-align: left;">5</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: left;">20 s</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: left;">segura 60</td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td style="text-align: left;">15 s</td>
 <td style="text-align: right;">80</td>
-<td style="text-align: right;">20 s</td>
+<td style="text-align: left;">degrau de subida</td>
 </tr>
 <tr>
-<td style="text-align: left;">6</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">20 s</td>
+<td style="text-align: right;">80</td>
+<td style="text-align: left;">segura 80</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td style="text-align: left;">15 s</td>
 <td style="text-align: right;">90</td>
-<td style="text-align: right;">20 s</td>
+<td style="text-align: left;">degrau de subida</td>
 </tr>
 <tr>
-<td style="text-align: left;">7</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: left;">20 s</td>
+<td style="text-align: right;">90</td>
+<td style="text-align: left;">segura 90</td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td style="text-align: left;">15 s</td>
 <td style="text-align: right;">100</td>
-<td style="text-align: right;">20 s</td>
+<td style="text-align: left;">degrau de subida</td>
 </tr>
 <tr>
-<td style="text-align: left;">8</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: left;">20 s</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: left;">segura 100</td>
+</tr>
+<tr>
+<td style="text-align: right;">15</td>
+<td style="text-align: left;">15 s</td>
 <td style="text-align: right;">110</td>
-<td style="text-align: right;">20 s</td>
+<td style="text-align: left;">degrau de subida</td>
 </tr>
 <tr>
-<td style="text-align: left;">9</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">20 s</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: left;">segura 110</td>
+</tr>
+<tr>
+<td style="text-align: right;">17</td>
+<td style="text-align: left;">15 s</td>
 <td style="text-align: right;">120</td>
-<td style="text-align: right;">30 s</td>
+<td style="text-align: left;">degrau de subida</td>
+</tr>
+<tr>
+<td style="text-align: right;">18</td>
+<td style="text-align: left;">30 s</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: left;"><strong>segura 120</strong></td>
+</tr>
+<tr>
+<td style="text-align: right;">19</td>
+<td style="text-align: left;">10 s</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">descida</td>
 </tr>
 </tbody>
 </table>
+<p>O resumo de uma linha por patamar é o que a tabela de
+<a href="#resultado-da-execucao-de-26092026">Resultado</a> mostra: <code>10 · 30 · 40 · 60 ·
+80 · 90 · 100 · 110 · 120</code>.</p>
 <p>Cada ciclo de VU: <code>GET /login</code> → WebSocket (Engine.IO <code>OPEN</code>/<code>PONG</code>/<code>CONNECT</code>)
-→ evento <code>handshake</code> do NiceGUI → <strong>segura a conexão 15 s</strong> → desconecta.</p>
+→ evento <code>handshake</code> do NiceGUI → <strong>segura a conexão 15 s</strong> (<code>SEGURAR_MS</code>) →
+desconecta.</p>
 <h2 id="o-que-significam-as-metricas">O que significam as métricas<a class="headerlink" href="#o-que-significam-as-metricas" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -840,7 +925,7 @@ reais — não a mesma conta repetida.</p>
 </tr>
 <tr>
 <td style="text-align: left;"><code>http_req_duration</code> (p95)</td>
-<td style="text-align: left;"><strong>a métrica decisiva</strong>, medida pela <em>sonda do event-loop</em>.</td>
+<td style="text-align: left;"><strong>a métrica decisiva</strong> — mas atenção ao que ela agrega: o threshold é <code>http_req_duration</code> <strong>sem seletor</strong>, e este script só faz <strong>duas</strong> requisições, o <code>GET /login</code> e o <code>GET /favicon.ico</code> da sonda. O p95 dos 955,6 ms é a mistura das duas, não a sonda sozinha. Para isolar a sonda com threshold próprio, use os seletores por classe de <code>carga_uso.js</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -850,9 +935,9 @@ síncrono bloqueando o event-loop</strong> — o "servidor desconectado". O caso
 grave: a primeira gravação de auditoria de cada módulo rodava DDL dentro do
 event-loop e levava <strong>73,9 s</strong>; com a tela congelada, o WebSocket caía.</p>
 <p>Enquanto N sockets estão abertos, um request leve tem de continuar rápido. Se o
-event-loop travar, a sonda do event-loop sobe e o teste reprova <strong>antes</strong> de
-qualquer usuário perceber. É por isso que a sonda roda em cenário separado,
-durante toda a escalada.</p>
+event-loop travar, o <code>GET /favicon.ico</code> da sonda sobe e o p95 agregado sobe
+junto — e o teste reprova <strong>antes</strong> de qualquer usuário perceber. É por isso que
+a sonda roda em cenário separado, durante toda a escalada.</p>
 <h2 id="limite-conhecido-e-deliberado">Limite conhecido, e deliberado<a class="headerlink" href="#limite-conhecido-e-deliberado" title="Permanent link">&para;</a></h2>
 <p>O teste <strong>não clica no botão "Entrar"</strong>, então <strong>não mede o bcrypt</strong>. O caminho
 existe e foi verificado até o fim — o handshake do NiceGUI é concluído, o
@@ -862,17 +947,24 @@ Acoplar o teste à versão do NiceGUI faria uma atualização quebrá-lo <strong
 silêncio</strong>, que é resultado pior que não medir. Por isso o bcrypt tem medição
 própria, descrita acima.</p>
 <h2 id="saida-esperada">Saída esperada<a class="headerlink" href="#saida-esperada" title="Permanent link">&para;</a></h2>
+<p>Transcrição literal do <code>handleSummary</code> de <code>assets/k6/login_carga.js</code>, na ordem
+em que ele imprime (11 linhas):</p>
 <div class="highlight"><pre><span></span><code>================= CARGA k6 — INTRANET =================
 reqs............: N  (falhas 0.0000)
-GET /login......: p95 ... ms
+GET /login......: p95 ... ms  | max ... ms
 conexao WS......: p95 ... ms
+socket vivo.....: p95 ... ms
 handshake ok....: 1.0000
 desconectou.....: 1.0000
-latencia geral..: p95 ... ms
+eventos/pagina...: N
+latencia geral..: p95 ... ms  | p99 ... ms
 checks..........: 1.0000
-VUs (max).......: 120
+VUs (max).......: 121
 ======================================================
 </code></pre></div>
+<p>O <code>VUs (max)</code> esperado é <strong>121</strong>, não 120: os 120 VUs do cenário <code>usuarios</code>
+somam 1 VU do cenário <code>sonda_eventloop</code> (<code>vus: 1</code>), e o k6 reporta o máximo
+global. Foi exatamente 121 na execução de 26/09.</p>
 <p>Os avisos <code>setTimeout N was stopped because the VU iteration was interrupted</code>
 no fim da execução são esperados: são as conexões em curso durante a rampa de
 descida para 0 VUs.</p>
