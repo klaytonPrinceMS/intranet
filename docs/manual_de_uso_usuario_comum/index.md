@@ -13,6 +13,23 @@
 - O `comum` vê apenas os módulos expressamente liberados (ex.: `qacomum` → editar_pdf, empenhos, solicita_impressao — SEM blog, removido do seed vigente).
 - Login em `/login`; sessão via cookie; logout encerra apenas o dispositivo atual.
 
+## Estilo visual (rodapé da tela)
+
+- A **tela de login é sempre a mesma** para todo mundo (padrão `verde`, na estética do WhatsApp).
+- Dentro dos módulos, a escolha de estilo fica no **rodapé**, que aparece quando o mouse passa na
+  **faixa de 5 px** na base da janela (ou por `Tab`/toque). As opções são **Azul**, **Verde**,
+  **Roxo**, **Preto** e **Padrão**.
+- O menu fica **exatamente no meio** da faixa do rodapé, entre o nome do sistema (à esquerda) e a
+  versão (à direita), que continuam aparecendo normalmente.
+- A escolha vale **só neste navegador e neste computador** — não viaja para outra máquina, e outro
+  login no mesmo aparelho tem a própria escolha.
+- **"Padrão"** significa **"não impor cor nenhuma"**: a tela fica com a cor que o **administrador
+  configurou para aquele módulo** (por padrão, o preto do sistema). Não é o mesmo que escolher um
+  estilo — é o contrário disso. É por isso que, nesse caso, o rótulo à direita do menu mostra
+  **"cor do módulo"** em vez do nome de um estilo.
+- Trocar o estilo **não** tira você da página nem do módulo em que está, e **não** precisa reiniciar
+  o servidor. Detalhe técnico em [Estilo Visual e Tema do Sistema](../estilo_visual.md).
+
 ## Blog (`/blog`)
 
 - Leitura de publicações e histórico (somente leitura).

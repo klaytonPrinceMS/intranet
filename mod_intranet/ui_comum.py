@@ -41,6 +41,11 @@ def _log():
 # Paleta semântica única do sistema: use `CORES["perigo"]`, `CORES["alerta"]`
 # etc. em vez de hexes soltos repetidos nas telas (ver docs/convencoes_codigo).
 CORES = {
+    # Valores de RESERVA, os mesmos de antes da experiência de estilo visual.
+    # O que vale mesmo é o que o administrador gravou em tb_config
+    # (`cor_principal`/`cor_fundo` e as chaves por módulo), lidos a cada
+    # renderização. O menu de estilo NÃO mexe nisto: quem escolhe "Padrão" está
+    # justamente dizendo "usa a cor do meu módulo, como está".
     "primaria": "#1565C0",
     "sucesso": "#2E7D32",
     "alerta": "#EF6C00",

@@ -57,7 +57,11 @@ PREFIXO_POR_CHAVE = {
 # Usado quando a chave do módulo está vazia em tb_config: o módulo inicia com
 # as SUAS cores padrão (não herda o tema do sistema). O valor de cada módulo
 # coincide com o usado nas rotas de administração (main.py, `ui.colors(primary=)`).
-# Padronização (08/09): TODOS os módulos usam a cor do intranet — PRETO (#000000).
+# Tema do sistema: PRETO (#000000), como estava antes da experiência de
+# estilo visual (27/09/2026). O "Padrão" do menu de estilo significa exatamente
+# isto — não impor cor nenhuma e deixar a cor que o ADMINISTRADOR configurou
+# para o módulo aparecer. Por isso o padrão voltou a ser o de antes: o estilo
+#WhatsApp virou uma OPÇÃO do menu (a "Verde"), não a cor do sistema.
 PADROES_TEMA = {
     "intranet": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
                  "cor_titulo": "#212121", "btn_tamanho": "medium"},

@@ -219,6 +219,24 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
     Espaçamentos via `.style("gap: …")` (visual 1:1, bug #2171/Ubuntu).
     """
     cores = _obter_cor_principal()
+    # Estilo visual em vigor: a ESCOLHA deste navegador (cookie). Vazio
+    # significa "Padrão" — e aí NENHUM estilo é imposto, para a cor que o
+    # administrador deste módulo configurou aparecer como está. Precisa ser
+    # resolvido e aplicado ANTES do cabeçalho: quando há estilo, ele redefine
+    # `--q-primary`, que é a cor do cabeçalho e de todo elemento `bg-primary`.
+    estilo_visual_usuario = ""
+    try:
+        from mod_intranet import preview_estilos as _pv_estilos
+        estilo_visual_usuario = _pv_estilos.estilo_efetivo()
+        if estilo_visual_usuario:
+            _pv_estilos.aplicar(estilo_visual_usuario, cor_principal=cores)
+    except Exception:
+        try:
+            import logging
+            logging.getLogger(__name__).exception(
+                "telas: falha ao aplicar o estilo visual")
+        except Exception:
+            pass
     ui.colors(primary=cores, secondary=ui_comum.CORES["cinza_escuro"],
               accent=cores)
     fundo = _obter_config('cor_fundo', ui_comum.CORES["fundo"]) \
@@ -412,8 +430,11 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
                 ativo=False)
 
     # ===== FOOTER (parte 4) =====
-    # Rodapé escondido com reveal no hover/focus (faixa de 5px como pista).
-    # CSS escopado via [data-testid="rodape-sistema"] — sem vazamento global.
+    # Rodapé ESCONDIDO durante a navegação, revelado no hover/focus (faixa de
+    # 5px como pista). É onde mora a escolha de estilo visual — escondido para
+    # não roubar altura da tela de quem está trabalhando, e um mouse na base da
+    # janela abre. CSS escopado via [data-testid="rodape-sistema"], sem
+    # vazamento global.
     try:
         ui.add_head_html("""
 <style>
@@ -425,10 +446,24 @@ def _montar_layout(nome_usuario: str, rotulo_perfil: str, titulo_modulo: str,
     except Exception:
         pass
     with ui.footer().classes("bg-grey-8 w-full").props('data-testid=rodape-sistema').style("min-width: 0"):
-        with ui.row().classes("w-full items-center justify-between flex-wrap px-4 py-1.5").style("gap: 0.5rem; min-width: 0"):
+        with ui.row().classes("w-full items-center justify-between flex-wrap px-4 py-1").style("gap: 0.5rem; min-width: 0"):
             texto_rodape = _obter_config("texto_rodape", "uso interno") or "uso interno"
             ui.label(f"{titulo_sistema} Básica — {texto_rodape}").classes(
                 "text-caption opacity-80")
+            # Escolha de estilo visual: mora no COOKIE deste navegador, então
+            # o padrão escolhido é só dele e não viaja com o usuário para
+            # outra máquina. Fica no meio do rodapé para ser Achado sem caçar a
+            # beira, e disponível em QUALQUER módulo.
+            try:
+                from mod_intranet import preview_estilos as _pv_estilos
+                _pv_estilos.barra_alternador(estilo_visual_usuario, discreto=True)
+            except Exception:
+                try:
+                    import logging
+                    logging.getLogger(__name__).exception(
+                        "telas: falha ao montar a barra de estilo no rodapé")
+                except Exception:
+                    pass
             # Versões (esquerda -> direita): 1ª global do sistema, seguida da
             # parte do módulo atual mesclada (ocultando AAMMDD iguais).
             # Sempre exibido num rótulo único; o detalhe completo fica no tooltip.

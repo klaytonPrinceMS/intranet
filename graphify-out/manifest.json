@@ -474,9 +474,9 @@
     "semantic_hash": ""
   },
   "main.py": {
-    "mtime": 1790472482.9294019,
-    "seen": 1790521220.2192657,
-    "ast_hash": "05f58e6cf9a4152b5b88d676c0da15f0",
+    "mtime": 1790528022.9844682,
+    "seen": 1790528656.1175957,
+    "ast_hash": "207be7a00a3873679c3e37aa3cd95d3d",
     "semantic_hash": ""
   },
   "mod_auditoria/__init__.py": {
@@ -582,8 +582,8 @@
     "semantic_hash": ""
   },
   "mod_intranet/autenticacao.py": {
-    "mtime": 1790380480.320576,
-    "seen": 1790387687.6665413,
+    "mtime": 1790527579.627608,
+    "seen": 1790528656.118151,
     "ast_hash": "8eb3477efaee69f4d8b044eb53a95065",
     "semantic_hash": ""
   },
@@ -594,9 +594,9 @@
     "semantic_hash": ""
   },
   "mod_intranet/bd_conexao.py": {
-    "mtime": 1790380480.3215759,
-    "seen": 1790387687.6665483,
-    "ast_hash": "64ea100b64f9d8fede7271c2489fb35b",
+    "mtime": 1790529752.9143367,
+    "seen": 1790530663.6729908,
+    "ast_hash": "18191bc136c82a0af206eba933011537",
     "semantic_hash": ""
   },
   "mod_intranet/bd_criador.py": {
@@ -732,9 +732,9 @@
     "semantic_hash": ""
   },
   "mod_intranet/telas.py": {
-    "mtime": 1790391137.5711176,
-    "seen": 1790428286.9267137,
-    "ast_hash": "8b0cdd5e24de79edf41c6dfc26e7792d",
+    "mtime": 1790529718.6420872,
+    "seen": 1790530663.6731722,
+    "ast_hash": "93110922c35ac0f1235ccc444c40e680",
     "semantic_hash": ""
   },
   "mod_intranet/tema_css.py": {
@@ -744,15 +744,15 @@
     "semantic_hash": ""
   },
   "mod_intranet/tema_modulo.py": {
-    "mtime": 1790380480.3735757,
-    "seen": 1790387687.6666458,
-    "ast_hash": "715a75a781855accbebf4bcb1e45718b",
+    "mtime": 1790529736.3592248,
+    "seen": 1790530663.6731935,
+    "ast_hash": "e58c836395e54a2becc8466868d58ce3",
     "semantic_hash": ""
   },
   "mod_intranet/ui_comum.py": {
-    "mtime": 1790119490.758996,
-    "seen": 1790387687.6666493,
-    "ast_hash": "cec28faefd356437a1257f58f7e31dee",
+    "mtime": 1790529744.1342852,
+    "seen": 1790530663.6731997,
+    "ast_hash": "6da21f7b7a117369ec61e4cac66beaa7",
     "semantic_hash": ""
   },
   "mod_intranet/ui_form.py": {
@@ -972,8 +972,8 @@
     "semantic_hash": ""
   },
   "assets/docker/compose.yml": {
-    "mtime": 1790119490.535994,
-    "seen": 1790387687.6668277,
+    "mtime": 1790523276.9701357,
+    "seen": 1790525935.326004,
     "ast_hash": "70cc3b6746c659140ab6e4829d95ada9",
     "semantic_hash": ""
   },
@@ -1014,8 +1014,8 @@
     "semantic_hash": ""
   },
   "assets/docker/postgres/docker-compose.yml": {
-    "mtime": 1790119490.537994,
-    "seen": 1790387687.6668508,
+    "mtime": 1790523276.9714053,
+    "seen": 1790525935.3261101,
     "ast_hash": "597dadaacd85f62b39552bce16315d4c",
     "semantic_hash": ""
   },
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_intranet.md": {
-    "mtime": 1790428026.7824588,
-    "seen": 1790428286.927438,
-    "ast_hash": "62acaf30d13af21e401356c0feba2ddd",
+    "mtime": 1790530445.9483433,
+    "seen": 1790530663.6736696,
+    "ast_hash": "f39aa979c54756080aa74de777c2b19e",
     "semantic_hash": ""
   },
   "docs/analise_mod_renomear_empenho.md": {
@@ -1098,9 +1098,9 @@
     "semantic_hash": ""
   },
   "docs/configuracoes.md": {
-    "mtime": 1790515271.5625947,
-    "seen": 1790521220.2201385,
-    "ast_hash": "be4d1ed472aa2cbe15bdfebd859d86ee",
+    "mtime": 1790530405.0831134,
+    "seen": 1790530663.6737294,
+    "ast_hash": "efbe7a06f3d8924f9939ce7182a1548c",
     "semantic_hash": ""
   },
   "docs/contribuicoes/index.md": {
@@ -1128,9 +1128,9 @@
     "semantic_hash": ""
   },
   "docs/index.md": {
-    "mtime": 1790388402.968463,
-    "seen": 1790388574.9842522,
-    "ast_hash": "1404c8d64f9feb22f5961d8ebebaf6f9",
+    "mtime": 1790530468.715473,
+    "seen": 1790530663.6737807,
+    "ast_hash": "4ae2f94ddbc4b8e677a431f5c3175fb2",
     "semantic_hash": ""
   },
   "docs/inicio_rapido.md": {
@@ -1152,9 +1152,9 @@
     "semantic_hash": ""
   },
   "docs/licoes_aprendida/index.md": {
-    "mtime": 1790388490.3111084,
-    "seen": 1790388574.9842832,
-    "ast_hash": "2e102436f81140771d0fe5a18d572eec",
+    "mtime": 1790530573.087082,
+    "seen": 1790530663.6738064,
+    "ast_hash": "2b00233fce7a7c4b0becdad7659f3a6e",
     "semantic_hash": ""
   },
   "docs/manual_de_uso_administrador/index.md": {
@@ -1176,9 +1176,9 @@
     "semantic_hash": ""
   },
   "docs/manual_de_uso_usuario_comum/index.md": {
-    "mtime": 1790380480.2105765,
-    "seen": 1790387687.666968,
-    "ast_hash": "26c54e7b695c003e0ee05a8226930fc0",
+    "mtime": 1790530468.8151975,
+    "seen": 1790530663.673832,
+    "ast_hash": "63e2f9c7d38f61fd78f81b59c095dc5b",
     "semantic_hash": ""
   },
   "docs/metricas_software/index.md": {
@@ -1320,9 +1320,9 @@
     "semantic_hash": ""
   },
   "mkdocs.yml": {
-    "mtime": 1790516476.4850228,
-    "seen": 1790521220.220447,
-    "ast_hash": "73bd36d2f70f67d2a75b8bd9e99b5980",
+    "mtime": 1790528743.5904386,
+    "seen": 1790529379.7299626,
+    "ast_hash": "c1c3a31008eb795475cbaee04c320e15",
     "semantic_hash": ""
   },
   "requirements-dev.txt": {
@@ -1800,9 +1800,9 @@
     "semantic_hash": ""
   },
   "assets/k6/carga_uso.js": {
-    "mtime": 1790521065.5811357,
-    "seen": 1790521220.2187788,
-    "ast_hash": "aa87dba6bfddd302840b00464a898004",
+    "mtime": 1790521340.4744525,
+    "seen": 1790525935.3193254,
+    "ast_hash": "e736985381fc46afce9d5cd0443b2b01",
     "semantic_hash": ""
   },
   "assets/k6/login_carga.js": {
@@ -1881,6 +1881,18 @@
     "mtime": 1790519968.4442828,
     "seen": 1790521220.2203844,
     "ast_hash": "590af00ec1ac052f606ca8bfd2db7e10",
+    "semantic_hash": ""
+  },
+  "mod_intranet/preview_estilos.py": {
+    "mtime": 1790530785.0263755,
+    "seen": 1790531208.6819894,
+    "ast_hash": "10dc32742c0d3211f0f41e089141aa07",
+    "semantic_hash": ""
+  },
+  "docs/estilo_visual.md": {
+    "mtime": 1790530875.1219432,
+    "seen": 1790531208.6831973,
+    "ast_hash": "d6eec99e7f3e74cd78231e9a9fabbd11",
     "semantic_hash": ""
   }
 }

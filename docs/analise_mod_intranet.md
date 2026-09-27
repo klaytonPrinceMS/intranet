@@ -245,9 +245,9 @@ código e a variação de nomes que existiam entre as telas.
   `texto_header`), lidas/gravadas em `tb_config` central, com aplicação imediata (sem restart).
   **Padrão próprio do módulo (06/09)**: para `cor_botao`/`cor_texto_botao`/`btn_tamanho` a precedência
   é (1) chave do módulo (`<prefixo>_<campo>`) não vazia → (2) default do parâmetro (quando o
-  chamador informa) → (3) padrão do PRÓPRIO módulo (`PADROES_TEMA`, `tema_modulo.py:53-68`); ou
+  chamador informa) → (3) padrão do PRÓPRIO módulo (`PADROES_TEMA`, `tema_modulo.py:65-88`; **paleta preta desde 27/09/2026** — ver [Estilo Visual e Tema do Sistema](estilo_visual.md)); ou
   seja, **chave do módulo vazia = padrão do próprio módulo** — o tema do sistema (`intranet_*`)
-  **NÃO é herdado** (`tema_modulo.py:94-126`). `cor_fundo`, `cor_titulo` e `texto_header` seguem
+  **NÃO é herdado** (`tema_modulo.py:115-148`). `cor_fundo`, `cor_titulo` e `texto_header` seguem
   a mesma regra (vazio = default do parâmetro).
 - **`btn_cls(tamanho)` / `btn_style(cor_botao, cor_texto)`**: funções puras de classe/estilo.
   Garantem a regra de **uniformidade** — todos os botões de uma mesma tela usam **sempre a mesma
@@ -277,6 +277,50 @@ código e a variação de nomes que existiam entre as telas.
 **Adoção**: `edit_pdf`, `solicita_impressao` e `usuarios` (aba Administração) usam o cupê
 padronizado `bloco_aparencia`; os 6 módulos de negócio usam `campo_modulo` (restaurado em 06/09).
 A regra de uniformidade e o helper são cobertos por `test/test_tema.py` (18 verificações standalone).
+
+## Estilo visual — `preview_estilos.py` (27/09/2026)
+
+Módulo **provisório** (`mod_intranet/preview_estilos.py`, 670 linhas) que implementa
+os 4 estilos nomeados (`azul`/`verde`/`roxo`/`preto`) + a opção `padrao`, que **não
+é um estilo**: é a **ausência de imposição** (aí manda a cor do administrador do
+módulo). **Documentação completa e normativa** em
+[Estilo Visual e Tema do Sistema](estilo_visual.md); aqui fica o resumo do
+contrato com o resto do núcleo:
+
+| Ponto | Onde | Contrato |
+|:---|:---|:---|
+| Login **fixo** no estilo `verde` | `main.py:242-251` (`PADRAO_LOGIN`) | `page_login` **não** lê `?estilo=` e **não** monta alternador; o estilo da escolha pessoal vale só para os módulos internos |
+| Estilo aplicado **antes** do cabeçalho, e **só quando há estilo** | `telas.py:229-240` (guarda `if estilo_visual_usuario:` em `:231`) | o estilo redefine `--q-primary`, que é a cor do cabeçalho e de todo `bg-primary` — se viesse depois, a tela nasceria na cor errada. Sem estilo, `aplicar()` **não é chamado** e o `ui.colors(primary=cores)` do módulo prevalece |
+| Preferência no **cookie** `estilo_visual` | `preview_estilos.py:443`, gravado em `:568-570` | **não** vai para `tb_config`: é do navegador, não do usuário. Por que cookie e não `localStorage`: o estilo é aplicado no **servidor**, na renderização — com `localStorage` a tela nasceria no padrão errado e piscaria (e exigiria JS direto, proibido em AGENTS.md §5) |
+| Rota de troca | `GET /estilo-visual/{chave}?volta=<caminho>` (`preview_estilos.py:541-571`) | **HTTP de verdade** porque só uma resposta HTTP pode mandar `Set-Cookie`; `303` para não repetir POST; `volta` só aceita caminho **interno** (redirecionamento aberto) |
+| Resolução do estilo — **um degrau só** | `estilo_efetivo()` `:503` = `ler_estilo()` `:483` | devolve a escolha pessoal **ou `""`**. O vazio é a resposta ao clique em "Padrão" e significa **nenhum estilo impondo** — quem manda é `tema_modulo.ler_tema` + `cor_principal` do módulo. `padrao` e valor fora da lista normalizam para `""`, para o código ter um único jeito de dizer "sem escolha" |
+| Menu no rodapé, **no fluxo** e centralizado por grade | `telas.py:432-476`; grade em `assets/css/preview-estilos-v1.css:145-161` | disponível em **TODOS** os módulos (o rodapé se revela no `:hover`/`:focus-within`, faixa de 5px como pista). O menu é o **3º item** entre o título (esquerda) e a versão (direita), que continuam presentes; `display: grid` com `minmax(0,1fr) auto minmax(0,1fr)` escopado em `[data-testid="rodape-sistema"] > .nicegui-row:first-child` põe o menu no **meio geométrico** — com `justify-between` e 3 itens ele encostava no da esquerda e saía 38px do centro. O modo `.pe-alternador-fixo` (`position: fixed`) foi **removido**. `data-testid`: `estilo-azul`, `estilo-verde`, `estilo-roxo`, `estilo-preto`, `estilo-padrao`, `estilo-atual` (este último mostra **"cor do módulo"** quando não há estilo) |
+| NiceGUI 3.15 | `_request_atual()` `preview_estilos.py:464-480` | `context.request` **não existe mais** (vai para `context.client.request`); o helper faz a cadeia — sem ele o cookie chega vazio e a falha é **silenciosa** (a tela abre, o clique grava, o estilo não muda) |
+| Tema do sistema: **PRETO** | `tema_modulo.py:65-88` (`PADROES_TEMA`); migração `bd_conexao.py:287-315` (marcador `migracao_padrao_por_modulo_260927`) | os 11 módulos voltaram a `cor_botao` `#000000` / `cor_texto_botao` `#FFFFFF` / `cor_titulo` `#212121`. A migração grava `cor_principal` `#000000`, `cor_fundo` `#EEEEEE` e `estilo_visual_padrao_sistema` `'padrao'`, e **zera** `<prefixo>_cor_botao`/`_cor_titulo` para caírem no `PADROES_TEMA`. O WhatsApp virou só a **opção "Verde"** do menu |
+
+!!! danger "Armadilha do Quasar — cascade layer (a lição que custa mais)"
+    O Quasar declara `.bg-primary { background: var(--q-primary) !important }` e
+    `.text-primary { color: var(--q-primary) !important }` **DENTRO de uma cascade
+    layer**. Em `!important`, a camada vence **qualquer** regra fora de camada — por
+    mais específica que seja e **por mais `!important` que esteja**. **Não dá para
+    pintar botão/cabeçalho "por fora"** (nem com `.classes()`, nem com `.style()`,
+    nem com seletor universal): a única saída é mexer no **TOKEN** `--q-primary`, que
+    é o mesmo mecanismo de rebrand do próprio Quasar (`ui.colors`). É por isso que
+    `_defs_css()` escreve `--q-primary` no `.q-layout` e que o botão ativo do
+    alternador redefine o token no próprio elemento (`.pe-alt--ativo`). Impacto
+    direto: a fábrica `ui_comum.botao` **não** é recolorável por CSS externo —
+    quando a cor é a informação, o controle tem de ser nosso. Detalhe em
+    [Estilo Visual §7](estilo_visual.md#7-a-armadilha-do-quasar-cascade-layer).
+
+!!! note "Acessibilidade: os contrastes medidos contra `#FFFFFF`"
+    Piso da WCAG AA: 4,5:1. O verde vivo do WhatsApp (`#25D366`) dá **1,98:1** —
+    reprova, e por isso **não** é a cor de ação: o botão do estilo `verde` usa o
+    **teal** `#0F7A6D` (**5,22:1**), deixando o `#25D366` como cor de **acento**
+    (`_CORES["verde"]["primaria_acao"]`). Pelo mesmo motivo o azul do estilo `azul`
+    é `#1668d8` (**5,24:1**) e não o azul clássico `#1877F2` (4,23:1). O roxo
+    `#7C3AED` dá 5,70:1, o `preto` `#111111` dá 18,88:1 e o preto do tema do
+    sistema `#000000` dá 21:1. Tabela completa em
+    [Estilo Visual §8](estilo_visual.md#8-acessibilidade-contrastes-medidos-contra-ffffff).
 
 ## Hora do servidor (NTP)
 

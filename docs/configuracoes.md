@@ -116,7 +116,8 @@ As principais chaves, agrupadas por dono:
 | Sistema | `cotadisco_global_gb` | `10` | cota global do editor PDF (GB) |
 | Sistema (legada) | `backup_interval_hours` | `12` | semente legada; os jobs usam `backup_horas:<modulo>` |
 | Sistema | `sessao_retencao` | `50` | histórico de sessões retido por usuário |
-| Aparência | `titulo_sistema`, `icone_sistema`, `cor_principal` (`#000000`), `cor_fundo` (`#EEEEEE`) | `PADRAO_CONFIG` | personalização global |
+| Aparência | `titulo_sistema`, `icone_sistema`, `cor_principal` (`#000000`), `cor_fundo` (`#EEEEEE`) | `PADRAO_CONFIG` | personalização global — **os valores do `PADRAO_CONFIG` são os que valem**: em 27/09/2026 o tema do sistema foi ao WhatsApp (`cor_principal` `#075E54`) e **revertido no mesmo dia** para `#000000` / `#EEEEEE` pela migração `migracao_padrao_por_modulo_260927`. O "Restaurar padrão" volta ao preto, que agora **é** o padrão (achado nº 2 do [Estilo Visual](estilo_visual.md#12-achados-de-auditoria-27092026) está **resolvido**) |
+| Aparência — estilo visual | `estilo_visual_padrao_sistema` (`'padrao'`) | — | chave **legada**: semeada em 27/09/2026 com o valor `'padrao'` (o nome da opção), **não participa mais da resolução** e não tem chamador no código. A opção "Padrão" do menu de estilo significa **não impor cor nenhuma** — quem manda é a configuração do módulo (`tema_modulo.ler_tema` + `cor_principal`). **Não** há campo na tela de Config — ver [Estilo Visual](estilo_visual.md#4-hierarquia-de-resolucao-do-estilo) |
 | Botões do sistema (intranet) | `intranet_cor_botao` (`#000000`), `intranet_cor_texto_botao` (`#FFFFFF`), `intranet_btn_tamanho` (`medium`), `intranet_cor_titulo` (`#212121`) | `PADRAO_CONFIG` | **"Cor geral do módulo"** (`intranet_cor_botao`): mesma cor/tamanho em TODOS os botões do módulo (login, painel, config, diálogos) **e nos menus/destaques** (`ui.colors(primary=...)`); prévia ao vivo; APLICAR recarrega. **Vale apenas para o próprio módulo `intranet`** — os demais módulos usam o padrão do PRÓPRIO módulo (`PADROES_TEMA`), sem herança (ver seção abaixo) |
 | Cards do sistema (intranet) | `intranet_cor_fundo_card` (`#FFFFFF`), `intranet_cor_texto_card` (vazio = herda) | `PADRAO_CONFIG` | fundo + texto base de todos os cards do módulo (login, config, diálogos, painel) |
 | Textos | `texto_login_titulo`, `texto_login_subtitulo`, `texto_login_hint`, `texto_home_saudacao`, `texto_home_subtitulo`, `texto_rodape` | `PADRAO_CONFIG` | textos fixos |
@@ -310,13 +311,27 @@ As chaves de tema de **botão** dos módulos (`<prefixo>_cor_botao`, `<prefixo>_
 
 1. **Chave do módulo não vazia** (ex.: `usuarios_cor_botao`, gravada no cupê "Aparência" da Administração do módulo);
 2. **Default do parâmetro** em `ler_tema` — quando o chamador informa (ex.: `ler_tema("editar_pdf", cor_botao="#000000")`);
-3. **Padrão do módulo** — mapa `PADROES_TEMA` (`tema_modulo.py:53-68`), usado quando o chamador não passa default explícito.
+3. **Padrão do módulo** — mapa `PADROES_TEMA` (`tema_modulo.py:65-88`), usado quando o chamador não passa default explícito.
 
-O tema do sistema (`intranet_*` / card **"Botões do sistema"** do painel central `/configuracoes`) **NÃO é herdado** por outros módulos: **todos os módulos usam a cor do intranet (`#000000`)** por padrão, configuráveis no cupê "Aparência".
+O tema do sistema (`intranet_*` / card **"Botões do sistema"** do painel central `/configuracoes`) **NÃO é herdado** por outros módulos: cada módulo usa o **próprio** padrão de `PADROES_TEMA`, configurável no cupê "Aparência".
+
+!!! warning "Tema do sistema PRETO desde 27/09/2026 (WhatsApp revertido no mesmo dia)"
+    A experiência de estilo visual chegou a apontar o tema do sistema para a paleta
+    do app de mensageiro, mas o **responsável reverteu**: o padrão voltou a ser o
+    **preto**, que é a cor que o administrador configurou. `PADROES_TEMA`
+    (`tema_modulo.py:65-88`) está com `cor_botao` **`#000000`**,
+    `cor_texto_botao` `#FFFFFF` e `cor_titulo` **`#212121`** para **todos os 11
+    módulos**. A migração idempotente `migracao_padrao_por_modulo_260927`
+    (`mod_intranet/bd_conexao.py:287-315`) grava `cor_principal` `#000000`,
+    `cor_fundo` `#EEEEEE` e `estilo_visual_padrao_sistema` `'padrao'`, e **zera**
+    `<prefixo>_cor_botao` / `<prefixo>_cor_titulo` para que caiam no `PADROES_TEMA`.
+    O estilo **"Verde" (WhatsApp) continua existindo**, mas virou apenas uma
+    **opção do menu de estilo**, não a cor do sistema — ver
+    [Estilo Visual e Tema do Sistema](estilo_visual.md).
 
 | Campo | Herda do sistema? | Comportamento com a chave vazia |
 |:---|:---:|:---|
-| `cor_botao` (**"Cor geral do módulo"**) | ✗ | padrão do módulo (`PADROES_TEMA` — **todos os módulos em `#000000`**, a cor do intranet) |
+| `cor_botao` (**"Cor geral do módulo"**) | ✗ | padrão do módulo (`PADROES_TEMA` — **todos os 11 módulos em `#000000`**, o padrão do sistema) |
 | `cor_texto_botao` (**"Cor do texto do módulo"**) | ✗ | `#FFFFFF` (padrão do módulo) |
 | `btn_tamanho` | ✗ | `medium` (padrão do módulo) |
 | `cor_fundo` | ✗ | fundo padrão da tela (default do parâmetro) |
@@ -324,7 +339,13 @@ O tema do sistema (`intranet_*` / card **"Botões do sistema"** do painel centra
 | `texto_header` | ✗ | default do parâmetro |
 
 !!! note "Efeito prático"
-    **Todos os módulos usam a cor do intranet (`#000000`)** por padrão (`PADROES_TEMA`), sem depender do tema do sistema — `PADRAO_CONFIG` não semeia chaves de botão por módulo e instalações novas já iniciam com a cor única `#000000`. O override por módulo continua disponível no cupê "Aparência" de cada módulo: os inputs exibem o valor **resolvido** (rótulo "vazio = padrão do módulo") e o "Restaurar padrão" grava `""` para voltar ao padrão do módulo. O card "Botões do sistema" (`intranet_*`) vale apenas para o próprio módulo `intranet` (`tema_modulo.py:94-126`).
+    **Todos os 11 módulos partem do preto `#000000`** (`PADROES_TEMA`), sem depender do tema do sistema — `PADRAO_CONFIG` não semeia chaves de botão por módulo, e a migração `migracao_padrao_por_modulo_260927` **zera** as chaves por módulo justamente para que elas caiam no `PADROES_TEMA`. O override por módulo continua disponível no cupê "Aparência" de cada módulo: os inputs exibem o valor **resolvido** (rótulo "vazio = padrão do módulo") e o "Restaurar padrão" grava `""` para voltar ao padrão do módulo. O card "Botões do sistema" (`intranet_*`) vale apenas para o próprio módulo `intranet` (`tema_modulo.py:115-148`).
+
+    ✅ **A ressalva de 27/09/2026 foi resolvida:** o "Restaurar padrão" do card
+    **"Configurações de cores"** grava `PADRAO_CONFIG`, que traz `cor_principal`
+    `#000000` e `cor_fundo` `#EEEEEE` — que é **exatamente** o estado gravado pela
+    migração. Ele deixa de ser uma reversão indevida e passa a ser a volta ao
+    padrão. Ver [Estilo Visual — Achados de auditoria](estilo_visual.md#12-achados-de-auditoria-27092026).
 
 !!! note "Rótulo renomeado: 'Cor geral do módulo' (06/09)"
     A chave `<prefixo>_cor_botao` agora é chamada de **"Cor geral do módulo"** (antes "Cor dos botões") e `cor_texto_botao` de **"Cor do texto do módulo"** (antes "Cor do texto dos botões") — rótulos renomeados em TODOS os painéis: cupê "Aparência" (`tema_modulo.bloco_aparencia` — `tema_modulo.py:318-323`), aba Cores do sistema (`tela_configuracoes.py:517-526`), admins de blog (`mod_blog/telas_administracao.py:56`), auditoria (`mod_auditoria/telas_administracao.py:111`) e empenhos (`mod_renomear_empenho/telas_administracao.py:99` + `telas.py:699`). O nome reflete o novo escopo: a cor define os **botões E os menus/abas/destaques** da tela do módulo — `ui.colors(primary=cor_botao)` (menus/Quasar) + `cabecalho(chave_modulo=...)` (borda de destaque) + `ui_comum.botao(chave_modulo=...)` (botões). `ui.colors(primary=...)` passou a ser aplicado em TODAS as telas (antes só blog e gest_cad): auditoria (`mod_auditoria/telas.py:126`), edit_pdf (`mod_edit_pdf/telas.py:89`), empenhos (`mod_renomear_empenho/telas.py:65`) e solicita_impressao (`mod_solicita_impressao/telas.py:53`). Nas rotas de admin (`main.py:484-523`) os hexes fixos viraram `ler_tema(<modulo>, cor_botao=<default>)["cor_botao"]`; empenhos usa `empenhos_cor_botao` com default alinhado a `#000000` (antes `#6D4C41`). `ui.color_input`/`ui.select` crus do admin de auditoria e empenhos migraram para as fábricas `campo_cor`/`campo_selecao`. Coberto por `test/teste_aba_config_intranet.py` (164 verificações — novos rótulos).

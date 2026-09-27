@@ -241,6 +241,78 @@ def init_db():
     if (cur.fetchone()[0] or 0) == 0:
         cur.execute("UPDATE tb_config SET valor='1.0.260918' WHERE chave='versao_modulo:usuarios'")
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('migracao_versao_usuarios_260918', '1') ON CONFLICT DO NOTHING")
+    # Migração ÚNICA (27/09/2026) — TEMA WHATSAPP como padrão do SISTEMA INTEIRO,
+    # escolhido pelo responsável. Antes os 11 módulos usavam preto (#000000).
+    # O que ela grava:
+    #   cor_principal -> teal da marca (#075E54): é o que `_montar_layout` joga
+    #     em `ui.colors(primary=)`, e portanto a cor do cabeçalho e de TODOS os
+    #     elementos `bg-primary` de qualquer módulo.
+    #   cor_fundo -> bege quente (#EAE6DF), o papel de parede do app.
+    #   <prefixo>_cor_botao e <prefixo>_cor_titulo -> VAZIO, de propósito: é o
+    #     que faz cada módulo cair no `PADROES_TEMA` (verde teal do botão e
+    #     ardósia do título). Zerar em vez de gravar o valor é o que mantém
+    #     esta aplicação em UM lugar só — trocar a paleta depois é editar o
+    #     `PADROES_TEMA`, sem nova migração.
+    #   <prefixo>_cor_fundo_card -> branco (#FFFFFF), o cartão sobre o fundo.
+    # Guardada pelo marcador, então roda UMA vez e não apaga personalização
+    # posterior do admin. SQL portátil: o proxy `_CursorPostgres` traduz.
+    cur.execute("SELECT COUNT(*) FROM tb_config WHERE chave='migracao_tema_whatsapp_260927'")
+    if (cur.fetchone()[0] or 0) == 0:
+        for _chave, _valor in (("cor_principal", "#075E54"),
+                               ("cor_fundo", "#EAE6DF"),
+                               # Padrão de estilo do ADMINISTRADOR: o que vale
+                               # para quem não fez escolha pessoal no navegador
+                               # (cookie `estilo_visual` vazio ou `padrao`).
+                               ("estilo_visual_padrao_sistema", "verde")):
+            cur.execute("INSERT INTO tb_config (chave, valor) VALUES (?, ?) "
+                        "ON CONFLICT DO NOTHING", (_chave, _valor))
+            cur.execute("UPDATE tb_config SET valor=? WHERE chave=?",
+                        (_valor, _chave))
+        for _p in ("intranet", "blog", "usuarios", "auditoria", "editpdf",
+                   "empenhos", "solicita_impressao", "tecnico", "filas",
+                   "lista_telefonica", "agregador_noticias"):
+            for _campo in ("cor_botao", "cor_titulo", "cor_texto_card",
+                           "texto_header", "cor_fundo"):
+                cur.execute("INSERT INTO tb_config (chave, valor) VALUES (?, '') "
+                            "ON CONFLICT DO NOTHING", (f"{_p}_{_campo}",))
+                cur.execute("UPDATE tb_config SET valor='' WHERE chave=?",
+                            (f"{_p}_{_campo}",))
+            for _campo in ("cor_fundo_card", "cor_texto_botao"):
+                cur.execute("INSERT INTO tb_config (chave, valor) VALUES (?, '#FFFFFF') "
+                            "ON CONFLICT DO NOTHING", (f"{_p}_{_campo}",))
+                cur.execute("UPDATE tb_config SET valor='#FFFFFF' WHERE chave=?",
+                            (f"{_p}_{_campo}",))
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('migracao_tema_whatsapp_260927', '1') ON CONFLICT DO NOTHING")
+    # Migração ÚNICA (27/09/2026, 2ª rodada) — o menu de estilo visual entrou e
+    # com ele a decisão de que o "Padrão" NÃO é uma cor do sistema, e sim a cor
+    # que cada ADMINISTRADOR configurou para o seu módulo. Esta migração
+    # desfaz o que a de cima fez:
+    #   cor_principal/cor_fundo voltam ao preto/cinza de antes;
+    #   as chaves por módulo continuam vazias, cair no PADROES_TEMA (preto);
+    #   estilo_visual_padrao_sistema é SEMEADA com 'padrao' — a de cima tentou
+    #   semear, mas o marcador já estava gravado quando ela rodou, então a
+    #   linha nunca existiu e a chave ficava ausente para sempre.
+    # O estilo "verde" (WhatsApp) continua existindo, agora como OPÇÃO do menu.
+    cur.execute("SELECT COUNT(*) FROM tb_config WHERE chave='migracao_padrao_por_modulo_260927'")
+    if (cur.fetchone()[0] or 0) == 0:
+        for _chave, _valor in (("cor_principal", "#000000"),
+                               ("cor_fundo", "#EEEEEE"),
+                               ("estilo_visual_padrao_sistema", "padrao")):
+            cur.execute("INSERT INTO tb_config (chave, valor) VALUES (?, ?) "
+                        "ON CONFLICT DO NOTHING", (_chave, _valor))
+            cur.execute("UPDATE tb_config SET valor=? WHERE chave=?",
+                        (_valor, _chave))
+        for _p in ("intranet", "blog", "usuarios", "auditoria", "editpdf",
+                   "empenhos", "solicita_impressao", "tecnico", "filas",
+                   "lista_telefonica", "agregador_noticias"):
+            for _campo in ("cor_botao", "cor_titulo"):
+                cur.execute("INSERT INTO tb_config (chave, valor) VALUES (?, '') "
+                            "ON CONFLICT DO NOTHING", (f"{_p}_{_campo}",))
+                cur.execute("UPDATE tb_config SET valor='' WHERE chave=?",
+                            (f"{_p}_{_campo}",))
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('migracao_padrao_por_modulo_260927', '1') ON CONFLICT DO NOTHING")
     # Seed do contador de acessos (se ainda não existir) + data inicial da contagem
     try:
         cur.execute("SELECT valor FROM tb_config WHERE chave='contador_acessos_inicio'")

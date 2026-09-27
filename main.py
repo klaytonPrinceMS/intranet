@@ -12,6 +12,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from nicegui import ui, app
+from fastapi import Request
 from fastapi.responses import FileResponse, Response, RedirectResponse
 
 # Patches no NiceGUI: timers cujo slot da página foi deletado param em silêncio
@@ -148,6 +149,18 @@ try:
 except Exception:
     print("[css] Aviso: não foi possível montar as rotas de /css/frameworks")
 
+# >>> PROVISÓRIO: folha de estilo do alternador de padrões visuais <<<
+# Só existe enquanto o protótivo de 4 padrões estiver na tela. Sem este mount
+# a folha volta 404 e nenhum padrão é aplicado. A rota de troca grava o cookie
+# do estilo escolhido no navegador. Para REMOVER: apagar este bloco,
+# `mod_intranet/preview_estilos.py` e `assets/css/preview-estilos-v1.css`.
+try:
+    from mod_intranet import preview_estilos as _pv_rotas
+    _pv_rotas.montar_rotas_static()
+    _pv_rotas.montar_rota_troca()
+except Exception:
+    print("[preview] Aviso: não foi possível montar /assets/css")
+
 
 
 # ================== IMAGENS DO BLOG (/img_postagens/*) ==================
@@ -194,8 +207,25 @@ if not os.path.exists(FAVICON_ATUAL):
     shutil.copy2(FAVICON_PADRAO, FAVICON_ATUAL)
 
 # ================== PÁGINA DE LOGIN ==================
+# >>> PROVISÓRIO: 4 PADRÕES VISUAIS NA LOGIN <<<
+# O bloco original (um `ui.card()` centralizado com `ui.row()` de tela cheia)
+# foi substituído por `preview_estilos.tela_login`, que monta um layout
+# diferente por padrão. PARA REMOVER o protótipo: apagar este arquivo de
+# `mod_intranet/preview_estilos.py`, o CSS `assets/css/preview-estilos-v1.css`
+# e restaurar aqui o `with ui.row().classes("w-full h-screen ...")`, mantendo
+# os mesmos `data-testid` (`login-usuario`, `login-senha`, `login-entrar`) e
+# o mesmo `tentar_login` (que NÃO mudou).
 @ui.page("/login")
-def page_login():
+def page_login(request: Request):
+    """Monta a tela de login (com o alternador de 4 padrões visuais).
+
+    Lê os textos e cores configuráveis (`texto_login_titulo`,
+    `texto_login_subtitulo`, `texto_login_hint`, `icone_sistema`,
+    `cor_principal`, `cor_fundo`) e escolhe o padrão visual pelo query param
+    `?estilo=`. Mantém os `data-testid` de produção e o mesmo `tentar_login`.
+
+    EN: Builds the login page; the 4-style switcher is a temporary prototype.
+    """
     try:
         from mod_intranet.bd_conexao import get_config
         cor = get_config("cor_principal", "#000000") or "#000000"
@@ -206,6 +236,20 @@ def page_login():
                           "Novos usuários? Procure o DTI para realizar o seu cadastro.")
         ui.colors(primary=cor)
         fundo_login = get_config("cor_fundo", "#EEEEEE") or "#EEEEEE"
+
+        # ===== PROVISÓRIO: padrão visual — remover no fim =====
+        # O LOGIN é FIXO no estilo `verde` (WhatsApp), por decisão do
+        # responsável: ele não segue a preferência do usuário nem aceita
+        # `?estilo=`. A escolha de estilo vale para os MÓDULOS INTERNOS, e é
+        # dela que o rodapé de cada tela cuida. Por isso o login é sempre o
+        # mesmo para todo mundo — inclusive quem já está logado em outro
+        # navegador.
+        from mod_intranet import preview_estilos as _pv
+        padrao_visual = _pv.PADRAO_LOGIN
+        paleta = _pv.aplicar(padrao_visual, cor_principal=cor, cor_fundo=fundo_login)
+        fundo_login = (paleta or {}).get("fundo") or fundo_login
+        # ===== FIM PROVISÓRIO =====
+
         ui.query("body").style(f"background:{fundo_login}")
         try:
             ui.query(".q-page").style(f"background-color:{fundo_login}")
@@ -218,26 +262,26 @@ def page_login():
         ui.add_head_html(
             f'<link rel="icon" type="image/x-icon" href="/favicon.ico?v={favicon_versao()}">')
 
-        # Se já logado, vai direto pro dashboard
+        # Se já logado, vai direto pro dashboard. O estilo NÃO vai na URL: ele
+        # mora no cookie do navegador e é resolvido na renderização da Home.
         if app.storage.user.get("usuario"):
             ui.navigate.to("/")
             return
 
-        with ui.row().classes("w-full h-screen items-center justify-center p-4").style("min-width: 0"):
-            from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn
-            with ui.card().classes("w-full max-w-[420px] p-6 sm:p-10 shadow-2xl mx-4").style(f"{_estilo_cartao_fn()}; min-width: 0"):
-                with ui.column().classes("items-center w-full gap-1"):
-                    ui.icon(icone, size="64px").classes("text-primary")
-                    ui.label(titulo_login).classes("text-h5 font-bold text-primary")
-                if subtitulo:
-                    ui.label(subtitulo).classes("text-caption text-grey-6 mb-4")
+        def _campos():
+            """Cria os campos e o botão de login (data-testid de produção).
 
-                usuario = ui.input("Usuário", placeholder="master").props("outlined dense").classes("w-full") \
+            Recebe a marcação do layout do `preview_estilos`; o conteúdo é
+            idêntico ao original — só a classe `preview-campo`/`preview-entrar`
+            foi somada para o CSS do padrão dar forma aos componentes Quasar.
+            """
+            try:
+                usuario = ui.input("Usuário", placeholder="master").props("outlined dense").classes("w-full preview-campo") \
                     .props('data-testid=login-usuario')
                 senha = ui.input("Senha", password=True, password_toggle_button=True,
                                  placeholder="master").props(
                     "outlined dense"
-                ).classes("w-full") \
+                ).classes("w-full preview-campo") \
                     .props('data-testid=login-senha')
 
                 def tentar_login():
@@ -265,21 +309,28 @@ def page_login():
                             pass
                         app.storage.user["usuario"] = {"nome": nome, "perfil": perfil, "sessao": sessao}
                         notificar(f"Bem-vindo(a), {nome}!", type="positive")
+                        # A Home lê o estilo do cookie do navegador; não é
+                        # preciso (nem cabe) levar o padrão pela URL.
                         ui.navigate.to("/")
                     except Exception as e:
                         observabilidade.get_logger("intranet").exception(
                             "tentar_login: falha ao autenticar: %s", e)
                         notificar("Erro ao tentar entrar. Tente novamente.", tipo="error")
 
-                with ui.column().classes("w-full gap-2 mt-4"):
+                with ui.column().classes("w-full mt-4").style("gap: .5rem"):
                     from mod_intranet.tema_modulo import botao as _botao_tema
-                    _botao_tema("Entrar", on_click=tentar_login, extra_classes="w-full") \
+                    _botao_tema("Entrar", on_click=tentar_login, extra_classes="w-full preview-entrar") \
                         .props('data-testid=login-entrar')
-                ui.label(hint).classes(
-                    "text-caption text-grey-6 text-center mt-3"
-                )
 
                 senha.on("keydown.enter", tentar_login)
+            except Exception as e:
+                observabilidade.get_logger("intranet").exception(
+                    "_campos: falha ao montar os campos de login: %s", e)
+                notificar("Erro ao montar o formulário de login.", tipo="error")
+
+        _pv.tela_login(padrao_visual, icone=icone, titulo=titulo_login,
+                       subtitulo=subtitulo, hint=hint, paleta=paleta,
+                       campos=_campos)
     except Exception as e:
         observabilidade.get_logger("intranet").exception(
             "page_login: erro ao renderizar a página de login: %s", e)
@@ -398,12 +449,12 @@ def _stat(rotulo, valor, icone, *, modelo="pic"):
                 _desc = f"{_desc_base} Total real: {v_int}. ⚠️ Alerta: volume elevado — realize backup do banco de auditoria (db_mod_auditoria.db) e avalie retenção/poda."
             else:
                 _desc = f"{_desc_base} Total real: {v_int}."
-        with ui.card().classes(classes).style(_estilo_cartao_fn3()).tooltip(_desc):
+        with ui.card().classes(f"{classes} preview-stat").style(_estilo_cartao_fn3()).tooltip(_desc):
             # Layout horizontal: ícone à esquerda + número à direita — exibe 4 dígitos (tooltip só no card)
             with ui.row().classes("w-full items-center justify-center gap-2 px-2 py-1").style("min-width: 0"):
-                with ui.element("div").classes("home-stat-icon bg-primary/10 shrink-0"):
+                with ui.element("div").classes("home-stat-icon preview-stat__icone bg-primary/10 shrink-0"):
                     ui.icon(icone).classes("text-primary text-2xl")
-                ui.label(texto_valor).classes("text-h6 font-extrabold text-grey-9 leading-none min-w-[4ch] text-center").style("min-width: 0")
+                ui.label(texto_valor).classes("preview-stat__numero text-h6 font-extrabold text-grey-9 leading-none min-w-[4ch] text-center").style("min-width: 0")
     except Exception as e:
         observabilidade.get_logger("intranet").exception(
             "_stat: falha ao renderizar card de métrica '%s': %s", rotulo, e)
@@ -411,20 +462,59 @@ def _stat(rotulo, valor, icone, *, modelo="pic"):
 
 
 def _construir_dashboard(nome: str, perfil: str, eh_admin: bool, modelo: str = "pic"):
-    """Constrói o conteúdo da Home (banner + feed + resumo dinâmico)."""
+    """Constrói o conteúdo da Home (banner + feed + resumo dinâmico).
+
+    >>> PROVISÓRIO: PADRÃO VISUAL NA HOME <<< — o `modelo` é a chave do
+    estilo escolhido pelo usuário (`azul|verde|roxo|light`), lida de
+    `estilo_visual:<usuario>` pelo `_montar_layout` e repassada aqui; a Home
+    não decide mais o estilo. Também aceita `pic`/`water`, o visual anterior
+    (Resumo com o `home_visual`).
+    PARA REMOVER o protótipo: apagar
+    `mod_intranet/preview_estilos.py`, `assets/css/preview-estilos-v1.css`,
+    o bloco `montar_rotas_static()` no boot, a classe
+    `preview-raiz preview-home preview-<padrão>` e a barra `barra_home(...)`
+    neste bloco, e voltar a chamar `_construir_dashboard(..., modelo="water")`
+    em `page_dashboard`. Nenhuma outra tela depende deste protótipo.
+    """
     try:
         from mod_intranet import home_visual as _hv
-        _hv.aplicar_modelo(modelo)
-        with ui.column().classes("w-full p-6 gap-6"):
+        from mod_intranet import preview_estilos as _pv
+        # O `home_visual` (PIC/Water) é o visual ANTERIOR da Home. Durante o
+        # protótivo ele é desligado para os 4 padrões: `aplicar_modelo` cairia
+        # no fallback e injetaria a folha do PIC por baixo do padrão, e as duas
+        # se brigam. Basta passar `pic`/`water` de novo para o visual antigo.
+        if modelo in ("pic", "water"):
+            _hv.aplicar_modelo(modelo)
+        # ===== PROVISÓRIO: paleta + folha do padrão; remover no fim =====
+        _paleta_preview = _pv.aplicar(
+            modelo, cor_principal=(get_config("cor_principal", "#000000") or "#000000"),
+            cor_fundo=(get_config("cor_fundo", "#EEEEEE") or "#EEEEEE"))
+        # `pe-<padrão>` é o que a folha do protótivo usa como escopo: é ela que
+        # faz o padrão valer na Home inteira, e não só no alternador.
+        _classe_preview = f"pe-{modelo} preview-raiz preview-home preview-{modelo}"
+        # O `body`/`.q-page` já receberam a cor de fundo do login/layout aqui:
+        # o padrão escuro precisa reescrever (o layout 4 partes roda antes).
+        try:
+            if _paleta_preview.get("escuro"):
+                ui.query("body").style(f"background:{_paleta_preview['fundo']}")
+                ui.query(".q-page").style(f"background-color:{_paleta_preview['fundo']}")
+        except Exception:
+            pass
+        # ===== FIM PROVISÓRIO =====
+
+        with ui.column().classes(f"{_classe_preview} w-full p-6").style("gap: 1.5rem"):
+            # A escolha de estilo NÃO fica aqui: ela vive no rodapé, que é
+            # montado pelo `_montar_layout` e portanto aparece em TODOS os
+            # módulos, não só na Home. Ver `mod_intranet/telas.py`.
             # Banner de boas-vindas
-            with ui.card().classes("w-full bg-primary text-white shadow-lg"):
+            with ui.card().classes("w-full bg-primary text-white shadow-lg preview-banner"):
                 with ui.row().classes("w-full items-center justify-between p-4 flex-wrap gap-4"):
                     with ui.column().classes("gap-0"):
                         saudacao = get_config("texto_home_saudacao", "Olá") or "Olá"
                         subtitulo_home = get_config("texto_home_subtitulo",
                                                     "Sua intranet corporativa — tudo em um só lugar.")
-                        ui.label(f"{saudacao}, {nome}!").classes("text-h4 font-bold")
-                        ui.label(subtitulo_home).classes("text-subtitle1 opacity-90")
+                        ui.label(f"{saudacao}, {nome}!").classes("preview-banner__titulo text-h4 font-bold")
+                        ui.label(subtitulo_home).classes("preview-banner__subtitulo text-subtitle1 opacity-90")
                     ui.icon("diversity_3", size="80px").classes("opacity-30")
 
             # Feedback no carregamento: toast de boas-vindas (desaparece sozinho
@@ -433,62 +523,65 @@ def _construir_dashboard(nome: str, perfil: str, eh_admin: bool, modelo: str = "
                                             type="positive", position="top"),
                      once=True)
 
-            # ---- Feed do Blog (RF-09) — logo abaixo do banner, sem título ----
-            from mod_blog.telas import renderizar_postagens
-            pode_publicar_blog = (perfil == "administrador_geral"
-                                  or autenticacao.eh_admin_do_modulo(nome, "blog"))
-            _feed_wrap = ui.column().classes("w-full gap-4")
-            renderizar_postagens(_feed_wrap, nome, perfil,
-                                 pode_publicar_blog,
-                                 lambda: ui.navigate.reload())
+            # ===== PROVISÓRIO: bloco de conteúdo (feed + Resumos) do padrão =====
+            with ui.column().classes("preview-conteudo w-full").style("gap: 1.5rem"):
+                # ---- Feed do Blog (RF-09) — logo abaixo do banner, sem título ----
+                from mod_blog.telas import renderizar_postagens
+                pode_publicar_blog = (perfil == "administrador_geral"
+                                      or autenticacao.eh_admin_do_modulo(nome, "blog"))
+                _feed_wrap = ui.column().classes("w-full").style("gap: 1rem")
+                renderizar_postagens(_feed_wrap, nome, perfil,
+                                     pode_publicar_blog,
+                                     lambda: ui.navigate.reload())
 
-            # ---- Resumo do sistema (somente administradores) ----
-            # Fica abaixo das postagens. Sem botão
-            # Atualizar — os dados são calculados automaticamente a cada acesso
-            # (dinâmico), sem ação manual.
-            # Dados para os Resumos — coletados uma vez (fail-soft 0)
-            n_users = n_posts = n_logs = n_sessoes = n_acessos = n_fila = n_quar = n_pdf = n_24h = 0
-            if eh_admin or _eh_autorizador_impressao(nome):
-                try:
-                    n_users, n_posts, n_logs, n_sessoes, n_acessos, n_fila, n_quar, n_pdf, n_24h = _orquestrar_resumo_dados()
-                except Exception:
-                    pass
-            if eh_admin:
-                from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2, ler_tema as _ler_tema_home
-                from mod_intranet import home_visual as _hv2
-                try:
-                    _cor_modulo_home = (_ler_tema_home("intranet").get("cor_botao") or "#000000").strip() or "#000000"
-                except Exception:
-                    _cor_modulo_home = "#000000"
-                with ui.card().classes(_hv2.classes_card_resumo(modelo)).style(
-                        f"border-left-color:{_cor_modulo_home};box-shadow:6px 0 16px rgba(0,0,0,0.07);{_estilo_cartao_fn2()}"):
-                    with ui.card_section().classes("gap-3 w-full"):
-                        ui.label("Resumo do sistema").classes("text-h6 font-bold text-grey-9")
-                        with ui.row().classes(_hv2.classes_wrap_resumo(modelo)):
-                            _stat("Usuários ativos", n_users, "people", modelo=modelo)
-                            _stat("Sessões ativas", n_sessoes, "sensors", modelo=modelo)
-                            _stat("Acessos", n_acessos, "login", modelo=modelo)
-                            _stat("Postagens", n_posts, "article", modelo=modelo)
-                            _stat("Quarentena", n_quar, "warning", modelo=modelo)
-                            _stat("PDFs", n_pdf, "picture_as_pdf", modelo=modelo)
-                            _stat("Registros de auditoria", n_logs, "history", modelo=modelo)
-                            _stat("Auditoria 24h", n_24h, "schedule", modelo=modelo)
-            # Somente autorizador de impressão vê este card (admin geral também é autorizador implícito via perfil) — cor padronizada do módulo + sombra lateral direita
-            if _eh_autorizador_impressao(nome) or perfil == "administrador_geral":
-                from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2b, ler_tema as _ler_tema_home2
-                from mod_intranet import home_visual as _hv2b
-                n_para_autorizar = _contar_fila_para_autorizar(nome, eh_admin_geral=(perfil == "administrador_geral"))
-                try:
-                    _cor_modulo_home2 = (_ler_tema_home2("intranet").get("cor_botao") or "#000000").strip() or "#000000"
-                except Exception:
-                    _cor_modulo_home2 = "#000000"
-                with ui.card().classes(_hv2b.classes_card_resumo(modelo)).style(
-                        f"border-left-color:{_cor_modulo_home2};box-shadow:6px 0 16px rgba(0,0,0,0.07);{_estilo_cartao_fn2b()}"):
-                    with ui.card_section().classes("gap-3 w-full"):
-                        ui.label("Resumo do sistema — Impressão").classes("text-h6 font-bold text-grey-9")
-                        with ui.row().classes(_hv2b.classes_wrap_resumo(modelo)):
-                            _stat("Fila geral", n_fila, "print", modelo=modelo)
-                            _stat("Para autorizar", n_para_autorizar, "rule", modelo=modelo)
+                # ---- Resumo do sistema (somente administradores) ----
+                # Fica abaixo das postagens. Sem botão
+                # Atualizar — os dados são calculados automaticamente a cada acesso
+                # (dinâmico), sem ação manual.
+                # Dados para os Resumos — coletados uma vez (fail-soft 0)
+                n_users = n_posts = n_logs = n_sessoes = n_acessos = n_fila = n_quar = n_pdf = n_24h = 0
+                if eh_admin or _eh_autorizador_impressao(nome):
+                    try:
+                        n_users, n_posts, n_logs, n_sessoes, n_acessos, n_fila, n_quar, n_pdf, n_24h = _orquestrar_resumo_dados()
+                    except Exception:
+                        pass
+                if eh_admin:
+                    from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2, ler_tema as _ler_tema_home
+                    from mod_intranet import home_visual as _hv2
+                    try:
+                        _cor_modulo_home = (_ler_tema_home("intranet").get("cor_botao") or "#000000").strip() or "#000000"
+                    except Exception:
+                        _cor_modulo_home = "#000000"
+                    with ui.card().classes(f"{_hv2.classes_card_resumo(modelo)} preview-resumo").style(
+                            f"border-left-color:{_cor_modulo_home};box-shadow:6px 0 16px rgba(0,0,0,0.07);{_estilo_cartao_fn2()}"):
+                        with ui.card_section().classes("gap-3 w-full"):
+                            ui.label("Resumo do sistema").classes("preview-resumo__titulo text-h6 font-bold text-grey-9")
+                            with ui.row().classes(_hv2.classes_wrap_resumo(modelo)):
+                                _stat("Usuários ativos", n_users, "people", modelo=modelo)
+                                _stat("Sessões ativas", n_sessoes, "sensors", modelo=modelo)
+                                _stat("Acessos", n_acessos, "login", modelo=modelo)
+                                _stat("Postagens", n_posts, "article", modelo=modelo)
+                                _stat("Quarentena", n_quar, "warning", modelo=modelo)
+                                _stat("PDFs", n_pdf, "picture_as_pdf", modelo=modelo)
+                                _stat("Registros de auditoria", n_logs, "history", modelo=modelo)
+                                _stat("Auditoria 24h", n_24h, "schedule", modelo=modelo)
+                # Somente autorizador de impressão vê este card (admin geral também é autorizador implícito via perfil) — cor padronizada do módulo + sombra lateral direita
+                if _eh_autorizador_impressao(nome) or perfil == "administrador_geral":
+                    from mod_intranet.tema_modulo import estilo_cartao as _estilo_cartao_fn2b, ler_tema as _ler_tema_home2
+                    from mod_intranet import home_visual as _hv2b
+                    n_para_autorizar = _contar_fila_para_autorizar(nome, eh_admin_geral=(perfil == "administrador_geral"))
+                    try:
+                        _cor_modulo_home2 = (_ler_tema_home2("intranet").get("cor_botao") or "#000000").strip() or "#000000"
+                    except Exception:
+                        _cor_modulo_home2 = "#000000"
+                    with ui.card().classes(f"{_hv2b.classes_card_resumo(modelo)} preview-resumo").style(
+                            f"border-left-color:{_cor_modulo_home2};box-shadow:6px 0 16px rgba(0,0,0,0.07);{_estilo_cartao_fn2b()}"):
+                        with ui.card_section().classes("gap-3 w-full"):
+                            ui.label("Resumo do sistema — Impressão").classes("preview-resumo__titulo text-h6 font-bold text-grey-9")
+                            with ui.row().classes(_hv2b.classes_wrap_resumo(modelo)):
+                                _stat("Fila geral", n_fila, "print", modelo=modelo)
+                                _stat("Para autorizar", n_para_autorizar, "rule", modelo=modelo)
+            # ===== FIM PROVISÓRIO =====
     except Exception as e:
         observabilidade.get_logger("intranet").exception(
             "_construir_dashboard: erro ao renderizar a Home de '%s': %s", nome, e)
@@ -542,7 +635,13 @@ def _contar_fila_para_autorizar(nome: str, eh_admin_geral: bool = False) -> int:
 
 
 @ui.page("/")
-def page_dashboard():
+def page_dashboard(request: Request):
+    """Home: banner + feed + Resumos, no padrão visual escolhido na URL.
+
+    >>> PROVISÓRIO <<< o `?estilo=` escolhe entre os 4 padrões de demonstração.
+    PARA REMOVER: voltar a chamar `_construir_dashboard(nome, perfil,
+    eh_admin, modelo="water")` e apagar o bloco marcado abaixo.
+    """
     try:
         from mod_intranet.telas import pagina_restrita
         user = pagina_restrita("Início")
@@ -552,7 +651,14 @@ def page_dashboard():
         perfil = user.get("perfil", "")
         nome = user["nome"]
         eh_admin = perfil in ("administrador_geral", "administrador_modulo")
-        _construir_dashboard(nome, perfil, eh_admin, modelo="water")
+        # ===== PROVISÓRIO: estilo visual da Home — remover no fim =====
+        # O estilo é o que o `_montar_layout` já aplicou (escolha do cookie
+        # deste navegador, ou o padrão do administrador). A Home reaproveita o
+        # mesmo valor para a classe de escopo do conteúdo.
+        from mod_intranet import preview_estilos as _pv
+        _construir_dashboard(nome, perfil, eh_admin,
+                             modelo=_pv.estilo_efetivo())
+        # ===== FIM PROVISÓRIO =====  (antes: modelo="water")
     except Exception as e:
         observabilidade.get_logger("intranet").exception(
             "page_dashboard: erro ao renderizar o dashboard: %s", e)

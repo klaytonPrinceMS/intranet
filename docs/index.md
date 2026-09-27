@@ -25,6 +25,7 @@
 - [Análise de Risco](analise_de_risco/index.md) — riscos conhecidos (semente)
 - [Métricas de Software](metricas_software/index.md) — cobertura de testes (semente)
 - [Lições Aprendidas](licoes_aprendida/index.md) — aprendizados do desenvolvimento (semente)
+- [Estilo Visual e Tema do Sistema](estilo_visual.md) — 4 estilos nomeados (`azul`/`verde`/`roxo`/`preto`) escolhidos no rodapé de **todos** os módulos, preferência no **cookie** do navegador (não no banco), login **fixo** no estilo `verde` (WhatsApp), e a opção **"Padrão"** definida como a **ausência de imposição** — sem estilo escolhido, vale a cor que o **administrador do módulo** configurou. O tema do sistema voltou ao **preto** (`#000000`/`#212121`), então o WhatsApp virou só a opção "Verde" do menu. Também registra a armadilha da cascade layer do Quasar (`!important` em camada só se vence mexendo no token `--q-primary`) e a grade de 3 colunas que centraliza o menu no rodapé
 - [Contribuições](contribuicoes/index.md) — como adicionar módulo/alterar
 - [Testes — Casos](testes_casos/index.md) — scripts em `test/`
 - [Testes — Plano](testes_plano/index.md) — plano por fluxo
