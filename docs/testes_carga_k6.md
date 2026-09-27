@@ -196,7 +196,13 @@ Duas decisões que mudam o resultado do teste:
 desenho — o primeiro login de qualquer servidor novo abre o diálogo de troca
 obrigatória. Medir com o diálogo pendente mede o **pior caso de primeiro
 acesso**, não o estado normal de produção, onde o usuário já trocou a senha uma
-vez. O script `popula_usuarios_carga.py` zera a flag ao final.
+vez. O script `popula_usuarios_carga.py` zera a flag ao final
+(`marcar_ja_migraram`); para o pior caso de verdade, use `--com-troca-pendente`.
+
+Isso **não** significa que o k6 tenha exercitado o diálogo: ele não abre
+diálogo nenhum, porque não chega a clicar em "Entrar" (ver
+[Limite conhecido](#limite-conhecido-e-deliberado)). O que o p95 de 955,6 ms
+mede é a latência com **os usuários já migrados**, que é o estado normal.
 
 **Todos entram pela API do módulo, nunca por SQL.** `criar_usuario` valida
 login, senha mínima, perfil e nome de exibição, gera o hash bcrypt e libera o

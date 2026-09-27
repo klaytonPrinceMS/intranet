@@ -1,16 +1,24 @@
-"""EN: Seeds load-test users (perf/users) for the k6 login test.
+"""EN: Seeds load-test users (user001..userNNN) for the k6 load test.
 
-PT-BR: Popula usuários de teste de carga (perf/usuarios) para o teste de login k6.
+PT-BR: Popula usuários de teste de carga (user001..userNNN) para o teste k6.
 
 Por que um script e não SQL direto: `criar_usuario` é a ÚNICA porta de
 entrada de usuário no sistema (AGENTS.md §4 — `bd_manipulador.py` é o único
 que toca o banco). Ela valida login, senha mínima, perfil e nome de exibição,
-gera o hash bcrypt, libera o acesso padrão `comum` e **marca `forcar_troca`**.
+gera o hash bcrypt e libera o acesso padrão `comum`.
 
-Esse último ponto é o que torna o teste k6 mais honesto: os 120 usuários
-nascem com a troca de senha pendente, exatamente como qualquer servidor
-novo. O script k6 tem de resolver esse diálogo no login — que é o caminho
-real de primeiro acesso, e por isso mede o pior caso.
+Sobre a troca de senha: `criar_usuario` marca `forcar_troca=1` por desenho — o
+primeiro login de qualquer servidor novo abre o diálogo de troca obrigatória.
+Este script **zera a flag ao final** (`marcar_ja_migraram`), e o padrão é
+zerar. O motivo é medir o estado NORMAL de produção, onde o usuário já trocou
+a senha uma vez; manter o diálogo pendente mediria o pior caso de primeiro
+acesso — que é um cenário real, mas outro, e que não é o que este teste
+compara.
+
+Para medir o pior caso de verdade, use `--com-troca-pendente`. E note que o
+teste k6 não abre o diálogo: ele mede a concorrência de clientes conectados
+(ver `docs/testes_carga_k6.md`); o custo do login é medido à parte, por
+`assets/test/mede_custo_login.py`.
 
 `--perfil` permite criar também administradores, para medir a tela mais
 pesada (que carrega o painel) e não só a home.
@@ -19,6 +27,7 @@ Uso:
     INTRANET_FORCE_SQLITE=1 .venv/bin/python assets/test/popula_usuarios_carga.py
     INTRANET_FORCE_SQLITE=1 .venv/bin/python assets/test/popula_usuarios_carga.py --qtd 120 --perfil administrador_geral
     .venv/bin/python assets/test/popula_usuarios_carga.py --limpar
+    .venv/bin/python assets/test/popula_usuarios_carga.py --somente-migrar
 """
 from __future__ import annotations
 
