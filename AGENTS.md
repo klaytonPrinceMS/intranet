@@ -271,6 +271,59 @@ Todo subagente do projeto segue este padrão (ver `.opencode/agent/kbp-qa.md` co
 - Senha padrão é provisória: qualquer fluxo que use `master`/`qacomum`/`qamaster` deve supor que a senha inicial pode já ter sido trocada pelo usuário.
 - Nunca expor senhas fora deste contexto interno (não logar, não commitar em `estrutura.md`/docs públicas).
 
+### 8.3 Exemplo de matrícula e de nome — NUNCA usar dado real
+
+O **nome de usuário dos servidores é a matrícula** (dados do portal da
+transparência). Isso cria um risco próprio: qualquer exemplo de matrícula em
+docstring, doc ou comentário pode ser o número de uma pessoa real, e o
+histórico do git é imutável e replicado para todo mundo que clona.
+
+| Nunca escrever | Escrever |
+|---|---|
+| matrícula real (6 dígitos, ex. `0NNNNN`) | **`MT-1234`** |
+| nome completo de servidor real | `Ana Beatriz Souza Rocha` |
+
+**A regra:** exemplo de matrícula **sempre com letras e números** (`MT-1234`).
+O formato com letras é o que torna óbvio, de relance, que o número é inventado
+— um exemplo de 6 dígitos parece real e é lido como real.
+
+Antes de commitar, confira. A conferência que **vale** é comparar com a
+folha real — é a única autoritativa, e o `grep` sozinho não serve:
+
+```bash
+# varre os arquivos versionados por 6 dígitos
+git ls-files | grep -E '\.(py|md|js|yml|html)$' | \
+  xargs grep -nE '(^|[^0-9A-Za-z_-])[0-9]{6}([^0-9]|$)'
+```
+
+**Espere falso positivo.** O comando acima accuse de propósito:
+
+- `260912 0751` — timestamp no formato `AAMMDD` (§7);
+- `123456` — a senha provisória dos seeds (§8.2);
+- `assets/css/frameworks/` — código de cor de biblioteca de terceiros.
+
+O que **não** pode aparecer é uma matrícula que esteja na folha real. Se você
+tem a folha (`assets/populacao/servidores_coletados.json`, fora do git),
+compare:
+
+```bash
+.venv/bin/python -c "
+import json, re, subprocess
+d = json.load(open('assets/populacao/servidores_coletados.json', encoding='utf-8'))
+mats = {r['matricula'] for r in d['servidores'] if r['matricula']}
+for arq in subprocess.run(['git','ls-files'], capture_output=True, text=True).stdout.split():
+    if not arq.endswith(('.py','.md','.js','.yml','.html','.css')): continue
+    if arq.startswith(('graphify-out/','site/','assets/css/frameworks/')): continue
+    try: txt = open(arq, encoding='utf-8', errors='ignore').read()
+    except Exception: continue
+    for m in re.findall(r'(?<![0-9A-Za-z_-])[0-9]{6}(?![0-9])', txt):
+        if m in mats: print(f'  {arq}: {m}')
+"
+```
+
+Saída vazia = nenhuma matrícula real em arquivo versionado. Os dados de
+verdade ficam em `db_mod_*.db` e `assets/populacao/*.json`, ambos fora do git.
+
 ## 9. Skills
 
 **seo-checklist:** Title 50-60 chars, meta 150-160 + CTA, H2/H3, keyword nos 100 primeiros chars, alt text

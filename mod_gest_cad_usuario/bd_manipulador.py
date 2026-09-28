@@ -1273,7 +1273,7 @@ def nome_de_tratamento(user_nome):
     cadastro (que guarda o nome completo ou social, Decreto 8.727/2016).
 
     POR QUE PRIMEIRO E ÚLTIMO, E NÃO O NOME TODO
-        O nome de usuário desta prefeitura é a **matrícula** (`000320`).
+        O nome de usuário desta prefeitura é a **matrícula** (`MT-1234`).
         Mostrar isso no cabeçalho é mostrar um código de barras com nome de
         pessoa: não diz nada, e a pessoa se reconhece no número como se
         reconhece numa placa. E o nome completo em tela cheia empurra o

@@ -324,7 +324,7 @@ Com 60 usuários de demonstração ninguém notava; com a folha real (mais de mi
 | `_primeiro_e_ultimo(nome_completo)` | `bd_manipulador.py:1250` | Quatro linhas: separa por espaço, e devolve `"primeiro ultimo"` |
 
 !!! note "Por que primeiro + último, e por que o helper é **local**"
-    O nome de usuário desta prefeitura é a **matrícula** (`000320`). Mostrar
+    O nome de usuário desta prefeitura é a **matrícula** (`MT-1234`). Mostrar
     isso no cabeçalho é mostrar um código de barras com nome de pessoa: não diz
     nada, e a pessoa se reconhece no número como se reconhece numa placa. E o
     nome completo em tela cheia empurra o rótulo do perfil para fora. Primeiro e
