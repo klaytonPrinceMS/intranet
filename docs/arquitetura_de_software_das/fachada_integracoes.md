@@ -83,11 +83,12 @@ chama**. Um `audit_log`, uma busca de usuário ou uma notícia de TV que falham
 não podem derrubar a página — o chamador decide o que fazer com o vazio (o
 padrão adotado é aviso amigável, não erro).
 
-## As 7 funções e onde cada uma é usada
+## As 9 funções e onde cada uma é usada
 
-> O arquivo expõe **7 funções públicas** (`integracoes.py:32-145`), agrupadas em
+> O arquivo expõe **9 funções públicas** (`integracoes.py:32-200`), agrupadas em
 > 4 blocos com separadores de seção: Gestão de usuários, Agregador de notícias,
-> Lista telefônica e Módulos do sistema.
+> Lista telefônica e Módulos do sistema. A **9ª** —
+> `telefones_de_recado_para_lista()` — entrou em 27/09/2026.
 
 | # | Função | Destino | Consumidores |
 |:--|:---|:---|:---|
@@ -97,7 +98,21 @@ padrão adotado é aviso amigável, não erro).
 | 4 | `listar_noticias_para_tv(limite=200)` (`:79`) | `listar_para_tv` (censura já filtrada na origem) | `mod_filas/telas.py:1747` (carrossel de manchetes da TV de Filas) |
 | 5 | `limpar_noticias_censuradas()` (`:93`) | `limpar_censuradas` | `mod_blog/telas_administracao.py:105` (após salvar a lista de censura: purga as já coletadas) |
 | 6 | `obter_organograma_base()` (`:110`) | `mod_lista_telefonica.bd_manipulador.ORGANOGRAMA_BASE` | `mod_solicita_impressao/bd_manipulador.py:407` (semeadura das cotas: 1000 por secretaria, 200 por setor/subsetor) |
-| 7 | `modulo_habilitado(chave)` (`:127`) | `mod_intranet.autenticacao.modulos_registrados` (`tb_modulos.ativo`) | chamador genérico — módulo desconhecido conta como **desligado** |
+| 7 | `espelhar_cadastro_na_lista_telefonica(ator="sistema")` (`:124`) | `mod_gest_cad_usuario.leitura_lista.listar_para_lista_telefonica` + `mod_lista_telefonica.bd_manipulador.sincronizar_contatos_do_cadastro` | `mod_lista_telefonica/telas.py:636` (botão "Sincronizar cadastro", só admin) · `mod_lista_telefonica/telas.py:690` (reespelhamento automático, silencioso) |
+| 8 | `telefones_de_recado_para_lista()` (`:156`) | `mod_gest_cad_usuario.leitura_lista.listar_para_lista_telefonica` (só os `recado=True`) | `mod_lista_telefonica/telas.py:576` (cache por desenho da tela; escreve **"deixe recado"** no cartão) |
+| 9 | `modulo_habilitado(chave)` (`:182`) | `mod_intranet.autenticacao.modulos_registrados` (`tb_modulos.ativo`) | chamador genérico — módulo desconhecido conta como **desligado** |
+
+!!! note "`espelhar_cadastro_na_lista_telefonica()` é a única que atravessa os DOIS lados"
+    As funções 1–6, 8 e 9 são **ponte de leitura**: o núcleo lê o banco do outro
+    módulo e devolve o dado. A função 7 é o caso diferente — ela **lê** o
+    cadastro de usuários **e** **grava** o diretório telefônico, num só
+    sentido de fluxo. Nenhum dos dois módulos importa o outro, nenhum abre o
+    banco do outro, e cada lado toca só o seu banco: é a regra do AGENTS.md §2
+    atravessada por um parâmetro, em vez de atravessada por uma consulta
+    cruzada. Devolve `{criados, atualizados, sem_unidade, sem_telefone,
+    ja_iguais}` e, em qualquer falha, o mesmo formato com `erro=True` e zeros —
+    uma falha aqui nunca pode derrubar a lista. Detalhes:
+    [Espelhamento do cadastro no diretório](../modulos/lista_telefonica.md#espelhamento-do-cadastro-no-diretorio-27092026).
 
 !!! warning "`obter_organograma_base()` devolve `None` de propósito"
     A Lista Telefônica é a fonte única do organograma, mas a Solicitação de
@@ -106,6 +121,39 @@ padrão adotado é aviso amigável, não erro).
     continua com um conjunto mínimo de secretarias (`mod_solicita_impressao/bd_manipulador.py:411-421`).
     Fallback **no chamador**, nunca um valor "inventado" devolvido pela fachada —
     a fachada informa ausência, ela não simula presença.
+
+## A 9ª função — `telefones_de_recado_para_lista()` (27/09/2026)
+
+> **EN:** `{user_nome: True}` — who answers on the **sector's** line, i.e. the
+> number on which a message gets taken down. It exists for the same reason as
+> `espelhar_cadastro_na_lista_telefonica()`: the directory has to know, per
+> card, whether the number belongs to the person or to the sector — and it must
+> not open the register database. The seam is here.
+>
+> **PT-BR:** `{user_nome: True}` — quem atende no telefone do **setor** (deixa
+> recado). Existe pela mesma razão de `espelhar_cadastro_na_lista_telefonica`: a
+> lista telefônica precisa saber, para cada cartão, se o número é da pessoa ou
+> do setor — e não pode abrir o banco do cadastro. A costura é aqui.
+
+A chave é a **matrícula** (`user_nome`), que é o que o contato vinculado guarda
+(`tb_contato.user_nome`) — por isso o cartão resolve o "deixe recado" sem tocar em
+banco nenhum durante o desenho. A marca é consultada **uma vez por desenho da
+tela** e cacheada em `_cache_recado` (`mod_lista_telefonica/telas.py:167-180`,
+`:564-579`): a grade desenha mais de mil cartões de uma vez, e perguntar ao cadastro
+de usuários por cada um transformava a tela em uma espera. A função
+`telefone_e_recado(user_nome)` do módulo de cadastro continua existindo para o
+caminho de **um** usuário — mesmo desenho de `telefone_empresa_principal` /
+`telefones_publicaveis_em_lote`.
+
+!!! note "As duas funções de Gestão de Usuários que alimentam o diretório"
+    | Fachada | Chamada por | Entrega |
+    |:---|:---|:---|
+    | `espelhar_cadastro_na_lista_telefonica(ator)` | botão "Sincronizar cadastro" e reespelhamento automático | a lista de servidores, que o diretório grava no banco dele |
+    | `telefones_de_recado_para_lista()` | um cache por desenho da tela | só a marca de recado, que o cartão lê ao desenhar |
+
+    Nenhuma das duas abre o banco do outro módulo: cada lado toca só o seu, e o
+    que atravessa é um **dicionário** — a regra do AGENTS.md §2 atravessada por
+    parâmetro.
 
 ## Precedente: `mod_intranet/censura.py`
 

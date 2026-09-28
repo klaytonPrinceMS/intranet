@@ -37,8 +37,8 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` + `foreig
 ## Funcionalidades
 
 - **Autenticação bcrypt + sessões revogáveis**: `autenticar` → `registrar_login` (cookie_hash via `secrets`) → `sessao_ativa` revalidada a cada request; encerrar sessão pelo admin derruba o navegador.
-- **Fachada de integração `integracoes.py` (25/09/2026)**: 7 funções públicas com **imports lazy** (dentro da função — um import de topo fecharia ciclo com `main.py`) e contrato **fail-soft** (valor neutro + `logger.warning`, nunca derruba a tela). É a forma canônica de um módulo de negócio acessar dado de outro módulo: **o negócio fala com o núcleo, e o núcleo possui o acoplamento** — o SQL continua rodando só no banco do módulo de destino, pelo `bd_manipulador` dele. Precedente: `censura.py` (dado compartilhado que mora no núcleo); validação: `assets/test/check_integridade.py` (13/13, era 5 falhas/17). Detalhes e checklist: [Fachada de Integração](../arquitetura_de_software_das/fachada_integracoes.md).
-- **Guarda de página** (`pagina_restrita`): revalida usuário/sessão/permissão e monta o layout de 4 partes (header, drawer lateral, rodapé com versões, área principal).
+- **Fachada de integração `integracoes.py` (25/09/2026; 9 funções em 27/09/2026)**: funções públicas com **imports lazy** (dentro da função — um import de topo fecharia ciclo com `main.py`) e contrato **fail-soft** (valor neutro + `logger.warning`, nunca derruba a tela). É a forma canônica de um módulo de negócio acessar dado de outro módulo: **o negócio fala com o núcleo, e o núcleo possui o acoplamento** — o SQL continua rodando só no banco do módulo de destino, pelo `bd_manipulador` dele. Precedente: `censura.py` (dado compartilhado que mora no núcleo); validação: `assets/test/check_integridade.py` (13/13, era 5 falhas/17). Detalhes e checklist: [Fachada de Integração](../arquitetura_de_software_das/fachada_integracoes.md).
+- **Guarda de página** (`pagina_restrita`): revalida usuário/sessão/permissão e monta o layout de 4 partes (header, drawer lateral, rodapé com versões, área principal). Ao final, chama `_primeiro_acesso(user["nome"])` — ver [Primeiro acesso: senha e telefone](#primeiro-acesso-senha-e-telefone-27092026).
 - **Dashboard `/` (redesign Home 09/2026)**: saudação + **feed do Blog por padrão** (RF-09) + **2 cards de Resumo sem botão Atualizar** — dados recalculados a cada acesso via `_orquestrar_resumo_dados()` (`main.py:250`):
     - **"Resumo do sistema" (8 métricas, só `administrador_geral`/`administrador_modulo` — `main.py:500` `eh_admin`)**: `Usuários ativos` (`people`, `filtro_ativo=None`), `Sessões ativas` (`sensors`, `tb_sessoes WHERE logout IS NULL`), `Visitas` (`login`, `tb_config contador_acessos_total`), `Postagens` (`article`), `Quarentena pendente` (`warning`, `tb_quarentena processado=0`), `PDFs ativos` (`picture_as_pdf`, `tb_arquivos ativo=1`), `Registros de auditoria` (`history`), `Auditoria 24h` (`schedule`, `SUM COUNT WHERE timestamp >= -1 day` por `tb_auditoria_*`). Ordem: `[Usuários, Sessões, Visitas, Postagens, Quarentena, PDFs, Logs, Logs 24h]`, `gap-1 px-2 py-1`, ícone 36px `text-2xl`, número `text-h6` 4 dígitos (`>9999` com total real no tooltip) — `_stat()` (`main.py:325`).
     - **"Resumo do sistema — Impressão" (2 métricas, só autorizador `tb_responsaveis_autorizacao ativo=1` ou `administrador_geral` — `main.py:417`/`446`)**: `Fila geral` (`print`, `tb_solicitacoes WHERE status NOT IN impresso/recusado/cancelado`) e `Para autorizar` (`rule`, `tb_responsaveis_autorizacao` por secretaria/setor — `main.py:460` `_contar_fila_para_autorizar()`; admin geral = fila geral).
@@ -55,7 +55,7 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` + `foreig
 - **Padrão próprio do tema de botões (06/09)**: chave de botão do módulo **VAZIA** (`<prefixo>_cor_botao`, `<prefixo>_cor_texto_botao`, `<prefixo>_btn_tamanho`) = **padrão do módulo** — precedência em `tema_modulo.ler_tema` (`tema_modulo.py:115-148`): (1) chave do módulo não vazia → (2) default do parâmetro → (3) `PADROES_TEMA` — mapa único com **TODOS os 11 módulos em `#000000`** (intranet, blog, usuarios, auditoria, editar_pdf, empenhos, solicita_impressao, tecnico, filas, lista_telefonica, agregador_noticias — paleta preta desde 27/09/2026, ver [Estilo Visual](../estilo_visual.md)). O tema do sistema (`intranet_*` / card **"Botões do sistema"** em `/configuracoes`) **NÃO é herdado** por outros módulos — **todos os módulos usam a cor do intranet (`#000000`)**; `cor_fundo`, `cor_titulo` e `texto_header` seguem a mesma regra. O override por módulo continua possível no cupê "Aparência" da Administração — inputs exibem o valor resolvido (rótulo "vazio = padrão do módulo" — `tema_modulo.py:319-322`) e "Restaurar padrão" grava `""` para voltar ao padrão do módulo. `PADRAO_CONFIG` não semeia chaves de botão por módulo (instalações novas já iniciam com a cor única `#000000`). Coberto por `test/verifica_ui_comum.py` (190 verificações — seção 15 "ler_tema real: padrão próprio do módulo").
 - **Login `/login`**: customizável por `tb_config`; com favicon dinâmico (`favicon_versao`). **Responsivo (09/2026, RNF-UI-01)**: card `w-full max-w-[420px] mx-4 p-6 sm:p-10` (antes `w-[420px] p-10`), wrapper `p-4 min-width:0`; header `flex-wrap` `truncate` `max-w` `gap` via `.style` (auditado 320/768/1024 — `kbp-web-design`). Validar `mkdocs build` tema `readthedocs`.
 - **Responsividade global (RNF-UI-01, 09/2026)**: padrão mobile-first 320/768/1024 — containers `w-full p-4 sm:p-6` `min-width:0`, `flex-wrap` + `gap` via `.style()`, `truncate`/`max-w`, `overflow-x-auto` tabs/tabelas, `w-full max-w` dialogs, grids `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`, `scroll_area` altura explícita; proposta P0/P1/P2 por `container`/`row`/`grid` na auditoria `kbp-web-design`.
-- **Configurações `/configuracoes`** (só `administrador_geral`): organizada no padrão **menu_mod de abas** (`tela_configuracoes.py:476-486`) — **5 abas**: Config (cards reordenados em 06/09 para **Configurações de cores → Textos fixos exibidos aos usuários → Configurações gerais do sistema → Ícones** — antes o card Ícones abria a aba; blocos movidos verbatim: Cores em grade 4+4 com prévia `:492`, textos com rótulo interno `:645`, gerais no padrão responsivo da aba Módulo `:769`, Ícones em grid único responsivo `:814`), E-mail (SMTP RF-58 + teste de conexão), Módulo (páginas do sistema + registro de módulos e vínculos órfãos), Observabilidade (logs loguru: ativo/nível/rotação/retenção/console/envio Loki + telemetria OTel local ou remota + URL Grafana + limpar todos) e Documentação (rebuild MkDocs). **Sem botão "APLICAR" geral** desde 06/09: cada card é `card_admin` recolhível (`aberto=False`) com rodapé padrão de 2 botões ("Restaurar padrão" + "Aplicar") exclusivos do card — o Aplicar grava só os campos daquele card, aguarda 1 s e recarrega (`_aplicar_card`, `tela_configuracoes.py:284-308`). Os painéis são vinculados às abas pelo `name` do Quasar — a ordem DOM dos `ui.tab_panel` (Config, E-mail, Observabilidade, Documentação, Módulo) difere da ordem da barra, sem mudança funcional.
+- **Configurações `/configuracoes`** (só `administrador_geral`): organizada no padrão **menu_mod de abas** (`tela_configuracoes.py:604-612`) — **6 abas**: Config (cards reordenados em 06/09 para **Configurações de cores → Textos fixos exibidos aos usuários → Configurações gerais do sistema → Ícones** — antes o card Ícones abria a aba; blocos movidos verbatim: Cores em grade 4+4 com prévia `:492`, textos com rótulo interno `:645`, gerais no padrão responsivo da aba Módulo `:769`, Ícones em grid único responsivo `:814`), E-mail (SMTP RF-58 + teste de conexão), Módulo (páginas do sistema + registro de módulos e vínculos órfãos), **Telefones** (faixas de número da prefeitura, 27/09/2026 — ver abaixo), Observabilidade (logs loguru: ativo/nível/rotação/retenção/console/envio Loki + telemetria OTel local ou remota + URL Grafana + limpar todos) e Documentação (rebuild MkDocs). **Sem botão "APLICAR" geral** desde 06/09: cada card é `card_admin` recolhível (`aberto=False`) com rodapé padrão de 2 botões ("Restaurar padrão" + "Aplicar") exclusivos do card — o Aplicar grava só os campos daquele card, aguarda 1 s e recarrega (`_aplicar_card`, `tela_configuracoes.py:284-308`). Os painéis são vinculados às abas pelo `name` do Quasar — a ordem DOM dos `ui.tab_panel` (Config, E-mail, Observabilidade, Documentação, Módulo) difere da ordem da barra, sem mudança funcional.
 - **Card "Cores" do Config — prévia ao vivo no topo do card (06/09)**: dentro do 1º card da aba Config (`tela_configuracoes.py:433-582`) a **pré-visualização ao vivo subiu para logo abaixo da legenda** — nova ordem interna **título → legenda → prévia (visualização exemplo) → campos de cores → "Restaurar padrão"** (bloco de 50 linhas movido verbatim: antes `:491-540`, depois `:440-489`, antes do grid `:491`). A prévia (`previa()` com `@ui.refreshable`, `tela_configuracoes.py:443-487`) exibe barra do sistema (ícone + nome sobre a cor principal), card de exemplo e botões de exemplo, lendo o estado pendente com fallback ao banco (`_prev` — `:245-255`); `_refresh_previa()` (`:235-243`) é order-independent (silenciosa se a prévia ainda não existir) e é acionada por `_mudou`/`_mudou_cor` em qualquer campo (`:223-233`) — renderização inicial idêntica, mudança apenas de posicionamento. Grid dos 8 seletores (4+4), seeds e "Restaurar padrão" byte-idênticos; card "Ícones" intocado. Coberto por `test/verifica_ui_comum.py` (**187 verificações OK**) e `test/teste_config_intranet.py` (50 OK).
 - **Card "Ícones" do Config — grid único responsivo, itens equilibrados (06/09)**: o card (4º da aba Config após a reordenação) usa um **único grid inline responsivo** `grid-cols-1 sm:grid-cols-2 md:grid-cols-3` (`tela_configuracoes.py:776-802`) com 3 itens na ordem **1º** input "Ícone do sistema (nome Material)", **2º** `ui.upload` do favicon e **3º** botão "Restaurar padrão" (no grid, mesmo `on_click` via `pos_acao=remover_fav`) — os três alinhados `w-full self-center` (colunas equilibradas: o input herda `w-full` do `campo_texto` + `self-center`; upload e botão com classes explícitas). O rótulo do upload foi **encurtado para "Enviar arquivo .ico"**, com o detalhe movido para o tooltip "Substitui o ícone da aba do navegador (favicon) — extensão .ico, até 1 MB" (`tela_configuracoes.py:785-791`). Removidos os badges de status do favicon e o preview base64 (`_linha_fav`); `receber_ico`/`remover_fav` inalteradas (validação `.ico` ≤1 MB + auditoria — `tela_configuracoes.py:736-774`). Coberto por `test/teste_config_intranet.py` (50 verificações — novo label na `:104`).
 - **Aba "Módulo" — redesenho (05/09)**: a aba (antes "Registro/Nome de módulo") ganhou **campo de ícone editável com seletor visual** — `_campo_icone` (`tela_configuracoes.py:519-546`): input livre + pré-visualização viva + `ui.menu` com grid de 6 colunas sobre `ICONES_COMUNS` (31 ícones, `tela_configuracoes.py:33-39`) + botão `grid_view`; reutilizado no registro de novo módulo (`tela_configuracoes.py:762`). O grid usa a constante compartilhada `COLUNAS_MODULOS` (`tela_configuracoes.py:45`) entre cabeçalho e linhas (mesmo columns/gap/padding — alinhamento corrigido). A lista de páginas é **ÚNICA** (os grupos "Indispensáveis"/"Demais" foram substituídos pela lista reordenável — ver "Reordenação de módulos" abaixo), com linhas em cards (`rounded-lg`, borda, `hover:shadow-sm`) e container `overflow-x-auto` (`tela_configuracoes.py:566-636`).
@@ -77,6 +77,303 @@ Toda conexão executa `PRAGMA journal_mode=WAL` + `synchronous=NORMAL` + `foreig
 - **Observabilidade (loguru)**: sinks em `logs/` com rotação/retenção/compressão; `get_logger("<modulo>")` por módulo; excepthook global.
 - **Hora do servidor (NTP) — `hora_servidor.py` (07/09)**: fonte da verdade de data/hora do sistema — `hora_servidor()`/`hora_servidor_str()` retornam a hora do SERVIDOR (nunca do cliente), sincronizada com **NTP.br** (RFC 5905, socket UDP puro, timeout 2 s, cache 60 s, lock threading) quando há internet; sem internet usa o relógio local. `offset_ntp()` devolve o offset com cache; `definir_ntp_ativa(valor)` grava a chave `hora_ntp_ativa` (`1`/`0`, default `"1"`) em `tb_config` central. Todas as funções com try/except + loguru (fail-soft). Adotado pelo `mod_solicita_impressao` em todas as datas (criação/autorização/impressão/expiração/mês de cota).
 - **Documentação embutida**: `documentacao.py` builda o MkDocs e monta `/documentacao` (site em `porta_documentacao` 8000, separada de `porta_site` 8080 — via `ativacao.config_persistida()` + `main.py:_cfg`).
+
+## Faixas de telefone da prefeitura — `mod_intranet/telefone_faixas.py` (27/09/2026)
+
+> **EN:** The municipality's phone is not a loose number: it is a **PABX with
+> ranges**. The screen tells the server, **while he types**, whether the number
+> belongs to the municipality — and which is the nearest range, so he can
+> discover his own. A number **outside** the ranges is **warned about, not
+> blocked**: blocking would punish a real situation (a health unit that
+> answers on the neighbouring town's number). Either the server fixes the
+> number, or he marks it as a **message phone**.
+>
+> **PT-BR:** O telefone da prefeitura não é um número solto: é um **PABX com
+> faixas**. A tela diz ao servidor, **enquanto ele digita**, se o número pertence
+> à prefeitura — e qual é a faixa mais próxima, para ele descobrir o próprio.
+> Um número **fora** das faixas é **avisado, não bloqueado**: bloquear puniria
+> uma situação real (unidade de saúde que atende no telefone da cidade
+> vizinha). O servidor ou corrige o número, ou marca como **recado**.
+
+O arquivo mora no **núcleo** porque a faixa é conhecimento da prefeitura, não do
+cadastro nem do diretório: quem valida o cadastro é o `mod_gest_cad_usuario`, que é
+dono do telefone, e o núcleo só responde "este número está dentro de alguma faixa
+nossa?". Ele é o **único** que fala com `tb_config` central e com o cadastro, então é
+o lugar onde a pergunta sobre a faixa pode ser feita sem quebrar o isolamento de
+bancos (AGENTS.md §2).
+
+### Armazenamento e API
+
+| Símbolo | Arquivo:linha | O que faz |
+|:---|:---|:---|
+| `CONFIG_FAIXAS = "faixas_telefone_prefeitura"` | `telefone_faixas.py:38` | Chave em `tb_config`. O valor é uma **lista JSON** de `{"inicio","fim","descricao"}`, **tudo em dígitos** — são **várias** faixas, porque a prefeitura tem mais de uma central e a lista cresce |
+| `FAIXA_INICIAL` | `telefone_faixas.py:43-44` | A faixa de instalação `3535915101-3535915199` ("Central de linhas") |
+| `faixa_inicial()` | `telefone_faixas.py:94` | Devolve uma **cópia** da faixa de instalação |
+| `listar_faixas(incluir_padrao=True)` | `telefone_faixas.py:99` | Todas as faixas configuradas, normalizadas; sem faixa cadastrada devolve a de instalação |
+| `salvar_faixas(ator, faixas)` | `telefone_faixas.py:131` | Grava. Devolve `(ok, mensagem)` |
+| `faixa_que_contem(numero)` | `telefone_faixas.py:165` | A faixa que contém o número, ou `None` |
+| `numero_dentro_da_faixa(numero)` | `telefone_faixas.py:182` | `(bool, faixa)` |
+| `faixa_mais_proxima(numero)` | `telefone_faixas.py:188` | A faixa **própria** mais próxima — é o que gera a dica do aviso |
+| `_normalizar_faixa(bruto)` | `telefone_faixas.py:66` | Aceita `dict` **ou** string `"3535915101 a 3535915199"` |
+| `_digitos(texto)` | `telefone_faixas.py:57` | Só os dígitos, para comparar sem se preocupar com máscara, espaço ou o `+55` da frente |
+
+!!! note "Por que `faixa_inicial()` existe, e não um banco sem faixa"
+    Um sistema instalado **sem nenhuma faixa** avisaria "fora da faixa" para o
+    **próprio telefone da prefeitura** — que é o caso que mais destrói a
+    confiança no aviso. Com a faixa de instalação, o aviso só aparece quando há
+    algo real para avisar, e o administrador troca pela faixa verdadeira pela
+    tela.
+
+!!! note "Faixa **invertida** é normalizada; faixa **inválida** é recusada **com o número**"
+    Uma faixa pode vir invertida (o usuário digitou o maior primeiro): a
+    `_normalizar_faixa` **troca** início e fim, e o salvamento segue. Já uma
+    faixa que não faz sentido (início ≥ fim depois de normalizar, ou número
+    curto demais — menos de 10 dígitos) é **recusada**, e a mensagem traz o
+    **número da faixa**, não a contagem: *"a faixa 3 tem o fim antes do
+    início"* é um erro que o usuário corrige sozinho; *"erro ao salvar"* não é.
+    Linha em branco da tela é ignorada, e `salvar_faixas` devolve `ok=True`
+    com um aviso do tipo *"2 faixa(s) salva(s). Ignoradas por serem inválidas:
+    faixa 3"* quando há linha boa **e** linha ruim.
+
+!!! note "`faixa_mais_proxima` é a diferença entre o usuário arrumar e desistir"
+    "esse número está fora das faixas da prefeitura" é uma **repreensão**;
+    "a faixa mais próxima é a Garagem" é uma **ajuda** para a pessoa descobrir a
+    dela. A comparação é pelos **últimos 10 dígitos** (DDD + assinatura), que é
+    onde a prefeitura opera, então o `+55` digitado na frente não quebra o
+    casamento.
+
+### A aba "Telefones" em `/configuracoes` (6ª aba)
+
+| Onde | O quê |
+|:---|:---|
+| `tela_configuracoes.py:608` | `tab_tel = ui.tab("Telefones", icon="support_agent")` — a **6ª** aba, junto de Config, E-mail, Módulo, Observabilidade e Documentação |
+| `tela_configuracoes.py:1443-1447` | `ui.tab_panel(tab_tel)` com um `card_admin("Faixas de telefone da prefeitura", icone="support_agent", chave_modulo="intranet", grade=False, aberto=True)` |
+| `tela_configuracoes.py:1453-1459` | O formato, escrito na tela: uma faixa por linha, `início-fim  descrição` |
+| `tela_configuracoes.py:1467-1470` | `_para_texto(faixas)` — lista de faixas → texto do campo |
+| `tela_configuracoes.py:1472-1500` | `_do_texto(texto)` — texto → lista de faixas |
+| `tela_configuracoes.py:1502-1506` | `ui.textarea(value=_para_texto(telefone_faixas.listar_faixas()))` com `outlined dense rows=5 autogrow` e `data-testid=config-faixas-texto` |
+| `tela_configuracoes.py:1544-1548` | Botões **"Salvar faixas"** (`save`) e **"Voltar à faixa inicial"** (`restart_alt`) |
+
+`_do_texto` é tolerante de propósito: aceita espaço, tabulação ou vírgula entre as
+partes, e o administrador pode escrever **só os dois números** — a descrição é
+opcional e serve justamente para o aviso dizer qual é a faixa mais próxima do
+número errado. Linha sem `-` é ignorada com `warning` no log.
+
+!!! note "Por que é um `ui.textarea` — uma decisão, não uma limitação"
+    A primeira versão montava as linhas com **elements dinâmicos** (`ui.row` +
+    `clear()` manual, depois `@ui.refreshable`), e o resultado foi: a lista
+    aparecia **vazia no primeiro desenho**, embora com a faixa carregada do
+    banco, e o **botão de remover disparava durante a montagem da página** — o
+    clique do próprio primeiro desenho chegava no handler de apagar.
+
+    Um campo de texto não tem estado de slot: é um valor só, que o navegador
+    desenha, e a tela relê do banco a cada montagem. Por isso ele **não tem**
+    esses dois defeitos, e ganha mais dois: é **mais fácil de revisar** pelo
+    administrador (vê as faixas inteiras, em bloco) e é **copiável e colável
+    entre ambientes** — servidor de homologação vira produção colando cinco
+    linhas, sem clicar em N botões de adicionar e remover.
+
+    O que se perde: remover uma faixa é apagar a linha e salvar, em vez de
+    clicar num `X`. A troca compensa porque a lista é **curta**, é **editada por
+    texto** e quem mexe nela é o **administrador** — tarefa rara, não o fluxo de
+    quem usa o sistema.
+
+### Onde a faixa é consultada
+
+| Momento | Chamador | Efeito |
+|:---|:---|:---|
+| Enquanto o servidor **digita** o fixo no 1º acesso | `telas.py:1092-1127` (`_reavaliar_faixa`, ligado por `fixo_empresa.on_value_change`) | Escreve o aviso **ao vivo** com o nome da faixa mais próxima |
+| Ao **avaliar** o conjunto de telefones | `mod_gest_cad_usuario/bd_manipulador.py:974` (`avaliar_telefones_primeiro_acesso`) | Preenche `fora_da_faixa` com `(numero, descricao_da_faixa_mais_proxima)`, **sem gravar** |
+| Ao **gravar** | `bd_manipulador.py:1023` (`registrar_contatos_primeiro_acesso`) | **Salva** e devolve o mesmo aviso em `detalhes["fora_da_faixa"]` — avisado, nunca recusado |
+
+## Primeiro acesso: senha e telefone (27/09/2026)
+
+> **EN:** `pagina_restrita` calls `_primeiro_acesso` after the layout is built.
+> It chains **two** mandatory steps — password, then phone numbers — and only
+> opens the second when the first was really completed. The server sheet of the
+> municipality has no extension, so the directory number only exists if the
+> server types it.
+>
+> **PT-BR:** `pagina_restrita` chama `_primeiro_acesso` depois de montar o
+> layout. Ele encadeia **dois** passos obrigatórios — senha e telefones — e
+> só abre o segundo quando o primeiro foi de fato concluído. A folha de
+> servidores do município não traz ramal, então o número do diretório só
+> existe se o próprio servidor o informar.
+
+`pagina_restrita` (`mod_intranet/telas.py:117-131`) chama `_primeiro_acesso(user["nome"])` dentro de `try/except`; se a montagem falhar, loga e avisa "Erro ao abrir a troca obrigatória — recarregue a página" em vez de derrubar a página.
+
+| Ordem | Condição e chamada | Arquivo:linha |
+|:--:|:---|:---|
+| 1a | `autenticacao.precisa_trocar_credenciais(nome)` ⇒ `_dialogo_troca_credenciais(nome, ao_concluir=abrir_telefones)` | diálogos em `:554`, com as variantes mínima `:586` e completa `:666` |
+| 1b | `autenticacao.precisa_trocar_senha(nome)` ⇒ `_dialogo_troca_senha(nome, ao_concluir=abrir_telefones)` | diálogo em `:801` |
+| 2 | `abrir_telefones()` ⇒ `bd.telefone_pendente(alvo)` ⇒ `_dialogo_telefones(alvo)` | encadeamento em `:1281-1300` · diálogo em `:982` |
+
+Os três diálogos de senha agora aceitam **`ao_concluir`**. Sem esse parâmetro, um diálogo de senha que fechasse sem trocar deixaria o telefone para trás, e o servidor entraria no sistema **com a pendência e sem saber por quê**.
+
+!!! note "`novo_nome`: a pendência é do usuário NOVO"
+    `abrir_telefones(novo_nome=None)` recebe o login escolhido quando o
+    `master` é renomeado. A pendência de telefone está no usuário **novo**,
+    não no `master` que já saiu de cena — por isso o alvo é
+    `novo_nome or nome_usuario`.
+
+### `_dialogo_telefones` — o consentimento em caixas
+
+`dialogo_card` de `w-[620px]` com `max_altura=True` e **`persistent`** (não fecha com ESC): fechar sem decidir deixaria o servidor sem número para sempre. São **quatro** campos, e cada um com a sua regra de consentimento.
+
+| Campo | `papel`/`tipo` | Caixa de consentimento | Publica? |
+|:---|:---|:---|:---:|
+| **Celular particular** | `pessoal`/`celular` | `primeiro-acesso-chk-pessoal`, **começa desmarcada** | **nunca** |
+| **Celular da prefeitura** | `empresa`/`celular` | `primeiro-acesso-chk-empresa`, **começa desmarcada** | **só se marcar** |
+| **Telefone fixo da prefeitura** | `empresa`/`fixo` | `primeiro-acesso-chk-fixo`, **`disable` — travada marcada** | **sempre** |
+| **Telefone residencial** (opcional) | `pessoal`/`fixo` | **não tem caixa** | **nunca** |
+
+As três caixas são o **espelho visual** de `mod_gest_cad_usuario.bd_manipulador.telefone_e_publicavel`; a decisão real fica no banco. O fixo é gravado com `visivel=True` e o residencial com `visivel=False` de qualquer forma (`telas.py:1080-1089`) — marcar o celular particular não publica nada, e o checkbox travado do fixo não é o que autoriza a linha institucional.
+
+A **quinta** linha do formulário (27/09/2026) é a caixa de **recado**, e ela não é uma caixa de consentimento:
+
+| Caixa | `data-testid` | Rótulo | Efeito |
+|:---|:---|:---|:---|
+| **Telefone de recado** | `primeiro-acesso-chk-recado` | **"Não tenho linha própria: este é o telefone do setor, para recado"** | Marca o **fixo** com `recado=True` (`telas.py:1086`) |
+
+O texto de apoio (`telas.py:1055-1059`) diz **onde** o número do setor costuma estar
+— *a garagem, a secretaria da escola, a unidade de saúde, o almoxarifado* — e o que
+acontece com a ligação: *quem receber anota o recado e passa adiante*. Sem essa
+explicação, o servidor entende "recado" como "não atendem" e desiste de marcar.
+
+#### O aviso de faixa, **enquanto digita**
+
+> **EN:** While he types the landline, the dialog tells him whether the number
+> is one of ours, and which is the nearest range. Showing the warning **after**
+> saving is too late: he already saved, already got "telefones registrados",
+> and only then finds out the number was wrong. The range exists to catch the
+> mistake **in the finger**, not in the report.
+>
+> **PT-BR:** Enquanto ele digita o fixo, o diálogo diz se o número é nosso e
+> qual é a faixa mais próxima. Mostrar o aviso **depois** de salvar é tarde: o
+> servidor já salvou, já recebeu o "telefones registrados", e só depois
+> descobre que o número estava errado. A faixa existe para pegar o erro **no
+> dedo**, não no relatório.
+
+`fixo_empresa.on_value_change(_reavaliar_faixa)` (`telas.py:1127`) chama
+`_reavaliar_faixa` (`:1092-1125`), que monta o texto:
+
+```
+Atenção: 3535999999 está fora das faixas de telefone da prefeitura.
+A faixa mais próxima é a Garagem — confira o número.
+```
+
+O aviso vive num `ui.label` de `text-caption text-orange-8` que fica **vazio** quando o
+número entra na faixa (o elemento continua no DOM, com texto vazio — `set_text("")`, não
+remoção; conferir ausência de elemento daria falso negativo, que foi exatamente o que
+aconteceu na primeira versão do teste E2E). O `on_value_change` é o **caminho do próprio
+projeto** (`campo_texto(ao_mudar=...)`); `on("update:model-value")` também funcionaria,
+mas mistura duas formas de fazer a mesma coisa no mesmo arquivo.
+
+#### `_montar_contatos()` separa a **leitura** da gravação
+
+`telas.py:1071-1090` é puro: lê os **quatro** campos e devolve a lista de dicionários
+que o cadastro grava, **sem** gravar nada. É essa separação que permite (a) o aviso ao
+vivo, (b) `avaliar_telefones_primeiro_acesso` antes de salvar, e (c) que
+`_salvar(liberacao_provisoria)` e `_confirmar()` cuidem só da **decisão**.
+
+#### `_salvar(liberacao_provisoria)` e `_confirmar()` separam a decisão
+
+`_salvar(liberacao_provisoria=False)` (`telas.py:1129-1167`) é quem chama
+`registrar_contatos_primeiro_acesso(nome_usuario, nome_usuario, contatos,
+liberacao_provisoria=liberacao_provisoria)` e desempacota os **três** valores
+(`ok, msg, detalhes`) — com `detalhes` deciding o que aparece depois:
+
+| `detalhes` | O que a tela faz |
+|:---|:---|
+| `fora_da_faixa` não vazio | `notificar(..., tipo="warning")` — salvou, mas o número não é nosso |
+| `provisorio` verdadeiro | abre o **bilhete** `_aviso_provisorio(nome_usuario, DIAS_LIBERACAO_PROVISORIA)` (`:1259-1278`) |
+| qualquer coisa | `dlg.close()` e `ao_concluir()` |
+
+`_confirmar()` (`telas.py:1169-1187`) é o que o botão "Salvar telefones" chama, e é o
+**guardião** do `liberacao_provisoria`: só ele pode passar `True`, e só depois das
+**duas** travas.
+
+### As DUAS travas (27/09/2026)
+
+> **EN:** Two gates instead of one is not distrust of the server — it is the
+> opposite. The only failure left is the hurried click on a warning screen, and
+> it goes through two. A server who read the warning twice and went ahead is
+> someone who understood; someone who clicked once may have read only the first
+> line.
+>
+> **PT-BR:** Duas travas em vez de uma não é desconfiança do servidor — é o
+> contrário. A única falha que sobra é o clique apressado numa tela de
+> advertência, e ele passa por duas. Um servidor que leu o aviso duas vezes e
+> seguiu em frente é alguém que entendeu; alguém que clicou uma vez pode ter só
+> lido a primeira linha.
+
+O encadeamento inteiro, com **nada gravado** até a segunda confirmação:
+
+```
+_confirmar()                                    # telas.py:1169
+   └─ sem particular?      → notificar e PARA (nem abre a trava)
+   └─ tem fixo da prefeitura? → _salvar()
+   └─ SÓ AQUI (sem fixo, com particular):
+        └─ _travas_falta_numero(...)            # telas.py:1195-1226  — TRAVA 1
+             ├─ "Informar o telefone do setor"  → fecha e volta ao formulário
+             └─ "Não sei meu número"
+                  └─ _travas_confirmar(...)     # telas.py:1229-1256  — TRAVA 2
+                       ├─ "Voltar e informar o número" → fecha
+                       └─ "Entendo, liberar por enquanto"
+                            └─ fecha as duas + ao_confirmar(True)  # _salvar(True)
+                                 └─ _aviso_provisorio(...)          # telas.py:1259 — o bilhete
+```
+
+| Trava | Onde | O que **escreve** |
+|:--:|:---|:---|
+| **1ª** — `_travas_falta_numero` | `telas.py:1195-1226` | "Falta um telefone da prefeitura". Explica que todo servidor está ligado a uma secretaria ou setor e todo setor tem telefone; oferece **"Informar o telefone do setor"** (volta ao formulário) ou **"Não sei meu número"**; e lista **onde perguntar**: secretaria da escola, unidade de saúde, **setor de empilhadeiras**, garagem, almoxarifado |
+| **2ª** — `_travas_confirmar` | `telas.py:1229-1256` | "Acesso temporário". **Escreve o preço**: liberado por `DIAS_LIBERACAO_PROVISORIA` (**4 dias**), depois disso a conta é **bloqueada** e **só o DTI** reabre. Repete onde perguntar e diz para voltar pelo perfil depois |
+| **Bilhete** — `_aviso_provisorio` | `telas.py:1259-1278` | "Acesso liberado por enquanto". Avisa que o nome **aparece na lista telefônica, mas sem número** — a prefeitura ainda não sabe como falar com a pessoa |
+
+O preço da 2ª trava é lido de `DIAS_LIBERACAO_PROVISORIA` (o **mesmo** valor que o
+cadastro grava), então mudar o prazo no cadastro muda o texto da tela — não há
+número duplicado em dois lugares.
+
+### A liberação temporária e o paliativo de 4 dias (27/09/2026)
+
+> **EN:** The window is served **at login**. `autenticar` calls
+> `bloqueio_provisorio_pendente(user_nome)` right after the password check; if
+> the 4-day deadline has passed, it blocks the account, writes
+> `acesso_provisorio_expirado` to the audit trail and refuses the login.
+>
+> **PT-BR:** A janela é cumprida **no login**. `autenticar` chama
+> `bloqueio_provisorio_pendente(user_nome)` logo depois de checar a senha; se o
+> prazo de 4 dias venceu, bloqueia a conta, grava
+> `acesso_provisorio_expirado` na auditoria e recusa o login.
+
+| Passo | Arquivo:linha | O quê |
+|:--|:---|:---|
+| 1 | `autenticacao.py:332` | `autenticar(user_nome, senha)` — assinatura intacta `(ok, msg)` |
+| 2 | `autenticacao.py:355-361` | `try: _gest_ = _gest()` + `bloqueio_provisorio_pendente(user_nome)`; se verdadeiro, `bloquear_usuario("sistema", user_nome, True)` e `audit_log(user_nome, "intranet", "acesso_provisorio_expirado", …)` |
+| 3 | `autenticacao.py:362-364` | A mensagem: **"Seu acesso temporário de 4 dias terminou. Procure o DTI para liberar seu cadastro depois de atualizar seu telefone."** |
+| 4 | `autenticacao.py:365-368` | `except Exception: pass` — a checagem que falha **não** bloqueia ninguém |
+
+!!! danger "Por que a checagem está no **login**, e por que ela é engolida"
+    Sem essa checagem, a liberação temporária seria um prazo que **ninguém nunca
+    fiscaliza** — a conta entraria para sempre e o paliativo viraria norma.
+    Checar mais tarde (rotina noturna) existiria; o problema é que viraria
+    norma **sem ninguém perceber**.
+
+    E o `except: pass` não é descuido: um erro de banco ali transformaria
+    **todo servidor** em "usuário bloqueado" no primeiro dia. Uma checagem que
+    pode bloquear a prefeitura inteira por causa de uma tabela travada é
+    pior do que um prazo que passa. O log registra; a conta fica aberta.
+
+Detalhe das funções de gravação e do estado (`informacao_acesso_provisorio` com
+`vencido` = prazo e `bloqueado` = conta, campos **independentes**):
+[Módulo Gestão de Usuários](gest_cad_usuario.md#a-liberacao-temporaria-de-4-dias-o-paliativo).
+
+!!! info "Por que o telefone é pergunta e não importação"
+    A folha de servidores do município traz matrícula, nome, secretaria,
+    departamento, cargo e vínculo — mas **não traz ramal**. O número do
+    diretório só existe se o próprio servidor informar, e é por isso que
+    este passo é obrigatório no primeiro acesso, em vez de ser um dado
+    copiado.
 
 ## Classes do núcleo (06/09)
 
@@ -233,7 +530,7 @@ Mapeamento via `sqlalchemy.orm.registry.map_imperatively()` — SQLAlchemy fica 
 
 - Rotas: `/` (`main.py:189`), `/login` (`main.py:115`), `/admin/{chave_modulo}` (`main.py:439` — dispatch de admin por módulo, renderiza `mod_<nome>/telas_administracao.py` standalone), `/configuracoes` (`main.py:527` — painel central, guarda `pagina_restrita("Administração")`), `/documentacao` (mount).
 - Consumido por todos: `pagina_restrita`, `get_connection`/`get_config`/`set_config`, `audit_log`/`audit_reg`, `CrudBase`, `gerar_hash_senha`, `validar_acesso_modulo`.
-- **Fachada de integração** (`integracoes.py`, 25/09/2026) — 7 funções fail-soft de imports lazy que permitem a um módulo de negócio alcançar outro **sem importá-lo** (o núcleo possui o acoplamento; o banco de cada módulo continua isolado): `obter_usuario_gestao`/`listar_usuarios_gestao` (Filas, Lista Telefônica → Gestão de Usuários), `agregador_habilitado`/`listar_noticias_para_tv` (Filas → Agregador), `limpar_noticias_censuradas` (Blog → Agregador), `obter_organograma_base` (Solicitação → Lista Telefônica, com fallback local no chamador) e `modulo_habilitado`. Fecha as 5 violações de isolamento detectadas por `assets/test/check_integridade.py` (**5 falhas/17 → 13/13**). Referência completa: [Fachada de Integração](../arquitetura_de_software_das/fachada_integracoes.md).
+- **Fachada de integração** (`integracoes.py`, 25/09/2026; 9 funções em 27/09/2026) — funções fail-soft de imports lazy que permitem a um módulo de negócio alcançar outro **sem importá-lo** (o núcleo possui o acoplamento; o banco de cada módulo continua isolado): `obter_usuario_gestao`/`listar_usuarios_gestao` (Filas, Lista Telefônica → Gestão de Usuários), `agregador_habilitado`/`listar_noticias_para_tv` (Filas → Agregador), `limpar_noticias_censuradas` (Blog → Agregador), `obter_organograma_base` (Solicitação → Lista Telefônica, com fallback local no chamador), **`espelhar_cadastro_na_lista_telefonica`** (núcleo → Gestão de Usuários **e** Lista Telefônica, 27/09/2026), **`telefones_de_recado_para_lista`** (núcleo → Gestão de Usuários, para o "deixe recado" do cartão, 27/09/2026) e `modulo_habilitado`. Fecha as 5 violações de isolamento detectadas por `assets/test/check_integridade.py` (**5 falhas/17 → 13/13**). Referência completa: [Fachada de Integração](../arquitetura_de_software_das/fachada_integracoes.md).
 - Jobs: `backup:<chave>` (12 h), `cleanup_pdf`/`cleanup_solicita` (1 min), `poda_auditoria` (24 h), `monitor_empenho` (10 s).
 
 ## Testes

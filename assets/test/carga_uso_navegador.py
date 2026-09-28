@@ -384,8 +384,8 @@ async def usar_filas_e_lista(page, reg: Registro) -> None:
         if await abrir_uso(page, reg, "filas", "/filas", 3000):
             reg.ok("filas", "tela de filas renderizou")
         if await abrir_uso(page, reg, "lista_telefonica", "/lista-telefonica", 3000):
-            if await _visivel(page, "lista-busca"):
-                await page.get_by_test_id("lista-busca").first.fill("gabinete")
+            if await _visivel(page, "lista-busca-termo"):
+                await page.get_by_test_id("lista-busca-termo").first.fill("gabinete")
                 await page.wait_for_timeout(1500)
             reg.ok("lista_telefonica", "organograma aberto e filtrado")
     except Exception as exc:

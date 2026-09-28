@@ -70,7 +70,7 @@ por separadores `# =================`. Todas as funções devolvem
 |:---|:---|:---|
 | `listar_usuarios(filtro_ativo=None)` | `list[tuple]` de **11 campos**: `(0)id, (1)user_nome, (2)user_perfil, (3)user_ativo, (4)user_email, (5)user_fone, (6)data_cadastro, (7)acessos "modulo:papel, …", (8)user_deletado, (9)user_nome_completo, (10)user_motivo_exclusao`. `filtro_ativo` filtra `user_ativo`; **não** filtra `user_deletado` (os soft-deleted **aparecem** com a flag ligada em `[8]`); ordenação por login |
 | `obter_usuario(user_nome)` | `tuple` de **10 campos** ou `None`: `(0)id, (1)user_nome, (2)user_senha, (3)user_email, (4)user_fone, (5)user_perfil, (6)user_ativo, (7)data_cadastro, (8)user_deletado, (9)user_nome_completo`. Inclui o hash da senha (uso interno do núcleo); ponto de entrada da fachada `obter_usuario_gestao` |
-| `nome_de_tratamento(user_nome)` | `str` | `user_nome_completo` (nome social, Decreto 8.727/2016) com fallback no login |
+| `nome_de_tratamento(user_nome)` | `str` | **Primeiro + último nome** de `user_nome_completo` (nome social, Decreto 8.727/2016), via `_primeiro_e_ultimo`; cai no nome completo e depois no login só se não houver nome. `"Ana Beatriz Souza Rocha"` → `"Ana Rocha"` (exemplo fictício). Motivo (27/09/2026): o login é a matrícula (`000123`, também fictícia), e mostrar matrícula no cabeçalho é mostrar um código de barras com nome de pessoa; o nome inteiro empurra o rótulo do perfil para fora da tela. |
 | `listar_acessos(user_nome)` | `list[tuple]` | Papéis por módulo + flags finas |
 
 !!! warning "Os dois formatos de tupla NÃO são o mesmo"

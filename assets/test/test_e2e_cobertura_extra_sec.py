@@ -1180,46 +1180,54 @@ class TestCoberturaExtraSec:
             raise
 
     def test_seg_lista_select_secretaria(self, page):
-        """EN: lista-select-secretaria on /lista-telefonica. PT-BR: lista-select-secretaria em /lista-telefonica."""
+        """EN: lista-cascata-1 on /lista-telefonica. PT-BR: lista-cascata-1 em /lista-telefonica.
+
+        A navegação em cascata (lista-select-*) foi substituída pelos botões do
+        organograma; este teste acompanha o novo botão raiz da navegação.
+        """
         try:
             if not _servidor_ativo():
                 pytest.skip("servidor localhost:8080 fora do ar")
-            _verificar_testid_seguro(page, 'lista-select-secretaria')
+            _verificar_testid_seguro(page, 'lista-cascata-1')
         except Exception:
             try:
                 lg = _log()
                 if lg is not None:
-                    lg.exception("cobertura_extra_sec: test_seg_lista_select_secretaria falhou")
+                    lg.exception("cobertura_extra_sec: test_seg_lista_nav_todas falhou")
             except Exception:
                 pass
             raise
 
     def test_seg_lista_select_setor(self, page):
-        """EN: lista-select-setor on /lista-telefonica. PT-BR: lista-select-setor em /lista-telefonica."""
+        """EN: lista-busca-termo on /lista-telefonica. PT-BR: lista-busca-termo em /lista-telefonica.
+
+        Um dos três campos de busca (nome/telefone/unidade) no lugar do seletor
+        em cascata, que saiu com a navegação por organograma.
+        """
         try:
             if not _servidor_ativo():
                 pytest.skip("servidor localhost:8080 fora do ar")
-            _verificar_testid_seguro(page, 'lista-select-setor')
+            _verificar_testid_seguro(page, 'lista-busca-termo')
         except Exception:
             try:
                 lg = _log()
                 if lg is not None:
-                    lg.exception("cobertura_extra_sec: test_seg_lista_select_setor falhou")
+                    lg.exception("cobertura_extra_sec: test_seg_lista_busca_nome falhou")
             except Exception:
                 pass
             raise
 
     def test_seg_lista_select_subsetor(self, page):
-        """EN: lista-select-subsetor on /lista-telefonica. PT-BR: lista-select-subsetor em /lista-telefonica."""
+        """EN: lista-busca-termo on /lista-telefonica. PT-BR: lista-busca-termo em /lista-telefonica."""
         try:
             if not _servidor_ativo():
                 pytest.skip("servidor localhost:8080 fora do ar")
-            _verificar_testid_seguro(page, 'lista-select-subsetor')
+            _verificar_testid_seguro(page, 'lista-busca-termo')
         except Exception:
             try:
                 lg = _log()
                 if lg is not None:
-                    lg.exception("cobertura_extra_sec: test_seg_lista_select_subsetor falhou")
+                    lg.exception("cobertura_extra_sec: test_seg_lista_busca_unidade falhou")
             except Exception:
                 pass
             raise

@@ -121,6 +121,61 @@ def obter_organograma_base():
         return None
 
 
+def espelhar_cadastro_na_lista_telefonica(ator="sistema") -> dict:
+    """EN: Mirror registered servers into the phone directory.
+
+    PT-BR: Espelha no diretório telefônico os servidores cadastrados.
+
+    ESTA FUNÇÃO É A COSTURA
+        O cadastro de usuários é dono de nome, matrícula, secretaria, cargo e
+        do telefone que a pessoa autorizou; a lista telefônica é dona dos
+        contatos. Nenhum dos dois pode abrir o banco do outro. Então quem
+        busca é o módulo do cadastro (que só publica o que é público e
+        autorizado), quem grava é o da lista (que só escreve no banco dele),
+        e a ligação entre os dois acontece AQUI, no núcleo — o único lugar do
+        sistema autorizado a conhecer os dois de perto.
+
+    Devolve o resumo `{criados, atualizados, sem_unidade, sem_telefone,
+    ja_iguais}`. Em qualquer falha, devolve o mesmo formato com `erro=True` e
+    zeros — a tela que chama decide o que fazer, e uma falha aqui nunca pode
+    derrubar a lista.
+    """
+    vazio = {"criados": 0, "atualizados": 0, "sem_unidade": 0,
+             "sem_telefone": 0, "ja_iguais": 0}
+    try:
+        from mod_gest_cad_usuario import leitura_lista
+        servidores = leitura_lista.listar_para_lista_telefonica()
+        from mod_lista_telefonica.bd_manipulador import sincronizar_contatos_do_cadastro
+        return sincronizar_contatos_do_cadastro(servidores, ator=ator)
+    except Exception as exc:
+        logger.warning("integracoes.espelhar_cadastro_na_lista_telefonica: "
+                       "falha (%s)", exc)
+        return {**vazio, "erro": True}
+
+
+def telefones_de_recado_para_lista() -> dict:
+    """EN: `{user_nome: True}` — who answers on the SECTOR's line (message phone).
+
+    PT-BR: Quem atende no telefone do SETOR (deixa recado).
+
+    Existe pela mesma razão de `espelhar_cadastro_na_lista_telefonica`: a lista
+    telefônica precisa saber, para cada cartão, se o número é da pessoa ou do
+    setor — e não pode abrir o banco do cadastro. A costura é aqui.
+
+    A chave é a **matrícula** (`user_nome`), que é o que o contato vinculado
+    guarda — por isso o cartão resolve o "deixe recado" sem tocar em banco
+    nenhum durante o desenho."""
+    try:
+        from mod_gest_cad_usuario import leitura_lista
+        return {u["user_nome"]: True
+                for u in leitura_lista.listar_para_lista_telefonica()
+                if u.get("recado")}
+    except Exception as exc:
+        logger.warning("integracoes.telefones_de_recado_para_lista: falha (%s)",
+                       exc)
+        return {}
+
+
 # ================== Módulos do sistema ==================
 
 

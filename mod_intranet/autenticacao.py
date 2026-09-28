@@ -345,6 +345,27 @@ def autenticar(user_nome, senha):
         return False, "Erro interno ao validar credenciais"
     if not ativo:
         return False, "Usuário bloqueado. Procure o administrador."
+
+    # Liberação TEMPORÁRIA vencida (27/09/2026). O servidor que entrou sem
+    # saber o próprio número teve 4 dias para descobrir — perguntando na
+    # secretaria da escola, na unidade de saúde, na garagem ou no almoxarifado.
+    # Passados os 4 dias, a conta fecha aqui, no login, que é onde a janela
+    # se cumpre. Checar mais tarde (rotina noturna) existiria: o paliativo
+    # viraria norma sem ninguém perceber.
+    try:
+        _gest_ = _gest()
+        if _gest_ is not None and _gest_.bloqueio_provisorio_pendente(user_nome):
+            _gest_.bloquear_usuario("sistema", user_nome, True)
+            audit_log(user_nome, "intranet", "acesso_provisorio_expirado",
+                      "Prazo da liberação temporária de 4 dias vencido; "
+                      "conta bloqueada até o DTI liberar")
+            return False, ("Seu acesso temporário de 4 dias terminou. "
+                           "Procure o DTI para liberar seu cadastro depois de "
+                           "atualizar seu telefone.")
+    except Exception:
+        # Falha na checagem NÃO bloqueia ninguém: um erro de banco aqui
+        # transformaria todo servidor em "usuário bloqueado" no primeiro dia.
+        pass
     return True, perfil
 
 

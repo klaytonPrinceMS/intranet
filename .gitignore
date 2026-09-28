@@ -146,6 +146,17 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Dados de servidores da prefeitura — NUNCA versionar (27/09/2026)
+# `assets/populacao/` guarda o FOLHA REAL de 1.165 servidores (matrícula, nome,
+# secretaria, cargo) e a folha fictícia de massa de teste. As ferramentas
+# (.py) vão para o git; os DADOS não. Nome, matrícula e cargo de servidor
+# público são informação pública por lei — mas "pública" quer dizer publicada
+# pelo portal da transparência, não publicada no histórico do git, que é
+# replicado para todo mundo que clona e nunca apaga. O mesmo vale para o
+# cadastro: ele vive em `db_mod_*.db`, que já é ignorado.
+assets/populacao/*.json
+assets/populacao/*.csv
+
 # mypy
 .mypy_cache/
 .dmypy.json

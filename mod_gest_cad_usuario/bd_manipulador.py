@@ -10,7 +10,8 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 import time
-from datetime import datetime
+import re
+from datetime import datetime, timedelta
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_CAD_PATH = os.path.join(BASE_DIR, "db_mod_gest_cad_usuario.db")
@@ -18,9 +19,22 @@ DB_CAD_PATH = os.path.join(BASE_DIR, "db_mod_gest_cad_usuario.db")
 PERFIS_GLOBAIS = ["comum", "administrador_modulo", "administrador_geral"]
 PAPEIS_MODULO = ["comum", "administrador"]
 # Módulos com acesso 'comum' liberado por padrão a todo usuário novo.
-# usuarios/auditoria/blog são restritos (sem vínculo inicial): o acesso a
-# eles é concedido manualmente pelo administrador na tela de usuários.
-ACESSO_PADRAO_NOVO_USUARIO = ("editar_pdf", "empenhos", "solicita_impressao")
+#
+# A lista é o TRABALHO DIÁRIO de quem trabalha na prefeitura (27/09/2026):
+# consultar empenho, editar documento, pedir impressão, achar o ramal de um
+# colega e ver as notícias do município. Um servidor que chega e não tem
+# nenhum destes liberados cai em tela vazia e acha que o sistema quebrou.
+#
+# Ficam de FORA: `usuarios`, `auditoria` e `blog`.
+#   - `usuarios` e `auditoria` mexem em conta e registro de todo mundo; são do
+#     administrador, concedidos à mão.
+#   - `blog` foi deixado de fora deliberadamente: publicar na intranet é ato de
+#     comunicação do município, não privilégio de estar com matrícula ativa.
+#     Se a prefeitura quiser, o administrador libera na tela de usuários —
+#     e é melhor que a liberação seja uma decisão visível do que um padrão
+#     que ninguém nota.
+ACESSO_PADRAO_NOVO_USUARIO = ("editar_pdf", "empenhos", "solicita_impressao",  # noqa: E501
+                              "lista_telefonica", "agregador_noticias")
 
 
 def get_connection():
@@ -226,6 +240,72 @@ def _init_db_seguro():
             )
         """)
         _commit_com_retry(conn, contexto="init_db:ddl_base")
+
+        # ---- Telefones múltiplos por usuário (27/09/2026) ----
+        # Antes cabia UM telefone em `tb_usuarios.user_fone`, e a lista
+        # telefônica só conseguia mostrar esse. Um servidor tem, no mínimo,
+        # celular particular, celular da empresa e fixo da empresa, e é o
+        # telefone DA EMPRESA que pode entrar na lista. Por isso a tabela
+        # separada, com `papel` dizendo a quem o número pertence.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS tb_telefone_usuario (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_nome TEXT NOT NULL REFERENCES tb_usuarios(user_nome) ON DELETE CASCADE,
+                numero TEXT NOT NULL,
+                papel TEXT NOT NULL DEFAULT 'empresa',
+                tipo TEXT NOT NULL DEFAULT 'celular',
+                principal INTEGER NOT NULL DEFAULT 0,
+                visivel INTEGER NOT NULL DEFAULT 0,
+                recado INTEGER NOT NULL DEFAULT 0,
+                data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # ---- Consentimento de exibição do telefone (27/09/2026) ----
+        # Ser servidor público não significa ter o número publicado: o prefeito
+        # não quer o celular particular na lista, e o responsável pela defesa
+        # civil precisa que o seu apareça para todos ligarem. Então a publicação
+        # é ESCOLHA de cada um — `visivel` — e não padrão do sistema.
+        cur.execute("PRAGMA table_info(tb_telefone_usuario)")
+        cols_tel = {r[1] for r in cur.fetchall()}
+        if "visivel" not in cols_tel:
+            cur.execute("ALTER TABLE tb_telefone_usuario "
+                        "ADD COLUMN visivel INTEGER NOT NULL DEFAULT 0")
+        # ---- Telefone de recado (27/09/2026) ----
+        # Quem não tem linha própria dá o telefone do SETOR, onde alguém
+        # anota a mensagem e passa adiante: o da coleta de lixo é o da
+        # garagem, o da merenda escolar é o da secretaria da escola. Sem esta
+        # marcação, o número do setor entra na lista parecendo linha pessoal
+        # de quem não atende — e a pessoa é desconsiderada por isso.
+        if "recado" not in cols_tel:
+            cur.execute("ALTER TABLE tb_telefone_usuario "
+                        "ADD COLUMN recado INTEGER NOT NULL DEFAULT 0")
+        _commit_com_retry(conn, contexto="init_db:consentimento_telefone")
+
+        # ---- Dados funcionais públicos (27/09/2026) ----
+        # Matrícula, nome, secretaria e cargo são informação pública (portal da
+        # transparência), e o cadastro não tinha onde guardar. `matricula` não
+        # entra como coluna: o PRÓPRIO `user_nome` é a matrícula.
+        cur.execute("PRAGMA table_info(tb_usuarios)")
+        cols_usuario = {r[1] for r in cur.fetchall()}
+        for _col, _def in (("unidade", "TEXT DEFAULT ''"),
+                           ("lotacao", "TEXT DEFAULT ''"),
+                           ("cargo", "TEXT DEFAULT ''"),
+                           # 1 = o servidor ainda não registrou os telefones.
+                           # O portal da transparência não publica ramal, então o
+                           # número só existe se ele mesmo informar no 1º acesso.
+                           ("telefone_pendente", "INTEGER NOT NULL DEFAULT 0"),
+                           # Liberação TEMPORÁRIA (27/09/2026). O servidor que
+                           # não sabe o próprio número entra com 4 dias de
+                           # prazo e um telefone particular obrigatório; depois
+                           # disso a conta fecha e só o DTI reabre. Precisa de
+                           # `provisorio_ate` porque `acesso_provisorio` sozinho
+                           # não guarda QUANDO o prazo vence.
+                           ("acesso_provisorio", "INTEGER NOT NULL DEFAULT 0"),
+                           ("provisorio_ate", "DATETIME")):
+            if _col not in cols_usuario:
+                cur.execute(f"ALTER TABLE tb_usuarios ADD COLUMN {_col} {_def}")
+        _commit_com_retry(conn, contexto="init_db:dados_funcionais")
 
         # Migração de esquema: garante FK com ON UPDATE CASCADE (renomeio).
         # Portável: no SQLite inspeciona `sqlite_master`; no PG o proxy
@@ -504,15 +584,709 @@ def obter_usuario(user_nome):
         conn.close()
 
 
-def nome_de_tratamento(user_nome):
-    """Display name for greetings/screens — full or social name.
+# ---------------------------------------------------------------------------
+#  Telefones do usuário e dados funcionais (27/09/2026)
+# ---------------------------------------------------------------------------
+# Um servidor tem mais de um telefone: celular particular, celular da empresa,
+# fixo da empresa. Só o telefone DA EMPRESA pode entrar na lista telefônica, e
+# é por isso que `papel` existe — é ele que separa o que a prefeitura publica
+# do que é do servidor. A lista telefônica LÊ estes telefones (ver
+# `mod_lista_telefonica`); aqui mora a fonte.
+PAPEIS_TELEFONE = ("empresa", "pessoal")
+TIPOS_TELEFONE = ("celular", "fixo")
 
-    Nome usado para tratamento nas telas — nome completo ou social
-    (Decreto 8.727/2016). Cai para o login se o campo ainda não foi
-    preenchido."""
+
+def _validar_papel(papel) -> str:
+    """Normaliza o `papel` do telefone; desconhecido vira 'empresa'.
+
+    O default é 'empresa' de propósito: o caminho seguro é o número ser
+    publicável. Um papel corrompido virando 'pessoal' publicaria um número
+    particular sem ninguém pedir."""
+    p = (papel or "empresa").strip().lower()
+    return p if p in PAPEIS_TELEFONE else "empresa"
+
+
+def _validar_tipo(tipo) -> str:
+    """Normaliza o `tipo` do telefone; desconhecido vira 'celular'."""
+    t = (tipo or "celular").strip().lower()
+    return t if t in TIPOS_TELEFONE else "celular"
+
+
+def telefone_e_publicavel(papel, tipo, visivel) -> bool:
+    """Diz se um telefone pode sair na lista telefônica.
+
+    A regra do município (27/09/2026), que é uma exceção que vale a pena
+    enxergar:
+
+    - **fixo da prefeitura SEMPRE sai**. É a linha institucional, o número
+      que a prefeitura divulga em papel de visitation e em editais. Se o
+      servidor informou o ramal, é porque quer ser localizado por ele — a
+      lista telefônica é justamente o instrumento de localização pública, e
+      um fixo institucional guardado é um fixo inútil para a Gemeinde.
+    - **celular da prefeitura SÓ sai se ele marcar**. É celular: quem
+      atende é a pessoa, no próprio número, a qualquer hora. Um responsável
+      pela defesa civil precisa aparecer para todos; o prefeito, não. Isso é
+      consentimento, não configuração do sistema.
+    - **qualquer número pessoal NUNCA sai**, marque ou não: celular particular
+      e residencial não têm por que estar num cadastro de servidor, e o
+      consentimento para o celular particular não alcança o residencial.
+    """
+    if _validar_papel(papel) == 'pessoal':
+        return False
+    if _validar_tipo(tipo) == 'fixo':
+        return True
+    return bool(visivel)
+
+
+def telefone_de_recado(numero, papel, tipo) -> bool:
+    """Diz se este telefone é o do SETOR, usado para recado.
+
+    O servidor sem linha própria dá o telefone do setor: o da coleta de lixo
+    é o da garagem, o da merenda escolar é o da secretaria da escola. Para o
+    diretório, o número é o mesmo — o que muda é o que está escrito ao lado,
+    porque "Fulano, 3591-5150" faz a pessoa achar que é a linha dela."""
+    try:
+        return _eh_telefone_da_prefeitura(papel, tipo)
+    except Exception:
+        return False
+
+
+def telefone_e_recado(user_nome) -> bool:
+    """O telefone que a lista telefônica vai mostrar é um recado?
+
+    É o número que a pessoa **não atende** e em que alguém anota a mensagem.
+    A lista escreve "deixe recado" ao lado do nome, para quem liga não
+    procurar a pessoa por dez minutos antes de descobrir que ela não atende
+    o próprio ramal."""
+    try:
+        tels = listar_telefones(user_nome, apenas_empresa=True)
+    except Exception:
+        return False
+    principal = next((t for t in tels if t[5]), tels[0]) if tels else None
+    if not principal:
+        return False
+    # t = (id, user, numero, papel, tipo, principal, visivel, recado, data)
+    return bool(principal[7]) if len(principal) > 7 else False
+
+
+def telefones_de_recado_em_lote(user_nomes) -> dict:
+    """Quem tem telefone de recado — uma consulta só.
+
+    Mesmo papel de `telefones_publicaveis_em_lote`: a lista telefônica monta
+    mais de mil cartões sem abrir mais de mil conexões. Devolve
+    `{user_nome: True}` só para quem tem número de recado marcado."""
+    try:
+        nomes = [str(n) for n in (user_nomes or []) if n]
+        if not nomes:
+            return {}
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            marcas = ",".join("?" * len(nomes))
+            cur.execute(
+                "SELECT user_nome, numero, principal, papel, tipo, visivel, recado "
+                f"FROM tb_telefone_usuario WHERE user_nome IN ({marcas})",
+                nomes)
+            linhas = cur.fetchall()
+        finally:
+            conn.close()
+        melhores = {}
+        for user_nome, numero, principal, papel, tipo, visivel, recado in linhas:
+            if not telefone_e_publicavel(papel, tipo, visivel):
+                continue
+            chave = (0 if principal else 1, str(numero or ""))
+            atual = melhores.get(user_nome)
+            if atual is None or chave < atual[0]:
+                melhores[user_nome] = (chave, bool(recado))
+        return {k: v[1] for k, v in melhores.items()}
+    except Exception as e:
+        _log().exception(f"telefones_de_recado_em_lote: falha | {e}")
+        return {}
+
+
+def listar_telefones(user_nome, apenas_empresa: bool = False):
+    """Telefones do usuário, principal primeiro e os demais por número.
+
+    Devolve linhas `(id, user_nome, numero, papel, tipo, principal, visivel,
+    recado, data_cadastro)`. `apenas_empresa=True` devolve só os PUBLICÁVEIS —
+    é o que a lista telefônica usa, para nunca vazar número particular. A
+    filtragem fica em Python por `telefone_e_publicavel` (e não em
+    `SQL WHERE papel=...`) para que a regra do fixo institucional valha igual
+    nos dois backends. `recado` diz que o número é o do SETOR, usado para
+    deixar recado — a lista telefônica escreve isso ao lado do nome.
+    """
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT id, user_nome, numero, papel, tipo, principal, visivel, "
+                "recado, data_cadastro FROM tb_telefone_usuario WHERE user_nome=?",
+                (user_nome,))
+            linhas = cur.fetchall()
+            if apenas_empresa:
+                linhas = [t for t in linhas
+                          if telefone_e_publicavel(t[3], t[4], t[6])]
+            return sorted(linhas, key=lambda r: (0 if r[5] else 1, r[2] or ""))
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(f"listar_telefones: falha ao listar de {user_nome} | {e}")
+        return []
+
+
+def telefone_empresa_principal(user_nome):
+    """Telefone publicável marcado como principal, ou o primeiro publicável.
+
+    A lista telefônica usa este para ligar um contato que é um servidor
+    cadastrado. `None` quando o usuário não liberou nenhum número — e aí o
+    contato fica sem telefone, o que é honesto: nem todo servidor quer ser
+    localizado no celular particular, e a lista respeita isso."""
+    tels = listar_telefones(user_nome, apenas_empresa=True)
+    if not tels:
+        return None
+    principal = next((t for t in tels if t[5]), tels[0])
+    return principal[2]
+
+
+def telefones_publicaveis_em_lote(user_nomes) -> dict:
+    """Telefone publicável de vários usuários, NORMALMENTE em uma consulta.
+
+    Existe por causa de um número: a prefeitura tem ~1.200 servidores, e
+    `telefone_empresa_principal` por pessoa abria ~1.200 conexões para montar
+    a mesma tela. Com 60 usuários de demonstração ninguém notava; com a
+    folha real, a tela da lista telefônica deixava de abrir.
+
+    Devolve `{user_nome: numero}` só para quem tem número publicável — quem
+    não liberou simplesmente não aparece no dicionário, que é o mesmo
+    significado de "sem telefone" que o resto do sistema usa.
+    """
+    try:
+        nomes = [str(n) for n in (user_nomes or []) if n]
+        if not nomes:
+            return {}
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            # `IN` com placeholders portátil: o proxy traduz para o PG, e os
+            # valores vão sempre por parâmetro — não há concatenação de texto.
+            marcas = ",".join("?" * len(nomes))
+            cur.execute(
+                "SELECT user_nome, numero, papel, tipo, principal, visivel "
+                f"FROM tb_telefone_usuario WHERE user_nome IN ({marcas})",
+                nomes)
+            linhas = cur.fetchall()
+        finally:
+            conn.close()
+        melhores = {}
+        for user_nome, numero, papel, tipo, principal, visivel in linhas:
+            if not telefone_e_publicavel(papel, tipo, visivel):
+                continue
+            chave = (0 if principal else 1, str(numero or ""))
+            atual = melhores.get(user_nome)
+            if atual is None or chave < atual[0]:
+                melhores[user_nome] = (chave, numero)
+        return {k: v[1] for k, v in melhores.items()}
+    except Exception as e:
+        _log().exception(f"telefones_publicaveis_em_lote: falha em {len(user_nomes or [])} usuário(s) | {e}")
+        return {}
+
+
+def adicionar_telefone(ator, user_nome, numero, papel="empresa",
+                       tipo="celular", principal=False, visivel=None):
+    """Cadastra um telefone do usuário. Devolve (True, msg) ou (False, motivo).
+
+    `principal=True` desmarca os outros, para só haver um principal por vez —
+    senão a lista telefônica não saberia qual mostrar. Número é normalizado
+    aqui, e não na tela, para que a mesma regra valha para toda escrita.
+
+    `visivel` é o CONSENTIMENTO de exibição. `None` (o padrão) deixa a decisão
+    para `telefone_e_publicavel`: fixo da prefeitura publica sozinho, celular
+    da empresa só se o servidor disser que pode.
+    """
+    try:
+        numero_limpo = _normalizar_telefone_cadastro(numero)
+        if not numero_limpo:
+            return False, "Telefone inválido."
+        papel_n = _validar_papel(papel)
+        tipo_n = _validar_tipo(tipo)
+        visivel_n = 0 if visivel is None else (1 if visivel else 0)
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_usuarios WHERE user_nome=?",
+                        (user_nome,))
+            if not (cur.fetchone()[0] or 0):
+                return False, "Usuário não encontrado."
+            if principal:
+                cur.execute("UPDATE tb_telefone_usuario SET principal=0 "
+                            "WHERE user_nome=?", (user_nome,))
+            cur.execute(
+                "INSERT INTO tb_telefone_usuario "
+                "(user_nome, numero, papel, tipo, principal, visivel) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (user_nome, numero_limpo, papel_n, tipo_n,
+                 1 if principal else 0, visivel_n))
+            _commit_com_retry(conn, contexto="adicionar_telefone")
+            _limpar_pendencia_telefone(cur, user_nome)
+            _commit_com_retry(conn, contexto="adicionar_telefone:pendencia")
+            _audit(ator, "telefone_cadastrado", user_nome,
+                   f"{numero_limpo} ({papel_n}/{tipo_n})"
+                   f"{' principal' if principal else ''}"
+                   f"{' publicado' if telefone_e_publicavel(papel_n, tipo_n, visivel_n) else ' restrito'}")
+            return True, "Telefone cadastrado."
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(f"adicionar_telefone: falha em {user_nome} | {e}")
+        return False, "Erro ao cadastrar o telefone."
+
+
+def editar_telefone(ator, telefone_id, numero=None, papel=None, tipo=None,
+                    principal=None, visivel=None):
+    """Altera um telefone do usuário. Devolve (True, msg) ou (False, motivo)."""
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT user_nome FROM tb_telefone_usuario WHERE id=?",
+                        (telefone_id,))
+            linha = cur.fetchone()
+            if not linha:
+                return False, "Telefone não encontrado."
+            user_nome = linha[0]
+            numero_limpo = None
+            if numero is not None:
+                numero_limpo = _normalizar_telefone_cadastro(numero)
+                if not numero_limpo:
+                    return False, "Telefone inválido."
+            if principal:
+                cur.execute("UPDATE tb_telefone_usuario SET principal=0 "
+                            "WHERE user_nome=?", (user_nome,))
+            campos, valores = [], []
+            if numero_limpo is not None:
+                campos.append("numero=?")
+                valores.append(numero_limpo)
+            if papel is not None:
+                campos.append("papel=?")
+                valores.append(_validar_papel(papel))
+            if tipo is not None:
+                campos.append("tipo=?")
+                valores.append(_validar_tipo(tipo))
+            if principal is not None:
+                campos.append("principal=?")
+                valores.append(1 if principal else 0)
+            if visivel is not None:
+                campos.append("visivel=?")
+                valores.append(1 if visivel else 0)
+            if not campos:
+                return True, "Nada a alterar."
+            valores.append(telefone_id)
+            cur.execute(f"UPDATE tb_telefone_usuario SET {', '.join(campos)} "
+                        f"WHERE id=?", valores)
+            _commit_com_retry(conn, contexto="editar_telefone")
+            _audit(ator, "telefone_alterado", user_nome,
+                   f"id={telefone_id}")
+            return True, "Telefone alterado."
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(f"editar_telefone: falha no id {telefone_id} | {e}")
+        return False, "Erro ao alterar o telefone."
+
+
+def remover_telefone(ator, telefone_id):
+    """Remove um telefone do usuário. Devolve (True, msg) ou (False, motivo)."""
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT user_nome FROM tb_telefone_usuario WHERE id=?",
+                        (telefone_id,))
+            linha = cur.fetchone()
+            if not linha:
+                return False, "Telefone não encontrado."
+            cur.execute("DELETE FROM tb_telefone_usuario WHERE id=?",
+                        (telefone_id,))
+            _commit_com_retry(conn, contexto="remover_telefone")
+            _audit(ator, "telefone_removido", linha[0], f"id={telefone_id}")
+            return True, "Telefone removido."
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(f"remover_telefone: falha no id {telefone_id} | {e}")
+        return False, "Erro ao remover o telefone."
+
+
+def _limpar_pendencia_telefone(cur, user_nome):
+    """Baixa a pendência de telefone do usuário (usado com o cursor aberto).
+
+    Fica em SQL cru e recebe o cursor porque quem chama já está numa
+    transação — abrir outra conexão aqui perderia o trabalho em curso."""
+    try:
+        cur.execute("UPDATE tb_usuarios SET telefone_pendente=0 "
+                    "WHERE user_nome=?", (user_nome,))
+    except Exception as e:
+        _log().warning(f"não foi possível baixar a pendência de telefone "
+                       f"de {user_nome}: {e}")
+
+
+def telefone_pendente(user_nome) -> bool:
+    """True se o servidor ainda precisa registrar os telefones.
+
+    O portal da transparência publica matrícula, nome, secretaria e cargo —
+    mas NÃO o ramal. Ou seja: sem esse passo, um servidor recém-cadastrado
+    entraria na lista telefônica sem número nenhum. Por isso a pendência
+    acompanha a troca de senha no primeiro acesso."""
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT telefone_pendente FROM tb_usuarios "
+                        "WHERE user_nome=?", (user_nome,))
+            linha = cur.fetchone()
+            return bool(linha and linha[0])
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(f"telefone_pendente: falha em {user_nome} | {e}")
+        return False
+
+
+# Prazo da liberação temporária, em dias. Depois dele a conta fecha e só o
+# DTI reabre — o prazo curto é o ponto: quatro dias é o bastante para o
+# servidor descobrir o número perguntando à secretaria da escola, à unidade de
+# saúde, à garagem ou ao almoxarifado, e curto o bastante para que a conta não
+# vire cadastro órfão no sistema.
+DIAS_LIBERACAO_PROVISORIA = 4
+
+
+def _eh_telefone_da_prefeitura(papel, tipo) -> bool:
+    """Fixo da prefeitura — o número institucional.
+
+    Celular da prefeitura NÃO conta: celular é a pessoa, e o que a
+    prefeitura precisa garantir é que exista uma **linha** que toque em
+    algum lugar do prédio. É por isso que a exigência é de um fixo, e não de
+    "um telefone da prefeitura" em geral."""
+    return _validar_papel(papel) == 'empresa' and _validar_tipo(tipo) == 'fixo'
+
+
+def avaliar_telefones_primeiro_acesso(contatos):
+    """EN: Evaluates the phones before saving — what is missing, what is out
+    of range. PT-BR: Avalia os telefones antes de gravar.
+
+    Devolve um dicionário para o chamador, sem gravar nada:
+
+    ```
+    {
+      "tem_da_prefeitura": bool,   # existe fixo da prefeitura (próprio ou recado)
+      "particulares":     int,     # quantos particulares o servidor informou
+      "fora_da_faixa":    [(numero, descricao_da_faixa_mais_proxima)],
+      "pode_prosseguir":  bool,
+    }
+    ```
+
+    Separar a avaliação da gravação é o que permite à tela mostrar o aviso de
+    "fora da faixa" **enquanto** o servidor digita, e não só depois que ele
+    já salvou e descobriu que errou."""
+    try:
+        from mod_intranet import telefone_faixas as _fx
+        tem_prefeitura = False
+        particulares = 0
+        fora = []
+        for c in (contatos or []):
+            if not isinstance(c, dict):
+                continue
+            num = _normalizar_telefone_cadastro(c.get("numero"))
+            if not num:
+                continue
+            if _eh_telefone_da_prefeitura(c.get("papel"), c.get("tipo")):
+                tem_prefeitura = True
+                dentro, _faixa = _fx.numero_dentro_da_faixa(num)
+                if not dentro:
+                    perto = _fx.faixa_mais_proxima(num)
+                    fora.append((num, (perto or {}).get("descricao", "")))
+            else:
+                particulares += 1
+        return {
+            "tem_da_prefeitura": tem_prefeitura,
+            "particulares": particulares,
+            "fora_da_faixa": fora,
+            "pode_prosseguir": tem_prefeitura or particulares > 0,
+        }
+    except Exception as e:
+        _log().exception(f"avaliar_telefones_primeiro_acesso: falha | {e}")
+        return {"tem_da_prefeitura": False, "particulares": 0,
+                "fora_da_faixa": [], "pode_prosseguir": False}
+
+
+def registrar_contatos_primeiro_acesso(ator, user_nome, contatos,
+                                       liberacao_provisoria=False):
+    """Grava de uma vez os telefones do primeiro acesso.
+
+    `contatos` é uma lista de dicionários com `numero`, `papel`
+    ('empresa'/'pessoal'), `tipo` ('celular'/'fixo'), `visivel` e `recado`.
+    Tudo numa transação só: ou entra o conjunto inteiro, ou nada — um cadastro
+    pela metade é pior do que um cadastro recusado, porque o servidor fica sem
+    saber o que já preencheu.
+
+    A EXIGÊNCIA DE UM TELEFONE DA PREFEITURA
+        Todo servidor está atrelado a uma secretaria ou a um setor, e todo
+        setor tem linha. Então o sistema pede um **fixo da prefeitura** — o
+        próprio ou o de recado. Celular particular e celular da prefeitura
+        não satisfazem: os dois vão para o celular de quem atende, e quem
+        precisa é a prefeitura ser localizada.
+
+    A LIBERAÇÃO TEMPORÁRIA (o paliativo)
+        Quando o servidor não sabe o número — e é mais comum do que parece,
+        porque a maioria não tem linha própria — ele confirma duas vezes que
+        não sabe, e aí entra com prazo: `liberacao_provisoria=True` grava
+        `acesso_provisorio` com `DIAS_LIBERACAO_PROVISORIA` de validade e
+        **exige um telefone particular**. Passado o prazo, `bloqueio_provisorio_pendente`
+        fecha a conta e só o DTI reabre.
+
+    O QUE NÃO É BLOQUEADO
+        Telefone fora das faixas da prefeitura: é avisado, não recusado. Ver
+        `avaliar_telefones_primeiro_acesso`.
+
+    Devolve `(ok, msg, detalhes)` — `detalhes` traz `provisorio` e
+    `fora_da_faixa` para a tela mostrar o que precisa mostrar.
+    """
+    detalhes = {"provisorio": False, "fora_da_faixa": [],
+                "ate": None, "pode_prosseguir": False}
+    try:
+        monta = []
+        for c in (contatos or []):
+            if not isinstance(c, dict):
+                continue
+            if not _normalizar_telefone_cadastro(c.get("numero")):
+                continue  # campo em branco: o servidor optou por não informar
+            monta.append(c)
+
+        avalio = avaliar_telefones_primeiro_acesso(monta)
+        detalhes["fora_da_faixa"] = avalio["fora_da_faixa"]
+        detalhes["pode_prosseguir"] = avalio["pode_prosseguir"]
+
+        if not monta:
+            return False, ("Informe ao menos um telefone — sem ele você não "
+                           "aparece na lista telefônica."), detalhes
+
+        if not avalio["tem_da_prefeitura"]:
+            if not liberacao_provisoria:
+                return False, ("Falta um telefone da prefeitura (fixo). "
+                               "Se você usa o telefone do setor para recado, "
+                               "marque-o como telefone de recado."), detalhes
+            # paliativo: entra com prazo, mas SÓ com particular informado
+            if avalio["particulares"] <= 0:
+                return False, ("Para liberar o acesso por um período você "
+                               "precisa informar um telefone particular de "
+                               "contato."), detalhes
+            detalhes["provisorio"] = True
+
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_usuarios WHERE user_nome=?",
+                        (user_nome,))
+            if not (cur.fetchone()[0] or 0):
+                return False, "Usuário não encontrado.", detalhes
+            cur.execute("DELETE FROM tb_telefone_usuario WHERE user_nome=?",
+                        (user_nome,))
+            principal_definido = any(bool(c.get("principal")) for c in monta)
+            for i, c in enumerate(monta):
+                papel_n = _validar_papel(c.get("papel"))
+                tipo_n = _validar_tipo(c.get("tipo"))
+                principal = 1 if (c.get("principal") or (i == 0 and not principal_definido)) else 0
+                if principal:
+                    cur.execute("UPDATE tb_telefone_usuario SET principal=0 "
+                                "WHERE user_nome=?", (user_nome,))
+                cur.execute(
+                    "INSERT INTO tb_telefone_usuario "
+                    "(user_nome, numero, papel, tipo, principal, visivel, recado) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (user_nome, _normalizar_telefone_cadastro(c.get("numero")),
+                     papel_n, tipo_n, principal,
+                     1 if c.get("visivel") else 0,
+                     1 if c.get("recado") else 0))
+            if detalhes["provisorio"]:
+                dias = DIAS_LIBERACAO_PROVISORIA
+                cur.execute(
+                    "UPDATE tb_usuarios SET acesso_provisorio=1, "
+                    "provisorio_ate=? WHERE user_nome=?",
+                    (_prazo(dias), user_nome))
+                cur.execute("SELECT provisorio_ate FROM tb_usuarios "
+                            "WHERE user_nome=?", (user_nome,))
+                linha_prazo = cur.fetchone()
+                detalhes["ate"] = linha_prazo[0] if linha_prazo else None
+            else:
+                # TEM um telefone nosso: a liberação é definitiva e o prazo
+                # anterior (se houve) deixa de valer.
+                cur.execute("UPDATE tb_usuarios SET acesso_provisorio=0, "
+                            "provisorio_ate=NULL WHERE user_nome=?", (user_nome,))
+            _limpar_pendencia_telefone(cur, user_nome)
+            _commit_com_retry(conn, contexto="registrar_contatos_primeiro_acesso")
+            _audit(ator, "contatos_primeiro_acesso", user_nome,
+                   f"{len(monta)} telefone(s)"
+                   + (" | LIBERACAO PROVISORIA" if detalhes["provisorio"] else ""))
+            _log().info(f"contatos do 1º acesso de {user_nome}: {len(monta)}"
+                        + (f" (provisório até {detalhes['ate']})"
+                           if detalhes["provisorio"] else ""))
+            if detalhes["provisorio"]:
+                return True, (f"Telefones registrados. Acesso liberado por "
+                               f"{DIAS_LIBERACAO_PROVISORIA} dias — depois "
+                               f"disso a conta fica bloqueada até o DTI "
+                               f"liberar."), detalhes
+            return True, "Telefones registrados.", detalhes
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(f"registrar_contatos_primeiro_acesso: "
+                         f"falha em {user_nome} | {e}")
+        return False, "Erro ao registrar os telefones.", detalhes
+
+
+def _prazo(dias):
+    """Data/hora em que a liberação temporária vence, no mesmo formato do
+    banco. Sem `strftime` do SQLite para continuar funcionando no Postgres
+    pelo proxy."""
+    try:
+        return (datetime.now() + timedelta(days=int(dias))).strftime(
+            "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return None
+
+
+def bloqueio_provisorio_pendente(user_nome) -> bool:
+    """True se a liberação temporária desta conta JÁ VENCEU e ela está ativa.
+
+    Chamado no login: é aí que a janela de 4 dias se cumpre. Sem essa
+    checagem, a liberação temporária seria um prazo que ninguém nunca
+    fiscaliza — a conta entraria para sempre, e o paliativo viraria norma."""
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT acesso_provisorio, provisorio_ate, user_ativo "
+                        "FROM tb_usuarios WHERE user_nome=?", (user_nome,))
+            linha = cur.fetchone()
+        finally:
+            conn.close()
+        if not linha or not linha[0] or not linha[1]:
+            return False
+        if not linha[2]:
+            return False  # já está bloqueada: nada a fazer
+        try:
+            prazo = datetime.strptime(str(linha[1])[:19], "%Y-%m-%d %H:%M:%S")
+        except (ValueError, TypeError):
+            return False
+        return datetime.now() > prazo
+    except Exception as e:
+        _log().exception(f"bloqueio_provisorio_pendente: falha em {user_nome} | {e}")
+        return False
+
+
+def definir_dados_funcionais(ator, user_nome, unidade=None, lotacao=None,
+                             cargo=None):
+    """Grava unidade, lotação e cargo do usuário (informação pública).
+
+    Só os campos informados são alterados (`None` = manter). Devolve
+    (True, msg) ou (False, motivo).
+    """
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_usuarios WHERE user_nome=?",
+                        (user_nome,))
+            if not (cur.fetchone()[0] or 0):
+                return False, "Usuário não encontrado."
+            campos, valores = [], []
+            for campo, valor in (("unidade", unidade), ("lotacao", lotacao),
+                                 ("cargo", cargo)):
+                if valor is not None:
+                    campos.append(f"{campo}=?")
+                    valores.append(str(valor or "").strip())
+            if not campos:
+                return True, "Nada a alterar."
+            valores.append(user_nome)
+            cur.execute(f"UPDATE tb_usuarios SET {', '.join(campos)} "
+                        f"WHERE user_nome=?", valores)
+            _commit_com_retry(conn, contexto="definir_dados_funcionais")
+            _audit(ator, "dados_funcionais_alterados", user_nome,
+                   ", ".join(campos))
+            return True, "Dados funcionais salvos."
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(
+            f"definir_dados_funcionais: falha em {user_nome} | {e}")
+        return False, "Erro ao salvar os dados funcionais."
+
+
+def _normalizar_telefone_cadastro(numero):
+    """Normaliza para apenas dígitos e `+`, para gravar e comparar.
+
+    Aceita o que o usuário digita ('(35) 3591-5101', '35 3591 5101', '+55 35
+    ...') e devolve uma forma canônica. Regra local de propósito: o módulo
+    não pode depender do `mod_intranet.telefone` (que é do núcleo) para gravar,
+    e a comparação de duplicidade precisa de uma forma só.
+    """
+    try:
+        bruto = re.sub(r"[^0-9+]", "", str(numero or ""))
+        if not bruto:
+            return ""
+        # '+' só no começo; '+55' duplicado vira um só.
+        tem_mais = bruto.startswith("+")
+        digitos = re.sub(r"[^0-9]", "", bruto)
+        if tem_mais and digitos.startswith("55") and len(digitos) > 12:
+            digitos = digitos[2:]
+        if not digitos:
+            return ""
+        return ("+" + digitos) if tem_mais else digitos
+    except Exception:
+        return ""
+
+
+def _primeiro_e_ultimo(nome_completo):
+    """"Ana Beatriz Souza Rocha" -> "Ana Rocha".
+
+    Função LOCAL, e não importada de `leitura_lista.nome_para_exibicao`, pelo
+    mesmo motivo daquele arquivo: `leitura_lista` importa este módulo, e o
+    caminho inverso fecharia um ciclo de import. São quatro linhas.
+
+    A regra é a mesma da lista telefônica: ninguém é tratado pelo nome
+    inteiro em voz alta. No cabeçalho, "Ana Rocha" diz quem é; "Ana Beatriz
+    Souza Rocha" ocupa a tela toda; e a matrícula "000123" não diz nada sobre
+    a pessoa. (Exemplo fictício, e a matrícula também.)"""
+    partes = [p for p in str(nome_completo or "").split() if p]
+    if not partes:
+        return ""
+    if len(partes) == 1:
+        return partes[0]
+    return f"{partes[0]} {partes[-1]}"
+
+
+def nome_de_tratamento(user_nome):
+    """Display name for greetings/screens — first name + surname.
+
+    Nome usado para tratamento nas telas — **primeiro e último nome** do
+    cadastro (que guarda o nome completo ou social, Decreto 8.727/2016).
+
+    POR QUE PRIMEIRO E ÚLTIMO, E NÃO O NOME TODO
+        O nome de usuário desta prefeitura é a **matrícula** (`000320`).
+        Mostrar isso no cabeçalho é mostrar um código de barras com nome de
+        pessoa: não diz nada, e a pessoa se reconhece no número como se
+        reconhece numa placa. E o nome completo em tela cheia empurra o
+        rótulo do perfil para fora. Primeiro e último é o que a pessoa ouve
+        quando é chamada.
+
+    Cai para o login só quando não existe nome completo — nesse caso não há
+    outra coisa a mostrar, e o nome de login é melhor do que um campo vazio."""
     try:
         row = obter_usuario(user_nome)
-        return (row[9] or "").strip() if row and row[9] else user_nome
+        completo = (row[9] or "").strip() if row and len(row) > 9 else ""
+        curto = _primeiro_e_ultimo(completo)
+        return curto or completo or user_nome
     except Exception as e:
         _log().exception(f"nome_de_tratamento: falha para {user_nome} | {e}")
         return user_nome
@@ -556,13 +1330,19 @@ def _validar_nome_completo(nome_completo, user_nome):
 
 
 def criar_usuario(ator, user_nome, senha, email=None, fone=None, perfil="comum",
-                   nome_completo=""):
+                   nome_completo="", exigir_telefone=True):
     """Creates a user with a provisional password (mandatory first-login change).
 
     Valida login, senha mínima (`senha_minima`), perfil global e nome de
     exibição; grava hash bcrypt, libera o acesso padrão 'comum'
     (`ACESSO_PADRAO_NOVO_USUARIO`), marca `forcar_troca` e audita
     `criar_usuario`. Senha vazia/None cai no padrão inicial ``123456``.
+
+    `exigir_telefone=True` (padrão) marca `telefone_pendente`, e o primeiro
+    acesso pede os telefones depois da troca de senha: o portal da
+    transparência não publica ramal, então o telefone da lista só existe se o
+    próprio servidor informar. Contas de serviço (robô, integração) passam
+    `False` — não têm pessoa para atender o telefone.
     Retorna `(ok, msg)`."""
     from mod_intranet.autenticacao import gerar_hash_senha, marcar_trocar_senha
     senha = (senha or "").strip() or "123456"
@@ -584,9 +1364,10 @@ def criar_usuario(ator, user_nome, senha, email=None, fone=None, perfil="comum",
         cur.execute(
             """INSERT INTO tb_usuarios
                (user_nome, user_senha, user_email, user_fone, user_perfil, user_ativo,
-                user_nome_completo)
-               VALUES (?, ?, ?, ?, ?, 1, ?)""",
-            (user_nome.strip(), hash_s, email, fone, perfil, nome_c),
+                user_nome_completo, telefone_pendente)
+               VALUES (?, ?, ?, ?, ?, 1, ?, ?)""",
+            (user_nome.strip(), hash_s, email, fone, perfil, nome_c,
+             1 if exigir_telefone else 0),
         )
         for chave in ACESSO_PADRAO_NOVO_USUARIO:
             cur.execute(
@@ -777,6 +1558,101 @@ def alterar_senha_admin(ator, user_nome, nova_senha):
         return False, "Erro inesperado ao redefinir senha"
     finally:
         conn.close()
+
+
+def liberar_acesso_definitivo(ator, user_nome):
+    """Libera em definitivo uma conta que estava em liberação temporária.
+
+    É o botão do DTI — o contrário de `bloqueio_provisorio_pendente`.
+    O servidor entra, o prazo de 4 dias vence, a conta fecha; ele vai ao
+    departamento de tecnologia, descobre o número do setor e o técnico libera
+    aqui. Sem esta função, a conferência seria feita direto no banco, e
+    cadastro de servidor não se arruma direto no banco.
+
+    A liberação é definitiva: a conta volta a ser normal. Se o servidor
+    estiver sem telefone da prefeitura ainda hoje, o DTI precisa
+    cadastrar o número **antes** de chamar esta função — a verificação é
+    feita aqui, não na tela, para que a conta não fique "liberada" e
+    sem telefone. Se o DTI liberar sem telefone, o paliativo recomeça.
+    """
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_usuarios WHERE user_nome=?",
+                        (user_nome,))
+            if not (cur.fetchone()[0] or 0):
+                return False, "Usuário não encontrado."
+            tem_prefeitura = cur.execute(
+                "SELECT COUNT(*) FROM tb_telefone_usuario "
+                "WHERE user_nome=? AND papel='empresa' AND tipo='fixo'",
+                (user_nome,)).fetchone()[0]
+            pendente = cur.execute(
+                "SELECT telefone_pendente FROM tb_usuarios WHERE user_nome=?",
+                (user_nome,)).fetchone()[0]
+        finally:
+            conn.close()
+        if not tem_prefeitura:
+            return False, ("Este cadastro ainda não tem telefone da "
+                           "prefeitura (fixo). Cadastre o número — o próprio "
+                           "ou o do setor como recado — antes de liberar.")
+        cur2 = get_connection()
+        try:
+            c2 = cur2.cursor()
+            c2.execute("UPDATE tb_usuarios SET acesso_provisorio=0, "
+                       "provisorio_ate=NULL, telefone_pendente=0, "
+                       "user_ativo=1 WHERE user_nome=?", (user_nome,))
+            _commit_com_retry(cur2, contexto="liberar_acesso_definitivo")
+        finally:
+            cur2.close()
+        _audit(ator, "liberar_acesso_definitivo", user_nome,
+               "liberado em definitivo" + (" (tinha telefone pendente)"
+                                           if pendente else ""))
+        _log().info(f"acesso liberado em definitivo para {user_nome} por {ator}")
+        return True, "Acesso liberado em definitivo."
+    except Exception as e:
+        _log().exception(f"liberar_acesso_definitivo: falha em {user_nome} | {e}")
+        return False, "Erro ao liberar o acesso."
+
+
+def informacao_acesso_provisorio(user_nome) -> dict:
+    """EN: The temporary-release state of an account, for screens and the DTI.
+
+    PT-BR: O estado da liberação temporária de uma conta, para as telas e
+    para o DTI ver quem está no prazo e quem já venceu."""
+    vazio = {"provisorio": False, "ate": None, "vencido": False,
+             "bloqueado": True, "dias_restantes": None}
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT acesso_provisorio, provisorio_ate, user_ativo "
+                        "FROM tb_usuarios WHERE user_nome=?", (user_nome,))
+            linha = cur.fetchone()
+        finally:
+            conn.close()
+        if not linha:
+            return vazio
+        bloqueado = not bool(linha[2])
+        if not linha[0] or not linha[1]:
+            # sem liberação temporária: a conta é normal. `bloqueado` continua
+            # valendo, porque é o que a tela do DTI quer mostrar.
+            return {**vazio, "bloqueado": bloqueado}
+        try:
+            prazo = datetime.strptime(str(linha[1])[:19], "%Y-%m-%d %H:%M:%S")
+        except (ValueError, TypeError):
+            return {**vazio, "bloqueado": bloqueado}
+        restante = prazo - datetime.now()
+        return {"provisorio": True, "ate": linha[1],
+                # `vencido` é o PRAZO. A conta estar bloqueada é outra
+                # coisa — no começo estes dois campos eram o mesmo, e uma
+                # conta liberada aparecia como vencida no primeiro dia.
+                "vencido": restante.total_seconds() <= 0,
+                "bloqueado": bloqueado,
+                "dias_restantes": max(0, restante.days)}
+    except Exception as e:
+        _log().exception(f"informacao_acesso_provisorio: falha em {user_nome} | {e}")
+        return vazio
 
 
 def bloquear_usuario(ator, user_nome, bloquear=True):

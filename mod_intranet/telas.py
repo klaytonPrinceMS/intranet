@@ -115,10 +115,9 @@ def pagina_restrita(titulo_modulo: str, chave_modulo: str = None):
     _montar_layout(user["nome"], rotulo_perfil, titulo_modulo, chave_modulo)
 
     try:
-        if autenticacao.precisa_trocar_credenciais(user["nome"]):
-            _dialogo_troca_credenciais(user["nome"])
-        elif autenticacao.precisa_trocar_senha(user["nome"]):
-            _dialogo_troca_senha(user["nome"])
+        # Primeiro acesso: senha -> telefones. `_primeiro_acesso` encadeia os
+        # dois passos e só abre o segundo quando o primeiro foi concluído.
+        _primeiro_acesso(user["nome"])
     except Exception as _e_troca:
         try:
             _login_erro_log().exception(
@@ -547,20 +546,158 @@ def _dialogo_meu_perfil(nome_usuario: str):
         _botao_tema("Alterar senha", on_click=salvar_senha)
 
         ui.separator()
+        _bloco_telefones_meu_perfil(nome_usuario)
+
+        ui.separator()
         with ui.row().classes("w-full justify-end"):
             _botao_tema("Fechar", variante="texto", on_click=dlg.close)
     dlg.open()
 
 
-def _dialogo_troca_credenciais(nome_usuario: str):
+def _bloco_telefones_meu_perfil(nome_usuario: str):
+    """EN: My phones — add, change and withdraw publication consent.
+
+    PT-BR: Meus telefones — cadastrar, corrigir e RETIRAR a autorização de
+    publicação.
+
+    POR QUE ISTO EXISTE
+        No primeiro acesso o servidor escolhe o que pode aparecer na lista
+        telefônica. Mas escolha nenhuma é definitiva: o número de quem
+        atendia a defesa civil em março pode ser de outra pessoa em setembro.
+        Pedir consentimento e não dar com o que retirá-lo é a forma mais
+        rápida de um cadastro público virar dato ruim — e o dono do número é
+        quem tem que decidir, não o administrador.
+
+    O QUE NÃO É NEGOCIÁVEL
+        O checkbox do celular particular e o do residencial não aparecem, e o
+        do fixo da prefeitura vem travado. A regra é da prefeitura
+        (`telefone_e_publicavel`), não deste formulário: repetir a regra
+        aqui criaria dois lugares onde ela mora, e o formulário viraria a
+        fonte da verdade no primeiro dia em que alguém o copiasse.
+    """
+    from mod_gest_cad_usuario import bd_manipulador as _bd_usuarios
+
+    ui.label("Meus telefones").classes("text-subtitle2 text-grey-7")
+    ui.label("O fixo da prefeitura é a linha institucional e aparece na "
+             "lista telefônica. Os demais só saem se você marcar aqui.") \
+        .classes("text-caption text-grey-6")
+
+    caixa = ui.column().classes("w-full gap-1")
+
+    def _desenhar():
+        caixa.clear()
+        try:
+            telefones = _bd_usuarios.listar_telefones(nome_usuario)
+        except Exception as e:
+            lg = _login_erro_log()
+            if lg:
+                lg.exception(f"meu_perfil: falha ao listar telefones: {e}")
+            return
+        if not telefones:
+            ui.label("Nenhum telefone cadastrado.").classes("text-body2 text-grey-6 italic")
+            return
+        # t = (id, user_nome, numero, papel, tipo, principal, visivel, data_cadastro)
+        for t in telefones:
+            papel_txt = "da prefeitura" if t[3] == "empresa" else "particular"
+            tipo_txt = "fixo" if t[4] == "fixo" else "celular"
+            with ui.row().classes("w-full items-center no-wrap").style("gap: 0.5rem"):
+                with ui.column().classes("grow").style("min-width: 0"):
+                    ui.label(f"{t[2]}").classes("text-body2 truncate")
+                    detalhe = f"{tipo_txt} {papel_txt}"
+                    if t[4] == "fixo" and t[3] == "empresa":
+                        detalhe += " · sempre na lista"
+                    elif _bd_usuarios.telefone_e_publicavel(t[3], t[4], t[6]):
+                        detalhe += " · aparece na lista"
+                    else:
+                        detalhe += " · só no seu cadastro"
+                    ui.label(detalhe).classes("text-caption text-grey-6 truncate")
+                # o particular não tem botão de publicar: não há o que
+                # autorizar. O fixo da prefeitura também não.
+                if t[3] == "empresa" and t[4] == "celular":
+                    marcado = ui.checkbox("na lista")
+                    marcado.props("dense data-testid=meu-perfil-visivel-{}".format(t[0]))
+                    marcado.value = bool(t[6])
+
+                    def _alternar(valor, tid=t[0]):
+                        try:
+                            _bd_usuarios.editar_telefone(nome_usuario, tid, visivel=bool(valor))
+                            notificar("Lista telefônica atualizada.", tipo="positive")
+                        except Exception as e:
+                            lg = _login_erro_log()
+                            if lg:
+                                lg.exception(f"meu_perfil: falha ao alterar visivel do {tid}: {e}")
+                            notificar("Não foi possível alterar.", tipo="error")
+
+                    marcado.on("update:model-value", lambda ev, tid=t[0]: _alternar(ev.value, tid))
+                with ui.button(on_click=lambda tid=t[0]: _remover(tid), icon="delete") \
+                        .props("flat dense color=negative").classes("shrink-0") \
+                        .tooltip("Remover este telefone"):
+                    ui.props("data-testid=meu-perfil-remover-{}".format(t[0]))
+
+    def _remover(tid):
+        try:
+            ok, msg = _bd_usuarios.remover_telefone(nome_usuario, tid)
+            notificar(msg, tipo="positive" if ok else "negative")
+            if ok:
+                _desenhar()
+        except Exception as e:
+            lg = _login_erro_log()
+            if lg:
+                lg.exception(f"meu_perfil: falha ao remover telefone {tid}: {e}")
+            notificar("Erro ao remover o telefone.", tipo="error")
+
+    _desenhar()
+
+    def _adicionar():
+        with ui.dialog() as dlg_add:
+            with ui.card().classes("w-[380px] gap-2"):
+                ui.label("Novo telefone").classes("text-h6")
+                num = ui.input("Número").props("outlined dense").classes("w-full") \
+                    .props("data-testid=meu-perfil-novo-numero")
+                pap = ui.select({"empresa": "da prefeitura", "pessoal": "particular"},
+                                label="De quem é", value="empresa") \
+                    .props("outlined dense").classes("w-full")
+                tip = ui.select({"celular": "celular", "fixo": "fixo"},
+                                label="Tipo", value="celular") \
+                    .props("outlined dense").classes("w-full")
+                vis = ui.checkbox("Pode aparecer na lista telefônica")
+                vis.props("dense data-testid=meu-perfil-novo-visivel")
+
+                def _salvar_add():
+                    try:
+                        ok, msg = _bd_usuarios.adicionar_telefone(
+                            nome_usuario, num.value or "", papel=pap.value,
+                            tipo=tip.value, visivel=bool(vis.value))
+                        notificar(msg, tipo="positive" if ok else "negative")
+                        if ok:
+                            dlg_add.close()
+                            _desenhar()
+                    except Exception as e:
+                        lg = _login_erro_log()
+                        if lg:
+                            lg.exception(f"meu_perfil: falha ao adicionar telefone: {e}")
+                        notificar("Erro ao cadastrar o telefone.", tipo="error")
+
+                with ui.row().classes("w-full justify-end"):
+                    ui.button("Cancelar", on_click=dlg_add.close).props("flat")
+                    _botao_tema("Salvar", on_click=_salvar_add)
+        dlg_add.open()
+
+    _botao_tema("Adicionar telefone", variante="secundario", on_click=_adicionar)
+
+
+def _dialogo_troca_credenciais(nome_usuario: str, ao_concluir=None):
     """Opens the mandatory first-access dialog with a safe minimal fallback.
 
     Abre o diálogo de troca obrigatória completo (pré-preenchido); se a
     montagem falhar por qualquer motivo, abre o diálogo mínimo (campos
     simples, sem pré-preenchimento) para nunca derrubar a página. Nenhum
-    caminho propaga exceção ao chamador."""
+    caminho propaga exceção ao chamador.
+
+    `ao_concluir` é repassado aos dois diálogos e roda só depois de uma
+    troca bem-sucedida — é o que encadeia o cadastro dos telefones."""
     try:
-        _dialogo_troca_credenciais_completo(nome_usuario)
+        _dialogo_troca_credenciais_completo(nome_usuario, ao_concluir)
     except Exception as _e_full:
         try:
             _login_erro_log().exception(
@@ -568,7 +705,7 @@ def _dialogo_troca_credenciais(nome_usuario: str):
         except Exception:
             pass
         try:
-            _dialogo_troca_credenciais_minimo(nome_usuario)
+            _dialogo_troca_credenciais_minimo(nome_usuario, ao_concluir)
         except Exception as _e_min:
             try:
                 _login_erro_log().exception(
@@ -581,13 +718,15 @@ def _dialogo_troca_credenciais(nome_usuario: str):
                 pass
 
 
-def _dialogo_troca_credenciais_minimo(nome_usuario: str):
+def _dialogo_troca_credenciais_minimo(nome_usuario: str, ao_concluir=None):
     """Minimal first-access dialog (plain fields, no prefill, no DDI select).
 
     Diálogo mínimo de primeiro acesso: campos simples vazios, sem
     pré-preenchimento e sem combobox de DDI. Fallback para garantir que o
     master sempre consiga trocar as credenciais mesmo se o diálogo completo
-    falhar."""
+    falhar.
+
+    `ao_concluir` recebe o NOVO nome de usuário, porque aqui o login muda."""
     with ui_comum.dialogo_card(largura="w-96", max_altura=False) as (dlg, card):
         ui.label("Credenciais obrigatórias").classes("text-h6")
         ui.label("Por segurança, defina um novo nome de usuário e uma nova "
@@ -636,6 +775,12 @@ def _dialogo_troca_credenciais_minimo(nome_usuario: str):
                     except Exception:
                         pass
                     ui.timer(0.2, lambda: ui.navigate.to("/"))
+                    if ao_concluir:
+                        try:
+                            ao_concluir(novo)
+                        except Exception as e:
+                            _login_erro_log().exception(
+                                f"troca_credenciais: callback de {novo} falhou: {e}")
             except Exception as _e_conf:
                 try:
                     _login_erro_log().exception(
@@ -653,13 +798,15 @@ def _dialogo_troca_credenciais_minimo(nome_usuario: str):
     dlg.open()
 
 
-def _dialogo_troca_credenciais_completo(nome_usuario: str):
+def _dialogo_troca_credenciais_completo(nome_usuario: str, ao_concluir=None):
     """Full first-access dialog (prefilled + DDI phone field).
 
     Diálogo completo do primeiro acesso do `master` nativo: vem
     pré-preenchido com os dados do responsável pelo sistema para o futuro
     administrador conferir/ajustar antes de salvar. `persistent` (não fecha
-    com ESC/clique fora) e fechamento somente após a troca bem-sucedida."""
+    com ESC/clique fora) e fechamento somente após a troca bem-sucedida.
+
+    `ao_concluir` recebe o NOVO nome de usuário, porque aqui o login muda."""
     with ui_comum.dialogo_card(largura="w-96", max_altura=False) as (dlg, card):
         ui.label("Credenciais obrigatórias").classes("text-h6")
         ui.label(f"Bem-vindo(a), {autenticacao.nome_de_tratamento(nome_usuario)}. "
@@ -762,6 +909,12 @@ def _dialogo_troca_credenciais_completo(nome_usuario: str):
                     except Exception:
                         pass
                     ui.timer(0.2, lambda: ui.navigate.to("/"))
+                    if ao_concluir:
+                        try:
+                            ao_concluir(novo)
+                        except Exception as e:
+                            _login_erro_log().exception(
+                                f"troca_credenciais: callback de {novo} falhou: {e}")
             except Exception as _e_conf:
                 try:
                     _login_erro_log().exception(
@@ -780,13 +933,18 @@ def _dialogo_troca_credenciais_completo(nome_usuario: str):
     dlg.open()
 
 
-def _dialogo_troca_senha(nome_usuario: str):
+def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
     """Forces the mandatory first-login password change dialog.
 
     Diálogo persistente de troca obrigatória de senha no primeiro acesso:
     `persistent` (não fecha com ESC/clique fora) e fechamento somente após
     a troca bem-sucedida. Título manual (`text-h6`, sem separador) para
     manter o visual original.
+
+    `ao_concluir` roda DEPOIS da troca bem-sucedida, e é o que abre o passo
+    seguinte do primeiro acesso (o cadastro dos telefones). Se a troca
+    falhar, o callback não roda — senão o servidor cadastraria o telefone
+    e continuaria com a senha provisória.
     """
     with ui_comum.dialogo_card(largura="w-96", max_altura=False) as (dlg, card):
         ui.label("Troca de senha obrigatória").classes("text-h6")
@@ -805,12 +963,361 @@ def _dialogo_troca_senha(nome_usuario: str):
             notificar(msg, type="positive" if ok else "negative")
             if ok:
                 dlg.close()
+                if ao_concluir:
+                    try:
+                        ao_concluir()
+                    except Exception as e:
+                        lg = _login_erro_log()
+                        if lg:
+                            lg.exception(
+                                f"troca_senha: callback de {nome_usuario} falhou: {e}")
 
         _botao_tema("Salvar nova senha", on_click=confirmar,
                     extra_classes="w-full mt-2")
     # persistent: não fecha com ESC/clique fora — a troca é realmente obrigatória
     dlg.props("persistent")
     dlg.open()
+
+
+def _dialogo_telefones(nome_usuario: str, ao_concluir=None):
+    """Força o cadastro dos telefones no primeiro acesso (persistent).
+
+    EN: First-access phone registration. The transparency portal publishes
+    name, unit and role — but no extension. So the extension only exists if
+    the server types it here, which is why this dialog is mandatory.
+
+    PT-BR: Cadastro dos telefones no primeiro acesso. O portal da
+    transparência publica nome, unidade e cargo — mas não o ramal. Então o
+    número só existe se o servidor o informar aqui, e é por isso que este
+    diálogo é obrigatório.
+
+    A CONSENTIMENTO — cada linha da prefeitura é escolha de quem atende:
+
+    - **celular particular**: começa desmarcado, e é assim que o prefeito
+      resolve não ter o número na lista. Ninguém precisa explicar nada a
+      ninguém.
+    - **celular da prefeitura**: começa desmarcado também, e é assim que o
+      responsável pela defesa civil resolve aparecer para todos. Quem atende
+      emergência liga de qualquer lugar; precisa ser achado.
+    - **fixo da prefeitura**: a caixa vem **travada marcada**. Linha
+      institucional existe para ser encontrada — é o número que a prefeitura
+      divulga em visita de rotina. Guardá-lo tornaria o cadastro inútil para
+      o fim a que ele serve.
+    - **residencial**: não tem caixa nenhuma. Telefone de casa não entra em
+      cadastro de servidor, ponto.
+    """
+    from mod_gest_cad_usuario import bd_manipulador as _bd_usuarios
+
+    with ui_comum.dialogo_card(largura="w-[620px]", max_altura=True) as (dlg, card):
+        ui.label("Seus telefones").classes("text-h6")
+        ui.label(f"{autenticacao.nome_de_tratamento(nome_usuario)}, "
+                 "falta o passo que faz você aparecer na lista telefônica. "
+                 "Preencha o que quiser e marque o que pode ficar público.").classes(
+            "text-body2 text-grey-7")
+
+        with ui.column().classes("w-full gap-1"):
+            # ---- celular particular ----
+            cel_pessoal = ui_comum.campo_texto(
+                "Celular particular", props="outlined dense",
+                placeholder="(35) 99999-0000")
+            chk_pessoal = ui.checkbox("Pode aparecer na lista telefônica")
+            chk_pessoal.props("dense data-testid=primeiro-acesso-chk-pessoal") \
+                .classes("text-body2")
+
+            # ---- celular da prefeitura ----
+            cel_empresa = ui_comum.campo_texto(
+                "Celular da prefeitura", props="outlined dense",
+                placeholder="(35) 99999-0000")
+            chk_empresa = ui.checkbox("Pode aparecer na lista telefônica")
+            chk_empresa.props("dense data-testid=primeiro-acesso-chk-empresa") \
+                .classes("text-body2")
+
+            # ---- fixo da prefeitura ----
+            fixo_empresa = ui_comum.campo_texto(
+                "Telefone fixo da prefeitura", props="outlined dense",
+                placeholder="(35) 3591-5100")
+            chk_fixo = ui.checkbox("Aparece na lista telefônica")
+            # Marcada E travada. A ordem importa: `value` antes de `disable`,
+            # senão o NiceGUI aplica `disable` e a atribuição seguinte é
+            # ignorada — e a tela mostrava uma caixa vazia ao lado de um texto
+            # que dizia que ela apareceria. A regra que manda é a de
+            # `telefone_e_publicavel`, não a do formulário; aqui só se
+            # mostra o que ela faz.
+            chk_fixo.props("dense disable data-testid=primeiro-acesso-chk-fixo") \
+                .classes("text-body2 text-grey-6")
+            chk_fixo.value = True
+
+            # ---- telefone de recado ----
+            chk_recado = ui.checkbox(
+                "Não tenho linha própria: este é o telefone do setor, para recado")
+            chk_recado.props("dense data-testid=primeiro-acesso-chk-recado") \
+                .classes("text-body2")
+            ui.label("Marque quando for o telefone do SETOR: a garagem, a "
+                     "secretaria da escola, a unidade de saúde, o almoxarifado. "
+                     "Quem receber a ligação anota o recado e passa adiante — "
+                     "é assim que a lista telefônica funciona para quem não "
+                     "atende.") .classes("text-caption text-grey-6")
+
+            # aviso de faixa, preenchido enquanto o servidor digita
+            aviso_faixa = ui.label("").classes("text-caption text-orange-8")
+
+            # ---- residencial ----
+            fixo_pessoal = ui_comum.campo_texto(
+                "Telefone residencial (opcional)", props="outlined dense",
+                placeholder="(35) 3800-0000")
+            ui.label("O residencial fica só no seu cadastro — nunca sai na "
+                     "lista telefônica.").classes("text-caption text-grey-6")
+
+        def _montar_contatos():
+            """Os 4 campos viram a lista que o cadastro grava."""
+            contatos = []
+            if (cel_pessoal.value or "").strip():
+                contatos.append({"numero": cel_pessoal.value, "papel": "pessoal",
+                                 "tipo": "celular", "visivel": chk_pessoal.value})
+            if (cel_empresa.value or "").strip():
+                contatos.append({"numero": cel_empresa.value, "papel": "empresa",
+                                 "tipo": "celular", "visivel": chk_empresa.value})
+            if (fixo_empresa.value or "").strip():
+                # visivel=1 fixo: é a regra da prefeitura
+                # (telefone_e_publicavel) — o checkbox travado acima é só o
+                # espelho visual dela, a decisão real fica no banco.
+                contatos.append({"numero": fixo_empresa.value, "papel": "empresa",
+                                 "tipo": "fixo", "visivel": True,
+                                 "recado": bool(chk_recado.value)})
+            if (fixo_pessoal.value or "").strip():
+                contatos.append({"numero": fixo_pessoal.value, "papel": "pessoal",
+                                 "tipo": "fixo", "visivel": False})
+            return contatos
+
+        def _reavaliar_faixa(_evento=None):
+            """Avisa, ENQUANTO digita, se o fixo está fora das faixas.
+
+            Mostrar o aviso depois de salvar é tarde: o servidor já salvou, já
+            recebeu o "telefones registrados" e só depois descobre que o
+            número estava errado. A faixa existe para pegar o erro no dedo,
+            não no relatório.
+
+            Registrado com `on_value_change`, que é o caminho do próprio
+            projeto (`campo_texto(ao_mudar=...)`); `on("update:model-value")`
+            também funcionaria, mas mistura duas formas de fazer a mesma
+            coisa no mesmo arquivo."""
+            try:
+                num = (fixo_empresa.value or "").strip()
+                if not num:
+                    aviso_faixa.set_text("")
+                    return
+                avalio = _bd_usuarios.avaliar_telefones_primeiro_acesso(
+                    [{"numero": num, "papel": "empresa", "tipo": "fixo"}])
+                fora = avalio.get("fora_da_faixa") or []
+                if not fora:
+                    aviso_faixa.set_text("")
+                    return
+                perto = fora[0][1] if len(fora[0]) > 1 else ""
+                aviso_faixa.set_text(
+                    f"Atenção: {num} está fora das faixas de telefone da "
+                    f"prefeitura."
+                    + (f" A faixa mais próxima é a {perto} — confira o número."
+                       if perto else " Confira o número."))
+            except Exception as e:
+                lg = _login_erro_log()
+                if lg:
+                    lg.exception(f"primeiro_acesso: aviso de faixa falhou: {e}")
+                aviso_faixa.set_text("")
+
+        fixo_empresa.on_value_change(_reavaliar_faixa)
+
+        def _salvar(liberacao_provisoria=False):
+            """Grava. `liberacao_provisoria` é o paliativo do servidor que não
+            sabe o próprio número — só chega True depois das DUAS confirmações."""
+            contatos = _montar_contatos()
+            try:
+                ok, msg, detalhes = _bd_usuarios.registrar_contatos_primeiro_acesso(
+                    nome_usuario, nome_usuario, contatos,
+                    liberacao_provisoria=liberacao_provisoria)
+            except Exception as e:
+                lg = _login_erro_log()
+                if lg:
+                    lg.exception(
+                        f"primeiro_acesso: falha ao gravar telefones de {nome_usuario}: {e}")
+                notificar("Erro ao salvar os telefones — tente de novo.", tipo="error")
+                return
+            if not ok:
+                notificar(msg, tipo="negative")
+                return
+            notificar(msg, tipo="positive")
+            fora = (detalhes or {}).get("fora_da_faixa") or []
+            if fora:
+                # o salvou, mas o número não é nosso: fala alto, porque o
+                # próximo passo do servidor é justamente confiar no número
+                notificar(
+                    f"{len(fora)} telefone(s) fora das faixas da prefeitura — "
+                    f"veja o aviso no formulário e ajuste depois.",
+                    tipo="warning")
+            if (detalhes or {}).get("provisorio"):
+                dias = _bd_usuarios.DIAS_LIBERACAO_PROVISORIA
+                _aviso_provisorio(nome_usuario, dias)
+            dlg.close()
+            if ao_concluir:
+                try:
+                    ao_concluir()
+                except Exception as e:
+                    lg = _login_erro_log()
+                    if lg:
+                        lg.exception(
+                            f"primeiro_acesso: falha no pós-conclusão de {nome_usuario}: {e}")
+
+        def _confirmar():
+            """Primeira trava: pergunta pelo telefone da prefeitura."""
+            try:
+                avalio = _bd_usuarios.avaliar_telefones_primeiro_acesso(
+                    _montar_contatos())
+            except Exception as e:
+                lg = _login_erro_log()
+                if lg:
+                    lg.exception(f"primeiro_acesso: avaliação falhou: {e}")
+                _salvar()
+                return
+            if avalio.get("tem_da_prefeitura"):
+                _salvar()
+                return
+            if not avalio.get("particulares"):
+                notificar("Informe também um telefone particular de contato.",
+                          tipo="negative")
+                return
+            _travas_falta_numero(nome_usuario, _salvar)
+
+        _botao_tema("Salvar telefones", on_click=_confirmar,
+                    extra_classes="w-full mt-2")
+    dlg.props("persistent")
+    dlg.open()
+
+
+def _travas_falta_numero(nome_usuario, ao_confirmar):
+    """As DUAS travas quando o servidor não sabe o número da prefeitura.
+
+    A primeira pergunta se ele quer sair e descobrir o número. A segunda
+    confirma que ele entendeu o preço: acesso por 4 dias, e depois a conta
+    fecha até o DTI abrir.
+
+    Duas travas em vez de uma não é desconfiança do servidor — é o contrário.
+    A única falha que sobra é o clique apressado numa tela de advertência, e
+    ele passa por duas. Um servidor que leu o aviso duas vezes e seguiu em
+    frente é alguém que entendeu; alguém que clicou uma vez pode ter só
+    lido a primeira linha."""
+    with ui.dialog() as dlg_t:
+        with ui.card().classes("w-[520px] gap-3"):
+            ui.label("Falta um telefone da prefeitura").classes("text-h6")
+            ui.label(
+                "Todo servidor da prefeitura está ligado a uma secretaria ou "
+                "a um setor, e todo setor tem telefone. O sistema precisa de um "
+                "número institucional para você constar na lista telefônica.") \
+                .classes("text-body2 text-grey-7")
+            ui.label("Se você não tem linha própria, use o telefone do seu "
+                     "setor e marque como telefone de recado: a garagem, a "
+                     "secretaria da escola, a unidade de saúde, o "
+                     "almoxarifado. Quem receber anota e passa adiante.") \
+                .classes("text-body2 text-grey-7")
+            with ui.row().classes("w-full justify-end").style("gap: 0.5rem"):
+                ui.button("Informar o telefone do setor", on_click=dlg_t.close) \
+                    .props("flat")
+                _botao_tema("Não sei meu número", on_click=lambda: _travas_confirmar(
+                    nome_usuario, ao_confirmar, dlg_t),
+                    variante="secundario")
+    dlg_t.open()
+
+
+def _travas_confirmar(nome_usuario, ao_confirmar, dlg_anterior):
+    """Segunda trava: o preço, escrito."""
+    from mod_gest_cad_usuario import bd_manipulador as _bd
+
+    dias = _bd.DIAS_LIBERACAO_PROVISORIA
+    with ui.dialog() as dlg_c:
+        with ui.card().classes("w-[520px] gap-3"):
+            ui.label("Acesso temporário").classes("text-h6")
+            ui.label(
+                f"Sem o número, seu acesso fica liberado por {dias} dias. "
+                f"Depois disso a conta é bloqueada e só o DTI consegue "
+                f"reabrir.").classes("text-body2 text-grey-7")
+            ui.label(
+                "Use esses 4 dias para descobrir o seu número: pergunte na "
+                "secretaria da sua escola, na unidade de saúde onde você "
+                "trabalha, no setor de empilhadeiras, na garagem ou no "
+                "almoxarifado. Depois, volte aqui pelo seu perfil e atualize "
+                "o telefone — o acesso fica definitivo.").classes(
+                "text-body2 text-grey-7")
+            with ui.row().classes("w-full justify-end").style("gap: 0.5rem"):
+                ui.button("Voltar e informar o número", on_click=dlg_c.close) \
+                    .props("flat")
+                _botao_tema("Entendo, liberar por enquanto",
+                            on_click=lambda: (
+                                dlg_c.close(), dlg_anterior.close(),
+                                ao_confirmar(True)),
+                            variante="primario")
+    dlg_c.open()
+
+
+def _aviso_provisorio(nome_usuario, dias):
+    """O bilhete que fica na tela depois de entrar em liberação temporária."""
+    try:
+        with ui.dialog() as dlg_p:
+            with ui.card().classes("w-[480px] gap-2"):
+                ui.label("Acesso liberado por enquanto").classes("text-h6")
+                ui.label(f"Você tem {dias} dias para descobrir o seu número de "
+                         f"contato na prefeitura e atualizar o cadastro. "
+                         f"Depois disso o acesso será bloqueado.").classes(
+                    "text-body2 text-grey-7")
+                ui.label("Enquanto o acesso é temporário, seu nome aparece na "
+                         "lista telefônica, mas sem número — a prefeitura "
+                         "ainda não sabe como falar com você.").classes(
+                    "text-caption text-grey-6")
+                _botao_tema("Entendi", on_click=dlg_p.close)
+        dlg_p.open()
+    except Exception as e:
+        lg = _login_erro_log()
+        if lg:
+            lg.exception(f"aviso provisório falhou: {e}")
+
+
+def _primeiro_acesso(nome_usuario: str):
+    """Encadeia os passos obrigatórios do primeiro acesso.
+
+    Ordem: senha -> telefones. Não dá para pular a senha; e não dá para
+    cadastrar telefone de quem ainda entra com a senha provisória
+    `123456`, que todo servidor da prefeitura conhece. Cada passo só abre
+    o próximo quando o anterior foi realmente concluído — um diálogo de
+    senha que fecha sem trocar deixaria o telefone para trás, e o servidor
+    entraria no sistema com a pendência e sem saber por quê."""
+    def abrir_telefones(novo_nome=None):
+        """Abre o cadastro de telefones se ainda estiver pendente.
+
+        `novo_nome` vem dos diálogos de credenciais, em que o login muda de
+        `master` para o nome escolhido — a pendência do telefone está no
+        usuário NOVO, não no `master` que já saiu de cena."""
+        try:
+            from mod_gest_cad_usuario import bd_manipulador as _bd_usuarios
+            alvo = novo_nome or nome_usuario
+            if _bd_usuarios.telefone_pendente(alvo):
+                _dialogo_telefones(alvo)
+        except Exception as e:
+            lg = _login_erro_log()
+            if lg:
+                lg.exception(
+                    f"primeiro_acesso: falha ao verificar telefone de "
+                    f"{novo_nome or nome_usuario}: {e}")
+
+    try:
+        if autenticacao.precisa_trocar_credenciais(nome_usuario):
+            _dialogo_troca_credenciais(nome_usuario, ao_concluir=abrir_telefones)
+            return
+        if autenticacao.precisa_trocar_senha(nome_usuario):
+            _dialogo_troca_senha(nome_usuario, ao_concluir=abrir_telefones)
+            return
+        abrir_telefones()
+    except Exception as e:
+        lg = _login_erro_log()
+        if lg:
+            lg.exception(
+                f"primeiro_acesso: falha ao montar o fluxo de {nome_usuario}: {e}")
 
 
 def _obter_cor_principal():

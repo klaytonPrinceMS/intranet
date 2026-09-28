@@ -709,6 +709,144 @@ def _dlg_novo_seguro(ator, refresh):
     dlg.open()
 
 
+def _bloco_telefones_admin(nome_usuario: str, ator: str = "sistema"):
+    """EN: Admin view of a user's phones (fix errors, unblock a stuck account).
+
+    PT-BR: Visão dos telefones de um usuário (corrigir erro, destravar conta).
+
+    POR QUE O ADMIN VÊ ISSO
+        O servidor cadastra o próprio telefone no primeiro acesso, mas há
+        dois casos em que ele não consegue: quem digita o número errado e
+        fecha o navegador antes de corrigir, e quem é cadastrado pelo RH às
+        pressas e fica com a pendência ligada. Sem esta tela, a conta ficaria
+        presa no primeiro acesso sem saída pela interface.
+
+    A ESCOLHA DE PUBLICAÇÃO CONTINUA SENDO DO SERVIDOR
+        O admin pode corrigir o NÚMERO, mas a caixa de "aparece na lista"
+        continua sendo do titular. O administrador não amplia a exposição de
+        ninguém por conveniência própria — e o botão de adicionar já nasce
+        desmarcado, para a escolha partir de quem atende o telefone.
+    """
+    ui.label("Telefones").classes("text-subtitle2 text-grey-8")
+    ui.label("O servidor escolhe o que sai na lista telefônica. O fixo da "
+             "prefeitura sempre sai — é linha institucional.").classes(
+        "text-caption text-grey-6")
+
+    # ---- LIBERAÇÃO TEMPORÁRIA ----
+    # O servidor que entrou sem saber o próprio número ficou com 4 dias de
+    # prazo. Vencido, a conta fecha e ele vem aqui. O botão só aparece
+    # quando faz sentido aparecer — e o texto diz por quê, para o técnico
+    # não liberar às cegas.
+    try:
+        info_prov = gest.informacao_acesso_provisorio(nome_usuario)
+    except Exception:
+        info_prov = {"provisorio": False, "ate": None, "vencido": False,
+                     "bloqueado": False, "dias_restantes": None}
+    if info_prov.get("provisorio"):
+        dias = info_prov.get("dias_restantes")
+
+        def _liberar_definitivo():
+            """DTI confirma que o servidor descobriu o número."""
+            try:
+                ok, msg = gest.liberar_acesso_definitivo(ator, nome_usuario)
+                notificar(msg, type="positive" if ok else "negative")
+            except Exception as e:
+                log.exception(
+                    f"_bloco_telefones_admin: falha ao liberar {nome_usuario}: {e}")
+                notificar("Erro ao liberar o acesso.", type="negative")
+
+        with ui.row().classes(
+                "w-full items-center no-wrap rounded bg-orange-1 px-2 py-1") \
+                .style("gap: 0.5rem"):
+            if info_prov.get("vencido"):
+                ui.label("Acesso temporário VENCIDO — a conta está bloqueada "
+                         "desde que o prazo passou.").classes(
+                    "text-caption text-orange-10 grow")
+            else:
+                ui.label(f"Acesso temporário: restam {dias} dia(s) "
+                         f"(até {info_prov.get('ate')}).").classes(
+                    "text-caption text-orange-10 grow")
+            botao("Liberar em definitivo", icone="verified_user",
+                  on_click=_liberar_definitivo, variante="primario",
+                  chave_modulo="usuarios",
+                  extra_classes="shrink-0 no-caps")
+    elif info_prov.get("bloqueado"):
+        ui.label("Conta bloqueada.").classes("text-caption text-grey-6")
+
+    caixa = ui.column().classes("w-full gap-1")
+
+    def _desenhar():
+        caixa.clear()
+        try:
+            telefones = gest.listar_telefones(nome_usuario)
+            pendente = gest.telefone_pendente(nome_usuario)
+        except Exception as e:
+            log.exception(f"_bloco_telefones_admin: falha ao ler telefones de {nome_usuario}: {e}")
+            return
+        if pendente:
+            ui.label("Pendente: o servidor ainda não cadastrou os telefones "
+                     "no primeiro acesso.").classes("text-caption text-orange-8")
+        if not telefones:
+            ui.label("Nenhum telefone cadastrado.").classes("text-body2 text-grey-6 italic")
+            return
+        # t = (id, user_nome, numero, papel, tipo, principal, visivel, data_cadastro)
+        for t in telefones:
+            papel_txt = "prefeitura" if t[3] == "empresa" else "particular"
+            tipo_txt = "fixo" if t[4] == "fixo" else "celular"
+            if gest.telefone_e_publicavel(t[3], t[4], t[6]):
+                situacao = "na lista"
+            else:
+                situacao = "restrito"
+            with ui.row().classes("w-full items-center no-wrap").style("gap: 0.5rem"):
+                with ui.column().classes("grow").style("min-width: 0"):
+                    ui.label(f"{t[2]}").classes("text-body2 truncate")
+                    ui.label(f"{tipo_txt} {papel_txt} · {situacao}"
+                             + (" · principal" if t[5] else "")).classes(
+                        "text-caption text-grey-6 truncate")
+                with ui.button(on_click=lambda tid=t[0]: _remover(tid), icon="delete") \
+                        .props("flat dense color=negative").classes("shrink-0") \
+                        .tooltip("Remover"):
+                    ui.props("data-testid=admin-tel-remover-{}".format(t[0]))
+
+    def _remover(tid):
+        try:
+            ok, msg = gest.remover_telefone(nome_usuario, tid)
+            notificar(msg, type="positive" if ok else "negative")
+            if ok:
+                _desenhar()
+        except Exception as e:
+            log.exception(f"_bloco_telefones_admin: falha ao remover {tid}: {e}")
+            notificar("Erro ao remover o telefone.", type="error")
+
+    _desenhar()
+
+    with ui.row().classes("w-full items-center no-wrap").style("gap: 0.5rem"):
+        num = ui.input("Número").props("outlined dense").classes("grow") \
+            .props("data-testid=admin-tel-novo-numero")
+        pap = ui.select({"empresa": "prefeitura", "pessoal": "particular"},
+                        label="De quem é", value="empresa") \
+            .props("outlined dense no-caps").classes("w-[130px] shrink-0")
+        tip = ui.select({"celular": "celular", "fixo": "fixo"},
+                        label="Tipo", value="celular") \
+            .props("outlined dense no-caps").classes("w-[110px] shrink-0")
+
+        def _adicionar():
+            try:
+                ok, msg = gest.adicionar_telefone(
+                    nome_usuario, num.value or "", papel=pap.value,
+                    tipo=tip.value, visivel=False)
+                notificar(msg, type="positive" if ok else "negative")
+                if ok:
+                    num.value = ""
+                    _desenhar()
+            except Exception as e:
+                log.exception(f"_bloco_telefones_admin: falha ao adicionar: {e}")
+                notificar("Erro ao cadastrar o telefone.", type="error")
+
+        botao("Adicionar", icone="add", on_click=_adicionar, variante="secundario",
+              chave_modulo="usuarios", extra_classes="shrink-0")
+
+
 def _dlg_editar(ator, nome_atual, refresh):
     """Edit-user dialog: identity, global profile and per-module access.
 
@@ -761,6 +899,9 @@ def _dlg_editar_seguro(ator, nome_atual, refresh):
                     _fone_edit_input = fone_i
             perf_i = ui.select(gest.PERFIS_GLOBAIS, value=perfil, label="Perfil global",
                                with_input=True).props("outlined dense").classes("w-full")
+
+            ui.separator()
+            _bloco_telefones_admin(nome_atual, ator)
 
             ui.separator()
             ui.label("Acesso aos módulos — papel em cada um").classes("text-subtitle2 text-grey-8")

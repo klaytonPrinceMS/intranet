@@ -257,10 +257,15 @@ class TestE2ELista:
             page.goto(BASE_URL + "/lista-telefonica", wait_until="domcontentloaded")
             page.wait_for_timeout(4000)
             _fechar_dialogos(page)
-            campo = page.get_by_test_id("lista-busca")
+            # A tela evoluiu para TRÊS campos de busca (nome/telefone/unidade) com
+            # filtro conjunto; `lista-busca` (legado) continua no card da busca e
+            # os campos novos têm o testid próprio de cada filtro.
+            assert page.get_by_test_id("lista-busca").count() >= 1
+            campo = page.get_by_test_id("lista-busca-termo")
             assert campo.count() >= 1
             campo.first.fill("gabinete")
             page.wait_for_timeout(2500)
+            assert page.get_by_test_id("lista-cascata-1").count() >= 1
             corpo = page.locator("body").inner_text().lower()
             assert "desconectado" not in corpo
             _cookie_sem_segredo(page)

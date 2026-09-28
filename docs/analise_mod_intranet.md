@@ -113,7 +113,7 @@ O rodapé mostra as versões **da esquerda para a direita**: 1ª a versão globa
 > step-by-step checklist to add a function) in
 > [Fachada de Integração — DAS](arquitetura_de_software_das/fachada_integracoes.md).
 
-`mod_intranet/integracoes.py` (145 linhas, 7 funções públicas) é a **costura
+`mod_intranet/integracoes.py` (200 linhas, 9 funções públicas) é a **costura
 pública única** para um módulo de negócio alcançar outro **sem importá-lo**. Fecha
 a regra do AGENTS.md §2 ("nunca faça cross-query entre bancos") sem criar
 dependência entre módulos de negócio.
@@ -143,7 +143,7 @@ dependência entre módulos de negócio.
    tela de quem chama**: quem chama decide o que fazer com o vazio (padrão
    adotado = aviso amigável).
 
-### As 7 funções e seus consumidores
+### As 9 funções e seus consumidores
 
 | Função (`integracoes.py`) | Destino | Onde é usada |
 |:---|:---|:---|
@@ -153,7 +153,9 @@ dependência entre módulos de negócio.
 | `listar_noticias_para_tv(limite=200)` `:79` | `mod_agregador_noticias.listar_para_tv` (censura filtrada na origem) | `mod_filas/telas.py:1747` (carrossel de manchetes da TV de Filas) |
 | `limpar_noticias_censuradas()` `:93` | `mod_agregador_noticias.limpar_censuradas` | `mod_blog/telas_administracao.py:105` (após salvar a lista de censura, purga as manchetes já coletadas) |
 | `obter_organograma_base()` `:110` | `mod_lista_telefonica.ORGANOGRAMA_BASE` | `mod_solicita_impressao/bd_manipulador.py:407` (semeadura de cotas: 1000 por secretaria, 200 por setor/subsetor) |
-| `modulo_habilitado(chave)` `:127` | `autenticacao.modulos_registrados` (`tb_modulos.ativo`) | chamador genérico — módulo desconhecido conta como **desligado** |
+| `espelhar_cadastro_na_lista_telefonica(ator)` `:124` | `mod_gest_cad_usuario.leitura_lista.listar_para_lista_telefonica` + `mod_lista_telefonica.sincronizar_contatos_do_cadastro` | `mod_lista_telefonica/telas.py:636` (botão "Sincronizar cadastro") · `:690` (reespelhamento automático) |
+| `telefones_de_recado_para_lista()` `:156` | `mod_gest_cad_usuario.leitura_lista.listar_para_lista_telefonica` (só `recado=True`) | `mod_lista_telefonica/telas.py:576` (cache por desenho da tela; escreve "deixe recado" no cartão) |
+| `modulo_habilitado(chave)` `:182` | `autenticacao.modulos_registrados` (`tb_modulos.ativo`) | chamador genérico — módulo desconhecido conta como **desligado** |
 
 !!! warning "`obter_organograma_base()` devolve `None` de propósito"
     Quando a Lista Telefônica não responde, a Solicitação de Impressão **mantém

@@ -235,6 +235,20 @@ def init_db():
         cur.execute("CREATE INDEX IF NOT EXISTS idx_contato_unidade ON tb_contato(unidade_id)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_contato_nome ON tb_contato(nome)")
 
+        # Quando a lista foi espelhada do cadastro pela última vez. Existe
+        # para a tela saber se está olhando para um diretário velho: os
+        # servidores cadastram o telefone no primeiro acesso, e sem isto o
+        # diretório só mudaria quando alguém lembrasse de apertar o botão.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS tb_sincronizacao (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                ultima_em DATETIME,
+                total_criados INTEGER NOT NULL DEFAULT 0,
+                total_atualizados INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+        cur.execute("INSERT OR IGNORE INTO tb_sincronizacao (id) VALUES (1)")
+
         # seed organograma base (idempotente)
         cur.execute("SELECT COUNT(*) FROM tb_unidade")
         if cur.fetchone()[0] == 0:
@@ -824,6 +838,392 @@ def buscar_contatos(termo: str):
         except Exception:
             pass
         return []
+
+
+# Teto de profundidade do organograma. A estrutura é `parent_id`, então o número
+# de níveis é livre; o teto existe só para o `montar` não entrar em laço
+# infinito se um `parent_id`_cycle for gravado pela tela (o dado é editável).
+# 20 níveis cobrem qualquer organograma real de prefeitura com folga.
+_PROFUNDIDADE_MAXIMA = 20
+
+
+def listar_arvore_contatos(raiz_id: int = None, termo: str = ""):
+    """Árvore completa de unidades com contatos, em ordem alfabética.
+
+    Usada pela navegação por organograma e pela impressão. A ordem é a mesma em
+    tela e no papel, senão a impressão não correspondia ao que o usuário viu:
+
+        Secretaria (alfabética)
+          Setor (alfabético)
+            Subsetor (alfabético)
+              Contato (alfabético)
+
+    `raiz_id` recorta a árvore numa unidade (e nos seus descendentes) para a
+    impressão de um trecho só; `None` traz todas. `termo` filtra contatos por
+    nome, telefone ou usuário vinculado, normalizado sem acento — o filtro
+    mantém as unidades no organograma, mesmo vazias, para não desalinhar a
+    leitura do usuário.
+
+    Devolve lista de dicts `{"id", "nome", "tipo", "nivel", "telefone",
+    "ativo", "contatos", "filhos"}`. `nivel` é a profundidade (0 na raiz) e
+    `filhos` vem preenchido em TODOS os níveis — a montagem é recursiva, e o
+    organograma real da prefeitura tem mais de três degraus. (Uma versão
+    anterior preenchia `filhos` só na secretaria e tratava setor e subsetor
+    como folhas; isso quebrou com unidades reais e foi corrigido em
+    27/09/2026.)
+
+    Portável SQLite↔PostgreSQL: a ordenação é feita em Python com `casefold()`
+    (nada de `COLLATE NOCASE`, que é SQLite-only e quebra no PG pelo proxy) —
+    mesma convenção já usada em `listar_contatos`.
+    """
+    try:
+        termo_n = _norm(termo) if termo else ""
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id, nome, tipo, parent_id, ordem, telefone, ativo "
+                        "FROM tb_unidade WHERE ativo=1")
+            unidades = cur.fetchall()
+            cur.execute("SELECT id, unidade_id, nome, telefone, user_nome, tipo, "
+                        "data_criacao FROM tb_contato")
+            todos_contatos = cur.fetchall()
+        finally:
+            conn.close()
+
+        por_unidade = {}
+        for c in todos_contatos:
+            if termo_n and not (termo_n in _norm(c[2]) or termo_n in _norm(c[3])
+                                or termo_n in _norm(c[4] or "")):
+                continue
+            por_unidade.setdefault(c[1], []).append(c)
+
+        def ordenar(linhas):
+            return sorted(linhas, key=lambda r: ((r[1] or "").casefold(), (r[1] or "")))
+
+        filhos_por_pai = {}
+        for u in unidades:
+            filhos_por_pai.setdefault(u[3], []).append(u)
+
+        def montar(u, prof):
+            """Monta o dict de uma unidade, já com contatos ordenados.
+
+            Recursivo e SEM limite de profundidade: o organograma tem
+            secretaria/setor/subsetor hoje, mas a estrutura é `parent_id` e o
+            pedido é aceitar mais níveis. A profundidade entra no dict como
+            `nivel` (0 na raiz) para a tela saber quantos botões de
+            navegação precisa desenhar, e um teto protege contra ciclo
+            acidental de `parent_id` (o dado é editável na tela).
+            """
+            try:
+                if prof > _PROFUNDIDADE_MAXIMA:
+                    _log().warning(
+                        "listar_arvore_contatos: profundidade %s excedeu o teto "
+                        "na unidade %s - suspeita de ciclo em parent_id",
+                        prof, u[0])
+                    return {"id": u[0], "nome": u[1], "tipo": u[2], "nivel": prof,
+                            "telefone": u[5], "ativo": u[6],
+                            "contatos": sorted(por_unidade.get(u[0], []),
+                                               key=lambda c: ((c[2] or "").casefold(),
+                                                              (c[2] or ""))),
+                            "filhos": []}
+                contatos = sorted(
+                    por_unidade.get(u[0], []),
+                    key=lambda c: ((c[2] or "").casefold(), (c[2] or "")))
+                no = {
+                    "id": u[0], "nome": u[1], "tipo": u[2], "nivel": prof,
+                    "telefone": u[5], "ativo": u[6],
+                    "contatos": contatos, "filhos": [],
+                }
+                for f in ordenar(filhos_por_pai.get(u[0], [])):
+                    no["filhos"].append(montar(f, prof + 1))
+                return no
+            except Exception:
+                _log().exception("montar da unidade %s falhou", u[0])
+                return {"id": u[0], "nome": u[1], "tipo": u[2], "nivel": prof,
+                        "telefone": u[5], "ativo": u[6], "contatos": [],
+                        "filhos": []}
+
+        if raiz_id is not None:
+            raiz = next((u for u in unidades if u[0] == raiz_id), None)
+            if not raiz:
+                return []
+            return [montar(raiz, 0)]
+
+        return [montar(u, 0) for u in ordenar(filhos_por_pai.get(None, []))]
+    except Exception:
+        try:
+            _log().exception("listar_arvore_contatos falhou")
+        except NameError:
+            try:
+                log.exception("listar_arvore_contatos falhou")
+            except NameError:
+                from mod_intranet import observabilidade as _obs_fail
+                _obs_fail.get_logger("lista_telefonica").exception(
+                    "listar_arvore_contatos falhou")
+        except Exception:
+            pass
+        return []
+
+
+def contar_contatos() -> int:
+    """Total de contatos cadastrados (rodapé da navegação e da impressão)."""
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_contato")
+            linha = cur.fetchone()
+            return int(linha[0]) if linha else 0
+        finally:
+            conn.close()
+    except Exception:
+        try:
+            _log().exception("contar_contatos falhou")
+        except NameError:
+            try:
+                log.exception("contar_contatos falhou")
+            except NameError:
+                from mod_intranet import observabilidade as _obs_fail
+                _obs_fail.get_logger("lista_telefonica").exception(
+                    "contar_contatos falhou")
+        except Exception:
+            pass
+        return 0
+
+
+def sincronizar_contatos_do_cadastro(contatos, ator="sistema") -> dict:
+    """Espelha no diretório os servidores que já cadastraram telefone.
+
+    POR QUE ESTA FUNÇÃO RECEBE DADOS E NÃO BUSCA
+        A lista telefônica é dona do banco dela e não pode abrir o banco do
+        cadastro de usuários — é a regra do AGENTS.md §2, e o
+        `assets/test/check_integridade.py` reprova o import direto. Então
+        quem busca é o NÚCLEO (`mod_intranet.integracoes`), que é a costura
+        pública entre módulos; esta função só recebe a lista pronta e grava
+        no banco dela. Separar quem lê de quem escreve é o que mantém cada
+        módulo com um banco só.
+
+    POR QUE ISTO EXISTE
+        A lista vivia de contatos digitados à mão, um por um, e a
+        prefeitura tem mais de mil servidores. Digitar mil nomes não é
+        solução, é dívida. O cadastro já tem nome, matrícula, secretaria,
+        cargo e — depois do primeiro acesso — o telefone que a pessoa
+        autorizou. Este é o caminho que leva um dado ao outro.
+
+    O QUE É CRIADO
+        Um `tb_contato` do tipo `vinculado`, apontando para o `user_nome`
+        (a matrícula). O nome mostrado é primeiro + último, e o telefone é o
+        publicável — o particular nunca chega aqui, porque quem busca já
+        devolve só os liberados.
+
+    O QUE NÃO É TOCADO
+        - Contato do tipo `externo` (empresa fornecedora, visitante): é da
+          prefeitura, não do cadastro de servidores. A sincronização
+          jamais mexe neles.
+        - Contato `vinculado` que o administrador editou à mão para outra
+          unidade: só o telefone é atualizado, o nome e a unidade ficam. Um
+          servidor que foi transferido de setor é caso do RH; mudar isso
+          atrás das costas do administrador apagaria um ajuste manual.
+
+    Idempotente: rodar mil vezes não cria mil contatos.
+
+    `contatos` é a lista de dicionários com `user_nome`, `nome_exibicao`,
+    `telefone`, `unidade` e `lotacao`.
+    """
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id, nome, tipo, parent_id, ordem, telefone, ativo "
+                        "FROM tb_unidade")
+            unidades = cur.fetchall()
+            cur.execute("SELECT id, unidade_id, nome, telefone, user_nome, tipo "
+                        "FROM tb_contato")
+            contatos_existentes = cur.fetchall()
+        finally:
+            conn.close()
+
+        # nome normalizado -> unidades ATIVAS com esse nome. Só as ativas
+        # entram: as de demonstração foram desativadas pela sincronização do
+        # organograma, e casar com elas esconderia o servidor num lugar morto.
+        consulta = {}
+        for u in unidades:
+            if u[6]:
+                consulta.setdefault(_norm(u[1]), []).append(u)
+
+        por_user = {}
+        for c in contatos_existentes:
+            if c[4] and c[5] == 'vinculado':
+                por_user[c[4]] = c
+
+        resumo = {"criados": 0, "atualizados": 0, "sem_unidade": 0,
+                  "sem_telefone": 0, "ja_iguais": 0, "rejeitados": 0}
+
+        # Prepara a lista ANTES de gravar. Separar as fases é o que permite
+        # uma transção só: `criar_contato` por pessoa custava ~480 ms (uma
+        # conexão e um commit cada), e o espelhamento de 1.165 servidores
+        # levava quase dez minutos — com a tela esperando. Aqui é UMA
+        # conexão e UM commit para o lote inteiro.
+        a_criar, a_atualizar = [], []
+        # (unidade_id, nome) já existente — mesma trava de `criar_contato`
+        nomes_por_unidade = {}
+        for c in contatos_existentes:
+            nomes_por_unidade.setdefault((c[1], c[2]), set()).add(c[2])
+
+        for s in (contatos or []):
+            telefone = (s.get("telefone") or "").strip()
+            if not telefone:
+                resumo["sem_telefone"] += 1
+                continue
+            # mesma validação de `criar_contato` (nome e telefone curtos)
+            nome_exibicao = (s.get("nome_exibicao") or "").strip()
+            if len(nome_exibicao) < 2 or len(telefone) < 8:
+                resumo["rejeitados"] += 1
+                continue
+            # tenta o departamento (lotação); se não existir, a secretaria
+            unid = None
+            if s.get("lotacao"):
+                unid = next((u[0] for u in consulta.get(_norm(s["lotacao"]), [])),
+                            None)
+            if unid is None and s.get("unidade"):
+                unid = next((u[0] for u in consulta.get(_norm(s["unidade"]), [])),
+                            None)
+            if unid is None:
+                resumo["sem_unidade"] += 1
+                continue
+
+            existente = por_user.get(s["user_nome"])
+            if existente:
+                if (existente[3] or "") != telefone:
+                    a_atualizar.append((telefone, existente[0], nome_exibicao))
+                else:
+                    resumo["ja_iguais"] += 1
+                continue
+            if nome_exibicao in nomes_por_unidade.get(unid, set()):
+                # já existe um contato com esse nome na mesma unidade: não é
+                # duplicar, é colidir. O cadastro manda, então o espelhamento
+                # recusa e conta.
+                resumo["rejeitados"] += 1
+                continue
+            nomes_por_unidade.setdefault(unid, set()).add(nome_exibicao)
+            a_criar.append((unid, nome_exibicao, telefone, s["user_nome"]))
+
+        if a_atualizar or a_criar:
+            conn = get_connection()
+            try:
+                cur = conn.cursor()
+                for telefone, cid, _nome in a_atualizar:
+                    cur.execute("UPDATE tb_contato SET telefone=? WHERE id=?",
+                                (telefone, cid))
+                if a_criar:
+                    # `executemany` em vez de um INSERT por linha: mesmo
+                    # resultado, uma ida ao driver em vez de mais de mil.
+                    cur.executemany(
+                        "INSERT INTO tb_contato "
+                        "(unidade_id, nome, telefone, user_nome, tipo) "
+                        "VALUES (?, ?, ?, ?, 'vinculado')",
+                        [(u, n, t, usr) for (u, n, t, usr) in a_criar])
+                _commit_com_retry(conn, contexto="sincronizar_contatos:lote")
+            except Exception:
+                _rollback_seguro(conn, contexto="sincronizar_contatos:lote")
+                _log().exception("sincronizar_contatos_do_cadastro: lote falhou")
+                return {**resumo, "erro": True}
+            finally:
+                conn.close()
+            resumo["atualizados"] = len(a_atualizar)
+            resumo["criados"] = len(a_criar)
+            # UM registro de auditoria para o lote, e não um por contato:
+            # são o mesmo ato ("espelhei o cadastro"), feito uma vez.
+            _audit(ator, "sincronizar_contatos",
+                   f"{len(a_criar)} criados / {len(a_atualizar)} atualizados",
+                   f"descartados: {resumo['sem_telefone']} sem telefone, "
+                   f"{resumo['sem_unidade']} sem unidade, "
+                   f"{resumo['rejeitados']} rejeitados")
+
+        _log().info(
+            "sincronizar_contatos_do_cadastro: "
+            f"criados={resumo['criados']} atualizados={resumo['atualizados']} "
+            f"iguais={resumo['ja_iguais']} sem_unidade={resumo['sem_unidade']} "
+            f"sem_telefone={resumo['sem_telefone']}")
+        _carregar_sincronizacao(resumo["criados"], resumo["atualizados"])
+        return resumo
+    except Exception:
+        _log().exception("sincronizar_contatos_do_cadastro falhou")
+        return {"criados": 0, "atualizados": 0, "sem_unidade": 0,
+                "sem_telefone": 0, "ja_iguais": 0, "erro": True}
+
+
+# Tempo que o diretório pode ficar velho antes de a tela reespelhar sozinho.
+# Longo o bastante para não lêr o cadastro a cada F5 de quem está digitando a
+# busca, curto o bastante para que o número informado no primeiro acesso
+# apareça no mesmo dia.
+INTERVALO_REFRESH_MIN = 15
+
+
+def _carregar_sincronizacao(criados=0, atualizados=0):
+    """Grava o carimbo da última sincronização. Nunca levanta.
+
+    A hora vem do PYTHON, e não de `CURRENT_TIMESTAMP` do banco. Motivo: o
+    SQLite grava `CURRENT_TIMESTAMP` em UTC e o Python compara em hora
+    local — três horas de diferença num servidor brasileiro, o que fazia a
+    subtração dar NEGATIVO e a tela nunca mais notar que o diretório tinha
+    envelhecido. A sincronização automática ficaria desligada para sempre,
+    em silêncio. Um relógio que nunca dispara é pior do que nenhum relógio.
+    """
+    try:
+        agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE tb_sincronizacao SET ultima_em=?, "
+                "total_criados=?, total_atualizados=? WHERE id=1",
+                (agora, int(criados or 0), int(atualizados or 0)))
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception:
+        _log().warning("não foi possível gravar o carimbo de sincronização")
+
+
+def sincronizacao_desatualizada() -> bool:
+    """True se o diretório está velho demais para ser mostrado sem reespelhar.
+
+    Devolve True quando nunca houve sincronização também — o banco recém-criado
+    tem o carimbo zerado, e nesse caso o diretório está literalmente vazio.
+    """
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT ultima_em FROM tb_sincronizacao WHERE id=1")
+            linha = cur.fetchone()
+        finally:
+            conn.close()
+        if not linha or not linha[0]:
+            return True
+        ultima = str(linha[0])
+        # O banco devolve o carimbo em formatos diferentes (SQLite:
+        # "2026-09-27 19:40:00"; Postgres via proxy pode vir com "T" e
+        # fuso). Cortar nos 19 caracteres pega a parte YYYY-MM-DD HH:MM:SS
+        # nos dois, e a comparação é feita em hora local nos dois lados.
+        try:
+            marca = datetime.strptime(ultima[:19], "%Y-%m-%d %H:%M:%S")
+        except (ValueError, TypeError):
+            return True
+        idade = (datetime.now() - marca).total_seconds()
+        # Idade negativa significa carimbo no futuro: relógio fora de hora,
+        # não diretório novo. Tratar como desatualizado é a leitura segura —
+        # reespelhar de novo é barato e barato-não-dói.
+        if idade < 0:
+            _log().warning(
+                "carimbo de sincronização está no futuro (%s); reespelhando",
+                ultima)
+            return True
+        return idade > INTERVALO_REFRESH_MIN * 60
+    except Exception:
+        _log().warning("sincronizacao_desatualizada: falha na leitura do carimbo")
+        return False
 
 
 def criar_contato(unidade_id: int, nome: str, telefone: str, user_nome: str = None, ator="sistema"):

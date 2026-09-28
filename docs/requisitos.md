@@ -104,7 +104,11 @@ Fonte: `requirements.txt` (raiz).
 | Troca obrigatória de senha no 1º acesso (diálogo persistente) + "Meu Perfil" (dados + senha) | ✅ Implementado |
 | Cadastro de módulos em `tb_modulos` (nome/ícone/rota/ordem/ativo; indispensáveis não desativáveis) | ✅ Implementado |
 | URL (slug) de página editável com re-registro ao vivo (`rotas_modulos`) — sem restart | ✅ Implementado |
-| Painel central `/configuracoes` (aparência, textos, e-mail/SMTP, módulos, observabilidade, documentação) | ✅ Implementado |
+| Painel central `/configuracoes` (aparência, textos, e-mail/SMTP, módulos, **telefones**, observabilidade, documentação) — **6 abas** | ✅ Implementado |
+| **Faixas de telefone da prefeitura** `mod_intranet/telefone_faixas.py` (27/09/2026): chave `faixas_telefone_prefeitura` em `tb_config` com **várias** faixas em JSON `[{"inicio","fim","descricao"}]`, faixa de instalação `3535915101-3535915199`, e `faixa_que_contem` / `numero_dentro_da_faixa` / `faixa_mais_proxima` | ✅ Implementado (27/09/2026) |
+| **6ª aba "Telefones"** em `/configuracoes` (27/09/2026): um `ui.textarea` com uma faixa por linha em `início-fim  descrição` (`config-faixas-texto`) + "Salvar faixas" e "Voltar à faixa inicial" — **textarea por decisão**: elements dinâmicos (`ui.row`/`clear()`/`@ui.refreshable`) mostravam a lista vazia no primeiro desenho e o botão de remover disparava durante a montagem | ✅ Implementado (27/09/2026) |
+| **Duas travas no primeiro acesso** (27/09/2026): `_travas_falta_numero` (1ª, oferece "Informar o telefone do setor" / "Não sei meu número" e lista onde perguntar) → `_travas_confirmar` (2ª, escreve o preço: 4 dias, bloqueio posterior, só o DTI reabre) → `_aviso_provisorio` (bilhete). Não é desconfiança: é o oposto — a única falha que sobra é o clique apressado | ✅ Implementado (27/09/2026) |
+| **Prazo da liberação temporária cumprido no login** (27/09/2026): `autenticar` → `bloqueio_provisorio_pendente` → bloqueia + audita `acesso_provisorio_expirado`; checagem que falha **não** bloqueia ninguém | ✅ Implementado (27/09/2026) |
 | Backups por módulo (APScheduler, intervalo individual, retenção 10 cópias) | ✅ Implementado |
 | Observabilidade loguru (arquivo por módulo, rotação/retenção, console `auto/sempre/nunca`, bridge OTel→Loki) | ✅ Implementado |
 | Telemetria OTel (stack local via Docker ou remota; Grafana com sync de credenciais) | ✅ Implementado |
@@ -119,6 +123,15 @@ Fonte: `requirements.txt` (raiz).
 | Soft CRUD completo (criar, editar, renomear, bloquear/restaurar, excluir lógico com motivo, excluir definitivo LGPD) | ✅ Implementado |
 | Perfis globais (`comum`, `administrador_modulo`, `administrador_geral`) + papéis por módulo (`tb_acesso_usuario`) | ✅ Implementado |
 | Senha provisória com troca obrigatória; política de tamanho mínimo configurável (`usuarios_senha_min`) | ✅ Implementado |
+| **Telefone múltiplo por usuário** (`tb_telefone_usuario` com `papel` empresa/pessoal, `tipo` celular/fixo, `principal`, **`visivel`** e **`recado`**) + **regra de consentimento** `telefone_e_publicavel` (fixo da prefeitura **sempre**, celular da prefeitura **só com autorização do servidor**, particular e residencial **nunca**) | ✅ Implementado (27/09/2026) |
+| **Telefone de recado** (o número é do **setor**): `recado` em `tb_telefone_usuario` + `telefone_de_recado`/`telefone_e_recado`/**`telefones_de_recado_em_lote`** (uma consulta para a folha inteira) — o diretório escreve **"deixe recado"**; a marca chega pela fachada `integracoes.telefones_de_recado_para_lista()` | ✅ Implementado (27/09/2026) |
+| **Primeiro acesso em dois passos** (senha **e** telefone): `telefone_pendente=1` em `criar_usuario(exigir_telefone=True)` + `registrar_contatos_primeiro_acesso` grava os quatro telefones numa transação só e baixa a pendência — **agora devolve `(ok, msg, detalhes)`** (3 valores) | ✅ Implementado (27/09/2026) |
+| **Exigência de um telefone da prefeitura** (`_eh_telefone_da_prefeitura`): só `empresa`/`fixo` conta — o **celular da prefeitura não satisfaz**, porque celular é a pessoa e o que a prefeitura precisa é que exista uma *linha* que toque no prédio | ✅ Implementado (27/09/2026) |
+| **Aviso de número fora da faixa** — `avaliar_telefones_primeiro_acesso(contatos)` avalia **sem gravar** (`{tem_da_prefeitura, particulares, fora_da_faixa, pode_prosseguir}`), para a tela avisar **enquanto o servidor digita**. Fora da faixa é **avisado, nunca bloqueado** | ✅ Implementado (27/09/2026) |
+| **Liberação temporária de 4 dias** (o paliativo): `DIAS_LIBERACAO_PROVISORIA = 4`, `tb_usuarios.acesso_provisorio` + **`provisorio_ate`**, `liberacao_provisoria=True` **exige telefone particular**, e o prazo ç cumprido **no login** (`autenticar` → `bloqueio_provisorio_pendente`); só o DTI reabre, por `liberar_acesso_definitivo`, que **recusa** sem fixo. `informacao_acesso_provisorio` separa `vencido` (prazo) de `bloqueado` (conta) | ✅ Implementado (27/09/2026) |
+| **Dados funcionais públicos** `unidade`/`lotacao`/`cargo` + **`telefones_publicaveis_em_lote`** (uma consulta em vez de uma por linha, para não travar a tela com a folha real) | ✅ Implementado (27/09/2026) |
+| **Nome de exibição = primeiro + último nome** (`nome_de_tratamento` + helper local `_primeiro_e_ultimo`): a matrícula (`000320`) é o login, e mostrá-la no cabeçalho é mostrar um código de barras com nome de pessoa | ✅ Implementado (27/09/2026) |
+| **Carga da folha de servidores** — `assets/populacao/sincroniza_servidores.py` (matrícula como login, ensaio sem `--aplicar`, pensionista/inativo/eleito/demitido **bloqueados**, organograma sincronizado com **desativação** das unidades de demonstração) | ✅ Implementado (27/09/2026) |
 | Nome de exibição/social (Decreto 8.727/2016) usado como tratamento | ✅ Implementado |
 | Busca instantânea em todos os campos + palavras-chave de estado (provisório/bloqueado/sessão/excluído) | ✅ Implementado |
 | Lista paginada (10/20/50/100), filtros situação/perfil, ordenação A→Z/numérica, exibição compacta com tooltip | ✅ Implementado |
@@ -235,15 +248,25 @@ Fonte: `requirements.txt` (raiz).
 | Administração `/admin/filas` via hambúrguer (Filas + voz/ordem/textos + mídia/fundo + áudio global `/midia_filas`, `Ativar/Desativar`, `↑/↓`, `Fundo`) | ✅ Implementado |
 | Censura filtrada na TV (`listar_para_tv` `conteudo_palavras_bloqueadas`) | ✅ Implementado |
 
-### Lista Telefônica (`mod_lista_telefonica`) — novo 19/09/2026
+### Lista Telefônica (`mod_lista_telefonica`) — novo 19/09/2026 · tela atualizada 27/09/2026
 
 | Requisito | Situação |
 |:---|:---:|
 | Banco `db_mod_lista_telefonica.db` (`tb_unidade` `secretaria\|setor\|subsetor` + `tb_contato` alfabético `COLLATE NOCASE`) + `ORGANOGRAMA_BASE` 12 secretarias genéricas | ✅ Implementado |
-| Organograma expansível `Secretaria→Setor→Subsetor` (selects cascata `clearable`, `disabled` até pai) + contatos alfabéticos | ✅ Implementado |
-| Busca global normalizada sem acentos (`_norm` NFKD + `re.findall`) sobre unidades e contatos | ✅ Implementado |
-| Telefone clicável `tel:` (`re.sub(r"[^0-9+]", "")`) + `ui.link(target="tel:...")` + diálogo "Ligar agora" (`window.location.href`) no celular | ✅ Implementado |
-| Admin: criar/mover/elevar/rebaixar/reordenar/comutar/excluir ramo (cascata `_coletar_ramo_ids` + FK CASCADE) + incluir via usuários (busca `on_value_change` por login/nome/e-mail) | ✅ Implementado |
+| **Recorte por 3 selects em cascata** Unidade/Subunidade/Sub-subunidade (`lista-cascata-1/2/3`, `clearable`; o nível sem filhos fica **vazio e desabilitado**) + contatos alfabéticos; o nível mais fundo escolhido define a listagem | ✅ Implementado |
+| Árvore do organograma **recursiva** (mais de 3 níveis na leitura), com teto de profundidade 20 só contra ciclo de `parent_id` | ✅ Implementado |
+| Busca em **um campo só** (`lista-busca-termo`), normalizada sem acentos (`_norm` NFKD + `re.findall`), casando nome, telefone **ou** unidade em **OU**; campos separados `nome`/`telefone`/`unidade` seguem em `filtrar_arvore` com comportamento **E** | ✅ Implementado |
+| Contatos em **grade contínua de 3+ colunas** (`minmax(200px, 1fr)` + `align-items: stretch` + altura fixa `5.9rem`), com nome (`tel:`), telefone, matrícula e caminho da unidade | ✅ Implementado |
+| Telefone clicável `tel:` (`re.sub(r"[^0-9+]", "")`) + `ui.link(target="tel:...")` + diálogo "Ligar agora" (`window.location.href`) no celular; **sem `+55` no texto do cartão** (decisão de espaço na coluna estreita), com o `tel:` completo | ✅ Implementado |
+| Impressão: **PDF para baixar** (`impressao.py`, 3 colunas/página com pymupdf, fontes embutidas, bytes em memória, `GET /lista-telefonica/pdf`) + **impressão do navegador** (folha `@media print`) | ✅ Implementado |
+| Admin: criar/mover/elevar/rebaixar/reordenar/comutar/excluir ramo (cascata `_coletar_ramo_ids` + FK CASCADE) + incluir via usuários (busca `on_value_change` por login/nome/e-mail) + **CRUD na própria tela** com guarda no servidor (`_guarda_admin`) | ✅ Implementado |
+| **Telefone múltiplo por usuário** no cadastro (`tb_telefone_usuario` com papel empresa/pessoal, tipo celular/fixo, principal, **`visivel` = consentimento** e **`recado` = número do setor**) + dados funcionais públicos (`unidade`/`lotacao`/`cargo`) + pendência `telefone_pendente` e liberação temporária (`acesso_provisorio`/`provisorio_ate`) | ✅ Implementado |
+| **"deixe recado" no cartão** (27/09/2026), em **linha separada abaixo do número** — e não como sufixo, que não caberia na coluna de ~216px nem empurraria o nome; cache `_contato_e_recado(user_nome)` alimentado por **uma** consulta por desenho da tela | ✅ Implementado (27/09/2026) |
+| **A marca do recado chega pelo núcleo** `mod_intranet/integracoes.telefones_de_recado_para_lista()` (9ª função da fachada) — a lista telefônica **não abre** o banco do cadastro | ✅ Implementado (27/09/2026) |
+| **Espelhamento do cadastro pelo núcleo** `mod_intranet/integracoes.espelhar_cadastro_na_lista_telefonica(ator)` → `sincronizar_contatos_do_cadastro(contatos, ator)`: cria contato `vinculado` pela matrícula, casa a unidade por **lotação** e depois por **secretaria** (sem acento, só unidades **ativas**), **só atualiza o telefone** do contato já existente e **nunca toca** em contato `externo`; idempotente | ✅ Implementado (27/09/2026) |
+| **A lista telefônica NÃO tem acesso direto ao cadastro** (AGENTS.md §2; `assets/test/check_integridade.py` reprova o import direto) — a costura é o núcleo | ✅ Implementado (27/09/2026) |
+| **Carimbo de sincronização** `tb_sincronizacao` (uma linha, `ultima_em`/`total_criados`/`total_atualizados`) + `sincronizacao_desatualizada()` com `INTERVALO_REFRESH_MIN = 15` | ✅ Implementado (27/09/2026) |
+| **Reespelhamento automático silencioso** (`ui.timer(0.4, _auto_sincronizar)`, `async` + `run.io_bound` + trava `_sincronizando`) e **botão "Sincronizar cadastro"** `lista-admin-sincronizar` (só admin, mostra o resumo) | ✅ Implementado (27/09/2026) |
 | LGPD `remover_vinculos_usuario`/`renomear_usuario` + auditoria `tb_auditoria_lista_telefonica` | ✅ Implementado |
 | Administração `/admin/lista_telefonica` (aparência + 2 cards + painel backup) + export `ORGANOGRAMA_BASE` para `solicita_impressao` 1000/200 | ✅ Implementado |
 

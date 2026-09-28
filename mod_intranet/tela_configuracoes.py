@@ -26,7 +26,7 @@ from nicegui import ui
 
 from mod_intranet.bd_conexao import get_config, set_config, PADRAO_CONFIG
 from mod_intranet.bd_manipulador import audit_log
-from mod_intranet import autenticacao, documentacao
+from mod_intranet import autenticacao, documentacao, telefone_faixas
 from mod_intranet import ui_comum
 from mod_intranet.tema_modulo import (
     btn_cls as _btn_cls_tema, btn_style as _btn_style_tema,
@@ -605,6 +605,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 tab_geral = ui.tab("Config", icon="tune")
                 tab_email = ui.tab("E-mail", icon="mail")
                 tab_mod = ui.tab("Módulo", icon="extension")
+                tab_tel = ui.tab("Telefones", icon="support_agent")
                 tab_obs = ui.tab("Observabilidade", icon="query_stats")
                 tab_docs = ui.tab("Documentação", icon="menu_book")
 
@@ -1434,6 +1435,117 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                                       tooltip="Abrir a documentação em nova aba",
                                       on_click=lambda: ui.navigate.to(
                                           "/documentacao", new_tab=True))
+
+            # ============================================================
+            # ============================================================
+            # ABA: TELEFONES — faixas de numero da prefeitura
+            # ============================================================
+            with ui.tab_panel(tab_tel):
+                with ui_comum.card_admin("Faixas de telefone da prefeitura",
+                                         icone="support_agent",
+                                         chave_modulo="intranet", grade=False,
+                                         aberto=True):
+                    ui.label(
+                        "O que está nestas faixas é o que a prefeitura "
+                        "reconhece como número próprio: a linha geral, a "
+                        "garagem, o almoxarifado, a unidade de saúde do "
+                        "distrito.").classes("text-caption text-grey-7 max-w-3xl -mt-2")
+                    ui.label(
+                        "Uma faixa por linha, no formato "
+                        "início-fim  descrição. Exemplo:\n"
+                        "3535915101-3535915199  Central de linhas\n"
+                        "3535915300-3535915350  Garagem e Obras\n"
+                        "3535915400-3535915450  Almoxarifado").classes(
+                        "text-caption text-grey-7 max-w-3xl whitespace-pre-line")
+                    ui.label(
+                        "Um telefone que o servidor digite FORA destas faixas "
+                        "não é bloqueado — é avisado na hora, e o servidor "
+                        "confirma se mesmo assim é o número certo ou se é o "
+                        "telefone de recado do setor.").classes(
+                        "text-caption text-grey-7 max-w-3xl")
+
+                    def _para_texto(faixas):
+                        return "\n".join(
+                            f"{f['inicio']}-{f['fim']}  {f.get('descricao','')}".rstrip()
+                            for f in faixas)
+
+                    def _do_texto(texto):
+                        """Lê o campo no formato `inicio-fim  descricao`.
+
+                        Aceita espaço, tabulação ou vírgula entre as partes, e
+                        o usuário pode escrever só os dois números — a
+                        descrição é opcional e serve para o aviso dizer qual
+                        faixa é a mais próxima do número errado."""
+                        faixas = []
+                        for linha in (texto or "").split("\n"):
+                            if not linha.strip():
+                                continue
+                            try:
+                                cab, _, resto = linha.partition("-")
+                                if not resto:
+                                    continue
+                                fim, _, descricao = resto.partition("  ")
+                                if not descricao.strip():
+                                    # separador de um espaço só
+                                    partes = resto.split(None, 1)
+                                    fim = partes[0]
+                                    descricao = partes[1] if len(partes) > 1 else ""
+                                faixas.append({"inicio": cab.strip(),
+                                               "fim": fim.strip(),
+                                               "descricao": descricao.strip()})
+                            except Exception as e:
+                                from mod_intranet import observabilidade as _obs_f
+                                _obs_f.get_logger("intranet").warning(
+                                    f"faixas: linha ignorada ({linha!r}): {e}")
+                        return faixas
+
+                    campo_faixas = ui.textarea(
+                        value=_para_texto(telefone_faixas.listar_faixas())) \
+                        .props("outlined dense rows=5 autogrow "
+                               "data-testid=config-faixas-texto") \
+                        .classes("w-full font-mono")
+
+                    def _salvar_faixas():
+                        try:
+                            faixas = _do_texto(campo_faixas.value)
+                            if not faixas:
+                                notificar("Informe pelo menos uma faixa.",
+                                          type="negative")
+                                return
+                            ok, msg = telefone_faixas.salvar_faixas(
+                                user_nome, faixas)
+                            if not ok:
+                                notificar(msg, type="negative")
+                                return
+                            # relê do banco: o que foi gravado é a verdade,
+                            # e o campo passa a mostrar a forma normalizada
+                            campo_faixas.value = _para_texto(
+                                telefone_faixas.listar_faixas())
+                            notificar(msg, type="positive")
+                        except Exception as e:
+                            from mod_intranet import observabilidade as _obs_f
+                            _obs_f.get_logger("intranet").exception(
+                                f"faixas: falha ao salvar: {e}")
+                            notificar("Erro ao salvar as faixas.", type="error")
+
+                    def _restaurar_padrao():
+                        try:
+                            campo_faixas.value = _para_texto(
+                                [telefone_faixas.faixa_inicial()])
+                            notificar("Faixa inicial sugerida. Clique em "
+                                       "Salvar para gravar.", type="warning")
+                        except Exception as e:
+                            from mod_intranet import observabilidade as _obs_f
+                            _obs_f.get_logger("intranet").exception(
+                                f"faixas: falha ao restaurar: {e}")
+
+                    with ui.row().classes("w-full items-center gap-2 mt-2") \
+                            .style("gap: 0.5rem"):
+                        _botao_padrao("Salvar faixas", tipo="primario",
+                                      icone="save", on_click=_salvar_faixas)
+                        _botao_padrao("Voltar à faixa inicial",
+                                      tipo="secundario", icone="restart_alt",
+                                      on_click=_restaurar_padrao)
 
             # ============================================================
             # ABA: MÓDULO
