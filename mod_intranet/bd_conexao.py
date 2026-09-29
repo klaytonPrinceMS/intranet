@@ -353,6 +353,32 @@ def init_db():
                     "('migracao_versao_agregador_noticias_260929', '1') "
                     "ON CONFLICT DO NOTHING")
 
+    # Segundo bump do `agregador_noticias` em 29/09/2026, com marcador
+    # próprio: quantas notícias EU VOU LER virou escolha de quem lê.
+    #   • saiu do painel admin (que é do administrador) para a barra da tela
+    #     de notícias, visível a qualquer perfil, inclusive `comum`;
+    #   • gravada em COOKIE do navegador (`noticias_por_pagina`), mesmo
+    #     padrão do `estilo_visual` — é leitura de uma pessoa, não dado do
+    #     sistema. Lida UMA VEZ no corpo da página, porque o timer redesenha
+    #     a grade sem request e releria o padrão do módulo por baixo;
+    #   • a amostra por tema virou ORDEM DE PRIORIDADE no topo, não o
+    #     conteúdo da página 1 — antes o slider prometia 63 e a tela mostrava
+    #     8, porque a primeira página era só a amostra;
+    #   • o tooltip do controle ficou "Quantas notícias por página".
+    # A coleta automática e o botão "Coletar agora" (só administrador) não
+    # mudaram: quem só lê não dispara coleta.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_agregador_noticias_260929_leitura'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('versao_modulo:agregador_noticias', '1.0.260929') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260929' "
+                    "WHERE chave='versao_modulo:agregador_noticias'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_agregador_noticias_260929_leitura', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_usuarios_260929'")
     if (cur.fetchone()[0] or 0) == 0:

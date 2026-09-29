@@ -161,6 +161,19 @@ try:
 except Exception:
     print("[preview] Aviso: não foi possível montar /assets/css")
 
+# ================== NOTÍCIAS POR PÁGINA (cookie do navegador) ============
+# "Quantas notícias eu vou ler" é escolha de QUEM LÊ, não configuração do
+# sistema: fica no cookie de cada navegador, no mesmo formato do `estilo_visual`
+# acima. Precisa de rota HTTP porque só uma RESPOSTA manda `Set-Cookie` — um
+# evento de WebSocket não tem resposta para anexar o cabeçalho. Para REMOVER:
+# apagar este bloco, `montar_rota_por_pagina` e `por_pagina_da_sessao` em
+# `mod_agregador_noticias/telas.py`.
+try:
+    from mod_agregador_noticias import telas as _telas_agregador
+    _telas_agregador.montar_rota_por_pagina()
+except Exception:
+    print("[agregador] Aviso: não foi possível montar a rota de notícias por página")
+
 
 
 # ================== IMAGENS DO BLOG (/img_postagens/*) ==================

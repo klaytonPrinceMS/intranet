@@ -240,40 +240,16 @@ def mostrar_administracao(usuario_logado: str = ""):
         rodape_salvar_restaurar(salvar_temas, restaurar_temas, chave_modulo="agregador_noticias", rotulo_salvar="Salvar temas", data_testid="agregador-salvar-temas")
 
     # === Card Exibição — tamanho de página e textos da tela ===
-    with card_admin("Exibição — notícias por página e textos da tela",
+    with card_admin("Textos da tela — o que o Agregador escreve",
                     icone="view_column", chave_modulo="agregador_noticias", grade=False):
-        ui.label("A grade tem 3 colunas, por isso o tamanho da página é sempre "
-                 "múltiplo de 3 — é o que evita a linha órfã com 1 ou 2 cards "
-                 "sozinhos no fim da página. A primeira página de “Todos os "
-                 "temas” é a amostra com uma notícia de cada tema; as "
-                 "seguintes mostram o resto da lista. A última página pode "
-                 "vir incompleta."
+        ui.label("Estes dois textos NASCEM VAZIOS: a tela do Agregador não "
+                 "escreve mais descrição de si mesma. O que ela escrever é o "
+                 "administrador que decide. O tamanho de página NÃO está "
+                 "aqui — quem escolhe quantas notícias vai ler é cada pessoa, "
+                 "no controle “Por página” da própria tela de notícias, e a "
+                 "escolha fica no navegador dela. Aqui fica só o padrão do "
+                 "módulo, para quem não mexe em nada."
                  ).classes("text-caption text-grey-6")
-
-        # Múltiplos de 3, mínimo 9 (3 linhas cheias). O clamp é do BACKEND
-        # (`ag.definir_por_pagina`), não da lista: mesmo que a chave seja
-        # gravada direto no banco, a tela recebe um valor válido.
-        val_pp = ag.por_pagina()
-        # SLIDER em vez de lista suspensa: com passo 3 de 9 a 99 são 31
-        # opções, e uma lista de 31 itens é pior de usar do que um trilho.
-        # O `ui.slider` NÃO aceita `label=` nesta versão do NiceGUI (TypeError
-        # ao abrir o painel) — mesmo cuidado do `sl_refresh` acima: o rótulo
-        # vai por `.props('label')`.
-        lbl_pp = ui.label(f"{val_pp} notícias por página").classes(
-            "text-caption text-grey-6")
-        sl_pp = ui.slider(min=ag.POR_PAGINA_MINIMO,
-                          max=ag.POR_PAGINA_MAXIMO - 1, step=3, value=val_pp) \
-            .props("outlined dense label label-always") \
-            .classes("w-full sm:w-96").props('data-testid=agregador-por-pagina')
-        # `max - 1`: o teto declarado é 100, mas 100 não é múltiplo de 3, então
-        # o último valor alcançável é 99. O tooltip diz o porquê em vez de
-        # deixar o trilho terminar num número que o clamp depois normaliza.
-        sl_pp.tooltip(
-            "Mínimo 9, passo de 3 (a grade tem 3 colunas), máximo real 99 — "
-            "o limite pedido é 100, mas 100 não é múltiplo de 3 e deixaria "
-            "uma linha órfã. A última página pode vir incompleta.")
-        sl_pp.on_value_change(lambda e: lbl_pp.set_text(
-            f"{int(e.value or 0)} notícias por página"))
 
         # Os DOIS textos nascem VAZIOS: a tela do Agregador não escreve mais
         # descrição de si mesma no código — quem escreve é o administrador.
@@ -297,39 +273,39 @@ def mostrar_administracao(usuario_logado: str = ""):
                         "VAZIO = nada aparece.")
 
         def salvar_exibicao():
+            # Só os DOIS textos. O tamanho de página saiu daqui: é escolha de
+            # quem lê, e cada pessoa ajusta o seu na tela de notícias.
             try:
-                ok_pp, v_pp = ag.definir_por_pagina(sl_pp.value, ator=usuario_logado)
                 ok_h, _ = ag.definir_texto_header(inp_header.value or "", ator=usuario_logado)
                 ok_s, _ = ag.definir_texto_sem_novidade(inp_sem.value or "", ator=usuario_logado)
-                if not (ok_pp and ok_h and ok_s):
-                    notificar("Falha ao salvar a exibição — nada foi alterado",
+                if not (ok_h and ok_s):
+                    notificar("Falha ao salvar os textos — nada foi alterado",
                               type="negative")
                     return
                 _tem_header = "sim" if (inp_header.value or "").strip() else "não"
                 _tem_sem = "sim" if (inp_sem.value or "").strip() else "não"
-                notificar(f"Exibição salva: {v_pp} notícias por página • "
-                          f"cabeçalho {_tem_header} • 'sem novidade' {_tem_sem}",
+                notificar(f"Textos salvos: cabeçalho {_tem_header} • "
+                          f"'sem novidade' {_tem_sem}",
                           type="positive")
                 ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
             except Exception:
-                log.exception("falha ao salvar exibição do agregador")
-                notificar("Erro ao salvar exibição", type="negative")
+                log.exception("falha ao salvar os textos do agregador")
+                notificar("Erro ao salvar os textos", type="negative")
 
         def restaurar_exibicao():
             try:
-                ag.definir_por_pagina(ag.POR_PAGINA_PADRAO, ator=usuario_logado)
                 ag.definir_texto_header("", ator=usuario_logado)
                 ag.definir_texto_sem_novidade("", ator=usuario_logado)
-                notificar(f"Exibição restaurada: {ag.POR_PAGINA_PADRAO} notícias "
-                          f"por página, sem textos na tela", type="positive")
+                notificar("Textos restaurados: a tela não escreve nada",
+                          type="positive")
                 ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
             except Exception:
-                log.exception("falha ao restaurar exibição do agregador")
-                notificar("Erro ao restaurar exibição", type="negative")
+                log.exception("falha ao restaurar os textos do agregador")
+                notificar("Erro ao restaurar os textos", type="negative")
 
         rodape_salvar_restaurar(salvar_exibicao, restaurar_exibicao,
                                 chave_modulo="agregador_noticias",
-                                rotulo_salvar="Salvar exibição",
+                                rotulo_salvar="Salvar textos",
                                 data_testid="agregador-salvar-exibicao")
 
     # === Card Censura — palavras bloqueadas ===

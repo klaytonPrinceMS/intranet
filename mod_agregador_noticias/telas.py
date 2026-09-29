@@ -3,8 +3,9 @@
 PT-BR: Tela do Agregador de Notícias — grid de 3 colunas, card de altura
 fixa com UM scroll só, integração TV.
 
-Barra com filtro de tema e busca (sem botão "Atualizar": a grade se
-atualiza sozinha) e grid responsivo 3 colunas (≤1024px: 2; ≤640px: 1).
+Barra com filtro de tema, busca e o controle "Por página" (escolha de quem
+lê, guardada em cookie do navegador) e grid responsivo 3 colunas
+(≤1024px: 2; ≤640px: 1).
 
 CARD — altura FIXA de 250px (220px no celular; `height`, nunca
 `min/max-height`, para todos ficarem uniformes). Estrutura de DUAS colunas
@@ -40,9 +41,15 @@ grade não virar um bloco só de Esporte/Economia. As páginas seguintes
 mostram o RESTO da lista, no tamanho configurado, sem repetir a amostra.
 Paginação com busca em memória (500 limite, NFKD lower).
 
-PAGINAÇÃO (29/09/2026): o tamanho da página vem de `ag.por_pagina()`
-(múltiplo de 3, mínimo 9 — configurável em /admin/agregador_noticias) e a
-CONTAGÊNCIA e a FATIA saem da MESMA lista, então "Exibindo X de Y" nunca
+PAGINAÇÃO (29/09/2026): o tamanho da página é ESCOLHA DE QUEM LÊ, não
+configuração do sistema. Fica em cookie do navegador (`noticias_por_pagina`),
+mesmo padrão do `estilo_visual`, e cada pessoa ajusta o seu na barra de cima
+desta tela — inclusive quem é `comum`. Quem não mexer usa o padrão do
+módulo, `ag.por_pagina()`. O intervalo de coleta NÃO é escolha do leitor: a
+coleta é automática e quem só pode disparar coleta manual é o administrador
+("Coletar agora", que fica restrito a ele).
+
+A CONTAGÊNCIA e a FATIA saem da MESMA lista, então "Exibindo X de Y" nunca
 anuncia página que não existe. Antes a contagem vinha do total cru e a
 fatia da amostra por tema: 30 páginas anunciadas, 29 vazias.
 
@@ -59,6 +66,110 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from nicegui import ui, run
 from mod_intranet import autenticacao
 from mod_intranet.aba_modulo import cabecalho
+
+# ============ QUANTAS NOTÍCIAS EU VOU LER (cookie do navegador) ============
+#
+# Preferência de QUEM LÊ, não configuração do sistema. Fica no navegador pelo
+# mesmo motivo e no mesmo formato do `estilo_visual` (`preview_estilos.py`):
+# é escolha de leitura de uma pessoa, e um navegador é o lugar onde essa
+# escolha vive sem virar dado do banco. Quem não mexe usa o padrão do módulo.
+#
+# O COOKIE e não um evento de WebSocket porque só uma RESPOSTA HTTP consegue
+# mandar `Set-Cookie`; num evento de socket não há resposta para anexar o
+# cabeçalho. Daí a rota + 303 de volta, o mesmo desenho de `trocar_estilo`.
+COOKIE_POR_PAGINA = "noticias_por_pagina"
+ROTA_POR_PAGINA = "/agregador-noticias/por-pagina"
+
+
+def por_pagina_da_sessao():
+    """EN: Page size chosen by this browser, falling back to the module default.
+
+    PT-BR: Tamanho de página escolhido neste navegador; sem cookie, o padrão
+    do módulo. O valor do cookie passa pelo mesmo clamp do backend
+    (`ag._ajustar_por_pagina`), porque cookie é entrada de usuário e não pode
+    serTrusted — alguém pode gravar `por_pagina=99999` no navegador à mão.
+    """
+    try:
+        bruto = ""
+        # `ui.context.client` LEVANTA RuntimeError quando não há requisição em
+        # curso (import, teste, script) — e "não há requisição" aqui é o caso
+        # NORMAL de quem cai no padrão, não uma falha. Por isso o acesso ao
+        # contexto fica num try próprio, sem log; só o resto é erro de verdade.
+        try:
+            req = ui.context.client.request
+        except Exception:
+            req = None
+        if req is not None:
+            bruto = (getattr(req, "cookies", {}) or {}).get(
+                COOKIE_POR_PAGINA) or ""
+            bruto = bruto.strip()
+        if bruto:
+            from mod_agregador_noticias import bd_manipulador as _ag
+            return _ag._ajustar_por_pagina(bruto)
+    except Exception as e:
+        try:
+            log.exception(f"por_pagina_da_sessao: cookie ilegível | {e}")
+        except Exception:
+            pass
+    try:
+        return ag.por_pagina()
+    except Exception:
+        return 12
+
+
+def url_por_pagina(valor, volta="/agregador-noticias"):
+    """EN: URL that saves the page size in the cookie and returns to `volta`.
+
+    PT-BR: URL que grava o tamanho de página no cookie e volta para `volta`.
+    Só caminho interno — um `volta` externo viraria redirecionamento aberto.
+    """
+    try:
+        from urllib.parse import quote
+        alvo = volta or "/agregador-noticias"
+        if not alvo.startswith("/"):
+            alvo = "/agregador-noticias"
+        return (f"{ROTA_POR_PAGINA}/{int(valor)}"
+                f"?volta={quote(alvo, safe='')}")
+    except Exception:
+        return f"{ROTA_POR_PAGINA}/12"
+
+
+def montar_rota_por_pagina() -> bool:
+    """Registra a rota que grava o cookie do tamanho de página e volta.
+
+    Mesma razão de `preview_estilos.montar_rota_troca`: só uma resposta HTTP
+    manda `Set-Cookie`. O 303 evita repetir o GET no destino, e o valor vem
+    pelo clamp do backend — o cookie é entrada de usuário, não é confiável.
+    """
+    try:
+        from urllib.parse import urlparse
+        from fastapi.responses import RedirectResponse
+        from nicegui import app
+
+        @app.get(ROTA_POR_PAGINA + "/{valor}")
+        def _trocar_por_pagina(valor: str, volta: str = "/agregador-noticias"):
+            """Grava o tamanho de página escolhido e devolve o usuário à tela."""
+            destino = urlparse(volta).path if str(volta).startswith("/") else \
+                "/agregador-noticias"
+            try:
+                # clamp do backend: quem grava o cookie é o navegador
+                numero = ag._ajustar_por_pagina(valor)
+            except Exception:
+                numero = ag.POR_PAGINA_PADRAO
+            resp = RedirectResponse(url=destino or "/agregador-noticias",
+                                    status_code=303)
+            resp.set_cookie(COOKIE_POR_PAGINA, str(numero),
+                            max_age=60 * 60 * 24 * 365,
+                            httponly=False, samesite="lax", path="/")
+            return resp
+
+        return True
+    except Exception:
+        try:
+            log.exception("montar_rota_por_pagina: rota não foi registrada")
+        except Exception:
+            pass
+        return False
 from mod_intranet.tema_modulo import ler_tema, notificar
 from mod_intranet.ui_comum import botao, dialogo_card
 from mod_agregador_noticias import bd_manipulador as ag
@@ -95,7 +206,18 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
 
     # Filtro por tema + busca
     temas = ag.temas_config()
-    estado = {"tema": "", "busca": "", "pagina": 1, "max_id": 0}
+    # `por_pagina` é lido do cookie **UMA VEZ**, aqui no corpo da página, e
+    # guardado no `estado` — e não relido a cada redesenho da grade.
+    #
+    # POR QUÊ UMA VEZ SÓ: a grade é redesenhada por `ui.timer` (atualização
+    # parcial a cada `refresh_seg`), e um timer roda num contexto em que
+    # `ui.context.client` não existe. Relindo ali, `por_pagina_da_sessao()`
+    # caía no padrão do MÓDULO e a página voltava a 12 por página por baixo,
+    # com o slider ainda marcando o que a pessoa escolheu. Ler uma vez no
+    # contexto de página — onde o request existe — elimina essa diferença,
+    # e é o certo: a escolha não muda enquanto a pessoa está lendo.
+    estado = {"tema": "", "busca": "", "pagina": 1, "max_id": 0,
+              "por_pagina": por_pagina_da_sessao()}
 
     # `_eh_admin` decide o que só o administrador vê/usa: a coleta manual
     # ("Coletar agora"). A atualização da tela NÃO é privilégio — é automática
@@ -398,6 +520,33 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             # (ui.timer com atualização parcial — só o card novo entra). O
             # administrador não precisa mais clicar para ver novidade.
             lbl_auto = ui.label().classes("text-caption text-grey-6")
+
+            # ---- Quantas notícias EU vou ler (escolha de quem lê) ----
+            # Fica aqui, na barra de cima, e NÃO no painel admin: escolher
+            # quanto ler é preferência de leitura, e o usuário comum tem o
+            # mesmo direito que o administrador. O padrão do módulo continua
+            # valendo para quem não mexer.
+            #
+            # Grava em cookie por NAVEGAÇÃO (rota + 303), pelo mesmo motivo do
+            # `estilo_visual`: só uma resposta HTTP manda `Set-Cookie`, e um
+            # evento de WebSocket não tem resposta para anexar o cabeçalho.
+            # Por isso o `change` (soltar o cursor), e não o
+            # `on_value_change` — que dispara a cada movimento do trilho e
+            # recarregaria a página dezenas de vezes.
+            _pp_atual = estado["por_pagina"]
+            with ui.row().classes("items-center gap-2 w-full sm:w-auto"):
+                ui.label("Por página").classes(
+                    "text-caption text-grey-6 whitespace-nowrap")
+                _sl_pp = ui.slider(min=ag.POR_PAGINA_MINIMO,
+                                   max=ag.POR_PAGINA_MAXIMO - 1, step=3,
+                                   value=_pp_atual) \
+                    .props("outlined dense label label-always") \
+                    .classes("w-full sm:w-56") \
+                    .props('data-testid=agregador-por-pagina')
+                _sl_pp.tooltip("Quantas notícias por página")
+                _sl_pp.on("change", lambda e: ui.navigate.to(
+                    url_por_pagina(int(e.value or _pp_atual)), force_load=True))
+
             if _eh_admin:
                 _estado_coleta = {"ocupado": False}
                 async def _coletar():
@@ -521,14 +670,19 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             mensagem de BANCO VAZIO. Agora contagem e fatia saem da MESMA
             lista:
 
-            • tamanho da página = `ag.por_pagina()` (múltiplo de 3, mínimo
-              9), configurável pelo administrador, com o clamp no BACKEND;
-            • "Todos os temas", página 1 = AMOSTRA (uma notícia por tema
-              distinto, no máximo `por_pagina`) — ela existe para o dia em
-              que 160 das 349 notícias eram do mesmo tema e a página única
-              virava quase tudo igual;
-            • páginas 2+ = o RESTO (tudo que a amostra não levou), no
-              tamanho configurado, sem repetir nada da página 1;
+            • tamanho da página = `estado["por_pagina"]` (múltiplo de 3,
+              mínimo 9) — escolha de QUEM LÊ, no controle "Por página" da
+              barra desta tela, gravada em cookie do navegador; sem cookie,
+              o padrão do módulo (`ag.por_pagina()`). Lido do cookie UMA
+              VEZ no corpo da página, e não a cada redesenho: o timer roda
+              sem request e releria o padrão do módulo por baixo. Clamp no
+              BACKEND;
+            • "Todos os temas": a AMOSTRA por tema entra no TOPO da lista
+              (uma notícia de cada tema distinto) e o RESTO vem logo depois.
+              Ela é ordem de PRIORIDADE, não o conteúdo inteiro da página 1:
+              o tamanho escolhido vale para TODAS as páginas, inclusive a
+              primeira. Antes a página 1 era só a amostra, e o controle
+              mentia — a pessoa punha 63 no trilho e via 8;
             • a última página pode vir incompleta.
 
             AMOSTRA e RESTO particionam a lista inteira, uma vez cada, então
@@ -541,7 +695,7 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             # TAMANHO DA PÁGINA — configurável (múltiplo de 3, mínimo 9),
             # com o clamp feito no BACKEND (`ag.por_pagina`), não aqui: é a
             # mesma variável que fatia e que anuncia o total.
-            por_pagina = ag.por_pagina()
+            por_pagina = estado["por_pagina"]
             truncado = False
             if busca:
                 # Busca do usuário: ÚNICO caso, junto com a seleção do tema,
@@ -594,6 +748,17 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 # vem depois. Amostra e resto não se repetem.
                 _linhas = ag.listar_noticias(tema=None, limite=_LIMITE_LISTAGEM,
                                              offset=0)
+                # A amostra é a ORDEM DE PRIORIDADE, não o conteúdo da página.
+                # Ela nasce de uma notícia por tema para o dia em que 160 das
+                # 351 eram do mesmo tema e o topo da página virava quase tudo
+                # igual — mas ela é só a CABEÇA da lista: o que vem depois
+                # completa a página até o tamanho que a pessoa escolheu.
+                #
+                # Antes a página 1 era SÓ a amostra, e aí o controle "Por
+                # página" mentia: a pessoa punha 63 no trilho e via 8, porque
+                # o tamanho não valia para a primeira página. Agora a
+                # amostra ocupa o topo e o resto vem logo em seguida, então o
+                # número que a pessoa escolheu é o número que ela vê.
                 _vistos, _amostra = set(), []
                 for _n in _linhas:
                     _t = _n[3]
@@ -604,25 +769,27 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     if len(_amostra) >= por_pagina:
                         break
                 _ids_amostra = {_n[0] for _n in _amostra}
+                _n_amostra = len(_amostra)
                 _resto = [_n for _n in _linhas if _n[0] not in _ids_amostra]
+                # A lista INTEIRA na ordem escolhida: amostra primeiro, resto
+                # depois, sem repetir. A partir daqui a paginação é a simples
+                # fatia por `por_pagina` — não há mais contagem separada para
+                # a amostra, que era a origem do desencontro.
+                _ordenada = _amostra + _resto
                 # O total anunciado é o que a paginação ALCANÇA de fato: a
                 # lista carregada, não a contagem bruta de uma tabela que
                 # pode ser maior que o limite de leitura. Havendo linhas
                 # além do limite, o rodapé avisa em vez de prometer páginas
                 # que não existem.
-                total = len(_linhas)
+                total = len(_ordenada)
                 truncado = (ag.contar_noticias(tema=None) or 0) > total
-                _paginas_resto = (len(_resto) + por_pagina - 1) // por_pagina
-                total_pag = max(1, 1 + _paginas_resto)
+                total_pag = max(1, (total + por_pagina - 1) // por_pagina)
                 if estado["pagina"] > total_pag:
                     estado["pagina"] = total_pag
                 if estado["pagina"] < 1:
                     estado["pagina"] = 1
-                if estado["pagina"] == 1:
-                    noticias = _amostra
-                else:
-                    _off = (estado["pagina"] - 2) * por_pagina
-                    noticias = _resto[_off:_off + por_pagina]
+                offset = (estado["pagina"] - 1) * por_pagina
+                noticias = _ordenada[offset:offset + por_pagina]
             if not noticias:
                 with vazio_box:
                     vazio_box.clear()
@@ -694,8 +861,10 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         ui.label(f"Exibindo {len(noticias)} de {total}").classes("text-caption text-grey-5")
                         if truncado:
                             ui.label(f"Mostrando as {total} mais recentes — a lista é maior que o limite de leitura.").classes("text-caption text-grey-5")
-                        elif not tema_f and not busca and estado["pagina"] == 1 and len(noticias) != por_pagina:
-                            ui.label("Primeira página: uma notícia de cada tema.").classes("text-caption text-grey-5")
+                        elif not tema_f and not busca and estado["pagina"] == 1 \
+                                and _n_amostra:
+                            # a amostra é o TOPO da lista, não a página inteira
+                            ui.label(f"As {_n_amostra} primeiras são uma de cada tema.").classes("text-caption text-grey-5")
 
         def _on_tema(e):
             estado["tema"] = e.value or ""
