@@ -347,7 +347,49 @@ Todo subagente do projeto segue este padrão (ver `.opencode/agent/kbp-qa.md` co
 | `qacomum` | `123456` | `comum` | Teste/QA (docs); segue o padrão de criação (comum em `editar_pdf`, `empenhos`, `solicita_impressao`; sem `blog`/`usuarios`/`auditoria`); troca de senha forçada no 1º login |
 | `qamaster` | `123456` | `administrador_geral` | Teste/QA (docs); troca de senha forçada no 1º login |
 
-**Regras:**
+### 8.2.0 Contas de fábrica na entrega — a decisão é do ADMINISTRADOR (29/09/2026)
+
+> Decisão do responsável, na entrega do produto. Vale para a instalação
+> (`ativacao` / primeiro boot) e para qualquer reinstalação.
+
+**As contas de fábrica NUNCA são removidas automaticamente, e o sistema não
+deve tratar a remoção como recomendação nem como pendência.** Elas existem
+na entrega e **permanecem**; quem decide se fica ou se sai é o administrador,
+quando ele entra.
+
+| Conta | Senha | Perfil | O que o administrador decide |
+|---|---|---|---|
+| `qacomum` | `123456` | `comum` | manter ou apagar |
+| `qamaster` | `123456` | `administrador_geral` | manter ou apagar |
+| `klayton` | `klayton` | `administrador_geral` | manter, ou fazer a troca de credenciais |
+
+**O que isso proíbe, na prática:**
+
+- **Não** "limpar" as contas no `init_db`, no seed, na ativação ou em rotina de
+  manutenção. Nenhum código do projeto apaga, desativa ou renomeia
+  `qacomum`, `qamaster` ou `klayton` por conta própria.
+- **Não** tratar a troca de credenciais do `klayton` como obrigatória. É uma
+  **escolha** do administrador no primeiro acesso dele, não uma imposição.
+  (A troca do `master` nativo é outra coisa e continua forçada — §4.2 do fluxo
+  de `master` e o marcador `forcar_troca_credenciais:master`.)
+- **Não** converter "manter" em culpa. O diálogo do primeiro acesso pode
+  **oferecer** a remoção como opção, mas a resposta padrão é manter, e não
+  removê-las é uma escolha legítima.
+
+**Por que a senha pode ser igual ao login em `klayton`:** é decisão do
+responsável, e o formulário de troca de credenciais nasce **pré-preenchido**
+com `klayton` justamente para que a troca seja um clique, sem digitação. O
+que o §8.2.1 continua exigindo é o mesmo: senha **nunca** na documentação
+(código, sim).
+
+**Consequência prática para quem receber a prefeitura:** o sistema entregue
+vem com **três** contas conhecidas, e o responsável pela instalação é quem
+decide, conscientemente, o que fazer com cada uma. Isso é preferível a
+qualquer remoção automática, porque a remoção automática acontece sem ninguém
+saber que aconteceu.
+
+
+**Regras da semente:**
 - São criados só se ainda não existem (idempotente). Nunca criar/duplicar em outra parte do código.
 - Senha padrão é provisória: qualquer fluxo que use `master`/`qacomum`/`qamaster` deve supor que a senha inicial pode já ter sido trocada pelo usuário.
 - Nunca expor senhas fora deste contexto interno (não logar, não commitar em `estrutura.md`/docs públicas).
