@@ -540,15 +540,15 @@
     "semantic_hash": ""
   },
   "mod_gest_cad_usuario/bd_criador.py": {
-    "mtime": 1790684311.323689,
-    "seen": 1790694056.662945,
-    "ast_hash": "dccfc7d067e46dba4a037a21435c9798",
+    "mtime": 1790700882.1744819,
+    "seen": 1790701869.2646198,
+    "ast_hash": "064a262d07e57ae303f05e08106ac1ce",
     "semantic_hash": ""
   },
   "mod_gest_cad_usuario/bd_manipulador.py": {
-    "mtime": 1790689802.4694452,
-    "seen": 1790694056.6629462,
-    "ast_hash": "8de0eaf92a72d039ebe1dab4f70a6125",
+    "mtime": 1790700726.4500859,
+    "seen": 1790701869.2646217,
+    "ast_hash": "3e220c63cffa2d06cf622d1f146e46da",
     "semantic_hash": ""
   },
   "mod_gest_cad_usuario/telas.py": {
@@ -594,9 +594,9 @@
     "semantic_hash": ""
   },
   "mod_intranet/bd_conexao.py": {
-    "mtime": 1790697338.7710056,
-    "seen": 1790698055.306658,
-    "ast_hash": "c2e103dac4fce77ca7df582758f52313",
+    "mtime": 1790701122.164553,
+    "seen": 1790701869.2646406,
+    "ast_hash": "dd4500c75c11317d3d44e121edd322de",
     "semantic_hash": ""
   },
   "mod_intranet/bd_criador.py": {
@@ -1032,9 +1032,9 @@
     "semantic_hash": ""
   },
   "docs/analise_de_risco/index.md": {
-    "mtime": 1790684311.2166886,
-    "seen": 1790694056.6630898,
-    "ast_hash": "23cf36f2cf3443bb61934997bdfd915a",
+    "mtime": 1790701585.5869648,
+    "seen": 1790701869.2647893,
+    "ast_hash": "c733cdfbb8fde42e2df125530694f0de",
     "semantic_hash": ""
   },
   "docs/analise_mod_auditoria.md": {
@@ -1056,9 +1056,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_gest_cad_usuario.md": {
-    "mtime": 1790684311.2206883,
-    "seen": 1790694056.6630976,
-    "ast_hash": "5cfbfddc369baa5afce976455e3d0a99",
+    "mtime": 1790701751.8673968,
+    "seen": 1790701869.264798,
+    "ast_hash": "28ac251350450d68b307d460a8157402",
     "semantic_hash": ""
   },
   "docs/analise_mod_intranet.md": {
@@ -1080,9 +1080,9 @@
     "semantic_hash": ""
   },
   "docs/api_referencia.md": {
-    "mtime": 1790684311.2236888,
-    "seen": 1790694056.663105,
-    "ast_hash": "0812f5c35efe0e94098242a97c57feb6",
+    "mtime": 1790701722.5187726,
+    "seen": 1790701869.2648067,
+    "ast_hash": "0ed0f9d05a1e8b9897ae7b14c4b2b8ae",
     "semantic_hash": ""
   },
   "docs/arquitetura.md": {
@@ -1098,9 +1098,9 @@
     "semantic_hash": ""
   },
   "docs/configuracoes.md": {
-    "mtime": 1790697235.9753857,
-    "seen": 1790698055.3068283,
-    "ast_hash": "51b59827e95aa6797b1007f2240f717a",
+    "mtime": 1790701722.5187726,
+    "seen": 1790701869.2648144,
+    "ast_hash": "d0e593572cd16d67c409284aef97bb08",
     "semantic_hash": ""
   },
   "docs/contribuicoes/index.md": {
@@ -1134,15 +1134,15 @@
     "semantic_hash": ""
   },
   "docs/inicio_rapido.md": {
-    "mtime": 1790697253.424233,
-    "seen": 1790698055.3068433,
-    "ast_hash": "db89db4d6c2eda6d53ad5fee42c0cccd",
+    "mtime": 1790701697.0456462,
+    "seen": 1790701869.26483,
+    "ast_hash": "45f89ef61ffdf5e8f39c533ce06e9884",
     "semantic_hash": ""
   },
   "docs/inicio_rapido_otel.md": {
-    "mtime": 1790684311.2306893,
-    "seen": 1790694056.663125,
-    "ast_hash": "f9e46f9c9056a7f3c7d5e013de76ad02",
+    "mtime": 1790701708.3358288,
+    "seen": 1790701869.2648315,
+    "ast_hash": "9ddbd46c9a620d090130f170bc26dcf1",
     "semantic_hash": ""
   },
   "docs/intro.md": {
@@ -1164,9 +1164,9 @@
     "semantic_hash": ""
   },
   "docs/manual_de_uso_instalacao/index.md": {
-    "mtime": 1790698351.1744897,
-    "seen": 1790698424.301426,
-    "ast_hash": "52bd8401806c1c534f8ff74492b63a51",
+    "mtime": 1790701713.127539,
+    "seen": 1790701869.2648373,
+    "ast_hash": "2d4f03acdd1fb0129e0fc6719b7819f3",
     "semantic_hash": ""
   },
   "docs/manual_de_uso_renomear_empenho/index.md": {
@@ -1206,9 +1206,9 @@
     "semantic_hash": ""
   },
   "docs/modulos/gest_cad_usuario.md": {
-    "mtime": 1790689802.4363415,
-    "seen": 1790694056.663143,
-    "ast_hash": "1bca1950df6ebf7dfdecc25e6e7e42bf",
+    "mtime": 1790701555.5019622,
+    "seen": 1790701869.2648509,
+    "ast_hash": "6d9c9d3f881b6d6381e2b8dd8078c4d2",
     "semantic_hash": ""
   },
   "docs/modulos/intranet.md": {
@@ -1242,9 +1242,9 @@
     "semantic_hash": ""
   },
   "docs/registro_de_mudancas/index.md": {
-    "mtime": 1790697656.275661,
-    "seen": 1790698055.306876,
-    "ast_hash": "5752d4ca0c419b3a84cbd73f9d2d1ef9",
+    "mtime": 1790701778.3758943,
+    "seen": 1790701869.264863,
+    "ast_hash": "951522843ce773bbd24f2d9c1752a0a2",
     "semantic_hash": ""
   },
   "docs/requisitos.md": {
@@ -1254,15 +1254,15 @@
     "semantic_hash": ""
   },
   "docs/seguranca/auditoria_menu_2026-09-12.md": {
-    "mtime": 1790684311.2436888,
-    "seen": 1790694056.6631591,
-    "ast_hash": "871803f832f29f6ecb8966f78af3acaa",
+    "mtime": 1790701800.592427,
+    "seen": 1790701869.264869,
+    "ast_hash": "d15da521c313e7c74e20cae7cfd0d406",
     "semantic_hash": ""
   },
   "docs/seguranca/ferramentas_de_seguranca.md": {
-    "mtime": 1790684311.244689,
-    "seen": 1790694056.6631603,
-    "ast_hash": "12759cb03997652ed2e5f308812eb000",
+    "mtime": 1790701806.4322827,
+    "seen": 1790701869.264872,
+    "ast_hash": "ab082ae3ea97fd7a6bbd85132147b1ca",
     "semantic_hash": ""
   },
   "docs/seguranca/riscos_ia_ml.md": {
@@ -1278,9 +1278,9 @@
     "semantic_hash": ""
   },
   "docs/testes_plano/index.md": {
-    "mtime": 1790684311.246689,
-    "seen": 1790694056.6631668,
-    "ast_hash": "5739518d71c598681a9d9fda825cc844",
+    "mtime": 1790701814.5066452,
+    "seen": 1790701869.2648797,
+    "ast_hash": "00628478ffe6983234c9af11b55b10cf",
     "semantic_hash": ""
   },
   "docs/testes_playwright.md": {
@@ -1296,15 +1296,15 @@
     "semantic_hash": ""
   },
   "docs/testes_relatorios/seguranca_2026-09-06.md": {
-    "mtime": 1790684311.24769,
-    "seen": 1790694056.663172,
-    "ast_hash": "5476f92aca7a96a066145140df55a2de",
+    "mtime": 1790701806.4322827,
+    "seen": 1790701869.2648854,
+    "ast_hash": "c10d5f687c9ca9190562242471997fba",
     "semantic_hash": ""
   },
   "docs/versionamento/index.md": {
-    "mtime": 1790697613.9357426,
-    "seen": 1790698055.306898,
-    "ast_hash": "2d459f32397f8de05d008e64bb093241",
+    "mtime": 1790701836.8620522,
+    "seen": 1790701869.2648869,
+    "ast_hash": "973f00d46350f70b1460f7e89d774f1d",
     "semantic_hash": ""
   },
   "docs/visao_de_produto/index.md": {
@@ -1320,9 +1320,9 @@
     "semantic_hash": ""
   },
   "mkdocs.yml": {
-    "mtime": 1790695866.664884,
-    "seen": 1790698055.3069026,
-    "ast_hash": "8c98265db83988a976716474a9c2e669",
+    "mtime": 1790701518.7370453,
+    "seen": 1790701869.2648914,
+    "ast_hash": "65dca103e8701e466a93ee81b8167125",
     "semantic_hash": ""
   },
   "requirements-dev.txt": {
@@ -2019,6 +2019,12 @@
     "mtime": 1790698564.3196163,
     "seen": 1790698613.9037662,
     "ast_hash": "4ff293d212d6477258686c02ffb26d1d",
+    "semantic_hash": ""
+  },
+  "docs/seguranca/conta_de_fabrica_master_2026-09-29.md": {
+    "mtime": 1790701514.595548,
+    "seen": 1790701869.2648706,
+    "ast_hash": "0ccc208e98e546120a001c3aedb28c93",
     "semantic_hash": ""
   }
 }

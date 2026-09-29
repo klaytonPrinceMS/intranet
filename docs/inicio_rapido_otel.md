@@ -12,13 +12,17 @@ Stack completa de observabilidade para monitoramento da Intranet:
 
 ---
 
-## Credenciais (master/master)
+## Credenciais
 
-Todos os serviços usam as mesmas credenciais do usuário master da Intranet:
+O Grafana usa o **mesmo login** da conta de fábrica da Intranet, com senha
+própria definida na inicialização da stack. **O valor não é publicado nesta
+documentação** (AGENTS.md §8.2.1) — ele é gerado/escrito no setup, em
+`assets/docker/setup-grafana-credentials.sh` e no `compose.yml`, e o endpoint
+para consultá-lo é o próprio Grafana após o primeiro acesso.
 
 | Serviço | Usuário | Senha | URL |
 |---------|---------|-------|-----|
-| **Grafana** | master | master | http://localhost:3000 |
+| **Grafana** | `master` | (definida no setup — não publicada aqui) | http://localhost:3000 |
 | Loki | (interno) | (interno) | http://localhost:3100 |
 | Tempo | (interno) | (interno) | http://localhost:3200 |
 | Mimir | (interno) | (interno) | http://localhost:9009 |
@@ -85,12 +89,10 @@ docker info
 
 | Serviço | URL | Credenciais |
 |---------|-----|-------------|
-| **Grafana** | http://localhost:3000 | master / master |
+| **Grafana** | http://localhost:3000 | usuário `master` (mesmo login da Intranet; senha definida no setup — não publicada aqui) |
 | Loki | http://localhost:3100 | (interno) |
 | Tempo | http://localhost:3200 | (interno) |
 | Mimir | http://localhost:9009 | (interno) |
-
-**Acesse o Grafana com:** master / master (mesmo usuário da Intranet)
 
 ---
 

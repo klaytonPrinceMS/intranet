@@ -40,7 +40,7 @@ caíam no fallback `1.0` do rodapé. Hoje as **13 têm chave**.
 
 | Chave | Versão no seed | Versão efetiva | Origem da linha |
 |:---|:---|:---|:---|
-| `usuarios` | `1.0.260918` | `1.0.260929` | seed + `migracao_versao_usuarios_260918` + bump `260929` |
+| `usuarios` | `1.0.260918` | `1.0.260929` | seed + `migracao_versao_usuarios_260918` + bump `260929` + **`260929_seg`** (correção de segurança do seed de `master`, 2ª entrega do dia — marcador **próprio**, senão o segundo bump é engolido pelo primeiro) |
 | `intranet` | — | `1.0.260929` | `migracao_versao_intranet_260913` + bump `260929` |
 | `estoque` | `1.0.260928` | `1.0.260929` | seed + `migracao_versao_pendentes_260928` + bump `260929` |
 | `lista_telefonica` | `1.0.260928` | `1.0.260929` | seed + `migracao_versao_pendentes_260928` + bump `260929` |
@@ -155,6 +155,18 @@ if (cur.fetchone()[0] or 0) == 0:
     some da leitura estática, e nem o `teste_versionamento_modulo.py` nem
     quem lê o diff consegue dizer que o bump existe.
 
+!!! tip "O marcador é um padrão do projeto, não um truque do versionamento"
+    O **marcador de migração** é a mesma peça conceitual que a marca
+    `forcar_troca_credenciais:master` (29/09/2026): **um fato gravado uma vez que
+    o código passa a consultar, para distinguir "nunca aconteceu" de "já
+    aconteceu"**. Nos dois casos o defeito nasce da mesma confusão — a guarda
+    olhando o **estado observável** (a versão, o login) em vez do **fato**
+    (o bump já rodou, a troca já concluiu) — e a correção é a mesma:
+    **estado que, uma vez gravado, não se desfaz sozinho**.
+
+    O caso de segurança, com diagnóstico e evidência:
+    [Conta de fábrica `master` ressuscitando a cada reinício](../seguranca/conta_de_fabrica_master_2026-09-29.md).
+
 ### 3.2 Conferência antes de fechar a alteração
 
 ```bash
@@ -252,3 +264,7 @@ if (cur.fetchone()[0] or 0) == 0:
 Veja [Registro de Mudanças](../registro_de_mudancas/index.md) para o histórico
 de alterações e [Módulos (resumo) — Intranet](../modulos/intranet.md) para a
 fábrica de componentes onde a versão é exibida.
+
+O marcador de migração é, em si, um **padrão de projeto** e não um detalhe do
+versionamento — o caso de segurança que motivou esta seção está em
+[Conta de fábrica `master` ressuscitando a cada reinício](../seguranca/conta_de_fabrica_master_2026-09-29.md).

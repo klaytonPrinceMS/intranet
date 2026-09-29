@@ -23,7 +23,7 @@
 | `semgrep` | 1.176.1 | `semgrep scan --config auto --error --timeout=30 -j 4 --quiet main.py mod_intranet/telas.py mod_intranet/autenticacao.py mod_intranet/rotas_modulos.py` | **0 achados** no escopo (regras auto não cobrem lógica de autorização — achados são de revisão manual abaixo) |
 | `pip-audit` | 2.10.1 | `pip-audit -r requirements.txt` e `pip-audit -r requirements-dev.txt` | **13 vulns de ambiente** (dependências, fora do código do menu — atualizar conforme `pip-audit`/`safety`; sem `fix` aplicado aqui) |
 | `safety` | 3.8.1 | `safety check` | Complementa o `pip-audit` acima (mesmas 13 vulns de ambiente) |
-| `gitleaks` | 8.24.3 | `gitleaks detect --source . --redact` | **1 leak histórico** (credencial padrão `master:master` em `assets/docker/verify-credentials.sh:67` e eco em `:23`, `:71`, `:74`, `:158` — ambiente local de observabilidade, não vazamento de produção) |
+| `gitleaks` | 8.24.3 | `gitleaks detect --source . --redact` | **1 leak histórico** (credencial padrão de observabilidade — par login/senha do Grafana — em `assets/docker/verify-credentials.sh:67` e eco em `:23`, `:71`, `:74`, `:158`; **valor não reproduzido aqui**, ver AGENTS.md §8.2.1 — ambiente local de observabilidade, não vazamento de produção) |
 | `k6` | — | não executado | Carga só contra **localhost/staging** por política; menu não tem endpoint crítico que justifique carga nesta rodada |
 
 > Observação: `site/` (build do MkDocs) gera falsos positivos de `gitleaks` (`search_index.json`). Filtrar ao interpretar — ver relatório de 06/09.
@@ -47,7 +47,7 @@
 | **M4** | PDF sem auditoria do acesso negado | `mod_edit_pdf` (guards de tela) vs. padrão `mod_intranet/telas.py:74-83` (`acesso_negado` com `audit_log`) | Negativas do Editor de PDF não seguem o padrão `audit_log(..., "acesso_negado", ...)` do guard central — trilha de quem tentou abrir o quê fica incompleta. | Chamar `audit_log(nome, chave, "acesso_negado", ...)` em todo `return None` por falta de permissão no PDF; padronizar mensagem com a chave. |
 | **M5** | JS de impressão servido sem gate | `main.py:480-485` (`servir_js_impressao` lê `mod_solicita_impressao/src/impressao.js` e retorna `Response`) | Rota do JS não passa por `pagina_restrita` — qualquer request não autenticado baixa o asset (baixo impacto direto, mas quebra a invariante "tudo de módulo exige sessão"). | Servir o JS por rota que exige sessão ou embutir como static autenticado; se for propositalmente público, registrar a exceção aqui. |
 | **M6** | Auditoria sem registro da negação interna | `mod_auditoria` (telas/guard) vs. `mod_intranet/telas.py:74-83` | Negativas dentro da Auditoria (ex.: não-`administrador_geral` em `main.py:525-530`) não geram `acesso_negado` — justamente o módulo que deveria ter a trilha mais completa. | `audit_log` em todo caminho negado da Auditoria (RF-35); incluir ator, chave e motivo. |
-| **M7** | Seed `master:master` presente no repo | `assets/docker/verify-credentials.sh:23,67,71,74,158`, `assets/docker/setup-grafana-credentials.sh:5-6,28,76-79,111-114`, `assets/docker/start.sh:86` | Credencial padrão versionada (detectada pelo `gitleaks` como o único leak real). É ambiente local de observabilidade, mas o par aparece em 3 scripts e ecoa no terminal. | Mover para `.env` não versionado/`INTRANET_*`/Vault; gerar senha no setup; mascarar e-mails/logs; manter `master/master` só em exemplo com aviso. |
+| **M7** | Credencial padrão de observabilidade versionada (par login/senha do Grafana, **valor não reproduzido aqui**) | `assets/docker/verify-credentials.sh:23,67,71,74,158`, `assets/docker/setup-grafana-credentials.sh:5-6,28,76-79,111-114`, `assets/docker/start.sh:86` | Credencial padrão versionada (detectada pelo `gitleaks` como o único leak real). É ambiente local de observabilidade, mas o par aparece em 3 scripts e ecoa no terminal. | Mover para `.env` não versionado/`INTRANET_*`/Vault; gerar senha no setup; mascarar e-mails/logs. **Não** reproduzir o valor em documentação (AGENTS.md §8.2.1) |
 
 ## 5. Achados Baixos / hardening
 
@@ -63,7 +63,7 @@
 1. **Alta:** `INTRANET_STORAGE_SECRET` obrigatório em produção + rotação (A1); gate de papel em `/configuracoes` (A2).
 2. **Alta:** revalidação de perfil/papel por request (A3); validação de chave desconhecida em `obter_papel_no_modulo` (A4).
 3. **Média:** allowlist em `/admin/{chave}` (M1); reserva de slugs (M2); decisão de acesso à `/documentacao` (M3).
-4. **Média/Baixa:** `acesso_negado` no PDF e na Auditoria (M4, M6); gate do JS (M5); remover `master:master` versionado (M7); bind docs em loopback (B3).
+4. **Média/Baixa:** `acesso_negado` no PDF e na Auditoria (M4, M6); gate do JS (M5); remover a credencial padrão de observabilidade versionada (M7); bind docs em loopback (B3).
 5. **Ambiente:** tratar as 13 vulns de `pip-audit`/`safety` (`pip-audit -r requirements.txt -r requirements-dev.txt`) e acompanhar `gitleaks` filtrando `site/`.
 
 ## 7. Reprodução (somente leitura — nenhum `fix` aplicado)
@@ -87,7 +87,8 @@ gitleaks detect --source . --redact
 
 ## 8. Histórico
 
-- 06/09/2026 — [Relatório de Varredura](../testes_relatorios/seguranca_2026-09-06.md): 0 High (bandit/semgrep), 1 segredo real (`master:master`).
+- 06/09/2026 — [Relatório de Varredura](../testes_relatorios/seguranca_2026-09-06.md): 0 High (bandit/semgrep), 1 segredo real (credencial padrão de observabilidade).
+- 29/09/2026 — [Conta de fábrica `master` ressuscitando a cada reinício](conta_de_fabrica_master_2026-09-29.md): correção de segurança no seed de contas (o achado **não** apareceu no SAST — é lógica de seed, invisível a `bandit`/`semgrep`).
 - 12/09/2026 — esta auditoria (foco menu hambúrguer): 4 Altas + 7 Médias de **lógica de autorização** (invisíveis ao SAST por regras auto).
 
 Veja também: [Ferramentas de Segurança](ferramentas_de_seguranca.md) · [Análise de Risco](../analise_de_risco/index.md).

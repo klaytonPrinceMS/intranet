@@ -187,6 +187,32 @@ def senha_minima():
         return 6
 
 
+def _troca_de_credencial_do_master_concluida():
+    """True quando o `master` nativo JÁ foi renomeado no primeiro acesso.
+
+    Lê a chave `forcar_troca_credenciais:master` do `tb_config` central. Ela
+    vale '1' enquanto a troca está PENDENTE e '0' quando a troca CONCLUÍ
+    (`autenticacao.trocar_credenciais_master` zera no fim, depois do rename).
+
+    Serve de MARCADOR para o seed de `init_db`: sem ele, o seed recria
+    `master/master` a cada reinício depois da troca, porque o rename tira o
+    nome da tabela e a guarda `not obter_usuario("master")` volta a ser
+    verdadeira (29/09/2026).
+
+    Fail-soft: em falha de leitura devolve False — ou seja, SEMEIA. Semear
+    numa instalação que já trocou é um transtorno; deixar de semear numa
+    instalação nova tranca o admin para fora sem a conta de fábrica. Na
+    dúvida, a conta existe.
+    """
+    try:
+        from mod_intranet.bd_conexao import get_config
+        return (get_config("forcar_troca_credenciais:master", "") or "").strip() == "0"
+    except Exception as e:
+        _log().warning(f"_troca_de_credencial_do_master_concluida: falha ao ler "
+                       f"a marca; assumindo troca pendente | {e}")
+        return False
+
+
 def init_db():
     """Creates/migrates the schema and seeds (idempotent bootstrap).
 
@@ -486,7 +512,27 @@ def _init_db_seguro():
         _log().exception(f"init_db: falha ao verificar senha padrão do master | {e}")
 
     # Garante master (seed idempotente AGENTS §8.2 — sem CrudBase aqui).
-    if not obter_usuario("master"):
+    #
+    # A guarda tem DUAS condições, e a segunda é a que impede a ressurreição
+    # da conta de fábrica (29/09/2026).
+    #
+    # O primeiro acesso do master é um RENOMEAR (`renomear_usuario` faz UPDATE
+    # e preserva o id), então `master` sai da tabela e a guarda
+    # `not obter_usuario("master")` volta a ser verdadeira no boot seguinte:
+    # o seed recria a conta com a senha de fábrica, perfil administrador_geral
+    # e as duas flags de troca rearmadas. O admin troca as credenciais, e no
+    # próximo reinício master/master está de volta — observado nesta instalação
+    # em 29/09/2026, 16:48:35, um minuto depois da troca concluída às 16:47:13.
+    #
+    # A segunda condição é o marcador: `forcar_troca_credenciais:master` é
+    # gravada como '1' quando a troca é pedida e como '0' quando ela CONCLUÍ
+    # (`autenticacao.trocar_credenciais_master` chama `marcar_trocar_credenciais(
+    # nome_atual, False)`). Então "a chave existe e vale 0" quer dizer, sem
+    # ambiguidade, "o master nativo já foi renomeado" — e um nome de usuário
+    # que não existe mais é justamente o que NÃO deve ser ressuscitado.
+    # Mesmo padrão do marcador de migração do versionamento (§4.2): uma vez
+    # gravado, o estado não volta atrás sozinho.
+    if not _troca_de_credencial_do_master_concluida() and not obter_usuario("master"):
         from mod_intranet.autenticacao import gerar_hash_senha, marcar_trocar_senha, marcar_trocar_credenciais
         conn = None
         try:
@@ -1878,7 +1924,15 @@ def renomear_usuario(ator, nome_atual, novo_nome, permitir_master=False):
         cur = conn.cursor()
         cur.execute("SELECT id FROM tb_usuarios WHERE user_nome=?", (novo_nome,))
         if cur.fetchone():
-            return False, f"'{novo_nome}' já existe"
+            # Mensagem que diz o que fazer: o diálogo de troca de credenciais
+            # traz o nome pré-preenchido com um valor fixo, e se esse nome já
+            # estiver em uso o rename falha. Como as flags de troca SÓ caem
+            # depois de um rename bem-sucedido (`autenticacao.py`), a recusa
+            # aqui abre um ciclo — o diálogo reabre no boot seguinte e falha
+            # igual, sem caminho de saída (29/09/2026). Dizer "já existe" sem
+            # orientar deixa quem instala sem saber que basta trocar o nome.
+            return False, (f"'{novo_nome}' já é o login de outro usuário. "
+                           f"Escolha um nome de usuário diferente.")
         cur.execute("SELECT id FROM tb_usuarios WHERE user_nome=?", (nome_atual,))
         if not cur.fetchone():
             return False, "Usuário não existe"

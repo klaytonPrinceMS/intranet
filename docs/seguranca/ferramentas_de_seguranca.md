@@ -165,7 +165,7 @@ Coberto por `test/test_ativacao.py` (57 verificações — `_mascarar_comando`, 
 | `bandit` | 0 High, 24 Medium, 86 Low — ver `docs/testes_relatorios/seguranca_2026-09-06.md` |
 | `semgrep` | 31 resultados (SQLAlchemy raw 21, formatted SQL 8, urllib dinâmico 2) |
 | `pip-audit` | Nenhuma vulnerabilidade conhecida |
-| `gitleaks` | 1 achado real (credenciais padrão `master:master` em `docker/verify-credentials.sh:66`); demais são falsos positivos de `site/` |
+| `gitleaks` | 1 achado real (credencial padrão de observabilidade em `docker/verify-credentials.sh:66` — **valor não reproduzido aqui**, AGENTS.md §8.2.1); demais são falsos positivos de `site/` |
 
 Veja também: [Relatório de Segurança (06/09)](../testes_relatorios/seguranca_2026-09-06.md),
 [Riscos de IA/ML](../seguranca/riscos_ia_ml.md) e

@@ -357,7 +357,7 @@ O cabeçalho da intranet consome esse nome em `mod_intranet/telas.py`
 - **Proteções**: vedado agir sobre a própria conta; `master` não é renomeado/excluído; último `administrador_geral` ativo protegido contra rebaixamento/bloqueio por outro admin (RF-26).
 - **Aba Administração** (admin geral): card padrão **"Configurações de cores"** (`usuarios_*` — `cor_botao`, `cor_texto_botao`, `cor_fundo`, `cor_titulo`, `btn_tamanho`, `texto_header`) + card "Configurações específicas" com a política `usuarios_senha_min`; card "Configurações de cores" padronizado via `tema_modulo.bloco_aparencia` (prévia ao vivo, rodapé 2 botões) e tela em área cheia (`w-full`). **Padrão próprio do tema de botões (06/09)**: os campos de botão exibem o rótulo "vazio = padrão do módulo" (`tema_modulo.bloco_aparencia` — `tema_modulo.py:319-322`) — com `usuarios_cor_botao`/`usuarios_cor_texto_botao`/`usuarios_btn_tamanho` vazios (padrão atual do banco), os botões usam o padrão do PRÓPRIO módulo (`PADROES_TEMA["usuarios"]` = `#000000` — sem herança do tema do sistema); os inputs mostram o valor resolvido e o "Restaurar padrão" grava `""` para voltar ao padrão do próprio módulo. O cabeçalho usa `chave_modulo="usuarios"` (`telas.py:97`): a borda de destaque é a **mesma cor dos botões do módulo** (`usuarios_cor_botao`, vazia = padrão do próprio módulo), título/fundo seguem o tema — sem hex hardcoded. **Cupê "Edição do módulo" restaurado (06/09)**: `campo_modulo(ator, "usuarios")` (`telas.py:705`) volta a permitir ao admin renomear o módulo, trocar o ícone e ativar/desativar (havia sido removido acidentalmente; a edição também permanece em `/configuracoes`).
 - **Responsividade (RNF-UI-01, 09/2026 — auditado 320/768/1024 `kbp-web-design`)**: barra superior `flex-nowrap` → `flex-wrap`, tabs `overflow-x-auto`, busca `flex-1 min-w` (`campo_busca` `grow min-w-[220px]`), dialogs `w-full max-w`; tabelas parcialmente com `overflow-x-auto`; proposta P0/P1/P2 por `container`/`row`/`grid` (header `flex-wrap` `truncate`, filtros `sm:grid-cols-2`).
-- **Versionamento**: `versao_modulo:usuarios = 1.0.260918` no rodapé de `/users`.
+- **Versionamento**: `versao_modulo:usuarios = 1.0.260929` no rodapé de `/users` (seed em `bd_conexao.init_db()` + migrações `migracao_versao_usuarios_260918`, `_260929` e `_260929_seg` — a última é o bump da correção de segurança do seed de `master`, com marcador **próprio** por ser a segunda entrega do dia). Ver [Versionamento](../versionamento/index.md).
 
 ## Permissões
 
@@ -376,6 +376,53 @@ O cabeçalho da intranet consome esse nome em `mod_intranet/telas.py`
 - **Fonte única do cadastro — consumida pela fachada do núcleo (25/09/2026)**: os demais módulos **não importam mais** este módulo. `mod_intranet/integracoes.py` expõe `obter_usuario_gestao(user_nome)`, `listar_usuarios_gestao(filtro_ativo=None)`, `espelhar_cadastro_na_lista_telefonica(ator)` e **`telefones_de_recado_para_lista()`** (imports lazy + fail-soft: devolvem `None`/`[]`/`{}` + `logger.warning` em vez de derrubar a tela). Consumidores: `mod_filas/bd_manipulador.py:454,483` (autorização e liberação de fila), `mod_filas/telas.py:631` (busca de usuário cadastrado) e `mod_lista_telefonica/telas_administracao.py:689,745` (busca de contato e preenchimento de nome/telefone). O SQL continua rodando **só** no banco deste módulo, pelo `bd_manipulador` dele — a fachada atravessa uma fronteira de **código**, nunca de **dados**. Detalhes: [Fachada de Integração](../arquitetura_de_software_das/fachada_integracoes.md).
 - **Única exceção de negócio→negócio**: a cascata LGPD (`_vinculos_cruzados_excluir`/`_vinculos_cruzados_renomear`) chama a API pública de limpeza do Blog, do Editor de PDF e do Renomeador de Empenhos — cada módulo toca só o seu banco. É a allowlist `CASCATA_LGPD` do `assets/test/check_integridade.py`.
 - Seed idempotente em `init_db` (fonte única deste módulo): conta nativa `master` (`administrador_geral`) e contas de QA (`qacomum` perfil `comum`, `qamaster` `administrador_geral`); credenciais provisórias com **troca forçada no 1º login** (`marcar_trocar_senha`, auto-cura do `master` a cada boot) e renomeação obrigatória do `master` (`marcar_trocar_credenciais`). Por segurança, os valores das senhas provisórias **não são publicados nesta doc** — ver `bd_manipulador.py` e a tabela de seeds no [AGENTS.md §8.2](../analise_mod_gest_cad_usuario.md#seeds-idempotentes-de-contas-agentsmd-82) (contexto interno).
+- **`bd_criador.py` está BLOQUEADO desde 29/09/2026** — `init_db()` levanta `RuntimeError` (fail-loud) e o corpo legado ficou em `_init_db_legado_morto()`. Era um **segundo caminho que criava a conta de fábrica `master`**, sem a marca que impede a ressurreição. Mesmo padrão de `mod_edit_pdf/bd_criador.py`. Detalhes: [Conta de fábrica `master` ressuscitando](../seguranca/conta_de_fabrica_master_2026-09-29.md).
+
+### A regra do seed de `master`
+
+> **EN:** The `master` seed exists so the system can be **born** with a way in.
+> Once the first access happened, that seed must never create the account again —
+> not on restart, not on restore, not through any other path. The account is a
+> bootstrap device, not a user.
+>
+> **PT-BR:** O seed do `master` existe para o sistema **nascer** com um caminho de
+> entrada. Feito o primeiro acesso, esse seed nunca mais pode criar a conta — nem
+> no reinício, nem numa restauração, nem por qualquer outro caminho. A conta é um
+> dispositivo de partida, não um usuário.
+
+Aconteceu de não ser assim: a guarda era `if not obter_usuario("master")`, e o
+primeiro acesso do `master` é um **renomear** — `renomear_usuario` faz `UPDATE` e
+preserva o `id`, então o login `master` **sai da tabela** e a guarda voltava a ser
+verdadeira no boot seguinte. O seed recriava a conta de fábrica, com perfil
+`administrador_geral` e as duas flags de troca rearmadas, e o diálogo de troca
+reabria para sempre.
+
+A guarda hoje tem **duas condições** (`bd_manipulador.py:535`):
+
+```python
+if not _troca_de_credencial_do_master_concluida() and not obter_usuario("master"):
+```
+
+| API | Arquivo:linha | O que faz |
+|:---|:---|:---|
+| `_troca_de_credencial_do_master_concluida()` | `bd_manipulador.py:190` | Lê `forcar_troca_credenciais:master` no `tb_config` **central** e devolve `True` quando vale `'0'` — ou seja, *"o `master` nativo já foi renomeado"*. **Fail-soft:** em falha de leitura devolve `False` (semeia), porque semear numa instalação que já trocou é transtorno e deixar de semear numa instalação nova tranca o admin para fora |
+
+O estado mora no banco **central** porque a troca acontece no núcleo
+(`mod_intranet/autenticacao.py:583`, que zera a flag **depois** do rename) e o
+seed acontece neste módulo — nenhum dos dois abre o banco do outro
+(AGENTS.md §2), então o fato compartilhado mora no `tb_config` central.
+
+!!! danger "A armadilha: estado que se auto-restaura"
+    A guarda olhava a **existência do login** e não o **fato de a troca ter
+    ocorrido**. São perguntas que dão respostas **opostas** justamente no
+    caminho feliz: a conta foi removida **de propósito**, e a guarda leu a remoção
+    como "falta criar". A regra geral é: **um seed que recria o que um fluxo de
+    segurança removeu tem de ler a marca do fluxo, não a ausência da linha** —
+    a mesma peça conceitual do marcador de migração do versionamento
+    ([Versionamento §3.1](../versionamento/index.md#31-o-modelo-da-migracao-de-bump)).
+
+Diagnóstico, evidência, `bd_criador.py` bloqueado e o ciclo travado do rename:
+[Conta de fábrica `master` ressuscitando a cada reinício (29/09/2026)](../seguranca/conta_de_fabrica_master_2026-09-29.md).
 - Acesso padrão de todo usuário novo (`ACESSO_PADRAO_NOVO_USUARIO`, `bd_manipulador.py:36`): papel `comum` em **`editar_pdf`, `empenhos`, `solicita_impressao`, `lista_telefonica` e `agregador_noticias`** (27/09/2026 — os dois últimos entraram na lista). A lista é o trabalho diário de quem trabalha na prefeitura; servidor que chega sem nenhum destes cai em tela vazia e acha que o sistema quebrou. Ficam **fora** `usuarios`, `auditoria` e `blog`: os dois primeiros mexem em conta e registro de todo mundo e são do administrador; o `blog` foi deixado de fora deliberadamente, porque publicar na intranet é ato de comunicação do município, não privilégio de estar com matrícula ativa — se a prefeitura quiser, o admin libera na tela de usuários, e é melhor que a liberação seja uma decisão visível do que um padrão que ninguém nota.
 
 ## Carga da folha de servidores — `mod_gest_cad_usuario/carga_folha.py` (27/09/2026)
@@ -525,7 +572,7 @@ o prazo vencido **bloqueia no login** (`aut.autenticar`) e a conta fica com
 ## Pontos de atenção
 
 - Tabela real é `tb_usuarios` (não `tb_usuario`); rota real é `/users` (não `/gestao-usuarios`).
-- `bd_criador.py` é morto — não executar.
+- `bd_criador.py` é morto — não executar. **Desde 29/09/2026 ele levanta `RuntimeError`** se alguém chamar `init_db()` (fail-loud, corpo legado preservado em `_init_db_legado_morto()`): era o segundo caminho que criava a conta de fábrica `master` sem a marca que impede a ressurreição.
 - Todos os testes de fluxo existem em `assets/test/` (local canónico; `test/` e `testes/` não existem na raiz): `teste_boot.py`, `teste_fluxo_autenticacao.py`, `teste_fluxo_permissoes.py` (Fase 2.5).
 - Consumidores externos dependem do **formato posicional das tuplas**, e os dois formatos **não são o mesmo**: `listar_usuarios` devolve 11 campos (`[1]` login, `[4]` **e-mail**, `[9]` nome completo) e `obter_usuario` devolve 10 (`[1]` login, `[4]` **telefone**, `[9]` nome completo). Reordenar as colunas de qualquer uma das duas QUEBRAS a fachada de forma silenciosa.
 - Senhas dos seeds são **provisórias**: assuma que já foram trocadas em qualquer fluxo de teste.

@@ -315,6 +315,23 @@ def init_db():
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
                     "('migracao_versao_intranet_260929', '1') ON CONFLICT DO NOTHING")
 
+    # Bump do `usuarios` pela CORREÇÃO DE SEGURANÇA de 29/09/2026 (2ª do dia,
+    # com marcador próprio — a de cima foi do `dialogo_formulario`).
+    # `mod_gest_cad_usuario`: o seed de `master` voltava em todo reinício
+    # depois da troca de credenciais; agora ele respeita a marca
+    # `forcar_troca_credenciais:master`. O `bd_criador.py` legado, que tinha um
+    # SEGUNDO `INSERT` de `master/master` sem essa marca, passou a levantar.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_usuarios_260929_seg'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('versao_modulo:usuarios', '1.0.260929') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260929' "
+                    "WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_usuarios_260929_seg', '1') ON CONFLICT DO NOTHING")
+
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_usuarios_260929'")
     if (cur.fetchone()[0] or 0) == 0:

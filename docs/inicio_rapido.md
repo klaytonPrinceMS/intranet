@@ -1,6 +1,6 @@
 # Intranet Modular — Guia de Início Rápido
 
-> Passos para rodar a Intranet Modular localmente: criar o `.venv`, instalar `requirements.txt`, subir com `.venv/bin/python main.py`, acessar `http://localhost:8080`, entrar com o seed `master`/`master` (troca de senha obrigatória) e usar as contas de teste `qacomum`/`qamaster`.
+> Passos para rodar a Intranet Modular localmente: criar o `.venv`, instalar `requirements.txt`, subir com `.venv/bin/python main.py`, acessar `http://localhost:8080`, fazer o primeiro acesso com a conta de fábrica `master` (troca de usuário e senha obrigatória) e usar as contas de teste `qacomum`/`qamaster`.
 
 ## Sumário
 
@@ -40,7 +40,7 @@ O `requirements.txt` instala todas as dependências (NiceGUI, APScheduler, nh3, 
 
 - O servidor sobe na porta **8080** (`porta_site`, `reload=False`, `show=False`, `tailwind=True` — Tailwind local sem CDN); a documentação mkdocs sobe na porta **8000** (`porta_documentacao`).
 - **Sem argumentos**, o boot carrega `config_persistida()` (`mod_intranet/ativacao.py:1284`) — lê `tb_config` (banco_tipo, postgres_url, otel_ativo, portas) com fallback em `_config_padrao()` — e sobe direto. O assistente só abre com `--config`/`-c`.
-- No boot, `inicializar_bancos()` cria os bancos `db_mod_*` (SQLite WAL) caso não existam e o usuário seed `master`/`master`.
+- No boot, `inicializar_bancos()` cria os bancos `db_mod_*` (SQLite WAL) caso não existam e o usuário seed `master` (conta de fábrica — só enquanto o primeiro acesso não tiver sido concluído; ver [a correção de segurança de 29/09/2026](seguranca/conta_de_fabrica_master_2026-09-29.md)).
 - Pastas operacionais são criadas automaticamente em runtime pelo boot/rotinas (`os.makedirs(..., exist_ok=True)`): na raiz, `backup/` e `logs/`; dentro dos módulos, `mod_edit_pdf/editorPDF/`, `mod_renomear_empenho/doc/`, `mod_renomear_empenho/organizadorPasta/`, `mod_renomear_empenho/quarentena/` (regra de ouro do AGENTS.md: artefatos de módulo vivem dentro de `mod_*`).
 - A documentação é compilada (MkDocs) e servida em **http://localhost:8000** (porta mkdocs, separada do site).
 
@@ -72,15 +72,24 @@ http://localhost:8000          # documentação (mkdocs)
 ## Passo 3 — Primeiro acesso
 
 1. Abra `http://localhost:8080` (será redirecionado para `/login`).
-2. Entre com o usuário **seed**:
+2. Entre com o usuário **seed** `master` (perfil `administrador_geral`). A senha de
+   fábrica **não é publicada nesta documentação** — o valor vive no código, em
+   `mod_gest_cad_usuario/bd_manipulador.py::init_db` (contexto interno do
+   AGENTS.md §8.2).
 
-| Usuário | Senha | Perfil |
-|:---|:---|:---|
-| `master` | `master` | `administrador_geral` |
+3. **A troca de USUÁRIO e senha é obrigatória no 1º logon** — o sistema exibe o
+   diálogo de troca de credenciais e não permite prosseguir no fluxo normal
+   (auto-cura idempotente: enquanto a senha de fábrica estiver em uso, a troca é
+   rearmada a cada boot — `mod_gest_cad_usuario/bd_manipulador.py:501-512`).
 
-3. **A troca de senha é obrigatória no 1º logon** — o sistema exibe o diálogo de troca e não permite prosseguir no fluxo normal (auto-cura idempotente: enquanto a senha for `master`, a troca é rearmada a cada boot — `mod_gest_cad_usuario/bd_manipulador.py:168-194`).
-
-> ⚠️ **Segurança:** troque a senha do `master` imediatamente e não use a senha padrão em produção.
+> ⚠️ **Segurança:** o primeiro acesso **renomeia** a conta e troca a senha. Feito
+> isso, o seed **não recria mais** o `master` — nem no reinício, nem numa
+> restauração. Por quê e como isso é garantido:
+> [Conta de fábrica `master` ressuscitando a cada reinício (29/09/2026)](seguranca/conta_de_fabrica_master_2026-09-29.md).
+>
+> ⚠️ Se o `master` for excluído **antes** do primeiro acesso, ele volta no
+> próximo boot — é o comportamento desejado: sem a conta de fábrica, uma
+> instalação nova não tem caminho de entrada.
 
 ## Passo 4 — Usuários de teste
 

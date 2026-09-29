@@ -94,7 +94,7 @@ Definida em `mod_intranet/mod_intranet_inicializacao_bd.py:13-46`. Ordem **crít
 2. `garantir_rastreabilidade()` — migração de colunas LGPD de `tb_sessoes` (`ip`, `user_agent`, `dispositivo`, `mac`) + seed `sessao_retencao`.
 3. `init_db_auditoria()` + `migrar_dados_existentes()` — banco exclusivo `db_mod_auditoria.db` (tabela por módulo) e migração única do legado central.
 4. `init_blog()` → `db_mod_blog.db`.
-5. `init_users()` → `db_mod_gest_cad_usuario.db` + seed `master`/`master`.
+5. `init_users()` → `db_mod_gest_cad_usuario.db` + seed da conta de fábrica `master` (só enquanto o primeiro acesso não tiver sido concluído — [correção de 29/09/2026](seguranca/conta_de_fabrica_master_2026-09-29.md)).
 6. `init_db_pdf()` → `db_mod_edit_pdf.db`.
 7. `init_db_empenho()` → `db_mod_renomear_empenho.db`.
 8. `init_solicita()` → `db_mod_solicita_impressao.db` — **importa `ORGANOGRAMA_BASE` do `mod_lista_telefonica` (19/09/2026)**: `tb_secretarias` 1000 + `tb_setores` 200 (subsetores achatados), migração `UPDATE` idempotente 1000/200.

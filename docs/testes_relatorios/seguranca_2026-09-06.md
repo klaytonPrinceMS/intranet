@@ -89,7 +89,7 @@ para confirmar uso de bind params; aplicar guarda de scheme no urllib.
 
 | Achado | Arquivo | Análise |
 |:---|:---|:---|
-| **Credenciais padrão `master:master`** | `docker/verify-credentials.sh:66` | Script de verificação do Docker/Grafana usa basic auth com usuário/senha padrão `master:master` |
+| **Credencial padrão de observabilidade** (par login/senha do Grafana — **valor não reproduzido aqui**, AGENTS.md §8.2.1) | `docker/verify-credentials.sh:66` | Script de verificação do Docker/Grafana usa basic auth com usuário/senha padrão versionados |
 | `generic-api-key` (×36) | `site/search/search_index.json` e `search/search_index.json` | **Falsos positivos** — arquivos de build do mkdocs (texto HTML/JSON gerado) |
 
 Ação recomendada: trocar credenciais padrão do Grafana em produção

@@ -137,7 +137,7 @@
 | Função | Linha | Descrição |
 |:---|:---|:---|
 | `senha_minima()` | `:46` | política mínima (`usuarios_senha_min`, default 6) |
-| `init_db()` | `:61` | cria `tb_usuarios`, `tb_acesso_usuario` + migrações + seed `master`/`master` + auto-cura da troca (`:168-194`) |
+| `init_db()` | `:61` | cria `tb_usuarios`, `tb_acesso_usuario` + migrações + seed da conta de fábrica `master` (guardado pela marca `forcar_troca_credenciais:master`) + auto-cura da troca (`:501-512`) |
 | `listar_usuarios(filtro_ativo)` | `:217` | lista com acessos agregados |
 | `obter_usuario(user_nome)` | `:245` | usuário por login |
 | `criar_usuario(ator, ...)` | `:299` | cria com senha provisória + `forcar_troca` |

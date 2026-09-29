@@ -55,7 +55,7 @@ Conexão com WAL + `foreign_keys=ON`. Criador vigente: `init_db()` em `bd_manipu
 - **Limpeza cruzada LGPD**: exclui postagens/comentários do Blog, remove arquivos/cota do editorPDF (`mod_edit_pdf/editorPDF/`) e anonimiza autoria de empenhos como "(usuário excluído)". Auditoria sempre preservada. Nota: implementa cross-query SQLite ad-hoc aos bancos vizinhos (contrariando a convenção geral do projeto).
 - **Proteções**: vedado agir sobre a própria conta (bloquear/excluir/rebaixar); `master` não é renomeado nem excluído; último admin geral ativo protegido contra **exclusão definitiva**; RF-26: `editar_usuario`/`bloquear_usuario` bloqueiam **rebaixar ou bloquear** o último `administrador_geral` ativo quando o ator é OUTRO admin (`bd_manipulador.py:349-362`).
 - **Senha provisória**: criação/redefinição marcam `forcar_troca`; redefinição derruba todas as sessões. O admin digita a senha manualmente (não é gerada aleatória como diz o PLANO 2.5).
-- **Auto-cura do master**: enquanto a senha for `master`, a troca é rearmada a cada boot (`bd_manipulador.py:168-194`) — corrige o roadmap do README que dizia o contrário.
+- **Auto-cura do master**: enquanto a senha de fábrica estiver em uso, a troca é rearmada a cada boot (`bd_manipulador.py:501-512`) — corrige o roadmap do README que dizia o contrário. **Não confundir com o seed:** o *rearme da troca* é desirable; a *recriação da conta* não é, e desde 29/09/2026 o seed respeita a marca `forcar_troca_credenciais:master` para não recriar a conta de fábrica depois do primeiro acesso — ver [Conta de fábrica `master` ressuscitando](seguranca/conta_de_fabrica_master_2026-09-29.md).
 
 ## Soft CRUD, perfis/papéis e sessões revogáveis — referência de API
 
@@ -217,7 +217,7 @@ existirem** (idempotente) — nunca duplicados em outro ponto do código.
 
 | Usuário | Perfil global | Observações |
 |:---|:---|:---|
-| `master` | `administrador_geral` | Conta nativa; 1º login **força** troca de senha **e** de credenciais (`marcar_trocar_senha` + `marcar_trocar_credenciais`). Enquanto a senha padrão existir, a troca é **rearmada a cada boot** (auto-cura idempotente, `:343-350`) |
+| `master` | `administrador_geral` | Conta **de fábrica**; 1º login **força** troca de senha **e** de credenciais (`marcar_trocar_senha` + `marcar_trocar_credenciais`) — o primeiro acesso **renomeia** o login. Enquanto a senha padrão existir, a troca é **rearmada a cada boot** (auto-cura idempotente, `:501-512`). **Depois do primeiro acesso o seed NÃO recria a conta** — a guarda tem duas condições e respeita a marca `forcar_troca_credenciais:master` (`:535`) |
 | `qacomum` | `comum` | Teste/QA; reconciliado a cada boot com `ACESSO_PADRAO_NOVO_USUARIO` (`INSERT OR IGNORE` dos 3 acessos comuns + `DELETE` do vínculo `blog` legado concedido por `sistema`) — **concessões manuais do admin são preservadas** (`:394-404`); troca forçada no 1º login |
 | `qamaster` | `administrador_geral` | Teste/QA; troca forçada no 1º login |
 
@@ -227,6 +227,21 @@ existirem** (idempotente) — nunca duplicados em outro ponto do código.
     deve supor que ela **já pode ter sido trocada** pelo usuário. A tabela acima é
     o contrato (login + perfil + regras); os valores vivem apenas no código
     (`bd_manipulador.py`, contexto interno do AGENTS.md §8.2).
+
+!!! danger "O seed do `master` existe **só para nascer o sistema** (29/09/2026)"
+    A guarda do seed era `if not obter_usuario("master")` — mas o primeiro acesso
+    do `master` é um **renomear**, e `renomear_usuario` faz `UPDATE` **preservando
+    o `id`**: o login `master` sai da tabela, a guarda volta a ser verdadeira no
+    boot seguinte, e o seed **recriava a conta de fábrica** com perfil
+    `administrador_geral` e as flags de troca rearmadas. O diálogo de troca
+    reabria em ciclo, indefinidamente.
+
+    Hoje a guarda é `if not _troca_de_credencial_do_master_concluida() and not obter_usuario("master")` (`:535`), e a função nova (`:190`) lê a marca `forcar_troca_credenciais:master` do `tb_config` **central** — `'1'` = troca pendente, `'0'` = troca **concluída** (gravada por `trocar_credenciais_master` **depois** do rename, no núcleo). "Chave existe e vale 0" = "o `master` nativo já foi renomeado". **Fail-soft:** em falha de leitura devolve `False` e semeia, porque semear numa instalação já trocada é transtorno e deixar de semear numa instalação nova **tranca o admin para fora**.
+
+    A **mesma** lógica, a **mesma** falha e a correção completa — com evidência,
+    com o `bd_criador.py` bloqueado (segundo caminho de criação) e com o padrão
+    "estado que se auto-restaura" — estão em
+    [Conta de fábrica `master` ressuscitando a cada reinício](seguranca/conta_de_fabrica_master_2026-09-29.md).
 
 O bootstrap em si é **check-then-add idempotente** e portátil SQLite↔PostgreSQL
 (`PRAGMA table_info` → `information_schema` no proxy; `INSERT OR IGNORE` →
@@ -248,7 +263,7 @@ segue pelo `audit_log` do núcleo para `db_mod_auditoria.db`
 
 ## Pontos de atenção
 
-- `bd_criador.py` é morto e aponta para o banco central — não executar.
+- `bd_criador.py` é morto e aponta para o banco central — não executar. **Desde 29/09/2026 `init_db()` levanta `RuntimeError`** (fail-loud, como `mod_edit_pdf/bd_criador.py:21`) e o corpo legado ficou em `_init_db_legado_morto()`: ele tinha um `INSERT` próprio de `master` com senha de fábrica, **segundo caminho de criação** sem a marca que impede a ressurreição.
 - `listar_vinculos_orfaos()` existe mas não é chamada pela tela (órfãos aparecem apenas como badge INDISPONÍVEL nos seletores).
 - Renomear usuário replica o nome nas tabelas dependentes (`tb_acesso_usuario`), nas sessões centrais abertas e nas autorias dos demais módulos (`_vinculos_cruzados_renomear`).
 - **Duplicar usuário** (`duplicar_usuario` + `_dlg_duplicar` em `telas.py`): clona perfil global, papéis por módulo e flags finas da origem (ajustáveis nos seletores antes de salvar).
@@ -257,7 +272,7 @@ segue pelo `audit_log` do núcleo para `db_mod_auditoria.db`
 
 ## Status — Fases 2 e 2.5 do PLANO.md
 
-**Implementado:** CRUD completo (criar, editar, renomear, bloquear/desbloquear, soft delete, exclusão definitiva LGPD); hash **bcrypt**; múltiplos perfis globais (`comum`, `administrador_modulo`, `administrador_geral`) e papéis granulares por módulo (`tb_acesso_usuario`); seed `master`/`master` com troca obrigatória de senha no 1º login (auto-cura idempotente em boot); senha provisória (`forcar_troca`); nome completo/social (`user_nome_completo`, Decreto 8.727/2016); exclusão em 2 estágios com motivo; limpeza cruzada LGPD (Blog, editorPDF, empenhos anonimizados; auditoria preservada); proteções (vedado agir sobre a própria conta, `master` não renomeável/excluível); lista paginada (10/20/50/100), busca instantânea em todos os campos + palavras-chave de estado (debounce 150 ms), filtros situação/perfil, ordenação A→Z/numérica e exibição compacta com hover (tooltip com nomes de módulos); alerta de módulos inexistentes (vínculos órfãos como INDISPONÍVEL); gestão/revogação de sessões ativas + histórico; auditoria central LGPD.
+**Implementado:** CRUD completo (criar, editar, renomear, bloquear/desbloquear, soft delete, exclusão definitiva LGPD); hash **bcrypt**; múltiplos perfis globais (`comum`, `administrador_modulo`, `administrador_geral`) e papéis granulares por módulo (`tb_acesso_usuario`); seed da conta de fábrica `master` com troca obrigatória de **usuário e senha** no 1º login (auto-cura idempotente em boot; o seed não recria a conta depois do primeiro acesso — marca `forcar_troca_credenciais:master`); senha provisória (`forcar_troca`); nome completo/social (`user_nome_completo`, Decreto 8.727/2016); exclusão em 2 estágios com motivo; limpeza cruzada LGPD (Blog, editorPDF, empenhos anonimizados; auditoria preservada); proteções (vedado agir sobre a própria conta, `master` não renomeável/excluível); lista paginada (10/20/50/100), busca instantânea em todos os campos + palavras-chave de estado (debounce 150 ms), filtros situação/perfil, ordenação A→Z/numérica e exibição compacta com hover (tooltip com nomes de módulos); alerta de módulos inexistentes (vínculos órfãos como INDISPONÍVEL); gestão/revogação de sessões ativas + histórico; auditoria central LGPD.
 
 **Desvios aceitáveis:** tabela chama-se `tb_usuarios` (não `tb_usuario`); não há tabela `tb_perfil` separada; rota real é `/users` (não `/gestao-usuarios`).
 
@@ -310,7 +325,7 @@ Oito melhorias na tela de usuários (`mod_gest_cad_usuario/telas.py`), todas na 
 ### Adições recentes (26/08)
 
 - **Aba "Administração"** (exclusiva do admin geral, nas tabs existentes): bloco **Aparência** (prefixo usuarios_* — cor do botão/texto, fundo da página, cor do título, tamanho via ui.color_input; a cor do botão também define a primária da tela) e **config específica**: usuarios_senha_min (política de senha mínima, aplicada em criar_usuario/alterar_senha_admin via senha_minima()). Salvo via set_config, vale sem reiniciar.
-- **Versionamento**: versao_modulo:usuarios = 1.0.260918 (seed em bd_conexao.init_db()), exibido no rodapé em /users (rota → chave usuarios).
+- **Versionamento**: versao_modulo:usuarios = 1.0.260929 (seed em bd_conexao.init_db() + migrações `migracao_versao_usuarios_260918`, `_260929` e `_260929_seg` — a última é o bump da correção de segurança do seed de `master`, com marcador **próprio** por ser a 2ª entrega do dia), exibido no rodapé em /users (rota → chave usuarios).
 - **Edição do módulo** (`campo_modulo` do helper `mod_intranet/tema_modulo.py`) — **RESTAURADO (06/09)**: após remoção acidental (regressão), o cupê voltou a aparecer na aba Administração — editar **nome de exibição, ícone e status (ativo/inativo)** do módulo (`mod_gest_cad_usuario/telas.py:705`); a edição também permanece no painel central `/configuracoes` (aba Módulo, admin geral).
 
 ### Adições recentes (06/09)

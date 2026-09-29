@@ -55,6 +55,7 @@ nav:
       - Ferramentas de Segurança: seguranca/ferramentas_de_seguranca.md
       - Riscos de IA/ML: seguranca/riscos_ia_ml.md
       - Auditoria do Menu (12/09/2026): seguranca/auditoria_menu_2026-09-12.md
+      - "Conta de fábrica `master` ressuscitando (29/09/2026)": seguranca/conta_de_fabrica_master_2026-09-29.md
   - Ferramentas (dev):
       - Graphify (grafo, dev-only): ferramentas/graphify.md
       - requirements.py (dev-only): ferramentas/requirements_py.md

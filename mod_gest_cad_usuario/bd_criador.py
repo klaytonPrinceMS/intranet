@@ -6,6 +6,14 @@ compatibilidade histórica. O criador VIGENTE do esquema é `init_db()` em
 `db_mod_gest_cad_usuario.db`, com migrações e seeds). Este arquivo conecta no
 banco CENTRAL e cria um esquema divergente (inclui `tb_modulo_perfil`, que
 não existe no esquema real) — não usar como fonte de verdade.
+
+BLOQUEADO (29/09/2026). Este arquivo era o SEGUNDO caminho que criava a conta
+`master` com senha de fábrica: um `INSERT` próprio, sem a marca que impede a
+ressurreição. Hoje `mod_intranet.bd_criador.inicializar_bancos` só chama
+`mod_gest_cad_usuario.bd_manipulador.init_db()`, então este código não roda no
+boot — mas ficar ali era um segundo gatilho de porta aberta para a mesma falha
+de segurança, e o AGENTS.md §2.1 já marca `bd_criador.py` como MORTO. Chamá-lo
+passa a levantar, como já acontece em `mod_edit_pdf/bd_criador.py`.
 """
 import sys
 import os
@@ -29,6 +37,21 @@ def _log():
 
 
 def init_db():
+    """BLOQUEADO — levanta sempre (29/09/2026).
+
+    EN: Raises unconditionally. The legacy creator is dead (AGENTS.md §2.1) and
+        was a second path that re-inserted the `master` factory account without
+        the marker that prevents its resurrection.
+    PT-BR: Levanta sempre. O criador legado está morto e era um segundo caminho
+        que reinseria a conta de fábrica `master` sem a marca que impede a
+        ressurreição. O caminho vigente é `bd_manipulador.init_db()`.
+    """
+    raise RuntimeError(
+        "mod_gest_cad_usuario.bd_criador.init_db() isolado/morto — "
+        "usar mod_gest_cad_usuario.bd_manipulador.init_db()")
+
+
+def _init_db_legado_morto():
     """Creates the LEGACY divergent schema in the CENTRAL database (do not use).
 
     Cria `tb_usuarios` e `tb_modulo_perfil` no banco central, semeia o

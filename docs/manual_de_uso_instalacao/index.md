@@ -108,7 +108,8 @@ Sem assistente, é possível configurar e subir direto por argumentos (**Typer**
 
 ## 3. Primeiro acesso (seed)
 
-- `master` / `master` — troca obrigatória de senha aplicada automaticamente no 1º logon (`mod_gest_cad_usuario/bd_manipulador.py:136-156`). Recomenda-se alterar manualmente.
+- Conta de fábrica **`master`** (perfil `administrador_geral`) — troca obrigatória de **usuário e senha** aplicada automaticamente no 1º logon (`mod_gest_cad_usuario/bd_manipulador.py:501-512`). O valor da senha de fábrica **não é publicado nesta documentação** — está no código, em `bd_manipulador.py::init_db` (AGENTS.md §8.2.1).
+- Depois do primeiro acesso, o seed **não recria** a conta: nem no reinício, nem numa restauração. A regra e a marca que a garante estão em [Conta de fábrica `master` ressuscitando (29/09/2026)](../seguranca/conta_de_fabrica_master_2026-09-29.md).
 
 ## 4. Usuários de teste
 

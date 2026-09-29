@@ -51,7 +51,7 @@
 
 ## Critérios de entrada/saída
 
-- Bancos `db_mod_*` devem ser (re)criados do zero se ausentes; seed `master`/`master` com `administrador_geral`.
+- Bancos `db_mod_*` devem ser (re)criados do zero se ausentes; seed da conta de fábrica `master` (perfil `administrador_geral`) — **valores das senhas fora da documentação** (AGENTS.md §8.2.1; no código, em `mod_gest_cad_usuario/bd_manipulador.py::init_db`).
 - Nenhuma falha em silêncio: recusas de upload/quota listadas nominalmente.
 
 ## Execução dos testes
@@ -103,7 +103,7 @@ cd assets/test && npm install && npm run test:e2e
 - **Excluídos** (`EXCLUIR`, `test_suite.py:23-31`) — não entram na suíte automatizada:
   - **Helpers**: `debug_boot.py`, `step_boot.py`, `diag_config.py`, `wtest.py`, `criar_postagens_blog.py` e `test_server.py` (sobe a app na 8080 e bloqueia).
   - **Destrutivos de banco**: `test_fresh_install.py`, `fresh_install_test.py`, `fresh_install_test2.py`.
-  - **Dependentes de instalação limpa** (assumem `master`/`master` ainda válidos): `test_fase1_login.py`, `validar_fase1_login.py`.
+  - **Dependentes de instalação limpa** (assumem a conta de fábrica `master` ainda com a senha de fábrica, sem primeiro acesso feito): `test_fase1_login.py`, `validar_fase1_login.py`. Desde 29/09/2026 o primeiro acesso **renomeia** a conta, então eles só passam em banco recém-criado — ver [Conta de fábrica `master` ressuscitando](../seguranca/conta_de_fabrica_master_2026-09-29.md).
   - **OTel**: `test_otel.py` (depende da stack Docker/porta).
 
 Motivo: são auxiliares (não são testes de regressão), alteram/destroem o estado dos bancos ou dependem de ambiente específico — incluí-los quebraria a suíte ou geraria falsos negativos.
