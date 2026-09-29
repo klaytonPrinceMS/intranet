@@ -1,7 +1,19 @@
 """EN: News Aggregator admin panel (route /admin/agregador_noticias) — coleta, fontes, temas, censura, reinicio.
 
 PT-BR: Painel de administração do Agregador de Notícias (rota /admin/agregador_noticias).
-Cards: Coleta (habilitado/intervalo/termo/hora reinício), Fontes, Temas, Censura, Reinício diário.
+Cards: Coleta (habilitado/intervalo/termo/hora reinício), Fontes, Temas,
+Exibição (notícias por página + os dois textos da tela), Censura, Reinício
+diário.
+
+EXIBIÇÃO (29/09/2026): o card "Exibição" é o dono de
+`agregador_noticias_por_pagina` (tamanho de página — múltiplo de 3,
+mínimo 9), `agregador_noticias_texto_header` (subtítulo do cabeçalho da
+tela) e `agregador_noticias_texto_sem_novidade` (aviso da barra de
+atualização automática, aceita `{seg}`). Os dois textos NASCEM VAZIOS: a
+tela não descreve mais a si mesma em código. O bloco de aparência entra
+com `com_texto_header=False` porque a chave do cabeçalho é a mesma — dois
+campos para a mesma chave fariam o "Aplicar" das cores sobrescrever o
+texto digitado aqui.
 """
 
 import sys, os, json, re
@@ -19,14 +31,20 @@ log = observabilidade.get_logger("agregador_noticias")
 def mostrar_administracao(usuario_logado: str = ""):
     tema = ler_tema("agregador_noticias", cor_botao="#000000", cor_texto_botao="#FFFFFF",
                     texto_header="Fontes, tema de pesquisa e intervalo de coleta.")
+    # `texto_header` nos padrões é VAZIO de propósito: a chave
+    # `agregador_noticias_texto_header` é a mesma que a TELA do Agregador lê,
+    # e o "Restaurar padrão" das cores não pode gravar aqui a frase deste
+    # painel — ela apareceria como cabeçalho da tela de notícias. O campo de
+    # texto do cabeçalho mora no card "Exibição", mais abaixo, e é o único
+    # dono da chave (daí `com_texto_header=False` no bloco de aparência).
     tema["_defaults"] = {
         "cor_botao": "", "cor_texto_botao": "", "cor_fundo": "",
         "cor_titulo": "#212121", "btn_tamanho": "medium",
-        "texto_header": "Fontes, tema de pesquisa e intervalo de coleta.",
+        "texto_header": "",
         "cor_fundo_card": "#FFFFFF", "cor_texto_card": "",
     }
     ui.colors(primary=tema["cor_botao"])
-    bloco_aparencia(usuario_logado, "agregador_noticias", tema, prefixo_auditoria="agregador_noticias", com_texto_header=True)
+    bloco_aparencia(usuario_logado, "agregador_noticias", tema, prefixo_auditoria="agregador_noticias", com_texto_header=False)
 
     # === Card Coleta ===
     with card_admin("Coleta — habilitação e intervalo", icone="sync", chave_modulo="agregador_noticias", grade=False):
@@ -220,6 +238,99 @@ def mostrar_administracao(usuario_logado: str = ""):
             ag.definir_temas(TEMAS_PADRAO, ator=usuario_logado)
             ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
         rodape_salvar_restaurar(salvar_temas, restaurar_temas, chave_modulo="agregador_noticias", rotulo_salvar="Salvar temas", data_testid="agregador-salvar-temas")
+
+    # === Card Exibição — tamanho de página e textos da tela ===
+    with card_admin("Exibição — notícias por página e textos da tela",
+                    icone="view_column", chave_modulo="agregador_noticias", grade=False):
+        ui.label("A grade tem 3 colunas, por isso o tamanho da página é sempre "
+                 "múltiplo de 3 — é o que evita a linha órfã com 1 ou 2 cards "
+                 "sozinhos no fim da página. A primeira página de “Todos os "
+                 "temas” é a amostra com uma notícia de cada tema; as "
+                 "seguintes mostram o resto da lista. A última página pode "
+                 "vir incompleta."
+                 ).classes("text-caption text-grey-6")
+
+        # Múltiplos de 3, mínimo 9 (3 linhas cheias). O clamp é do BACKEND
+        # (`ag.definir_por_pagina`), não da lista: mesmo que a chave seja
+        # gravada direto no banco, a tela recebe um valor válido.
+        val_pp = ag.por_pagina()
+        # SLIDER em vez de lista suspensa: com passo 3 de 9 a 99 são 31
+        # opções, e uma lista de 31 itens é pior de usar do que um trilho.
+        # O `ui.slider` NÃO aceita `label=` nesta versão do NiceGUI (TypeError
+        # ao abrir o painel) — mesmo cuidado do `sl_refresh` acima: o rótulo
+        # vai por `.props('label')`.
+        lbl_pp = ui.label(f"{val_pp} notícias por página").classes(
+            "text-caption text-grey-6")
+        sl_pp = ui.slider(min=ag.POR_PAGINA_MINIMO,
+                          max=ag.POR_PAGINA_MAXIMO - 1, step=3, value=val_pp) \
+            .props("outlined dense label label-always") \
+            .classes("w-full sm:w-96").props('data-testid=agregador-por-pagina')
+        # `max - 1`: o teto declarado é 100, mas 100 não é múltiplo de 3, então
+        # o último valor alcançável é 99. O tooltip diz o porquê em vez de
+        # deixar o trilho terminar num número que o clamp depois normaliza.
+        sl_pp.tooltip(
+            "Mínimo 9, passo de 3 (a grade tem 3 colunas), máximo real 99 — "
+            "o limite pedido é 100, mas 100 não é múltiplo de 3 e deixaria "
+            "uma linha órfã. A última página pode vir incompleta.")
+        sl_pp.on_value_change(lambda e: lbl_pp.set_text(
+            f"{int(e.value or 0)} notícias por página"))
+
+        # Os DOIS textos nascem VAZIOS: a tela do Agregador não escreve mais
+        # descrição de si mesma no código — quem escreve é o administrador.
+        # (O cabeçalho é o MESMO campo que o tema do módulo usa, por isso
+        # `com_texto_header=False` no bloco de aparência acima: uma chave,
+        # um dono, um campo — dois campos para a mesma chave fariam o
+        # "Aplicar" das cores sobrescrever o texto digitado aqui.)
+        inp_header = ui.input("Texto do cabeçalho", value=ag.texto_header(),
+                              placeholder="Ex.: Notícias agregadas de múltiplas fontes") \
+            .props("outlined dense clearable").classes("w-full") \
+            .props('data-testid=agregador-texto-header')
+        inp_header.tooltip("Subtítulo abaixo do título “Agregador de Notícias”. "
+                           "VAZIO = a tela não mostra cabeçalho nenhum.")
+
+        inp_sem = ui.input("Texto de 'sem novidade'", value=ag.texto_sem_novidade(),
+                           placeholder="Sem novidade • próxima checagem em {seg}s") \
+            .props("outlined dense clearable").classes("w-full") \
+            .props('data-testid=agregador-texto-sem-novidade')
+        inp_sem.tooltip("Aviso da barra quando a checagem automática não achou "
+                        "nada novo. Use {seg} para o intervalo em segundos. "
+                        "VAZIO = nada aparece.")
+
+        def salvar_exibicao():
+            try:
+                ok_pp, v_pp = ag.definir_por_pagina(sl_pp.value, ator=usuario_logado)
+                ok_h, _ = ag.definir_texto_header(inp_header.value or "", ator=usuario_logado)
+                ok_s, _ = ag.definir_texto_sem_novidade(inp_sem.value or "", ator=usuario_logado)
+                if not (ok_pp and ok_h and ok_s):
+                    notificar("Falha ao salvar a exibição — nada foi alterado",
+                              type="negative")
+                    return
+                _tem_header = "sim" if (inp_header.value or "").strip() else "não"
+                _tem_sem = "sim" if (inp_sem.value or "").strip() else "não"
+                notificar(f"Exibição salva: {v_pp} notícias por página • "
+                          f"cabeçalho {_tem_header} • 'sem novidade' {_tem_sem}",
+                          type="positive")
+                ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
+            except Exception:
+                log.exception("falha ao salvar exibição do agregador")
+                notificar("Erro ao salvar exibição", type="negative")
+
+        def restaurar_exibicao():
+            try:
+                ag.definir_por_pagina(ag.POR_PAGINA_PADRAO, ator=usuario_logado)
+                ag.definir_texto_header("", ator=usuario_logado)
+                ag.definir_texto_sem_novidade("", ator=usuario_logado)
+                notificar(f"Exibição restaurada: {ag.POR_PAGINA_PADRAO} notícias "
+                          f"por página, sem textos na tela", type="positive")
+                ui.timer(1.0, lambda: ui.navigate.reload(), once=True)
+            except Exception:
+                log.exception("falha ao restaurar exibição do agregador")
+                notificar("Erro ao restaurar exibição", type="negative")
+
+        rodape_salvar_restaurar(salvar_exibicao, restaurar_exibicao,
+                                chave_modulo="agregador_noticias",
+                                rotulo_salvar="Salvar exibição",
+                                data_testid="agregador-salvar-exibicao")
 
     # === Card Censura — palavras bloqueadas ===
     with card_admin("Censura de conteúdo — palavras bloqueadas", icone="lock", chave_modulo="agregador_noticias", grade=False):

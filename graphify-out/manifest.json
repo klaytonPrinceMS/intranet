@@ -594,9 +594,9 @@
     "semantic_hash": ""
   },
   "mod_intranet/bd_conexao.py": {
-    "mtime": 1790701122.164553,
-    "seen": 1790701869.2646406,
-    "ast_hash": "dd4500c75c11317d3d44e121edd322de",
+    "mtime": 1790705552.8750503,
+    "seen": 1790705669.5672247,
+    "ast_hash": "4a12e7502a75065f50eb99125484588d",
     "semantic_hash": ""
   },
   "mod_intranet/bd_criador.py": {
@@ -1032,9 +1032,9 @@
     "semantic_hash": ""
   },
   "docs/analise_de_risco/index.md": {
-    "mtime": 1790701585.5869648,
-    "seen": 1790701869.2647893,
-    "ast_hash": "c733cdfbb8fde42e2df125530694f0de",
+    "mtime": 1790701933.8184063,
+    "seen": 1790705669.5673692,
+    "ast_hash": "ad0065ff0390058cf28981094cda1e51",
     "semantic_hash": ""
   },
   "docs/analise_mod_auditoria.md": {
@@ -1056,9 +1056,9 @@
     "semantic_hash": ""
   },
   "docs/analise_mod_gest_cad_usuario.md": {
-    "mtime": 1790701751.8673968,
-    "seen": 1790701869.264798,
-    "ast_hash": "28ac251350450d68b307d460a8157402",
+    "mtime": 1790701967.3091257,
+    "seen": 1790705669.5673778,
+    "ast_hash": "bac348c9559ee1c4bf78e1cf2bfb337f",
     "semantic_hash": ""
   },
   "docs/analise_mod_intranet.md": {
@@ -1098,9 +1098,9 @@
     "semantic_hash": ""
   },
   "docs/configuracoes.md": {
-    "mtime": 1790701722.5187726,
-    "seen": 1790701869.2648144,
-    "ast_hash": "d0e593572cd16d67c409284aef97bb08",
+    "mtime": 1790706189.9699333,
+    "seen": 1790706439.183741,
+    "ast_hash": "df7a60549ef0c29cffc2e3bef4b4279b",
     "semantic_hash": ""
   },
   "docs/contribuicoes/index.md": {
@@ -1164,9 +1164,9 @@
     "semantic_hash": ""
   },
   "docs/manual_de_uso_instalacao/index.md": {
-    "mtime": 1790701713.127539,
-    "seen": 1790701869.2648373,
-    "ast_hash": "2d4f03acdd1fb0129e0fc6719b7819f3",
+    "mtime": 1790701967.3091257,
+    "seen": 1790705669.5674174,
+    "ast_hash": "7297e00a4fb980d62c3fff12b96d6167",
     "semantic_hash": ""
   },
   "docs/manual_de_uso_renomear_empenho/index.md": {
@@ -1206,9 +1206,9 @@
     "semantic_hash": ""
   },
   "docs/modulos/gest_cad_usuario.md": {
-    "mtime": 1790701555.5019622,
-    "seen": 1790701869.2648509,
-    "ast_hash": "6d9c9d3f881b6d6381e2b8dd8078c4d2",
+    "mtime": 1790701940.6547356,
+    "seen": 1790705669.5674307,
+    "ast_hash": "1da89b9b6774c3be1033c0ec5309df28",
     "semantic_hash": ""
   },
   "docs/modulos/intranet.md": {
@@ -1242,15 +1242,15 @@
     "semantic_hash": ""
   },
   "docs/registro_de_mudancas/index.md": {
-    "mtime": 1790701778.3758943,
-    "seen": 1790701869.264863,
-    "ast_hash": "951522843ce773bbd24f2d9c1752a0a2",
+    "mtime": 1790706309.479895,
+    "seen": 1790706439.1837893,
+    "ast_hash": "8dd842bb143fd6a81f996f1f03eff249",
     "semantic_hash": ""
   },
   "docs/requisitos.md": {
-    "mtime": 1790689802.4529865,
-    "seen": 1790694056.6631575,
-    "ast_hash": "ca88e2966b99e3967243e2dd2de04147",
+    "mtime": 1790706332.524239,
+    "seen": 1790706439.1837986,
+    "ast_hash": "82fe3fde402aa6299d4c99f78526fdd2",
     "semantic_hash": ""
   },
   "docs/seguranca/auditoria_menu_2026-09-12.md": {
@@ -1578,9 +1578,9 @@
     "semantic_hash": ""
   },
   "mod_agregador_noticias/bd_manipulador.py": {
-    "mtime": 1790684311.3086889,
-    "seen": 1790694056.6629012,
-    "ast_hash": "63215a1373aaa55bbc0b2d47e573eb53",
+    "mtime": 1790706360.3004923,
+    "seen": 1790706439.1835008,
+    "ast_hash": "1dc3e65a60ab877e3f1d70b0e28210f8",
     "semantic_hash": ""
   },
   "mod_agregador_noticias/models/__init__.py": {
@@ -1590,27 +1590,27 @@
     "semantic_hash": ""
   },
   "mod_agregador_noticias/telas.py": {
-    "mtime": 1790684311.3106885,
-    "seen": 1790694056.6629043,
-    "ast_hash": "46f323a59e6597d4e4bce14fa41ababe",
+    "mtime": 1790705457.1091971,
+    "seen": 1790705669.567159,
+    "ast_hash": "ffc5a62aa4ca0a6e83d1bfe0bb84b90c",
     "semantic_hash": ""
   },
   "mod_agregador_noticias/telas_administracao.py": {
-    "mtime": 1790684311.3106885,
-    "seen": 1790694056.6629057,
-    "ast_hash": "3cc9bfd57b1dcea2c6fd34d97bde8116",
+    "mtime": 1790705538.3984342,
+    "seen": 1790705669.5671606,
+    "ast_hash": "ac115eac20507412f2be827367df1ab4",
     "semantic_hash": ""
   },
   "docs/analise_mod_agregador_noticias.md": {
-    "mtime": 1790684311.2176888,
-    "seen": 1790694056.663091,
-    "ast_hash": "b8c6202831519711cc4ab1be9ae8067e",
+    "mtime": 1790706230.9038286,
+    "seen": 1790706439.183717,
+    "ast_hash": "679d4340380eab274abea3b9a47a92aa",
     "semantic_hash": ""
   },
   "docs/modulos/agregador_noticias.md": {
-    "mtime": 1790684311.2346904,
-    "seen": 1790694056.663136,
-    "ast_hash": "87dd407eaee4cade08c81f783ebb62e9",
+    "mtime": 1790706485.5621076,
+    "seen": 1790706539.5905008,
+    "ast_hash": "76a96ccbebf828f7a5139670b62343a7",
     "semantic_hash": ""
   },
   "mod_intranet/censura.py": {
@@ -2022,9 +2022,9 @@
     "semantic_hash": ""
   },
   "docs/seguranca/conta_de_fabrica_master_2026-09-29.md": {
-    "mtime": 1790701514.595548,
-    "seen": 1790701869.2648706,
-    "ast_hash": "0ccc208e98e546120a001c3aedb28c93",
+    "mtime": 1790701944.9449687,
+    "seen": 1790705669.5674498,
+    "ast_hash": "2d6d7271fa48174a469560976e85f94c",
     "semantic_hash": ""
   }
 }

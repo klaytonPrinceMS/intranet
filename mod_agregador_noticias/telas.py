@@ -35,9 +35,22 @@ aparece se o usuário escolher o tema ou achá-lo pela pesquisa.
 TEMPO RELATIVO: <15min "agora"; 15–59min "N min atrás"; 1–24h "Nh" /
 "NhMm atrás"; >24h "N dias atrás".
 
-"Todos os temas" mostra UMA notícia por tema, para a grade não virar um
-bloco só de Esporte/Economia. Paginação com busca em memória (500
-limite, NFKD lower).
+"Todos os temas" mostra UMA notícia por tema na PRIMEIRA página, para a
+grade não virar um bloco só de Esporte/Economia. As páginas seguintes
+mostram o RESTO da lista, no tamanho configurado, sem repetir a amostra.
+Paginação com busca em memória (500 limite, NFKD lower).
+
+PAGINAÇÃO (29/09/2026): o tamanho da página vem de `ag.por_pagina()`
+(múltiplo de 3, mínimo 9 — configurável em /admin/agregador_noticias) e a
+CONTAGÊNCIA e a FATIA saem da MESMA lista, então "Exibindo X de Y" nunca
+anuncia página que não existe. Antes a contagem vinha do total cru e a
+fatia da amostra por tema: 30 páginas anunciadas, 29 vazias.
+
+TEXTOS CONFIGURÁVEIS: o subtítulo do cabeçalho
+(`agregador_noticias_texto_header`) e o aviso de "sem novidade"
+(`agregador_noticias_texto_sem_novidade`, que aceita `{seg}`) saem da
+configuração e NASCEM VAZIOS — vazio significa nenhuma label na tela, não
+label em branco. Quem escreve é o administrador.
 """
 
 import sys, os, re
@@ -70,8 +83,11 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             ui.label("Somente usuários com acesso ao Agregador de Notícias.").classes("text-body2 text-grey-7")
         return
 
-    tema = ler_tema("agregador_noticias", cor_botao="#000000", cor_texto_botao="#FFFFFF",
-                    texto_header="Notícias agregadas de múltiplas fontes — 3 colunas, clique abre no site original. Para TV do Filas, carrossel título+descrição.")
+    # O subtítulo do cabeçalho NÃO é mais texto fixo do código: vem da
+    # configuração `agregador_noticias_texto_header` (padrão VAZIO) e,
+    # vazio, o `cabecalho` não renderiza nenhuma label. Quem escreve é o
+    # administrador, em /admin/agregador_noticias.
+    tema = ler_tema("agregador_noticias", cor_botao="#000000", cor_texto_botao="#FFFFFF")
     ui.colors(primary=tema["cor_botao"])
     t_cor_titulo = tema["cor_titulo"]
     t_cor_fundo = tema["cor_fundo"]
@@ -93,6 +109,13 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
     _REFRESCO_SEG_MIN = 15
     _REFRESCO_SEG_MAX = 600
     _REFRESCO_SEG_PADRAO = 60
+
+    # Teto de linhas lidas em memória para a página de "Todos os temas" (a
+    # amostra por tema e o resto saem daqui). Maior que a contagem real do
+    # banco hoje (349 linhas com 24h de recycle), então o normal é não
+    # truncar nada — mas se truncar, o rodapé avisa em vez de anunciar
+    # páginas que não existem.
+    _LIMITE_LISTAGEM = 600
 
     def _tempo_relativo(data_str: str) -> str:
         """EN: Publication age — "agora" / "20 min atrás" / "1h40 atrás" / "5 dias atrás".
@@ -489,9 +512,37 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
 
         @ui.refreshable
         def grid():
+            """Desenha a página de notícias e a paginação.
+
+            PAGINAÇÃO (corrigida em 29/09/2026). Antes a contagem vinha do
+            TOTAL CRU (349 linhas) e a fatia vinha da AMOSTRA por tema (9
+            linhas): as páginas 2..30 anunciavam 30 páginas e saíam vazias —
+            e a página vazia caía no cartão "Nenhuma notícia ainda", que é a
+            mensagem de BANCO VAZIO. Agora contagem e fatia saem da MESMA
+            lista:
+
+            • tamanho da página = `ag.por_pagina()` (múltiplo de 3, mínimo
+              9), configurável pelo administrador, com o clamp no BACKEND;
+            • "Todos os temas", página 1 = AMOSTRA (uma notícia por tema
+              distinto, no máximo `por_pagina`) — ela existe para o dia em
+              que 160 das 349 notícias eram do mesmo tema e a página única
+              virava quase tudo igual;
+            • páginas 2+ = o RESTO (tudo que a amostra não levou), no
+              tamanho configurado, sem repetir nada da página 1;
+            • a última página pode vir incompleta.
+
+            AMOSTRA e RESTO particionam a lista inteira, uma vez cada, então
+            o total anunciado é exatamente o alcance da paginação: somar os
+            "Exibindo X" de todas as páginas dá o total da última, sem
+            sobra e sem buraco.
+            """
             tema_f = estado["tema"] or None
             busca = (estado.get("busca") or "").strip()
-            # total para paginação (com busca)
+            # TAMANHO DA PÁGINA — configurável (múltiplo de 3, mínimo 9),
+            # com o clamp feito no BACKEND (`ag.por_pagina`), não aqui: é a
+            # mesma variável que fatia e que anuncia o total.
+            por_pagina = ag.por_pagina()
+            truncado = False
             if busca:
                 # Busca do usuário: ÚNICO caso, junto com a seleção do tema,
                 # em que o público restrito (Tribunais de Contas) pode
@@ -519,54 +570,101 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     or busca_n in _norm(_camp(n, 3))
                 ]
                 total = len(filtradas)
-            else:
+                total_pag = max(1, (total + por_pagina - 1) // por_pagina)
+                if estado["pagina"] > total_pag:
+                    estado["pagina"] = total_pag
+                if estado["pagina"] < 1:
+                    estado["pagina"] = 1
+                offset = (estado["pagina"] - 1) * por_pagina
+                noticias = filtradas[offset:offset + por_pagina]
+            elif tema_f:
+                # Tema escolhido: paginação direta, sem amostra — o filtro
+                # JÁ é a seleção do usuário.
                 total = ag.contar_noticias(tema=tema_f)
-            if tema_f:
-                por_pagina = 12
+                total_pag = max(1, (total + por_pagina - 1) // por_pagina)
+                if estado["pagina"] > total_pag:
+                    estado["pagina"] = total_pag
+                if estado["pagina"] < 1:
+                    estado["pagina"] = 1
+                offset = (estado["pagina"] - 1) * por_pagina
+                noticias = ag.listar_noticias(tema=tema_f, limite=por_pagina,
+                                              offset=offset)
             else:
-                # "Todos os temas": UMA notícia por tema, para a grade não virar
-                # um bloco só de Esporte/Economia com as demais soterradas.
-                # O teto de 12 dá no máximo 1 card por tema; se houver mais
-                # temas que 12, a paginação leva o restante.
-                por_pagina = max(12, len(temas))
-            total_pag = max(1, (total + por_pagina) // por_pagina)
-            if estado["pagina"] > total_pag:
-                estado["pagina"] = total_pag
-            if estado["pagina"] < 1:
-                estado["pagina"] = 1
-            offset = (estado["pagina"] - 1) * por_pagina
-            if busca:
-                # pagina sobre filtradas
-                noticias = filtradas[offset:offset+por_pagina]
-            else:
-                if tema_f:
-                    noticias = ag.listar_noticias(tema=tema_f, limite=por_pagina, offset=offset)
+                # TODOS OS TEMAS: a página 1 é a amostra por tema e o resto
+                # vem depois. Amostra e resto não se repetem.
+                _linhas = ag.listar_noticias(tema=None, limite=_LIMITE_LISTAGEM,
+                                             offset=0)
+                _vistos, _amostra = set(), []
+                for _n in _linhas:
+                    _t = _n[3]
+                    if _t in _vistos:
+                        continue
+                    _vistos.add(_t)
+                    _amostra.append(_n)
+                    if len(_amostra) >= por_pagina:
+                        break
+                _ids_amostra = {_n[0] for _n in _amostra}
+                _resto = [_n for _n in _linhas if _n[0] not in _ids_amostra]
+                # O total anunciado é o que a paginação ALCANÇA de fato: a
+                # lista carregada, não a contagem bruta de uma tabela que
+                # pode ser maior que o limite de leitura. Havendo linhas
+                # além do limite, o rodapé avisa em vez de prometer páginas
+                # que não existem.
+                total = len(_linhas)
+                truncado = (ag.contar_noticias(tema=None) or 0) > total
+                _paginas_resto = (len(_resto) + por_pagina - 1) // por_pagina
+                total_pag = max(1, 1 + _paginas_resto)
+                if estado["pagina"] > total_pag:
+                    estado["pagina"] = total_pag
+                if estado["pagina"] < 1:
+                    estado["pagina"] = 1
+                if estado["pagina"] == 1:
+                    noticias = _amostra
                 else:
-                    # AMOSTRA POR TEMA (1 por tema): agrupa a lista geral
-                    # preservando a ordem cronológica e fica só com a primeira
-                    # ocorrência de cada tema. Contagem/paginação seguem pelo
-                    # total real, então os próximos temas entram na página 2.
-                    _vistos, _amostra = set(), []
-                    for _n in ag.listar_noticias(tema=None, limite=600, offset=0):
-                        _t = _n[3]
-                        if _t in _vistos:
-                            continue
-                        _vistos.add(_t)
-                        _amostra.append(_n)
-                    noticias = _amostra[offset:offset + 12]
+                    _off = (estado["pagina"] - 2) * por_pagina
+                    noticias = _resto[_off:_off + por_pagina]
             if not noticias:
                 with vazio_box:
                     vazio_box.clear()
                     with ui.card().classes("w-full p-8 items-center"):
                         ui.icon("article", size="48px").classes("text-grey-4")
                         if busca:
+                            # busca sem resultado: não é banco vazio, é filtro
                             ui.label(f'Nenhuma notícia para "{busca}" (busca em todos os temas).').classes("text-grey-6")
-                        else:
+                        elif tema_f and total <= 0:
+                            # o tema escolhido ainda não tem notícia: o banco
+                            # tem, a coleta é que não trouxe desse tema
+                            ui.label(f'Nenhuma notícia do tema "{tema_f}" no momento.').classes("text-grey-6")
+                            ui.label(f"Coleta a cada {ag.intervalo_min()} min.").classes("text-caption text-grey-5")
+                        elif total <= 0:
+                            # BANCO REALMENTE VAZIO
                             ui.label("Nenhuma notícia ainda. A coleta é automática — aguarde o primeiro ciclo ou peça ao administrador.").classes("text-grey-6")
                             ui.label(f"Coleta a cada {ag.intervalo_min()} min.").classes("text-caption text-grey-5")
-                        if tema_f and not busca:
-                            ui.label(f"Tema: {tema_f}").classes("text-caption text-grey-5")
+                        else:
+                            # PÁGINA VAZIA dentro de um banco com notícias:
+                            # só ocorre em página além do fim (proteção contra
+                            # estado inconsistente). Aqui a notícia não é a
+                            # coleta — é voltar.
+                            ui.label("Nenhuma notícia nesta página.").classes("text-grey-6")
+                            try:
+                                _btn = botao(
+                                    "Voltar para a primeira página", icone="first_page",
+                                    on_click=lambda: (estado.__setitem__("pagina", 1), _reforcar_grid()),
+                                    variante="primario", compacto=True,
+                                    chave_modulo="agregador_noticias")
+                                if _btn is not None:
+                                    _btn.props('data-testid=agregador-voltar-primeira')
+                            except Exception:
+                                log.exception("grid: falha ao montar o botão de voltar")
+                # a paginação some junto com a grade: botão apontando para
+                # uma página que não existe é pior do que nenhum botão
+                with pag_box:
+                    pag_box.clear()
                 return
+            # a página anterior estava vazia: o cartão de estado não pode
+            # sobrar na tela ao lado da grade
+            with vazio_box:
+                vazio_box.clear()
             # marca d'água da tela: o timer compara contra isso para saber
             # se apareceu notícia nova sem carregar linhas
             _marca = ag.marca_ultimo_coletado()
@@ -589,7 +687,15 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         ui.label(f"Página {estado['pagina']} de {total_pag} • {total} notícias").classes("text-caption text-grey-7 mx-2")
                         ui.button(icon="chevron_right", on_click=lambda: (estado.__setitem__("pagina", min(total_pag, estado["pagina"]+1)), _reforcar_grid())).props("flat dense").tooltip("Próxima").props('data-testid=agregador-proxima')
                         ui.button(icon="last_page", on_click=lambda: (estado.__setitem__("pagina", total_pag), _reforcar_grid())).props("flat dense").tooltip("Última página").props('data-testid=agregador-ultima')
-                    ui.label(f"Exibindo {len(noticias)} de {total}").classes("text-caption text-grey-5")
+                    with ui.column().classes("items-end").style("gap: 0.15rem"):
+                        # `len(noticias)` é o que está DE FATO na tela e
+                        # `total` é o alcance da paginação — os dois saem
+                        # da mesma lista, então nunca mentem juntos.
+                        ui.label(f"Exibindo {len(noticias)} de {total}").classes("text-caption text-grey-5")
+                        if truncado:
+                            ui.label(f"Mostrando as {total} mais recentes — a lista é maior que o limite de leitura.").classes("text-caption text-grey-5")
+                        elif not tema_f and not busca and estado["pagina"] == 1 and len(noticias) != por_pagina:
+                            ui.label("Primeira página: uma notícia de cada tema.").classes("text-caption text-grey-5")
 
         def _on_tema(e):
             estado["tema"] = e.value or ""
@@ -607,10 +713,32 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
         # ATUALIZAÇÃO AUTOMÁTICA (parcial) — o usuário não clica em nada
         # ================================================================
         def _rotulo_auto(texto):
+            """Escreve (ou apaga) o rótulo da barra de atualização automática.
+
+            Texto VAZIO = rótulo apagado, sem resíduo na tela: o
+            administrador configurou em `/admin/agregador_noticias` e não
+            preencheu nada, então nada aparece (nem uma label em branco).
+            """
             try:
-                lbl_auto.set_text(texto)
+                lbl_auto.set_text(texto or "")
             except Exception:
                 pass
+
+        def _texto_sem_novidade() -> str:
+            """Texto de 'sem novidade' — vem da configuração; vazio = nada.
+
+            Aceita o marcador `{seg}`, trocado pelo intervalo real de
+            checagem (ex.: `Sem novidade • próxima checagem em {seg}s`).
+            O PADRÃO é vazio: nada aparece até o administrador preencher.
+            """
+            try:
+                texto = ag.texto_sem_novidade() or ""
+                if not texto:
+                    return ""
+                return texto.replace("{seg}", str(_intervalo_refresh()))
+            except Exception:
+                log.exception("_texto_sem_novidade: falha ao montar o rótulo")
+                return ""
 
         def _prepender_novas(novas):
             """Insere SÓ os cards novos no topo da grade, sem redesenhar.
@@ -649,7 +777,9 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 return
             _total, _max_id, _coleta = _marca
             if _max_id <= estado["max_id"]:
-                _rotulo_auto(f"Sem novidade • próxima checagem em {ag.refresh_seg()}s")
+                # Texto CONFIGURÁVEL (`agregador_noticias_texto_sem_novidade`,
+                # padrão VAZIO): com a configuração vazia, nada aparece.
+                _rotulo_auto(_texto_sem_novidade())
                 return
             try:
                 novas = await run.io_bound(
@@ -670,7 +800,12 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                 v = _REFRESCO_SEG_PADRAO
             return max(_REFRESCO_SEG_MIN, min(_REFRESCO_SEG_MAX, v))
 
-        _rotulo_auto(f"Atualização automática a cada {_intervalo_refresh()}s")
+        # Rótulo inicial da barra: é o MESMO estado do "sem novidade"
+        # (ainda não chegou nada da checagem automática), então usa o texto
+        # configurado — e nasce vazio quando o admin não preencheu nada.
+        # Assim o rótulo não "acende" com um texto fixo e apaga no primeiro
+        # polling.
+        _rotulo_auto(_texto_sem_novidade())
         ui.timer(_intervalo_refresh(), _checar_novidades)
 
         # Primeira notícia ASSÍNCRONA: se a grade nasce vazia, dispara a

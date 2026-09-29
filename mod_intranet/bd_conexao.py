@@ -332,6 +332,27 @@ def init_db():
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
                     "('migracao_versao_usuarios_260929_seg', '1') ON CONFLICT DO NOTHING")
 
+    # Bump do `agregador_noticias` pela correção da EXIBIÇÃO de 29/09/2026.
+    # A contagem de páginas era feita sobre o total cru (349) enquanto a fatia
+    # vinha da amostra de 1 por tema (9 elementos): as páginas 2..30 saíam
+    # vazias e caíam no cartão de "nenhuma notícia". Agora a contagem e a fatia
+    # saem da MESMA lista, a página 1 continua sendo a amostra por tema e as
+    # seguintes mostram o resto. Junto: tamanho de página configurável
+    # (múltiplo de 3, mínimo 9, padrão 12) e os dois textos da tela — cabeçalho
+    # e aviso de "sem novidade" — tirados do código e agora configuráveis,
+    # vazios por padrão.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_agregador_noticias_260929'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('versao_modulo:agregador_noticias', '1.0.260929') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260929' "
+                    "WHERE chave='versao_modulo:agregador_noticias'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_agregador_noticias_260929', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_usuarios_260929'")
     if (cur.fetchone()[0] or 0) == 0:

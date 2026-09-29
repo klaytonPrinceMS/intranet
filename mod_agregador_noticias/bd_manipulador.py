@@ -37,6 +37,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 # ele fica acessível sob demanda.
 _TEMAS_RESTRITOS = ("Tribunais de Contas",)
 
+# Versão deste módulo (AGENTS.md §4.2 — formato X.Y.AAMMDD, patch = data da
+# alteração). É a data em que o CÓDIGO mudou, não um contador de revisões.
+# 29/09/2026 — paginação da grade corrigida (página 1 = amostra por tema,
+# páginas seguintes = o restante no tamanho configurado) e os dois textos
+# fixos da tela movidos para configuração.
+VERSAO_MODULO = "1.0.260929"
+
 # Temas que NÃO vão para o carrossel da TV do mod_filas.
 # A TV é o painel de atendimento ao público: notícia de julgamento de
 # tribunal de contas ali é ruído para quem está esperando ser chamado. As
@@ -251,6 +258,155 @@ def definir_refresh_seg(segundos: int, ator="sistema"):
     return ok, v
 
 
+# ============ EXIBIÇÃO DA TELA (29/09/2026) ============
+
+# A grade tem 3 COLUNAS no desktop, então o tamanho da página é MÚLTIPLO DE 3:
+# é o que evita a linha órfã com 1 ou 2 cards sozinhos no fim da grade.
+#
+# POR QUE O TETO É 99 E NÃO 100 (29/09/2026, decisão do responsável)
+#     Quem pediu o limite disse "100"; 100 não é múltiplo de 3 (100/3 = 33,33)
+#     e é exatamente a linha órfã que a regra dos múltiplos existe para
+#     impedir. O TETO declarado fica em 100 para atender o pedido, mas o maior
+#     valor ALCANÇÁVEL é 99. Gravar 100 direto no banco normaliza para 99, e o
+#     painel avisa o porquê em vez de aceitar e quebrar a grade.
+POR_PAGINA_PADRAO = 12
+POR_PAGINA_MINIMO = 9
+POR_PAGINA_MAXIMO = 100
+# Alcançável de verdade: todos os múltiplos de 3 de 9 até 99.
+POR_PAGINA_OPCOES = tuple(range(9, 100, 3))
+# Tetos de caracteres dos textos livres da tela (o excedente é cortado).
+TEXTO_HEADER_MAX = 300
+TEXTO_SEM_NOVIDADE_MAX = 200
+
+
+def _ajustar_por_pagina(valor) -> int:
+    """EN: Clamps the page size to an int in 9–100 that is a multiple of 3.
+
+    PT-BR: Ajusta o tamanho de página para inteiro entre 9 e 100 e múltiplo
+    de 3.
+
+    Valor fora da regra é ARREDONDADO PARA BAIXO até o múltiplo de 3 mais
+    próximo (com piso de 9): 10 → 9, 11 → 9, 13 → 12, 58 → 57, 100 → 99. O
+    ajuste é determinístico e vale para o valor que vem da TELA e para o que
+    alguém gravar direto na chave de configuração — o clamp é do backend,
+    não da UI. Valor ilegível cai no padrão (12). Nunca levanta exceção.
+    """
+    try:
+        v = int(valor)
+    except Exception:
+        return POR_PAGINA_PADRAO
+    try:
+        v = max(POR_PAGINA_MINIMO, min(POR_PAGINA_MAXIMO, v))
+        resto = v % 3
+        if resto:
+            v -= resto
+        return max(POR_PAGINA_MINIMO, v)
+    except Exception:
+        return POR_PAGINA_PADRAO
+
+
+def por_pagina() -> int:
+    """EN: How many news cards a page shows — multiple of 3, minimum 9.
+
+    PT-BR: Quantas notícias a página mostra — múltiplo de 3, mínimo 9.
+
+    Configurável pelo administrador em `/admin/agregador_noticias`
+    (card "Exibição"). É a MESMA conta que a tela fatia as páginas: a
+    página 1 de "Todos os temas" é a amostra por tema (uma de cada) e as
+    páginas seguintes fatiam o restante no tamanho configurado.
+    """
+    bruto = _get_config("por_pagina", str(POR_PAGINA_PADRAO)) or ""
+    return _ajustar_por_pagina((bruto or "").strip() or POR_PAGINA_PADRAO)
+
+
+def definir_por_pagina(valor, ator="sistema"):
+    """EN: Saves the page size (clamp: int, ≥ 9, ≤ 100, multiple of 3).
+
+    PT-BR: Grava o tamanho de página (clamp: inteiro, ≥ 9, ≤ 100, múltiplo
+    de 3; o maior valor alcançável é 99 porque 100 não é múltiplo de 3).
+
+    Devolve `(ok, valor_aplicado)` — o valor devolvido é o que foi realmente
+    gravado depois do clamp, para a tela mostrar a verdade e não o que foi
+    digitado.
+    """
+    try:
+        v = _ajustar_por_pagina(valor)
+        ok = _set_config("por_pagina", str(v))
+        if ok:
+            _audit(ator, "configurar", "por_pagina", str(v))
+        return ok, v
+    except Exception:
+        _log().warning(f"definir_por_pagina: falha ao gravar ({valor!r})")
+        return False, POR_PAGINA_PADRAO
+
+
+def texto_header() -> str:
+    """EN: Header subtitle of the news screen — empty means NO subtitle.
+
+    PT-BR: Subtítulo do cabeçalho da tela — vazio significa NÃO mostrar.
+
+    Chave `agregador_noticias_texto_header`, a mesma que `tema_modulo`
+    lê; o padrão é VAZIO, então a tela nasce sem aquele parágrafo fixo que
+    descrevia a tela como se fosse sempre verdade.
+    """
+    return (_get_config("texto_header", "") or "").strip()[:TEXTO_HEADER_MAX]
+
+
+def definir_texto_header(texto, ator="sistema"):
+    """Grava o subtítulo do cabeçalho (vazio = a tela não mostra cabeçalho)."""
+    try:
+        t = (str(texto or "")).strip()[:TEXTO_HEADER_MAX]
+        ok = _set_config("texto_header", t)
+        if ok:
+            # `tema_modulo` guarda o tema em `lru_cache`: sem limpar, a tela
+            # continuaria com o texto velho até reiniciar o servidor.
+            _limpar_cache_tema()
+            _audit(ator, "configurar", "texto_header", t)
+        return ok, t
+    except Exception:
+        _log().warning("definir_texto_header: falha ao gravar")
+        return False, ""
+
+
+def texto_sem_novidade() -> str:
+    """EN: Text shown when the auto-check found nothing new — empty = no text.
+
+    PT-BR: Texto exibido quando a checagem automática não achou nada novo —
+    vazio = nenhum texto.
+
+    Aceita o marcador `{seg}`, substituído pelo intervalo de checagem em
+    segundos (ex.: `Sem novidade • próxima checagem em {seg}s`).
+    """
+    return (_get_config("texto_sem_novidade", "") or "").strip()[:TEXTO_SEM_NOVIDADE_MAX]
+
+
+def definir_texto_sem_novidade(texto, ator="sistema"):
+    """Grava o texto de 'sem novidade' (vazio = nada aparece na barra)."""
+    try:
+        t = (str(texto or "")).strip()[:TEXTO_SEM_NOVIDADE_MAX]
+        ok = _set_config("texto_sem_novidade", t)
+        if ok:
+            _audit(ator, "configurar", "texto_sem_novidade", t)
+        return ok, t
+    except Exception:
+        _log().warning("definir_texto_sem_novidade: falha ao gravar")
+        return False, ""
+
+
+def _limpar_cache_tema():
+    """Limpa o cache de tema do núcleo (fail-soft) após gravar o cabeçalho."""
+    try:
+        from mod_intranet import tema_modulo
+        tema_modulo.ler_tema.cache_clear()
+    except Exception:
+        pass
+    try:
+        from mod_intranet import tema_modulo
+        tema_modulo._cfg.cache_clear()
+    except Exception:
+        pass
+
+
 def termo_pesquisa() -> str:
     return (_get_config("termo_pesquisa", "") or "").strip()
 
@@ -427,6 +583,14 @@ def init_db():
         ("agregador_noticias_intervalo_min", "60"),
         ("agregador_noticias_refresh_seg", "60"),
         ("agregador_noticias_termo_pesquisa", ""),
+        # Exibição (29/09/2026): tamanho de página e os DOIS textos que
+        # eram fixos no código — subtítulo do cabeçalho e aviso de "sem
+        # novidade". Todos nascem VAZIOS (exceto o tamanho de página): a
+        # tela não escreve mais descrição de si mesma, quem escreve é o
+        # administrador em /admin/agregador_noticias.
+        ("agregador_noticias_por_pagina", str(POR_PAGINA_PADRAO)),
+        ("agregador_noticias_texto_header", ""),
+        ("agregador_noticias_texto_sem_novidade", ""),
         ("agregador_noticias_temas_json", json.dumps(TEMAS_PADRAO, ensure_ascii=False)),
         ("agregador_noticias_fontes_json", json.dumps(FONTES_PADRAO, ensure_ascii=False)),
         ("agregador_noticias_hora_reinicio", "09:00"),
@@ -505,6 +669,56 @@ def init_db():
         pass
     conn.commit()
     conn.close()
+    _migrar_versao_modulo()
+
+
+# ============ VERSÃO DO MÓDULO (AGENTS.md §4.2) ============
+
+def _migrar_versao_modulo():
+    """Migração idempotente do bump de 29/09/2026 — paginação + textos.
+
+    O que mudou: a contagem da paginação passou a bater com a fatia
+    (página 1 = amostra por tema, páginas seguintes = o restante no
+    tamanho configurado) e os dois textos fixos da tela viraram
+    configuração.
+
+    A chave `versao_modulo:agregador_noticias` é a MESMA que o rodapé da
+    tela lê e que `mod_auditoria`/`mod_edit_pdf` já semeiam no próprio
+    `bd_manipulador` — o INSERT abaixo cria a chave quando ela ainda não
+    existe, então banco novo e banco em uso nascem certos.
+
+    Idempotente pelo marcador `migracao_versao_agregador_noticias_260929`:
+    roda UMA vez; na segunda não muda nada e não sobrescreve uma versão
+    que o administrador tenha ajustado. SQL portátil (SQLite e PostgreSQL).
+
+    NOTA: o marcador-padrão `migracao_versao_<chave>_<data>` que o
+    `assets/test/teste_versionamento_modulo.py` procura vive em
+    `mod_intranet/bd_conexao.py` (fora do diretório deste módulo). Ele
+    precisa ser somado lá para que a checagem estática reconheça o bump;
+    funcionalmente esta migração já aplica a versão no banco.
+    """
+    try:
+        from mod_intranet.bd_conexao import get_connection as gc
+        conn = gc()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_config "
+                        "WHERE chave='migracao_versao_agregador_noticias_260929'")
+            if (cur.fetchone()[0] or 0) == 0:
+                cur.execute("INSERT INTO tb_config (chave, valor) "
+                            "VALUES (?, ?) ON CONFLICT DO NOTHING",
+                            ("versao_modulo:agregador_noticias", VERSAO_MODULO))
+                cur.execute("UPDATE tb_config SET valor=? "
+                            "WHERE chave='versao_modulo:agregador_noticias'",
+                            (VERSAO_MODULO,))
+                cur.execute("INSERT INTO tb_config (chave, valor) "
+                            "VALUES ('migracao_versao_agregador_noticias_260929', '1') "
+                            "ON CONFLICT DO NOTHING")
+                conn.commit()
+        finally:
+            conn.close()
+    except Exception:
+        _log().warning("_migrar_versao_modulo: falha ao aplicar o bump de versão")
 
 
 # ============ CRUD ============
