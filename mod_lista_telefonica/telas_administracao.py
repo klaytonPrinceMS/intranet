@@ -7,11 +7,11 @@ Gerencia unidades (criar/mover/elevar/reordenar/excluir ramo) e contatos
 (criar/editar/transferir/excluir), além de aparência e backup.
 """
 
-import sys, os, re
+import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from nicegui import ui
-from mod_intranet.ui_comum import card_admin, rodape_salvar_restaurar, botao, botao_icone, dialogo_card
+from mod_intranet.ui_comum import card_admin, botao, botao_icone, dialogo_card
 from mod_intranet.tema_modulo import ler_tema, notificar, bloco_aparencia
 from mod_intranet import observabilidade
 from mod_lista_telefonica import bd_manipulador as lista
@@ -320,7 +320,6 @@ def mostrar_administracao(usuario_logado: str = ""):
                         # opções conforme tipo
                         if uni[2] == "secretaria":
                             ui.label("Secretaria não pode ser movida para dentro (ficará na raiz).").classes("text-caption text-grey-6")
-                            novo_pai = None
                             def confirmar():
                                 try:
                                     ok, msg = lista.mover_unidade(uid, None, ator=usuario_logado)
@@ -689,7 +688,7 @@ def mostrar_administracao(usuario_logado: str = ""):
                             from mod_intranet import integracoes
                             todos = integracoes.listar_usuarios_gestao()
                             # filtra por nome, login, e-mail, completo (sem acentos, case-insensitive)
-                            import unicodedata, re
+                            import unicodedata
                             def _norm(s):
                                 s = unicodedata.normalize("NFKD", s or "").encode("ascii","ignore").decode().lower()
                                 return s

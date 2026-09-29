@@ -22,8 +22,9 @@ PAPEIS_MODULO = ["comum", "administrador"]
 #
 # A lista é o TRABALHO DIÁRIO de quem trabalha na prefeitura (27/09/2026):
 # consultar empenho, editar documento, pedir impressão, achar o ramal de um
-# colega e ver as notícias do município. Um servidor que chega e não tem
-# nenhum destes liberados cai em tela vazia e acha que o sistema quebrou.
+# colega, ver as notícias do município e abrir quadro de ordens de serviço do
+# próprio setor. Um servidor que chega e não tem nenhum destes liberados cai
+# em tela vazia e acha que o sistema quebrou.
 #
 # Ficam de FORA: `usuarios`, `auditoria` e `blog`.
 #   - `usuarios` e `auditoria` mexem em conta e registro de todo mundo; são do
@@ -34,7 +35,8 @@ PAPEIS_MODULO = ["comum", "administrador"]
 #     e é melhor que a liberação seja uma decisão visível do que um padrão
 #     que ninguém nota.
 ACESSO_PADRAO_NOVO_USUARIO = ("editar_pdf", "empenhos", "solicita_impressao",  # noqa: E501
-                              "lista_telefonica", "agregador_noticias")
+                              "lista_telefonica", "agregador_noticias", "os",
+                              "estoque")
 
 
 def get_connection():
@@ -282,6 +284,26 @@ def _init_db_seguro():
                         "ADD COLUMN recado INTEGER NOT NULL DEFAULT 0")
         _commit_com_retry(conn, contexto="init_db:consentimento_telefone")
 
+        # ---- Histórico de remuneração (28/09/2026) ----
+        # Uma linha por competência, só quando o VALOR MUDA. Guardar todo mês
+        # mesmo sem mudança encheria a tabela de repetição; e guardar só o
+        # valor atual perderia o histórico, que é a única coisa que interessa
+        # quando se pergunta "quanto ele recebeu em março?". A intranet roda
+        # o sync mensalmente, então a linha do mês é o registro.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS tb_remuneracao_historico (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_nome TEXT NOT NULL REFERENCES tb_usuarios(user_nome)
+                    ON DELETE CASCADE,
+                competencia TEXT NOT NULL,
+                remuneracao TEXT NOT NULL DEFAULT '',
+                ficha_contracheque TEXT DEFAULT '',
+                registrado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_remuneracao_historico "
+                    "ON tb_remuneracao_historico(user_nome, competencia)")
+
         # ---- Dados funcionais públicos (27/09/2026) ----
         # Matrícula, nome, secretaria e cargo são informação pública (portal da
         # transparência), e o cadastro não tinha onde guardar. `matricula` não
@@ -302,7 +324,41 @@ def _init_db_seguro():
                            # `provisorio_ate` porque `acesso_provisorio` sozinho
                            # não guarda QUANDO o prazo vence.
                            ("acesso_provisorio", "INTEGER NOT NULL DEFAULT 0"),
-                           ("provisorio_ate", "DATETIME")):
+                           ("provisorio_ate", "DATETIME"),
+                           # ---- Pendência de atualização dos dados (28/09/2026) ----
+                           # O portal da transparência publica a secretaria, o
+                           # departamento e o cargo. Quando um servidor muda de
+                           # setor, o sistema NÃO sobrescreve: MARCA, e quem
+                           # confirma é a própria pessoa. Dois motivos que se
+                           # sustentam: o portal é a fonte do setor mas o
+                           # telefone só a pessoa sabe, e overwrite apagaria o
+                           # ajuste que o administrador fez à mão no painel.
+                           ("pendencia_dados", "TEXT DEFAULT ''"),
+                           ("pendencia_em", "DATETIME"),
+                           # ---- Remuneração (28/09/2026) ----
+                           # Dado público por lei (a remuneração de servidor
+                           # é informação pública, e a prefeitura a publica
+                           # mensalmente). A intranet importa para que o
+                           # servidor veja o próprio valor sem sair do
+                           # sistema — e o DTI, que precisa conferir a
+                           # folha contra o portal.
+                           #
+                           # TEXTO, E NÃO NÚMERO: dinheiro em ponto flutuante
+                           # perde centavo, e "R$ 3.456,78" arredondado para
+                           # 3456.78 vira 3456.779999... no relatório. O valor
+                           # entra como o portal envia.
+                           ("remuneracao", "TEXT DEFAULT ''"),
+                           ("remuneracao_competencia", "TEXT DEFAULT ''"),
+                           ("ficha_contracheque", "TEXT DEFAULT ''"),
+                           # `vinculo` e `situacao` são o que a folha traz do
+                           # portal e que a folha sozinha não consegue responder
+                           # depois: "é efetivo?", "está ativo?". A lista
+                           # telefônica precisa disso para CONSTAR a pessoa
+                           # mesmo sem telefone — e sem essas duas colunas a
+                           # resposta seria sempre "não sei", que é pior que
+                           # não responder. (28/09/2026)
+                           ("vinculo", "TEXT DEFAULT ''"),
+                           ("situacao", "TEXT DEFAULT ''")):
             if _col not in cols_usuario:
                 cur.execute(f"ALTER TABLE tb_usuarios ADD COLUMN {_col} {_def}")
         _commit_com_retry(conn, contexto="init_db:dados_funcionais")
@@ -918,6 +974,293 @@ def remover_telefone(ator, telefone_id):
         return False, "Erro ao remover o telefone."
 
 
+def marcar_pendencia_dados(ator, user_nome, descricao):
+    """Marca que os dados funcionais do servidor mudaram no portal.
+
+    O texto da `descricao` é o que o servidor vai ler no alerta ("seu
+    departamento mudou de A para B"), então deve ser escrito para a pessoa,
+    não para o técnico.
+
+    Não sobrescreve nada: `unidade`, `lotacao` e `cargo` continuam como
+    estão até a pessoa confirmar. É a diferença entre "o sistema atualiza" e
+    "o sistema pergunta" — e perguntar é o certo aqui, porque quem responde é
+    quem sabe.
+
+    A marca **não acumula**: chamar de novo substitui o texto e a data. Um
+    servidor que mudou duas vezes no mesmo mês precisa de um alerta, não de
+    dois, e o segundo sobrecreveria a informação do primeiro.
+    """
+    try:
+        descricao = (descricao or "").strip()
+        if not descricao:
+            return True, "Nada a marcar."
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_usuarios WHERE user_nome=?",
+                        (user_nome,))
+            if not (cur.fetchone()[0] or 0):
+                return False, "Usuário não encontrado."
+            agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cur.execute("UPDATE tb_usuarios SET pendencia_dados=?, "
+                        "pendencia_em=? WHERE user_nome=?",
+                        (descricao, agora, user_nome))
+            _commit_com_retry(conn, contexto="marcar_pendencia_dados")
+            _audit(ator, "pendencia_dados", user_nome, descricao)
+            _log().info(f"pendência de dados marcada para {user_nome}: "
+                        f"{descricao}")
+            return True, "Dados marcados para revisão."
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(f"marcar_pendencia_dados: falha em {user_nome} | {e}")
+        return False, "Erro ao marcar a pendência."
+
+
+def _limpar_pendencia_dados(cur, user_nome):
+    """Baixa a pendência de dados (chamado com o cursor aberto)."""
+    try:
+        cur.execute("UPDATE tb_usuarios SET pendencia_dados='', "
+                    "pendencia_em=NULL WHERE user_nome=?", (user_nome,))
+    except Exception as e:
+        _log().warning(f"não foi possível baixar a pendência de dados "
+                       f"de {user_nome}: {e}")
+
+
+def informacao_pendencia(user_nome) -> dict:
+    """EN: Pending data-change state of one account.
+
+    PT-BR: O estado da pendência de atualização dos dados de uma conta.
+
+    `varios_dias` é o que o alerta do DTI usa para cobrar quem está há
+    semanas sem confirmar — a pendência sozinha não diz que está parada, e
+    uma pendência parada é uma pendência que ninguém vai resolver."""
+    vazio = {"tem": False, "descricao": "", "desde": None, "dias": 0}
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT pendencia_dados, pendencia_em FROM tb_usuarios "
+                        "WHERE user_nome=?", (user_nome,))
+            linha = cur.fetchone()
+        finally:
+            conn.close()
+        if not linha or not (linha[0] or "").strip():
+            return vazio
+        dias = 0
+        if linha[1]:
+            try:
+                marca = datetime.strptime(str(linha[1])[:19], "%Y-%m-%d %H:%M:%S")
+                dias = max(0, (datetime.now() - marca).days)
+            except (ValueError, TypeError):
+                dias = 0
+        return {"tem": True, "descricao": linha[0], "desde": linha[1],
+                "dias": dias}
+    except Exception as e:
+        _log().exception(f"informacao_pendencia: falha em {user_nome} | {e}")
+        return vazio
+
+
+def listar_pendencias_dados(limite=50) -> list:
+    """Contas com dado funcional mudado e ainda não confirmado.
+
+    Serve ao alerta do DTI na Home. Ordenada pela mais antiga primeiro: a
+    pendência de quem está há 3 semanas é o problema, e a de quem abriu
+    yesterday é ruído. Devolve dicionários com `user_nome`, `nome_completo`,
+    `descricao`, `desde` e `dias`.
+    """
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("""SELECT user_nome, user_nome_completo, pendencia_dados,
+                                  pendencia_em, user_ativo
+                           FROM tb_usuarios
+                           WHERE pendencia_dados IS NOT NULL
+                             AND pendencia_dados <> ''
+                           ORDER BY (pendencia_em IS NULL), pendencia_em ASC
+                           LIMIT ?""", (int(limite or 50),))
+            linhas = cur.fetchall()
+        finally:
+            conn.close()
+        saida = []
+        for u, nome, desc, desde, ativo in linhas:
+            dias = 0
+            if desde:
+                try:
+                    marca = datetime.strptime(str(desde)[:19], "%Y-%m-%d %H:%M:%S")
+                    dias = max(0, (datetime.now() - marca).days)
+                except (ValueError, TypeError):
+                    dias = 0
+            saida.append({
+                "user_nome": u,
+                "nome_completo": nome or "",
+                "descricao": desc or "",
+                "desde": desde,
+                "dias": dias,
+                "ativo": bool(ativo),
+            })
+        return saida
+    except Exception as e:
+        _log().exception(f"listar_pendencias_dados: falha | {e}")
+        return []
+
+
+def contar_pendencias_dados() -> int:
+    """Quantas contas estão com dado funcional aguardando confirmação."""
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_usuarios "
+                        "WHERE pendencia_dados IS NOT NULL "
+                        "AND pendencia_dados <> ''")
+            return int((cur.fetchone()[0] or 0))
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(f"contar_pendencias_dados: falha | {e}")
+        return 0
+
+
+def definir_remuneracao(ator, user_nome, remuneracao=None, competencia=None,
+                       ficha_contracheque=None):
+    """Grava a remuneração vinda do portal e registra no histórico.
+
+    Chamado pelo sync mensal, com a `competencia` da folha (ex.: "08/2026").
+
+    A REMUNERAÇÃO É OBJETIVA E NÃO VIRA PERGUNTA
+        O aviso de mudança de setor existe porque setor tem dois donos
+        possíveis e um deles é a pessoa. Remuneração não: é o valor oficial
+        publicado, e não há o que a pessoa confirme — ela sabe quanto ganha,
+        mas quem registra é o RH e o portal. Por isso aqui se ATUALIZA e se
+        guarda o histórico, em vez de marcar e esperar.
+
+    O HISTÓRICO SÓ GRAVA QUANDO O VALOR MUDA
+        Rodar o sync todo mês com o mesmo valor criaria 12 linhas idênticas
+        por ano, e a pergunta "quando subiu o salário?" deixaria de ter
+        resposta. A linha entra na competência em que o valor mudou — que é
+        também a linha que interessa.
+    """
+    try:
+        comp = (competencia or "").strip()
+        rem = (remuneracao or "").strip() if remuneracao is not None else None
+        ficha = (ficha_contracheque or "").strip() \
+            if ficha_contracheque is not None else None
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_usuarios WHERE user_nome=?",
+                        (user_nome,))
+            if not (cur.fetchone()[0] or 0):
+                return False, "Usuário não encontrado."
+            if rem is None and ficha is None and not comp:
+                return True, "Nada a atualizar."
+            cur.execute("SELECT remuneracao, ficha_contracheque FROM tb_usuarios "
+                        "WHERE user_nome=?", (user_nome,))
+            antes = cur.fetchone() or ("", "")
+            rem_final = rem if rem is not None else (antes[0] or "")
+            ficha_final = ficha if ficha is not None else (antes[1] or "")
+            cur.execute("UPDATE tb_usuarios SET remuneracao=?, "
+                        "remuneracao_competencia=?, ficha_contracheque=? "
+                        "WHERE user_nome=?",
+                        (rem_final, comp or None, ficha_final, user_nome))
+            mudou = (antes[0] or "") != rem_final
+            if mudou and comp:
+                # já existe linha desta competência? então atualiza, não duplica
+                cur.execute("SELECT id FROM tb_remuneracao_historico "
+                            "WHERE user_nome=? AND competencia=?",
+                            (user_nome, comp))
+                linha = cur.fetchone()
+                if linha:
+                    cur.execute("UPDATE tb_remuneracao_historico "
+                                "SET remuneracao=?, ficha_contracheque=?, "
+                                "registrado_em=CURRENT_TIMESTAMP WHERE id=?",
+                                (rem_final, ficha_final, linha[0]))
+                else:
+                    cur.execute("INSERT INTO tb_remuneracao_historico "
+                                "(user_nome, competencia, remuneracao, "
+                                "ficha_contracheque) VALUES (?, ?, ?, ?)",
+                                (user_nome, comp, rem_final, ficha_final))
+                _audit(ator, "remuneracao_atualizada", user_nome,
+                       f"{antes[0] or '(vazio)'} -> {rem_final} "
+                       f"[{comp or 'sem competência'}]")
+            _commit_com_retry(conn, contexto="definir_remuneracao")
+            return True, ("Remuneração atualizada." if mudou
+                          else "Remuneração conferida, sem mudança.")
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(f"definir_remuneracao: falha em {user_nome} | {e}")
+        return False, "Erro ao gravar a remuneração."
+
+
+def definir_vinculo(ator, user_nome, vinculo=None, situacao=None):
+    """Grava o vínculo (efetivo, concursado, terceirizado...) e a situação.
+
+    Chamado pelo sync mensal, com o que a folha traz do portal.
+
+    É OBJETIVO, COMO A REMUNERAÇÃO, E TAMBÉM NÃO VIRA PERGUNTA
+        "Esta pessoa é efetiva?" não tem dois donos possíveis: a folha é a
+        fonte e o dado é publicado por lei. A pergunta é para setor, cargo e
+        departamento, onde a folha e a pessoa discordam às vezes. Aqui o
+        sistema grava e pronto.
+
+    POR QUE EXISTE
+        A lista telefônica precisa responder "é efetivo?" e "está ativo?" para
+        quem não autorizou telefone. Sem estas duas colunas no cadastro, a
+        resposta seria "não sei" — e a pessoa desapareceria da busca, que é
+        exatamente o que a busca não deve fazer.
+
+    Só os campos informados mudam (`None` = manter), para uma competência que
+        traga o vínculo e não traga a situação não apagar a situação anterior.
+    """
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            campos, valores = [], []
+            for campo, valor in (("vinculo", vinculo), ("situacao", situacao)):
+                if valor is not None:
+                    campos.append(f"{campo}=?")
+                    valores.append(str(valor or "").strip())
+            if not campos:
+                return True, "Nada a gravar."
+            valores.append(user_nome)
+            cur.execute(f"UPDATE tb_usuarios SET {', '.join(campos)} "
+                        f"WHERE user_nome=?", valores)
+            _commit_com_retry(conn, contexto="definir_vinculo")
+            _audit(ator, "vinculo_atualizado", user_nome,
+                   ", ".join(f"{c}={v}" for c, v in zip(campos, valores[:-1])))
+            return True, "Vínculo atualizado."
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(f"definir_vinculo: falha em {user_nome} | {e}")
+        return False, "Erro ao gravar o vínculo."
+
+
+def historico_remuneracao(user_nome, limite=24) -> list:
+    """Histórico de remuneração do servidor, do mais recente para o mais antigo."""
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT competencia, remuneracao, ficha_contracheque, "
+                        "registrado_em FROM tb_remuneracao_historico "
+                        "WHERE user_nome=? ORDER BY competencia DESC LIMIT ?",
+                        (user_nome, int(limite or 24)))
+            linhas = cur.fetchall()
+        finally:
+            conn.close()
+        return [{"competencia": l[0], "remuneracao": l[1],
+                 "ficha_contracheque": l[2] or "", "registrado_em": l[3]}
+                for l in linhas]
+    except Exception as e:
+        _log().exception(f"historico_remuneracao: falha em {user_nome} | {e}")
+        return []
+
+
 def _limpar_pendencia_telefone(cur, user_nome):
     """Baixa a pendência de telefone do usuário (usado com o cursor aberto).
 
@@ -1185,6 +1528,49 @@ def bloqueio_provisorio_pendente(user_nome) -> bool:
         return False
 
 
+def confirmar_pendencia_dados(ator, user_nome, unidade=None, lotacao=None,
+                              cargo=None):
+    """O servidor confirmou a mudança: grava os valores novos e baixa a marca.
+
+    A confirmação é da PESSOA, não do técnico. Quando ela confirma, o que
+    ela está dizendo é "é isso mesmo, meu departamento mudou" — e a partir
+    daí o banco passa a refletir isso.
+
+    Só os campos informados mudam (`None` = manter), para que a confirmação
+    não apague o campo que o portal não trouxe.
+    """
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_usuarios WHERE user_nome=?",
+                        (user_nome,))
+            if not (cur.fetchone()[0] or 0):
+                return False, "Usuário não encontrado."
+            campos, valores = [], []
+            for campo, valor in (("unidade", unidade), ("lotacao", lotacao),
+                                 ("cargo", cargo)):
+                if valor is not None:
+                    campos.append(f"{campo}=?")
+                    valores.append(str(valor or "").strip())
+            if campos:
+                valores.append(user_nome)
+                cur.execute(f"UPDATE tb_usuarios SET {', '.join(campos)} "
+                            f"WHERE user_nome=?", valores)
+            _limpar_pendencia_dados(cur, user_nome)
+            _commit_com_retry(conn, contexto="confirmar_pendencia_dados")
+            _audit(ator, "pendencia_dados_confirmada", user_nome,
+                   ", ".join(campos) if campos else "sem alteração de valor")
+            _log().info(f"pendência de dados confirmada por {user_nome}: "
+                        f"{', '.join(campos) or 'nenhum campo'}")
+            return True, "Dados atualizados."
+        finally:
+            conn.close()
+    except Exception as e:
+        _log().exception(f"confirmar_pendencia_dados: falha em {user_nome} | {e}")
+        return False, "Erro ao confirmar a atualização."
+
+
 def definir_dados_funcionais(ator, user_nome, unidade=None, lotacao=None,
                              cargo=None):
     """Grava unidade, lotação e cargo do usuário (informação pública).
@@ -1226,7 +1612,7 @@ def definir_dados_funcionais(ator, user_nome, unidade=None, lotacao=None,
 def _normalizar_telefone_cadastro(numero):
     """Normaliza para apenas dígitos e `+`, para gravar e comparar.
 
-    Aceita o que o usuário digita ('(35) 3591-5101', '35 3591 5101', '+55 35
+    Aceita o que o usuário digita ('(00) 3591-5101', '00 3591 5101', '+55 00
     ...') e devolve uma forma canônica. Regra local de propósito: o módulo
     não pode depender do `mod_intranet.telefone` (que é do núcleo) para gravar,
     e a comparação de duplicidade precisa de uma forma só.

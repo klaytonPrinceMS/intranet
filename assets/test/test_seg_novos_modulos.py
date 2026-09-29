@@ -31,7 +31,7 @@ import tempfile
 import shutil
 import pathlib
 import subprocess
-import unicodedata
+
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 os.environ["INTRANET_FORCE_SQLITE"] = "1"
@@ -276,9 +276,39 @@ if ok3:
             nome_contato = f"ContatoQA{os.getpid()}"
             ok_ct, _ = lista.criar_contato(setor_id, nome_contato, "(11) 99999-0000", ator="qa_seg")
             check(ok_ct, "criar_contato com telefone formatado ok")
-            # busca deve encontrar via _norm sem acento
+            # busca deve encontrar via _norm sem acento.
+            # `buscar_contatos` devolve DICIONÁRIOS (mudou de tupla para dict
+            # em 28/09/2026, quando o diretório passou a trazer cargo, vínculo
+            # e situação e a gravar servidor sem telefone). Ler por `r[2]`
+            # levantava KeyError e derrubava a suíte inteira aqui.
             res_busca = lista.buscar_contatos("contatoqa")
-            check(any(nome_contato.lower() in r[2].lower() for r in res_busca), "buscar_contatos _norm encontra sem acento")
+            check(any(nome_contato.lower() in (r.get("nome") or "").lower()
+                      for r in res_busca),
+                  "buscar_contatos _norm encontra sem acento")
+            # Contrato do diretório (28/09/2026): a busca devolve dict com o
+            # posto inteiro, e o telefone é OPCIONAL — servidor que não
+            # autorizou número continua constando, que é o que faz a busca por
+            # nome funcionar na prática.
+            check(all(isinstance(r, dict) for r in res_busca),
+                  "buscar_contatos devolve dicionário")
+            _um = res_busca[0] if res_busca else {}
+            for _campo in ("nome", "nome_completo", "telefone", "user_nome",
+                           "cargo", "lotacao", "vinculo", "situacao", "ativo",
+                           "sem_telefone"):
+                check(_campo in _um,
+                      f"buscar_contatos traz o campo '{_campo}'")
+            # A busca tem que achar por cargo e por vínculo, não só por nome.
+            _arvore = lista.listar_arvore_contatos()
+            _n = len(_arvore or [])
+            check(_n >= 0, "listar_arvore_contatos devolve a árvore")
+            _achou_cargo = any(
+                (c or {}).get("cargo")
+                for _no in (_arvore or [])
+                for c in ((_no.get("contatos") or []) +
+                          [c2 for _f in (_no.get("filhos") or [])
+                           for c2 in (_f.get("contatos") or [])]))
+            check(_achou_cargo,
+                  "diretório tem cargo gravado (a busca por cargo funciona)")
             # tel link sanitização: tel: deve ser só digits/+
             tel_raw = "(11) 9999-8888; alert(1)"
             tel_limpo = re.sub(r"[^0-9+]", "", tel_raw)
@@ -326,58 +356,88 @@ if secs:
     ok_elev, msg_elev = lista.elevar_rebaixar(secs[0][0], "invalido", ator="qa_seg")
     check(not ok_elev, "elevar_rebaixar tipo inválido rejeita")
 
-# ========== C. SOLICITA IMPRESSAO — cotas 1000/200 ==========
-print("\n-- C. Solicita Impressão — ORGANOGRAMA_BASE seed 1000/200 + migração --")
+# ========== C. SOLICITA IMPRESSAO — cotas vindas do organograma REAL ==========
+# Mudança de 28/09/2026: as cotas NÃO vêm mais de uma lista de secretarias de
+# demonstração (a constante ORGANOGRAMA_BASE), e sim do organograma real, que
+# nasce vazio e é preenchido pela folha de servidores. Num clone novo, sem
+# folha configurada, o módulo fica com ZERO secretaria — e isso é o certo:
+# secretaria inventada tem cota inventada e ocupa tela de gente que existe.
+print("\n-- C. Solicita Impressão — cotas do organograma real (sem semente demo) --")
 from mod_solicita_impressao import bd_manipulador as sol  # noqa: E402
 
 sol.init_db()
-# Verifica que secretarias do ORGANOGRAMA_BASE têm cota 1000
-from mod_lista_telefonica.bd_manipulador import ORGANOGRAMA_BASE
 secs_sol = sol.listar_secretarias(ativo=1)
-# deve conter ao menos as do ORGANOGRAMA_BASE
-nomes_org = [n for n, _ in ORGANOGRAMA_BASE]
-nomes_bd = [r[1] for r in secs_sol]
-check(any(n in nomes_bd for n in nomes_org), f"seed secretarias contém ORGANOGRAMA_BASE ({len(nomes_bd)} total)")
-# cota 1000 para secretarias
-# listar_secretarias retorna (id, nome, sigla, cota_paginas_mensal, limite_pedidos_abertos, ativo) -> cota é [3]
-cotas_ok = True
-for r in secs_sol:
-    nome = r[1]
-    cota = r[3] if len(r) > 3 else None
-    if nome in nomes_org and cota != 1000:
-        cotas_ok = False
-        print(f"    cota divergente sec {nome}: {cota} != 1000")
-        break
-check(cotas_ok, "secretarias ORGANOGRAMA_BASE com cota 1000")
-# setores com cota 200
 setores_sol = sol.listar_setores(ativo=1)
-# listar_setores retorna (id, nome, secretaria_id, cota_paginas_mensal, limite_pedidos_abertos, ativo) -> cota é [3]
-# verificação genérica: ao menos um setor com 200
-tem_200 = any(r[3] == 200 for r in setores_sol if len(r) > 3)
-check(tem_200, "setores seed com cota 200 (padrão organograma)")
-# verificar que não há setor com cota 0 após migração (legado DTI corrigido)
-tem_zero = any(r[3] == 0 for r in setores_sol if len(r) > 3)
-check(not tem_zero, "migração corrigiu setores com cota 0 → 200 (nenhum cota 0 restante)")
-# detalhamento: verifica que cada setor do ORGANOGRAMA_BASE presente tem 200
-missing_200 = []
-for sec_nome, setores in ORGANOGRAMA_BASE:
-    for set_nome, _subs in setores:
-        found = next((r for r in setores_sol if r[1] == set_nome), None)
-        if found and found[3] != 200:
-            missing_200.append(f"{set_nome}:{found[3]}")
-check(not missing_200, f"todos setores ORGANOGRAMA_BASE com 200 ({'ok' if not missing_200 else ', '.join(missing_200[:3])})")
+nomes_bd = [r[1] for r in secs_sol]
+
+# Nenhuma secretaria de demonstração pode sobreviver no banco.
+from mod_lista_telefonica.bd_manipulador import ORGANOGRAMA_BASE  # noqa: E402
+nomes_demo = {n for n, _ in ORGANOGRAMA_BASE}
+fugas = sorted(set(nomes_bd) & nomes_demo)
+check(not fugas,
+      f"nenhuma secretaria de demonstração no banco ({len(fugas)}: {fugas[:3]})")
+
+# O código não pode mais semear de ORGANOGRAMA_BASE — a lista fictícia está
+# fora do caminho de carga das cotas.
+SRC_SOL = ler("mod_solicita_impressao/bd_manipulador.py")
+bloco_seed = SRC_SOL.split("# Seeds organograma")[-1] if "# Seeds organograma" in SRC_SOL else ""
+check("obter_organograma_base" not in bloco_seed,
+      "init_db não semeia cotas de ORGANOGRAMA_BASE (organograma real no lugar)")
+check("listar_unidades_organograma" in SRC_SOL,
+      "init_db lê o organograma real pela fachada do núcleo")
+check('("Gabinete", [])' not in SRC_SOL and '("Administração", [])' not in SRC_SOL,
+      "fallback local de secretarias de demonstração removido")
+
+# Cota por tipo, quando existe secretaria.
+# listar_secretarias -> (id, nome, sigla, cota_paginas_mensal, limite_pedidos_abertos, ativo)
+cotas_sec = {r[1]: r[3] for r in secs_sol if len(r) > 3}
+check(all(c == 1000 for c in cotas_sec.values()),
+      f"toda secretaria com cota 1000 ({len(cotas_sec)} secretaria(s))")
+# listar_setores -> (id, nome, secretaria_id, cota_paginas_mensal, limite_pedidos_abertos, ativo)
+cotas_set = {r[1]: r[3] for r in setores_sol if len(r) > 3}
+check(all(c == 200 for c in cotas_set.values()),
+      f"todo setor/subsetor com cota 200 ({len(cotas_set)} setor(es))")
+check(not any(c == 0 for c in cotas_set.values()),
+      "nenhum setor com cota 0 (a migração do DTI continua valendo)")
+
+# Sigla: tem de ser distinta por secretaria. Com nomes reais quase todos
+# começando com "Secretaria de", a sigla por 4 primeiros caracteres colidia e
+# a segunda secretaria sumia sem erro nem log (28/09/2026).
+siglas = [r[2] for r in secs_sol if len(r) > 2 and r[2]]
+check(len(set(siglas)) == len(siglas),
+      f"sigla distinta por secretaria ({len(set(siglas))}/{len(siglas)})")
+check(not [s for s in siglas if s == "SEC_SECR"],
+      "nenhuma sigla 'SEC_SECR' (colisão de 'Secretaria de ...')")
+
+# O achatador do organograma tem de ser testado direto: é a parte que decide a
+# qual secretaria um subsetor pertence, e ela só aparece com 3+ níveis.
+_arvore = [
+    (1, "Secretaria de Obras", "secretaria", None, 0, "", 1),
+    (2, "Secretaria de Saude", "secretaria", None, 1, "", 1),
+    (3, "Obras", "setor", 1, 0, "", 1),
+    (4, "Manutencao", "subsetor", 3, 0, "", 1),
+    (5, "Eletrica", "subsetor", 4, 0, "", 1),
+    (6, "Hidraulica", "subsetor", 4, 1, "", 1),
+    (7, "ORFAO sem secretaria", "setor", 99, 0, "", 1),
+]
+_plano = sol._organograma_para_cotas(_arvore)
+check(set(_plano) == {"Secretaria de Obras", "Secretaria de Saude"},
+      f"achata só as secretarias do organograma ({sorted(_plano)})")
+check(sorted(_plano.get("Secretaria de Obras", []))
+      == ["Eletrica", "Hidraulica", "Manutencao", "Obras"],
+      "subsetor de N níveis cai na secretaria da raiz")
+check("ORFAO sem secretaria" not in _plano.get("Secretaria de Obras", [])
+      and not any("ORFAO" in s for s in _plano.values()),
+      "unidade órfã (pai inexistente) não é atribuída a ninguém")
+check(sol._organograma_para_cotas([]) == {} and sol._organograma_para_cotas(None) == {},
+      "organograma vazio/ausente não gera cota nenhuma")
+check("deepcopy" not in SRC_SOL.split("def _organograma_para_cotas")[-1][:2000],
+      "_organograma_para_cotas sem truque desnecessário")
 
 # B608 allowlist: editar_* usa sets fixos nome=? etc, não injetável
-SRC_SOL = ler("mod_solicita_impressao/bd_manipulador.py")
 check('sets.append("nome=?")' in SRC_SOL, "solicita editar_secretaria usa allowlist nome=? (B608 falso-positivo)")
 check('sets.append("cota_paginas_mensal=?")' in SRC_SOL, "solicita cota via placeholder ? (sem SQLi)")
-# A semente do organograma chega pela fachada pública do núcleo
-# (`integracoes.obter_organograma_base()`) desde 25/09/2026 — o módulo não
-# importa mais `mod_lista_telefonica` direto (AGENTS.md §2). Aceita as duas
-# formas para o teste não acoplar à forma do acoplamento.
-check(("obter_organograma_base" in SRC_SOL or "ORGANOGRAMA_BASE" in SRC_SOL)
-      and "1000" in SRC_SOL and "200" in SRC_SOL,
-      "solicita seed referencia organograma (fachada ou constante) com cotas 1000/200")
+check("COTA_POR_TIPO" in SRC_SOL, "cotas por tipo em constante única (1000 secretaria / 200 setor)")
 # verificar _sanitizar_nome do solicita
 check("def _sanitizar_nome" in SRC_SOL, "_sanitizar_nome presente em solicita")
 # testar sanitizar

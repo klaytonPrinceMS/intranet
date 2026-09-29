@@ -271,6 +271,28 @@ Todo subagente do projeto segue este padrão (ver `.opencode/agent/kbp-qa.md` co
 - Senha padrão é provisória: qualquer fluxo que use `master`/`qacomum`/`qamaster` deve supor que a senha inicial pode já ter sido trocada pelo usuário.
 - Nunca expor senhas fora deste contexto interno (não logar, não commitar em `estrutura.md`/docs públicas).
 
+### 8.2.1 Senhas de desenvolvimento: no código, fora da documentação
+
+Decisão de 28/09/2026, na entrega do produto. Vale para a senha de operações do
+banco e para os valores pré-preenchidos nos formulários de primeiro acesso.
+
+| Onde | Regra |
+|---|---|
+| **No código** (`mod_intranet/bd_conexao.py`, `mod_intranet/telas.py`) | **Ficam.** São removidas só na entrega, e essa remoção é decisão do responsável, não tarefa de agente. |
+| **Na documentação** (`docs/`, `AGENTS.md`, `README.md`, `estrutura.md`, `site/`) | **NUNCA.** Nem o valor, nem em exemplo, nem em trecho de log de alteração. |
+| **Nas senhas de teste dos seeds** (`qacomum`, `qamaster` — `123456`) | **Podem** ficar documentadas, na §8.2 acima. São contas de teste com login e senha publicados aqui de propósito. |
+
+> **NÃO "limpe" as senhas de desenvolvimento do código achando que é
+> segurança.** Elas estão no código porque o ciclo de desenvolvimento e de
+> entrega precisa delas, e a remoção no meio do caminho trava o próprio
+> desenvolvimento. O que se pede é o oposto do que parece: **tirar da
+> documentação e deixar no código.** Se um agente encontrar senha em `.md`, o
+> conserto é remover da `.md`. Se encontrar em `.py`, o conserto é **nada**.
+
+Documento que tem a tabela de credenciais passa a apontar **a chave e o
+arquivo do código**, nunca o valor — foi o que `docs/arquitetura.md` e
+`docs/modulos/intranet.md` passaram a fazer.
+
 ### 8.3 Exemplo de matrícula e de nome — NUNCA usar dado real
 
 O **nome de usuário dos servidores é a matrícula** (dados do portal da
@@ -303,13 +325,13 @@ git ls-files | grep -E '\.(py|md|js|yml|html)$' | \
 - `assets/css/frameworks/` — código de cor de biblioteca de terceiros.
 
 O que **não** pode aparecer é uma matrícula que esteja na folha real. Se você
-tem a folha (`assets/populacao/servidores_coletados.json`, fora do git),
+tem a folha (`mod_gest_cad_usuario/dados/funcionarios.json`, fora do git),
 compare:
 
 ```bash
 .venv/bin/python -c "
 import json, re, subprocess
-d = json.load(open('assets/populacao/servidores_coletados.json', encoding='utf-8'))
+d = json.load(open('mod_gest_cad_usuario/dados/funcionarios.json', encoding='utf-8'))
 mats = {r['matricula'] for r in d['servidores'] if r['matricula']}
 for arq in subprocess.run(['git','ls-files'], capture_output=True, text=True).stdout.split():
     if not arq.endswith(('.py','.md','.js','.yml','.html','.css')): continue
@@ -322,7 +344,7 @@ for arq in subprocess.run(['git','ls-files'], capture_output=True, text=True).st
 ```
 
 Saída vazia = nenhuma matrícula real em arquivo versionado. Os dados de
-verdade ficam em `db_mod_*.db` e `assets/populacao/*.json`, ambos fora do git.
+verdade ficam em `db_mod_*.db` e em `mod_gest_cad_usuario/dados/`, ambos fora do git.
 
 ## 9. Skills
 

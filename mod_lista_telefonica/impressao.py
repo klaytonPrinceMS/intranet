@@ -306,7 +306,7 @@ class _Impressor:
         PT-BR: Uma linha de contato — nome à esquerda, telefone alinhado à direita.
         """
         try:
-            tel = _telefone_exibicao(contato[3] if len(contato) > 3 else "")
+            tel = _telefone_exibicao(_campo_contato(contato, "telefone", 3))
             self._garantir_altura(TAM_CONTATO + 2.6)
             y = self.coluna.y
             if tel:
@@ -317,7 +317,7 @@ class _Impressor:
                 nome_limite = self.largura_coluna - largura_tel - 6
             else:
                 nome_limite = self.largura_coluna
-            nome = contato[2] if len(contato) > 2 else ""
+            nome = _campo_contato(contato, "nome", 2)
             self.pagina.insert_text(
                 (self.coluna.x, y), _cortar(nome or "", nome_limite),
                 fontname=FONTE, fontsize=TAM_CONTATO, color=PRETO)
@@ -544,6 +544,49 @@ def filtrar_arvore(arvore, termo="", nome="", telefone="", unidade=""):
         return arvore or []
 
 
+def _campo_contato(c, chave, indice_padrao):
+    """Lê um campo do contato por NOME, com a posição antiga como reserva.
+
+    Contato é dict (28/09/2026); o código antigo lia por índice e levantava
+    KeyError em toda linha de contato do PDF — a impressão saía em branco sem
+    erro visível. Aceitar as duas formas evita isso e ainda tolera uma árvore
+    vinda de outro ponto do módulo.
+    """
+    if isinstance(c, dict):
+        return c.get(chave) or ""
+    try:
+        return c[indice_padrao] or ""
+    except Exception:
+        return ""
+
+
+def _texto_do_contato(c):
+    """Todo o texto pesquisável de um contato, em uma string só.
+
+    O contato é DICT (mudou de tupla para dict em 28/09/2026, quando a lista
+    passou a trazer cargo, vínculo e situação e a gravar servidor sem
+    telefone). Indexar por posição aqui levantava `KeyError: 2`, o `except`
+    devolvia a árvore INTEIRA sem filtrar, e a busca "funcionava" — devolvendo
+    sempre a lista toda. Por isso a busca precisa ler por NOME de chave, e não
+    por índice.
+
+    Aceita tupla também, para uma árvore antiga vinda de outro ponto do módulo
+    não virar `KeyError` agora.
+    """
+    if isinstance(c, dict):
+        partes = [c.get("nome"), c.get("nome_completo"), c.get("telefone"),
+                  c.get("user_nome"), c.get("cargo"), c.get("lotacao"),
+                  c.get("vinculo"), c.get("situacao")]
+    else:
+        try:
+            partes = [c[2], c[3], c[4]]
+            if len(c) > 6:
+                partes += [c[6], c[7], c[8], c[9], c[10]]
+        except Exception:
+            partes = []
+    return " ".join(str(p or "") for p in partes)
+
+
 def _filtrar_termo(arvore, prefixo, alvo, norm):
     """EN: Keeps a unit if the term hits its path or any of its contacts.
 
@@ -551,6 +594,15 @@ def _filtrar_termo(arvore, prefixo, alvo, norm):
     contato. A unidade continua na árvore mesmo sem contato casado, para o
     diretório não "pular" a secretaria e deixar o usuário sem contexto de onde
     o contato veio.
+
+    O termo casa com nome, nome completo, telefone, matrícula, CARGO, LOTAÇÃO,
+    VÍNCULO e SITUAÇÃO (28/09/2026) — quem procura "Agente Administrativo" ou
+    "Efetivo" precisa achar a pessoa, e não só quem tem número.
+
+    A UNIDADE sobrevive ao filtro (é o que dá contexto de onde veio o contato),
+    mas os CONTATOS que não casam são removidos dela. Sem isso, buscar um nome
+    devolvia a secretaria INTEIRA: a unidade casava porque tinha um contato
+    certo, e os outros trinta ficavam junto — "Guerzoni" trazia 304 pessoas.
     """
     saida = []
     try:
@@ -558,11 +610,20 @@ def _filtrar_termo(arvore, prefixo, alvo, norm):
             nome = no.get("nome") or ""
             caminho = f"{prefixo} > {nome}" if prefixo else nome
             filhos = _filtrar_termo(no.get("filhos") or [], caminho, alvo, norm)
-            contato_casou = any(
-                alvo in norm(" ".join([c[2] or "", c[3] or "", c[4] or ""]))
-                for c in (no.get("contatos") or []))
-            if alvo in norm(caminho) or contato_casou or filhos:
+            todos = no.get("contatos") or []
+            if alvo:
+                # só os contatos que casam; a unidade continua de pé se algum
+                # casou OU se algum filho casou
+                contatos = [c for c in todos if alvo in norm(_texto_do_contato(c))]
+            else:
+                contatos = list(todos)
+            unidade_casou = alvo in norm(caminho)
+            if unidade_casou or contatos or filhos:
                 copia = dict(no)
+                # se a própria unidade casou pelo nome, ela mostra quem tem:
+                # quem busca "Educacao" quer os servidores da Educação, não a
+                # lista dos que não são.
+                copia["contatos"] = list(todos) if unidade_casou else contatos
                 copia["filhos"] = filhos
                 saida.append(copia)
         return saida
@@ -597,8 +658,8 @@ def _filtrar(arvore, prefixo, alvo_nome, alvo_tel, alvo_unidade, norm):
                 continue
             contatos = []
             for contato in no.get("contatos") or []:
-                nome_contato = contato[2] if len(contato) > 2 else ""
-                telefone_contato = contato[3] if len(contato) > 3 else ""
+                nome_contato = _campo_contato(contato, "nome", 2)
+                telefone_contato = _campo_contato(contato, "telefone", 3)
                 if alvo_nome and alvo_nome not in norm(nome_contato):
                     continue
                 if alvo_tel and alvo_tel not in _digitos(telefone_contato):

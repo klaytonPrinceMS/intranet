@@ -37,11 +37,14 @@ import json
 # cadastrar a central, a garagem, o almoxarifado e o que vier depois.
 CONFIG_FAIXAS = "faixas_telefone_prefeitura"
 
-# Faixa que vem na instalação. A prefeitura cadastra a sua real pela tela de
-# configurações — esta é uma sugestão razoável para DDD 35 (Monte Santo de
-# Minas) e serve só para o sistema não começar sem nenhuma.
-FAIXA_INICIAL = {"inicio": "3535915101", "fim": "3535915199",
-                 "descricao": "Central de linhas (faixa inicial)"}
+# Faixa que vem na instalação. É um NÚMERO INVENTADO, da faixa que a ANPD
+# reserva para exemplo (todos os zeros) — nunca o número de ninguém. Serve só
+# para o sistema não começar sem nenhuma faixa, e vale até o administrador
+# cadastrar a real pela tela de configurações. A faixa real de um município ou
+# de uma empresa é informação DELE, e vai no `tb_config` dele, não no git:
+# quem clona este repositório não deve herdar o telefone de ninguém.
+FAIXA_INICIAL = {"inicio": "0000000000", "fim": "0000000099",
+                 "descricao": "Faixa de exemplo — cadastre a real em Configurações"}
 
 
 def _log():
@@ -78,7 +81,7 @@ def _normalizar_faixa(bruto):
     que é exatamente o caso que destrói a confiança no aviso."""
     try:
         if isinstance(bruto, str):
-            # aceita "3535915101 a 3535915199" colado no campo
+            # aceita "0000000000 a 0000000099" colado no campo
             partes = [p for p in bruto.replace("-", " ").split() if p]
             if len(partes) >= 2:
                 bruto = {"inicio": partes[0], "fim": partes[-1],
@@ -201,7 +204,7 @@ def faixa_mais_proxima(numero):
     mais próxima.
 
     Serve ao aviso: "esse número está fora das faixas da prefeitura" é uma
-    repreensão; "o número mais próximo é 3535915199, da Central" é uma ajuda
+    repreensão; "o número mais próximo é 0000000099, da Central" é uma ajuda
     para a pessoa descobrir o dela. A diferença entre as duas frases é a
     diferença entre o usuário arrumar o cadastro e o usuário desistir dele.
     """

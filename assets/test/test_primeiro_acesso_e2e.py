@@ -146,7 +146,7 @@ def rodar():
                   "1. os quatro campos de telefone estão presentes")
 
             # 2) fora da faixa -> aviso com a faixa mais proxima
-            _campo(dlg, "Telefone fixo da prefeitura").fill("3535999999")
+            _campo(dlg, "Telefone fixo da prefeitura").fill("0035999999")
             aviso = dlg.locator(".text-orange-8")
             aviso.wait_for(state="visible", timeout=10000)
             texto_aviso = aviso.inner_text()
@@ -156,7 +156,7 @@ def rodar():
                   "2. o aviso diz qual é a faixa mais próxima")
 
             # 3) dentro da faixa -> sem aviso
-            _campo(dlg, "Telefone fixo da prefeitura").fill("3535915150")
+            _campo(dlg, "Telefone fixo da prefeitura").fill("0035915150")
             pagina.wait_for_timeout(1500)
             # o aviso é LIMPADO (set_text("")), não removido do DOM — o
             # elemento continua lá, vazio. Conferir `count() == 0` daria
@@ -169,7 +169,7 @@ def rodar():
 
             # 4) sem telefone da prefeitura -> PRIMEIRA trava
             _campo(dlg, "Telefone fixo da prefeitura").fill("")
-            _campo(dlg, "Celular particular").fill("35988881111")
+            _campo(dlg, "Celular particular").fill("00988881111")
             pagina.wait_for_timeout(400)
             dlg.get_by_role("button", name="Salvar telefones").click()
             trava1 = pagina.get_by_text("Falta um telefone da prefeitura")
@@ -215,7 +215,7 @@ def rodar():
             check(0 <= dias <= 4, f"7. o prazo é de {dias} dia(s), no máximo 4")
             check("PENDENTE=False" in est,
                   "7. a pendência de telefone foi baixada")
-            check("35988881111" not in est.split("PUBLICOS=")[1].split("\n")[0],
+            check("00988881111" not in est.split("PUBLICOS=")[1].split("\n")[0],
                   f"7. o particular NAO entra na lista (publicáveis: "
                   f"{est.split('PUBLICOS=')[1].split(chr(10))[0] or 'nenhum'})")
         finally:

@@ -139,7 +139,7 @@ with Repositorio() as repo:
 - **Multi-banco:** `engine(chave)`/`sessaodb(chave)`/`Repositorio(chave_db=...)` operam em qualquer banco de `MODULOS_BD` (7 bancos); chave desconhecida cai no central. Helpers genéricos `consultar`/`executar`/`ultimo_id` migram SQL cru gradualmente.
 - **Criação condicional:** `create_all` + log só quando o arquivo do banco não existe; módulos ≠ intranet nunca rodam `create_all` (schema via `init_db` do módulo, garantido por `garantir_bancos()` no passo 0 do boot).
 - **Não use `mapper()`** (removido em SQLAlchemy 2.0) — use `registry().map_imperatively()`.
-- Credential pattern: `postgres_url(como_admin=False)` usa `klayton/klayton`; `postgres_url(como_admin=True)` usa `master/master` (chaves `banco_usuario`/`banco_senha`/`banco_admin_usuario`/`banco_admin_senha` em `tb_config`).
+- Credential pattern: `postgres_url(como_admin=False)` monta o DSN com `banco_usuario`/`banco_senha`; `postgres_url(como_admin=True)` usa `banco_admin_usuario`/`banco_admin_senha` (as quatro em `tb_config`). Os valores padrão ficam no código e não são documentados.
 
 Soft delete para entidades sensíveis, com coluna de motivo e auditoria.
 

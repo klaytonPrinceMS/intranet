@@ -27,6 +27,8 @@ MAPA_BACKUPS = {
     "tecnico": ("db_mod_tecnico.db", "Técnico"),
     "filas": ("db_mod_filas.db", "Filas"),
     "lista_telefonica": ("db_mod_lista_telefonica.db", "Lista Telefônica"),
+    "os": ("db_mod_os.db", "Ordens de Serviço"),
+    "estoque": ("db_mod_estoque.db", "Estoque"),
 }
 
 _agendador = None  # referência global para reagendamento em tempo de execução
@@ -285,6 +287,66 @@ def reconfigurar_agregador_noticias():
         return False
 
 
+def _cfg_int(chave, padrao, minimo=None, maximo=None):
+    """Inteiro de `tb_config`, com limites. Cai no padrão se não der.
+
+    O piso e o teto não são vaidade: um `carga_folha_hora` digitado como `99`
+    faria o `CronTrigger` receber uma hora impossível e o APScheduler recusar o
+    job no boot — derrubando os outros jobs do agendador junto, porque a falha
+    acontece na hora de registrar, não na de executar.
+    """
+    try:
+        from mod_intranet.bd_conexao import get_config
+        valor = int(get_config(chave, str(padrao)))
+    except Exception:
+        valor = padrao
+    if minimo is not None:
+        valor = max(minimo, valor)
+    if maximo is not None:
+        valor = min(maximo, valor)
+    return valor
+
+
+def _job_carga_folha():
+    """Carga da folha de servidores — uma vez por dia, de madrugada.
+
+    É o job mais "não" deste arquivo: ele existe para ficar PARADO na maior
+    parte do tempo. Desligado por padrão (`fonte_folha.json` com
+    `ativo: false`), age só sobre arquivo novo, nunca sobrescreve cadastro
+    existente e nunca apaga nada. Três camadas de proteção, todas dentro de
+    `carga_folha.carga_automatica()`; aqui está só o registro do resultado.
+    """
+    try:
+        from mod_gest_cad_usuario.carga_folha import carga_automatica
+        rel = carga_automatica()
+    except Exception as ex:
+        try:
+            from mod_intranet import observabilidade
+            observabilidade.get_logger("intranet").error(
+                f"carga_folha falhou: {ex}")
+        except Exception:
+            pass
+        return
+    try:
+        log = observabilidade.get_logger("intranet")
+    except Exception:
+        return
+    if not rel.get("rodou"):
+        # Só vale logar quando a fonte está LIGADA: desligada, isto aqui é o
+        # silêncio normal de um sistema que ninguém pediu para popular.
+        if "desativada" not in (rel.get("motivo") or ""):
+            log.info(f"carga_folha: {rel.get('motivo') or 'sem motivo'}")
+        return
+    log.info(
+        f"carga_folha ({rel.get('origem', '?')}, competência "
+        f"{rel.get('competencia') or '?'}): {rel.get('criados', 0)} criado(s), "
+        f"{rel.get('marcados', 0)} marcado(s) para confirmar, "
+        f"{rel.get('bloqueados', 0)} bloqueado(s), "
+        f"{rel.get('total', 0)} servidor(es) na folha")
+    for erro in (rel.get("erros") or [])[:5]:
+        log.error(f"carga_folha: {erro}")
+
+
 def _job_poda_auditoria():
     """Poda diária do banco exclusivo de auditoria (db_mod_auditoria.db).
 
@@ -501,6 +563,14 @@ def iniciar_agendador():
     sched.add_job(_job_agregador_coleta, "interval", minutes=_int_ag, id="agregador_coleta")
     from apscheduler.triggers.cron import CronTrigger
     sched.add_job(_job_agregador_reinicio, CronTrigger(hour=_h_ag, minute=_m_ag), id="agregador_reinicio")
+    # Folha de servidores — diária, de madrugada. Registrada SEMPRE (mesmo
+    # desligada): o job sai em segundos quando a fonte está desligada, e
+    # tê-lo agendado de antemão faz o cadastro de um município novo valer no
+    # dia em que a fonte for ligada, sem precisar reiniciar o servidor.
+    sched.add_job(_job_carga_folha,
+                  CronTrigger(hour=_cfg_int("carga_folha_hora", 3, 0, 23),
+                              minute=_cfg_int("carga_folha_minuto", 0, 0, 59)),
+                  id="carga_folha")
     sched.start()
     _agendador = sched
     return sched

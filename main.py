@@ -1031,6 +1031,54 @@ if rotas_modulos is not None:
     rotas_modulos.REGISTRO_MODULOS["agregador_noticias"] = page_agregador_noticias
 
 
+@ui.page("/os")
+def page_os():
+    """EN: Route /os — the Service Orders board module (module-gated).
+
+    PT-BR: Rota /os — módulo de quadros de ordens de serviço (acesso por
+    módulo). O `pagina_restrita` já barra quem não tem o vínculo; aqui é só
+    desenhar a tela de negócio."""
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Ordens de Serviço", chave_modulo="os")
+        if not user:
+            return
+        from mod_os.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_os: erro ao renderizar as Ordens de Serviço: %s", e)
+        notificar("Erro ao carregar as Ordens de Serviço.", tipo="error")
+
+
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["os"] = page_os
+
+
+@ui.page("/estoque")
+def page_estoque():
+    """EN: Route /estoque — the multi-unit Stock module (module-gated).
+
+    PT-BR: Rota /estoque — módulo de estoque multi-setorial (acesso por
+    módulo). O `pagina_restrita` já barra quem não tem o vínculo; aqui é só
+    desenhar a tela de negócio."""
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Estoque", chave_modulo="estoque")
+        if not user:
+            return
+        from mod_estoque.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_estoque: erro ao renderizar o Estoque: %s", e)
+        notificar("Erro ao carregar o Estoque.", tipo="error")
+
+
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["estoque"] = page_estoque
+
+
 @app.get("/api/attachments/{caminho:path}")
 def fallback_attachments(caminho: str):
     """EN: Fallback for broken /api/attachments/* exported from Trello/Notion.
@@ -1235,6 +1283,31 @@ def page_admin_modulo(chave_modulo: str):
             if not eh_admin:
                 notificar("Acesso restrito a administradores", type="negative")
                 ui.navigate.to("/agregador-noticias")
+            else:
+                mostrar_administracao(nome)
+
+        elif chave_modulo == "os":
+            eh_admin = (perfil == "administrador_geral"
+                        or autenticacao.eh_admin_do_modulo(nome, "os"))
+            from mod_os.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            ui.colors(primary=ler_tema("os", cor_botao="#000000")["cor_botao"])
+            if not eh_admin:
+                notificar("Acesso restrito a administradores", type="negative")
+                ui.navigate.to("/os")
+            else:
+                mostrar_administracao(nome)
+
+        elif chave_modulo == "estoque":
+            eh_admin = (perfil == "administrador_geral"
+                        or autenticacao.eh_admin_do_modulo(nome, "estoque"))
+            from mod_estoque.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            ui.colors(primary=ler_tema("estoque", cor_botao="#000000")["cor_botao"])
+            # admin requer papel; sem ele, aviso + volta para a tela do módulo
+            if not eh_admin:
+                notificar("Acesso restrito a administradores", type="negative")
+                ui.navigate.to("/estoque")
             else:
                 mostrar_administracao(nome)
 

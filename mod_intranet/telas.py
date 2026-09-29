@@ -798,6 +798,90 @@ def _dialogo_troca_credenciais_minimo(nome_usuario: str, ao_concluir=None):
     dlg.open()
 
 
+# Contas de teste que a semente de QA cria (AGENTS.md §8.2). São as mesmas da
+# documentação — o objetivo de as listar aqui é o oposto do de documentá-las:
+# aqui é onde se decide se elas ficam.
+CONTAS_DE_TESTE = ("qacomum", "qamaster")
+
+
+def _contas_de_teste():
+    """As contas de teste que ainda existem, para a tela do primeiro acesso.
+
+    Devolve lista de dicionários `{"login", "nome", "perfil"}`. Lista vazia
+    quando não há nenhuma, ou quando o cadastro não pode ser lido — e lista
+    vazia é o estado NORMAL depois que o administrador já apagou, e também o
+    estado de quem não tem esse módulo. Nos dois casos a tela não mostra o
+    bloco, e não é erro.
+    """
+    saida = []
+    try:
+        from mod_gest_cad_usuario import bd_manipulador as _bd
+        for login in CONTAS_DE_TESTE:
+            try:
+                linha = _bd.listar_usuarios()
+            except Exception:
+                return []
+            achado = next((u for u in (linha or []) if u[1] == login), None)
+            if not achado:
+                continue
+            saida.append({
+                "login": login,
+                "nome": (achado[9] or "").strip() or login,
+                "perfil": achado[2] or "",
+            })
+    except Exception as e:
+        try:
+            _login_erro_log().exception(
+                f"contas de teste: não foi possível listar: {e}")
+        except Exception:
+            pass
+        return []
+    return saida
+
+
+def _apagar_conta_teste(login: str):
+    """Apaga uma conta de teste a partir da tela de primeiro acesso.
+
+    A exclusão é a DEFINITIVA (a de LGPD, com limpeza em cascata nos outros
+    módulos), não uma desativação: conta de teste que fica lá, desativada, é
+    conta que alguém reativa por engano daqui a seis meses. O usuário pede
+    "apagar do cadastro", e apagar de verdade é o que ele espera.
+
+    O que este botão NÃO faz é apagar conta que não é de teste. A lista vem
+    de `CONTAS_DE_TESTE`, e o nome vem do botão — não de digitação livre — então
+    não há como apagar `master` por este caminho. E mesmo que houvesse,
+    `excluir_usuario_definitivo` recusa `master` e recusa remover o último
+    administrador geral ativo: a proteção não depende desta tela.
+    """
+    if login not in CONTAS_DE_TESTE:
+        notificar("Esta conta não é de teste.", type="warning")
+        return
+    try:
+        from mod_gest_cad_usuario import bd_manipulador as _bd
+        ok, msg = _bd.excluir_usuario_definitivo("master", login)
+        notificar(msg or ("Conta apagada." if ok else "Não foi possível apagar."),
+                  type="positive" if ok else "negative")
+        if ok:
+            # some com a linha da lista sem recarregar a página inteira: quem
+            # está no meio da troca de credenciais não pode perder o que já
+            # preencheu por causa de um botão ao lado.
+            _REMOVIDOS_DE_TESTE.add(login)
+            ui.navigate.reload()
+    except Exception as e:
+        try:
+            _login_erro_log().exception(f"apagar conta de teste {login}: {e}")
+        except Exception:
+            pass
+        notificar("Erro ao apagar a conta de teste.", type="negative")
+
+
+# Contas já apagadas nesta sessão. Vive no servidor (não no navegador) porque a
+# tela é re-renderizada a cada dialogo e a lista de contas é lida de novo; sem
+# isto, o bloco voltaria a aparecer depois do reload, com a conta que não existe
+# mais — pior do que não mostrar nada.
+_REMOVIDOS_DE_TESTE = set()
+
+
 def _dialogo_troca_credenciais_completo(nome_usuario: str, ao_concluir=None):
     """Full first-access dialog (prefilled + DDI phone field).
 
@@ -824,6 +908,50 @@ def _dialogo_troca_credenciais_completo(nome_usuario: str, ao_concluir=None):
                     "text-caption text-blue-9")
         except Exception:
             pass
+        # ------- Contas de teste: apagar ou manter, AQUI (28/09/2026) -------
+        #
+        # A prefeitura recebe o sistema com `qacomum` e `qamaster` já
+        # cadastrados (a semente de QA, AGENTS.md §8.2). Quem entra pela
+        # primeira vez com `master` é o administrador installing — é a única
+        # pessoa no sistema cuja conta tem o perfil `administrador_geral` de
+        # fábrica e senha conhecida. Se ele sai da tela sem decidir o destino
+        # dessas duas contas, fica uma prefeitura com dois administradores de
+        # senha `123456` published.
+        #
+        # Por que AQUI e não em uma tela depois: este é o momento em que a
+        # pessoa está trocando a senha do administrador porque entendeu que
+        # conta de fábrica é perigosa. Um passo adiante, essa Timeout já passou.
+        _contas_teste = _contas_de_teste()
+        if _contas_teste:
+            with ui.column().classes("w-full gap-1 p-2 rounded bg-orange-1"):
+                ui.label("Contas de teste que vieram com o sistema").classes(
+                    "text-caption font-bold text-orange-10")
+                ui.label(
+                    "O sistema é entregue com duas contas de teste, para "
+                    "documentação e conferência. Elas entram com a senha "
+                    "conhecida, então convém decidir agora o que fazer com "
+                    "elas — apagar é o padrão de quem vai usar o sistema de "
+                    "verdade, e manter é o de quem ainda vai documentar.").classes(
+                    "text-caption text-orange-9")
+                for _c in _contas_teste:
+                    with ui.row().classes("w-full items-center").style(
+                            "gap: 0.5rem; min-width: 0"):
+                        with ui.column().classes("gap-0").style(
+                                "min-width: 0; flex: 1 1 0"):
+                            ui.label(f"{_c['nome']}  (@{_c['login']})").classes(
+                                "text-caption text-grey-8 truncate")
+                            ui.label(f"perfil: {_c['perfil']}").classes(
+                                "text-caption text-grey-6")
+                        _btn_excluir = ui_comum.botao(
+                            "Apagar", icone="delete",
+                            on_click=lambda l=_c["login"]: _apagar_conta_teste(l),
+                            variante="perigo", compacto=True,
+                            chave_modulo="intranet")
+                        _btn_excluir.props(
+                            f'data-testid=apagar-conta-teste-{_c["login"]} '
+                            f'aria-label="Apagar a conta de teste {_c["login"]}"')
+                        _btn_excluir.classes("no-print")
+
         novo_nome = ui_comum.campo_texto("Novo nome de usuário", valor="klayton", props="")
         nome_completo = ui_comum.campo_texto(
             "Nome completo (ou social)", valor="PRINCE,K.B", props="",
@@ -1035,7 +1163,7 @@ def _dialogo_telefones(nome_usuario: str, ao_concluir=None):
             # ---- fixo da prefeitura ----
             fixo_empresa = ui_comum.campo_texto(
                 "Telefone fixo da prefeitura", props="outlined dense",
-                placeholder="(35) 3591-5100")
+                placeholder="(00) 3591-5100")
             chk_fixo = ui.checkbox("Aparece na lista telefônica")
             # Marcada E travada. A ordem importa: `value` antes de `disable`,
             # senão o NiceGUI aplica `disable` e a atribuição seguinte é
@@ -1064,7 +1192,7 @@ def _dialogo_telefones(nome_usuario: str, ao_concluir=None):
             # ---- residencial ----
             fixo_pessoal = ui_comum.campo_texto(
                 "Telefone residencial (opcional)", props="outlined dense",
-                placeholder="(35) 3800-0000")
+                placeholder="(00) 3800-0000")
             ui.label("O residencial fica só no seu cadastro — nunca sai na "
                      "lista telefônica.").classes("text-caption text-grey-6")
 
@@ -1278,6 +1406,121 @@ def _aviso_provisorio(nome_usuario, dias):
             lg.exception(f"aviso provisório falhou: {e}")
 
 
+def _dialogo_dados_pendentes(nome_usuario: str, ao_concluir=None):
+    """Avisa que a folha de pagamento trouxe dado diferente do cadastro.
+
+    A folha é atualizada todo mês e traz secretaria, departamento e cargo. O
+    sistema NÃO sobrescreve o cadastro de quem já existe: marca a pendência e
+    pergunta à própria pessoa. A pergunta é o ponto — setor tem dois donos
+    possíveis (a folha e a pessoa), e só a pessoa sabe qual é o certo.
+
+    Dá para recusar ("continua como está"), e isso também é resposta: a folha
+    pode estar errada, e uma pessoa que discorda de um sistema tem razão para
+    discordar.
+    """
+    try:
+        from mod_gest_cad_usuario import bd_manipulador as _bd_usuarios
+        info = _bd_usuarios.informacao_pendencia(nome_usuario)
+        if not info.get("tem"):
+            if ao_concluir:
+                ao_concluir()
+            return
+        descricao = info.get("descricao") or "seus dados funcionais mudaram"
+        dias = int(info.get("dias") or 0)
+    except Exception as e:
+        lg = _login_erro_log()
+        if lg:
+            lg.exception(f"dialogo de pendência: leitura falhou para "
+                         f"{nome_usuario}: {e}")
+        if ao_concluir:
+            ao_concluir()
+        return
+
+    def _salvar(novo_depto: str, novo_cargo: str, unidade: str):
+        """Grava o que a pessoa confirmou. Falhou, a pendência fica."""
+        try:
+            ok, msg = _bd_usuarios.confirmar_pendencia_dados(
+                nome_usuario, nome_usuario, unidade=unidade or None,
+                lotacao=novo_depto or None, cargo=novo_cargo or None)
+            notificar(msg or ("Dados atualizados." if ok
+                              else "Não foi possível atualizar."),
+                      type="positive" if ok else "negative")
+        except Exception as e:
+            lg = _login_erro_log()
+            if lg:
+                lg.exception(f"diálogo de pendência: gravar falhou para "
+                             f"{nome_usuario}: {e}")
+            notificar("Não foi possível atualizar seus dados agora.",
+                      type="negative")
+        finally:
+            if ao_concluir:
+                ao_concluir()
+
+    try:
+        with ui.dialog() as dlg_d:
+            with ui.card().classes("w-[560px] gap-3"):
+                ui.label("A folha de pagamento mudou o seu cadastro").classes("text-h6")
+                # Só a PRIMEIRA letra desce. `descricao.lower()` inteiro
+                # quebraria o nome próprio do setor — "Obras" viraria "obras" —
+                # e a pessoa lê o próprio departamento com letra minúscula
+                # como se fosse erro de digitação do sistema.
+                meio = descricao[:1].lower() + descricao[1:]
+                ui.label(f"A folha de pagamento foi atualizada e {meio} Por isso "
+                         f"o cadastro só muda com a sua confirmação — o sistema "
+                         f"não sobrescreve o que está gravado por causa de um "
+                         f"arquivo.").classes("text-body2 text-grey-7")
+                if dias > 7:
+                    ui.label(f"Esta pendência está aberta há {dias} dias. Se "
+                             f"estiver correta, confirme; se não estiver, "
+                             f"avise o DTI para corrigir a folha.").classes(
+                        "text-caption text-orange-8")
+                # O que o servidor responde: como é hoje, para ele escrever.
+                # Em branco = mantém o que já está gravado, sem apagar.
+                inp_unidade = ui.input("Secretaria").props("outlined dense") \
+                    .classes("w-full").props("data-testid=pendencia-dados-unidade")
+                inp_depto = ui.input("Departamento").props("outlined dense") \
+                    .classes("w-full").props("data-testid=pendencia-dados-departamento")
+                inp_cargo = ui.input("Cargo").props("outlined dense") \
+                    .classes("w-full").props("data-testid=pendencia-dados-cargo")
+
+                def _confirmar():
+                    _salvar((inp_depto.value or "").strip(),
+                            (inp_cargo.value or "").strip(),
+                            (inp_unidade.value or "").strip())
+                    dlg_d.close()
+
+                def _manter():
+                    try:
+                        _bd_usuarios.confirmar_pendencia_dados(
+                            nome_usuario, nome_usuario)
+                        notificar("Cadastro mantido como estava. Avise o DTI "
+                                  "se a folha estiver errada.", type="warning")
+                    except Exception as e:
+                        lg = _login_erro_log()
+                        if lg:
+                            lg.exception(f"diálogo de pendência: manter falhou "
+                                         f"para {nome_usuario}: {e}")
+                    finally:
+                        dlg_d.close()
+                        if ao_concluir:
+                            ao_concluir()
+
+                with ui.row().classes("w-full justify-end").style("gap: 0.5rem"):
+                    _botao_tema("Está certo, confirmar", on_click=_confirmar) \
+                        .props("data-testid=pendencia-dados-confirmar")
+                    _botao_tema("Manter como está", on_click=_manter,
+                                variante="secundario") \
+                        .props("data-testid=pendencia-dados-manter")
+        dlg_d.open()
+    except Exception as e:
+        lg = _login_erro_log()
+        if lg:
+            lg.exception(f"diálogo de pendência: abrir falhou para "
+                         f"{nome_usuario}: {e}")
+        if ao_concluir:
+            ao_concluir()
+
+
 def _primeiro_acesso(nome_usuario: str):
     """Encadeia os passos obrigatórios do primeiro acesso.
 
@@ -1292,18 +1535,35 @@ def _primeiro_acesso(nome_usuario: str):
 
         `novo_nome` vem dos diálogos de credenciais, em que o login muda de
         `master` para o nome escolhido — a pendência do telefone está no
-        usuário NOVO, não no `master` que já saiu de cena."""
+        usuário NOVO, não no `master` que já saiu de cena.
+
+        A pendência de DADOS vem DEPOIS da do telefone, e só se o telefone
+        estiver resolvido. A ordem não é estética: são duas perguntas para a
+        mesma pessoa, no mesmo minuto, e quem responde a segunda já não está
+        mais ledindo o formulário da primeira."""
         try:
             from mod_gest_cad_usuario import bd_manipulador as _bd_usuarios
             alvo = novo_nome or nome_usuario
             if _bd_usuarios.telefone_pendente(alvo):
-                _dialogo_telefones(alvo)
+                _dialogo_telefones(alvo, ao_concluir=lambda: _abrir_dados(alvo))
+                return
+            _abrir_dados(alvo)
         except Exception as e:
             lg = _login_erro_log()
             if lg:
                 lg.exception(
                     f"primeiro_acesso: falha ao verificar telefone de "
                     f"{novo_nome or nome_usuario}: {e}")
+
+    def _abrir_dados(alvo):
+        """A pendência de dados, quando existir, com o telefone já resolvido."""
+        try:
+            _dialogo_dados_pendentes(alvo)
+        except Exception as e:
+            lg = _login_erro_log()
+            if lg:
+                lg.exception(f"primeiro_acesso: falha ao verificar pendência "
+                             f"de dados de {alvo}: {e}")
 
     try:
         if autenticacao.precisa_trocar_credenciais(nome_usuario):

@@ -235,12 +235,17 @@ O PostgreSQL é ativado pelo admin em `/configuracoes` → aba **Config** (ao fi
 
 **Modelo de credenciais PostgreSQL:**
 
-| Papel | Usuário | Senha | Uso |
-|:---|:---|:---|:---|
-| Operações normais | `klayton` | `klayton` | Queries do aplicativo |
-| Operações administrativas | `master` | `master` | Criação de banco, migrations |
+> Os **valores** de usuário e senha não são documentados aqui de propósito: ficam
+> no código (`mod_intranet/bd_conexao.py`) e saem do texto na entrega do
+> produto. Um default de credencial escrito num arquivo versionado é um default
+> copiado junto para o próximo servidor.
 
-> **08/09:** com o backend duplo ativo, o `postgres_url` (DSN) vive no arquivo SQLite central e **as credenciais da URL são usadas como estão** (container `intranet/intranet`). O antigo padrão `klayton/klayton` + `master/master` (chaves `banco_usuario`/`banco_senha`/`banco_admin_*`) é o modelo legado de credenciais do núcleo; o container Docker fornece o usuário `intranet`/`intranet`.
+| Papel | Onde o valor padrão está | Uso |
+|:---|:---|:---|
+| Operações normais | `mod_intranet/bd_conexao.py` (`banco_usuario` / `banco_senha`) | Queries do aplicativo |
+| Operações administrativas | `mod_intranet/bd_conexao.py` (`banco_admin_usuario` / `banco_admin_senha`) | Criação de banco, migrations |
+
+> **08/09:** com o backend duplo ativo, o `postgres_url` (DSN) vive no arquivo SQLite central e **as credenciais da URL são usadas como estão** (container `intranet/intranet`). O modelo legado de credenciais do núcleo (chaves `banco_usuario`/`banco_senha`/`banco_admin_*`) é o que a chave `postgres_url` substitui; o container Docker fornece o usuário `intranet`/`intranet`.
 
 Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configurações](configuracoes.md#card-banco-de-dados-sqlite-ou-postgresql-0809)).
 

@@ -47,14 +47,30 @@ TEXTO_HEADER = ("Navegue por secretaria, setor e subsetor; busque por nome, tele
 # alturas diferentes — que é o oposto de "padrão em tamanho igual para todos".
 CSS_GRADE = ("display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); "
              "gap: 0.75rem; align-items: stretch;")
-ALTURA_CARTAO = "6.9rem"   # 4 linhas: nome+ações, telefone, "deixe recado"
-                          # (só nos de recado) e matrícula/unidade. Antes eram
-                          # 5.9rem com 3 linhas; o "deixe recado" cabe na MESMA
-                          # linha visual do telefone quando não há recado, e
-                          # quem tem recado ganha a 4ª linha. A altura cobre as
-                          # duas situações para os cartões continuarem iguais —
-                          # é a regra de "3 colunas de tamanho igual" que
-                          # vale mais do que poupar 1rem.
+# Quantos servidores a tela desenha de uma vez (28/09/2026).
+#
+# O diretorio passou a listar TODOS os servidores cadastrados, e nao so quem
+# autorizou telefone - que e o que faz a busca por nome funcionar. Sao mais de
+# mil pessoas, e o navegador passava de 90 segundos sem pintar a tela quando
+# desenhava tudo. O backend responde em 0,15 s: o custo e o DOM, nao a consulta.
+#
+# 240 e o numero que cabe com folga em uma pagina e ainda mostra o organograma
+# inteiro com uma parte boa de cada secretaria. Abaixo disso a lista vira uma
+# parede; acima disso a tela demora.
+LIMITE_CONTATOS_TELA = 240
+
+ALTURA_CARTAO = "9.4rem"   # até 6 linhas: nome+ações, cargo, vinculo/situacao,
+                            # telefone (ou "sem número informado"), "deixe
+                            # recado" (só nos de recado) e matrícula/secretaria.
+                            #
+                            # Subiu de 6.9rem em 28/09/2026, quando o cartao
+                            # passou a mostrar cargo e vínculo. O diretório de
+                            # quem NÃO autorizou telefone é justamente o que mais
+                            # precisa ser identificável, e cargo + vínculo são as
+                            # duas primeiras coisas que se olha numa pessoa. A
+                            # altura cobre o pior caso para os cartões
+                            # continuarem iguais — e a regra de "3 colunas de
+                            # tamanho igual" vale mais do que poupar 2,5rem.
 
 # Folha de impressão: esconde cabeçalho, menu, busca, navegação e botões e deixa
 # só a lista, em 3 colunas. Sem JavaScript — só CSS `@media print`.
@@ -230,7 +246,7 @@ def _tel_exibicao(telefone):
     A formatação é feita aqui, pelos dígitos, em vez de chamar
     `telefone.formatar_para_exibicao`: aquela função devolve o que já está
     gravado e, num número parcial, devolve sem os separadores — daí o resultado
-    inconsistente entre "(35) 3591-5101" e "35915104" lado a lado.
+    inconsistente entre "(00) 3591-5101" e "35915104" lado a lado.
     """
     try:
         digitos = "".join(c for c in str(telefone or "") if c.isdigit())
@@ -849,12 +865,30 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             A ESTRUTURA é coluna, com os botões só na PRIMEIRA linha. Com os
             botões como irmãos de uma coluna de texto (o desenho anterior), eles
             espremiam a largura em TODAS as linhas: num cartão de ~216px da
-            grade de 3 colunas, o telefone "(35) 3591-5101" quebrava no meio
+            grade de 3 colunas, o telefone "(00) 3591-5101" quebrava no meio
             ("3591-" / "5101") e o nome ficava cortado. Com os botões apenas na
             linha do nome, telefone e unidade ganham a largura inteira.
             """
             try:
-                cid, _uid, nome, telefone, user_nome, tipo = contato[:6]
+                # Consome DICT, não tupla (28/09/2026). Com tupla, a tela
+                # precisei saber a ordem das colunas, e foi assim que os
+                # campos novos quebraram o desenho do cartão. Aceita os dois
+                # para um contato antigo em cache não virar `TypeError`.
+                if isinstance(contato, dict):
+                    _c = contato
+                else:
+                    _c = {"id": contato[0], "nome": contato[2],
+                          "telefone": contato[3] or "", "user_nome": contato[4] or "",
+                          "tipo": contato[5] or ""}
+                cid = _c.get("id")
+                nome = _c.get("nome") or ""
+                telefone = _c.get("telefone") or ""
+                user_nome = _c.get("user_nome") or ""
+                tipo = _c.get("tipo") or ""
+                cargo = _c.get("cargo") or ""
+                vinculo = _c.get("vinculo") or ""
+                situacao = _c.get("situacao") or ""
+                ativo = int(_c.get("ativo", 1) or 0)
                 with ui.element("div").classes(
                         "lista-cartao-contato border rounded-lg px-3 py-2 flex flex-col "
                         "justify-between overflow-hidden hover:bg-blue-50/50") \
@@ -901,23 +935,58 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                                                     extra_classes="no-print"),
                                         f'data-testid=lista-contato-remover-{cid} '
                                         f'aria-label="Remover {_texto_curto(nome)}"')
-                    # Linha 2: telefone, com a largura inteira do cartão. O
+                    # Linha 2: cargo e vínculo. A pergunta que a lista responde é
+                    # "quem é essa pessoa e ela está na folha?" — e "cargo" e
+                    # "efetivo" são as duas primeiras coisas que se olha. Vem
+                    # ANTES do telefone porque vale para quem não tem número:
+                    # quem não autorizou telefone continua encontrável, e é
+                    # justamente quem mais precisa ser identificável.
+                    with ui.column().classes("gap-0").style("min-width: 0; width: 100%"):
+                        if cargo:
+                            ui.label(cargo).classes(
+                                "text-caption text-grey-7 truncate") \
+                                .props('data-testid=lista-contato-cargo')
+                        etiquetas = []
+                        if vinculo:
+                            etiquetas.append(vinculo)
+                        if situacao:
+                            etiquetas.append(situacao)
+                        if etiquetas:
+                            _classe_et = ("text-positive" if not ativo
+                                          else "text-grey-6")
+                            ui.label(" · ".join(etiquetas)).classes(
+                                f"text-caption {_classe_et} truncate") \
+                                .props('data-testid=lista-contato-vinculo')
+                        elif not ativo:
+                            ui.label("inativo").classes(
+                                "text-caption text-negative truncate") \
+                                .props('data-testid=lista-contato-vinculo')
+                    # Linha 3: telefone, com a largura inteira do cartão. O
                     # "deixe recado" vem logo abaixo, e não como sufixo do
                     # número: o número é o do SETOR, e quem liga precisa saber
-                    # que não vai falar com a pessoa. Escrever "(35) 3591-5150
+                    # que não vai falar com a pessoa. Escrever "(00) 3591-5150
                     # (deixe recado)" faria o texto não caber na coluna de
                     # ~216px e empurraria o nome.
                     with ui.column().classes("gap-0").style("min-width: 0; width: 100%"):
-                        ui.label(_tel_exibicao(telefone)).classes(
-                            "text-caption text-grey-6 font-mono truncate")
-                        if _contato_e_recado(user_nome):
-                            ui.label("deixe recado").classes(
+                        if telefone.strip():
+                            ui.label(_tel_exibicao(telefone)).classes(
+                                "text-caption text-grey-6 font-mono truncate")
+                            if _contato_e_recado(user_nome):
+                                ui.label("deixe recado").classes(
+                                    "text-caption text-grey-5 italic truncate") \
+                                    .props('data-testid=lista-contato-recado')
+                        elif user_nome:
+                            # Sem número é DIFERENÇA de número vazio: a
+                            # pessoa não autorizou publicar o telefone dela. Dizer
+                            # isso é o que evita o servidor achar que o cadastro
+                            # dela está quebrado.
+                            ui.label("sem número informado").classes(
                                 "text-caption text-grey-5 italic truncate") \
-                                .props('data-testid=lista-contato-recado')
-                    # Linha 3: matrícula e unidade. A unidade é o que diz a que
-                    # secretaria/setor/subsetor o contato pertence — como a grade
-                    # é uma só e os cartões fluem em 3+ colunas, sem este rótulo
-                    # o diretório perderia a hierarquia do organograma.
+                                .props('data-testid=lista-contato-sem-numero')
+                    # Linha 4: secretaria/local de atuação. A unidade é o que diz
+                    # a que secretaria/setor/subsetor o contato pertence — como a
+                    # grade é uma só e os cartões fluem em 3+ colunas, sem este
+                    # rótulo o diretório perderia a hierarquia do organograma.
                     with ui.row().classes("items-center").style(
                             "gap: 0.35rem; min-width: 0; width: 100%"):
                         if user_nome:
@@ -1184,6 +1253,62 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             except Exception:
                 _falhar("dlg_editar_unidade", "dialogo")
 
+        def _contar_contatos(nos):
+            """Quantos servidores há no recorte, em todos os níveis."""
+            total = 0
+            pilha = list(nos or [])
+            while pilha:
+                no = pilha.pop()
+                total += len(no.get("contatos") or [])
+                pilha.extend(no.get("filhos") or [])
+            return total
+
+        def _limitar_contatos(nos, teto):
+            """Deixa no máximo `teto` servidores no recorte, em ordem alfabética.
+
+            Percorre em profundidade, unidade por unidade, e só entra o que couber
+            no teto. As unidades que ficaram de fora continuam na árvore (sem
+            contatos), porque uma secretaria vazia ainda é informação: o
+            diretório mostra que existe, mesmo sem quem cuide dela.
+            """
+            restante = int(teto)
+            pilha = [(no, False) for no in reversed(list(nos or []))]
+            # `while pilha` e NÃO `while pilha and restante > 0`: quando o teto
+            # é atingido, o laço ainda tem que CONTINUAR percorrendo para
+            # ESVAZAR os contatos das unidades que não couberam. Parar ali
+            # deixava 953 de 1084 cartões no desenho — o teto era aplicado só
+            # às primeiras unidades visitadas, e a página continuava travando.
+            while pilha:
+                no, visitada = pilha.pop()
+                if not visitada:
+                    pilha.append((no, True))
+                    for filho in reversed(no.get("filhos") or []):
+                        pilha.append((filho, False))
+                    continue
+                if restante <= 0:
+                    no["contatos"] = []
+                    continue
+                c = no.get("contatos") or []
+                if len(c) > restante:
+                    c = c[:restante]
+                no["contatos"] = c
+                restante -= len(c)
+            return int(teto) - max(0, restante)
+
+        def _aviso_pagina(total, teto):
+            """Diz quantos foram desenhados e por onde chegar no resto.
+
+            Silenciar o corte seria o erro: a pessoa veria 200 servidores e
+            concluiria que a prefeitura tem 200. O número inteiro é o que
+            transforma "lista truncada" em "tem mais, e aqui está o caminho".
+            """
+            ui.label(
+                f"Mostrando {teto} de {total} servidores do recorte. "
+                f"Para ver o resto, use a busca por nome, cargo ou secretaria "
+                f"acima, ou escolha a secretaria nos filtros.").classes(
+                "text-caption text-grey-7 bg-grey-2 rounded p-2") \
+                .props('data-testid=lista-aviso-limite')
+
         @ui.refreshable
         def render_organograma():
             """EN: Nav buttons + slice + contact grid. PT-BR: Botões + recorte + grade."""
@@ -1199,6 +1324,22 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     if estado.get(chave) is not None:
                         recorte = _recortar(recorte, estado[chave])
                         break
+                # TETO DE DESENHO (28/09/2026)
+                #
+                # O diretório passou a trazer TODOS os servidores cadastrados, e
+                # não só quem autorizou telefone: são mais de mil pessoas. Desenhar
+                # todas de uma vez travava a página por mais de um minuto — o
+                # backend respondia em 0,15 s e o navegador passava de 90 s sem
+                # pintar a tela. Mil cartões de seis linhas são ~6 mil elementos
+                # de DOM, e DOM grande é lento por definição.
+                #
+                # A solução NÃO é voltar a esconder servidor sem telefone — a
+                # busca por nome é o que o diretório precisa fazer. É desenhar uma
+                # PÁGINA por vez e dizer quantas faltam, para quem não lê número
+                # nenhum saber que a lista tem mais e como chegar no resto.
+                total = _contar_contatos(recorte)
+                if total > LIMITE_CONTATOS_TELA:
+                    _limitar_contatos(recorte, LIMITE_CONTATOS_TELA)
                 with ui.card().classes("w-full p-4 gap-3 lista-impressao"):
                     _cabecalho_recorte(recorte)
                     if not recorte:
@@ -1211,6 +1352,8 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                             ui.label("Nenhum contato encontrado.").classes("text-grey-6 italic")
                         return
                     _desenhar_blocos(recorte, nivel=0, prefixo="")
+                    if total > LIMITE_CONTATOS_TELA:
+                        _aviso_pagina(total, LIMITE_CONTATOS_TELA)
             except Exception:
                 _falhar("render_organograma", "desenho da navegacao")
 

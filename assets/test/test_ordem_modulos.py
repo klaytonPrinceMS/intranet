@@ -48,7 +48,7 @@ from mod_intranet.repositorio import Repositorio  # noqa: E402
 
 DESEJADA = ["editar_pdf", "empenhos", "solicita_impressao", "blog", "usuarios",
             "auditoria", "tecnico", "filas", "lista_telefonica",
-            "agregador_noticias"]
+            "agregador_noticias", "os", "estoque"]
 
 conn = autenticacao.get_connection()
 try:
@@ -68,7 +68,7 @@ try:
     # comparação com `ordens` (10 linhas) nunca casaria.
     prova = ["blog", "usuarios", "auditoria", "editar_pdf", "empenhos",
              "solicita_impressao", "tecnico", "filas", "lista_telefonica",
-             "agregador_noticias"]
+             "agregador_noticias", "os", "estoque"]
     with Repositorio() as repo:
         check(repo.reordenar_modulos(prova), "reordenar persiste a ordem de prova")
     conn = autenticacao.get_connection()

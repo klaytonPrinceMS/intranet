@@ -76,14 +76,14 @@ Telefones são gravados como texto livre (validação mínima: ≥8 caracteres) 
 
 | Entrada | Exibido no cartão |
 |:---|:---|
-| `+553535915101` | `(35) 3591-5101` |
-| `3535915101` | `(35) 3591-5101` |
+| `+553535915101` | `(00) 3591-5101` |
+| `0035915101` | `(00) 3591-5101` |
 | `35915104` | `35915104` (sem separadores, abaixo de 10 dígitos) |
 
 Dois motivos, ambos documentados no próprio código:
 
 1. **Espaço na coluna estreita** — no cartão de ~216px da grade de 3 colunas, o prefixo empurrava o telefone para duas linhas e cortava o nome do contato.
-2. **Consistência** — a formatação é feita aqui pelos dígitos, em vez de chamar `telefone.formatar_para_exibicao`: aquela devolve o que já está gravado e, num número parcial, devolve sem separadores — daí o resultado inconsistente entre `(35) 3591-5101` e `35915104` lado a lado.
+2. **Consistência** — a formatação é feita aqui pelos dígitos, em vez de chamar `telefone.formatar_para_exibicao`: aquela devolve o que já está gravado e, num número parcial, devolve sem separadores — daí o resultado inconsistente entre `(00) 3591-5101` e `35915104` lado a lado.
 
 O link `tel:` **não** é afetado: `_tel_limpo` continua montando o número completo (com `+55` quando gravado), e o nome do cartão é o que recebe o `ui.link(target=f"tel:{limpo}")`.
 
@@ -221,7 +221,7 @@ da ponte — é a diferença entre o que a prefeitura publica e o que é do serv
 | `mod_intranet/integracoes.py:156` | `telefones_de_recado_para_lista()` — a **9ª** função da fachada: `{user_nome: True}` para quem tem `recado` |
 
 !!! note "Por que **linha separada** e não sufixo"
-    Escrever `(35) 3591-5150 (deixe recado)` faria o texto não caber na coluna
+    Escrever `(00) 3591-5150 (deixe recado)` faria o texto não caber na coluna
     de ~216px e **empurraria o nome** do contato — que é a primeira linha do
     cartão, a única que tem a largura toda. O número é o do **setor**, e quem
     liga precisa saber que não vai falar com a pessoa; numa linha abaixo isso é
@@ -280,13 +280,128 @@ mod_lista_telefonica.bd_manipulador
 
 O núcleo é o único lugar do sistema autorizado a conhecer os dois de perto: ele tem o banco do cadastro (para ler) e o banco do diretório (para gravar), e cada lado do espelhamento toca **só o banco dele**. É a regra do AGENTS.md §2 atravessada por um parâmetro, em vez de atravessada por uma consulta.
 
+### O diretório espelha **TODOS** os servidores, não só quem autorizou telefone (28/09/2026)
+
+> **EN:** The directory now mirrors **every registered server**, not only the
+> ones who released a phone number. Previously an empty phone was a `continue`
+> and the person was **not written at all**, so a populated staff register with
+> nobody authorised produced a directory with **zero contacts** and searching a
+> name found nobody. The **consent rule is intact**: whoever did not authorise
+> keeps an **empty phone**, and the card says "sem número informado". What
+> enters without authorisation is the **post** (name, job, secretariat,
+> allocation, link, status) — which is legal publication. The **number** is
+> what the consent protects.
+
+Esta é a mudança de comportamento mais importante do módulo, e a distinção
+abaixo é o que permite a lista ser útil sem virar vazamento:
+
+| Dado | Entra sem autorização? | Por quê |
+|:---|:---:|:---|
+| Nome, nome completo | **sim** | identificação da pessoa |
+| **Cargo** | **sim** | é o que se procura primeiro numa pessoa |
+| **Secretaria / lotação** | **sim** | organograma é informação pública |
+| **Vínculo** e **situação** | **sim** | efetivo/estágio, ativo/férias/demitido — objetivo, da folha |
+| Matrícula (`@login`) | **sim** | identificação funcional |
+| **Telefone** | **NÃO** | é exatamente o que o consentimento protege |
+
+Publicação de cargo, lotação, vínculo e situação é a informação que a lei
+obriga os órgãos públicos a disponibilizar sobre seus servidores (Lei
+12.527/2011, acesso à informação). O **número de telefone particular ou do
+celular corporativo** não está nessa lista: ele entra **só** com autorização
+marcada em `tb_telefone_usuario.visivel`, avaliada por
+`mod_gest_cad_usuario.telefone_e_publicavel`.
+
+!!! note "`sem número informado` é diferente de telefone vazio"
+    Na leitura, telefone vazio parece cadastro quebrado. A tela escreve
+    literalmente **"sem número informado"** (`telas.py:983`, `data-testid=
+    lista-contato-sem-numero`) para que o servidor entenda que a pessoa
+    **escolheu** não publicar, e não que o cadastro dela quebrou.
+
+#### `vinculo` e `situacao` chegaram ao cadastro como dado objetivo (28/09/2026)
+
+`tb_usuarios` ganhou **`vinculo`** e **`situacao`**, gravados pela carga da
+folha por `definir_vinculo` — pela **mesma regra da remuneração**: são
+**objetivos**, a folha é a fonte, e não se pergunta a ninguém. Sem eles, a
+busca da lista telefônica não conseguia responder "é efetivo?" nem "está
+ativo?" de quem não autorizou telefone, e a pessoa **desaparecia da busca** —
+o oposto do que um diretório precisa fazer.
+
+Resultado real medido em 28/09/2026 sobre a folha de 1.165 servidores:
+
+| Dimensão | Contagem |
+|:---|:---|
+| Servidores gravados no diretório | **1.165** |
+| Efetivos | **542** |
+| Contrato determinado | **398** |
+| Estagiários | **124** |
+| Ativos | **1.054** |
+| De férias | **73** |
+| Demitidos | **19** |
+
+#### A busca casa com oito campos
+
+`buscar_contatos` e `listar_arvore_contatos` comparam o termo — normalizado
+sem acento, comparação por **substring** — contra **nome, telefone, login
+(matrícula), cargo, lotação, vínculo e situação**, além do nome completo
+(`bd_manipulador.py:875`). A comparação é por substring em Python, não em SQL,
+para ser idêntica em SQLite e PostgreSQL e não depender de `LIKE` com acento.
+
+Os três `ui.select` em cascata (`lista-cascata-1/2/3`) continuam o recorte
+por organograma; a busca por texto é o **caminho para o que o teto não cabe**
+(§ abaixo).
+
+### Teto de desenho: 240 cartões por vez, com aviso explícito
+
+> **EN:** The screen draws **at most 240 cards at a time**, with an explicit
+> notice ("Mostrando 240 de N servidores"). One thousand cards is roughly six
+> thousand DOM elements and the browser went past 90 seconds **without
+> painting**; the backend answers in **0.15 s**. The cost is the **DOM**, not
+> the query.
+
+`LIMITE_CONTATOS_TELA = 240` (`telas.py:60`) com a aplicação em
+`_limitar_contatos` (`telas.py:1266`) e o aviso em `_aviso_pagina`
+(`telas.py:1298`, `data-testid=lista-aviso-limite`).
+
+O número não é vaidade: é o que **cabe com folga em uma página** e ainda mostra
+o organograma inteiro com uma parte boa de cada secretaria. Abaixo disso a
+lista vira uma parede; acima disso a tela demora.
+
+!!! warning "O aviso é obrigatório, e o laço tem de esvaziar as unidades de fora"
+    Duas armadilhas já encontradas e corrigidas:
+
+    1. **Silenciar o corte seria o erro**: a pessoa veria 240 servidores e
+       concluiria que a instituição tem 240. O número inteiro é o que
+       transforma "lista truncada" em "tem mais, e aqui está o caminho" — por
+       isso o aviso diz **quantos** de **quantos**, e manda para a busca ou
+       para o filtro de secretaria.
+    2. **O laço é `while pilha` e NÃO `while pilha and restante > 0`.** Com a
+       segunda forma, quando o teto era atingido o laço parava e deixava os
+       contatos das unidades seguintes intactos: **953 de 1.084 cartões** no
+       desenho, e a página continuava travando. Percorrer até esvaziar é o
+       que faz o teto valer.
+
+    A unidade que ficou sem contato **continua na árvore**: uma secretaria
+    vazia ainda é informação — o diretório mostra que existe, mesmo sem quem
+    cuide dela.
+
+#### Por que aumentar o teto **não** é a solução
+
+O backend responde em **0,15 s** com o recorte inteiro. Os 90 s sem pintar são
+**decrebimento e layout de ~6.000 elementos de DOM** no navegador, não consulta.
+Aumentar o teto de 240 para 1.000 não deixa a tela "mais completa": deixa a
+tela **travada por mais tempo**, e o usuário não chega nem a ler o começo. A
+solução para ver o resto **já está na tela** — a busca por nome, cargo ou
+secretaria, que reduz o recorte antes de desenhar, e os três selects de
+organograma.
+
 ### O que `sincronizar_contatos_do_cadastro(contatos, ator="sistema")` faz
 
-> **EN:** Mirrors registered servers into the directory. It creates a `vinculado`
-> contact pointing at the matrícula, matches the unit by **lotação** and then by
-> **secretaria** (accent-insensitive, active units only), **only updates the
-> phone** of an existing contact, and **never touches** an `externo` contact.
-> Idempotent.
+> **EN:** Mirrors registered servers into the directory — **all of them, since
+> 28/09/2026**, with or without a released phone number. It creates a
+> `vinculado` contact pointing at the matrícula, matches the unit by **lotação**
+> and then by **secretaria** (accent-insensitive, active units only), **updates
+> the phone and the functional data together** of an existing contact, and
+> **never touches** an `externo` contact. Idempotent.
 >
 > **PT-BR:** Espelha no diretório os servidores cadastrados. Cria um contato do
 > tipo `vinculado` apontando para a matrícula, casa a unidade pela **lotação** e
@@ -362,7 +477,7 @@ Depois disso, `_preencher_cascata(None)` + `render_organograma.refresh()`: a sin
 - **Três selects em cascata** (`lista-cascata-1/2/3`, rótulos **Unidade** / **Subunidade** / **Sub-subunidade**), no mesmo card da busca: `ui.select({}, label=rotulo, with_input=True).props("outlined dense clearable")`. Escolher a unidade popula o select seguinte com os **filhos** dela (`_preencher_cascata` → `_caminho_do_id` + `no["filhos"]`); o select que não tem o que mostrar fica **vazio e desabilitado** (`sel.disable()`), que é a informação honesta ("aqui embaixo não tem mais nada"). `_preencher_cascata(None)` roda **antes** do primeiro desenho — sem isso o primeiro select nascia vazio e desligado e só ganhava as unidades depois que o usuário mexesse em algum campo. O **recorte** da listagem vem do nível mais fundo escolhido: `for chave in ("nivel_3", "nivel_2", "nivel_1")` e, no primeiro não-`None`, `_recortar(recorte, estado[chave])` devolve a subárvore (que já traz os descendentes).
 - **Estado da tela** (`telas.py:380`): `{"unidade": None, "busca": "", "nivel_1": None, "nivel_2": None, "nivel_3": None}`. `unidade` é o recorte herdado do diálogo de novo contato (`_dlg_novo_contato` grava `estado["unidade"] = sel_unidade.value` ao salvar, para o contato criado já aparecer).
 - **Grade de contatos — UMA grade contínua** (`CSS_GRADE`, `telas.py:39`): `display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; align-items: stretch;`. **Não existe mais uma grade por unidade**: como quase toda unidade tem um contato só, a grade de 3 colunas nunca aparecia e o resultado era uma coluna de cartões, um por unidade — o oposto do pedido. O `minmax` é de **200px** porque `3 × 200px + 2 × 12px = 624px`; com 260px eram necessárias 804px e num contentor de 673px (janela de 800px menos a margem) a grade caía em **duas** colunas. `ui.row()` não serve aqui (é flex e nunca quebra em colunas). `align-items: stretch` + **altura fixa** `ALTURA_CARTAO = "5.9rem"` são o que fazem todos os cartões terem o **mesmo** tamanho (3 linhas: nome+ações, telefone, matrícula/unidade).
-- **Cartão de contato** (`_cartao_contato`, `telas.py:822`): `lista-cartao-contato`, `data-testid=lista-contato-<cid>`, `role="listitem"`, `aria-label="<nome> <caminho>"`. A estrutura é **coluna**, com os botões de ação só na **primeira** linha — como irmãos de uma coluna de texto eles espremiam a largura em todas as linhas, e num cartão de ~216px o telefone `(35) 3591-5101` quebrava no meio. Conteúdo: ícone do tipo (`person` vinculado / `badge` externo), nome como `ui.link(target=f"tel:{_tel_limpo(telefone)}")` com `truncate` e tooltip "Toque para ligar (celular)" (`ui.label` sem `tel:` quando o telefone está vazio), o telefone em `font-mono` na largura inteira — e, **logo abaixo dele e na mesma coluna**, o **"deixe recado"** (`text-caption text-grey-5 italic`, `data-testid=lista-contato-recado`) quando o contato é de recado — e na 3ª linha a matrícula (`@user_nome`, quando vinculada) e o **caminho da unidade** com `tooltip` — como a grade é uma só e os cartões fluem em 3+ colunas, sem este rótulo o diretório perderia a hierarquia. Ações: `lista-ligar` (sempre) e, para admin, `lista-contato-editar-<cid>` / `lista-contato-remover-<cid>`.
+- **Cartão de contato** (`_cartao_contato`, `telas.py:822`): `lista-cartao-contato`, `data-testid=lista-contato-<cid>`, `role="listitem"`, `aria-label="<nome> <caminho>"`. A estrutura é **coluna**, com os botões de ação só na **primeira** linha — como irmãos de uma coluna de texto eles espremiam a largura em todas as linhas, e num cartão de ~216px o telefone `(00) 3591-5101` quebrava no meio. Conteúdo: ícone do tipo (`person` vinculado / `badge` externo), nome como `ui.link(target=f"tel:{_tel_limpo(telefone)}")` com `truncate` e tooltip "Toque para ligar (celular)" (`ui.label` sem `tel:` quando o telefone está vazio), o telefone em `font-mono` na largura inteira — e, **logo abaixo dele e na mesma coluna**, o **"deixe recado"** (`text-caption text-grey-5 italic`, `data-testid=lista-contato-recado`) quando o contato é de recado — e na 3ª linha a matrícula (`@user_nome`, quando vinculada) e o **caminho da unidade** com `tooltip` — como a grade é uma só e os cartões fluem em 3+ colunas, sem este rótulo o diretório perderia a hierarquia. Ações: `lista-ligar` (sempre) e, para admin, `lista-contato-editar-<cid>` / `lista-contato-remover-<cid>`.
 - **Unidade sem contato** não vira cartão: vira uma **faixa de seção** ocupando a linha toda (`grid-column: 1 / -1`, `lista-secao no-print`, ícone por `tipo`) — na tela informa que a unidade existe; no papel some, porque um título sozinho na folha impressa é só ruído. Só aparece **sem filtro ligado** (`elif not _tem_filtro()`).
 - **Ordem alfabética**: garantida no banco (`listar_arvore_contatos` ordena com `casefold()` em Python, portátil SQLite↔PostgreSQL). A tela percorre a árvore como veio — sem `sorted()`.
 - **Cabeçalho temático**: `ler_tema("lista_telefonica", cor_botao="#000000", cor_texto_botao="#FFFFFF", texto_header=TEXTO_HEADER)` + `ui.colors(primary=tema["cor_botao"])` + `cabecalho("Lista Telefônica", …, chave_modulo="lista_telefonica")` (borda = cor do módulo via `PADROES_TEMA["lista_telefonica"]` → `#000000`).
@@ -488,7 +603,7 @@ Ver [Análise do Módulo](../analise_mod_lista_telefonica.md) e [Arquitetura](..
 ## Pontos de atenção
 
 - **Não há navegação por botões.** Se a documentação ou um teste citar `lista-nav-*`, `lista-busca-nome`, `lista-busca-telefone` ou `lista-busca-unidade`, está descrevendo uma versão que não existe mais: o recorte é pelos três `lista-cascata-{1,2,3}` e a busca é o `lista-busca-termo` único.
-- **Filtro OU no termo, filtro E nos campos separados.** `filtrar_arvore(arvore, termo="", nome="", telefone="", unidade="")` — quando `termo` vem preenchido, ele tem **precedência** e vale como OU entre nome, telefone e caminho da unidade; `nome`/`telefone`/`unidade` continuam aceitos (impressão de recorte, testes) e se combinam como **E**, como eram. A comparação de telefone é feita sobre os **dígitos** (`_digitos`), então `3591` acha `(35) 3591-5101`.
+- **Filtro OU no termo, filtro E nos campos separados.** `filtrar_arvore(arvore, termo="", nome="", telefone="", unidade="")` — quando `termo` vem preenchido, ele tem **precedência** e vale como OU entre nome, telefone e caminho da unidade; `nome`/`telefone`/`unidade` continuam aceitos (impressão de recorte, testes) e se combinam como **E**, como eram. A comparação de telefone é feita sobre os **dígitos** (`_digitos`), então `3591` acha `(00) 3591-5101`.
 - **`+55` fora do cartão, dentro do `tel:`.** Decisão de espaço na coluna de ~216px da grade de 3 colunas (o prefixo empurrava o telefone para duas linhas e cortava o nome) e de consistência entre números completos e parciais. `_tel_limpo` continua produzindo o número completo para o link.
 - **Altura fixa é requisito, não enfeite.** `ALTURA_CARTAO = "5.9rem"` + `align-items: stretch` são o que garante cartões do **mesmo** tamanho; com `align-items: start` cada cartão mediria o próprio conteúdo e a coluna ficaria com alturas diferentes.
 - **`minmax(200px, 1fr)`, não 260px.** A conta está no comentário do código (`3 × 200px + 2 × 12px = 624px`): a 260px a grade caía em duas colunas no contentor de 673px e o mínimo de 3 colunas não era cumprido.

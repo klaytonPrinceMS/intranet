@@ -378,14 +378,14 @@ O cabeçalho da intranet consome esse nome em `mod_intranet/telas.py`
 - Seed idempotente em `init_db` (fonte única deste módulo): conta nativa `master` (`administrador_geral`) e contas de QA (`qacomum` perfil `comum`, `qamaster` `administrador_geral`); credenciais provisórias com **troca forçada no 1º login** (`marcar_trocar_senha`, auto-cura do `master` a cada boot) e renomeação obrigatória do `master` (`marcar_trocar_credenciais`). Por segurança, os valores das senhas provisórias **não são publicados nesta doc** — ver `bd_manipulador.py` e a tabela de seeds no [AGENTS.md §8.2](../analise_mod_gest_cad_usuario.md#seeds-idempotentes-de-contas-agentsmd-82) (contexto interno).
 - Acesso padrão de todo usuário novo (`ACESSO_PADRAO_NOVO_USUARIO`, `bd_manipulador.py:36`): papel `comum` em **`editar_pdf`, `empenhos`, `solicita_impressao`, `lista_telefonica` e `agregador_noticias`** (27/09/2026 — os dois últimos entraram na lista). A lista é o trabalho diário de quem trabalha na prefeitura; servidor que chega sem nenhum destes cai em tela vazia e acha que o sistema quebrou. Ficam **fora** `usuarios`, `auditoria` e `blog`: os dois primeiros mexem em conta e registro de todo mundo e são do administrador; o `blog` foi deixado de fora deliberadamente, porque publicar na intranet é ato de comunicação do município, não privilégio de estar com matrícula ativa — se a prefeitura quiser, o admin libera na tela de usuários, e é melhor que a liberação seja uma decisão visível do que um padrão que ninguém nota.
 
-## Carga da folha de servidores — `assets/populacao/sincroniza_servidores.py` (27/09/2026)
+## Carga da folha de servidores — `mod_gest_cad_usuario/carga_folha.py` (27/09/2026)
 
-> **EN:** `sincroniza_servidores.py` reads the municipality's staff sheet (a JSON
+> **EN:** `carga_folha.py` reads the municipality's staff sheet (a JSON
 > file) and writes every server into the register, creating what is new and
 > updating what changed. It also mirrors the **organogram** into the phone
 > directory. Without `--aplicar` it is a dry run and writes nothing.
 >
-> **PT-BR:** `sincroniza_servidores.py` lê a folha de servidores do município
+> **PT-BR:** `carga_folha.py` lê a folha de servidores do município
 > (um arquivo JSON) e grava cada servidor no cadastro, criando o que é novo e
 > atualizando o que mudou. Ele também sincroniza o **organograma** no
 > diretório telefônico. Sem `--aplicar` é só um ensaio e nada é gravado.
@@ -393,16 +393,16 @@ O cabeçalho da intranet consome esse nome em `mod_intranet/telas.py`
 É um **script de administração**, executado no terminal — não é item de menu, não é rota e não aparece na tela. O servidor não o executa e não depende dele para entrar no sistema.
 
 ```bash
-python assets/populacao/sincroniza_servidores.py            # ensaio: nada é gravado
-python assets/populacao/sincroniza_servidores.py --aplicar   # grava de verdade
-python assets/populacao/sincroniza_servidores.py --aplicar --arquivo <folha.json>
+python mod_gest_cad_usuario/carga_folha.py            # ensaio: nada é gravado
+python mod_gest_cad_usuario/carga_folha.py --aplicar   # grava de verdade
+python mod_gest_cad_usuario/carga_folha.py --aplicar --arquivo <folha.json>
 ```
 
 | Opção | Padrão | Efeito |
 |:---|:---|:---|
 | *(nenhuma)* | — | **Ensaio.** Imprime o que faria (quantos usuários, quantos bloqueados, quantas unidades) e sai com 0 |
 | `--aplicar` | desligado | Grava de verdade: organograma + usuários |
-| `--arquivo` | `assets/populacao/servidores_coletados.json` | Folha de servidores a ler |
+| `--arquivo` | `mod_gest_cad_usuario/dados/funcionarios.json` | Folha de servidores a ler |
 
 O **modo padrão é ensaio por desenho**: sem `--aplicar` o script não abre nenhuma transação de escrita.
 
@@ -439,7 +439,7 @@ O **modo padrão é ensaio por desenho**: sem `--aplicar` o script não abre nen
 > obrigatório e o histórico importa — mas **bloqueados**: não entram no
 > sistema. Bloquear é reversível pelo administrador; apagar não seria.
 
-| Regra | Conjunto (`sincroniza_servidores.py:58-59`) |
+| Regra | Conjunto (`carga_folha.py:58-59`) |
 |:---|:---|
 | **Vínculo bloqueado** | `pensionista`, `inativo`, `eleito`, `exonerado` |
 | **Situação bloqueada** | `demitido`, `exonerado`, `afastado` |
@@ -535,6 +535,6 @@ o prazo vencido **bloqueia no login** (`aut.autenticar`) e a conta fica com
 - **`listar_telefones` desempacota por índice e a tupla ganhou um campo.** São 9 campos desde 27/09/2026: `recado` entrou no **7** e `data_cadastro` foi para o **8**. `telefone_e_recado` (`:669`) é o único leitor de `recado` e tem guarda de tamanho (`len(principal) > 7`); quem ler `t[7]` esperando a data recebe o flag. A ponte `leitura_lista.py` devolve **dicionários** justamente para que nenhum consumidor externo dependa de posição fixa.
 - **`registrar_contatos_primeiro_acesso` desempacota TRÊS valores** (`:1023`). `ok, msg = ...` levanta `ValueError`. O terceiro (`detalhes`) é o que permite à tela mostrar o bilhete do acesso provisório e o aviso de número fora da faixa — não é cosmético.
 - **`bloqueio_provisorio_pendente` é fail-soft por convicção.** Devolve `False` em qualquer falha, e o `except` em `autenticar` só passa: uma checagem de prazo que bloqueia todo mundo por causa de um erro de banco é pior do que um prazo que passa.
-- **`sincroniza_servidores.py` toca em DOIS bancos** (o deste módulo e o do diretório, via `mod_lista_telefonica.bd_manipulador`). É o **único** lugar do projeto em que um processo de manutenção opera assim — a regra de isolamento do AGENTS.md §2 vale para os módulos em execução, e este script é ferramenta de administração, não tela. Ainda assim, cada lado escreve **só** no banco dele.
+- **`carga_folha.py` toca em DOIS bancos** (o deste módulo e o do diretório, via `mod_lista_telefonica.bd_manipulador`). É o **único** lugar do projeto em que um processo de manutenção opera assim — a regra de isolamento do AGENTS.md §2 vale para os módulos em execução, e este script é ferramenta de administração, não tela. Ainda assim, cada lado escreve **só** no banco dele.
 
 Ver [Análise do Módulo](../analise_mod_gest_cad_usuario.md).

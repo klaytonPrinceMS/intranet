@@ -198,3 +198,194 @@ def modulo_habilitado(chave: str) -> bool:
         logger.warning("integracoes.modulo_habilitado('%s'): falha (%s) — devolvendo False",
                        chave, exc)
         return False
+
+
+def registrar_auditoria(usuario, modulo, acao, descricao):
+    """EN: Writes one audit row on behalf of a business module (fail-soft).
+
+    PT-BR: Grava UM registro de auditoria em nome de um módulo de negócio
+    (fail-soft). Existe para que o módulo de negócio NUNCA importe
+    `mod_intranet.bd_manipulador`: quem possui o acoplamento é o núcleo, e
+    a função devolve `True`/`False` em vez de propagar a exceção — uma
+    auditoria que falhou não pode derrubar a tela do servidor."""
+    try:
+        from mod_intranet.bd_manipulador import audit_log
+        audit_log(usuario or "sistema", modulo, acao, descricao)
+        return True
+    except Exception as exc:
+        logger.warning("integracoes.registrar_auditoria('%s', '%s'): "
+                       "falha (%s) — devolvendo False", modulo, acao, exc)
+        return False
+
+
+def buscar_usuarios_gestao(termo="", limite=50):
+    """EN: Active users matching `termo` — dicts with display name and unit.
+
+    PT-BR: Usuários ATIVOS que casam com o termo — dicionários com nome de
+    exibição (primeiro + último), cargo, unidade e lotação. Serve para o
+    seletor de quem participa de um quadro/convite: a tela mostra o nome que
+    a pessoa deve ler e a unidade dela, nunca a matrícula crua sozinha. Lista
+    vazia em qualquer falha — o seletor fica vazio, a tela não quebra."""
+    try:
+        from mod_gest_cad_usuario import leitura_lista
+        return list(leitura_lista.buscar_usuarios_para_lista(termo=termo,
+                                                             limite=limite) or [])
+    except Exception as exc:
+        logger.warning("integracoes.buscar_usuarios_gestao(termo=%r): "
+                       "falha (%s) — devolvendo []", termo, exc)
+        return []
+
+
+def conceder_acesso_gestao(ator, user_nome, modulo_chave, papel="comum"):
+    """EN: Grants/revokes a user's per-module role in the user registry.
+
+    PT-BR: Concede (ou remove) o papel do usuário num módulo, no cadastro de
+    usuários. `papel=None` remove o vínculo. O módulo de negócio só pede —
+    quem escreve em `tb_acesso_usuario` é o módulo dono do cadastro.
+    Devolve (ok, mensagem); em falha, o mesmo formato com erro."""
+    try:
+        from mod_gest_cad_usuario.bd_manipulador import definir_acesso
+        return definir_acesso(ator, user_nome, modulo_chave, papel)
+    except Exception as exc:
+        logger.warning("integracoes.conceder_acesso_gestao(%r, %r): "
+                       "falha (%s)", user_nome, modulo_chave, exc)
+        return (False, "Erro ao alterar o acesso do servidor")
+
+
+def obter_papel_gestao(user_nome, modulo_chave):
+    """EN: The user's effective role in a module, or None.
+
+    PT-BR: Papel efetivo do usuário no módulo, ou None quando não tem
+    vínculo. None também quando o cadastro não responde (fail-soft)."""
+    try:
+        from mod_gest_cad_usuario.bd_manipulador import obter_papel_no_modulo
+        return obter_papel_no_modulo(user_nome, modulo_chave)
+    except Exception as exc:
+        logger.warning("integracoes.obter_papel_gestao(%r, %r): falha (%s)",
+                       user_nome, modulo_chave, exc)
+        return None
+
+
+# ================== Unidades do organograma (mod_lista_telefonica) ==================
+
+
+def sincronizar_organograma_cadastro(plano, aplicar=True, ator="sistema"):
+    """EN: Writes the organogram coming from the payroll sheet into the phone
+    directory. The core is the one that stitches, per AGENTS.md §2.
+
+    PT-BR: Grava no organograma da lista telefônica o plano que a folha de
+    servidores trouxe. `plano` é uma lista flat de
+    `(nome, tipo, nome_do_pai_ou_None, ordem)`, de raiz para a folha.
+
+    Existe porque o módulo de cadastro de usuários tem a FOLHA e o módulo da
+    lista telefônica tem o BANCO, e nenhum dos dois pode falar direto com o
+    outro. Quem tem o banco expõe a escrita (`sincronizar_organograma`); quem
+    tem a folha monta o plano; o núcleo costura. Nenhum dado de servidor
+    atravessa direto — só o organograma, que é estrutura, não cadastro.
+    """
+    vazio = {"secretarias_criadas": 0, "setores_criados": 0,
+             "reativadas": 0, "desativadas": 0, "erros": []}
+    try:
+        from mod_lista_telefonica.bd_manipulador import sincronizar_organograma
+        return sincronizar_organograma(plano, aplicar=aplicar, ator=ator)
+    except Exception as exc:
+        logger.warning("integracoes.sincronizar_organograma_cadastro: falha (%s) "
+                       "— organograma nao alterado", exc)
+        return {**vazio, "erros": [str(exc)]}
+
+
+def listar_unidades_organograma(tipo=None, ativo=1):
+    """EN: Organogram units of the phone directory as dicts (id, name, kind...).
+
+    PT-BR: Unidades do organograma da lista telefônica como dicionários
+    (`id`, `nome`, `tipo`, `parent_id`, `ordem`, `telefone`, `ativo`).
+    É o seletor de unidade do quadro de ordens de serviço: cada secretaria,
+    setor ou subsetor pode ter o seu. Lista vazia em qualquer falha — o
+    quadro particular continua disponível."""
+    try:
+        from mod_lista_telefonica.bd_manipulador import listar_todas_unidades
+        saida = []
+        for linha in listar_todas_unidades() or []:
+            if not linha or len(linha) < 7:
+                continue
+            if tipo and linha[2] != tipo:
+                continue
+            if ativo is not None and not linha[6]:
+                continue
+            saida.append({"id": linha[0], "nome": linha[1], "tipo": linha[2],
+                          "parent_id": linha[3], "ordem": linha[4],
+                          "telefone": linha[5], "ativo": linha[6]})
+        return saida
+    except Exception as exc:
+        logger.warning("integracoes.listar_unidades_organograma(tipo=%r): "
+                       "falha (%s) — devolvendo []", tipo, exc)
+        return []
+
+
+def _norm_unidade(texto):
+    """Compara nomes de unidade sem acento e sem pontuação (NFKD + [a-z0-9])."""
+    try:
+        import re
+        import unicodedata
+        limpo = unicodedata.normalize("NFKD", str(texto or "")) \
+            .encode("ascii", "ignore").decode().lower()
+        return " ".join(re.findall(r"[a-z0-9]+", limpo))
+    except Exception:
+        return str(texto or "").lower()
+
+
+def unidades_por_usuario_gestao():
+    """EN: `{matricula: {nome_exibicao, unidade, lotacao, cargo}}` for the organogram.
+
+    PT-BR: `{matricula: {nome_exibicao, unidade, lotacao, cargo}}` — quem é o
+    servidor e de qual setor ele é, para o quadro da unidade saber a quem se
+    mostrar.
+
+    O nome da unidade guardado é o do CADASTRO do servidor (lotação, com a
+    unidade como reserva); casar isso com as unidades do organograma é tarefa
+    do módulo que DETÉM o organograma, não deste. Por isso o campo `unidade`
+    sai com o valor do cadastro e quem compara é o chamador, com a normalização
+    que ele quiser. Dicionário vazio em qualquer falha."""
+    try:
+        from mod_gest_cad_usuario import leitura_lista
+        saida = {}
+        for servidor in leitura_lista.listar_para_lista_telefonica() or []:
+            matricula = servidor.get("user_nome")
+            if not matricula:
+                continue
+            saida[matricula] = {
+                "nome_exibicao": servidor.get("nome_exibicao") or matricula,
+                "unidade": servidor.get("unidade") or "",
+                "lotacao": servidor.get("lotacao") or "",
+                "cargo": servidor.get("cargo") or "",
+            }
+        return saida
+    except Exception as exc:
+        logger.warning("integracoes.unidades_por_usuario_gestao: "
+                       "falha (%s) — devolvendo {}", exc)
+        return {}
+
+
+def unidades_do_organograma_por_nome():
+    """EN: `{nome normalizado: {id, nome, tipo}}` of the ACTIVE units.
+
+    PT-BR: `{nome normalizado: {id, nome, tipo}}` das unidades ATIVAS do
+    organograma, com o nome já normalizado (sem acento, sem pontuação).
+
+    É a peça que fecha o casamento: o cadastro do servidor traz `lotacao`/
+    `unidade` como TEXTO, e o organograma tem a unidade com id. Casa-se por
+    nome normalizado — a lotação tem precedência, porque é o setor onde a
+    pessoa trabalha de fato. Dicionário vazio em qualquer falha."""
+    try:
+        consulta = {}
+        for unidade in listar_unidades_organograma(ativo=1):
+            chave = _norm_unidade(unidade.get("nome"))
+            if chave and chave not in consulta:
+                consulta[chave] = {"id": unidade.get("id"),
+                                   "nome": unidade.get("nome"),
+                                   "tipo": unidade.get("tipo")}
+        return consulta
+    except Exception as exc:
+        logger.warning("integracoes.unidades_do_organograma_por_nome: "
+                       "falha (%s) — devolvendo {}", exc)
+        return {}

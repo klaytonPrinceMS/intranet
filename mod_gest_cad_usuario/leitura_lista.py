@@ -70,7 +70,13 @@ def nome_para_exibicao(nome_completo: str) -> str:
 
 
 def _para_dict(linha):
-    """Converte a linha do SELECT no dicionário que a lista consome."""
+    """Converte a linha do SELECT no dicionário que a lista consome.
+
+    Índice 7 e 8 são `vinculo` e `situacao` (veja `_SELECT`). São lidos com
+    `len(linha) > n` porque esta função também pode receber linha de um SELECT
+    mais curto em outro ponto do módulo — e um `IndexError` aqui derrubaria a
+    tela inteira em vez de devolver um campo a menos.
+    """
     nome_exibicao = nome_para_exibicao(linha[1])
     return {
         "user_nome": linha[0],
@@ -80,13 +86,21 @@ def _para_dict(linha):
         "unidade": linha[3] or "",
         "lotacao": linha[4] or "",
         "ativo": bool(linha[5]) and not bool(linha[6]),
+        "vinculo": (linha[7] or "") if len(linha) > 7 else "",
+        "situacao": (linha[8] or "") if len(linha) > 8 else "",
         "telefone": bd.telefone_empresa_principal(linha[0]),
         "recado": bd.telefone_e_recado(linha[0]),
     }
 
 
+# `vinculo` e `situacao` entram na leitura (28/09/2026) porque a lista
+# telefônica precisa responder "é efetivo?" e "está ativo?" de quem não
+# autorizou telefone. A leitura é sobre o CADASTRO, não sobre o diretório
+# publicado: nome, cargo, secretaria e lotação são publicação legal (Lei
+# 12.527/2011) e quem está na folha é quem ocupa o posto — o que é privado é o
+# NÚMERO, e o número continua vindo só de quem autorizou.
 _SELECT = ("SELECT user_nome, user_nome_completo, cargo, unidade, lotacao, "
-           "user_ativo, user_deletado FROM tb_usuarios")
+           "user_ativo, user_deletado, vinculo, situacao FROM tb_usuarios")
 
 
 def obter_usuario_para_lista(user_nome):
@@ -197,6 +211,8 @@ def listar_para_lista_telefonica():
                 "unidade": r[3] or "",
                 "lotacao": r[4] or "",
                 "ativo": True,
+                "vinculo": (r[7] or "") if len(r) > 7 else "",
+                "situacao": (r[8] or "") if len(r) > 8 else "",
                 "telefone": telefones.get(r[0]),
                 "recado": telefones_recado.get(r[0], False),
             })

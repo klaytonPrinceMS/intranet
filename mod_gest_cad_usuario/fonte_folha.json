@@ -1,0 +1,144 @@
+{
+  "_leia_me": [
+    "CONFIGURACAO DE CARGA DE FUNCIONARIOS. Leia antes de preencher.",
+    "",
+    "1. 'ativo': enquanto for false, o sistema NAO carrega ninguem. Este e o",
+    "   padrao de proposito: quem instala o sistema e nao preenche isto aqui",
+    "   recebe um sistema funcionando, com o cadastro de usuarios vazio, e",
+    "   nada tentando se conectar a lugar nenhum.",
+    "",
+    "2. 'origem': 'csv' le o arquivo indicado em 'caminho_csv'. 'portal' le",
+    "   direto do portal de transparencia configurado em 'portal_url'.",
+    "   O portal e opcional e so existe porque algumas fabricas publicam a",
+    "   folha em um formato proprietario; quando existe um CSV, prefira o",
+    "   CSV — ele e um contrato seu, e nao depende de terceiro.",
+    "",
+    "3. 'delimitador': 'auto' detecta (ponto-e-virgula, virgula ou tab).",
+    "   Fixe apenas se a deteccao errar. O padrao e 'auto' porque o Excel em",
+    "   portugues grava ';' e o Excel em ingles grava ',', e forcar um dos dois",
+    "   quebra o outro.",
+    "",
+    "4. 'colunas' mapeia o que a tela precisa para o nome que o seu arquivo",
+    "   usa. A lista e uma alternativa: o sistema aceita qualquer um dos nomes.",
+    "   Assim um ERP que exporta 'id_registro' funciona sem renomear coluna.",
+    "",
+    "5. 'competencia' carimba a remuneracao. Se mudar todo mes, o historico",
+    "   mostra a evolucao; sem competencia, o valor e guardado sem historico.",
+    "",
+    "Exemplo de colunas de um ERP que usa outros nomes:",
+    "  \"matricula\": [\"id_registro\", \"codigo_funcionario\"],",
+    "  \"nome\":      [\"nome_completo_funcionario\"],"
+  ],
+  "ativo": false,
+  "origem": "csv",
+  "caminho_csv": "mod_gest_cad_usuario/dados/funcionarios.csv",
+  "delimitador": "auto",
+  "competencia": "",
+  "idioma_arquivo": "utf-8",
+  "portal_url": "https://transparencia.montesantodeminas.mg.gov.br",
+  "portal_pagina": "/servidores-por-nomes",
+  "portal_competencia_padrao": "auto",
+  "portal_intervalo_s": 1.2,
+  "portal_user_agent": "intranet/1.0 (carga de servidores - dados publicos)",
+  "origem_rotulo": "Portal da Transparência",
+  "_portal_endpoints": [
+    "Caminhos dos endpoints do portal. Preencha com os da plataforma da sua",
+    "prefeitura, ou deixe vazio e use 'origem': 'csv', que nao depende de",
+    "nenhum portal.",
+    "",
+    "Os valores abaixo sao os do 'Portal Facil', plataforma de transparencia",
+    "usada por muitos municipios brasileiros — mas o padrao aqui e VAZIO,",
+    "porque um sistema publicado nao deve presumir a plataforma de ninguem.",
+    "Aqui, portanto, so o exemplo de como preencher:",
+    "  \\\"portal_endpoints\\\": {",
+    "    \\\"folha\\\":       \\\"/transparencia/servidor/tpc_servidor_data.ashx?metodo=ServidorGetNomeGrid\\\",",
+    "    \\\"competencia\\\": \\\"/transparencia/servidor/tpc_servidor_data.ashx?metodo=ServidorGetCompetencia&entidade=\\\"",
+    "  }",
+    "",
+    "O portal precisa responder em JSON ao POST. Alguns publicam em formato",
+    "proprietario — nesse caso o CSV e o caminho, e a coleta automatica nao se aplica."
+  ],
+  "portal_endpoints": {
+    "folha": "/transparencia/servidor/tpc_servidor_data.ashx?metodo=ServidorGetNomeGrid",
+    "competencia": "/transparencia/servidor/tpc_servidor_data.ashx?metodo=ServidorGetCompetencia&entidade="
+  },
+  "colunas": {
+    "matricula": [
+      "matricula",
+      "id",
+      "registro",
+      "codigo",
+      "codigo_funcionario",
+      "id_registro",
+      "numero"
+    ],
+    "nome": [
+      "nome",
+      "nome_completo",
+      "nome_funcionario",
+      "nome_do_funcionario",
+      "nome_completo_funcionario"
+    ],
+    "unidade": [
+      "unidade",
+      "secretaria",
+      "orgao",
+      "unidade_organizacional"
+    ],
+    "lotacao": [
+      "lotacao",
+      "setor",
+      "unidade_trabalho",
+      "departamento",
+      "unidade_de_trabalho"
+    ],
+    "cargo": [
+      "cargo",
+      "funcao",
+      "posto",
+      "funcao_cargo"
+    ],
+    "vinculo": [
+      "vinculo",
+      "situacao_vinculo",
+      "tipo_vinculo"
+    ],
+    "situacao": [
+      "situacao",
+      "status"
+    ],
+    "remuneracao": [
+      "remuneracao",
+      "vencimento",
+      "salario",
+      "remuneracao_base",
+      "vencimento_base",
+      "proventos"
+    ],
+    "ficha_contracheque": [
+      "ficha_contracheque",
+      "ficha",
+      "contracheque",
+      "id_contracheque"
+    ],
+    "regime": [
+      "regime",
+      "regime_juridico"
+    ],
+    "carga_horaria": [
+      "carga_horaria",
+      "carga",
+      "horas"
+    ],
+    "admissao": [
+      "admissao",
+      "data_admissao",
+      "dt_admissao"
+    ],
+    "exoneracao": [
+      "exoneracao",
+      "data_exoneracao",
+      "dt_exoneracao"
+    ]
+  }
+}

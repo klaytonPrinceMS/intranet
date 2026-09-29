@@ -67,6 +67,12 @@ def inicializar_bancos():
     from mod_agregador_noticias.bd_manipulador import init_db as init_agregador
     init_agregador()      # db_mod_agregador_noticias.db
 
+    from mod_os.bd_manipulador import init_db as init_os
+    init_os()             # db_mod_os.db
+
+    from mod_estoque.bd_manipulador import init_db as init_estoque
+    init_estoque()        # db_mod_estoque.db
+
 
 if __name__ == "__main__":
     inicializar_bancos()

@@ -132,14 +132,34 @@ def campo_busca(placeholder, on_change=None, *, valor_inicial="", tooltip=None):
     """Builds the standard search field (outlined, dense, clearable, debounced).
 
     Cria o campo de pesquisa padrão das barras de ações: `ui.input` com
-    `placeholder`/`value`/`on_change`, props `outlined dense clearable
-    debounce='150'` e classes `w-full grow min-w-[220px]`. `tooltip` é
-    aplicado somente quando informado. Retorna o `ui.input` criado.
+    `placeholder`/`value`, props `outlined dense clearable debounce='150'` e
+    classes `w-full grow min-w-[220px]`. `tooltip` é aplicado somente quando
+    informado. Retorna o `ui.input` criado.
+
+    POR QUE `on_value_change` E NÃO `on_change` (28/09/2026)
+        `on_change` escuta o evento DOM `change`, que num campo de texto só
+        dispara ao perder o foco ou apertar Enter. Quem digita "Guerzoni" vê a
+        lista inteira por baixo enquanto escreve e o filtro só fecha no fim —
+        que parece defeito, e é. `on_value_change` escuta o `v-model` do
+        Quasar e dispara a cada tecla; o `debounce='150'` agrupa as teclas em
+        rajada, então não redesenha a lista a cada caractere.
+
+        Os dois entregam um evento com `.value`, então o handler passado aqui
+        funciona igual nos dois casos — nenhum dos módulos que usa este campo
+        (lista telefônica, blog, gestão de usuários) precisa mudar.
+
+        Cai para `on_change` se a versão do NiceGUI não tiver
+        `on_value_change`: o campo continua funcionando, só sem filtrar
+        enquanto se digita.
     """
-    campo = ui.input(placeholder=placeholder, value=valor_inicial,
-                     on_change=on_change) \
+    campo = ui.input(placeholder=placeholder, value=valor_inicial) \
         .props("outlined dense clearable debounce='150'") \
         .classes("w-full grow min-w-[220px]")
+    if on_change is not None:
+        if hasattr(campo, "on_value_change"):
+            campo.on_value_change(on_change)
+        else:
+            campo.on_change(on_change)
     if tooltip:
         campo.tooltip(tooltip)
     return campo

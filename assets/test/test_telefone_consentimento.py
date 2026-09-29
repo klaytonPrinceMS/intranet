@@ -96,9 +96,9 @@ def teste_pendencia_e_registro():
              "tipo": "celular", "visivel": True},     # nao pode publicar
             {"numero": "(35) 98888-2222", "papel": "empresa",
              "tipo": "celular", "visivel": False},    # nao autorizou
-            {"numero": "(35) 3591-5100", "papel": "empresa",
+            {"numero": "(00) 3591-5100", "papel": "empresa",
              "tipo": "fixo", "visivel": True},        # publica sozinho
-            {"numero": "(35) 3800-3030", "papel": "pessoal",
+            {"numero": "(00) 3800-3030", "papel": "pessoal",
              "tipo": "fixo", "visivel": False},       # residencial
         ]
         ok, msg, _d = bd.registrar_contatos_primeiro_acesso(nome, nome, contatos)
@@ -111,15 +111,15 @@ def teste_pendencia_e_registro():
 
         publicos = bd.listar_telefones(nome, apenas_empresa=True)
         numeros = sorted(t[2] for t in publicos)
-        # Guardado só com dígitos, DDD junto: "(35) 3591-5100" vira
-        # "3535915100". A forma canônica evita que o mesmo ramal digitado de
+        # Guardado só com dígitos, DDD junto: "(00) 3591-5100" vira
+        # "0035915100". A forma canônica evita que o mesmo ramal digitado de
         # dois jeitos vire dois contatos. Quem exibe.formata para leitura
-        # ("(35) 3591-5100") e o `tel:` do link monta o número internacional.
-        check(numeros == ["3535915100"],
+        # ("(00) 3591-5100") e o `tel:` do link monta o número internacional.
+        check(numeros == ["0035915100"],
               f"sai na lista SO o fixo da prefeitura (veio {numeros})")
 
         principal = bd.telefone_empresa_principal(nome)
-        check(principal == "3535915100",
+        check(principal == "0035915100",
               f"telefone principal e o fixo institucional (veio {principal})")
 
         # 3) idempotencia: rodar de novo nao duplica
@@ -133,7 +133,7 @@ def teste_pendencia_e_registro():
                                  nome_completo="Somente Particular")
         if ok:
             bd.registrar_contatos_primeiro_acesso(nome2, nome2, [
-                {"numero": "35 98888-3333", "papel": "pessoal",
+                {"numero": "00 98888-3333", "papel": "pessoal",
                  "tipo": "celular", "visivel": True}])
             check(bd.telefone_empresa_principal(nome2) is None,
                   "quem so tem celular particular fica SEM numero na lista")
@@ -142,7 +142,7 @@ def teste_pendencia_e_registro():
 
         # 5) o lote bate com o individual (o N+1 foi removido)
         lote = bd.telefones_publicaveis_em_lote([nome, nome2, "NAO_EXISTE_9"])
-        check(lote.get(nome) == "3535915100",
+        check(lote.get(nome) == "0035915100",
               f"lote traz o fixo do servidor 1 ({lote.get(nome)})")
         check(nome2 not in lote, "lote NAO traz quem so tem particular")
         check("NAO_EXISTE_9" not in lote, "lote ignora usuario inexistente")
@@ -163,7 +163,7 @@ def teste_ponte_da_lista():
         bd.definir_dados_funcionais("teste", nome, unidade="Secretaria de Saude",
                                     cargo="Agente de Saude")
         bd.registrar_contatos_primeiro_acesso(nome, nome, [
-            {"numero": "35 3591-5150", "papel": "empresa",
+            {"numero": "00 3591-5150", "papel": "empresa",
              "tipo": "fixo", "visivel": True}])
         from mod_gest_cad_usuario import leitura_lista
         item = leitura_lista.obter_usuario_para_lista(nome)
@@ -171,7 +171,7 @@ def teste_ponte_da_lista():
         if item:
             check(item["nome_exibicao"] == "Ana Rocha",
                   f"mostra primeiro + ultimo (veio {item['nome_exibicao']!r})")
-            check(item["telefone"] == "3535915150",
+            check(item["telefone"] == "0035915150",
                   f"traz o fixo liberado (veio {item['telefone']!r})")
             check(item["cargo"] == "Agente de Saude", "traz o cargo")
         # quem esta bloqueado nao entra no diretório
@@ -210,37 +210,37 @@ def teste_recado_e_faixas():
     try:
         # 1) o FIXO DA PREFEITURA e o que libera o acesso; celular nao
         avalio = bd.avaliar_telefones_primeiro_acesso([
-            {"numero": "35988881111", "papel": "pessoal", "tipo": "celular"}])
+            {"numero": "00988881111", "papel": "pessoal", "tipo": "celular"}])
         check(not avalio["tem_da_prefeitura"],
               "celular particular NAO satisfaz a exigencia da prefeitura")
         ok, msg, _d = bd.registrar_contatos_primeiro_acesso("teste", nome, [
-            {"numero": "35988881111", "papel": "pessoal", "tipo": "celular"}])
+            {"numero": "00988881111", "papel": "pessoal", "tipo": "celular"}])
         check(ok is False, "recusa sem telefone da prefeitura e sem liberacao")
 
         # 2) fixo de RECADO do setor satisfaz
         avalio = bd.avaliar_telefones_primeiro_acesso([
-            {"numero": "3535915300", "papel": "empresa", "tipo": "fixo",
+            {"numero": "0035915300", "papel": "empresa", "tipo": "fixo",
              "recado": True}])
         check(avalio["tem_da_prefeitura"],
               "fixo do setor marcado como recado satisfaz a exigencia")
 
         # 3) numero FORA da faixa e avisado, nao bloqueado
         fx.salvar_faixas("teste", [
-            {"inicio": "3535915101", "fim": "3535915199", "descricao": "Central"}])
+            {"inicio": "0035915101", "fim": "0035915199", "descricao": "Central"}])
         avalio = bd.avaliar_telefones_primeiro_acesso([
-            {"numero": "3535999999", "papel": "empresa", "tipo": "fixo"}])
+            {"numero": "0035999999", "papel": "empresa", "tipo": "fixo"}])
         check(bool(avalio["fora_da_faixa"]),
               "numero fora da faixa e sinalizado")
         ok, msg, det = bd.registrar_contatos_primeiro_acesso("teste", nome, [
-            {"numero": "3535999999", "papel": "empresa", "tipo": "fixo"}])
+            {"numero": "0035999999", "papel": "empresa", "tipo": "fixo"}])
         check(ok, f"numero fora da faixa SALVA (so avisa): {msg}")
 
         # 4) multiplas faixas cadastradas pelo admin
         ok, _m = fx.salvar_faixas("teste", [
-            {"inicio": "3535915101", "fim": "3535915199", "descricao": "Central"},
-            {"inicio": "3535915300", "fim": "3535915350", "descricao": "Garagem"}])
+            {"inicio": "0035915101", "fim": "0035915199", "descricao": "Central"},
+            {"inicio": "0035915300", "fim": "0035915350", "descricao": "Garagem"}])
         check(ok, "admin cadastra MAIS DE UMA faixa")
-        for num, desc in (("3535915150", "Central"), ("3535915320", "Garagem")):
+        for num, desc in (("0035915150", "Central"), ("0035915320", "Garagem")):
             dentro, f = fx.numero_dentro_da_faixa(num)
             check(dentro and f["descricao"] == desc,
                   f"{num} cai na faixa {desc}")
@@ -251,7 +251,7 @@ def teste_recado_e_faixas():
         bd.criar_usuario("teste", nome, "123456",
                          nome_completo="Servador Sem Numero")
         ok, msg, det = bd.registrar_contatos_primeiro_acesso("teste", nome, [
-            {"numero": "35988881111", "papel": "pessoal", "tipo": "celular"}],
+            {"numero": "00988881111", "papel": "pessoal", "tipo": "celular"}],
             liberacao_provisoria=True)
         check(ok, f"paliativo libera o acesso: {msg}")
         check(det["provisorio"] is True, "marcado como liberacao provisoria")
@@ -288,7 +288,7 @@ def teste_recado_e_faixas():
         conn.execute("INSERT INTO tb_telefone_usuario "
                      "(user_nome,numero,papel,tipo,principal,visivel,recado) "
                      "VALUES (?,?,?,?,?,?,?)",
-                     (nome, "3535915300", "empresa", "fixo", 0, 1, 1))
+                     (nome, "0035915300", "empresa", "fixo", 0, 1, 1))
         conn.commit()
         conn.close()
         ok, msg = bd.liberar_acesso_definitivo("dti", nome)

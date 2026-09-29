@@ -50,6 +50,8 @@ PREFIXO_POR_CHAVE = {
     "filas": "filas",
     "lista_telefonica": "lista_telefonica",
     "agregador_noticias": "agregador_noticias",
+    "os": "os",
+    "estoque": "estoque",
 }
 
 
@@ -85,6 +87,10 @@ PADROES_TEMA = {
                          "cor_titulo": "#212121", "btn_tamanho": "medium"},
     "agregador_noticias": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
                            "cor_titulo": "#212121", "btn_tamanho": "medium"},
+    "os": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
+           "cor_titulo": "#212121", "btn_tamanho": "medium"},
+    "estoque": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
+                "cor_titulo": "#212121", "btn_tamanho": "medium"},
 }
 
 

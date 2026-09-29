@@ -156,6 +156,228 @@ def _eh_violacao_unicidade(exc):
         return False
 
 
+# Cotas padrão por tipo de unidade. Secretaria tem 1000 páginas/mês, setor e
+# subsetor 200 cópias/mês. Subsetor entra como setor: é o mesmo nível de gasto
+# com a mesma regra, e achatá-lo aqui evita ter que decidir o que é subsetor
+# toda vez que a cota é calculada.
+COTA_POR_TIPO = {"secretaria": (1000, 20), "setor": (200, 10),
+                 "subsetor": (200, 10)}
+
+# Rótulos que abrem o nome de uma unidade e NÃO a identificam. Descartados
+# antes de gerar a sigla, palavra a palavra e na ordem mais longa primeiro
+# ("secretaria municipal de" tem de vir antes de "secretaria", senão o corte
+# para no meio e sobra "municipal de ..."). Todo mundo usa o mesmo rótulo, é
+# exatamente por isso que ele não pode entrar na sigla.
+_ROTULOS_GENERICOS = (
+    ("secretaria", "municipal", "de"),
+    ("secretaria", "municipal", "da"),
+    ("secretaria", "de"),
+    ("secretaria", "da"),
+    ("departamento", "municipal", "de"),
+    ("departamento", "de"),
+    ("coordenadoria", "de"),
+    ("superintendencia", "de"),
+    ("procuradoria", "de"),
+    ("sec", "mun", "de"),
+    ("sec", "municipal", "de"),
+    ("setor", "de"),
+    ("orgao", "de"),
+    ("secretaria",),
+    ("departamento",),
+    ("coordenadoria",),
+    ("superintendencia",),
+    ("procuradoria",),
+    ("setor",),
+    ("orgao",),
+)
+
+
+def _unidade_como_tupla(u):
+    """Uma unidade do organograma como `(id, nome, tipo, parent_id, ordem, ...)`.
+
+    A fachada do núcleo pode devolver a unidade como tupla (o formato cru de
+    `listar_todas_unidades`) ou como dicionário nomeado (o formato legível que
+    `integracoes.listar_unidades_organograma` devolve). Aceitar as duas é
+    deliberado: quem escreve esta função não é dono daquele formato, e acoplar
+    no índice ou na chave faz o módulo inteiro silenciosamente gerar cota
+    zero quando o outro lado resolve mudar a forma.
+    """
+    try:
+        if isinstance(u, dict):
+            return (u.get("id"), u.get("nome"), u.get("tipo"),
+                    u.get("parent_id"), u.get("ordem"), u.get("telefone"),
+                    u.get("ativo"))
+        return tuple(u)[:7]
+    except Exception:
+        return None
+
+
+def _organograma_para_cotas(unidades):
+    """Achata o organograma hierárquico em `{secretaria: [setores]}`.
+
+    `unidades` vem do núcleo, em qualquer ordem e em qualquer profundidade — o
+    organograma aceita N subsetores de N subsetores (28/09/2026), então a
+    descida é por construção, não por um nível fixo.
+
+    O que NÃO dá para saber pela lista é a secretaria de um setor vários níveis
+    abaixo. Por isso a subida é pelo `parent_id` até chegar numa secretaria, e
+    não pela posição na lista. A memoização evita percorrer a árvore uma vez por
+    setor: com 1200 servidores e 4 níveis, a versão sem memoização faz ~4800
+    passos e a com memoização faz ~1200.
+    """
+    try:
+        por_id = {}
+        for bruto in unidades or []:
+            u = _unidade_como_tupla(bruto)
+            if not u or len(u) < 4:
+                continue
+            uid, nome, tipo, pai = u[0], (u[1] or "").strip(), (u[2] or ""), u[3]
+            if nome:
+                por_id[uid] = {"nome": nome, "tipo": tipo, "pai": pai}
+        cache = {}
+
+        def secretaria_de(uid, guarda):
+            if uid in cache:
+                return cache[uid]
+            if uid in guarda or uid not in por_id:
+                return None
+            guarda.add(uid)
+            no = por_id[uid]
+            if no["tipo"] == "secretaria":
+                achada = no["nome"]
+            elif no["pai"]:
+                achada = secretaria_de(no["pai"], guarda)
+            else:
+                achada = None
+            cache[uid] = achada
+            return achada
+
+        arvore = {}
+        for no in por_id.values():
+            if no["tipo"] == "secretaria":
+                arvore.setdefault(no["nome"], [])
+        for uid, no in por_id.items():
+            if no["tipo"] in ("setor", "subsetor"):
+                sec = secretaria_de(uid, set())
+                if sec and sec in arvore:
+                    arvore[sec].append(no["nome"])
+        return arvore
+    except Exception:
+        return {}
+
+
+def _org_para_cota(nome):
+    """Nome de unidade normalizado, para comparar com o organograma.
+
+    O portal da folha grava "Saude" e o cadastro pode ter "Saúde"; o DTI pode
+    ter digitado "Secretaria de Obras" e o organograma dizer "Obras". Sem
+    normalizar, cada grafia diferente é uma unidade a mais na tela e uma cota a
+    menos na secretaria certa.
+
+    A comparação é por CONTEÚDO DE LETRAS, em minúsculas e sem acento: o que
+    identifica a unidade é o nome, não a pontuação dele.
+    """
+    try:
+        import unicodedata
+        s = unicodedata.normalize("NFKD", str(nome or "")).encode(
+            "ascii", "ignore").decode().lower()
+        return "".join(c for c in s if c.isalnum())
+    except Exception:
+        return str(nome or "").strip().lower()
+
+
+def _reparar_siglas(cur, calcular_sigla, organograma):
+    """Corrige sigla degenerada de secretaria real, sem tocar em cota.
+
+    Só mexe em linha cujo nome está no organograma real E cuja sigla é
+    claramente derivada do rótulo genérico em vez do nome:
+
+    - sigla vazia;
+    - base repetida na tabela (o padrão da colisão: SEC_MUNI, SEC_MUNI2, ...);
+    - base que é começo de um rótulo genérico (SEC_SECM, SEC_SECR) — veio de
+      "Secretaria"/"Sec Mun", que todo mundo tem, e não identifica ninguém.
+
+    Uma sigla já única e que não vem de rótulo fica como está, mesmo que o
+    critério de hoje sugerisse outra: quem cadastrou à mão escolheu, e a
+    escolha vale.
+
+    As siglas novas são calculadas contra um conjunto que EXCLUI as siglas das
+    linhas que estão sendo reparadas. Sem isso, a primeira secretaria
+    reparada ficaria com `SEC_EDUC3` — porque `SEC_EDUC` ainda estaria
+    reservado pela linha vizinha que ela própria veio para substituir, e o
+    reparo se alimentaria da sujeira que existe para limpar.
+
+    Devolve quantas linhas foram reparadas, para o log dizer o que aconteceu.
+    """
+    reparadas = []
+    try:
+        if not organograma:
+            return 0
+        nomes_reais = {_org_para_cota(k) for k in organograma}
+        linhas = cur.execute(
+            "SELECT id, nome, sigla, ativo FROM tb_secretarias").fetchall()
+
+        def base_de(sigla):
+            b = str(sigla or "")
+            while b and b[-1].isdigit():
+                b = b[:-1]
+            return b
+
+        # base repetida na tabela toda (contando as de demonstração, que
+        # continuam no banco mesmo desativadas)
+        contagem = {}
+        for _id, _nome, _sig, _at in linhas:
+            if _sig:
+                contagem[base_de(_sig)] = contagem.get(base_de(_sig), 0) + 1
+        # rótulos genéricos, como texto puro, para comparar com a base
+        genericas = {"".join(r).upper() for r in _ROTULOS_GENERICOS}
+        genericas |= {"SECRETARIA", "SECRETARIAS", "SEC", "SECM", "DEPARTAMENTO",
+                      "SETOR", "ORGAO", "COORDENADORIA", "SUPERINTENDENCIA",
+                      "PROCURADORIA"}
+
+        alvos = []
+        for _id, _nome, _sig, _at in linhas:
+            if _org_para_cota(_nome) not in nomes_reais:
+                continue
+            base = base_de(_sig)
+            degenerada = (
+                not _sig
+                or contagem.get(base, 0) > 1
+                or base.replace("SEC_", "") in genericas
+                or base in genericas
+            )
+            if degenerada:
+                alvos.append((_id, _nome, _sig))
+        if not alvos:
+            return 0
+        # Reserva só as siglas que continuam valendo: as de linha ATIVA que
+        # NÃO está sendo substituída. Secretaria desativada não reserva sigla
+        # nenhuma — senão as 12 de demonstração, que seguem no banco com
+        # ativo=0, tomavam SEC_EDUC, SEC_FINA, SEC_SAUD e obrigavam a secretaria
+        # REAL a nascer como SEC_EDUC2, SEC_FINA2, SEC_SAUD2.
+        ids_alvo = {a[0] for a in alvos}
+        em_uso = {str(_sig) for _id, _nome, _sig, _at in linhas
+                  if _sig and int(_at or 0) == 1 and _id not in ids_alvo}
+        for _id, _nome, _sig in alvos:
+            nova = calcular_sigla(_nome, em_uso=em_uso)
+            if nova and nova != _sig:
+                reparadas.append((_id, _nome, _sig, nova))
+        for _id, _nome, _velha, _nova in reparadas:
+            cur.execute("UPDATE tb_secretarias SET sigla=? WHERE id=?",
+                        (str(_nova), int(_id)))
+        if reparadas:
+            try:
+                _log().info(
+                    f"siglas reparadas: {len(reparadas)} secretaria(s) com "
+                    f"sigla colidida ou derivada do rotulo; cotas NAO foram "
+                    f"alteradas")
+            except Exception:
+                pass
+    except Exception:
+        return 0
+    return len(reparadas)
+
+
 # ================= INIT DB =================
 
 def init_db():
@@ -398,35 +620,77 @@ def init_db():
         cur.execute("UPDATE tb_configuracoes_modulo SET valor='1.0.260913' "
                     "WHERE chave='versao_modulo' AND valor='1.0.260908'")
 
-        # Seeds organograma — secretarias 1000 impressões, setores/subsetores 200 cópias
-        # Popula automaticamente no início do sistema (quando o banco é criado).
-        # Idempotente: só insere se sigla/nome ainda não existe.
+        # Cotas do organograma REAL. Nada de secretarias de demonstração (28/09/2026):
+        # a cota é o limite de impressão de uma secretaria que existe, e uma
+        # secretaria inventada tem cota inventada, compete na tela com a
+        # secretaria de verdade e não tem nobody para gastar a cota. Num clone
+        # novo o organograma nasce vazio — e aí a cota nasce vazia junto, que é
+        # o estado honesto: a folha de servidores é que traz as secretarias.
+        #
+        # O organograma vem pela fachada pública do núcleo (AGENTS.md §2: este
+        # módulo não importa a Lista Telefônica — quem costura é o mod_intranet).
+        # `getattr` em vez de chamada direta porque a função é opcional: um
+        # núcleo mais antigo não pode derrubar a criação do banco por causa
+        # disso, e um núcleo sem ela simplesmente semeia cota de menos.
         try:
-            # Organograma via API pública do núcleo (AGENTS.md §2: Solicitação
-            # não importa a Lista Telefônica — quem costura é o mod_intranet).
             from mod_intranet import integracoes
-            _ORG_BASE = integracoes.obter_organograma_base()
+            _fn = getattr(integracoes, "listar_unidades_organograma", None)
+            _UNIDADES = list(_fn(ativo=1) or []) if _fn else []
+            # _UNIDADES: (id, nome, tipo, parent_id, ordem, telefone, ativo)
+            _ORG = _organograma_para_cotas(_UNIDADES)
         except Exception:
-            _ORG_BASE = None
-        if not _ORG_BASE:
-            # Fallback local: módulo ausente ou organograma vazio — a semeadura
-            # das cotas continua funcionando com o mínimo de secretarias.
-            _ORG_BASE = [
-                ("Gabinete", []),
-                ("Administração", []),
-                ("Finanças", []),
-                ("Saúde", []),
-                ("Educação", []),
-                ("Obras e Infraestrutura", []),
-            ]
+            _ORG = {}
+        if not _ORG:
+            try:
+                _log().info(
+                    "Organograma vazio: nenhuma cota semeada. As cotas nascem "
+                    "com a folha de servidores, e não antes (28/09/2026).")
+            except Exception:
+                pass
 
-        def _sigla_sec(nome):
+        def _sigla_sec(nome, em_uso=None):
+            """Sigla curta e ESTÁVEL da secretaria, a partir do nome.
+
+            A sigla não pode ser "os 4 primeiros caracteres". Numa prefeitura
+            as secretarias se chamam quase todas "Secretaria Municipal de ...":
+            com esse critério, as nove dariam SEC_SECM e oito seriam
+            descartadas em silêncio por colisão — sem erro, sem log, só
+            secretaria faltando. Foi o que aconteceu ao trocar a semente de
+            demonstração pelo organograma real (28/09/2026).
+
+            O que se usa é a parte DISTINTIVA: descarta o rótulo genérico do
+            começo — "Secretaria Municipal de", "Secretaria de", "Sec Mun de",
+            "Departamento de" — e pega a primeira palavra que sobra.
+            "Secretaria Municipal de Educacao Publica" vira EDUC;
+            "Secretaria Municipal de Financas Geral" vira FINA; "Gabinete
+            Municipal e Assessoria Governo" vira GABI. E se ainda assim
+            colidir, o sufixo numérico desempata: secretaria perdida por
+            colisão de sigla seria secretaria sumindo do sistema.
+            """
             try:
                 import unicodedata
-                s = unicodedata.normalize("NFKD", nome).encode("ascii", "ignore").decode().lower()
-                s = "".join(c for c in s if c.isalnum())
-                base = s[:4].upper() if len(s) >= 4 else s.upper().ljust(3, "X")
-                return f"SEC_{base}"
+                s = unicodedata.normalize("NFKD", str(nome or "")).encode(
+                    "ascii", "ignore").decode().lower()
+                s = "".join(c if c.isalnum() else " " for c in s).split()
+                for rotulo in _ROTULOS_GENERICOS:
+                    # o rótulo precisa bater palavra a palavra, senão
+                    # "secretaria" engoliria "secretariadealgo" inteiro
+                    if (len(s) > len(rotulo)
+                            and tuple(s[:len(rotulo)]) == rotulo):
+                        s = s[len(rotulo):]
+                        while s and s[0] in ("de", "da", "do", "e"):
+                            s = s[1:]
+                        break
+                base = "".join(s[:1])[:4] if s else ""
+                base = (base.upper() or "SEC").ljust(3, "X")[:4]
+                sigla = f"SEC_{base}"
+                if em_uso is not None:
+                    n = 2
+                    while sigla in em_uso:
+                        sigla = f"SEC_{base}{n}"
+                        n += 1
+                    em_uso.add(sigla)
+                return sigla
             except Exception:
                 try:
                     try:
@@ -441,33 +705,76 @@ def init_db():
                     pass
                 return None
 
-        _SECRETARIAS_PADRAO = []
-        for _sec_nome, _setores in _ORG_BASE:
-            _sig = _sigla_sec(_sec_nome)
-            _SECRETARIAS_PADRAO.append((_sec_nome, _sig, 1000, 20))
-
-        # Seeds organograma — secretarias 1000 impressões, setores/subsetores 200 cópias.
-        # REGRA devSecOps/PG: semear SOMENTE se a tabela estiver vazia (COUNT==0);
-        # NUNCA forçar UPDATE em cotas existentes (sobrescreveria ajuste do admin).
+        # As siglas em uso são as JÁ gravadas + as que este laço vai criando,
+        # para que duas secretarias novas com o mesmo nome curto não se
+        # atropelem (e a segunda não suma — ver `_sigla_sec`).
+        _siglas_uso = set()
         try:
-            _total_secr = cur.execute("SELECT COUNT(*) FROM tb_secretarias").fetchone()[0]
+            for _r in cur.execute("SELECT sigla FROM tb_secretarias").fetchall():
+                if _r[0]:
+                    _siglas_uso.add(str(_r[0]).strip())
         except Exception:
-            _total_secr = 1
-        if int(_total_secr or 0) == 0:
-            for _nome, _sigla, _cota, _lim in _SECRETARIAS_PADRAO:
-                try:
-                    cur.execute(
-                        "SELECT id FROM tb_secretarias WHERE sigla=? OR nome=?",
-                        (_sigla.strip(), _nome.strip()),
-                    )
-                    if not cur.fetchone():
-                        cur.execute(
-                            "INSERT INTO tb_secretarias (nome, sigla, cota_paginas_mensal, limite_pedidos_abertos) "
-                            "VALUES (?, ?, ?, ?)",
-                            (_nome.strip(), _sigla.strip(), int(_cota), int(_lim)),
-                        )
-                except Exception:
-                    pass
+            pass
+        _SECRETARIAS_PADRAO = []
+        for _sec_nome in sorted(_ORG):
+            _cota, _lim = COTA_POR_TIPO["secretaria"]
+            _sig = _sigla_sec(_sec_nome, em_uso=_siglas_uso)
+            _SECRETARIAS_PADRAO.append((_sec_nome, _sig, _cota, _lim))
+
+        # Sincronização das cotas com o organograma real (28/09/2026).
+        #
+        # A regra antiga era "semear só se a tabela estivesse vazia (COUNT==0)".
+        # Ela servia para a lista de demonstração, mas quebra com o organograma
+        # real: o banco já tinha as 12 secretarias de demonstração, o COUNT era
+        # 12, e as 9 secretarias de verdade NUNCA recebiam cota. Resultado: o
+        # sistema tinha cota para secretaria que não existe e nenhuma para quem
+        # existe.
+        #
+        # A regra agora é a que serve para os dois casos, e ela cabe numa frase:
+        #   insere o que falta, desativa o que é demonstração, nunca altera cota.
+        # - INSERT do que falta: secretaria nova do organograma entra com a cota
+        #   padrão. Só entra quem não está lá — uma secretaria presente mantém
+        #   o que tem, porque ajuste do administrador é soberano (regra
+        #   devSecOps/PG que continua valendo).
+        # - DESATIVA o que é demonstração: as 12 secretarias e os setores de
+        #   demonstração que ficaram de uma instalação anterior. Desativa e
+        #   não apaga, porque pode haver pedido histórico apontando para elas, e
+        #   apagar deixaria pedido órfão.
+        # - UPDATE de cota: nunca. Em hipótese nenhuma.
+        #
+        # E a desativação SÓ acontece com organograma lido e não vazio. Sem
+        # essa trava, um núcleo sem a função (ou uma falha de leitura) chega
+        # aqui com lista vazia, e "não está na lista" vira "não existe": as 9
+        # secretarias de verdade são desativadas junto com as 12 de
+        # demonstração, sem erro e sem log de erro — porque a operação foi um
+        # sucesso. Fonte vazia é fonte desconhecida, e fonte desconhecida não
+        # apaga nada.
+        _nomes_reais = {_org_para_cota(k) for k in _ORG} if _ORG else set()
+        _desativadas = 0
+        if _ORG:
+            try:
+                for _r in cur.execute("SELECT id, nome FROM tb_secretarias").fetchall():
+                    if _org_para_cota(_r[1]) not in _nomes_reais:
+                        cur.execute("UPDATE tb_secretarias SET ativo=0 WHERE id=?",
+                                    (int(_r[0]),))
+                        _desativadas += 1
+            except Exception:
+                pass
+        for _nome, _sigla, _cota, _lim in _SECRETARIAS_PADRAO:
+            try:
+                cur.execute("SELECT id FROM tb_secretarias WHERE nome=?",
+                            (_nome.strip(),))
+                if cur.fetchone():
+                    continue
+                cur.execute("UPDATE tb_secretarias SET ativo=1 WHERE nome=?",
+                            (_nome.strip(),))
+                cur.execute(
+                    "INSERT INTO tb_secretarias (nome, sigla, cota_paginas_mensal, limite_pedidos_abertos) "
+                    "VALUES (?, ?, ?, ?)",
+                    (_nome.strip(), _sigla.strip(), int(_cota), int(_lim)),
+                )
+            except Exception:
+                pass
         # Mapa nome secretaria -> id e sigla -> id
         _mapa_nome_id = {}
         _mapa_sigla_id = {}
@@ -479,46 +786,68 @@ def init_db():
         except Exception:
             pass
 
-        # Seedes setores (200 cópias padrão) — inclui subsetores achatados como setores.
-        # Também só semeia o que estiver ausente (INSERT se não existe); nunca UPDATE.
+        # Setores e subsetores: mesmos 200, achatados em uma tabela só.
         _SETORES_PADRAO = []
-        for _sec_nome, _setores in _ORG_BASE:
-            for _set_nome, _subsetores in _setores:
-                _SETORES_PADRAO.append((_set_nome, _sec_nome, 200, 10))
-                for _sub in _subsetores:
-                    _SETORES_PADRAO.append((_sub, _sec_nome, 200, 10))
-
-        try:
-            _total_set = cur.execute("SELECT COUNT(*) FROM tb_setores").fetchone()[0]
-        except Exception:
-            _total_set = 1
-        if int(_total_set or 0) == 0:
-            for _nome_setor, _sec_nome, _cota_s, _lim_s in _SETORES_PADRAO:
-                try:
-                    _sid = _mapa_nome_id.get(_sec_nome.strip())
-                    if not _sid:
-                        _sid = _mapa_sigla_id.get(_sigla_sec(_sec_nome).strip())
-                    if not _sid:
-                        cur.execute("SELECT id FROM tb_secretarias WHERE nome=?", (_sec_nome.strip(),))
-                        _r = cur.fetchone()
-                        _sid = _r[0] if _r else None
-                    if not _sid:
-                        continue
+        for _sec_nome in sorted(_ORG):
+            _cota_s, _lim_s = COTA_POR_TIPO["setor"]
+            for _set_nome in sorted(set(_ORG[_sec_nome])):
+                _SETORES_PADRAO.append((_set_nome, _sec_nome, _cota_s, _lim_s))
+        _nomes_setores_reais = {_org_para_cota(s[0]) for s in _SETORES_PADRAO}
+        if _ORG:
+            try:
+                for _r in cur.execute("SELECT id, nome FROM tb_setores").fetchall():
+                    if _org_para_cota(_r[1]) not in _nomes_setores_reais:
+                        cur.execute("UPDATE tb_setores SET ativo=0 WHERE id=?",
+                                    (int(_r[0]),))
+                        _desativadas += 1
+            except Exception:
+                pass
+        for _nome_setor, _sec_nome, _cota_s, _lim_s in _SETORES_PADRAO:
+            try:
+                _sid = _mapa_nome_id.get(_sec_nome.strip())
+                if not _sid:
+                    _sid = _mapa_sigla_id.get(_sigla_sec(_sec_nome).strip())
+                if not _sid:
+                    cur.execute("SELECT id FROM tb_secretarias WHERE nome=?",
+                                (_sec_nome.strip(),))
+                    _r = cur.fetchone()
+                    _sid = _r[0] if _r else None
+                if not _sid:
+                    continue
+                cur.execute(
+                    "SELECT id FROM tb_setores WHERE nome=? AND secretaria_id=?",
+                    (_nome_setor.strip(), int(_sid)),
+                )
+                if not cur.fetchone():
                     cur.execute(
-                        "SELECT id FROM tb_setores WHERE nome=? AND secretaria_id=?",
-                        (_nome_setor.strip(), int(_sid)),
+                        "INSERT INTO tb_setores (nome, secretaria_id, cota_paginas_mensal, limite_pedidos_abertos) "
+                        "VALUES (?, ?, ?, ?)",
+                        (_nome_setor.strip(), int(_sid), int(_cota_s), int(_lim_s)),
                     )
-                    if not cur.fetchone():
-                        cur.execute(
-                            "INSERT INTO tb_setores (nome, secretaria_id, cota_paginas_mensal, limite_pedidos_abertos) "
-                            "VALUES (?, ?, ?, ?)",
-                            (_nome_setor.strip(), int(_sid), int(_cota_s), int(_lim_s)),
-                        )
-                except Exception:
-                    pass
+            except Exception:
+                pass
+        if _desativadas:
+            try:
+                _log().info(f"cotas: {_desativadas} unidade(s) de demonstração "
+                            f"desativada(s) por não existirem no organograma real")
+            except Exception:
+                pass
+
+        # Reparo da sigla — e é REPARO, não sincronização.
+        #
+        # A regra de nunca atualizar vale para COTA, porque cota é ajuste do
+        # administrador. Sigla é código derivado do nome: quando a base dela
+        # se repete (SEC_MUNI, SEC_MUNI2, ... SEC_MUNI7), ela não identifica
+        # ninguém e foi produzida pela colisão do critério antigo. Aqui a
+        # atualiza é segura e é restrita a esse caso — nome real com sigla
+        # degenerada. A cota dessa mesma linha não é tocada, e a auditoria
+        # registra o reparo para o DTI ver o que mudou.
+        try:
+            _reparar_siglas(cur, _sigla_sec, _ORG)
+        except Exception:
+            pass
 
         # NUNCA forçar cotas padrão via UPDATE (1000/200): ajuste do admin é soberano.
-        # Bancos já existentes mantêm seus valores; bancos novos recebem o seed acima.
 
         # Índices
         cur.execute("CREATE INDEX IF NOT EXISTS idx_sol_usuario ON tb_solicitacoes(usuario_solicitante)")

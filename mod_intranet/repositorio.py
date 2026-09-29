@@ -66,6 +66,8 @@ MODULOS_BD = {
     "filas": "db_mod_filas.db",
     "lista_telefonica": "db_mod_lista_telefonica.db",
     "agregador_noticias": "db_mod_agregador_noticias.db",
+    "os": "db_mod_os.db",
+    "estoque": "db_mod_estoque.db",
 }
 
 DB_PATH = os.path.join(BASE_DIR, MODULOS_BD["intranet"])

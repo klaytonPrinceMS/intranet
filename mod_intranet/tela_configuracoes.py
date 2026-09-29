@@ -1452,10 +1452,12 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                         "distrito.").classes("text-caption text-grey-7 max-w-3xl -mt-2")
                     ui.label(
                         "Uma faixa por linha, no formato "
-                        "início-fim  descrição. Exemplo:\n"
-                        "3535915101-3535915199  Central de linhas\n"
-                        "3535915300-3535915350  Garagem e Obras\n"
-                        "3535915400-3535915450  Almoxarifado").classes(
+                        "início-fim  descrição. Exemplo (números fictícios, "
+                        "da faixa que a ANPD reserva para exemplo — troque "
+                        "pelos seus):\n"
+                        "0000000000-0000000099  Central de linhas\n"
+                        "0000000100-0000000199  Garagem e Obras\n"
+                        "0000000200-0000000299  Almoxarifado").classes(
                         "text-caption text-grey-7 max-w-3xl whitespace-pre-line")
                     ui.label(
                         "Um telefone que o servidor digite FORA destas faixas "

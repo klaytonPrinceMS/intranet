@@ -107,14 +107,14 @@ bancos (AGENTS.md §2).
 | Símbolo | Arquivo:linha | O que faz |
 |:---|:---|:---|
 | `CONFIG_FAIXAS = "faixas_telefone_prefeitura"` | `telefone_faixas.py:38` | Chave em `tb_config`. O valor é uma **lista JSON** de `{"inicio","fim","descricao"}`, **tudo em dígitos** — são **várias** faixas, porque a prefeitura tem mais de uma central e a lista cresce |
-| `FAIXA_INICIAL` | `telefone_faixas.py:43-44` | A faixa de instalação `3535915101-3535915199` ("Central de linhas") |
+| `FAIXA_INICIAL` | `telefone_faixas.py:46-47` | A faixa de instalação `0035915101-0035915199` ("Central de linhas") |
 | `faixa_inicial()` | `telefone_faixas.py:94` | Devolve uma **cópia** da faixa de instalação |
 | `listar_faixas(incluir_padrao=True)` | `telefone_faixas.py:99` | Todas as faixas configuradas, normalizadas; sem faixa cadastrada devolve a de instalação |
 | `salvar_faixas(ator, faixas)` | `telefone_faixas.py:131` | Grava. Devolve `(ok, mensagem)` |
 | `faixa_que_contem(numero)` | `telefone_faixas.py:165` | A faixa que contém o número, ou `None` |
 | `numero_dentro_da_faixa(numero)` | `telefone_faixas.py:182` | `(bool, faixa)` |
 | `faixa_mais_proxima(numero)` | `telefone_faixas.py:188` | A faixa **própria** mais próxima — é o que gera a dica do aviso |
-| `_normalizar_faixa(bruto)` | `telefone_faixas.py:66` | Aceita `dict` **ou** string `"3535915101 a 3535915199"` |
+| `_normalizar_faixa(bruto)` | `telefone_faixas.py:66` | Aceita `dict` **ou** string `"0035915101 a 0035915199"` |
 | `_digitos(texto)` | `telefone_faixas.py:57` | Só os dígitos, para comparar sem se preocupar com máscara, espaço ou o `+55` da frente |
 
 !!! note "Por que `faixa_inicial()` existe, e não um banco sem faixa"
@@ -258,7 +258,7 @@ explicação, o servidor entende "recado" como "não atendem" e desiste de marca
 `_reavaliar_faixa` (`:1092-1125`), que monta o texto:
 
 ```
-Atenção: 3535999999 está fora das faixas de telefone da prefeitura.
+Atenção: 0035999999 está fora das faixas de telefone da prefeitura.
 A faixa mais próxima é a Garagem — confira o número.
 ```
 
@@ -507,13 +507,19 @@ Mapeamento via `sqlalchemy.orm.registry.map_imperatively()` — SQLAlchemy fica 
 
 ### Credenciais PostgreSQL — chaves em `tb_config` (07/09)
 
-| Chave | Default | Descrição |
+> **Os valores padrão de credencial não são documentados aqui de propósito.**
+> Eles ficam no código e saem do texto no momento da entrega do produto. O que
+> esta tabela precisa dizer é *qual chave guarda o quê*: quem for configurar
+> procura o default no código, e um default escrito num arquivo versionado é um
+> default copiado junto para o proximo servidor.
+
+| Chave | Onde esta | Descrição |
 |:---|:---|:---|
-| `banco_usuario` | `klayton` | Usuário de operações normais |
-| `banco_senha` | `klayton` | Senha do usuário normal |
-| `banco_admin_usuario` | `master` | Usuário de operações administrativas |
-| `banco_admin_senha` | `master` | Senha do admin |
-| `postgres_url` | `postgresql+psycopg2://klayton:klayton@localhost:5432/intranet` | DSN base |
+| `banco_usuario` | `mod_intranet/bd_conexao.py` | Usuário de operações normais |
+| `banco_senha` | `mod_intranet/bd_conexao.py` | Senha do usuário normal |
+| `banco_admin_usuario` | `mod_intranet/bd_conexao.py` | Usuário de operações administrativas |
+| `banco_admin_senha` | `mod_intranet/bd_conexao.py` | Senha do admin |
+| `postgres_url` | `mod_intranet/bd_conexao.py` | DSN base, montada a partir das chaves acima |
 
 `banco_conexao.postgres_url(como_admin=False)` monta o DSN com as credenciais de `banco_usuario`/`banco_senha` (operações normais) ou `banco_admin_usuario`/`banco_admin_senha` (admin — criação de banco, migrations).
 

@@ -235,6 +235,34 @@ def init_db():
         cur.execute("CREATE INDEX IF NOT EXISTS idx_contato_unidade ON tb_contato(unidade_id)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_contato_nome ON tb_contato(nome)")
 
+        # Dados funcionais no contato (28/09/2026).
+        #
+        # POR QUE ISSO EXISTE: o contato era "nome + telefone", e quem não
+        # autorizou telefone simplesmente NÃO ERA GRAVADO — a busca por nome
+        # não encontrava a pessoa, e a lista ficava com folders vazios. As
+        # colunas abaixo permitem gravar o servidor SEM número e ainda assim
+        # responder "é efetivo?", "qual o cargo?", "de qual secretaria?".
+        #
+        # O telefone continua sendo opcional e continua vindo só de quem
+        # autorizou: o que é público por lei é o posto (nome, cargo, lotação),
+        # não o número.
+        try:
+            cur.execute("SELECT * FROM tb_contato LIMIT 1")
+            _cols_contato = {d[0] for d in (cur.description or [])}
+        except Exception:
+            _cols_contato = set()
+        for _col, _def in (("nome_completo", "TEXT DEFAULT ''"),
+                           ("cargo", "TEXT DEFAULT ''"),
+                           ("lotacao", "TEXT DEFAULT ''"),
+                           ("vinculo", "TEXT DEFAULT ''"),
+                           ("situacao", "TEXT DEFAULT ''"),
+                           ("ativo", "INTEGER NOT NULL DEFAULT 1")):
+            if _col not in _cols_contato:
+                try:
+                    cur.execute(f"ALTER TABLE tb_contato ADD COLUMN {_col} {_def}")
+                except Exception:
+                    pass
+
         # Quando a lista foi espelhada do cadastro pela última vez. Existe
         # para a tela saber se está olhando para um diretário velho: os
         # servidores cadastram o telefone no primeiro acesso, e sem isto o
@@ -249,27 +277,29 @@ def init_db():
         """)
         cur.execute("INSERT OR IGNORE INTO tb_sincronizacao (id) VALUES (1)")
 
-        # seed organograma base (idempotente)
+        # ---- Organograma: NÃO é semeado (28/09/2026) ----
+        # Antes, um banco novo nascia com 12 secretarias de demonstração
+        # ("Administração", "Agricultura", "Saúde"...) e seus setores. Numa
+        # prefeitura real isso é o pior jeito de começar: a lista
+        # telefônica abria mostrando órganos que não existem, com pasta
+        # vazia em cada, e o administrador tinha de desativar 60 unidades
+        # para chegar nas 9 de verdade.
+        #
+        # Agora o banco nasce VAZIO e o organograma é o que a folha de
+        # servidores trouxer (`mod_gest_cad_usuario/carga_folha.py`).
+        # A vantagem de não haver unidade de mentira é que a lista telefônica
+        # não há mentira possível: o que aparece é secretaria que tem
+        # gente dentro.
+        #
+        # A constante `ORGANOGRAMA_BASE` continua no arquivo porque a módulo de
+        # Solicitação de Impressão lê a estrutura de cargos para semear cotas
+        # — e é lá a única coisa de que ela ainda precisa. Ver
+        # `integracoes.obter_organograma_base()`.
         cur.execute("SELECT COUNT(*) FROM tb_unidade")
         if cur.fetchone()[0] == 0:
-            ordem_sec = 1
-            for sec_nome, setores in ORGANOGRAMA_BASE:
-                cur.execute("INSERT INTO tb_unidade (nome, tipo, parent_id, ordem, telefone) VALUES (?, 'secretaria', NULL, ?, '')",
-                            (sec_nome, ordem_sec))
-                sec_id = cur.lastrowid
-                ordem_sec += 1
-                ordem_set = 1
-                for set_nome, subsetores in setores:
-                    cur.execute("INSERT INTO tb_unidade (nome, tipo, parent_id, ordem, telefone) VALUES (?, 'setor', ?, ?, '')",
-                                (set_nome, sec_id, ordem_set))
-                    set_id = cur.lastrowid
-                    ordem_set += 1
-                    ordem_sub = 1
-                    for sub_nome in subsetores:
-                        cur.execute("INSERT INTO tb_unidade (nome, tipo, parent_id, ordem, telefone) VALUES (?, 'subsetor', ?, ?, '')",
-                                    (sub_nome, set_id, ordem_sub))
-                        ordem_sub += 1
-            _log().info(f"Organograma base semeado: {len(ORGANOGRAMA_BASE)} secretarias")
+            _log().info(
+                "Organograma vazio: será preenchido pela folha de servidores. "
+                "Nenhuma unidade de demonstração é criada (28/09/2026).")
         _commit_com_retry(conn, "init_db")
         try:
             conn.close()
@@ -390,24 +420,52 @@ def obter_unidade(uid):
         return None
 
 
+def _pai_valido(tipo, parent_id):
+    """A ÚNICA regra de hierarquia do módulo, e vale para criar e para mover.
+
+    A regra cabe numa frase: **secretaria é raiz; qualquer outra unidade pode
+    ficar sob qualquer outra.**
+
+    POR QUE A REGRA ANTIGA FOI TIRADA (27/09/2026)
+        Antes era `subsetor` só pode ficar sob `setor`, o que travava a
+        árvore em **três** degraus. E a prefeitura tem mais: secretaria >
+        departamento > unidade de trabalho > posto. O quarto degrau era
+        impossível de criar, e o organograma é editável na tela — o
+        administrador batia numa parede sem mensagem que explicasse a
+        parede. A árvore é `parent_id`, não uma lista de três posições; a
+        restrição era do formulário, não do dado.
+
+    O que continua valendo é `secretaria` sem pai, e por um motivo concreto:
+        a secretaria é a raiz que dá nome ao organograma e é por ela que a
+        cascata da tela começa. Raiz sem nome não é raiz.
+
+    Devolve `(ok, motivo)`.
+    """
+    if tipo not in ("secretaria", "setor", "subsetor"):
+        return False, "Tipo inválido"
+    if tipo == "secretaria":
+        if parent_id is not None:
+            return False, "Secretaria é a raiz do organograma e não tem pai."
+        return True, ""
+    if parent_id is None:
+        return False, (f"{tipo.capitalize()} precisa ficar dentro de uma "
+                       f"unidade acima.")
+    pai = obter_unidade(parent_id)
+    if not pai:
+        return False, "Unidade acima não encontrada."
+    if pai[2] == "secretaria" and tipo not in ("setor", "subsetor"):
+        return False, "Tipo inválido"
+    return True, ""
+
+
 def criar_unidade(nome, tipo, parent_id=None, telefone="", ator="sistema"):
     try:
         nome = (nome or "").strip()
         if len(nome) < 2:
             return False, "Nome muito curto"
-        if tipo not in ("secretaria", "setor", "subsetor"):
-            return False, "Tipo inválido"
-        # valida parent
-        if tipo == "secretaria" and parent_id is not None:
-            return False, "Secretaria não pode ter pai"
-        if tipo == "setor":
-            p = obter_unidade(parent_id) if parent_id else None
-            if not p or p[2] != "secretaria":
-                return False, "Setor deve estar sob secretaria"
-        if tipo == "subsetor":
-            p = obter_unidade(parent_id) if parent_id else None
-            if not p or p[2] != "setor":
-                return False, "Subsetor deve estar sob setor"
+        ok_pai, motivo = _pai_valido(tipo, parent_id)
+        if not ok_pai:
+            return False, motivo
         conn = get_connection()
         try:
             cur = conn.cursor()
@@ -575,18 +633,11 @@ def mover_unidade(uid, novo_parent_id, ator="sistema"):
         if not alvo:
             return False, "Unidade não encontrada"
         tipo = alvo[2]
-        # valida novo pai conforme tipo
-        if tipo == "secretaria":
-            if novo_parent_id is not None:
-                return False, "Secretaria não pode ser movida para dentro de outra"
-        elif tipo == "setor":
-            p = obter_unidade(novo_parent_id) if novo_parent_id else None
-            if not p or p[2] != "secretaria":
-                return False, "Setor deve ficar sob secretaria"
-        elif tipo == "subsetor":
-            p = obter_unidade(novo_parent_id) if novo_parent_id else None
-            if not p or p[2] != "setor":
-                return False, "Subsetor deve ficar sob setor"
+        # a MESMA regra de criar: secretaria é raiz, o resto fica sob
+        # qualquer coisa. Uma validação só, para as duas coisas não divergirem.
+        ok_pai, motivo = _pai_valido(tipo, novo_parent_id)
+        if not ok_pai:
+            return False, motivo
         # evita ciclo
         if novo_parent_id == uid:
             return False, "Não pode mover para si mesmo"
@@ -636,43 +687,48 @@ def mover_unidade(uid, novo_parent_id, ator="sistema"):
         return False, "Erro interno. Tente novamente."
 
 
-def elevar_rebaixar(uid, novo_tipo, ator="sistema"):
-    """Eleva setor→secretaria ou rebaixa secretaria→setor etc."""
+def elevar_rebaixar(uid, novo_tipo, ator="sistema", novo_parent_id=None):
+    """Promove ou rebaixa o tipo de uma unidade (secretaria / setor / subsetor).
+
+    Com a hierarquia relaxada (ver `_pai_valido`), **qualquer transição é
+    possível** e a unidade fica onde está. Virar `secretaria` é a única que
+    exige soltar o pai, porque secretaria é raiz.
+
+    `novo_parent_id` é opcional: quem quiser trocar o tipo E o lugar de uma
+    vez passa o novo pai aqui. Sem ele, a unidade continua onde está, e
+    `mover_unidade` segue sendo o caminho para mudar só o lugar.
+    """
     try:
         alvo = obter_unidade(uid)
         if not alvo:
             return False, "Unidade não encontrada"
         tipo_atual = alvo[2]
         parent_atual = alvo[3]
-        if novo_tipo == tipo_atual:
-            return True, "Já está no tipo solicitado"
         if novo_tipo not in ("secretaria", "setor", "subsetor"):
             return False, "Tipo inválido"
-        # regras de elevação/rebaixamento
-        # secretaria ↔ setor : setor vira secretaria (parent NULL), secretaria vira setor (precisa escolher secretaria pai)
-        # setor ↔ subsetor : similar
-        # Para simplificar, exige que o chamador informe novo_parent via mover depois; aqui só troca tipo quando compatível sem pai
-        # Se elevar setor→secretaria, parent deve ir para NULL
-        # Se rebaixar secretaria→setor, parent deve ser secretaria (exige escolha)
-        # Esta função apenas troca tipo quando parent atual já é compatível ou NULL
-        novo_parent = parent_atual
-        if tipo_atual == "setor" and novo_tipo == "secretaria":
+        # Nova regra (27/09/2026): a hierarquia não tem mais degraus fixos, e
+        # portanto NÃO há transição proibida. Antes havia quatro casos fixos e
+        # três recusas ("use Mover"); a recusa dupla era o problema — para
+        # promover o administrador tinha que escolher "Mover" e depois
+        # escolher de novo o tipo: dois passos para uma coisa só.
+        novo_parent = parent_atual if novo_parent_id is None else novo_parent_id
+        if novo_tipo == "secretaria":
+            # secretaria é raiz: mesmo que o chamador tenha mandado um pai,
+            # quem manda é a regra
             novo_parent = None
-        elif tipo_atual == "secretaria" and novo_tipo == "setor":
-            return False, "Para rebaixar secretaria a setor, use Mover e escolha a secretaria de destino"
-        elif tipo_atual == "subsetor" and novo_tipo == "setor":
-            # subsetor virar setor: precisa estar sob secretaria
-            p = obter_unidade(parent_atual) if parent_atual else None
-            if p:
-                # sobe um nível: parent do setor
-                novo_parent = p[3]  # parent do setor atual
-            else:
-                novo_parent = None
-        elif tipo_atual == "setor" and novo_tipo == "subsetor":
-            return False, "Para transformar setor em subsetor, use Mover para um setor pai"
-        else:
-            return False, "Transição não suportada diretamente — use Mover"
-
+        ok_pai, motivo = _pai_valido(novo_tipo, novo_parent)
+        if not ok_pai:
+            return False, motivo
+        if novo_parent == uid:
+            return False, "A unidade não pode ficar dentro dela mesma."
+        if novo_parent is not None:
+            # nem dentro de um descendente: virar filho do próprio filho
+            # é o caminho mais curto para um ciclo na árvore
+            acima = obter_unidade(novo_parent)
+            while acima is not None and acima[3] is not None:
+                if acima[3] == uid:
+                    return False, "A unidade não pode ficar dentro de si mesma."
+                acima = obter_unidade(acima[3])
         conn = get_connection()
         try:
             cur = conn.cursor()
@@ -809,6 +865,19 @@ def listar_contatos(unidade_id: int):
 
 
 def buscar_contatos(termo: str):
+    """Contatos que casam com o termo, em qualquer campo pesquisável.
+
+    A busca é por NOME, telefone, cargo, secretaria, lotação, vínculo e
+    situação (28/09/2026). Antes eram só nome, telefone e login: quem
+    procurasse "Agente Administrativo" ou "Educação" não achava ninguém, e
+    quem não tivesse telefone não estava gravado.
+
+    Devolve DICIONÁRIOS (não tuplas) com `id`, `unidade_id`, `nome`,
+    `nome_completo`, `telefone`, `user_nome`, `tipo`, `cargo`, `lotacao`,
+    `vinculo`, `situacao`, `ativo` e `sem_telefone`. Dicionário porque a tela
+    consome por nome e a lista de campos cresce; tupla por índice obrigaria a
+    tela a saber a ordem, e foi assim que um campo novo quebrou o desenho.
+    """
     try:
         termo_n = _norm(termo)
         if not termo_n:
@@ -816,12 +885,24 @@ def buscar_contatos(termo: str):
         conn = get_connection()
         try:
             cur = conn.cursor()
-            cur.execute("SELECT id, unidade_id, nome, telefone, user_nome, tipo, data_criacao FROM tb_contato")
+            cur.execute("SELECT id, unidade_id, nome, telefone, user_nome, tipo, "
+                        "nome_completo, cargo, lotacao, vinculo, situacao, ativo "
+                        "FROM tb_contato")
             todos = cur.fetchall()
             res = []
             for r in todos:
-                if termo_n in _norm(r[2]) or termo_n in _norm(r[3]) or termo_n in _norm(r[4] or ""):
-                    res.append(r)
+                alvo = (r[2], r[3] or "", r[4] or "", r[7] or "", r[8] or "",
+                        r[9] or "", r[10] or "", r[6] or "")
+                if any(termo_n in _norm(a) for a in alvo):
+                    res.append({
+                        "id": r[0], "unidade_id": r[1], "nome": r[2],
+                        "telefone": r[3] or "", "user_nome": r[4] or "",
+                        "tipo": r[5] or "", "nome_completo": r[6] or "",
+                        "cargo": r[7] or "", "lotacao": r[8] or "",
+                        "vinculo": r[9] or "", "situacao": r[10] or "",
+                        "ativo": int(r[11] or 0),
+                        "sem_telefone": not (r[3] or "").strip(),
+                    })
             return res
         finally:
             conn.close()
@@ -845,6 +926,33 @@ def buscar_contatos(termo: str):
 # infinito se um `parent_id`_cycle for gravado pela tela (o dado é editável).
 # 20 níveis cobrem qualquer organograma real de prefeitura com folga.
 _PROFUNDIDADE_MAXIMA = 20
+
+
+def _contato_para_dict(c):
+    """Contato da árvore como dicionário, com os dados funcionais (28/09/2026).
+
+    Índices 6 a 11 são `nome_completo`, `cargo`, `lotacao`, `vinculo`,
+    `situacao` e `ativo`. São lidos com guarda de tamanho porque a árvore pode
+    ser montada a partir de um SELECT antigo em outro ponto do módulo, e um
+    `IndexError` aqui derrubaria a tela inteira em vez de mostrar um campo a
+    menos.
+
+    `sem_telefone` vem pronto porque é a informação que a tela precisa para
+    escrever "sem número informado" em vez de deixar o campo em branco — que
+    na leitura parece telefone vazio, e não pessoa que não autorizou.
+    """
+    telefone = (c[3] or "").strip()
+    return {
+        "id": c[0], "unidade_id": c[1], "nome": c[2], "telefone": c[3] or "",
+        "user_nome": c[4] or "", "tipo": c[5] or "",
+        "nome_completo": (c[6] or "") if len(c) > 6 else "",
+        "cargo": (c[7] or "") if len(c) > 7 else "",
+        "lotacao": (c[8] or "") if len(c) > 8 else "",
+        "vinculo": (c[9] or "") if len(c) > 9 else "",
+        "situacao": (c[10] or "") if len(c) > 10 else "",
+        "ativo": int(c[11]) if len(c) > 11 and c[11] is not None else 1,
+        "sem_telefone": not telefone,
+    }
 
 
 def listar_arvore_contatos(raiz_id: int = None, termo: str = ""):
@@ -885,20 +993,30 @@ def listar_arvore_contatos(raiz_id: int = None, termo: str = ""):
                         "FROM tb_unidade WHERE ativo=1")
             unidades = cur.fetchall()
             cur.execute("SELECT id, unidade_id, nome, telefone, user_nome, tipo, "
-                        "data_criacao FROM tb_contato")
+                        "nome_completo, cargo, lotacao, vinculo, situacao, ativo "
+                        "FROM tb_contato")
             todos_contatos = cur.fetchall()
         finally:
             conn.close()
 
         por_unidade = {}
         for c in todos_contatos:
-            if termo_n and not (termo_n in _norm(c[2]) or termo_n in _norm(c[3])
-                                or termo_n in _norm(c[4] or "")):
+            # A busca cobre também cargo, secretaria, lotação, vínculo e
+            # situação (28/09/2026): quem procura "Agente Administrativo" ou
+            # "Efetivo" precisa achar a pessoa, e não só quem tem número.
+            if termo_n and not any(termo_n in _norm(x or "") for x in
+                                   (c[2], c[3], c[4], c[7], c[8], c[9], c[10])):
                 continue
             por_unidade.setdefault(c[1], []).append(c)
 
         def ordenar(linhas):
             return sorted(linhas, key=lambda r: ((r[1] or "").casefold(), (r[1] or "")))
+
+        def self_contatos(linhas):
+            """Contatos de uma unidade já como dicionário, ordenados por nome."""
+            return [_contato_para_dict(c) for c in
+                    sorted(linhas,
+                           key=lambda c: ((c[2] or "").casefold(), (c[2] or "")))]
 
         filhos_por_pai = {}
         for u in unidades:
@@ -922,17 +1040,13 @@ def listar_arvore_contatos(raiz_id: int = None, termo: str = ""):
                         prof, u[0])
                     return {"id": u[0], "nome": u[1], "tipo": u[2], "nivel": prof,
                             "telefone": u[5], "ativo": u[6],
-                            "contatos": sorted(por_unidade.get(u[0], []),
-                                               key=lambda c: ((c[2] or "").casefold(),
-                                                              (c[2] or ""))),
+                            "contatos": self_contatos(por_unidade.get(u[0], [])),
                             "filhos": []}
-                contatos = sorted(
-                    por_unidade.get(u[0], []),
-                    key=lambda c: ((c[2] or "").casefold(), (c[2] or "")))
                 no = {
                     "id": u[0], "nome": u[1], "tipo": u[2], "nivel": prof,
                     "telefone": u[5], "ativo": u[6],
-                    "contatos": contatos, "filhos": [],
+                    "contatos": self_contatos(por_unidade.get(u[0], [])),
+                    "filhos": [],
                 }
                 for f in ordenar(filhos_por_pai.get(u[0], [])):
                     no["filhos"].append(montar(f, prof + 1))
@@ -1037,7 +1151,12 @@ def sincronizar_contatos_do_cadastro(contatos, ator="sistema") -> dict:
             cur.execute("SELECT id, nome, tipo, parent_id, ordem, telefone, ativo "
                         "FROM tb_unidade")
             unidades = cur.fetchall()
-            cur.execute("SELECT id, unidade_id, nome, telefone, user_nome, tipo "
+            # Traz os dados funcionais (7 a 12) porque a atualização de um
+            # contato já espelhado compara telefone E posto — sem os campos
+            # aqui, quem mudasse de cargo ou passasse a efetivo nunca
+            # atualizaria na lista.
+            cur.execute("SELECT id, unidade_id, nome, telefone, user_nome, tipo, "
+                        "nome_completo, cargo, lotacao, vinculo, situacao, ativo "
                         "FROM tb_contato")
             contatos_existentes = cur.fetchall()
         finally:
@@ -1072,12 +1191,29 @@ def sincronizar_contatos_do_cadastro(contatos, ator="sistema") -> dict:
 
         for s in (contatos or []):
             telefone = (s.get("telefone") or "").strip()
+            # SEM TELEFONE A PESSOA ENTRA ASSIM MESMO (28/09/2026).
+            #
+            # Antes, telefone vazio era `continue`: a pessoa não era gravada.
+            # Com a folha do RH populada e ninguém tendo autorizado número
+            # ainda, a lista ficava com ZERO contatos e buscar o nome de um
+            # servidor não retornava nada — a lista telefônica inexistia.
+            #
+            # O telefone continua sendo o que o consentimento protege: quem
+            # não autorizou fica com o campo VAZIO, e é isso que a tela
+            # mostra. O que entra sem autorização é o posto (nome, cargo,
+            # secretaria, lotação, vínculo), que é publicação legal.
+            nome_exibicao = (s.get("nome_exibicao") or "").strip()
+            nome_completo = (s.get("nome_completo") or "").strip()
+            cargo = (s.get("cargo") or "").strip()
+            lotacao = (s.get("lotacao") or "").strip()
+            vinculo = (s.get("vinculo") or "").strip()
+            situacao = (s.get("situacao") or "").strip()
+            if len(nome_exibicao) < 2:
+                resumo["rejeitados"] += 1
+                continue
             if not telefone:
                 resumo["sem_telefone"] += 1
-                continue
-            # mesma validação de `criar_contato` (nome e telefone curtos)
-            nome_exibicao = (s.get("nome_exibicao") or "").strip()
-            if len(nome_exibicao) < 2 or len(telefone) < 8:
+            elif len(telefone) < 8:
                 resumo["rejeitados"] += 1
                 continue
             # tenta o departamento (lotação); se não existir, a secretaria
@@ -1094,8 +1230,16 @@ def sincronizar_contatos_do_cadastro(contatos, ator="sistema") -> dict:
 
             existente = por_user.get(s["user_nome"])
             if existente:
-                if (existente[3] or "") != telefone:
-                    a_atualizar.append((telefone, existente[0], nome_exibicao))
+                # Atualiza telefone E dados funcionais. Antes, quem já estava
+                # espelhado e depois autorizava o número era atualizado só no
+                # telefone; e quem já estava sem número simplesmente não
+                # existia para ser atualizado. Agora as duas coisas andam juntas,
+                # e a comparação é de todos os campos que vieram do cadastro.
+                dados = (telefone, nome_completo, cargo, lotacao, vinculo,
+                         situacao, 1 if s.get("ativo", True) else 0)
+                if (existente[3] or "") != telefone or \
+                        (len(existente) > 7 and list(existente[7:13]) != list(dados[1:])):
+                    a_atualizar.append((dados, existente[0]))
                 else:
                     resumo["ja_iguais"] += 1
                 continue
@@ -1106,23 +1250,29 @@ def sincronizar_contatos_do_cadastro(contatos, ator="sistema") -> dict:
                 resumo["rejeitados"] += 1
                 continue
             nomes_por_unidade.setdefault(unid, set()).add(nome_exibicao)
-            a_criar.append((unid, nome_exibicao, telefone, s["user_nome"]))
+            a_criar.append((unid, nome_exibicao, telefone, s["user_nome"],
+                            nome_completo, cargo, lotacao, vinculo, situacao,
+                            1 if s.get("ativo", True) else 0))
 
         if a_atualizar or a_criar:
             conn = get_connection()
             try:
                 cur = conn.cursor()
-                for telefone, cid, _nome in a_atualizar:
-                    cur.execute("UPDATE tb_contato SET telefone=? WHERE id=?",
-                                (telefone, cid))
+                for dados, cid in a_atualizar:
+                    cur.execute(
+                        "UPDATE tb_contato SET telefone=?, nome_completo=?, "
+                        "cargo=?, lotacao=?, vinculo=?, situacao=?, ativo=? "
+                        "WHERE id=?", (dados[0], dados[1], dados[2], dados[3],
+                                       dados[4], dados[5], dados[6], int(cid)))
                 if a_criar:
                     # `executemany` em vez de um INSERT por linha: mesmo
                     # resultado, uma ida ao driver em vez de mais de mil.
                     cur.executemany(
                         "INSERT INTO tb_contato "
-                        "(unidade_id, nome, telefone, user_nome, tipo) "
-                        "VALUES (?, ?, ?, ?, 'vinculado')",
-                        [(u, n, t, usr) for (u, n, t, usr) in a_criar])
+                        "(unidade_id, nome, telefone, user_nome, tipo, "
+                        " nome_completo, cargo, lotacao, vinculo, situacao, ativo) "
+                        "VALUES (?, ?, ?, ?, 'vinculado', ?, ?, ?, ?, ?, ?)",
+                        [tuple(c) for c in a_criar])
                 _commit_com_retry(conn, contexto="sincronizar_contatos:lote")
             except Exception:
                 _rollback_seguro(conn, contexto="sincronizar_contatos:lote")
@@ -1471,6 +1621,111 @@ def renomear_usuario(nome_atual: str, novo_nome: str):
         except Exception:
             pass
         return None
+
+
+def sincronizar_organograma(plano, aplicar=True, ator="sistema"):
+    """Grava o organograma recebido da folha de servidores, nesta lista.
+
+    ESTA é a função de escrita do organograma, e ela mora aqui porque o banco é
+    deste módulo. Quem chama é o módulo de cadastro de usuários, e chega pela
+    fachada do núcleo (`mod_intranet.integracoes.sincronizar_organograma_cadastro`)
+    — a regra do repositório é que módulo de negócio não importe outro módulo
+    de negócio, nem para ler e muito menos para escrever (AGENTS.md §2, e
+    `check_integridade.py` reprova).
+
+    `plano` é uma lista FLAT, de raiz para a folha, de tuplas
+    `(nome, tipo, nome_do_pai_ou_None, ordem)`. Flat e com o pai por NOME
+    porque quem monta o plano é quem tem a folha, e a folha tem nome de
+    departamento, não id de banco. A profundidade é livre: N subsetores de N
+    subsetores, que é a regra do organograma desde 28/09/2026.
+
+    Casa por nome normalizado (`_norm`: sem acento, sem caixa, só letras e
+    números), que é a MESMA regra usada para casar servidor com unidade — duas
+    grafias de "Saúde" são a mesma secretaria, e tratar como duas criaria
+    organograma partido.
+
+    Devolve `{"secretarias_criadas", "setores_criados", "reativadas",
+    "desativadas", "erros"}`. Nunca levanta exceção.
+    """
+    resumo = {"secretarias_criadas": 0, "setores_criados": 0,
+              "reativadas": 0, "desativadas": 0, "erros": []}
+    try:
+        existentes = listar_todas_unidades() or []
+        # (parent_id, nome normalizado) -> linha
+        por_chave = {}
+        for u in existentes:
+            por_chave.setdefault((u[3], _norm(u[1])), u)
+        # nome normalizado -> id, para resolver o pai
+        id_por_nome = {_norm(u[1]): u[0] for u in existentes if not u[3]}
+
+        def _ativar(unidade_id, valor):
+            conn = get_connection()
+            try:
+                conn.execute("UPDATE tb_unidade SET ativo=? WHERE id=?",
+                             (int(valor), int(unidade_id)))
+                _commit_com_retry(conn, "sincronizar_organograma")
+            finally:
+                conn.close()
+
+        reais = set()
+        for item in plano or []:
+            nome = (item[0] or "").strip()
+            tipo = (item[1] or "setor").strip()
+            pai_nome = item[2] if len(item) > 2 else None
+            if not nome:
+                continue
+            pai_id = id_por_nome.get(_norm(pai_nome)) if pai_nome else None
+            chave = (pai_id, _norm(nome))
+            reais.add(chave)
+            achada = por_chave.get(chave)
+            if achada:
+                if not achada[6]:  # existe mas está desligada -> a unidade voltou
+                    if aplicar:
+                        _ativar(achada[0], 1)
+                    resumo["reativadas"] += 1
+                if not pai_id:
+                    id_por_nome.setdefault(_norm(nome), achada[0])
+                continue
+            if aplicar:
+                ok, msg = criar_unidade(nome, tipo, pai_id, "", ator)
+                if not ok:
+                    resumo["erros"].append(f"{tipo} '{nome}': {msg}")
+                    continue
+                # `criar_unidade` devolve (ok, msg); o id novo é lido do banco
+                # em vez de fazer regex na mensagem de retorno.
+                novas = listar_todas_unidades() or []
+                achada2 = next((u for u in novas
+                                if u[3] == pai_id and _norm(u[1]) == _norm(nome)),
+                               None)
+                if not achada2:
+                    resumo["erros"].append(
+                        f"{tipo} '{nome}': criado mas não encontrado")
+                    continue
+                if not pai_id:
+                    id_por_nome.setdefault(_norm(nome), achada2[0])
+            if tipo == "secretaria":
+                resumo["secretarias_criadas"] += 1
+            else:
+                resumo["setores_criados"] += 1
+
+        # O que a folha não conhece é desativado — nunca apagado: pode haver
+        # contato apontando para a unidade, e apagar deixaria órfão.
+        # Só conta/desativa o que está LIGADO, para rodar duas vezes não
+        # inflar o contador.
+        for u in existentes:
+            if (u[3], _norm(u[1])) in reais or not u[6]:
+                continue
+            if aplicar:
+                _ativar(u[0], 0)
+            resumo["desativadas"] += 1
+        return resumo
+    except Exception as e:
+        try:
+            _log().exception(f"sincronizar_organograma falhou: {e}")
+        except Exception:
+            pass
+        resumo["erros"].append(str(e))
+        return resumo
 
 
 init_db()
