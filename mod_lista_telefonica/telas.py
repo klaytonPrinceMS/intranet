@@ -16,7 +16,8 @@ from nicegui import ui, run
 from mod_intranet import autenticacao
 from mod_intranet.aba_modulo import cabecalho, campo_busca
 from mod_intranet.tema_modulo import ler_tema, notificar
-from mod_intranet.ui_comum import botao, botao_icone, dialogo_card
+from mod_intranet.ui_comum import botao, botao_icone, dialogo_card, \
+    dialogo_formulario
 from mod_lista_telefonica import bd_manipulador as lista
 from mod_lista_telefonica import impressao
 
@@ -1048,38 +1049,40 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             try:
                 opcoes = dict(_unidades_para_selecao(_carregar_arvore()))
                 inicial = estado["unidade"] if estado["unidade"] in opcoes else None
-                with dialogo_card(titulo="Novo contato", largura="w-[420px]",
-                                  chave_modulo=CHAVE) as (dlg, card):
-                    sel_unidade = ui.select(opcoes, label="Unidade *", value=inicial) \
-                        .props("outlined dense clearable").classes("w-full") \
-                        .props('data-testid=lista-novo-contato-unidade')
-                    inp_nome = ui.input("Nome *").props("outlined dense").classes("w-full") \
-                        .props('data-testid=lista-novo-contato-nome')
-                    campo_tel = _campo_telefone("Telefone *", "lista-novo-contato")
+                with dialogo_formulario("Novo contato", chave_modulo=CHAVE) as (
+                        dlg, card, miolo, grade):
+                    with grade:
+                        sel_unidade = ui.select(opcoes, label="Unidade *", value=inicial) \
+                            .props("outlined dense clearable").classes("w-full") \
+                            .props('data-testid=lista-novo-contato-unidade')
+                        inp_nome = ui.input("Nome *").props("outlined dense").classes("w-full") \
+                            .props('data-testid=lista-novo-contato-nome')
+                        campo_tel = _campo_telefone("Telefone *", "lista-novo-contato")
 
-                    def _salvar():
-                        try:
-                            if not _guarda_admin("criar contatos"):
-                                return
-                            if not sel_unidade.value:
-                                notificar("Escolha a unidade.", tipo="warning")
-                                return
-                            ok, msg = lista.criar_contato(
-                                sel_unidade.value, inp_nome.value or "",
-                                campo_tel["obter"]() if campo_tel else "", ator=user_nome)
-                            notificar(msg, tipo="positive" if ok else "negative")
-                            if ok:
-                                dlg.close()
-                                estado["unidade"] = sel_unidade.value
-                                render_organograma.refresh()
-                        except Exception:
-                            _falhar("salvar novo contato", str(inp_nome.value))
+                    with miolo:
+                        def _salvar():
+                            try:
+                                if not _guarda_admin("criar contatos"):
+                                    return
+                                if not sel_unidade.value:
+                                    notificar("Escolha a unidade.", tipo="warning")
+                                    return
+                                ok, msg = lista.criar_contato(
+                                    sel_unidade.value, inp_nome.value or "",
+                                    campo_tel["obter"]() if campo_tel else "", ator=user_nome)
+                                notificar(msg, tipo="positive" if ok else "negative")
+                                if ok:
+                                    dlg.close()
+                                    estado["unidade"] = sel_unidade.value
+                                    render_organograma.refresh()
+                            except Exception:
+                                _falhar("salvar novo contato", str(inp_nome.value))
 
-                    with ui.row().classes("w-full justify-end mt-2").style("gap: 0.5rem"):
-                        ui.button("Cancelar", on_click=dlg.close).props("flat")
-                        _testid(botao("Salvar", icone="save", on_click=_salvar, variante="primario",
-                                      chave_modulo=CHAVE),
-                                'data-testid=lista-novo-contato-salvar')
+                        with ui.row().classes("w-full justify-end mt-2").style("gap: 0.5rem"):
+                            ui.button("Cancelar", on_click=dlg.close).props("flat")
+                            _testid(botao("Salvar", icone="save", on_click=_salvar, variante="primario",
+                                          chave_modulo=CHAVE),
+                                    'data-testid=lista-novo-contato-salvar')
                 dlg.open()
             except Exception:
                 _falhar("dlg_novo_contato", "dialogo")
@@ -1157,53 +1160,55 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             try:
                 arvore = _carregar_arvore()
                 sel_pai = {"elemento": None}
-                with dialogo_card(titulo="Nova unidade", largura="w-[420px]",
-                                  chave_modulo=CHAVE) as (dlg, card):
-                    inp_nome = ui.input("Nome *").props("outlined dense").classes("w-full") \
-                        .props('data-testid=lista-nova-unidade-nome')
-                    sel_tipo = ui.select({"secretaria": "Secretaria", "setor": "Setor",
-                                          "subsetor": "Subsetor"}, value="secretaria",
-                                         label="Tipo").props("outlined dense").classes("w-full") \
-                        .props('data-testid=lista-nova-unidade-tipo')
-                    pai_holder = ui.column().classes("w-full gap-1")
-                    campo_tel = _campo_telefone("Telefone", "lista-nova-unidade")
+                with dialogo_formulario("Nova unidade", chave_modulo=CHAVE) as (
+                        dlg, card, miolo, grade):
+                    with grade:
+                        inp_nome = ui.input("Nome *").props("outlined dense").classes("w-full") \
+                            .props('data-testid=lista-nova-unidade-nome')
+                        sel_tipo = ui.select({"secretaria": "Secretaria", "setor": "Setor",
+                                              "subsetor": "Subsetor"}, value="secretaria",
+                                             label="Tipo").props("outlined dense").classes("w-full") \
+                            .props('data-testid=lista-nova-unidade-tipo')
+                        pai_holder = ui.column().classes("w-full gap-1")
+                        campo_tel = _campo_telefone("Telefone", "lista-nova-unidade")
 
-                    def _montar_pai():
-                        """EN: Parent picker follows the chosen type.
+                    with miolo:
+                        def _montar_pai():
+                            """EN: Parent picker follows the chosen type.
 
-                        PT-BR: O seletor de pai acompanha o tipo escolhido.
-                        """
-                        try:
-                            sel_pai["elemento"] = None
-                            pai_holder.clear()
-                            with pai_holder:
-                                sel_pai["elemento"] = ui.select(
-                                    _opcoes_pai(arvore, sel_tipo.value), label="Unidade pai *") \
-                                    .props("outlined dense clearable").classes("w-full") \
-                                    .props('data-testid=lista-nova-unidade-pai')
-                        except Exception:
-                            _falha("seletor de pai", str(sel_tipo.value))
+                            PT-BR: O seletor de pai acompanha o tipo escolhido.
+                            """
+                            try:
+                                sel_pai["elemento"] = None
+                                pai_holder.clear()
+                                with pai_holder:
+                                    sel_pai["elemento"] = ui.select(
+                                        _opcoes_pai(arvore, sel_tipo.value), label="Unidade pai *") \
+                                        .props("outlined dense clearable").classes("w-full") \
+                                        .props('data-testid=lista-nova-unidade-pai')
+                            except Exception:
+                                _falha("seletor de pai", str(sel_tipo.value))
 
-                    def _salvar():
-                        try:
-                            if not _guarda_admin("criar unidades"):
-                                return
-                            pai = sel_pai["elemento"].value if sel_pai["elemento"] else None
-                            ok, msg = lista.criar_unidade(
-                                inp_nome.value or "", sel_tipo.value, pai,
-                                campo_tel["obter"]() if campo_tel else "", ator=user_nome)
-                            notificar(msg, tipo="positive" if ok else "negative")
-                            if ok:
-                                dlg.close()
-                                render_organograma.refresh()
-                        except Exception:
-                            _falhar("salvar nova unidade", str(sel_tipo.value))
+                        def _salvar():
+                            try:
+                                if not _guarda_admin("criar unidades"):
+                                    return
+                                pai = sel_pai["elemento"].value if sel_pai["elemento"] else None
+                                ok, msg = lista.criar_unidade(
+                                    inp_nome.value or "", sel_tipo.value, pai,
+                                    campo_tel["obter"]() if campo_tel else "", ator=user_nome)
+                                notificar(msg, tipo="positive" if ok else "negative")
+                                if ok:
+                                    dlg.close()
+                                    render_organograma.refresh()
+                            except Exception:
+                                _falhar("salvar nova unidade", str(sel_tipo.value))
 
-                    with ui.row().classes("w-full justify-end mt-2").style("gap: 0.5rem"):
-                        ui.button("Cancelar", on_click=dlg.close).props("flat")
-                        _testid(botao("Salvar", icone="save", on_click=_salvar, variante="primario",
-                                      chave_modulo=CHAVE),
-                                'data-testid=lista-nova-unidade-salvar')
+                        with ui.row().classes("w-full justify-end mt-2").style("gap: 0.5rem"):
+                            ui.button("Cancelar", on_click=dlg.close).props("flat")
+                            _testid(botao("Salvar", icone="save", on_click=_salvar, variante="primario",
+                                          chave_modulo=CHAVE),
+                                    'data-testid=lista-nova-unidade-salvar')
 
                 sel_tipo.on_value_change(lambda e: _montar_pai())
                 _montar_pai()

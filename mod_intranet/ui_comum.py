@@ -3,6 +3,8 @@
 Fábrica central de componentes de UI compartilhados por todas as telas:
 paleta semântica de cores (`CORES`), fábrica de botões (`BotaoFabrica` +
 `botao`/`botao_icone`), moldura de diálogo (`Dialogo` + `dialogo_card`),
+base de DIÁLOGO DE FORMULÁRIO (`dialogo_formulario` +
+`LARGURA_DIALOGO_FORMULARIO`/`CSS_GRADE_CAMPOS`/`CSS_GRADE_AVISOS`),
 rodapés (`rodape_dialogo`, `rodape_salvar_restaurar`), campos de
 configuração (`CampoBase`/`CampoCor`/`CampoTexto`/`CampoSelecao` +
 `campo_cor`/`campo_texto`/`campo_selecao`) e card de configuração
@@ -311,6 +313,115 @@ def dialogo_card(titulo="", largura="w-[560px]", *, chave_modulo="intranet",
                       max_altura=max_altura)
     with dialogo as (dlg, card):
         yield dlg, card
+
+
+# ============ DIÁLOGO DE FORMULÁRIO: LARGURA, ALTURA E ROLAGEM ============
+#
+# O `Dialogo`/`dialogo_card` acima resolve o CASCO GERAL: um cartão de
+# largura fixa com o conteúdo do tamanho que ele tiver. Ele serve para
+# confirmação ("excluir?") e para campos poucos. O que ele NÃO serve é para o
+# outro tipo de diálogo da intranet: o FORMULÁRIO, que tem vários campos, dois
+# ou três blocos informativos e um botão no pé.
+#
+# O sintoma desse segundo tipo, sem tratamento, é sempre o mesmo: cartão
+# estreito (380–620px), conteúdo mais alto que a janela e o `max-h` ausente —
+# então quem rola é a PÁGINA INTEIRA, e a barra de rolagem aparece no meio do
+# formulário, longe do dedo de quem está num monitor de altura curta.
+#
+# A correção é sempre a mesma e por isso mora aqui, num lugar só:
+#   largura  -> pelo menos 80% da viewport, com teto para não esticar em
+#               monitor ultrawide (88vw / 1600px);
+#   altura   -> teto de 90vh com o CONTEÚDO rolando por dentro do cartão, e o
+#               `min-h-0` que é o que permite ao filho flex encolher abaixo da
+#               altura do conteúdo — sem ele o `overflow-y` não pega e o teto é
+#               simplesmente ignorado;
+#   grade    -> `auto-fit` + `minmax`, que dispensa media query: cai sozinha
+#               para uma coluna no celular e preenche as colunas no monitor.
+#
+# Não é 'responsividade' no sentido degrades de breakpoint: é o conteúdo
+# deixar deldrastar a janela e passar a caber nela.
+
+LARGURA_DIALOGO_FORMULARIO = "w-[88vw] max-w-[1600px]"
+
+# 300px por causa do telefone: a linha DDI (190px fixos) + número precisa de
+# ~300px de célula, senão o campo do número vira um palito. Com 260px sobrariam
+# 60px para o número — pior que ficar em coluna única.
+CSS_GRADE_CAMPOS = ("display: grid; grid-template-columns: "
+                    "repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; "
+                    "align-items: start;")
+
+# Blocos informativos são texto corrido, não campo: 320px evita que fiquem
+# espremidos ao lado das três colunas do formulário.
+CSS_GRADE_AVISOS = ("display: grid; grid-template-columns: "
+                    "repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; "
+                    "align-items: start;")
+
+
+@contextmanager
+def dialogo_formulario(titulo="", *, chave_modulo="intranet", largura=None,
+                       descricao="", sem_descricao=False):
+    """Abre um diálogo de FORMULÁRIO largo, com teto de altura e rolagem interna.
+
+    Mesma moldura do `dialogo_card`, com o esqueleto que resolve o formulário
+    que estoura a janela: o cartão vira coluna flex, e o miolo — criado aqui
+    entre o cabeçalho e o rodapé — é a ÚNICA parte que rola. Título fica
+    parado em cima, os botões que o chamador criar depois do `with` ficam
+    parados embaixo, e o formulário some no meio.
+
+    Devolve `(dlg, card, miolo, grade)`:
+      - `dlg`/`card`  como em `dialogo_card`;
+      - `miolo`        coluna rolável (`flex-1 min-h-0 overflow-y-auto`) —
+                       tudo que for criado DENTRO dela rola;
+      - `grade`        div com `CSS_GRADE_CAMPOS`, pronta para receber os
+                       campos lado a lado. Para diálogos cujo corpo é lista ou
+                       tabela, basta ignorar `grade` e criar o que for preciso
+                       direto dentro de `miolo`.
+
+    Os dois slots de contexto (`miolo` e `grade`) saem ANTES do `yield` de
+    propósito: quem chama abre `with grade:` ou `with miolo:` para pôr os
+    campos, e ao sair deles o slot corrente volta a ser o CARD — que é onde o
+    rodapé (`rodape_dialogo`, botão "Salvar") tem de nascer, ancorado na base e
+    fora da área rolável. Com o `yield` dentro de `with grade:`, o rodapé do
+    chamador cairia dentro de uma célula da grade e rolaria junto com o
+    formulário.
+
+    `descricao` cria um parágrafo abaixo do título, do mesmo modo do diálogo de
+    troca de credenciais; `sem_descricao=True` dispensa. `largura` sobrescreve
+    `LARGURA_DIALOGO_FORMULARIO` quando um diálogo specifico precisar de outro
+    teto (padrão: usar o padrão).
+
+    EN: Opens a wide, height-capped, internally scrollable FORM dialog. Same
+        frame as `dialogo_card` plus the flex-column skeleton that stops the
+        form from overflowing the window.
+    """
+    from nicegui import ui
+    try:
+        with Dialogo(titulo, largura or LARGURA_DIALOGO_FORMULARIO,
+                     chave_modulo=chave_modulo, max_altura=True) as (dlg, card):
+            # O `max-h-[90vh]` vem do `max_altura=True` acima. O `flex flex-col`
+            # é o que transforma o cartão em coluna para o miolo poder dividir
+            # a altura com o que estiver fora dele.
+            card.classes("flex flex-col")
+            if descricao and not sem_descricao:
+                ui.label(descricao).classes("text-body2 text-grey-7")
+            try:
+                miolo = ui.column().classes("w-full flex-1 min-h-0 overflow-y-auto")
+                miolo.props('role="region" tabindex="0" '
+                            'aria-label="Conteúdo do formulário"')
+                with miolo:
+                    grade = ui.element("div").classes("w-full").style(CSS_GRADE_CAMPOS)
+                    grade.props('role="group" aria-label="Campos do formulário"')
+                # Fora de `with miolo` e `with grade`: o `yield` acontece com o
+                # slot corrente já no card, para o rodapé do chamador ancorar na
+                # base em vez de virar célula da grade.
+                yield dlg, card, miolo, grade
+            except Exception as e:
+                _log().error(f"dialogo_formulario: falha ao montar o miolo de "
+                             f"'{titulo or chave_modulo}': {e}")
+                raise
+    except Exception as e:
+        _log().error(f"dialogo_formulario: falha ao abrir '{titulo or chave_modulo}': {e}")
+        raise
 
 
 def rodape_dialogo(dlg, acoes=(), *, chave_modulo="intranet", classes_extra=""):

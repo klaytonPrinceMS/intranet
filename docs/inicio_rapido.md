@@ -156,7 +156,7 @@ O padrão é **SQLite** (um arquivo por módulo, zero dependências). Para usar 
    cd assets/docker/postgres && docker compose up -d
    ```
 2. Acesse `/configuracoes` → aba **Config** (ao final, após o card "Ícones") → card **"Banco de dados — SQLite ou PostgreSQL"** (ícone `storage`).
-3. Selecione **PostgreSQL** e confira o DSN (`postgresql+psycopg2://intranet:intranet@localhost:5432/intranet`).
+3. Selecione **PostgreSQL** e confira o DSN exibido no campo `postgres_url` (usuário e senha: ver `mod_intranet/bd_conexao.py` e `assets/docker/postgres/docker-compose.yml` — **não são transcritos aqui**, AGENTS.md §8.2.1).
 4. Clique **Aplicar** e **REINICIE o servidor** (`fuser -k 8080/tcp; .venv/bin/python main.py`).
 
 No boot, os módulos recriam os bancos/tabelas no Postgres (`garantir_bancos_postgres` cria os DATABASE `db_mod_<chave>` ausentes; o schema entra pelos `init_db`). A migração de dados SQLite→PostgreSQL é manual. Para voltar ao SQLite, repita o passo 3 selecionando "SQLite" e reinicie.

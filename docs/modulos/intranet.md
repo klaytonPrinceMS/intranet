@@ -402,7 +402,8 @@ Componentes reutilizáveis que eliminam o boilerplate replicado nos módulos —
 | Classe | Wrapper funcional |
 |:---|:---|
 | `BotaoFabrica` (`ui_comum.py:58`) — leitura do tema do módulo + montagem de props/classes/estilo por variante (`primario`/`secundario` tematizadas; `neutro`/`restaurar`/`perigo`/`icone_branco`/`texto_branco` fixas; `cor` sobrepõe sem ler tema) | `botao(...)` (`ui_comum.py:177`), `botao_icone(...)` (`ui_comum.py:202`) |
-| `Dialogo(titulo, largura, ...)` (`ui_comum.py:224`) — context manager com `ExitStack` (escopo do card permanece aberto até `__exit__`), estilo de cartão do tema, `abrir()`/`fechar()`; devolve `(dlg, card)` | `dialogo_card(...)` (`ui_comum.py:294`) |
+| `Dialogo(titulo, largura, ...)` (`ui_comum.py:242`) — context manager com `ExitStack` (escopo do card permanece aberto até `__exit__`), estilo de cartão do tema, `abrir()`/`fechar()`; devolve `(dlg, card)` | `dialogo_card(...)` (`ui_comum.py:299`) — **confirmações e fichas curtas** |
+| — | `dialogo_formulario(...)` (`ui_comum.py:359`) + `LARGURA_DIALOGO_FORMULARIO` (`:342`), `CSS_GRADE_CAMPOS` (`:347`), `CSS_GRADE_AVISOS` (`:353`) — **diálogos de FORMULÁRIO**: `w-[88vw] max-w-[1600px]`, teto `max-h-[90vh]` com rolagem **interna** (`miolo` com `min-h-0`) e grade `repeat(auto-fit, minmax(300px, 1fr))`. Devolve `(dlg, card, miolo, grade)`; `miolo`/`grade` saem **antes** do `yield` para o rodapé nascer no card. **Regra de classificação formulário × confirmação + inventário dos 25 diálogos: [Diálogo de Formulário](../dialogo_formulario.md)** |
 | `Cartao` (`ui_comum.py:628`) — card de configuração: estilo `cor_fundo`/`estilo_cartao`, título/legenda, grid de campos (CALLABLES), extras entre grid e ações, row de ações | `card_config(...)` (`ui_comum.py:746`) |
 | `CampoBase` (`ui_comum.py:384`) — resolução de valor `tb_config` (`chave`/`padrao`) + acabamento fixo (props, classes, estilo inline, tooltip, `ao_mudar`); subclasses `CampoCor` (`ui_comum.py:442`), `CampoTexto` (`ui_comum.py:467`) e `CampoSelecao` (`ui_comum.py:529`) | `campo_cor(...)` (`ui_comum.py:562`), `campo_texto(...)` (`ui_comum.py:582`), `campo_selecao(...)` (`ui_comum.py:609`) |
 
@@ -425,12 +426,47 @@ Backend **duplo e controlado pelo sistema**: **SQLite** (padrão, um arquivo por
 | `conexao_central()` | `banco_conexao.py:601` | atalho `conexao('intranet')` |
 | `obter_engine()` | `banco_conexao.py:194` | engine SQLAlchemy sob demanda (lazy singleton) com troca de DSN; `None` em SQLite ou sem driver (fail-soft) |
 | `_dsn_publico(url)` | `banco_conexao.py:43` | mascara credenciais do DSN em logs (`postgresql+psycopg2://***@host/db`) |
+| `_banco_central_sem_schema()` | `banco_conexao.py:61` | `True` quando o SQLite central ainda não tem **nenhuma** tabela — classifica o erro de boot (ver [Aviso de primeiro boot](#aviso-de-primeiro-boot-o-erro-esperado-da-primeira-execucao-29092026)) |
 
 **Proxy psycopg2 (`_CursorPostgres`, `banco_conexao.py:390`):** traduz `?`→`%s`; `datetime('now','localtime')`→`LOCALTIMESTAMP`; DDL SQLite→Postgres (`_ddl_postgres`, `:358` — `AUTOINCREMENT` removido, `INTEGER PRIMARY KEY`→`SERIAL PRIMARY KEY`, `BLOB`→`BYTEA`, `DATETIME`→`TIMESTAMP`, remoção de `FOREIGN KEY`); `INSERT OR IGNORE`→`ON CONFLICT DO NOTHING`; `INSERT OR REPLACE`→`ON CONFLICT`; `PRAGMA`/`sqlite_master`/FTS5 (`CREATE VIRTUAL TABLE`/`CREATE TRIGGER`) ignorados; `PRAGMA table_info`→`information_schema.columns`; `lastrowid` via `RETURNING id` com SAVEPOINT e SAVEPOINT por statement (falha isolada não desfaz a transação).
 
 **Roteamento:** `repositorio.engine(chave)`/`sessaodb(chave)` roteiam para o Postgres via `obter_engine_modulo(chave)` quando `banco_tipo='postgres'`; senão mantêm SQLite por arquivo. `CrudBase._conectar` também roteia pelo backend ativo.
 
 **Dependência habilitada:** `requirements.txt:24-25` — `sqlalchemy>=2.0` + `psycopg2-binary>=2.9` (sem driver o sistema segue de pé em SQLite com exception no loguru). Container: `assets/docker/postgres/docker-compose.yml`. Toggle no admin: `/configuracoes` → aba **Config** (ao final, após o card "Ícones") → card **"Banco de dados — SQLite ou PostgreSQL"** (ícone `storage`, `data-testid="config-aplicar-banco"`, sem reload — exige **reiniciar o servidor**). Detalhes: [Arquitetura — Backend duplo](../arquitetura.md#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809) e [Configurações](../configuracoes.md#card-banco-de-dados-sqlite-ou-postgresql-0809).
+
+#### Aviso de primeiro boot — o erro esperado da primeira execução (29/09/2026)
+
+No **primeiro boot**, `main.py` lê `banco_tipo` em `tb_config` **antes** de o banco existir. O `sqlite3.connect()` de `_ler_config_sqlite` **cria o arquivo vazio** e o `SELECT` seguinte falha com `sqlite3.OperationalError: no such table: tb_config` — o `init_db()` só semeia o schema em seguida.
+
+**O comportamento fail-soft já estava certo** antes desta mudança: a exceção cai no `except`, o loguru registra e a função devolve o `default` (`sqlite`), e o sistema sobe. O que mudou em 29/09/2026 foi **apenas a impressão no terminal**: a nova função `_banco_central_sem_schema()` (`banco_conexao.py:61`) classifica o caso e imprime, logo abaixo do traceback:
+
+```
+[banco] Primeira execução: 'banco_tipo' ainda não existe em tb_config porque o
+banco central ainda não foi criado. Erro esperado no primeiro boot — o schema é
+semeado em seguida. Causa registrada no log.
+```
+
+| Item | Comportamento |
+|:---|:---|
+| O que mudou | **só a impressão** — o traceback e o log ERROR continuam |
+| O que NÃO mudou | o comportamento fail-soft: `default` devolvido, sistema sobe |
+| Como classifica | `True` = banco central sem **nenhuma** tabela (`sqlite_master` vazio) ou arquivo inexistente → é o primeiro boot. `False` = banco já semeado, e aí a falha é **anômala** e precisa de atenção |
+| Falha na inspeção | devolve `False` — **não** mascaramos falha real como se fosse primeiro boot |
+| Por que o log **não** foi suprimido | AGENTS.md §3.2 proíbe engolir erro em silêncio: a causa continua registrada em ERROR. O que muda é a leitura de quem olha o boot |
+
+!!! danger "Não "limpe" esse log achando que é segurança"
+    A supressão do log **não** é um ganho de segurança aqui: ela apagaria a
+    única evidência de que a leitura do seletor de backend falhou, num sistema
+    em que `banco_tipo` decide se o banco inteiro é SQLite ou PostgreSQL. O que
+    foi feito foi **explicar** o erro, não escondê-lo. Se um dia a classificação
+    ficar imprecisa (por exemplo, banco semeado mas `tb_config` derrubada), a
+    impressão dirá "primeira execução" onde há defeito — e por isso a função
+    consulta `sqlite_master`, que é o que separa os dois casos de verdade.
+
+**Onde verificar:** o aviso só aparece **uma vez**, no primeiro boot de uma
+instalação nova. Ver o log (`logs/`) — a entrada `ERROR` de
+`_ler_config_sqlite('banco_tipo')` continua lá em qualquer boot em que ele
+reapareça.
 
 ### Painel de backup reutilizável — `rotinas.painel_backup()` (06/09)
 

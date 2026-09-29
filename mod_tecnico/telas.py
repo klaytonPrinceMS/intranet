@@ -366,7 +366,7 @@ def _dlg_listar(pasta_nome: str, user_nome: str):
     PT-BR: Diálogo de prévia listando até 200 arquivos da pasta de backup.
     """
     from nicegui import ui as _ui
-    from mod_intranet.ui_comum import dialogo_card
+    from mod_intranet.ui_comum import dialogo_formulario
     row = tec.obter_backup(pasta_nome)
     if not row:
         notificar("Backup não encontrado", type="negative")
@@ -380,14 +380,15 @@ def _dlg_listar(pasta_nome: str, user_nome: str):
         for f in files:
             rel = os.path.relpath(os.path.join(root, f), caminho).replace(os.sep, "/")
             arquivos.append(rel)
-    with dialogo_card(titulo=f"Arquivos — {pasta_nome}", largura="w-full max-w-[640px] mx-4", chave_modulo="tecnico") as (dlg, card):
-        with ui.column().classes("w-full gap-1 max-h-[60vh] overflow-auto"):
+    with dialogo_formulario(f"Arquivos — {pasta_nome}",
+                            chave_modulo="tecnico") as (dlg, card, miolo, _grade):
+        with miolo:
             if not arquivos:
                 ui.label("Pasta vazia.").classes("text-grey-6 italic")
             for a in sorted(arquivos)[:200]:
                 ui.label(a).classes("text-caption font-mono")
             if len(arquivos) > 200:
                 ui.label(f"... e mais {len(arquivos)-200} arquivo(s)").classes("text-caption text-grey-5")
-        with ui.row().classes("w-full justify-end mt-3"):
-            ui.button("Fechar", on_click=dlg.close).props("flat")
+            with ui.row().classes("w-full justify-end mt-3"):
+                ui.button("Fechar", on_click=dlg.close).props("flat")
     dlg.open()

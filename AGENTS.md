@@ -154,6 +154,87 @@ Não use Declarative. Use mapeamento imperativo em `models/__init__.py`:
 - **Regressão:** ao alterar o esquema de um módulo, testar com SQLite E com
   Postgres (verificar schemas/tabelas criados no database do módulo).
 
+### 4.2 Versionamento de módulo — obrigatório em TODA alteração de código
+
+> **REGRA: toda e qualquer alteração de código em `mod_<nome>/` obriga a
+> atualizar a versão daquele módulo. Sem exceção — nem correção de uma linha,
+> nem docstring, nem comentário.**
+
+A versão é o que responde, no rodapé de qualquer tela do módulo, **qual código
+o banco espera**. Sem ela não existe como distinguir "o banco está velho" de "o
+código está velho", que é exatamente a pergunta que se faz quando algo quebra
+depois de uma entrega.
+
+- **Onde mora:** a chave `versao_modulo:<chave>` na `tb_config` do banco
+  **CENTRAL** (`db_mod_intranet.db`) — é dela que o rodapé lê
+  (`_obter_versao_modulo`/`_formatar_versao_rodape` em `mod_intranet/telas.py`).
+  A `<chave>` é a de `MODULOS_BD` em `mod_intranet/repositorio.py`
+  (`usuarios` para `mod_gest_cad_usuario`, `empenhos` para
+  `mod_renomear_empenho`, e assim por diante). **O prefixo do diretório não é a
+  chave** — é onde mais se erra.
+- **Formato:** `X.Y.AAMMDD` (`1.0.260928`). O patch é a **data do dia da
+  alteração**. Várias mudanças no mesmo dia = mesma versão, e está tudo bem:
+  a versão data o CÓDIGO, não conta revisão.
+- **Como aplicar — NÃO é só editar a constante.** O banco **não é versionado**
+  (`db_mod_*.db` nunca é commitado), então trocar o número no seed só alcança
+  instalação nova. Para o banco em uso mudar junto com o código, o bump precisa
+  de uma **migração idempotente** em `mod_intranet/bd_conexao.py`, no formato
+  já usado por `migracao_versao_usuarios_260918`:
+
+  ```python
+  # Migração 28/09/2026 — bump de versão do módulo <nome> (<motivo curto>).
+  cur.execute("SELECT COUNT(*) FROM tb_config "
+              "WHERE chave='migracao_versao_<chave>_AAMMDD'")
+  if (cur.fetchone()[0] or 0) == 0:
+      cur.execute("INSERT INTO tb_config (chave, valor) VALUES (?, '1.0.AAMMDD') "
+                  "ON CONFLICT DO NOTHING", (f"versao_modulo:<chave>",))
+      cur.execute("UPDATE tb_config SET valor='1.0.AAMMDD' "
+                  "WHERE chave='versao_modulo:<chave>'")
+      cur.execute("INSERT INTO tb_config (chave, valor) "
+                  "VALUES ('migracao_versao_<chave>_AAMMDD', '1') ON CONFLICT DO NOTHING")
+  ```
+
+  E **também** somar a chave no tuple de seed do mesmo arquivo, para instalação
+  nova já nascer certa. Os dois são obrigatórios: o seed cobre banco novo, a
+  migração cobre banco em uso — nenhum dos dois sozinho basta.
+- **SQL portátil:** a migração tem de funcionar em SQLite **e** PostgreSQL
+  (§4.1). `ON CONFLICT DO NOTHING` e `SELECT COUNT(*)` já são portáveis pelo
+  proxy; não introduza `sqlite3` cru.
+- **Idempotência:** o marcador `migracao_versao_<chave>_AAMMDD` garante uma
+  execução só. Teste rodando `init_db()` **duas vezes** e conferindo que a
+  segunda não muda nada e não sobrescreve versão que o admin tenha mexido.
+- **Quem faz o bump:** quem altera o código é quem atualiza a versão. Um commit
+  que toca `mod_<nome>/` e não mexe na versão é um commit incompleto.
+- **Múltiplos módulos no mesmo commit:** cada módulo alterado ganha a **própria**
+  migração. `mod_estoque/` + `mod_os/` no mesmo commit = dois bumps.
+
+**Antes de fechar qualquer alteração, rode a conferência:**
+
+```bash
+# 1. quais módulos foram tocados no diff
+git diff --name-only HEAD~1 | grep -oE '^mod_[a-z_]+' | sort -u
+
+# 2. para cada um, a versão em tela bate com a data de hoje?
+.venv/bin/python -c "
+import sqlite3
+c = sqlite3.connect('db_mod_intranet.db')
+for k, v in c.execute(\"SELECT chave, valor FROM tb_config WHERE chave LIKE 'versao_modulo:%'\"):
+    print(f'{k:<34}{v}')
+"
+```
+
+Faltou módulo no passo 1 ou a versão não é `1.0.<hoje>`? A alteração está
+incompleta — faça o bump antes de commit.
+
+> **Hoje existem três mecanismos de versão no código** e esta regra padroniza
+> pelo **primeiro** (o da `tb_config` central, que é o que o rodapé lê):
+> `mod_auditoria` e `mod_edit_pdf` também têm um `_semear_versao_modulo()` no
+> `bd_manipulador` que escreve a MESMA chave central — está de acordo, mas o
+> número tem que bater nos dois. `mod_solicita_impressao` usa uma chave
+> separada, `versao_modulo` na `tb_configuracoes_modulo` do **banco do próprio
+> módulo** — essa é a exceção que ainda não foi migrada para o padrão. Ao tocar
+> nele, migre a chave para a central em vez de criar uma terceira via.
+
 ## 5. Padrão de Telas — NiceGUI
 
 - Assinatura: `def tela_xxx(nome: str, perfil: str):`

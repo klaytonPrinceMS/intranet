@@ -175,6 +175,16 @@ def init_db():
         ("empenhos", "1.0.260913"),
         ("blog", "1.0.260908"),
         ("solicita_impressao", "1.0.260913"),
+        # Módulos que entraram em MODULOS_BD sem linha correspondente aqui, e
+        # por isso rodavam com a versão padrão '1.0' no rodapé. O seed acima
+        # só alcança banco novo; a migração `migracao_versao_pendentes_260928`
+        # é quem alcança o banco já em uso.
+        ("agregador_noticias", "1.0.260928"),
+        ("lista_telefonica", "1.0.260928"),
+        ("filas", "1.0.260928"),
+        ("tecnico", "1.0.260928"),
+        ("os", "1.0.260928"),
+        ("estoque", "1.0.260928"),
     ):
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES (?, ?) "
                     "ON CONFLICT DO NOTHING",
@@ -241,6 +251,125 @@ def init_db():
     if (cur.fetchone()[0] or 0) == 0:
         cur.execute("UPDATE tb_config SET valor='1.0.260918' WHERE chave='versao_modulo:usuarios'")
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('migracao_versao_usuarios_260918', '1') ON CONFLICT DO NOTHING")
+    # Migração 28/09/2026 — VERSÃO DOS MÓDULOS QUE ESTAVAM SEM VERSÃO.
+    # Seis chaves de `MODULOS_BD` (repositorio.py) nunca chegaram ao tuple de
+    # seed acima, então não tinham `versao_modulo:<chave>` em `tb_config`. Sem a
+    # chave, `_obter_versao_modulo` (telas.py) devolve '1.0' e o rodapé mostra
+    # `v<versao_sistema> · v1.0` — sem distinguir o código de hoje do de amanhã.
+    #   os/estoque      — nasceram no commit 9a7d57d (28/09) sem linha de seed.
+    #   agregador_noticias/lista_telefonica/filas/tecnico — débito anterior,
+    #                     entraram em MODULOS_BD antes de o tuple existir.
+    # `INSERT OR IGNORE` com um `UPDATE` só onde ainda é PLACEHOLDER.
+    #
+    # POR QUE A LISTA DE PLACEHOLDERS INCLUI '1.0.260908' — a ordem das
+    # migrações importa e é fácil errar aqui: num banco NOVO, o seed acima grava
+    # 1.0.260928 e a migração `migracao_padronizacao_260908` (mais acima, neste
+    # mesmo `init_db`) roda `UPDATE ... WHERE chave LIKE 'versao_modulo:%'`,
+    # rebaixando TUDO para 1.0.260908. Sem esta linha no filtro, a correção
+    # nunca entraria numa instalação nova: o `INSERT` não faz nada (a chave já
+    # existe) e o `UPDATE` não casa com 1.0.260908. O que NÃO entra é uma
+    # versão que já evoluiu para outra data — essa é bump futuro, e bump
+    # futuro não é da conta desta migração.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_pendentes_260928'")
+    if (cur.fetchone()[0] or 0) == 0:
+        for _chave_mod in ("agregador_noticias", "lista_telefonica", "filas",
+                           "tecnico", "os", "estoque"):
+            cur.execute("INSERT INTO tb_config (chave, valor) VALUES (?, '1.0.260928') "
+                        "ON CONFLICT DO NOTHING",
+                        (f"versao_modulo:{_chave_mod}",))
+            cur.execute("UPDATE tb_config SET valor='1.0.260928' "
+                        "WHERE chave=? AND (valor IS NULL OR valor='' "
+                        "OR valor IN ('1.0', '1.0.260908'))",
+                        (f"versao_modulo:{_chave_mod}",))
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('migracao_versao_pendentes_260928', '1') ON CONFLICT DO NOTHING")
+    # Bumps de 29/09/2026 — DIÁLOGO DE FORMULÁRIO RESPONSIVO (AGENTS.md §4.2:
+    # toda alteração de código obriga a atualizar a versão do módulo).
+    #   mod_intranet        — base `dialogo_formulario` /
+    #                         `LARGURA_DIALOGO_FORMULARIO` / `CSS_GRADE_*` em
+    #                         `ui_comum`, e os diálogos de Meu Perfil, Troca de
+    #                         senha e Seus telefones em `telas.py`
+    #   mod_gest_cad_usuario — diálogos Novo usuário, Editar, Duplicar e Sessões
+    #   mod_estoque         — 11 diálogos de movimentação/ajuste
+    #   mod_lista_telefonica — diálogos Novo contato, Nova unidade e Reordenar
+    #   mod_tecnico         — diálogo de listagem de arquivos
+    #
+    # POR QUE ESCRETO LITERAL E NÃO UM `for` COM f-string
+    #     O marcador `migracao_versao_<chave>_<data>` é o que faz a §4.2
+    #     verificável: é nele que o `teste_versionamento_modulo.py` procura para
+    #     dizer "este módulo foi alterado e não ganhou bump". Numa f-string o
+    #     código-fonte tem `{_chave_mod}` e não `intranet` — o marcador some da
+    #     leitura estática, tanto para o teste quanto para quem lê o diff. Por
+    #     isso os cinco blocos são escritos um a um, como já fazia
+    #     `migracao_versao_usuarios_260918`. É verbosidade deliberada: um bump
+    #     que não dá para ler não é rastreável.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_intranet_260929'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('versao_modulo:intranet', '1.0.260929') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260929' "
+                    "WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_intranet_260929', '1') ON CONFLICT DO NOTHING")
+
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_usuarios_260929'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('versao_modulo:usuarios', '1.0.260929') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260929' "
+                    "WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_usuarios_260929', '1') ON CONFLICT DO NOTHING")
+
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_estoque_260929'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('versao_modulo:estoque', '1.0.260929') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260929' "
+                    "WHERE chave='versao_modulo:estoque'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_estoque_260929', '1') ON CONFLICT DO NOTHING")
+
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_lista_telefonica_260929'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('versao_modulo:lista_telefonica', '1.0.260929') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260929' "
+                    "WHERE chave='versao_modulo:lista_telefonica'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_lista_telefonica_260929', '1') "
+                    "ON CONFLICT DO NOTHING")
+
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_tecnico_260929'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('versao_modulo:tecnico', '1.0.260929') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260929' "
+                    "WHERE chave='versao_modulo:tecnico'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_tecnico_260929', '1') ON CONFLICT DO NOTHING")
+    # A versão do SISTEMA também anda quando o núcleo muda: o aviso de
+    # primeiro boot e a própria base de diálogos ficam em `mod_intranet`.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_sistema_260929'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('versao_sistema', '1.0.260929') ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260929' "
+                    "WHERE chave='versao_sistema'")
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('migracao_versao_sistema_260929', '1') ON CONFLICT DO NOTHING")
     # Migração ÚNICA (27/09/2026) — TEMA WHATSAPP como padrão do SISTEMA INTEIRO,
     # escolhido pelo responsável. Antes os 11 módulos usavam preto (#000000).
     # O que ela grava:

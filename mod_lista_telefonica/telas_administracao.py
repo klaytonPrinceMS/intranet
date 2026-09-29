@@ -11,7 +11,8 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from nicegui import ui
-from mod_intranet.ui_comum import card_admin, botao, botao_icone, dialogo_card
+from mod_intranet.ui_comum import card_admin, botao, botao_icone, dialogo_card, \
+    dialogo_formulario
 from mod_intranet.tema_modulo import ler_tema, notificar, bloco_aparencia
 from mod_intranet import observabilidade
 from mod_lista_telefonica import bd_manipulador as lista
@@ -507,85 +508,87 @@ def mostrar_administracao(usuario_logado: str = ""):
                     if len(irmas) < 2:
                         notificar("Nada a reordenar", type="warning")
                         return
-                    with dialogo_card(titulo="Reordenar (comutar)", largura="w-[500px]", chave_modulo="lista_telefonica") as (dlg, card):
-                        ui.label("Arraste mentalmente: use ↑/↓ para comutar ordem.").classes("text-caption")
-                        ordem = [r[0] for r in irmas]
-                        # render lista com botões ↑/↓
-                        col = ui.column().classes("w-full gap-1")
-                        def render_ord():
-                            try:
-                                col.clear()
-                                with col:
-                                    for idx, uid in enumerate(ordem):
-                                        nome = next((r[1] for r in irmas if r[0]==uid), str(uid))
-                                        with ui.row().classes("w-full items-center gap-2 border rounded px-2 py-1"):
-                                            ui.label(f"{idx+1}. {nome}").classes("flex-1")
-                                            def _up(i=idx):
-                                                try:
-                                                    if i>0:
-                                                        ordem[i-1], ordem[i] = ordem[i], ordem[i-1]
-                                                        render_ord()
-                                                except Exception:
-                                                    try:
-                                                        try:
-                                                            _log().exception("_up falhou")
-                                                        except NameError:
-                                                            try:
-                                                                log.exception("_up falhou")
-                                                            except NameError:
-                                                                from mod_intranet import observabilidade as _obs_fail
-                                                                _obs_fail.get_logger("lista_telefonica").exception("_up falhou")
-                                                    except Exception:
-                                                        pass
-                                                    try:
-                                                        from mod_intranet.tema_modulo import notificar as _notificar_fail
-                                                        _notificar_fail("Erro interno. Tente novamente.", tipo="error")
-                                                    except Exception:
-                                                        pass
-                                                    return None
-                                            def _down(i=idx):
-                                                try:
-                                                    if i < len(ordem)-1:
-                                                        ordem[i], ordem[i+1] = ordem[i+1], ordem[i]
-                                                        render_ord()
-                                                except Exception:
-                                                    try:
-                                                        try:
-                                                            _log().exception("_down falhou")
-                                                        except NameError:
-                                                            try:
-                                                                log.exception("_down falhou")
-                                                            except NameError:
-                                                                from mod_intranet import observabilidade as _obs_fail
-                                                                _obs_fail.get_logger("lista_telefonica").exception("_down falhou")
-                                                    except Exception:
-                                                        pass
-                                                    try:
-                                                        from mod_intranet.tema_modulo import notificar as _notificar_fail
-                                                        _notificar_fail("Erro interno. Tente novamente.", tipo="error")
-                                                    except Exception:
-                                                        pass
-                                                    return None
-                                            botao_icone("arrow_upward", on_click=_up, tooltip="Mover para cima", chave_modulo="lista_telefonica")
-                                            botao_icone("arrow_downward", on_click=_down, tooltip="Mover para baixo", chave_modulo="lista_telefonica")
-                            except Exception:
+                    with dialogo_formulario("Reordenar (comutar)", chave_modulo="lista_telefonica",
+                                            descricao="Arraste mentalmente: use ↑/↓ para comutar ordem."
+                                            ) as (dlg, card, miolo, _grade):
+                        with miolo:
+                            ordem = [r[0] for r in irmas]
+                            # render lista com botões ↑/↓
+                            col = ui.column().classes("w-full gap-1")
+                            def render_ord():
                                 try:
+                                    col.clear()
+                                    with col:
+                                        for idx, uid in enumerate(ordem):
+                                            nome = next((r[1] for r in irmas if r[0]==uid), str(uid))
+                                            with ui.row().classes("w-full items-center gap-2 border rounded px-2 py-1"):
+                                                ui.label(f"{idx+1}. {nome}").classes("flex-1")
+                                                def _up(i=idx):
+                                                    try:
+                                                        if i>0:
+                                                            ordem[i-1], ordem[i] = ordem[i], ordem[i-1]
+                                                            render_ord()
+                                                    except Exception:
+                                                        try:
+                                                            try:
+                                                                _log().exception("_up falhou")
+                                                            except NameError:
+                                                                try:
+                                                                    log.exception("_up falhou")
+                                                                except NameError:
+                                                                    from mod_intranet import observabilidade as _obs_fail
+                                                                    _obs_fail.get_logger("lista_telefonica").exception("_up falhou")
+                                                        except Exception:
+                                                            pass
+                                                        try:
+                                                            from mod_intranet.tema_modulo import notificar as _notificar_fail
+                                                            _notificar_fail("Erro interno. Tente novamente.", tipo="error")
+                                                        except Exception:
+                                                            pass
+                                                        return None
+                                                def _down(i=idx):
+                                                    try:
+                                                        if i < len(ordem)-1:
+                                                            ordem[i], ordem[i+1] = ordem[i+1], ordem[i]
+                                                            render_ord()
+                                                    except Exception:
+                                                        try:
+                                                            try:
+                                                                _log().exception("_down falhou")
+                                                            except NameError:
+                                                                try:
+                                                                    log.exception("_down falhou")
+                                                                except NameError:
+                                                                    from mod_intranet import observabilidade as _obs_fail
+                                                                    _obs_fail.get_logger("lista_telefonica").exception("_down falhou")
+                                                        except Exception:
+                                                            pass
+                                                        try:
+                                                            from mod_intranet.tema_modulo import notificar as _notificar_fail
+                                                            _notificar_fail("Erro interno. Tente novamente.", tipo="error")
+                                                        except Exception:
+                                                            pass
+                                                        return None
+                                                botao_icone("arrow_upward", on_click=_up, tooltip="Mover para cima", chave_modulo="lista_telefonica")
+                                                botao_icone("arrow_downward", on_click=_down, tooltip="Mover para baixo", chave_modulo="lista_telefonica")
+                                except Exception:
                                     try:
-                                        _log().exception("render_ord falhou")
-                                    except NameError:
                                         try:
-                                            log.exception("render_ord falhou")
+                                            _log().exception("render_ord falhou")
                                         except NameError:
-                                            from mod_intranet import observabilidade as _obs_fail
-                                            _obs_fail.get_logger("lista_telefonica").exception("render_ord falhou")
-                                except Exception:
-                                    pass
-                                try:
-                                    from mod_intranet.tema_modulo import notificar as _notificar_fail
-                                    _notificar_fail("Erro interno. Tente novamente.", tipo="error")
-                                except Exception:
-                                    pass
-                                return None
+                                            try:
+                                                log.exception("render_ord falhou")
+                                            except NameError:
+                                                from mod_intranet import observabilidade as _obs_fail
+                                                _obs_fail.get_logger("lista_telefonica").exception("render_ord falhou")
+                                    except Exception:
+                                        pass
+                                    try:
+                                        from mod_intranet.tema_modulo import notificar as _notificar_fail
+                                        _notificar_fail("Erro interno. Tente novamente.", tipo="error")
+                                    except Exception:
+                                        pass
+                                    return None
                         render_ord()
                         def salvar():
                             try:

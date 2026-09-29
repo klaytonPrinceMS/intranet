@@ -26,6 +26,7 @@ nav:
       - Configurações e Variáveis de Ambiente: configuracoes.md
       - Arquitetura: arquitetura.md
       - "Estilo Visual e Tema do Sistema (27/09/2026)": estilo_visual.md
+      - "Diálogo de Formulário — layout responsivo (29/09/2026)": dialogo_formulario.md
       - Referência de API e Código: api_referencia.md
       - Convenções de Criação de Código: convencoes_codigo.md
   - Visão de Produto: visao_de_produto/index.md

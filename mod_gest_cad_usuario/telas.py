@@ -26,8 +26,8 @@ from mod_intranet import observabilidade
 from mod_intranet.bd_manipulador import audit_log
 from mod_intranet.aba_modulo import cabecalho, campo_busca
 from mod_intranet.tema_modulo import ler_tema, notificar
-from mod_intranet.ui_comum import botao, botao_icone, dialogo_card, rodape_dialogo, \
-    rodape_salvar_restaurar
+from mod_intranet.ui_comum import botao, botao_icone, dialogo_card, \
+    dialogo_formulario, rodape_dialogo, rodape_salvar_restaurar
 from mod_gest_cad_usuario import bd_manipulador as gest
 
 log = observabilidade.get_logger("gest_cad_usuario")
@@ -511,9 +511,10 @@ def _dlg_sessoes(ator, nome):
     """User traceability dialog: active sessions + recent history.
 
     Diálogo de rastreabilidade do usuário: sessões ativas + histórico
-    recente (IP, dispositivo e MAC), shell padronizado (`dialogo_card`) e
-    ações de encerramento padronizadas (`botao_icone` na grade, `botao`
-    primário compacto no rodapé às extremidades).
+    recente (IP, dispositivo e MAC), shell de FORMULÁRIO
+    (`dialogo_formulario`: o corpo são duas tabelas longas, que estouravam a
+    janela) e ações de encerramento padronizadas (`botao_icone` na grade,
+    `botao` primário compacto no rodapé às extremidades).
     """
     try:
         _dlg_sessoes_seguro(ator, nome)
@@ -536,11 +537,12 @@ def _dlg_sessoes_seguro(ator, nome):
             log.warning(f"_duracao: falha ao calcular duração de sessão | {e}")
             return "—"
 
-    with dialogo_card(largura="w-full max-w-[820px] mx-4", chave_modulo="usuarios") as (dlg, card):
-        with ui.card_section().classes("w-full gap-1"):
-            ui.label(f"Sessões — {gest.nome_de_tratamento(nome)}").classes("text-h6")
-            ui.label(f"@{nome} · rastreabilidade LGPD: IP, dispositivo e MAC "
-                     "(quando resolvível na rede local)").classes("text-caption text-grey-7")
+    with dialogo_formulario(f"Sessões — {gest.nome_de_tratamento(nome)}",
+                            chave_modulo="usuarios",
+                            descricao=f"@{nome} · rastreabilidade LGPD: IP, dispositivo e MAC "
+                                      "(quando resolvível na rede local)"
+                            ) as (dlg, card, miolo, grade):
+        with miolo:
             if nome == ator:
                 ui.badge("sua conta — encerrar a sessão atual deslogará você",
                          color="amber-3").props("text-color=amber-10 outline dense")
@@ -625,9 +627,11 @@ def _dlg_novo(ator, refresh):
 
     Diálogo de criação de usuário: dados básicos, senha provisória
     (troca obrigatória no primeiro acesso) e seletores de acesso por
-    módulo; shell padronizado (`dialogo_card`), notificações via
-    `notificar` e rodapé padrão (`rodape_dialogo`) com "Criar usuário"
-    (primário compacto do tema).
+    módulo; shell de FORMULÁRIO (`dialogo_formulario`: 88vw, teto de
+    1600px, `max-h-[90vh]` com o miolo rolável), os campos no `grade`
+    auto-fit e o rodapé ancorado na base, notificações via `notificar` e
+    rodapé padrão (`rodape_dialogo`) com "Criar usuário" (primário
+    compacto do tema).
     """
     try:
         _dlg_novo_seguro(ator, refresh)
@@ -638,12 +642,11 @@ def _dlg_novo(ator, refresh):
 
 def _dlg_novo_seguro(ator, refresh):
     """Body of `_dlg_novo`, isolated so the entry point can protect it."""
-    with dialogo_card(largura="w-full max-w-[560px] mx-4", chave_modulo="usuarios") as (dlg, card):
-        with ui.card_section().classes("w-full overflow-auto gap-2"):
-            ui.label("Novo usuário").classes("text-h6")
-            ui.label("Senha provisória — troca obrigatória no primeiro acesso (padrão inicial: 123456).").classes(
-                "text-caption text-grey-7 -mt-2")
-
+    with dialogo_formulario("Novo usuário", chave_modulo="usuarios",
+                            descricao="Senha provisória — troca obrigatória no "
+                                     "primeiro acesso (padrão inicial: 123456)."
+                            ) as (dlg, card, miolo, grade):
+        with grade:
             nome = ui.input("Nome de usuário (login) *").props("outlined dense").classes("w-full") \
                 .tooltip("Usado apenas para entrar — não aparece como tratamento")
             completo = ui.input("Nome completo ou social *", placeholder="ex.: Maria Aparecida da Silva") \
@@ -654,17 +657,17 @@ def _dlg_novo_seguro(ator, refresh):
                              password=True, password_toggle_button=True,
                              value="123456") \
                 .props("outlined dense").classes("w-full")
-            with ui.grid(columns=2).classes("w-full gap-2"):
-                email = ui.input("E-mail").props("outlined dense")
-                try:
-                    from mod_intranet import telefone as _tel
-                    _campo_fone_novo = _tel.criar_campo_telefone(valor="")
-                except Exception:
-                    _campo_fone_novo = None
-                    fone = ui.input("Telefone").props("outlined dense")
+            email = ui.input("E-mail").props("outlined dense").classes("w-full")
+            try:
+                from mod_intranet import telefone as _tel
+                _campo_fone_novo = _tel.criar_campo_telefone(valor="")
+            except Exception:
+                _campo_fone_novo = None
+                fone = ui.input("Telefone").props("outlined dense").classes("w-full")
             perfil = ui.select(gest.PERFIS_GLOBAIS, value="comum", label="Perfil global",
                                with_input=True).props("outlined dense").classes("w-full")
 
+        with miolo:
             ui.separator()
             ui.label("Acesso aos módulos (padrão: Comum em Editor PDF, Empenhos e Solicitação de Impressão)").classes(
                 "text-subtitle2 text-grey-8")
@@ -872,13 +875,11 @@ def _dlg_editar_seguro(ator, nome_atual, refresh):
         return
     _, _, _, email, fone, perfil, _, _, _deletado, completo = row
 
-    with dialogo_card(largura="w-full max-w-[560px] mx-4", chave_modulo="usuarios") as (dlg, card):
-        with ui.card_section().classes("w-full overflow-auto gap-2"):
-            ui.label(f"Editar — {gest.nome_de_tratamento(nome_atual)}").classes("text-h6")
-            ui.separator()
-
-            ui.label("Identidade (chave primária ID preservada)").classes(
-                "text-subtitle2 text-grey-8")
+    with dialogo_formulario(f"Editar — {gest.nome_de_tratamento(nome_atual)}",
+                            chave_modulo="usuarios",
+                            descricao="Identidade (chave primária ID preservada)"
+                            ) as (dlg, card, miolo, grade):
+        with grade:
             novo_nome = ui.input("Nome de usuário (login)", value=nome_atual).props("outlined dense").classes("w-full")
             if nome_atual == "master":
                 novo_nome.disable().tooltip("A conta master nativa não pode ser renomeada")
@@ -886,20 +887,19 @@ def _dlg_editar_seguro(ator, nome_atual, refresh):
             completo_i = ui.input("Nome completo ou social *", value=completo or "",
                                   placeholder="Nome para tratamento — pode ser nome social") \
                 .props("outlined dense").classes("w-full")
-
-            with ui.grid(columns=2).classes("w-full gap-2"):
-                email_i = ui.input("E-mail", value=email or "").props("outlined dense")
-                try:
-                    from mod_intranet import telefone as _tel_edit
-                    _campo_fone_edit = _tel_edit.criar_campo_telefone(valor=fone or "")
-                    _fone_edit_input = None
-                except Exception:
-                    _campo_fone_edit = None
-                    fone_i = ui.input("Telefone", value=fone or "").props("outlined dense")
-                    _fone_edit_input = fone_i
+            email_i = ui.input("E-mail", value=email or "").props("outlined dense").classes("w-full")
+            try:
+                from mod_intranet import telefone as _tel_edit
+                _campo_fone_edit = _tel_edit.criar_campo_telefone(valor=fone or "")
+                _fone_edit_input = None
+            except Exception:
+                _campo_fone_edit = None
+                fone_i = ui.input("Telefone", value=fone or "").props("outlined dense").classes("w-full")
+                _fone_edit_input = fone_i
             perf_i = ui.select(gest.PERFIS_GLOBAIS, value=perfil, label="Perfil global",
                                with_input=True).props("outlined dense").classes("w-full")
 
+        with miolo:
             ui.separator()
             _bloco_telefones_admin(nome_atual, ator)
 
@@ -1137,16 +1137,16 @@ def _dlg_duplicar_seguro(ator, origem, refresh):
     origem_perfil = row[5]
     acessos = gest.listar_acessos(origem)
 
-    with dialogo_card(largura="w-full max-w-[560px] mx-4", chave_modulo="usuarios") as (dlg, card):
-        with ui.card_section().classes("w-full overflow-auto gap-2"):
-            ui.label(f"Duplicar usuário — @{origem}").classes("text-h6")
-            ui.label("O novo usuário herdará o perfil global e os acessos por módulo "
-                     "do usuário origem, que já vêm pré-selecionados abaixo.").classes(
-                "text-caption text-grey-7 -mt-2")
+    with dialogo_formulario(f"Duplicar usuário — @{origem}", chave_modulo="usuarios",
+                            descricao="O novo usuário herdará o perfil global e os acessos por módulo "
+                                      "do usuário origem, que já vêm pré-selecionados abaixo."
+                            ) as (dlg, card, miolo, grade):
+        with miolo:
             ui.label(f"Origem: @{origem} · perfil {origem_perfil.replace('_', ' ')}"
                      f" · {len(acessos)} acesso(s) por módulo") \
                 .classes("text-caption bg-teal-1 text-teal-9 px-2 py-1 rounded")
 
+        with grade:
             nome = ui.input("Nome de usuário (login) *").props("outlined dense").classes("w-full") \
                 .tooltip("Usado apenas para entrar — não aparece como tratamento")
             completo = ui.input("Nome completo ou social *", placeholder="ex.: Maria Aparecida da Silva") \
@@ -1165,6 +1165,7 @@ def _dlg_duplicar_seguro(ator, origem, refresh):
                 _campo_fone_dup = None
                 fone = ui.input("Telefone (opcional)").props("outlined dense").classes("w-full")
 
+        with miolo:
             ui.separator()
             ui.label(f"Acessos por módulo (copiados de @{origem})").classes(
                 "text-subtitle2 text-grey-8")

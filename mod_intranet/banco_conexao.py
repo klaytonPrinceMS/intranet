@@ -58,6 +58,34 @@ def _dsn_publico(url):
         return "<dsn>"
 
 
+def _banco_central_sem_schema():
+    """True quando o SQLite central ainda não tem tabela nenhuma (instalação nova).
+
+    Usado só para classificar o erro de boot: no primeiro boot o
+    `sqlite3.connect()` em `_ler_config_sqlite` CRIA o arquivo vazio antes de
+    consultar `tb_config`, e o `init_db` só semeia o schema em seguida. Nesse
+    intervalo o `SELECT` falha com `no such table`. True aqui = banco
+    zerado de verdade; False = banco já semeado, onde a falha é anômala e
+    precisa de atenção. Qualquer erro ao inspecionar devolve False (não
+    mascaramos falha real como se fosse primeiro boot).
+    """
+    try:
+        from mod_intranet.repositorio import DB_PATH
+        if not os.path.exists(DB_PATH):
+            return True
+        import sqlite3
+        conn = sqlite3.connect(DB_PATH, timeout=2.0)
+        try:
+            total = conn.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table'"
+            ).fetchone()[0]
+            return total == 0
+        finally:
+            conn.close()
+    except Exception:
+        return False
+
+
 @lru_cache(maxsize=32)
 def _ler_config_sqlite(chave, default=""):
     """Reads a selector config key straight from the central SQLite file.
@@ -84,8 +112,20 @@ def _ler_config_sqlite(chave, default=""):
         finally:
             conn.close()
     except Exception as exc:
+        # O log NUNCA é suprimido (AGENTS.md 3.2): a causa fica registrada
+        # mesmo quando o erro é o esperado do primeiro boot. O que muda é
+        # apenas a impressão no terminal, para quem está olhando o boot
+        # entender que ali não há defeito — é a primeira execução sem banco.
         try:
             _log().exception(f"_ler_config_sqlite('{chave}'): {exc}")
+        except Exception:
+            pass
+        try:
+            if _banco_central_sem_schema():
+                print(f"[banco] Primeira execução: '{chave}' ainda não existe em "
+                      f"tb_config porque o banco central ainda não foi criado. "
+                      f"Erro esperado no primeiro boot — o schema é semeado em "
+                      f"seguida. Causa registrada no log.", flush=True)
         except Exception:
             pass
         return default

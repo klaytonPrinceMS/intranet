@@ -26,7 +26,8 @@ from mod_intranet import integracoes
 from mod_intranet import observabilidade
 from mod_intranet.aba_modulo import cabecalho
 from mod_intranet.tema_modulo import ler_tema, notificar
-from mod_intranet.ui_comum import CORES, botao, botao_icone, dialogo_card
+from mod_intranet.ui_comum import CORES, botao, botao_icone, dialogo_card, \
+    dialogo_formulario
 from mod_estoque import bd_manipulador as est_bd
 
 log = observabilidade.get_logger("estoque")
@@ -642,26 +643,27 @@ def _dialogo_em_uso(sessao, almoxarifado):
     """Diálogo com o que está em uso em UM almoxarifado."""
     try:
         entregas = est_bd.listar_entregas(almoxarifado_id=almoxarifado["id"])
-        with dialogo_card(f"O que está em uso em {almoxarifado['nome']}",
-                          "w-[720px]", chave_modulo=CHAVE) as (dlg, _card):
-            if not entregas:
-                ui.label("Nada entregue em sala por este almoxarifado.").classes(
-                    "text-body2 text-grey-7")
-            else:
-                with ui.column().classes("w-full gap-2").style("min-width: 0"):
-                    for entrega in entregas:
-                        with ui.row().classes("w-full items-center flex-wrap") \
-                                .style("gap: 0.5rem; min-width: 0"):
-                            ui.label(
-                                f"{entrega['item_numero']} — {entrega['descricao']} "
-                                f"· {entrega['quantidade']:g} "
-                                f"{entrega['unidade_medida']} · "
-                                f"{entrega['destino_sala']} · "
-                                f"{entrega['dias_parado']} dia(s)") \
-                                .classes("text-caption").style(
-                                "min-width: 0; word-break: break-word")
-                            if entrega["parado"]:
-                                ui.badge("parado", color="orange-8").props("rounded")
+        with dialogo_formulario(f"O que está em uso em {almoxarifado['nome']}",
+                                chave_modulo=CHAVE) as (dlg, _card, miolo, _grade):
+            with miolo:
+                if not entregas:
+                    ui.label("Nada entregue em sala por este almoxarifado.").classes(
+                        "text-body2 text-grey-7")
+                else:
+                    with ui.column().classes("w-full gap-2").style("min-width: 0"):
+                        for entrega in entregas:
+                            with ui.row().classes("w-full items-center flex-wrap") \
+                                    .style("gap: 0.5rem; min-width: 0"):
+                                ui.label(
+                                    f"{entrega['item_numero']} — {entrega['descricao']} "
+                                    f"· {entrega['quantidade']:g} "
+                                    f"{entrega['unidade_medida']} · "
+                                    f"{entrega['destino_sala']} · "
+                                    f"{entrega['dias_parado']} dia(s)") \
+                                    .classes("text-caption").style(
+                                    "min-width: 0; word-break: break-word")
+                                if entrega["parado"]:
+                                    ui.badge("parado", color="orange-8").props("rounded")
         dlg.open()
     except Exception:
         log.exception("_dialogo_em_uso falhou")
@@ -1014,36 +1016,37 @@ def _dialogo_convites_pendentes(sessao):
     """Convites de depósito que aguardam resposta de quem está na tela."""
     try:
         convites = est_bd.listar_convites_pendentes(sessao.user_nome)
-        with dialogo_card("Convites de depósito", "w-[560px]",
-                          chave_modulo=CHAVE) as (dlg, _card):
-            if not convites:
-                ui.label("Nenhum convite esperando.").classes(
-                    "text-body2 text-grey-7")
-            for convite in convites:
-                with ui.column().classes("w-full gap-1").style("min-width: 0"):
-                    ui.label(f"{convite['tarefa_numero']} — {convite['tarefa_titulo']}") \
-                        .classes("text-body2 font-medium").style(
-                        "min-width: 0; word-break: break-word")
-                    ui.label(f"{TIPOS_TAREFA_ROTULO.get(convite['tarefa_tipo'], '')}"
-                             f" · convidado por {convite['convidado_por']}").classes(
-                        "text-caption text-grey-6")
-                    inp = ui.input("Recado (opcional)")
-                    inp.props("outlined dense data-testid="
-                              f"estoque-recado-convite-{convite['id']}")
-                    with ui.row().classes("w-full justify-end").style("gap: 0.5rem"):
-                        btn_ok = botao("Aceitar", icone="check", chave_modulo=CHAVE) \
-                            .props(f"data-testid=estoque-aceitar-convite-"
-                                   f"{convite['id']}")
-                        btn_ok.on("click", lambda c=convite, campo=inp:
-                                  _responder_convite(sessao, c, True, campo, dlg,
-                                                     btn_ok))
-                        btn_nao = botao("Recusar", variante="perigo",
-                                        chave_modulo=CHAVE) \
-                            .props(f"data-testid=estoque-recusar-convite-"
-                                   f"{convite['id']}")
-                        btn_nao.on("click", lambda c=convite, campo=inp:
-                                   _responder_convite(sessao, c, False, campo, dlg,
-                                                      btn_nao))
+        with dialogo_formulario("Convites de depósito", chave_modulo=CHAVE) as (
+                dlg, _card, miolo, _grade):
+            with miolo:
+                if not convites:
+                    ui.label("Nenhum convite esperando.").classes(
+                        "text-body2 text-grey-7")
+                for convite in convites:
+                    with ui.column().classes("w-full gap-1").style("min-width: 0"):
+                        ui.label(f"{convite['tarefa_numero']} — {convite['tarefa_titulo']}") \
+                            .classes("text-body2 font-medium").style(
+                            "min-width: 0; word-break: break-word")
+                        ui.label(f"{TIPOS_TAREFA_ROTULO.get(convite['tarefa_tipo'], '')}"
+                                 f" · convidado por {convite['convidado_por']}").classes(
+                            "text-caption text-grey-6")
+                        inp = ui.input("Recado (opcional)").classes("w-full")
+                        inp.props("outlined dense data-testid="
+                                  f"estoque-recado-convite-{convite['id']}")
+                        with ui.row().classes("w-full justify-end").style("gap: 0.5rem"):
+                            btn_ok = botao("Aceitar", icone="check", chave_modulo=CHAVE) \
+                                .props(f"data-testid=estoque-aceitar-convite-"
+                                       f"{convite['id']}")
+                            btn_ok.on("click", lambda c=convite, campo=inp:
+                                      _responder_convite(sessao, c, True, campo, dlg,
+                                                         btn_ok))
+                            btn_nao = botao("Recusar", variante="perigo",
+                                            chave_modulo=CHAVE) \
+                                .props(f"data-testid=estoque-recusar-convite-"
+                                       f"{convite['id']}")
+                            btn_nao.on("click", lambda c=convite, campo=inp:
+                                       _responder_convite(sessao, c, False, campo, dlg,
+                                                          btn_nao))
         dlg.open()
     except Exception:
         log.exception("_dialogo_convites_pendentes falhou")
@@ -1121,41 +1124,39 @@ def _dialogo_entrada(sessao, almoxarifado_id=None):
         if not opcoes:
             notificar("Nenhum almoxarifado disponível.", type="warning")
             return
-        with dialogo_card("Entrada de material", "w-[620px]",
-                          chave_modulo=CHAVE) as (dlg, _card):
-            ui.label("O que entra no almoxarifado: compra, nota de empenho, "
-                     "empenho ou doação. Se o item ainda não está no catálogo, "
-                     "ele é cadastrado agora com o número do almoxarifado.") \
-                .classes("text-caption text-grey-6")
-            with ui.column().classes("w-full gap-2").style("min-width: 0"):
+        with dialogo_formulario("Entrada de material", chave_modulo=CHAVE,
+                                descricao="O que entra no almoxarifado: compra, nota de empenho, "
+                                          "empenho ou doação. Se o item ainda não está no catálogo, "
+                                          "ele é cadastrado agora com o número do almoxarifado."
+                                ) as (dlg, _card, miolo, grade):
+            with grade:
                 sel_alm = ui.select(opcoes, label="Almoxarifado",
                                     value=almoxarifado_id or
-                                    next(iter(opcoes.values())))
+                                    next(iter(opcoes.values()))) \
+                    .classes("w-full")
                 sel_alm.props("outlined dense data-testid=estoque-entrada-almoxarifado")
                 inp_desc = ui.input("Item (o que entrou)",
-                                    placeholder="Ex.: Resma A4")
+                                    placeholder="Ex.: Resma A4").classes("w-full")
                 inp_desc.props("outlined dense data-testid=estoque-entrada-item")
-                with ui.row().classes("w-full items-center flex-wrap") \
-                        .style("gap: 0.75rem; min-width: 0"):
-                    inp_qtd = ui.number("Quantidade", value=1, min=0, step=1, format="%.3f") \
-                        .props("outlined dense data-testid=estoque-entrada-qtd")
-                    sel_un = ui.select(dict(UNIDADES_ROTULO), label="Unidade de medida",
-                                       value="UN")
-                    sel_un.props("outlined dense data-testid=estoque-entrada-unidade")
-                with ui.row().classes("w-full items-center flex-wrap") \
-                        .style("gap: 0.75rem; min-width: 0"):
-                    sel_origem = ui.select(dict(ORIGENS_ROTULO), label="Origem",
-                                           value="nota_empenho")
-                    sel_origem.props("outlined dense data-testid=estoque-entrada-origem")
-                    inp_data = ui.date("Data da entrada", value=_hoje())
-                    inp_data.props("outlined dense data-testid=estoque-entrada-data")
+                inp_qtd = ui.number("Quantidade", value=1, min=0, step=1, format="%.3f") \
+                    .classes("w-full") \
+                    .props("outlined dense data-testid=estoque-entrada-qtd")
+                sel_un = ui.select(dict(UNIDADES_ROTULO), label="Unidade de medida",
+                                   value="UN").classes("w-full")
+                sel_un.props("outlined dense data-testid=estoque-entrada-unidade")
+                sel_origem = ui.select(dict(ORIGENS_ROTULO), label="Origem",
+                                       value="nota_empenho").classes("w-full")
+                sel_origem.props("outlined dense data-testid=estoque-entrada-origem")
+                inp_data = ui.date("Data da entrada", value=_hoje()).classes("w-full")
+                inp_data.props("outlined dense data-testid=estoque-entrada-data")
                 inp_ne = ui.input("Nota de empenho (se houver)",
-                                  placeholder="Ex.: NE-2026-0145")
+                                  placeholder="Ex.: NE-2026-0145").classes("w-full")
                 inp_ne.props("outlined dense data-testid=estoque-entrada-nota")
-                inp_resp = ui.input("Responsável pelo recebimento")
+                inp_resp = ui.input("Responsável pelo recebimento").classes("w-full")
                 inp_resp.props("outlined dense data-testid=estoque-entrada-responsavel")
-                inp_obs = ui.textarea("Observação")
+                inp_obs = ui.textarea("Observação").classes("w-full")
                 inp_obs.props("outlined rows=2 dense data-testid=estoque-entrada-obs")
+            with miolo:
                 lbl = ui.label("").classes("text-caption text-grey-6")
 
                 def _salvar():
@@ -1186,18 +1187,17 @@ def _dialogo_transferencia(sessao, almoxarifado_origem_id=None, item_id=None,
             notificar("É preciso ter um almoxarifado de destino para transferir.",
                       type="warning")
             return
-        with dialogo_card("Transferência de material", "w-[620px]",
-                          chave_modulo=CHAVE) as (dlg, _card):
-            ui.label("A transferência gera DOCUMENTO DE SAÍDA e baixa a origem. "
-                     "O que passaria do disponível é recusado, e a mensagem diz "
-                     "quanto tem — o estoque nunca fica negativo.") \
-                .classes("text-caption text-grey-6")
-            with ui.column().classes("w-full gap-2").style("min-width: 0"):
+        with dialogo_formulario("Transferência de material", chave_modulo=CHAVE,
+                                descricao="A transferência gera DOCUMENTO DE SAÍDA e baixa a origem. "
+                                          "O que passaria do disponível é recusado, e a mensagem diz "
+                                          "quanto tem — o estoque nunca fica negativo."
+                                ) as (dlg, _card, miolo, grade):
+            with grade:
                 sel_origem = ui.select(opcoes, label="Almoxarifado de origem",
                                        value=almoxarifado_origem_id or
-                                       next(iter(opcoes.values())))
+                                       next(iter(opcoes.values()))).classes("w-full")
                 sel_origem.props("outlined dense data-testid=estoque-transf-origem")
-                sel_item = ui.select({}, label="Item disponível na origem")
+                sel_item = ui.select({}, label="Item disponível na origem").classes("w-full")
                 sel_item.props("outlined dense data-testid=estoque-transf-item")
 
                 def _recarrega_itens(e=None):
@@ -1223,19 +1223,19 @@ def _dialogo_transferencia(sessao, almoxarifado_origem_id=None, item_id=None,
                 sel_destino = ui.select(opcoes_destino,
                                         label="Almoxarifado de destino",
                                         value=destino_id or
-                                        next(iter(opcoes_destino.values()), None))
+                                        next(iter(opcoes_destino.values()), None)) \
+                    .classes("w-full")
                 sel_destino.props("outlined dense data-testid=estoque-transf-destino")
-                with ui.row().classes("w-full items-center flex-wrap") \
-                        .style("gap: 0.75rem; min-width: 0"):
-                    inp_qtd = ui.number("Quantidade", value=1, min=0, step=1,
-                                        format="%.3f")
-                    inp_qtd.props("outlined dense data-testid=estoque-transf-qtd")
-                    inp_data = ui.date("Data", value=_hoje())
-                    inp_data.props("outlined dense data-testid=estoque-transf-data")
-                inp_resp = ui.input("Responsável pela saída")
+                inp_qtd = ui.number("Quantidade", value=1, min=0, step=1,
+                                    format="%.3f").classes("w-full")
+                inp_qtd.props("outlined dense data-testid=estoque-transf-qtd")
+                inp_data = ui.date("Data", value=_hoje()).classes("w-full")
+                inp_data.props("outlined dense data-testid=estoque-transf-data")
+                inp_resp = ui.input("Responsável pela saída").classes("w-full")
                 inp_resp.props("outlined dense data-testid=estoque-transf-responsavel")
-                inp_obs = ui.textarea("Observação")
+                inp_obs = ui.textarea("Observação").classes("w-full")
                 inp_obs.props("outlined rows=2 dense data-testid=estoque-transf-obs")
+            with miolo:
                 lbl = ui.label("").classes("text-caption text-grey-6")
 
                 def _salvar():
@@ -1269,17 +1269,17 @@ def _dialogo_entrega(sessao, almoxarifado_id=None, item_id=None):
         if not opcoes:
             notificar("Nenhum almoxarifado disponível.", type="warning")
             return
-        with dialogo_card("Entrega para a sala", "w-[620px]",
-                          chave_modulo=CHAVE) as (dlg, _card):
-            ui.label("O material sai do DISPONÍVEL e entra como EM USO. A sala "
-                     "e a data são obrigatórias: sem elas não dá para dizer "
-                     "quanto tempo o material está fora.") \
-                .classes("text-caption text-grey-6")
-            with ui.column().classes("w-full gap-2").style("min-width: 0"):
+        with dialogo_formulario("Entrega para a sala", chave_modulo=CHAVE,
+                                descricao="O material sai do DISPONÍVEL e entra como EM USO. A sala "
+                                          "e a data são obrigatórias: sem elas não dá para dizer "
+                                          "quanto tempo o material está fora."
+                                ) as (dlg, _card, miolo, grade):
+            with grade:
                 sel_alm = ui.select(opcoes, label="Almoxarifado",
-                                    value=almoxarifado_id or next(iter(opcoes.values())))
+                                    value=almoxarifado_id or next(iter(opcoes.values()))) \
+                    .classes("w-full")
                 sel_alm.props("outlined dense data-testid=estoque-entrega-almoxarifado")
-                sel_item = ui.select({}, label="Item disponível")
+                sel_item = ui.select({}, label="Item disponível").classes("w-full")
                 sel_item.props("outlined dense data-testid=estoque-entrega-item")
 
                 def _recarrega_itens(e=None):
@@ -1298,20 +1298,20 @@ def _dialogo_entrega(sessao, almoxarifado_id=None, item_id=None):
                         sel_item.value = item_id
                     except Exception:
                         log.exception("_dialogo_entrega: preencheu item falhou")
-                with ui.row().classes("w-full items-center flex-wrap") \
-                        .style("gap: 0.75rem; min-width: 0"):
-                    inp_qtd = ui.number("Quantidade", value=1, min=0, step=1,
-                                        format="%.3f")
-                    inp_qtd.props("outlined dense data-testid=estoque-entrega-qtd")
-                    inp_data = ui.date("Data da entrega", value=_hoje())
-                    inp_data.props("outlined dense data-testid=estoque-entrega-data")
+                inp_qtd = ui.number("Quantidade", value=1, min=0, step=1,
+                                    format="%.3f").classes("w-full")
+                inp_qtd.props("outlined dense data-testid=estoque-entrega-qtd")
+                inp_data = ui.date("Data da entrega", value=_hoje()).classes("w-full")
+                inp_data.props("outlined dense data-testid=estoque-entrega-data")
                 inp_sala = ui.input("Sala de destino",
-                                    placeholder="Ex.: Sala 12, Protocolo Geral")
+                                    placeholder="Ex.: Sala 12, Protocolo Geral") \
+                    .classes("w-full")
                 inp_sala.props("outlined dense data-testid=estoque-entrega-sala")
-                inp_dep = ui.input("Departamento / setor")
+                inp_dep = ui.input("Departamento / setor").classes("w-full")
                 inp_dep.props("outlined dense data-testid=estoque-entrega-departamento")
-                inp_resp = ui.input("Responsável pelo uso")
+                inp_resp = ui.input("Responsável pelo uso").classes("w-full")
                 inp_resp.props("outlined dense data-testid=estoque-entrega-responsavel")
+            with miolo:
                 lbl = ui.label("").classes("text-caption text-grey-6")
 
                 def _salvar():
@@ -1379,18 +1379,18 @@ def _dialogo_recolhimento(sessao, almoxarifado_id=None, item_id=None, sala=""):
         if not opcoes:
             notificar("Nenhum almoxarifado disponível.", type="warning")
             return
-        with dialogo_card("Pedido de recolhimento", "w-[620px]",
-                          chave_modulo=CHAVE) as (dlg, _card):
-            ui.label("O material entregue e não usado volta a ficar DISPONÍVEL "
-                     "quando o central atende o pedido. É o pedido que evita "
-                     "o desperdício: quem pede é o almoxarifado da secretaria "
-                     "ou quem está com o item parado.") \
-                .classes("text-caption text-grey-6")
-            with ui.column().classes("w-full gap-2").style("min-width: 0"):
+        with dialogo_formulario("Pedido de recolhimento", chave_modulo=CHAVE,
+                                descricao="O material entregue e não usado volta a ficar DISPONÍVEL "
+                                          "quando o central atende o pedido. É o pedido que evita "
+                                          "o desperdício: quem pede é o almoxarifado da secretaria "
+                                          "ou quem está com o item parado."
+                                ) as (dlg, _card, miolo, grade):
+            with grade:
                 sel_alm = ui.select(opcoes, label="Almoxarifado",
-                                    value=almoxarifado_id or next(iter(opcoes.values())))
+                                    value=almoxarifado_id or next(iter(opcoes.values()))) \
+                    .classes("w-full")
                 sel_alm.props("outlined dense data-testid=estoque-pedido-almoxarifado")
-                sel_item = ui.select({}, label="Item entregue e ainda em uso")
+                sel_item = ui.select({}, label="Item entregue e ainda em uso").classes("w-full")
                 sel_item.props("outlined dense data-testid=estoque-pedido-item")
 
                 def _recarrega_itens(e=None):
@@ -1421,17 +1421,17 @@ def _dialogo_recolhimento(sessao, almoxarifado_id=None, item_id=None, sala=""):
                 sel_tipo = ui.select(
                     {"recolhimento": "Almoxarifado pede para o central recolher",
                      "devolucao": "Quem está com o item devolve por não uso"},
-                    label="Quem está pedindo", value="recolhimento")
+                    label="Quem está pedindo", value="recolhimento").classes("w-full")
                 sel_tipo.props("outlined dense data-testid=estoque-pedido-tipo")
-                with ui.row().classes("w-full items-center flex-wrap") \
-                        .style("gap: 0.75rem; min-width: 0"):
-                    inp_qtd = ui.number("Quantidade", value=1, min=0, step=1,
-                                        format="%.3f")
-                    inp_qtd.props("outlined dense data-testid=estoque-pedido-qtd")
-                    inp_sala = ui.input("Sala", value=sala or "")
-                    inp_sala.props("outlined dense data-testid=estoque-pedido-sala")
-                inp_motivo = ui.textarea("Motivo (por que o material não foi usado)")
+                inp_qtd = ui.number("Quantidade", value=1, min=0, step=1,
+                                    format="%.3f").classes("w-full")
+                inp_qtd.props("outlined dense data-testid=estoque-pedido-qtd")
+                inp_sala = ui.input("Sala", value=sala or "").classes("w-full")
+                inp_sala.props("outlined dense data-testid=estoque-pedido-sala")
+                inp_motivo = ui.textarea("Motivo (por que o material não foi usado)") \
+                    .classes("w-full")
                 inp_motivo.props("outlined rows=2 dense data-testid=estoque-pedido-motivo")
+            with miolo:
                 lbl = ui.label("").classes("text-caption text-grey-6")
 
                 def _salvar():
@@ -1470,25 +1470,27 @@ def _dialogo_novo_almoxarifado(sessao):
             dlg.open()
             return
         opcoes = {u["nome"]: u["id"] for u in unidades}
-        with dialogo_card("Novo almoxarifado", "w-[620px]",
-                          chave_modulo=CHAVE) as (dlg, _card):
-            ui.label("Cada secretaria do organograma pode ter o seu almoxarifado. "
-                     "Quem escolhe quais secretarias têm almoxarifado é o "
-                     "administrador do módulo — secretaria sem almoxarifado "
-                     "simplesmente não tem.") \
-                .classes("text-caption text-grey-6")
-            with ui.column().classes("w-full gap-2").style("min-width: 0"):
-                sel_unidade = ui.select(opcoes, label="Secretaria (organograma)")
+        with dialogo_formulario("Novo almoxarifado", chave_modulo=CHAVE,
+                                descricao="Cada secretaria do organograma pode ter o seu almoxarifado. "
+                                          "Quem escolhe quais secretarias têm almoxarifado é o "
+                                          "administrador do módulo — secretaria sem almoxarifado "
+                                          "simplesmente não tem."
+                                ) as (dlg, _card, miolo, grade):
+            with grade:
+                sel_unidade = ui.select(opcoes, label="Secretaria (organograma)") \
+                    .classes("w-full")
                 sel_unidade.props("outlined dense data-testid="
                                   "estoque-almox-secretaria")
                 inp_nome = ui.input("Nome do almoxarifado",
-                                    placeholder="Vazio = usa o nome da secretaria")
+                                    placeholder="Vazio = usa o nome da secretaria") \
+                    .classes("w-full")
                 inp_nome.props("outlined dense data-testid=estoque-almox-nome")
-                inp_sigla = ui.input("Sigla (opcional)")
+                inp_sigla = ui.input("Sigla (opcional)").classes("w-full")
                 inp_sigla.props("outlined dense maxlength=6 data-testid="
                                 "estoque-almox-sigla")
-                inp_resp = ui.input("Responsável pelo almoxarifado")
+                inp_resp = ui.input("Responsável pelo almoxarifado").classes("w-full")
                 inp_resp.props("outlined dense data-testid=estoque-almox-responsavel")
+            with miolo:
                 lbl_sug = ui.label("").classes("text-caption text-grey-6")
 
                 def _sugerir(e=None):
@@ -1534,39 +1536,41 @@ def _dialogo_novo_almoxarifado(sessao):
 def _dialogo_ajustes_almoxarifado(sessao, almoxarifado):
     """Ajustes do almoxarifado: responsável, estado e formato do número."""
     try:
-        with dialogo_card(f"Ajustes — {almoxarifado['nome']}", "w-[620px]",
-                          chave_modulo=CHAVE) as (dlg, _card):
-            ui.label("O estoque central é fixo e não aparece aqui: ele não se "
-                     "renomeia, não se desativa e não se exclui.") \
-                .classes("text-caption text-grey-6")
-            with ui.column().classes("w-full gap-2").style("min-width: 0"):
-                inp_nome = ui.input("Nome", value=almoxarifado["nome"])
+        with dialogo_formulario(f"Ajustes — {almoxarifado['nome']}",
+                                chave_modulo=CHAVE,
+                                descricao="O estoque central é fixo e não aparece aqui: ele não se "
+                                          "renomeia, não se desativa e não se exclui."
+                                ) as (dlg, _card, miolo, grade):
+            with grade:
+                inp_nome = ui.input("Nome", value=almoxarifado["nome"]).classes("w-full")
                 inp_nome.props("outlined dense data-testid=estoque-ajuste-nome")
                 inp_resp = ui.input("Responsável",
-                                    value=almoxarifado["responsavel_user_nome"] or "")
+                                    value=almoxarifado["responsavel_user_nome"] or "") \
+                    .classes("w-full")
                 inp_resp.props("outlined dense data-testid=estoque-ajuste-responsavel")
                 chk_ativo = ui.switch("Ativo", value=bool(almoxarifado["ativo"]))
                 chk_ativo.props("data-testid=estoque-ajuste-ativo")
                 chk_bloq = ui.switch("Bloqueado para movimentação",
                                      value=bool(almoxarifado["bloqueado"]))
                 chk_bloq.props("data-testid=estoque-ajuste-bloqueado")
+                inp_pref_item = ui.input("Prefixo do item",
+                                         value=almoxarifado["prefixo_item"] or "IT") \
+                    .classes("w-full")
+                inp_pref_item.props("outlined dense maxlength=12 data-testid="
+                                    "estoque-ajuste-prefixo-item")
+                inp_pref_doc = ui.input("Prefixo do documento",
+                                        value=almoxarifado["prefixo_documento"] or "DOC") \
+                    .classes("w-full")
+                inp_pref_doc.props("outlined dense maxlength=12 data-testid="
+                                   "estoque-ajuste-prefixo-doc")
+                num_dig = ui.number("Dígitos", value=almoxarifado["digitos_numero"],
+                                    min=est_bd.DIGITOS_MINIMO,
+                                    max=est_bd.DIGITOS_MAXIMO, step=1).classes("w-full")
+                num_dig.props("outlined dense data-testid=estoque-ajuste-digitos")
+            with miolo:
                 ui.separator()
                 ui.label("Formato do número — NÃO renumera o que já existe.").classes(
                     "text-caption text-grey-7")
-                with ui.row().classes("w-full items-center flex-wrap") \
-                        .style("gap: 0.75rem; min-width: 0"):
-                    inp_pref_item = ui.input("Prefixo do item",
-                                             value=almoxarifado["prefixo_item"] or "IT")
-                    inp_pref_item.props("outlined dense maxlength=12 data-testid="
-                                        "estoque-ajuste-prefixo-item")
-                    inp_pref_doc = ui.input("Prefixo do documento",
-                                            value=almoxarifado["prefixo_documento"] or "DOC")
-                    inp_pref_doc.props("outlined dense maxlength=12 data-testid="
-                                       "estoque-ajuste-prefixo-doc")
-                    num_dig = ui.number("Dígitos", value=almoxarifado["digitos_numero"],
-                                        min=est_bd.DIGITOS_MINIMO,
-                                        max=est_bd.DIGITOS_MAXIMO, step=1)
-                    num_dig.props("outlined dense data-testid=estoque-ajuste-digitos")
                 lbl_ex = ui.label(
                     f"Fica assim: {almoxarifado['prefixo_item']}-"
                     f"{'0' * int(almoxarifado['digitos_numero'])} / "
@@ -1633,28 +1637,26 @@ def _dialogo_novo_item(sessao, almoxarifado_id=None):
         if not opcoes:
             notificar("Nenhum almoxarifado disponível.", type="warning")
             return
-        with dialogo_card("Cadastrar item", "w-[560px]",
-                          chave_modulo=CHAVE) as (dlg, _card):
-            ui.label("O item recebe um número sequencial do almoxarifado "
-                     "escolhido, e o número nunca é reaproveitado. A quantidade "
-                     "entra depois, pelo botão de entrada.") \
-                .classes("text-caption text-grey-6")
-            with ui.column().classes("w-full gap-2").style("min-width: 0"):
+        with dialogo_formulario("Cadastrar item", chave_modulo=CHAVE,
+                                descricao="O item recebe um número sequencial do almoxarifado "
+                                          "escolhido, e o número nunca é reaproveitado. A quantidade "
+                                          "entra depois, pelo botão de entrada."
+                                ) as (dlg, _card, miolo, grade):
+            with grade:
                 inp_desc = ui.input("Descrição do item",
-                                    placeholder="Ex.: Resma A4")
+                                    placeholder="Ex.: Resma A4").classes("w-full")
                 inp_desc.props("outlined dense data-testid=estoque-item-descricao")
-                with ui.row().classes("w-full items-center flex-wrap") \
-                        .style("gap: 0.75rem; min-width: 0"):
-                    sel_un = ui.select(dict(UNIDADES_ROTULO),
-                                       label="Unidade de medida", value="UN")
-                    sel_un.props("outlined dense data-testid=estoque-item-unidade")
-                    sel_alm = ui.select(opcoes, label="Almoxarifado",
-                                        value=almoxarifado_id or
-                                        next(iter(opcoes.values())))
-                    sel_alm.props("outlined dense data-testid=estoque-item-almoxarifado")
+                sel_un = ui.select(dict(UNIDADES_ROTULO),
+                                   label="Unidade de medida", value="UN").classes("w-full")
+                sel_un.props("outlined dense data-testid=estoque-item-unidade")
+                sel_alm = ui.select(opcoes, label="Almoxarifado",
+                                    value=almoxarifado_id or
+                                    next(iter(opcoes.values()))).classes("w-full")
+                sel_alm.props("outlined dense data-testid=estoque-item-almoxarifado")
                 sel_origem = ui.select(dict(ORIGENS_ROTULO), label="Origem padrão",
-                                       value="nota_empenho")
+                                       value="nota_empenho").classes("w-full")
                 sel_origem.props("outlined dense data-testid=estoque-item-origem")
+            with miolo:
                 lbl = ui.label("").classes("text-caption text-grey-6")
 
                 def _salvar():
@@ -1680,30 +1682,29 @@ def _dialogo_tarefa(sessao):
         if not opcoes:
             notificar("Nenhum almoxarifado disponível.", type="warning")
             return
-        with dialogo_card("Nova tarefa de depósito", "w-[600px]",
-                          chave_modulo=CHAVE) as (dlg, _card):
-            ui.label("A tarefa é quem chama: você abre, escolhe quantos "
-                     "servidores são necessários e convida servidores já "
-                     "cadastrados. Quem aceita passa a contar como tratando "
-                     "o depósito.") \
-                .classes("text-caption text-grey-6")
-            with ui.column().classes("w-full gap-2").style("min-width: 0"):
+        with dialogo_formulario("Nova tarefa de depósito", chave_modulo=CHAVE,
+                                descricao="A tarefa é quem chama: você abre, escolhe quantos "
+                                          "servidores são necessários e convida servidores já "
+                                          "cadastrados. Quem aceita passa a contar como tratando "
+                                          "o depósito."
+                                ) as (dlg, _card, miolo, grade):
+            with grade:
                 inp_titulo = ui.input("Título",
-                                      placeholder="Ex.: Conferência da entrada de outubro")
+                                      placeholder="Ex.: Conferência da entrada de outubro") \
+                    .classes("w-full")
                 inp_titulo.props("outlined dense data-testid=estoque-tarefa-titulo")
                 sel_tipo = ui.select(dict(TIPOS_TAREFA_ROTULO), label="Tipo de tarefa",
-                                     value="conferir")
+                                     value="conferir").classes("w-full")
                 sel_tipo.props("outlined dense data-testid=estoque-tarefa-tipo")
                 sel_alm = ui.select(opcoes, label="Almoxarifado do depósito",
-                                    value=next(iter(opcoes.values())))
+                                    value=next(iter(opcoes.values()))).classes("w-full")
                 sel_alm.props("outlined dense data-testid=estoque-tarefa-almoxarifado")
-                inp_desc = ui.textarea("O que precisa ser feito")
+                inp_desc = ui.textarea("O que precisa ser feito").classes("w-full")
                 inp_desc.props("outlined rows=2 dense data-testid=estoque-tarefa-descricao")
-                with ui.row().classes("w-full items-center flex-wrap") \
-                        .style("gap: 0.75rem; min-width: 0"):
-                    num_conv = ui.number("Servidores necessários", value=1, min=1,
-                                         max=20, step=1)
-                    num_conv.props("outlined dense data-testid=estoque-tarefa-necessarios")
+                num_conv = ui.number("Servidores necessários", value=1, min=1,
+                                     max=20, step=1).classes("w-full")
+                num_conv.props("outlined dense data-testid=estoque-tarefa-necessarios")
+            with miolo:
                 lbl = ui.label("").classes("text-caption text-grey-6")
 
                 def _salvar():
@@ -1727,21 +1728,23 @@ def _dialogo_tarefa(sessao):
 def _dialogo_convite(sessao, tarefa):
     """CHAMA um servidor cadastrado para tratar o depósito."""
     try:
-        with dialogo_card(f"Chamar servidor — {tarefa['numero']}", "w-[560px]",
-                          chave_modulo=CHAVE) as (dlg, _card):
-            ui.label(f"Aceitos: {tarefa['aceitos']} de "
-                     f"{tarefa['necessarios_convidados']} necessários. O "
-                     f"convite fica pendente até o servidor aceitar.") \
-                .classes("text-caption text-grey-6")
-            inp_busca = ui.input("Buscar servidor cadastrado",
-                                 placeholder="nome ou login")
-            inp_busca.props("outlined dense clearable data-testid="
-                            "estoque-convite-busca")
-            sel_conv = ui.select({}, label="Servidor encontrado")
-            sel_conv.props("outlined dense clearable data-testid=estoque-convite-servidor")
-            inp_recado = ui.textarea("Recado (o que ele vai fazer)")
-            inp_recado.props("outlined rows=2 dense data-testid=estoque-convite-recado")
-            lbl = ui.label("").classes("text-caption text-grey-6")
+        with dialogo_formulario(f"Chamar servidor — {tarefa['numero']}",
+                                chave_modulo=CHAVE,
+                                descricao=f"Aceitos: {tarefa['aceitos']} de "
+                                          f"{tarefa['necessarios_convidados']} necessários. O "
+                                          f"convite fica pendente até o servidor aceitar."
+                                ) as (dlg, _card, miolo, grade):
+            with grade:
+                inp_busca = ui.input("Buscar servidor cadastrado",
+                                     placeholder="nome ou login").classes("w-full")
+                inp_busca.props("outlined dense clearable data-testid="
+                                "estoque-convite-busca")
+                sel_conv = ui.select({}, label="Servidor encontrado").classes("w-full")
+                sel_conv.props("outlined dense clearable data-testid=estoque-convite-servidor")
+                inp_recado = ui.textarea("Recado (o que ele vai fazer)").classes("w-full")
+                inp_recado.props("outlined rows=2 dense data-testid=estoque-convite-recado")
+            with miolo:
+                lbl = ui.label("").classes("text-caption text-grey-6")
 
             def _buscar(e=None):
                 """Busca servidores pelo cadastro — o módulo nunca cria usuário."""

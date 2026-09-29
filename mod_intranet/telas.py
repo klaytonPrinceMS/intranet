@@ -493,22 +493,30 @@ def _dialogo_meu_perfil(nome_usuario: str):
     fone_atual = row[4] or "" if row else ""
     completo_atual = row[9] or "" if row else ""
 
-    with ui_comum.dialogo_card(largura="w-[420px]", max_altura=False) as (dlg, card):
+    # Diálogo de FORMULÁRIO (dados + senha + telefones + fechar): sem teto de
+    # altura, ele estourava a janela e quem rolava era a página inteira. O
+    # `dialogo_formulario` dá 88vw, teto de 90vh e rolagem só no miolo.
+    with ui_comum.dialogo_formulario(chave_modulo="intranet",
+                                     sem_descricao=True) as (dlg, card, miolo, grade):
         ui.label("Meu Perfil").classes("text-h6 font-bold")
         ui.separator()
 
         ui.label("Dados pessoais").classes("text-subtitle2 text-grey-7")
-        completo = ui_comum.campo_texto(
-            "Nome completo (ou social)", valor=completo_atual,
-            tooltip="Nome pelo qual você será tratado no sistema. "
-                    "Pode ser seu nome social (Decreto 8.727/2016)")
-        email = ui_comum.campo_texto("E-mail", valor=email_atual)
-        try:
-            from mod_intranet import telefone as _tel_perfil
-            _campo_fone_perfil = _tel_perfil.criar_campo_telefone(valor=fone_atual)
-        except Exception:
-            _campo_fone_perfil = None
-            fone = ui_comum.campo_texto("Telefone", valor=fone_atual)
+        # Grade só dos três campos de dados: a ordem do DOM dos campos de SENHA
+        # abaixo não pode mudar (o QA preenche por índice), e ela fica fora da
+        # grade de propósito.
+        with grade:
+            completo = ui_comum.campo_texto(
+                "Nome completo (ou social)", valor=completo_atual,
+                tooltip="Nome pelo qual você será tratado no sistema. "
+                        "Pode ser seu nome social (Decreto 8.727/2016)")
+            email = ui_comum.campo_texto("E-mail", valor=email_atual)
+            try:
+                from mod_intranet import telefone as _tel_perfil
+                _campo_fone_perfil = _tel_perfil.criar_campo_telefone(valor=fone_atual)
+            except Exception:
+                _campo_fone_perfil = None
+                fone = ui_comum.campo_texto("Telefone", valor=fone_atual)
 
         def _fone_perfil_valor():
             try:
@@ -686,6 +694,28 @@ def _bloco_telefones_meu_perfil(nome_usuario: str):
     _botao_tema("Adicionar telefone", variante="secundario", on_click=_adicionar)
 
 
+# ================ LAYOUT DO DIÁLOGO DE TROCA DE CREDENCIAIS =================
+#
+# O diálogo do primeiro acesso do `master` foi o PRIMEIRO a receber o layout de
+# formulário largo, e é o que tem mais conteúdo: 7 campos, dois blocos
+# informativos e um botão. Com `w-96` (384px) e `max_altura=False` ele virava uma
+# coluna estreita que estourava a altura da janela — e quem rolava era a PÁGINA
+# INTEIRA, uma barra de rolagem no meio do formulário, não o conteúdo do diálogo.
+#
+# A correção é de LAYOUT, não de estrutura: os campos continuam sendo os mesmos
+# `ui_comum.campo_texto`, na MESMA ordem do DOM (o QA preenche os três campos
+# de senha por índice: atual → nova → confirmar), e o que muda é o CSS.
+#
+# A largura e as grades NÃO são definidas aqui: moram em `ui_comum` e são
+# compartilhadas por todos os diálogos de formulário da intranet, para que este
+# diálogo e o de "Novo usuário" não cresçam em direções diferentes. O que este
+# módulo acrescenta são os DOIS blocos informativos lado a lado, o que a base
+# comum não faz — os campos vão na grade de `miolo`, os avisos em outra.
+LARGURA_DIALOGO_TROCA = ui_comum.LARGURA_DIALOGO_FORMULARIO
+CSS_GRADE_CAMPOS_TROCA = ui_comum.CSS_GRADE_CAMPOS
+CSS_GRADE_AVISOS_TROCA = ui_comum.CSS_GRADE_AVISOS
+
+
 def _dialogo_troca_credenciais(nome_usuario: str, ao_concluir=None):
     """Opens the mandatory first-access dialog with a safe minimal fallback.
 
@@ -726,18 +756,44 @@ def _dialogo_troca_credenciais_minimo(nome_usuario: str, ao_concluir=None):
     master sempre consiga trocar as credenciais mesmo se o diálogo completo
     falhar.
 
+    Mesmo layout do diálogo completo (88vw, teto de 1600px, `max-h-[90vh]` com
+    rolagem interna e grade auto-fit nos campos), porque um fallback que
+    estoura a tela em máquina de instalação não é fallback de ninguém.
+
     `ao_concluir` recebe o NOVO nome de usuário, porque aqui o login muda."""
-    with ui_comum.dialogo_card(largura="w-96", max_altura=False) as (dlg, card):
+    with ui_comum.dialogo_card(largura=LARGURA_DIALOGO_TROCA,
+                               max_altura=True) as (dlg, card):
+        # O card vira coluna flex (`max-h-[90vh]` vem do `max_altura=True`):
+        # título fica parado em cima, botão parado embaixo, e o miolo é que
+        # rola. O `min-h-0` do miolo é obrigatório — sem ele o filho flex não
+        # encolhe abaixo da altura do conteúdo, o `overflow-y` não pega e o
+        # `max-h` do card é simplesmente ignorado.
+        card.classes("flex flex-col")
         ui.label("Credenciais obrigatórias").classes("text-h6")
         ui.label("Por segurança, defina um novo nome de usuário e uma nova "
                  "senha antes de continuar.").classes("text-body2 text-grey-7")
-        novo_nome = ui_comum.campo_texto("Novo nome de usuário", props="")
-        nome_completo = ui_comum.campo_texto("Nome completo (ou social)", props="")
-        email = ui_comum.campo_texto("E-mail", props="")
-        fone = ui_comum.campo_texto("Telefone", props="")
-        atual = ui_comum.campo_texto("Senha atual", senha=True, props="")
-        nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True, props="")
-        conf = ui_comum.campo_texto("Confirmar nova senha", senha=True, props="")
+        _miolo = ui.column().classes("w-full flex-1 min-h-0 overflow-y-auto")
+        _miolo.props('role="region" tabindex="0" '
+                     'aria-label="Campos da troca de credenciais"')
+        with _miolo:
+            # Grade responsiva: os 7 campos saem da coluna estreita e ocupam
+            # várias colunas na tela larga, sem media query e sem mexer na
+            # ORDEM do DOM — atual → nova → confirmar, que é o contrato do QA.
+            _grade = ui.element("div").classes("w-full").style(
+                CSS_GRADE_CAMPOS_TROCA)
+            _grade.props('role="group" aria-label="Dados de acesso"')
+            with _grade:
+                novo_nome = ui_comum.campo_texto("Novo nome de usuário",
+                                                 props="")
+                nome_completo = ui_comum.campo_texto("Nome completo (ou social)",
+                                                     props="")
+                email = ui_comum.campo_texto("E-mail", props="")
+                fone = ui_comum.campo_texto("Telefone", props="")
+                atual = ui_comum.campo_texto("Senha atual", senha=True, props="")
+                nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True,
+                                            props="")
+                conf = ui_comum.campo_texto("Confirmar nova senha", senha=True,
+                                            props="")
 
         def _v(campo):
             try:
@@ -792,8 +848,10 @@ def _dialogo_troca_credenciais_minimo(nome_usuario: str, ao_concluir=None):
                 except Exception:
                     pass
 
+        # fora do miolo: o botão fica ancorado na base do card, sempre visível
+        # mesmo com o formulário rolado até o fim
         _botao_tema("Salvar credenciais", on_click=confirmar,
-                    extra_classes="w-full mt-2")
+                    extra_classes="w-full mt-2 shrink-0")
     dlg.props("persistent")
     dlg.open()
 
@@ -890,89 +948,132 @@ def _dialogo_troca_credenciais_completo(nome_usuario: str, ao_concluir=None):
     administrador conferir/ajustar antes de salvar. `persistent` (não fecha
     com ESC/clique fora) e fechamento somente após a troca bem-sucedida.
 
+    Layout: card largo (88vw, teto de 1600px) e alto no máximo 90vh, com o
+    conteúdo rolando por dentro — em vez dos 384px de antes, que faziam o
+    formulário estourar a janela. Os dois blocos informativos ocupam o mesmo
+    grid auto-fit (lado a lado em tela larga, empilhados no celular) e os
+    campos vão para um segundo grid, SEM mudar a ordem do DOM: o QA preenche
+    os três campos de senha por índice (atual → nova → confirmar).
+
     `ao_concluir` recebe o NOVO nome de usuário, porque aqui o login muda."""
-    with ui_comum.dialogo_card(largura="w-96", max_altura=False) as (dlg, card):
+    with ui_comum.dialogo_card(largura=LARGURA_DIALOGO_TROCA,
+                               max_altura=True) as (dlg, card):
+        # Mesmo esqueleto do diálogo mínimo: card em coluna flex com
+        # `max-h-[90vh]`, título e botão parados nas pontas e miolo rolável
+        # (`flex-1 min-h-0 overflow-y-auto`) — o `min-h-0` é o que permite ao
+        # filho encolher abaixo da altura do conteúdo e o `overflow-y` pegar.
+        card.classes("flex flex-col")
         ui.label("Credenciais obrigatórias").classes("text-h6")
         ui.label(f"Bem-vindo(a), {autenticacao.nome_de_tratamento(nome_usuario)}. "
                  "Por segurança, defina um novo nome de usuário e uma nova "
                  "senha antes de continuar.").classes("text-body2 text-grey-7")
-        try:
-            with ui.column().classes("w-full gap-1 p-2 rounded bg-blue-1"):
-                ui.label("Analista de Sistemas Atual: Klayton Prince").classes(
-                    "text-caption font-bold text-blue-10")
-                ui.label("Analista de Sistemas Inicial: Klayton Prince").classes(
-                    "text-caption text-blue-9")
-                ui.label("klayton.prince.ms@gmail.com").classes(
-                    "text-caption text-blue-9")
-                ui.label("+55 (35) 98818-3288").classes(
-                    "text-caption text-blue-9")
-        except Exception:
-            pass
-        # ------- Contas de teste: apagar ou manter, AQUI (28/09/2026) -------
-        #
-        # A prefeitura recebe o sistema com `qacomum` e `qamaster` já
-        # cadastrados (a semente de QA, AGENTS.md §8.2). Quem entra pela
-        # primeira vez com `master` é o administrador installing — é a única
-        # pessoa no sistema cuja conta tem o perfil `administrador_geral` de
-        # fábrica e senha conhecida. Se ele sai da tela sem decidir o destino
-        # dessas duas contas, fica uma prefeitura com dois administradores de
-        # senha `123456` published.
-        #
-        # Por que AQUI e não em uma tela depois: este é o momento em que a
-        # pessoa está trocando a senha do administrador porque entendeu que
-        # conta de fábrica é perigosa. Um passo adiante, essa Timeout já passou.
-        _contas_teste = _contas_de_teste()
-        if _contas_teste:
-            with ui.column().classes("w-full gap-1 p-2 rounded bg-orange-1"):
-                ui.label("Contas de teste que vieram com o sistema").classes(
-                    "text-caption font-bold text-orange-10")
-                ui.label(
-                    "O sistema é entregue com duas contas de teste, para "
-                    "documentação e conferência. Elas entram com a senha "
-                    "conhecida, então convém decidir agora o que fazer com "
-                    "elas — apagar é o padrão de quem vai usar o sistema de "
-                    "verdade, e manter é o de quem ainda vai documentar.").classes(
-                    "text-caption text-orange-9")
-                for _c in _contas_teste:
-                    with ui.row().classes("w-full items-center").style(
-                            "gap: 0.5rem; min-width: 0"):
-                        with ui.column().classes("gap-0").style(
-                                "min-width: 0; flex: 1 1 0"):
-                            ui.label(f"{_c['nome']}  (@{_c['login']})").classes(
-                                "text-caption text-grey-8 truncate")
-                            ui.label(f"perfil: {_c['perfil']}").classes(
-                                "text-caption text-grey-6")
-                        _btn_excluir = ui_comum.botao(
-                            "Apagar", icone="delete",
-                            on_click=lambda l=_c["login"]: _apagar_conta_teste(l),
-                            variante="perigo", compacto=True,
-                            chave_modulo="intranet")
-                        _btn_excluir.props(
-                            f'data-testid=apagar-conta-teste-{_c["login"]} '
-                            f'aria-label="Apagar a conta de teste {_c["login"]}"')
-                        _btn_excluir.classes("no-print")
+        _miolo = ui.column().classes("w-full flex-1 min-h-0 overflow-y-auto")
+        _miolo.props('role="region" tabindex="0" '
+                     'aria-label="Conteúdo da troca de credenciais"')
+        with _miolo:
+            _grade_avisos = ui.element("div").classes("w-full").style(
+                CSS_GRADE_AVISOS_TROCA)
+            _grade_avisos.props(
+                'role="group" aria-label="Informações do primeiro acesso"')
+            with _grade_avisos:
+                try:
+                    with ui.column().classes("w-full gap-1 p-2 rounded bg-blue-1"):
+                        ui.label("Analista de Sistemas Atual: Klayton Prince").classes(
+                            "text-caption font-bold text-blue-10")
+                        ui.label("Analista de Sistemas Inicial: Klayton Prince").classes(
+                            "text-caption text-blue-9")
+                        ui.label("klayton.prince.ms@gmail.com").classes(
+                            "text-caption text-blue-9")
+                        ui.label("+55 (35) 98818-3288").classes(
+                            "text-caption text-blue-9")
+                except Exception:
+                    pass
+                # ------- Contas de teste: apagar ou manter, AQUI (28/09/2026) ---
+                #
+                # A prefeitura recebe o sistema com `qacomum` e `qamaster` já
+                # cadastrados (a semente de QA, AGENTS.md §8.2). Quem entra pela
+                # primeira vez com `master` é o administrador installing — é a
+                # única pessoa no sistema cuja conta tem o perfil
+                # `administrador_geral` de fábrica e senha conhecida. Se ele sai
+                # da tela sem decidir o destino dessas duas contas, fica uma
+                # prefeitura com dois administradores de senha `123456`
+                # published.
+                #
+                # Por que AQUI e não em uma tela depois: este é o momento em que
+                # a pessoa está trocando a senha do administrador porque entendeu
+                # que conta de fábrica é perigosa. Um passo adiante, essa Timeout
+                # já passou.
+                _contas_teste = _contas_de_teste()
+                if _contas_teste:
+                    with ui.column().classes("w-full gap-1 p-2 rounded bg-orange-1"):
+                        ui.label("Contas de teste que vieram com o sistema").classes(
+                            "text-caption font-bold text-orange-10")
+                        ui.label(
+                            "O sistema é entregue com duas contas de teste, "
+                            "para documentação e conferência. Elas entram com "
+                            "a senha conhecida, então convém decidir agora o "
+                            "que fazer com elas — apagar é o padrão de quem "
+                            "vai usar o sistema de verdade, e manter é o de "
+                            "quem ainda vai documentar.").classes(
+                            "text-caption text-orange-9")
+                        # a linha da conta continua com a mesma estrutura: o
+                        # nome/login ocupa o que sobra (`flex: 1 1 0` +
+                        # `min-width: 0`) e o botão "Apagar" nunca é espremido
+                        # nem quebra em tela estreita
+                        for _c in _contas_teste:
+                            with ui.row().classes("w-full items-center").style(
+                                    "gap: 0.5rem; min-width: 0"):
+                                with ui.column().classes("gap-0").style(
+                                        "min-width: 0; flex: 1 1 0"):
+                                    ui.label(f"{_c['nome']}  (@{_c['login']})").classes(
+                                        "text-caption text-grey-8 truncate")
+                                    ui.label(f"perfil: {_c['perfil']}").classes(
+                                        "text-caption text-grey-6")
+                                _btn_excluir = ui_comum.botao(
+                                    "Apagar", icone="delete",
+                                    on_click=lambda l=_c["login"]: _apagar_conta_teste(l),
+                                    variante="perigo", compacto=True,
+                                    chave_modulo="intranet")
+                                _btn_excluir.props(
+                                    f'data-testid=apagar-conta-teste-{_c["login"]} '
+                                    f'aria-label="Apagar a conta de teste {_c["login"]}"')
+                                _btn_excluir.classes("no-print")
 
-        novo_nome = ui_comum.campo_texto("Novo nome de usuário", valor="klayton", props="")
-        nome_completo = ui_comum.campo_texto(
-            "Nome completo (ou social)", valor="PRINCE,K.B", props="",
-            tooltip="Nome pelo qual você será tratado no sistema. "
-                    "Pode ser seu nome social (Decreto 8.727/2016)")
-        email = ui_comum.campo_texto("E-mail", valor="klayton.prince.ms@gmail.com", props="")
-        _campo_fone = None
-        fone = None
-        try:
-            from mod_intranet import telefone as _tel
-            _campo_fone = _tel.criar_campo_telefone(valor="+5535988183288")
-        except Exception:
-            _campo_fone = None
-        if _campo_fone is None:
-            try:
-                fone = ui_comum.campo_texto("Telefone", valor="35988183288", props="")
-            except Exception:
+            _grade_campos = ui.element("div").classes("w-full").style(
+                CSS_GRADE_CAMPOS_TROCA)
+            _grade_campos.props('role="group" aria-label="Dados de acesso"')
+            with _grade_campos:
+                novo_nome = ui_comum.campo_texto("Novo nome de usuário",
+                                                 valor="klayton", props="")
+                nome_completo = ui_comum.campo_texto(
+                    "Nome completo (ou social)", valor="PRINCE,K.B", props="",
+                    tooltip="Nome pelo qual você será tratado no sistema. "
+                            "Pode ser seu nome social (Decreto 8.727/2016)")
+                email = ui_comum.campo_texto("E-mail",
+                                             valor="klayton.prince.ms@gmail.com",
+                                             props="")
+                _campo_fone = None
                 fone = None
-        atual = ui_comum.campo_texto("Senha atual", senha=True, valor="master", props="")
-        nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True, valor="klayton", props="")
-        conf = ui_comum.campo_texto("Confirmar nova senha", senha=True, valor="klayton", props="")
+                try:
+                    from mod_intranet import telefone as _tel
+                    _campo_fone = _tel.criar_campo_telefone(valor="+5535988183288")
+                except Exception:
+                    _campo_fone = None
+                if _campo_fone is None:
+                    try:
+                        fone = ui_comum.campo_texto("Telefone", valor="35988183288",
+                                                    props="")
+                    except Exception:
+                        fone = None
+                # a ORDEM do DOM dos três campos de senha é contrato do QA
+                # (`concluir_troca` preenche por índice): atual → nova →
+                # confirmar. O grid CSS preenche por linha e não reordena.
+                atual = ui_comum.campo_texto("Senha atual", senha=True,
+                                             valor="master", props="")
+                nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True,
+                                            valor="klayton", props="")
+                conf = ui_comum.campo_texto("Confirmar nova senha", senha=True,
+                                            valor="klayton", props="")
 
         def _v(campo):
             try:
@@ -1054,8 +1155,10 @@ def _dialogo_troca_credenciais_completo(nome_usuario: str, ao_concluir=None):
                 except Exception:
                     pass
 
+        # fora do miolo: o botão fica ancorado na base do card, sempre visível
+        # mesmo com o formulário rolado até o fim
         _botao_tema("Salvar credenciais", on_click=confirmar,
-                    extra_classes="w-full mt-2")
+                    extra_classes="w-full mt-2 shrink-0")
     # persistent: não fecha com ESC/clique fora — a troca é realmente obrigatória
     dlg.props("persistent")
     dlg.open()
@@ -1074,14 +1177,20 @@ def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
     falhar, o callback não roda — senão o servidor cadastraria o telefone
     e continuaria com a senha provisória.
     """
-    with ui_comum.dialogo_card(largura="w-96", max_altura=False) as (dlg, card):
+    # Mesmo esqueleto do diálogo de credenciais: 88vw, teto de 90vh, miolo
+    # rolável e botão ancorado na base. A ORDEM do DOM dos três campos de senha
+    # (atual → nova → confirmar) é preservada: o QA preenche por índice em
+    # `assets/test/qa_login_helper.py::concluir_troca`.
+    with ui_comum.dialogo_formulario(
+            chave_modulo="intranet", sem_descricao=True) as (dlg, card, miolo, grade):
         ui.label("Troca de senha obrigatória").classes("text-h6")
         ui.label(f"Bem-vindo(a), {autenticacao.nome_de_tratamento(nome_usuario)}. "
                  "Por segurança, defina uma nova senha antes de continuar.").classes(
             "text-body2 text-grey-7")
-        atual = ui_comum.campo_texto("Senha atual", senha=True, props="")
-        nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True, props="")
-        conf = ui_comum.campo_texto("Confirmar nova senha", senha=True, props="")
+        with grade:
+            atual = ui_comum.campo_texto("Senha atual", senha=True, props="")
+            nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True, props="")
+            conf = ui_comum.campo_texto("Confirmar nova senha", senha=True, props="")
 
         def confirmar():
             if nova.value != conf.value:
@@ -1136,65 +1245,82 @@ def _dialogo_telefones(nome_usuario: str, ao_concluir=None):
     """
     from mod_gest_cad_usuario import bd_manipulador as _bd_usuarios
 
-    with ui_comum.dialogo_card(largura="w-[620px]", max_altura=True) as (dlg, card):
+    # Diálogo de FORMULÁRIO: 4 campos, 4 caixas de consentimento e texto longo
+    # de instrução. A 620px ele virava uma coluna alta; agora tem 88vw, teto de
+    # 90vh e só o miolo rola. Os `data-testid` das caixas de consentimento são
+    # contrato do QA (`assets/test/test_primeiro_acesso_e2e.py`) e ficam como
+    # estavam.
+    with ui_comum.dialogo_formulario(
+            chave_modulo="intranet", sem_descricao=True) as (dlg, card, miolo, grade):
         ui.label("Seus telefones").classes("text-h6")
         ui.label(f"{autenticacao.nome_de_tratamento(nome_usuario)}, "
                  "falta o passo que faz você aparecer na lista telefônica. "
                  "Preencha o que quiser e marque o que pode ficar público.").classes(
             "text-body2 text-grey-7")
 
-        with ui.column().classes("w-full gap-1"):
-            # ---- celular particular ----
-            cel_pessoal = ui_comum.campo_texto(
-                "Celular particular", props="outlined dense",
-                placeholder="(35) 99999-0000")
-            chk_pessoal = ui.checkbox("Pode aparecer na lista telefônica")
-            chk_pessoal.props("dense data-testid=primeiro-acesso-chk-pessoal") \
-                .classes("text-body2")
+        # Grade só dos CAMPOS. Cada par (campo + caixa) é uma célula: a caixa
+        # fica logo abaixo do seu campo, e o par inteiro ocupa uma coluna —
+        # juntar os quatro campos numa linha e as caixas noutra desamarraria
+        # quem responde "pode aparecer?" de qual número é.
+        with grade:
+            with ui.column().classes("w-full gap-1"):
+                # ---- celular particular ----
+                cel_pessoal = ui_comum.campo_texto(
+                    "Celular particular", props="outlined dense",
+                    placeholder="(35) 99999-0000")
+                chk_pessoal = ui.checkbox("Pode aparecer na lista telefônica")
+                chk_pessoal.props("dense data-testid=primeiro-acesso-chk-pessoal") \
+                    .classes("text-body2")
 
-            # ---- celular da prefeitura ----
-            cel_empresa = ui_comum.campo_texto(
-                "Celular da prefeitura", props="outlined dense",
-                placeholder="(35) 99999-0000")
-            chk_empresa = ui.checkbox("Pode aparecer na lista telefônica")
-            chk_empresa.props("dense data-testid=primeiro-acesso-chk-empresa") \
-                .classes("text-body2")
+            with ui.column().classes("w-full gap-1"):
+                # ---- celular da prefeitura ----
+                cel_empresa = ui_comum.campo_texto(
+                    "Celular da prefeitura", props="outlined dense",
+                    placeholder="(35) 99999-0000")
+                chk_empresa = ui.checkbox("Pode aparecer na lista telefônica")
+                chk_empresa.props("dense data-testid=primeiro-acesso-chk-empresa") \
+                    .classes("text-body2")
 
-            # ---- fixo da prefeitura ----
-            fixo_empresa = ui_comum.campo_texto(
-                "Telefone fixo da prefeitura", props="outlined dense",
-                placeholder="(00) 3591-5100")
-            chk_fixo = ui.checkbox("Aparece na lista telefônica")
-            # Marcada E travada. A ordem importa: `value` antes de `disable`,
-            # senão o NiceGUI aplica `disable` e a atribuição seguinte é
-            # ignorada — e a tela mostrava uma caixa vazia ao lado de um texto
-            # que dizia que ela apareceria. A regra que manda é a de
-            # `telefone_e_publicavel`, não a do formulário; aqui só se
-            # mostra o que ela faz.
-            chk_fixo.props("dense disable data-testid=primeiro-acesso-chk-fixo") \
-                .classes("text-body2 text-grey-6")
-            chk_fixo.value = True
+            with ui.column().classes("w-full gap-1"):
+                # ---- fixo da prefeitura ----
+                fixo_empresa = ui_comum.campo_texto(
+                    "Telefone fixo da prefeitura", props="outlined dense",
+                    placeholder="(00) 3591-5100")
+                chk_fixo = ui.checkbox("Aparece na lista telefônica")
+                # Marcada E travada. A ordem importa: `value` antes de `disable`,
+                # senão o NiceGUI aplica `disable` e a atribuição seguinte é
+                # ignorada — e a tela mostrava uma caixa vazia ao lado de um texto
+                # que dizia que ela apareceria. A regra que manda é a de
+                # `telefone_e_publicavel`, não a do formulário; aqui só se
+                # mostra o que ela faz.
+                chk_fixo.props("dense disable data-testid=primeiro-acesso-chk-fixo") \
+                    .classes("text-body2 text-grey-6")
+                chk_fixo.value = True
 
-            # ---- telefone de recado ----
-            chk_recado = ui.checkbox(
-                "Não tenho linha própria: este é o telefone do setor, para recado")
-            chk_recado.props("dense data-testid=primeiro-acesso-chk-recado") \
-                .classes("text-body2")
-            ui.label("Marque quando for o telefone do SETOR: a garagem, a "
-                     "secretaria da escola, a unidade de saúde, o almoxarifado. "
-                     "Quem receber a ligação anota o recado e passa adiante — "
-                     "é assim que a lista telefônica funciona para quem não "
-                     "atende.") .classes("text-caption text-grey-6")
+            with ui.column().classes("w-full gap-1"):
+                # ---- telefone de recado ----
+                chk_recado = ui.checkbox(
+                    "Não tenho linha própria: este é o telefone do setor, para recado")
+                chk_recado.props("dense data-testid=primeiro-acesso-chk-recado") \
+                    .classes("text-body2")
 
-            # aviso de faixa, preenchido enquanto o servidor digita
-            aviso_faixa = ui.label("").classes("text-caption text-orange-8")
+                # ---- residencial ----
+                fixo_pessoal = ui_comum.campo_texto(
+                    "Telefone residencial (opcional)", props="outlined dense",
+                    placeholder="(00) 3800-0000")
+                ui.label("O residencial fica só no seu cadastro — nunca sai na "
+                         "lista telefônica.").classes("text-caption text-grey-6")
 
-            # ---- residencial ----
-            fixo_pessoal = ui_comum.campo_texto(
-                "Telefone residencial (opcional)", props="outlined dense",
-                placeholder="(00) 3800-0000")
-            ui.label("O residencial fica só no seu cadastro — nunca sai na "
-                     "lista telefônica.").classes("text-caption text-grey-6")
+        # fora da grade: as explicações e o aviso de faixa são texto corrido e
+        # ocupam a largura toda, não uma coluna estreita da grade
+        ui.label("Marque quando for o telefone do SETOR: a garagem, a "
+                 "secretaria da escola, a unidade de saúde, o almoxarifado. "
+                 "Quem receber a ligação anota o recado e passa adiante — "
+                 "é assim que a lista telefônica funciona para quem não "
+                 "atende.").classes("text-caption text-grey-6")
+
+        # aviso de faixa, preenchido enquanto o servidor digita
+        aviso_faixa = ui.label("").classes("text-caption text-orange-8")
 
         def _montar_contatos():
             """Os 4 campos viram a lista que o cadastro grava."""

@@ -245,7 +245,7 @@ O PostgreSQL é ativado pelo admin em `/configuracoes` → aba **Config** (ao fi
 | Operações normais | `mod_intranet/bd_conexao.py` (`banco_usuario` / `banco_senha`) | Queries do aplicativo |
 | Operações administrativas | `mod_intranet/bd_conexao.py` (`banco_admin_usuario` / `banco_admin_senha`) | Criação de banco, migrations |
 
-> **08/09:** com o backend duplo ativo, o `postgres_url` (DSN) vive no arquivo SQLite central e **as credenciais da URL são usadas como estão** (container `intranet/intranet`). O modelo legado de credenciais do núcleo (chaves `banco_usuario`/`banco_senha`/`banco_admin_*`) é o que a chave `postgres_url` substitui; o container Docker fornece o usuário `intranet`/`intranet`.
+> **08/09:** com o backend duplo ativo, o `postgres_url` (DSN) vive no arquivo SQLite central e **as credenciais da URL são usadas como estão** (definidas pelo container via `POSTGRES_USER`/`POSTGRES_PASSWORD` — **valores não documentados aqui**, AGENTS.md §8.2.1). O modelo legado de credenciais do núcleo (chaves `banco_usuario`/`banco_senha`/`banco_admin_*`) é o que a chave `postgres_url` substitui.
 
 Chaves em `tb_config`: `banco_tipo`, `postgres_url` (principais — ver [Configurações](configuracoes.md#card-banco-de-dados-sqlite-ou-postgresql-0809)).
 

@@ -141,7 +141,7 @@ As principais chaves, agrupadas por dono:
 | Avisos | `notificacao_timeout` (`4`, 1–30 s) | — | tempo de exibição dos toasts via `tema_modulo.notificar()` |
 | Hora do servidor | `hora_ntp_ativa` (`1`) | — | sincronização NTP.br da hora do servidor (`mod_intranet/hora_servidor.py`): `1` = ativa (default), `0` = usa o relógio local; aplicada sem restart |
 | Contador de visitas (Home) | `contador_acessos_total` (`0`), `contador_acessos_inicio` (`YYYY-MM-DD`) | `PADRAO_CONFIG` (`bd_conexao.py:70-72`) + seed `init_db()` `bd_conexao.py:188-196` | contador **padronizado de visitas**: incrementado **só em login bem-sucedido** (`bd_conexao.incrementar_contador_acessos()` `bd_conexao.py:200` chamada em `main.py:tentar_login()` `main.py:229` — nunca em navegação/refresh/troca de aba); `contador_acessos_inicio` semeado na primeira execução em `YYYY-MM-DD` (tooltip Dashboard `Visitas` simplificado para `"Visitas"`; data início `DD/MM/YYYY` como referência); exibido como `Acessos/Visitas` no Resumo Water (`main.py:_stat` `gap-1 px-2 py-1`, ícone 36px, 4 dígitos `>9999` com total real no tooltip único do card) |
-| Banco | `banco_tipo` (`sqlite`), `postgres_url` (`postgresql+psycopg2://intranet:intranet@localhost:5432/intranet`) | `PADRAO_CONFIG` (`bd_conexao.py:40-41`) | seleção do SGBD: `sqlite` (padrão, zero dependências extras) ou `postgres` (backend duplo via `banco_conexao` — conexão DBAPI por módulo, **um DATABASE `db_mod_<chave>` por módulo**, espelhando o arquivo SQLite); lidos no boot via `banco_conexao._ler_config_sqlite`; troca exige **reiniciar o servidor** — ver [Card "Banco de dados" (SQLite ou PostgreSQL)](#card-banco-de-dados-sqlite-ou-postgresql-0809) |
+| Banco | `banco_tipo` (`sqlite`), `postgres_url` (DSN do container — **usuário e senha não são documentados aqui**, AGENTS.md §8.2.1) | `PADRAO_CONFIG` (`bd_conexao.py:77`; credenciais em `banco_usuario`/`banco_senha` e `banco_admin_*`) | seleção do SGBD: `sqlite` (padrão, zero dependências extras) ou `postgres` (backend duplo via `banco_conexao` — conexão DBAPI por módulo, **um DATABASE `db_mod_<chave>` por módulo**, espelhando o arquivo SQLite); lidos no boot via `banco_conexao._ler_config_sqlite`; troca exige **reiniciar o servidor** — ver [Card "Banco de dados" (SQLite ou PostgreSQL)](#card-banco-de-dados-sqlite-ou-postgresql-0809) |
 
 > Os padrões de aparência vivem em `PADRAO_CONFIG` (`mod_intranet/bd_conexao.py:13-24`) e são restaurados via tela de configurações (abas com "Restaurar padrão" por cartão).
 
@@ -157,7 +157,7 @@ O padrão permanece **SQLite** (atende servidores simples, zero dependências ex
 |:---|:---|
 | Card | `ui_comum.card_admin("Banco de dados — SQLite ou PostgreSQL", icone="storage")` (`tela_configuracoes.py:1034`, aba Config, após o card "Ícones") |
 | Select `banco_tipo` | `sqlite` (padrão) \| `postgres` — lido de `config_backend()` (`banco_conexao.py:115`) |
-| Campo `postgres_url` | DSN do Postgres (default do container: `postgresql+psycopg2://intranet:intranet@localhost:5432/intranet`) |
+| Campo `postgres_url` | DSN do Postgres — **usuário e senha não são documentados aqui** (AGENTS.md §8.2.1); o valor default está em `mod_intranet/bd_conexao.py` (`PADRAO_CONFIG`) e as credenciais do container em `assets/docker/postgres/docker-compose.yml` (env `POSTGRES_USER`/`POSTGRES_PASSWORD`) |
 | Salvar | `banco_conexao.salvar_backend(banco_tipo, postgres_url)` grava no arquivo SQLite central |
 | Aviso | **"Banco de dados atualizado — REINICIE o servidor para aplicar (as conexões ativas seguem no backend anterior)"** — a troca exige restart (o backend é resolvido no boot) |
 | Auditoria | `aplicar_banco` audita `config_banco` via `_aplicar_card_sem_reload("Banco de dados", ...)` (`tela_configuracoes.py:1070-1075`, `data-testid="config-aplicar-banco"`) — **sem reload**, exige restart |
@@ -165,7 +165,7 @@ O padrão permanece **SQLite** (atende servidores simples, zero dependências ex
 **Backend duplo controlado pelo sistema** (`mod_intranet/banco_conexao.py`):
 
 - `banco_tipo` em `tb_config` central (`'sqlite'` padrão | `'postgres'`): lido **DIRETO do arquivo SQLite central** (`_ler_config_sqlite`, `banco_conexao.py:57`) — seletor de backend autoritativo no boot, sem recursão.
-- `postgres_url` (DSN) também no arquivo SQLite central; credenciais da URL usadas como estão (container `intranet/intranet`).
+- `postgres_url` (DSN) também no arquivo SQLite central; credenciais da URL usadas como estão (definidas pelo container via env — **valores não documentados aqui**, AGENTS.md §8.2.1).
 - Postgres: **um DATABASE `db_mod_<chave>` por módulo** (espelha o arquivo SQLite `db_mod_<chave>.db`) — `banco_modulo(chave)` (`banco_conexao.py:263`) resolve o nome e `_garantir_bd_postgres(banco)` (`:281`) cria o banco ausente via `CREATE DATABASE` no banco de manutenção `postgres` (autocommit, idempotente por processo); `garantir_bancos_postgres()` (`:317`) garante TODOS os bancos de módulo no boot. Isso preserva o isolamento "um banco por módulo" e evita colisões de nome de tabela (ex.: `tb_solicitacoes`).
 - `conexao(chave)` devolve uma conexão DBAPI para o backend ativo: sqlite (arquivo do módulo, WAL) ou postgres (proxy psycopg2 com tradução `?`→`%s`, DDL SQLite→Postgres, `INSERT OR IGNORE`→`ON CONFLICT DO NOTHING`, `PRAGMA`/FTS5 ignorados, `lastrowid` via `RETURNING id` com SAVEPOINT, SAVEPOINT por statement). Detalhes em [Arquitetura — Backend duplo](arquitetura.md#arquitetura-de-acesso-a-dados-do-nucleo-backend-duplo-0809).
 - `repositorio.engine(chave)`/`sessaodb(chave)` roteiam para o Postgres quando `banco_tipo='postgres'` (senão mantêm SQLite por arquivo).
@@ -178,7 +178,7 @@ O padrão permanece **SQLite** (atende servidores simples, zero dependências ex
 |:---|:---|
 | Imagem | `postgres:16-alpine` |
 | Banco | `intranet` (via env `POSTGRES_DB`) |
-| Credenciais | `intranet`/`intranet` (via env `POSTGRES_USER`/`POSTGRES_PASSWORD`) |
+| Credenciais | definidas por env `POSTGRES_USER`/`POSTGRES_PASSWORD` do compose — **valores não documentados aqui** (AGENTS.md §8.2.1); veja `assets/docker/postgres/docker-compose.yml` |
 | Porta | `5432:5432` |
 | Volume | `intranet_pgdata` (persistente) |
 | Healthcheck | `pg_isready` |
