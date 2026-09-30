@@ -191,8 +191,8 @@ número errado. Linha sem `-` é ignorada com `warning` no log.
 > **ATUALIZADO em 30/09/2026** — a troca de senha deixou de ser um modal sobre
 > a página montada e virou um **guard de servidor**, com tela própria. A tabela
 > abaixo e as linhas `1a`/`1b` descrevem o desenho **antigo**; o que vale hoje
-> está em [A troca obrigatória passou a bloquear](#a-troca-obrigatória-passou-a-bloquear)
-> e em [Força e vazamento de senha](#força-e-vazamento-de-senha-30092026).
+> está em [A troca obrigatória passou a bloquear](#a-troca-obrigatoria-passou-a-bloquear-30092026)
+> e em [Força e vazamento de senha](#forca-e-vazamento-de-senha-30092026).
 
 > **EN:** `pagina_restrita` calls `_primeiro_acesso` after the layout is built.
 > It chains **two** mandatory steps — password, then phone numbers — and only
