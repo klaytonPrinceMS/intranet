@@ -577,12 +577,25 @@ def analisar_online(senha: str, nome_usuario: str = "") -> dict:
     Quando nao ha internet, devolve o veredito offline com `consulta_online`
     dizendo `sem_internet`. Nao e excecao e nao trava: e exatamente o caso da
     prefeitura em rede fechada.
+
+    CONTA DE TESTE (`qacomum`/`qamaster`) TAMBÉM CONSULTA (30/09/2026). Antes
+    a exceção cortava a consulta inteira e devolvia `vazou=False, vezes=0` —
+    então digitar `123456` numa conta de teste não mostrava NENHUM número, e a
+    linha de vazamento ficava muda. O número estava no cache a 5cm dali
+    (210.461.208 ocorrências, que é o que o próprio cache devolve) e a tela
+    dizia que não havia nada.
+
+    A exceção agora vale só para o que BLOQUEIA: a conta de teste continua
+    com `ok=True`, sem bloqueios, sem termo de risco e sem exigência de
+    "ESTOU CIENTE", para a suíte de QA não travar. **Informar não é bloquear**,
+    e esconder a contagem de quem já viu o veredito é esconder a informação
+    mais útil da tela.
     """
     try:
         r = analisar_offline(senha, nome_usuario)
-        if r.get("excecao"):
-            r["consulta_online"] = "conta_de_teste"
-            return r
+        # `excecao` = conta de teste: não bloqueia, mas continua sendo
+        # consultado abaixo. Só o desliga da chave respeita a exceção.
+        eh_teste = bool(r.get("excecao"))
 
         # A chave desliga a camada INTEIRA, inclusive a leitura do cache. Sem
         # isso, quem desliga a opção continua vendo bloqueio de vazamento do
@@ -612,6 +625,12 @@ def analisar_online(senha: str, nome_usuario: str = "") -> dict:
         r["vezes"] = int(vezes or 0)
         r["consulta_online"] = situacao
         r["inaceitavel"] = bool(r.get("inaceitavel"))
+
+        if eh_teste:
+            # A conta de teste recebe o NÚMERO e nada mais: nem aviso, nem
+            # bloqueio, nem `ok` falso. Quem lê o número não é levado a
+            # recusar a senha — e a tela segue mostrando o que a senha é.
+            return r
 
         if vazou:
             aviso = (f"Esta senha foi exposta {vezes:,} vez(es) em vazamentos "
@@ -703,10 +722,63 @@ _SITUACAO_PT_BR = {
 }
 
 
+def texto_vazamento(veredito: dict) -> str:
+    """A CONTAGEM de vazamentos da senha, em duas linhas, como o servidor lê.
+
+    Desenho pedido pelo responsável (30/09/2026), e o desenho é o ponto:
+
+    ```
+    [Vazamentos: 210.461.208]
+    Esta senha já consta em vazamentos.
+    ```
+
+    Duas linhas porque o NÚMERO e a CONSEQUÊNCIA são duas informações: o número
+    é o que a pessoa veio procurar, e a frase é o que o número significa.
+    Juntas numa linha só, o número vira um dado e a pessoa tem de traduzi-lo.
+
+    O número aparece **desde a primeira consulta**, inclusive quando é zero.
+    Isso é o que faz a linha ser confiável: um `[Vazamentos: 0]` é uma
+    resposta, e sem ele a pessoa não sabe se o sistema consultou e não
+    achou, ou se nunca consultou.
+
+    Uma linha de cada vez, nunca as duas:
+
+    - **N > 0** → o número e a frase, em VERMELHO.
+    - **N = 0** → só o número, em verde: a consulta aconteceu e a senha não
+      está em nenhum vazamento conhecido.
+    - **sem consulta** (sem internet, desligada, serviço fora) → o aviso de
+      que NÃO SE SABE, em cinza. Nunca `0` aqui: `0` é uma afirmação, e sem
+      consulta não há nada para afirmar.
+
+    A conta de teste (`qacomum`/`qamaster`) recebe a MESMA linha: a exceção
+    dela é sobre bloqueio, não sobre informação. `123456` é a senha mais
+    vazada do mundo, e esconder isso de quem acabou de digitá-la seria o
+    contrário do que a tela existe para fazer.
+
+    EN: The breach COUNT for this password, as two plain lines.
+    """
+    try:
+        v = veredito or {}
+        situacao = v.get("consulta_online")
+        if v.get("vazou"):
+            vezes = int(v.get("vezes") or 0)
+            return (f"[Vazamentos: {vezes:,}]\n"
+                    f"Esta senha já consta em vazamentos.".replace(",", "."))
+        if situacao in ("ok", "cache", "vazia"):
+            return "[Vazamentos: 0]"
+        if situacao in ("sem_internet", "desligada", "indisponivel", "erro",
+                        "limite_requisicoes", "nao_consultada"):
+            return ("[Vazamentos: não foi possível consultar — "
+                    f"{_SITUACAO_PT_BR.get(situacao, 'a consulta não respondeu')}]")
+        return ""
+    except Exception:
+        return ""
+
+
 def texto_para_usuario(veredito: dict) -> str:
     """O veredito em uma frase, para a tela. Texto para PESSOAS.
 
-    Duas regras que às vezes se confundem:
+    Três regras que às vezes se confundem:
 
     - **Nada de jargão.** Nome de arquivo, número de seção e palavra de
       identificador não vão para a tela. Quem lê esta mensagem é servidor da
@@ -717,22 +789,29 @@ def texto_para_usuario(veredito: dict) -> str:
       nesse caso, e um aviso ali só ocuparia a tela — então devolve vazio e a
       tela limpa o rótulo. Quem precisa saber por quê lê o código e a
       documentação.
+    - **A contagem de vazamento não se perde por truncamento.** Ela é a
+      informação que a pessoa digita procurando, então entra na FRENTE do
+      veredito, com o número à vista, mesmo quando há bloqueio demais para
+      caber nos três primeiros lugares.
     """
     try:
         v = veredito or {}
         if v.get("excecao"):
             return ""
         partes: list[str] = []
+        vazamento = texto_vazamento(v)
+        if vazamento:
+            partes.append(vazamento)
         for b in (v.get("bloqueios") or [])[:3]:
-            partes.append(b)
+            if b not in partes:
+                partes.append(b)
         for a in (v.get("avisos") or [])[:2]:
-            partes.append(a)
+            if a not in partes:
+                partes.append(a)
         situacao = v.get("consulta_online")
         if situacao in ("sem_internet", "desligada", "indisponivel", "erro",
                         "limite_requisicoes", "nao_consultada"):
-            partes.append("Não foi possível consultar vazamentos porque "
-                          f"{_SITUACAO_PT_BR.get(situacao, '')} — a senha foi "
-                          "avaliada só pela força.")
+            partes.append("A senha foi avaliada só pela força.")
         return " ".join(partes) if partes else (
             "Senha forte." if v.get("ok") else "Senha recusada.")
     except Exception:

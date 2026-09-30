@@ -76,6 +76,29 @@ FAIXAS = (
     (90, "muito_forte", "Muito forte", "positive"),
 )
 
+# Cor da BARRA por faixa de força (0 a 1) — decisão do responsável, 30/09/2026.
+#
+# Mora aqui, e não na tela, pelo mesmo motivo de `FORCA_MINIMA`: o corte da
+# cor é o mesmo corte que decide se a senha pode ser usada. Se a barra
+# pintasse de verde a 0,45 — enquanto o sistema recusa por estar abaixo de
+# 0,5 —, a tela estaria dizendo "vá em frente" na cor de quem aprova.
+#
+# | faixa         | cor         | leitura                               |
+# |:--------------|:------------|:--------------------------------------|
+# | abaixo de 0,5 | `negative`  | vermelho — não pode ser usada         |
+# | 0,5 até 0,7   | `warning`   | amarelo — dá para usar, mas não é forte|
+# | acima de 0,7  | `positive`  | verde — forte                         |
+#
+# O amarelo é a faixa em que a senha passa do corte e ainda não é forte, que é
+# também a faixa em que costuma aparecer o risco residual e o aceite. As três
+# cores são as do Quasar (`negative`/`warning`/`positive`), e é por isso que a
+# faixa é a mesma das cinco faixas de RÓTULO acima — uma tela com duas
+# palettes de cor discordando entre si seria pior que nenhuma.
+FORCA_FORTE = 0.7
+COR_BARRA_FRACA = "negative"   # < FORCA_MINIMA — não pode ser usada
+COR_BARRA_MEDIA = "warning"    # >= FORCA_MINIMA e < FORCA_FORTE
+COR_BARRA_FORTE = "positive"   # >= FORCA_FORTE
+
 # Papéis que o aceite NÃO impede (decisão: aviso e registro, sem bloqueio).
 PERFIS_ADMIN = ("administrador_geral", "administrador_modulo")
 
@@ -118,6 +141,24 @@ def acima_do_piso(medidor: dict) -> bool:
         return forca(medidor) >= FORCA_MINIMA
     except Exception:
         return False
+
+
+def cor_da_barra(medidor: dict) -> str:
+    """A cor da barra de força para este medidor (nome de cor do Quasar).
+
+    Três faixas e nenhum critério novo: o corte é o mesmo `FORCA_MINIMA` que
+    decide se a senha pode ser usada, e o topo é `FORCA_FORTE`. Ver o quadro
+    nas constantes — o ponto é que a cor e a regra não podem divergir.
+    """
+    try:
+        f = forca(medidor)
+        if f < FORCA_MINIMA:
+            return COR_BARRA_FRACA
+        if f < FORCA_FORTE:
+            return COR_BARRA_MEDIA
+        return COR_BARRA_FORTE
+    except Exception:
+        return COR_BARRA_FRACA
 
 
 def medidor(senha: str) -> dict:

@@ -25,18 +25,24 @@ from pathlib import Path
 BASE_URL = "http://localhost:8080"
 QA_USUARIO = "qamaster"
 QA_SENHA = "123456"
-# mesma senha de origem: o fluxo só exige que a troca seja feita
-QA_SENHA_NOVA = QA_SENHA
+# A senha nova PRECISA passar do piso de força (0,5). Não dá para trocar
+# `123456` por `123456`: `123456` mede 0,15, fica abaixo do piso, e o
+# formulário nunca libera o botão "Alterar senha". A troca do próprio usuário
+# de teste deixaria de ser um clique e viraria um beco sem saída.
+QA_SENHA_NOVA = "Prefeitura@2026"
+
+# Rota da troca obrigatória. É uma TELA, não um diálogo: desde 30/09/2026 a
+# troca é a própria tela de login (mesmo invólucro, mesmo padrão verde), sem
+# cartão e sem modal. Detectar por `.q-dialog` não acha mais nada.
+ROTA_TROCA = "/troca-obrigatoria"
 
 
-def _dialogo_troca_visivel(page) -> bool:
-    """Diz se o diálogo de troca de senha está aberto na tela."""
+def _troca_visivel(page) -> bool:
+    """Diz se a tela de troca obrigatória está aberta."""
     try:
-        if page.locator(".q-dialog").count() == 0:
-            return False
-        dlg = page.locator(".q-dialog").first
-        return dlg.is_visible() and ("troca" in (dlg.inner_text() or "").lower()
-                                     or "senha" in (dlg.inner_text() or "").lower())
+        if ROTA_TROCA in (page.url or ""):
+            return True
+        return page.get_by_role("button", name="Alterar senha").count() > 0
     except Exception:
         return False
 
@@ -76,14 +82,14 @@ def fazer_login_com_troca(page, usuario: str = QA_USUARIO,
     except Exception:
         return False
 
-    if not _dialogo_troca_visivel(page):
+    if not _troca_visivel(page):
         return "/" not in page.url or "login" not in page.url
 
-    # --- troca obrigatória: preenche com a MESMA senha e confirma ---
+    # --- troca obrigatória: preenche e confirma ---
     if not concluir_troca(page, senha_atual=senha, senha_nova=QA_SENHA_NOVA):
         return False
     zerar_forcar_troca(usuario)
-    return not _dialogo_troca_visivel(page)
+    return not _troca_visivel(page)
 
 
 def _preencher(page, testid: str, valor: str) -> None:
@@ -99,31 +105,41 @@ def _preencher(page, testid: str, valor: str) -> None:
 
 
 def concluir_troca(page, senha_atual: str, senha_nova: str) -> bool:
-    """EN: Completes the mandatory password-change dialog.
+    """EN: Completes the mandatory password-change screen.
 
-    PT-BR: Conclui o diálogo de troca obrigatória de senha.
+    PT-BR: Conclui a tela de troca obrigatória de senha.
 
-    Assume que a sessão JÁ está logada e o diálogo aberto — não faz
-    login. Separado de `fazer_login_com_troca` porque recarregar a página
-    aqui destruiria o próprio diálogo que o teste precisa resolver.
+    Assume que a sessão JÁ está logada e a tela aberta — não faz login.
+    Separado de `fazer_login_com_troca` porque recarregar a página aqui
+    destruiria a própria tela que o teste precisa resolver.
+
+    A tela é a de login: os três campos de senha saem por POSIÇÃO
+    (atual → nova → confirmar), que é o mesmo contrato de antes, e o botão
+    só existe depois que a senha passa do piso de força — daí o
+    `wait_for` nele.
     """
     try:
-        if not _dialogo_troca_visivel(page):
+        if not _troca_visivel(page):
             return True
-        campos = page.locator(".q-dialog input[type=password]")
+        campos = page.locator("input[type=password]")
         if campos.count() < 3:
             return False
         campos.nth(0).fill(senha_atual)               # senha atual
         campos.nth(1).fill(senha_nova)                 # nova
         campos.nth(2).fill(senha_nova)                 # confirmar
-        botao = page.get_by_role("button", name="Salvar nova senha")
-        if botao.count() == 0:
-            botao = page.locator(".q-dialog button").last
-        botao.click()
-        #aguarda a confirmação ("Senha alterada com sucesso") e o sumiço do diálogo
+        botao = page.get_by_role("button", name="Alterar senha")
+        # O botão nasce ESCONDIDO e só é liberado quando a senha passa do
+        # piso. Sem esta espera, o clique corre antes de ele existir.
+        try:
+            botao.first.wait_for(state="visible", timeout=10000)
+        except Exception:
+            return False
+        botao.first.click()
+        # Aguarda a confirmação ("Senha alterada com sucesso") e a saída da
+        # tela de troca.
         try:
             page.wait_for_function(
-                "() => document.querySelectorAll('.q-dialog').length === 0",
+                f"() => !location.pathname.includes('{ROTA_TROCA.strip('/')}')",
                 timeout=15000)
         except Exception:
             return False

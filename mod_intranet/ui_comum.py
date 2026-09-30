@@ -183,11 +183,16 @@ class BotaoFabrica:
             # `icone_branco`, `texto_branco`) e quando `cor=` foi informado
             # pelo chamador, não se mexe: vermelho de "excluir" é vermelho em
             # qualquer estilo, e uma cor explícita é decisão de quem chamou.
+            #
+            # A `v` vai junto porque é ela que diz COMO a cor entra: fundo
+            # cheio no primário, contorno no secundário, círculo translúcido
+            # no ícone-sozinho. Sem a variante, a cor entrava igual em todas e
+            # apagava a forma das que não têm fundo.
             if v in self.TEMATIZADAS and not cor:
                 try:
                     from mod_intranet import preview_estilos
                     preview_estilos.aplicar_no_botao(
-                        btn, chave_modulo=self.chave_modulo)
+                        btn, chave_modulo=self.chave_modulo, variante=v)
                 except Exception:
                     _log().warning(f"botao: estilo visual indisponível para "
                                    f"'{self.chave_modulo}', mantendo cor do "
@@ -481,6 +486,48 @@ def dialogo_formulario(titulo="", *, chave_modulo="intranet", largura=None,
                 raise
     except Exception as e:
         _log().error(f"dialogo_formulario: falha ao abrir '{titulo or chave_modulo}': {e}")
+        raise
+
+
+@contextmanager
+def formulario_na_tela(*, gap="1rem", max_altura="72vh",
+                       rotulo="Conteúdo do formulário"):
+    """Formulário montado no SLOT CORRENTE — sem cartão e sem diálogo.
+
+    Devolve `(miolo, grade)` com o mesmo contrato de `dialogo_formulario`, e
+    é por isso que existe: a troca de senha deixou de ser um modal e passou a
+    ser a PRÓPRIA tela de login (`preview_estilos.tela_login` monta o
+    invólucro e chama um callback). Um diálogo dentro dessa tela seria um
+    cartão por cima de outra coisa — exatamente o que se queria tirar.
+
+    Não cria moldura nenhuma. O que o chamador cria depois de sair de
+    `with miolo:`/`with grade:` nasce no mesmo lugar do `miolo` (irmão, logo
+    ABAIXO dele), que é o rodapé de tela cheia: o botão de salvar fica preso
+    embaixo e o formulário some no meio, em vez de a rolagem levar o botão
+    embora.
+
+    `max_altura` é o teto do miolo, não o da tela: a coluna cresce até ele e a
+    partir daí rola por dentro. Sem teto, o termo de responsabilidade empurra
+    o rodapé para fora da janela e a pessoa precisa rolar a página inteira
+    para achar "Salvar" — e a rolagem da página também leva embora o
+    cabeçalho do login.
+
+    EN: Renders a form into the CURRENT slot, with no card and no dialog.
+    """
+    from nicegui import ui
+    try:
+        miolo = ui.column().classes("w-full min-w-0").style(
+            f"gap: {gap}; max-height: {max_altura}; overflow-y: auto; "
+            # O `padding-right` reserva a barra de rolagem: sem ele o texto
+            # encosta nela quando o termo de responsabilidade está aberto.
+            f"overflow-x: hidden; padding-right: 2px")
+        miolo.props(f'role="region" aria-label="{rotulo}"')
+        with miolo:
+            grade = ui.element("div").classes("w-full").style(CSS_GRADE_CAMPOS)
+            grade.props('role="group" aria-label="Campos do formulário"')
+        yield miolo, grade
+    except Exception as e:
+        _log().error(f"formulario_na_tela: falha ao montar '{rotulo}': {e}")
         raise
 
 

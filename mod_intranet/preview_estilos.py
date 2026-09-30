@@ -205,6 +205,15 @@ def montar_rotas_static() -> bool:
         return False
 
 
+# Marcador das telas que ocupam a JANELA INTEIRA: login e troca de senha.
+#
+# Existe para o CSS dar um alvo próprio. A classe `pe-*` não serve, porque ela
+# também está na Home e em todos os módulos quando a pessoa escolheu um
+# estilo — uma regra para "tela cheia" escrita em cima de `pe-*` mudaria o
+# respiro de todas as telas do sistema.
+CLASSE_TELA_INTEIRA = "preview-tela-inteira"
+
+
 def _defs_css(paleta: dict) -> str:
     """`:root` com as custom properties do padrão + o `--q-primary` da página.
 
@@ -253,6 +262,30 @@ def _defs_css(paleta: dict) -> str:
             f"  body:has(.pe-{paleta['chave']}) .q-menu,\n"
             f"  body:has(.pe-{paleta['chave']}) .q-notification {{\n"
             f"    --q-primary: {q_primaria} !important;\n"
+            f"  }}\n"
+            # O `padding: 0` aqui é a correção do SCROLL QUE NÃO LEVA A
+            # NENHUM LUGAR (30/09/2026). A tela de login abria com a barra de
+            # rolagem sempre visível mesmo com todo o conteúdo à vista: o
+            # `.q-page` do Quasar já traz `min-height: 100vh` E `padding: 16px`,
+            # e o wrapper da tela também pedia `100vh`. São dois 100vh mais 32px
+            # de padding dentro de uma janela de 100vh — o transbordo é
+            # garantido, e a barra some quando se rola até o fim. A pessoa
+            # rolava e não acontecia nada.
+            #
+            # O escopo é `CLASSE_TELA_INTEIRA`, e não `body:has(.pe-verde)`:
+            # a classe `pe-*` também está na Home e em todos os módulos quando
+            # a pessoa escolheu um estilo, e zerar o padding da página tiraria
+            # o respiro de todas as telas do sistema para consertar o login.
+            # `CLASSE_TELA_INTEIRA` só existe nos layouts de tela cheia (login e
+            # troca de senha), que já trazem o próprio respiro.
+            f"  body:has(.{CLASSE_TELA_INTEIRA}) .q-page {{\n"
+            # O `!important` não é força bruta: é a mesma armadilha de camada do
+            # `--q-primary` acima. O NiceGUI/Quasar escreve o padding do
+            # `.q-page` numa cascade layer, e em camada quem vence é a camada —
+            # por mais específica que seja a nossa regra. Sem o `!important` a
+            # regra estava no CSS e não valia nada (medido: 16px no
+            # computado, com a regra presente na folha).
+            f"    padding: 0 !important;\n"
             f"  }}")
 
 
@@ -332,14 +365,15 @@ def _rodape() -> None:
 #  coubessem num `if/elif` só, trocar o estilo acabaria virando um galho
 #  impossível de manter. Um por padrão deixa o removê-lo uma dela só.
 # ---------------------------------------------------------------------------
-def _login_azul(*, padrao, icone, titulo, subtitulo, hint, paleta, campos) -> None:
+def _login_azul(*, padrao, icone, titulo, subtitulo, hint, paleta, campos,
+                titulo_caixa=None) -> None:
     """Facebook: cartão branco centralizado sobre fundo cinza, marca em cima.
 
     É a assinatura do login do Facebook: nome do produto grande e azul ACIMA do
     cartão, formulário dentro do cartão, botão azul de largura total.
     """
     from nicegui import ui
-    with ui.element("div").classes("pe-azul w-full min-w-0").style(
+    with ui.element("div").classes(f"pe-azul w-full min-w-0 {CLASSE_TELA_INTEIRA}").style(
             "min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; gap: 1.5rem"):
         with ui.column().classes("items-center").style("gap: .35rem"):
             ui.icon(icone, size="46px").classes("pe-marca")
@@ -353,14 +387,22 @@ def _login_azul(*, padrao, icone, titulo, subtitulo, hint, paleta, campos) -> No
         _rodape()
 
 
-def _login_verde(*, padrao, icone, titulo, subtitulo, hint, paleta, campos) -> None:
+def _login_verde(*, padrao, icone, titulo, subtitulo, hint, paleta, campos,
+                 titulo_caixa=None) -> None:
     """WhatsApp Web: painel colorido à esquerda, formulário branco à direita.
 
     A tela dividida é a assinatura do WhatsApp Web — e no telefone ela
     empilha, porque o painel some e sobra só o formulário.
+
+    `titulo_caixa` é o título do FORMULÁRIO, e por padrão é o mesmo `titulo`.
+    Existe porque a troca de senha usa o painel para o texto da tarefa
+    ("Troca de senha obrigatória", no lugar onde o login escreve o nome do
+    sistema) e a caixa branca para o nome do produto. Sem o parâmetro os dois
+    campos repetiriam a mesma frase, e era o que acontecia: o mesmo título
+    gigante à esquerda e o mesmo título pequeno à direita, lado a lado.
     """
     from nicegui import ui
-    with ui.element("div").classes("pe-verde w-full min-w-0").style(
+    with ui.element("div").classes(f"pe-verde w-full min-w-0 {CLASSE_TELA_INTEIRA}").style(
             "min-height: 100vh; display: flex; align-items: stretch; flex-wrap: wrap"):
         # painel decorativo (some no telefone)
         with ui.column().classes("pe-painel w-full").style(
@@ -376,17 +418,19 @@ def _login_verde(*, padrao, icone, titulo, subtitulo, hint, paleta, campos) -> N
         with ui.column().classes("pe-caixa-login w-full min-w-0").style(
                 "flex: 1 1 54%; min-width: 0; padding: 2.5rem 2rem; justify-content: center; gap: 1.1rem; max-width: 640px"):
             with ui.column().classes("w-full min-w-0").style("gap: .35rem"):
-                ui.label(titulo).classes("text-h6").style("font-weight: 700")
+                ui.label(titulo_caixa or titulo).classes("text-h6").style(
+                    "font-weight: 700")
                 ui.label("Entre para continuar").classes("text-caption text-grey-6")
             _campos(campos)
             _dica("verde", hint)
             _rodape()
 
 
-def _login_roxo(*, padrao, icone, titulo, subtitulo, hint, paleta, campos) -> None:
+def _login_roxo(*, padrao, icone, titulo, subtitulo, hint, paleta, campos,
+                titulo_caixa=None) -> None:
     """Messenger: cartão muito arredondado com faixa gradiente no topo."""
     from nicegui import ui
-    with ui.element("div").classes("pe-roxo w-full min-w-0").style(
+    with ui.element("div").classes(f"pe-roxo w-full min-w-0 {CLASSE_TELA_INTEIRA}").style(
             "min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; gap: 1.25rem"):
         with ui.column().classes("pe-caixa-login w-full min-w-0").style(
                 "padding: 0; max-width: 440px; overflow: hidden"):
@@ -402,10 +446,11 @@ def _login_roxo(*, padrao, icone, titulo, subtitulo, hint, paleta, campos) -> No
         _rodape()
 
 
-def _login_preto(*, padrao, icone, titulo, subtitulo, hint, paleta, campos) -> None:
+def _login_preto(*, padrao, icone, titulo, subtitulo, hint, paleta, campos,
+                 titulo_caixa=None) -> None:
     """Instagram: monocromático, aro colorido no avatar, muito limpo."""
     from nicegui import ui
-    with ui.element("div").classes("pe-preto w-full min-w-0").style(
+    with ui.element("div").classes(f"pe-preto w-full min-w-0 {CLASSE_TELA_INTEIRA}").style(
             "min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; gap: 1.25rem"):
         with ui.column().classes("items-center").style("gap: .6rem"):
             with ui.element("div").classes("pe-aro"):
@@ -430,7 +475,7 @@ _LAYOUTS = {
 
 
 def tela_login(padrao: str, *, icone: str, titulo: str, subtitulo: str,
-               hint: str, paleta: dict, campos) -> None:
+               hint: str, paleta: dict, campos, titulo_caixa: str = "") -> None:
     """Monta a tela de login no padrão escolhido.
 
     `campos` é uma CALLABLE que o `main.py` fornece: é ela quem cria os
@@ -445,7 +490,8 @@ def tela_login(padrao: str, *, icone: str, titulo: str, subtitulo: str,
     p = padrao if padrao in _LAYOUTS else PADRAO_PADRAO
     try:
         _LAYOUTS[p](padrao=p, icone=icone, titulo=titulo, subtitulo=subtitulo,
-                    hint=hint, paleta=paleta, campos=campos)
+                    hint=hint, paleta=paleta, campos=campos,
+                    titulo_caixa=titulo_caixa)
     except Exception:
         try:
             import logging
@@ -536,7 +582,67 @@ def cor_do_botao(padrao: str = "") -> str:
         return "#1565C0"
 
 
-def aplicar_no_botao(elemento, *, chave_modulo: str = "intranet"):
+def _rgba(cor: str, alfa: float) -> str:
+    """Converte `#rgb`/`#rrggbb` em `rgba(r,g,b,alfa)`.
+
+    Aceita o que a paleta e o tema do módulo podem devolver — hex de 3 ou 6
+    dígitos, `rgb()`/`rgba()` — porque um tom malformado não pode derrubar a
+    pintura do botão: no pior dos casos devolve a cor sem alpha, o navegador
+    descarta a regra e o botão fica como estava.
+    """
+    try:
+        c = (cor or "").strip()
+        if c.startswith("#"):
+            h = c[1:]
+            if len(h) == 3:
+                h = "".join(ch * 2 for ch in h)
+            if len(h) == 6:
+                return (f"rgba({int(h[0:2], 16)},{int(h[2:4], 16)},"
+                        f"{int(h[4:6], 16)},{alfa})")
+        return c
+    except Exception:
+        return cor or ""
+
+
+# Fundo do ícone-sozinho: bem fraco, na tonalidade do estilo. Abaixo de ~10% o
+# círculo some de vez; acima de ~20% compete com o glifo. 14% é o ponto em que
+# a ação fica visível como CIRCULO mas o ícone continua sendo a informação.
+_ALFA_CIRCULO_ICONE = 0.14
+
+
+def _estilo_do_botao(cor: str, variante: str = "primario") -> str:
+    """Traduz a cor do estilo em vigor para a FORMA que a variante pede.
+
+    Cada variante do `BotaoFabrica` tem uma forma, e a cor do estilo tem de
+    entrar NESSA forma — nunca apagar a forma. Antes esta função escrevia
+    `background-color:<cor>;color:#FFFFFF` em todas, o que destruía as
+    variantes que não têm fundo: em Gestão de Usuários as ações de linha
+    (editar, duplicar, sessões, bloquear, excluir) viravam uma fileira de
+    círculos sólidos com o glifoperdido dentro. "Padrão" continuava correto
+    porque nesse caminho a função nem pinta.
+
+    | variante     | forma               | como a cor entra                     |
+    |--------------|---------------------|--------------------------------------|
+    | `primario`   | sólida              | fundo cheio, texto `#FFFFFF`         |
+    | `secundario` | contorno            | fundo vazado, borda e texto na cor   |
+    | `texto`      | só o rótulo         | fundo vazado, texto na cor           |
+    | `icone`      | círculo translúcido | fundo a 14% da cor, ícone na cor cheia |
+
+    A `secundario` e a `texto` são transcritas pelo mesmo motivo da `icone`:
+    um botão de contorno com fundo sólido deixa de ser contorno, e um botão
+    de texto com fundo sólido vira um segundo botão primário na mesma tela.
+    """
+    if variante == "icone":
+        return f"background-color:{_rgba(cor, _ALFA_CIRCULO_ICONE)};color:{cor};"
+    if variante == "secundario":
+        return f"background-color:transparent;border-color:{cor};color:{cor};"
+    if variante == "texto":
+        return f"background-color:transparent;color:{cor};"
+    return f"background-color:{cor};color:#FFFFFF;"
+
+
+def aplicar_no_botao(elemento, *, chave_modulo: str = "intranet",
+                     variante: str = "primario"):
     """Escreve a cor do estilo em vigor no botão. Chame DEPOIS de `.style()`.
 
     Existe porque **estilo inline vence CSS**. A fábrica de botões escreve
@@ -545,9 +651,15 @@ def aplicar_no_botao(elemento, *, chave_modulo: str = "intranet"):
     teal fixo enquanto a tela inteira estava azul — não era o botão estar
     "errado", era ele ser o único que não ouvia a escolha da pessoa.
 
+    `variante` é a chave que `BotaoFabrica` já tem em mãos: é ela que decide
+    se a cor entra como fundo cheio, contorno, rótulo ou círculo de ação
+    (ver `_estilo_do_botao`). Sem ela, todas as variantes são pintadas igual e
+    as que não têm fundo perdem a forma.
+
     Não mexe em cor de ESTADO (apagar, restaurar, aviso): o vermelho de
     "excluir" é o mesmo em qualquer estilo, e pintar esse botão de azul
-    esconderia o que a ação faz.
+    esconderia o que a ação faz. `BotaoFabrica` não chama esta função para
+    elas, e o chamador que passa `cor=` também não.
     """
     if elemento is None:
         return None
@@ -568,7 +680,7 @@ def aplicar_no_botao(elemento, *, chave_modulo: str = "intranet"):
             return elemento
     cor = cor_do_botao(padrao)
     try:
-        elemento.style(f"background-color:{cor};color:#FFFFFF;")
+        elemento.style(_estilo_do_botao(cor, variante))
     except Exception:
         try:
             import logging
