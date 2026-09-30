@@ -509,6 +509,25 @@ def init_db():
                     "('migracao_versao_intranet_260930_validador_senha', '1') "
                     "ON CONFLICT DO NOTHING")
 
+    # Bump do `intranet` em 30/09/2026, marcador próprio. Mesmo dia, outra
+    # alteração: o diálogo de troca obrigatória ganhou título e boas-vindas no
+    # TOPO, e a cor do botão passou a seguir o estilo escolhido pela pessoa.
+    # `Dialogo` ganhou `sem_separador` e `dialogo_formulario` ganhou o mesmo
+    # parâmetro, para o título nascer no cabeçalho do cartão em vez de depois
+    # da coluna rolável; e o seletor de `--q-primary` passou a cobrir o portal
+    # do modal (`.q-dialog`), que vive fora do `.q-layout`.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_intranet_260930_dialogo_topo'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:intranet', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_intranet_260930_dialogo_topo', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_usuarios_260929'")
     if (cur.fetchone()[0] or 0) == 0:

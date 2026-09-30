@@ -1207,22 +1207,23 @@ def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
     # substituindo, e vir preenchida tiraria a prova de que a pessoa sabe a
     # senha de entrada.
     with ui_comum.dialogo_formulario(
-            chave_modulo="intranet", sem_descricao=True) as (dlg, card, miolo, grade):
-        # TÍTULO E BOAS-VINDAS DENTRO DO `miolo`, de propósito (30/09/2026).
-        # `dialogo_formulario` fecha `miolo` e `grade` ANTES do `yield` — está
-        # escrito no docstring: é o que ancora o rodapé na base do cartão. Só
-        # que a consequência é que tudo que o chamador cria fora desses `with`
-        # nasce no CARD, ou seja DEPOIS da coluna rolável, e o título aparecia
-        # embaixo dos campos. Criando dentro de `miolo`, título e boas-vindas
-        # ficam no topo do formulário.
+            titulo="Troca de senha obrigatória",
+            descricao=f"Bem-vindo(a), {autenticacao.nome_de_tratamento(nome_usuario)}. "
+                      "Por segurança, defina uma nova senha antes de continuar.",
+            sem_separador=True,
+            chave_modulo="intranet") as (dlg, card, miolo, grade):
+        # TÍTULO E BOAS-VINDAS VEM PELOS PARÂMETROS DO HELPER (30/09/2026).
+        # Eles apareciam EMBaixo dos campos, e a causa está no `yield` de
+        # `dialogo_formulario`: `miolo` e `grade` são fechados ANTES do yield,
+        # então o slot corrente já é o CARD — e tudo que o chamador cria fora
+        # de `with miolo:`/`with grade:` nasce depois da coluna rolável.
         #
-        # Em diálogo de três campos a coluna nem rola, então não há custo: é o
-        # lugar certo, e não vale mexer no helper compartilhado (23 chamadas).
+        # Criar o título dentro de `with miolo:` não resolve: o `grade` já é o
+        # primeiro filho do `miolo` (nasce no yield), então o título ia para
+        # DEPOIS dele. Foi o que apareceu no navegador. A saída é o helper criar
+        # o cabeçalho, que ele faz no `Dialogo.__enter__` — antes do `miolo`
+        # existir. `sem_separador=True` mantém o visual de origem, sem divisória.
         with miolo:
-            ui.label("Troca de senha obrigatória").classes("text-h6")
-            ui.label(f"Bem-vindo(a), {autenticacao.nome_de_tratamento(nome_usuario)}. "
-                     "Por segurança, defina uma nova senha antes de continuar.").classes(
-                "text-body2 text-grey-7")
             with grade:
                 atual = ui_comum.campo_texto("Senha atual", senha=True, props="")
                 nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True,

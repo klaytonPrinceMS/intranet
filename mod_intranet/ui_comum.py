@@ -242,11 +242,19 @@ class Dialogo:
     """
 
     def __init__(self, titulo="", largura="w-[560px]", *,
-                 chave_modulo="intranet", max_altura=True):
+                 chave_modulo="intranet", max_altura=True, sem_separador=False):
         self.titulo = titulo
         self.largura = largura
         self.chave_modulo = chave_modulo
         self.max_altura = max_altura
+        # O separador é o padrão há anos, mas o diálogo de troca obrigatória
+        # usa título sem divisória (30/09/2026) para não mudar o visual que já
+        # era o dele. Precisou virar opção porque `Dialogo.__enter__` roda
+        # ANTES de `dialogo_formulario` criar o `miolo` — então o título sai no
+        # TOPO do cartão, e o chamador não tem como repor esse lugar depois:
+        # tudo que ele cria nasce depois do `miolo` (ver docstring do
+        # `dialogo_formulario`).
+        self.sem_separador = sem_separador
         self.dlg = None
         self.card = None
         self._stack = None
@@ -275,7 +283,8 @@ class Dialogo:
             card.style(estilo)
         if self.titulo:
             ui.label(self.titulo).classes("text-h6")
-            ui.separator()
+            if not self.sem_separador:
+                ui.separator()
         self.dlg, self.card = dlg, card
         return dlg, card
 
@@ -359,7 +368,7 @@ CSS_GRADE_AVISOS = ("display: grid; grid-template-columns: "
 
 @contextmanager
 def dialogo_formulario(titulo="", *, chave_modulo="intranet", largura=None,
-                       descricao="", sem_descricao=False):
+                       descricao="", sem_descricao=False, sem_separador=False):
     """Abre um diálogo de FORMULÁRIO largo, com teto de altura e rolagem interna.
 
     Mesma moldura do `dialogo_card`, com o esqueleto que resolve o formulário
@@ -390,6 +399,13 @@ def dialogo_formulario(titulo="", *, chave_modulo="intranet", largura=None,
     `LARGURA_DIALOGO_FORMULARIO` quando um diálogo specifico precisar de outro
     teto (padrão: usar o padrão).
 
+    `titulo` e `descricao` saem ACIMA do `miolo`, e isso é a diferença entre um
+    diálogo com cabeçalho e um sem: o `yield` deste gerador vem DEPOIS do
+    `miolo`, então um título que o chamador cria por conta própria aparece
+    embaixo dos campos. Quem precisa de título no topo passa o texto por
+    aqui — e `sem_separador=True` quando o diálogo de origem não tinha
+    divisória sob o título.
+
     EN: Opens a wide, height-capped, internally scrollable FORM dialog. Same
         frame as `dialogo_card` plus the flex-column skeleton that stops the
         form from overflowing the window.
@@ -397,7 +413,8 @@ def dialogo_formulario(titulo="", *, chave_modulo="intranet", largura=None,
     from nicegui import ui
     try:
         with Dialogo(titulo, largura or LARGURA_DIALOGO_FORMULARIO,
-                     chave_modulo=chave_modulo, max_altura=True) as (dlg, card):
+                     chave_modulo=chave_modulo, max_altura=True,
+                     sem_separador=sem_separador) as (dlg, card):
             # O `max-h-[90vh]` vem do `max_altura=True` acima. O `flex flex-col`
             # é o que transforma o cartão em coluna para o miolo poder dividir
             # a altura com o que estiver fora dele.
