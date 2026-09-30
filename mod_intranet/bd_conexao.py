@@ -379,6 +379,55 @@ def init_db():
                     "('migracao_versao_agregador_noticias_260929_leitura', '1') "
                     "ON CONFLICT DO NOTHING")
 
+    # Terceiro bump do `agregador_noticias`, agora em 30/09/2026, com marcador
+    # próprio: o slider de "Por página" finalmente GRAVA.
+    #
+    # Ele gravava o cookie (a rota funcionava), mas arrastar o trilho não
+    # mudava nada, por DUAS falhas encadeadas no mesmo controle:
+    #   1. o `change` do Quasar chegava ao handler como
+    #      `GenericEventArguments`, que não tem `.value` — o handler estourava
+    #      ali, ANTES de gravar (`AttributeError` no log do servidor);
+    #   2. trocado por `on_value_change` + atraso de 0,8s (que segura o
+    #      arrasto e grava uma vez ao soltar o cursor), a chamada final
+    #      passou `force_load=True`, que NÃO EXISTE nesta versão do NiceGUI —
+    #      a assinatura é `to(target, new_tab=False)`, e o `TypeError`
+    #      impedia a navegação para a rota do cookie.
+    # Nenhuma das duas aparecia testando a rota direto pela URL: as duas só
+    # nascem na interação real com o trilho.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_agregador_noticias_260930_slider'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('versao_modulo:agregador_noticias', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:agregador_noticias'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_agregador_noticias_260930_slider', '1') "
+                    "ON CONFLICT DO NOTHING")
+
+    # Bump do `intranet` em 30/09/2026, com marcador próprio. O que mudou foi
+    # `telas.py`: a troca de senha obrigatória das CONTAS DE TESTE
+    # (`qacomum`/`qamaster`, senha `123456` — AGENTS.md §8.2) nasce
+    # PRÉ-PREENCHIDA, para a troca virar um clique em vez de digitação de uma
+    # senha que já se publica no §8.2. Mesmo espírito do diálogo de
+    # credenciais do `master`, que já nasce preenchido.
+    #
+    # `intranet` não tem linha no tuple de seed de cima (linhas 171-188): a
+    # chave nasce na migração `migracao_versao_intranet_260913` e é daqui para
+    # frente que a cadeia 260913 -> 260929 -> 260930 a entrega. Banco novo sai
+    # certo pela própria cadeia, banco em uso por este marcador.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_intranet_260930'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) "
+                    "VALUES ('versao_modulo:intranet', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_intranet_260930', '1') ON CONFLICT DO NOTHING")
+
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_usuarios_260929'")
     if (cur.fetchone()[0] or 0) == 0:

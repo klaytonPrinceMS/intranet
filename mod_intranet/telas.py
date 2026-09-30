@@ -715,6 +715,19 @@ LARGURA_DIALOGO_TROCA = ui_comum.LARGURA_DIALOGO_FORMULARIO
 CSS_GRADE_CAMPOS_TROCA = ui_comum.CSS_GRADE_CAMPOS
 CSS_GRADE_AVISOS_TROCA = ui_comum.CSS_GRADE_AVISOS
 
+# Senha que o formulário de troca obrigatória JÁ PROPOSTE (30/09/2026).
+#
+# Só para as contas de TESTE — `qacomum` e `qamaster`, que entregam com a
+# senha `123456` e são contas de fábrica publicadas na §8.2 do AGENTS.md. Não
+# vale para conta real: o campo nasce vazio e a pessoa digita a senha dela.
+#
+# Por que preencher: obrigar a DIGITAR uma senha que já se sabe qual é é
+# trabalho sem resultado — o objetivo da troca obrigatória é a pessoa entrar,
+# não decorar `123456`. Com o campo preenchido, a troca é um clique. É a mesma
+# lógica do diálogo de credenciais do `master`, que nasce com o nome e a
+# senha do responsável.
+_SENHA_PROPOSTA_TROCA = "123456"
+
 
 def _dialogo_troca_credenciais(nome_usuario: str, ao_concluir=None):
     """Opens the mandatory first-access dialog with a safe minimal fallback.
@@ -1181,6 +1194,18 @@ def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
     # rolável e botão ancorado na base. A ORDEM do DOM dos três campos de senha
     # (atual → nova → confirmar) é preservada: o QA preenche por índice em
     # `assets/test/qa_login_helper.py::concluir_troca`.
+    #
+    # SENHA PROPOSTA PRÉ-PREENCHIDA (30/09/2026, decisão do responsável).
+    # `qacomum` e `qamaster` são contas de teste que ENTREGAM com a senha
+    # `123456` (§8.2 do AGENTS.md), e a troca obrigatória existe para quem
+    # entra. Deixar o campo vazio obriga a pessoa a DIGITAR uma senha que já
+    # se sabe qual é — trabalho sem resultado. O formulário nasce preenchido
+    # com `123456` nos dois campos, como o diálogo de credenciais do `master`
+    # nasce com o nome e a senha do responsável: a troca vira um clique.
+    #
+    # A senha ATUAL continua vazia de propósito: ela é o que se está
+    # substituindo, e vir preenchida tiraria a prova de que a pessoa sabe a
+    # senha de entrada.
     with ui_comum.dialogo_formulario(
             chave_modulo="intranet", sem_descricao=True) as (dlg, card, miolo, grade):
         ui.label("Troca de senha obrigatória").classes("text-h6")
@@ -1189,8 +1214,11 @@ def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
             "text-body2 text-grey-7")
         with grade:
             atual = ui_comum.campo_texto("Senha atual", senha=True, props="")
-            nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True, props="")
-            conf = ui_comum.campo_texto("Confirmar nova senha", senha=True, props="")
+            nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True,
+                                        valor=_SENHA_PROPOSTA_TROCA,
+                                        props="")
+            conf = ui_comum.campo_texto("Confirmar nova senha", senha=True,
+                                        valor=_SENHA_PROPOSTA_TROCA, props="")
 
         def confirmar():
             if nova.value != conf.value:

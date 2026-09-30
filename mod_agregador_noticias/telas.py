@@ -530,9 +530,6 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
             # Grava em cookie por NAVEGAÇÃO (rota + 303), pelo mesmo motivo do
             # `estilo_visual`: só uma resposta HTTP manda `Set-Cookie`, e um
             # evento de WebSocket não tem resposta para anexar o cabeçalho.
-            # Por isso o `change` (soltar o cursor), e não o
-            # `on_value_change` — que dispara a cada movimento do trilho e
-            # recarregaria a página dezenas de vezes.
             _pp_atual = estado["por_pagina"]
             with ui.row().classes("items-center gap-2 w-full sm:w-auto"):
                 ui.label("Por página").classes(
@@ -544,8 +541,59 @@ def mostrar_tela(user_nome: str, perfil_global: str = ""):
                     .classes("w-full sm:w-56") \
                     .props('data-testid=agregador-por-pagina')
                 _sl_pp.tooltip("Quantas notícias por página")
-                _sl_pp.on("change", lambda e: ui.navigate.to(
-                    url_por_pagina(int(e.value or _pp_atual)), force_load=True))
+
+                # POR QUE `on_value_change` COM ATRASO, E NÃO O `change`
+                # O `change` do Quasar dispara ao soltar o cursor e CHEGA ao
+                # handler pelo WebSocket — mas chega como `GenericEventArguments`,
+                # que NÃO tem `.value` (o traceback do servidor mostra
+                # `AttributeError: 'GenericEventArguments' object has no
+                # attribute 'value'`). O handler estourava ali, ANTES de gravar,
+                # e o resultado era um slider que movia e não salvava nada.
+                #
+                # O caminho certo é `on_value_change` (que é o
+                # `update:model-value` e traz o valor), mas ele dispara a CADA
+                # movimento do cursor — gravar a cada um recarregaria a página
+                # dezenas de vezes enquanto a pessoa arrasta. Por isso o ATRASO:
+                # cada movimento cancela o timer do anterior e marca um novo.
+                # Só quando a pessoa para de mexer o timer vence, e aí grava
+                # uma vez só — que é, na prática, "ao soltar o cursor".
+                _pp_agenda = {"timer": None, "valor": _pp_atual}
+
+                def _agendar_gravacao(valor):
+                    try:
+                        numero = int(valor or 0)
+                    except Exception:
+                        return
+                    if numero <= 0 or numero == _pp_agenda["valor"]:
+                        return
+                    _pp_agenda["valor"] = numero
+                    pendente = _pp_agenda.get("timer")
+                    if pendente is not None:
+                        try:
+                            pendente.delete()
+                        except Exception:
+                            pass
+                    _pp_agenda["timer"] = ui.timer(
+                        0.8, lambda: _gravar_agora(numero), once=True)
+
+                def _gravar_agora(numero):
+                    # Sem `force_load`: a assinatura desta versão do NiceGUI é
+                    # `to(target, new_tab=False)` — passar `force_load` estoura
+                    # `TypeError` e nada é gravado. O mesmo ida-e-volta de
+                    # cookie do `estilo_visual` (`preview_estilos.py:606`) vai
+                    # assim, sem argumento extra.
+                    try:
+                        ui.navigate.to(url_por_pagina(numero))
+                    except Exception as e:
+                        try:
+                            log.exception(
+                                f"_gravar_agora: falha ao salvar o tamanho de "
+                                f"página {numero} | {e}")
+                        except Exception:
+                            pass
+
+                _sl_pp.on_value_change(
+                    lambda e: _agendar_gravacao(getattr(e, "value", None)))
 
             if _eh_admin:
                 _estado_coleta = {"ocupado": False}
