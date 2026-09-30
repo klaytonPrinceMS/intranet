@@ -218,15 +218,30 @@ def _defs_css(paleta: dict) -> str:
     `!important` é o que vence a declaração inline que o `ui.colors()` deixa
     no layout. O valor vem da paleta, que continua sendo a fonte única — não
     há cor chumbada no CSS.
+
+    O `.q-dialog` está na lista pelo mesmo motivo e pela mesma armadilha: modal
+    do Quasar nasce num portal no `body`, IRMÃO do `.q-layout`, então uma
+    regra que sópega o layout deixa o botão do modal com a cor do
+    administrador. O token é o mesmo; só o alvo mudou.
     """
     chaves = ("fundo", "superficie", "primaria", "primaria_acao", "primaria_2",
               "primaria_texto", "raio", "sombra")
     linhas = "\n".join(
         f"    --pe-{k}: {paleta[k]};" for k in chaves if k in paleta)
     q_primaria = paleta.get("primaria_q", paleta["primaria"])
+    # `.q-dialog` entrou na lista em 30/09/2026 porque o diálogo é a primeira
+    # coisa que mostrou o furo: o Quasar monta modal num PORTAL no `body`, fora
+    # do `.q-layout`, e a regra antiga cobria só o layout. Resultado era o botão
+    # do "Salvar nova senha" na cor do ADMINISTRADOR (o preto de
+    # `cor_principal`), com o servidor logado num estilo verde — o botão não
+    # seguia o tema que a pessoa estava usando. O token é o mesmo e o
+    # `!important` é o mesmo; só faltava o elemento certo no seletor.
     return (f":root {{\n{linhas}\n  }}\n"
             f"  .pe-{paleta['chave']},\n"
-            f"  body:has(.pe-{paleta['chave']}) .q-layout {{\n"
+            f"  body:has(.pe-{paleta['chave']}) .q-layout,\n"
+            f"  body:has(.pe-{paleta['chave']}) .q-dialog,\n"
+            f"  body:has(.pe-{paleta['chave']}) .q-menu,\n"
+            f"  body:has(.pe-{paleta['chave']}) .q-notification {{\n"
             f"    --q-primary: {q_primaria} !important;\n"
             f"  }}")
 

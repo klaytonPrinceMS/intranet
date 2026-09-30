@@ -513,11 +513,50 @@ def definir_tema_escuro(user_nome, escuro):
 
 
 def trocar_senha_propria(user_nome, senha_atual, nova_senha):
+    """Troca a própria senha, recusando senha fraca ou vazada.
+
+    A regra de força vem de `validador_senha.veredito_bloqueante`, que é
+    OFFLINE por contrato: o caminho que decide se a senha é aceita não
+    consulta a internet. Numa prefeitura em rede fechada isso não é
+    detalhe — se a gravação dependesse da rede, trocar senha dependeria da
+    rede, e sem rede o servidor ficaria esperando.
+
+    O veredito de vazamento entra só se a senha já tiver sido consultada antes
+    (cache em memória ou em `tb_senha_vazamento_cache`), o que resolve sem
+    rede. Nunca é o que impede a troca: quem decide é a análise de força.
+
+    Contas de teste do seed (`qacomum`/`qamaster`) ficam de fora da regra e
+    podem manter a própria senha — sem isso a troca obrigatória delas viraria
+    beco sem saída. Ver `validador_senha.CONTAS_DE_TESTE`.
+    """
     ok, msg = autenticar(user_nome, senha_atual)
     if not ok:
         return False, "Senha atual incorreta"
     if len(nova_senha) < 6:
         return False, "Nova senha deve ter no mínimo 6 caracteres"
+    try:
+        from mod_intranet.validador_senha import (CONTAS_DE_TESTE,
+                                                 veredito_bloqueante)
+        if (user_nome or "").strip().lower() not in CONTAS_DE_TESTE:
+            veredito = veredito_bloqueante(nova_senha, user_nome)
+            if veredito is not None and not veredito.get("ok"):
+                motivos = veredito.get("bloqueios") or ["Senha fraca demais."]
+                return False, motivos[0]
+            # Troca forçada que mantém a mesma senha não é troca nenhuma: é
+            # o usuário passando pela tela sem mudar nada. Não precisa
+            # reautenticar: o `autenticar` do topo já confirmou `senha_atual`.
+            if (nova_senha or "") == (senha_atual or ""):
+                return (False, "A nova senha é igual à senha atual. Escolha "
+                        "outra.")
+    except Exception:
+        # A checagem nunca pode trancar o usuário fora da própria senha: se o
+        # validador falhar, a troca segue. O problema fica no log.
+        try:
+            import logging
+            logging.getLogger(__name__).exception(
+                "autenticacao: validador de senha falhou; troca prosseguindo")
+        except Exception:
+            pass
     gest = _gest()
     conn = gest.get_connection()
     try:

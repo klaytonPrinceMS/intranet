@@ -16,7 +16,7 @@ Uso dentro de uma função @ui.page:
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
-from nicegui import ui, app
+from nicegui import ui, app, run
 
 from mod_intranet import autenticacao
 from mod_intranet import ui_comum
@@ -1208,17 +1208,80 @@ def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
     # senha de entrada.
     with ui_comum.dialogo_formulario(
             chave_modulo="intranet", sem_descricao=True) as (dlg, card, miolo, grade):
-        ui.label("Troca de senha obrigatória").classes("text-h6")
-        ui.label(f"Bem-vindo(a), {autenticacao.nome_de_tratamento(nome_usuario)}. "
-                 "Por segurança, defina uma nova senha antes de continuar.").classes(
-            "text-body2 text-grey-7")
-        with grade:
-            atual = ui_comum.campo_texto("Senha atual", senha=True, props="")
-            nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True,
-                                        valor=_SENHA_PROPOSTA_TROCA,
-                                        props="")
-            conf = ui_comum.campo_texto("Confirmar nova senha", senha=True,
-                                        valor=_SENHA_PROPOSTA_TROCA, props="")
+        # TÍTULO E BOAS-VINDAS DENTRO DO `miolo`, de propósito (30/09/2026).
+        # `dialogo_formulario` fecha `miolo` e `grade` ANTES do `yield` — está
+        # escrito no docstring: é o que ancora o rodapé na base do cartão. Só
+        # que a consequência é que tudo que o chamador cria fora desses `with`
+        # nasce no CARD, ou seja DEPOIS da coluna rolável, e o título aparecia
+        # embaixo dos campos. Criando dentro de `miolo`, título e boas-vindas
+        # ficam no topo do formulário.
+        #
+        # Em diálogo de três campos a coluna nem rola, então não há custo: é o
+        # lugar certo, e não vale mexer no helper compartilhado (23 chamadas).
+        with miolo:
+            ui.label("Troca de senha obrigatória").classes("text-h6")
+            ui.label(f"Bem-vindo(a), {autenticacao.nome_de_tratamento(nome_usuario)}. "
+                     "Por segurança, defina uma nova senha antes de continuar.").classes(
+                "text-body2 text-grey-7")
+            with grade:
+                atual = ui_comum.campo_texto("Senha atual", senha=True, props="")
+                nova = ui_comum.campo_texto("Nova senha (mín. 6)", senha=True,
+                                            valor=_SENHA_PROPOSTA_TROCA,
+                                            props="")
+                conf = ui_comum.campo_texto("Confirmar nova senha", senha=True,
+                                            valor=_SENHA_PROPOSTA_TROCA, props="")
+            # --- Veredito de força e de vazamento, enquanto a pessoa digita --
+            # `on("update:model-value")` chega a cada tecla; o `ui.timer` de 0,8s
+            # segura o que está digitando e dispara UMA vez ao parar, no mesmo
+            # padrão do "Por página" do agregador.
+            #
+            # O requisito de rede local mora aqui: o que roda no event-loop é só
+            # a troca de rótulo. A consulta sai por `run.io_bound`, porque pode
+            # falar com a internet — e uma espera de socket na fila do
+            # event-loop trava a tela inteira, sem internet até o fim do tempo
+            # máximo. Fora da fila, o pior caso é um rótulo que não muda.
+            rotulo_veredito = ui.label("").classes("text-body2")
+
+            async def _avaliar_senha():
+                """Consulta fora do event-loop. Falha aqui não trava a troca."""
+                from mod_intranet.validador_senha import (
+                    analisar_online, texto_para_usuario)
+                senha = nova.value or ""
+                if len(senha) < 4:
+                    rotulo_veredito.set_text("")
+                    return
+                try:
+                    r = await run.io_bound(analisar_online, senha, nome_usuario)
+                    r = r or {}
+                    texto = texto_para_usuario(r)
+                    rotulo_veredito.set_text(texto)
+                    rotulo_veredito.classes(
+                        remove="text-grey-7 text-positive text-negative",
+                        add="text-negative" if not r.get("ok") else "text-positive")
+                except Exception as e:
+                    # Se a avaliação falhar, a pessoa continua podendo trocar a
+                    # senha — a checagem é ajuda, não portão.
+                    lg = _login_erro_log()
+                    if lg:
+                        lg.exception(f"troca_senha: veredito falhou: {e}")
+                    rotulo_veredito.set_text("")
+
+            _pendente_veredito = {"timer": None}
+
+            def _agendar_veredito(_=None):
+                t = _pendente_veredito.get("timer")
+                if t is not None:
+                    try:
+                        t.delete()
+                    except Exception:
+                        pass
+                _pendente_veredito["timer"] = ui.timer(
+                    0.8, _avaliar_senha, once=True)
+
+            nova.on("update:model-value", _agendar_veredito)
+            # Primeira avaliação: o formulário já nasce preenchido, e a pessoa
+            # precisa do veredito sem ter que mexer em algum campo.
+            _agendar_veredito()
 
         def confirmar():
             if nova.value != conf.value:

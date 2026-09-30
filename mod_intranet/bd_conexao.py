@@ -104,6 +104,17 @@ PADRAO_CONFIG = {
     # Contador de acessos ao sistema (incrementado a cada login bem-sucedido)
     "contador_acessos_total": "0",
     "contador_acessos_inicio": "",
+    # Validação de senha (`mod_intranet/validador_senha.py`).
+    #
+    # A sondagem de internet é o que garante o requisito de rede local: com
+    # `senha_sondar_internet=0` a camada de vazamento nem tenta abrir socket,
+    # e com `senha_consultar_vazamento=0` ela some de vez. As duas são 1 por
+    # padrão porque a sondagem é barata e tem cache de 15 min — mas quem instala
+    # em rede fechada tem o botão para desligar sem mexer em código.
+    "senha_consultar_vazamento": "1",
+    "senha_sondar_internet": "1",
+    # 6 é o piso que já valia no código; subir barra o existente sem querer.
+    "senha_tamanho_minimo": "6",
 }
 
 
@@ -163,6 +174,41 @@ def init_db():
             ordem INTEGER NOT NULL DEFAULT 0
         )
     """)
+    # Verificação de senha (`validador_senha.py`), 30/09/2026.
+    #
+    # `tb_senha_vazamento_cache` NÃO é o corpus de senhas vazadas, e sim a
+    # memória das consultas já feitas: par (prefixo, sufixo) do SHA-1 e a
+    # contagem devolvida. Existe para a segunda tentativa com a mesma senha sair
+    # instantânea e sem repetir chamada — e para que o caminho que BLOQUEIA a
+    # troca (que roda no event-loop e por isso não pode depender de rede)
+    # consiga ler o veredito em vez de refazer a consulta.
+    #
+    # `tb_senha_padrao_organizacao` é configuração do PRÓPRIO órgão: as
+    # palavras com as quais o público monta senha (nome da prefeitura, do
+    # órgão, um termo do serviço). `tipo='exata'` compara a senha inteira;
+    # `tipo='palavra'` reprova se a senha CONTER o padrão.
+    #
+    # A lista de senhas vazadas em texto plano fica de fora, de propósito: ver
+    # `validador_senha.motivos_sem_corpus()`.
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS tb_senha_vazamento_cache (
+            prefixo TEXT NOT NULL,
+            sufixo TEXT NOT NULL,
+            contagem INTEGER NOT NULL DEFAULT 0,
+            data_consulta DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (prefixo, sufixo)
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS tb_senha_padrao_organizacao (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            padrao TEXT NOT NULL UNIQUE,
+            descricao TEXT,
+            tipo TEXT NOT NULL DEFAULT 'palavra',
+            ativo INTEGER NOT NULL DEFAULT 1,
+            data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     cur.execute("SELECT COUNT(*) FROM tb_config")
     if (cur.fetchone()[0] or 0) == 0:
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('versao_sistema', '1.0.260913')")
@@ -192,6 +238,22 @@ def init_db():
     for chave, valor in PADRAO_CONFIG.items():
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES (?, ?) "
                     "ON CONFLICT DO NOTHING", (chave, valor))
+    # Semente dos padrões do órgão (30/09/2026). Genéricos de propósito: o
+    # administrador edita, desativa ou apaga em `validador_senha` pela tela de
+    # administração. O que entra aqui é o que o servidor DAQUI monta senha —
+    # o nome da instituição e o termo do serviço —, não dado de terceiros.
+    for _pad, _desc in (
+        ("prefeitura", "Nome da instituição"),
+        ("municipio", "Nome do município"),
+        ("cidade", "Como o município é chamado"),
+        ("servidor", "Cargo de quem usa o sistema"),
+        ("detran", "Órgão"),
+        ("tributos", "Área de atendimento"),
+        ("camara", "Órgão"),
+    ):
+        cur.execute("INSERT INTO tb_senha_padrao_organizacao (padrao, descricao, "
+                    "tipo, ativo) VALUES (?, ?, 'palavra', 1) "
+                    "ON CONFLICT DO NOTHING", (_pad, _desc))
     # Migração ÚNICA (06/09): cores padrão por módulo. O banco existente guardou
     # valores antigos/customizados semeados (intranet/`cor_principal` = #1565C0,
     # blog/editpdf/empenhos/solicita com cores soltas) que sobrescrevem os
@@ -427,6 +489,25 @@ def init_db():
                     "WHERE chave='versao_modulo:intranet'")
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
                     "('migracao_versao_intranet_260930', '1') ON CONFLICT DO NOTHING")
+
+    # Bump do `intranet` em 30/09/2026, marcador próprio. Entrou
+    # `validador_senha.py`: verificação de força e de vazamento na troca de
+    # senha. O requisito que mandou no desenho foi rede local — o sistema não
+    # pode travar quando não há internet, tem que ignorar. Daí a separação:
+    # o caminho que BLOQUEIA é só o offline (entropia, teclado, sequência,
+    # padrões do órgão) e a camada de vazamento é sondada, tem tempo máximo
+    # próprio, não faz retry e falha para "indisponível" em vez de travar.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_intranet_260930_validador_senha'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:intranet', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_intranet_260930_validador_senha', '1') "
+                    "ON CONFLICT DO NOTHING")
 
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_usuarios_260929'")
