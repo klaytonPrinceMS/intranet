@@ -299,6 +299,121 @@ liberacao_provisoria=liberacao_provisoria)` e desempacota os **três** valores
 **guardião** do `liberacao_provisoria`: só ele pode passar `True`, e só depois das
 **duas** travas.
 
+## Política de senha: medidor, aceite de risco e tentativas de login (30/09/2026)
+
+> **EN:** Password difficulty meter in the password-change form, a risk
+> acceptance with double confirmation quoting the LGPD, and login attempts
+> limited by **progressive delay** (never by account lockout).
+>
+> **PT-BR:** Medidor de dificuldade de senha no formulário de troca, aceite de
+> risco com confirmação dupla citando a LGPD, e tentativas de login limitadas
+> por **atraso progressivo** (nunca por bloqueio de conta).
+
+Módulo: `mod_intranet/politica_senha.py`.
+
+### O medidor responde "mas ela vazou e ainda assim…"
+
+Vazamento e dificuldade são **duas leituras diferentes**, e a tela mostra as
+duas. Uma senha pode vazar e ser forte; pode não vazar e ser fraca, porque é
+adivinhável.
+
+| Senha | Bits | Faixa |
+|:---|---:|:---|
+| `123456` | 15,5 | Muito fraca |
+| `Senha@2025` | 31,2 | Fraca |
+| `prefeitura2026` | 47,3 | Média |
+| `MinhaSenhaForte#2026` | 76,4 | Forte |
+| `aB3$Kq9!zR7#vN2@wT6^yL4&mP8*` | 134,6 | Muito forte |
+
+`prefeitura2026` é o caso que mostra a diferença: 47 bits, barra no meio, e
+mesmo assim o validador recusa — porque contém a palavra da instituição e um
+ano. A **medida** é uma coisa; a **dedução** é outra.
+
+Pisos das faixas: 0 / 30 / 45 / 60 / **90** bits. O topo é 90 de propósito —
+uma senha humana de 20 caracteres dá ~76, e com o piso em 75 quase toda senha
+boa cairia em "Muito forte", deixando a barra de distinguir nada.
+
+### O aceite: pode usar, mas assinando
+
+Senha fraca ou vazada é **recusada por padrão**. Mas quem escolheu a senha pode
+usá-la assim mesmo — marcando duas coisas:
+
+1. um checkbox ("li e estou ciente");
+2. a palavra **`ESTOU CIENTE`** digitada.
+
+O botão "Salvar nova senha" fica **desabilitado** até as duas. Sem isso o
+servidor leria um botão apagado como defeito e clicaria por força, e o aceite
+viraria teatro.
+
+O aceite vale **só para aquela troca**. Não vira marca permanente no cadastro
+porque amanhã a pessoa pode trocar a senha, e um rótulo de "usa senha fraca" que
+ninguém pode apagar é estigma, não registro.
+
+O que fica para sempre é a **auditoria**: quem assinou, quando, e que o texto da
+LGPD foi apresentado. **A senha nunca entra no registro.**
+
+### O texto do aceite e a LGPD
+
+`politica_senha.TEXTO_ACEITE_RISCO` (bilíngue, EN no topo / PT-BR abaixo)
+reproduz o que a lei estabelece **e o que ela não estabelece**:
+
+- **Art. 6º, VI e VII** (segurança e prevenção) e **Art. 46**: a prefeitura é
+  a **controladora** e adota medidas técnicas e administrativas contra acessos
+  não autorizados. Esse é o dever do controlador, e é o que o sistema entrega.
+- A **co-responsabilidade** é do servidor: escolher senha fácil é ato dele.
+- Se a conta for invadida por senha fraca ou vazada, o uso indevido é
+  atribuído ao perfil dele.
+
+O texto **não** promete o que a lei não promete. Não há isenção de
+responsabilidade, nem "a prefeitura não responde", nem cláusula que anule o
+dever do controlador. Um aceite que só cita artigo para assustar é propaganda, e
+a prefeitura não pode fazer isso com servidor público.
+
+### Decisões que o responsável tomou (e o que elas custam)
+
+| Decisão | Motivo registrado |
+|:---|:---|
+| Aceite **só avisa**, não bloqueia promoção de perfil | A responsabilidade é de quem escolheu a senha fraca, e se prova no registro — não num trinco que o próprio sistema aplicaria |
+| Restrição vale **só para `administrator`**, não para permissão comum | Impressão e demais permissões de comum não ficam impedidas |
+| Tentativas de login: **atraso**, sem bloqueio | "Troquei a senha e digitei a antiga duas vezes" viraria chamado no DTI — e quem mais digita errado é quem trabalha com a senha o dia todo |
+
+### Tentativas de login: atraso, nunca bloqueio
+
+| Falhas | Espera |
+|---:|---:|
+| 0 | 0 s |
+| 1 | 1 s |
+| 2 | 2,5 s |
+| 3 | 5,2 s |
+| 5 | 13 s |
+| 9+ | 30 s (teto) |
+
+`login_tentativas_maximas` — **piso 3**, configurável até 20. Abaixo de 3 ele
+ignora; acima de 20, limita.
+
+O efeito real do limite não é o tempo, é o **custo**: um ataque de dicionário
+fica caro sem nunca fechar a conta de quem só esqueceu a senha.
+
+Três detalhes que valem o registro:
+
+- **Login certo zera a contagem** — senão a penalidade vaza para a sessão
+  seguinte de quem entrou corretamente.
+- **A janela é de 15 min.** Passada ela, vale zero: a conta não fica lenta
+  para sempre depois de um período ruim de digitação.
+- **Login inexistente também conta.** A mensagem é a mesma nos dois casos
+  ("Usuário ou senha inválidos"), então sem contar aqui o atacante testaria
+  logins inexistentes de graça — e é assim que se descobre a lista de quem tem
+  conta. Como `tb_login_tentativas` tem chave estrangeira para `tb_usuarios`, o
+  inexistente é contado em memória.
+
+Medido no login real: tentativas 1 e 2 sem aviso; da 3 em diante o aviso de
+espera entra na mensagem, e `qacomum` continua entrando com a senha certa.
+
+`tb_login_tentativas` fica no banco do módulo **`usuarios`** — que é o dono do
+login — e não no central.
+
+---
+
 ## A cor dos botões é uma só para todo o sistema (30/09/2026)
 
 > **EN:** Every button in the system follows the same rule. If the user picked a

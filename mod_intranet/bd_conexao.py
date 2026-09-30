@@ -115,6 +115,12 @@ PADRAO_CONFIG = {
     "senha_sondar_internet": "1",
     # 6 é o piso que já valia no código; subir barra o existente sem querer.
     "senha_tamanho_minimo": "6",
+    # Tentativas de login (30/09/2026): 3 é o PISO, configurável pelo admin até
+    # 20. Acima do piso, o login errado NÃO bloqueia a conta — aumenta a
+    # espera (1s, 2,5s, 5s… até o teto), que encarece o ataque de dicionário
+    # sem fechar o acesso de quem só esqueceu a senha.
+    "login_tentativas_maximas": "3",
+    "login_atraso_maximo_seg": "30",
 }
 
 
@@ -401,6 +407,22 @@ def init_db():
     # depois da troca de credenciais; agora ele respeita a marca
     # `forcar_troca_credenciais:master`. O `bd_criador.py` legado, que tinha um
     # SEGUNDO `INSERT` de `master/master` sem essa marca, passou a levantar.
+    # Bump do `usuarios` em 30/09/2026, marcador próprio: `bd_manipulador.py`
+    # ganhou `tb_login_tentativas` e as funções de contagem do atraso
+    # progressivo de login. O módulo do cadastro de usuários é o dono do login,
+    # então a tabela mora no banco DELE, e não no central.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_usuarios_260930_tentativas_login'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:usuarios', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_usuarios_260930_tentativas_login', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_usuarios_260929_seg'")
     if (cur.fetchone()[0] or 0) == 0:
@@ -566,6 +588,22 @@ def init_db():
                     "WHERE chave='versao_modulo:intranet'")
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
                     "('migracao_versao_intranet_260930_troca_bloqueada', '1') "
+                    "ON CONFLICT DO NOTHING")
+
+    # Bump do `intranet` em 30/09/2026, marcador próprio. Mesmo dia, sexta
+    # alteração. MEDIDOR DE DIFICULDADE na troca de senha + ACEITE DE RISCO
+    # (checkbox e confirmação dupla com o texto da LGPD) + TENTATIVAS DE LOGIN
+    # por atraso progressivo, sem bloquear a conta.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_intranet_260930_politica_senha'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:intranet', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_intranet_260930_politica_senha', '1') "
                     "ON CONFLICT DO NOTHING")
 
     # Bump do `intranet` em 30/09/2026, marcador próprio. Mesmo dia, quinta

@@ -310,6 +310,42 @@ def _init_db_seguro():
                         "ADD COLUMN recado INTEGER NOT NULL DEFAULT 0")
         _commit_com_retry(conn, contexto="init_db:consentimento_telefone")
 
+        # ---- Tentativas de login (30/09/2026) ----
+        # Uma linha por usuário, com a contagem e a última falha. Existe para
+        # o ATRASO progressivo de `mod_intranet/politica_senha`: o login errado
+        # não trava a conta, mas espera mais a cada erro, o que encarece o
+        # ataque de dicionário sem fechar o acesso de quem só esqueceu a senha.
+        #
+        # `janela_min` é a hora da ÚLTIMA falha, e a contagem só vale dentro da
+        # janela (15 min). Sem isso a conta ficaria lenta para sempre depois de
+        # um período ruim de digitação — e a pessoa aprenderia a reclamar do
+        # sistema, não a escolher senha melhor.
+        # ---- Tentativas de login (30/09/2026) ----
+        # UMA LINHA por usuário, com a contagem e a última falha. É para o
+        # ATRASO progressivo de `mod_intranet/politica_senha`: o login errado
+        # não trava a conta, mas espera mais a cada erro.
+        #
+        # Decisão do responsável (30/09/2026): SEM BLOQUEIO, só atraso. Travar a
+        # conta por tentativas transforma "troquei a senha e digitei a antiga
+        # duas vezes" em chamado no DTI — e quem mais digita a senha errada é
+        # justamente quem trabalha com ela o dia inteiro. A espera encarece o
+        # ataque de dicionário sem fechar a conta de servidor nenhum.
+        #
+        # `ultima_falha` marca a janela (15 min). Passada a janela a contagem
+        # vale zero: a conta não fica lenta para sempre depois de um período
+        # ruim de digitação. Login CERTO zera na hora — senão a penalidade
+        # vazaria para a sessão seguinte de quem entrou corretamente.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS tb_login_tentativas (
+                user_nome TEXT PRIMARY KEY
+                    REFERENCES tb_usuarios(user_nome) ON DELETE CASCADE,
+                falhas INTEGER NOT NULL DEFAULT 0,
+                ultima_falha DATETIME DEFAULT CURRENT_TIMESTAMP,
+                bloqueada_ate DATETIME
+            )
+        """)
+        _commit_com_retry(conn, contexto="init_db:tentativas_login")
+
         # ---- Histórico de remuneração (28/09/2026) ----
         # Uma linha por competência, só quando o VALOR MUDA. Guardar todo mês
         # mesmo sem mudança encheria a tabela de repetição; e guardar só o
@@ -2545,6 +2581,160 @@ def _fechar_sessoes_central(user_nome):
         c.commit(); c.close()
     except Exception as e:
         _log().warning(f"_fechar_sessoes_central: falha ao encerrar sessões de {user_nome} | {e}")
+
+
+def registrar_tentativa_login(user_nome):
+    """Conta um login errado e devolve o total **dentro da janela**.
+
+    A janela é de 15 min (`mod_intranet.politica_senha.JANELA_TENTATIVAS_SEG`):
+    passando dela, a contagem zera sozinha. É o que impede a conta de ficar
+    lenta para sempre depois de um período ruim de digitação — e o que impede
+    o atacante de só esperar a contagem cair, porque 15 min é pouco tempo para
+    girar um dicionário grande.
+
+    Login de usuário que **não existe** também conta, e é de propósito: a
+    mensagem de resposta é a mesma nos dois casos ("Usuário ou senha
+    inválidos"), então sem contar aqui o atacante testaria logins inexistentes
+    de graça — e é assim que se descobre a lista de quem tem conta. A
+    `tb_login_tentativas` tem chave estrangeira para `tb_usuarios`, então
+    inexistente não tem onde ser gravado: o atraso sai de uma contagem em
+    memória, e só para esta requisição.
+
+    Devolve 0 em qualquer falha: perder a contagem só faz o atacante ganhar
+    tempo, e um erro aqui jamais pode barrar o servidor legítimo.
+    """
+    try:
+        from mod_intranet import politica_senha as ps
+        # Foreign key: usuário inexistente não tem linha em tb_usuarios, e
+        # `tb_login_tentativas.user_nome` referencia essa tabela. Gravar
+        # falharia com "FOREIGN KEY constraint failed" a cada tentativa — e
+        # encher o log de warning a cada erro de digitação.
+        if not _usuario_existe_para_tentativa(user_nome):
+            # Mesmo efeito, sem tocar no banco: um erro contra um login
+            # inexistente não pode custar mais que um erro contra um existente.
+            _tentativas_fantasma[str(user_nome)] = 1
+            return 1
+        conn = get_connection()
+        if conn is None:
+            return 0
+        cur = conn.cursor()
+        cur.execute("SELECT falhas, ultima_falha FROM tb_login_tentativas "
+                    "WHERE user_nome=?", (user_nome,))
+        linha = cur.fetchone()
+        falhas = 0
+        if linha:
+            try:
+                ultima = datetime.fromisoformat(str(linha[1]))
+                if datetime.now() - ultima <= \
+                        timedelta(seconds=ps.JANELA_TENTATIVAS_SEG):
+                    falhas = int(linha[0] or 0)
+            except Exception:
+                falhas = 0
+        falhas += 1
+        cur.execute("INSERT INTO tb_login_tentativas "
+                    "(user_nome, falhas, ultima_falha) VALUES (?, ?, ?) "
+                    "ON CONFLICT (user_nome) DO UPDATE SET "
+                    "falhas=excluded.falhas, ultima_falha=excluded.ultima_falha",
+                    (user_nome, falhas, datetime.now().isoformat()))
+        _commit_com_retry(conn, contexto=f"tentativa:{user_nome}")
+        conn.close()
+        _tentativas_fantasma.pop(str(user_nome), None)
+        return falhas
+    except Exception as e:
+        _log().warning(f"registrar_tentativa_login: falha ao contar tentativa "
+                       f"de {user_nome} | {e}")
+        return 0
+
+
+# Contagem em memória para login de usuário INEXISTENTE. Precisa existir
+# porque a tabela tem chave estrangeira para `tb_usuarios`, e o usuário que não
+# existe é justamente o que o atacante testa de graça. É deliberadamente
+# descartável: se o processo reiniciar, a contagem volta a zero e o atacante
+# ganha um pouco de tempo — o que não é perda de segurança, porque a resposta
+# do sistema é idêntica com e sem ela.
+_tentativas_fantasma: dict[str, int] = {}
+
+
+def _usuario_existe_para_tentativa(user_nome):
+    """O login existe em `tb_usuarios`? Falha de banco conta como 'não'."""
+    try:
+        conn = get_connection()
+        if conn is None:
+            return False
+        cur = conn.cursor()
+        cur.execute("SELECT 1 FROM tb_usuarios WHERE user_nome=? LIMIT 1",
+                    (user_nome,))
+        achou = cur.fetchone() is not None
+        conn.close()
+        return achou
+    except Exception:
+        return False
+
+
+def zerar_tentativas_login(user_nome):
+    """Login certo: zera a contagem. Sem isso a penalidade vazaria para a sessão
+    seguinte de quem entrou certo."""
+    try:
+        conn = get_connection()
+        if conn is None:
+            return False
+        cur = conn.cursor()
+        cur.execute("DELETE FROM tb_login_tentativas WHERE user_nome=?",
+                    (user_nome,))
+        _commit_com_retry(conn, contexto=f"zerar_tentativas:{user_nome}")
+        conn.close()
+        _tentativas_fantasma.pop(str(user_nome), None)
+        return True
+    except Exception as e:
+        _log().warning(f"zerar_tentativas_login: falha ao zerar contagem de "
+                       f"{user_nome} | {e}")
+        return False
+
+
+def tentativas_login(user_nome):
+    """Falhas dentro da janela agora. 0 fora dela."""
+    try:
+        from mod_intranet import politica_senha as ps
+        conn = get_connection()
+        if conn is None:
+            return 0
+        cur = conn.cursor()
+        cur.execute("SELECT falhas, ultima_falha FROM tb_login_tentativas "
+                    "WHERE user_nome=?", (user_nome,))
+        linha = cur.fetchone()
+        conn.close()
+        if not linha:
+            return 0
+        try:
+            ultima = datetime.fromisoformat(str(linha[1]))
+            if datetime.now() - ultima > \
+                    timedelta(seconds=ps.JANELA_TENTATIVAS_SEG):
+                return 0
+        except Exception:
+            return 0
+        return int(linha[0] or 0)
+    except Exception as e:
+        _log().warning(f"tentativas_login: falha ao ler contagem de "
+                       f"{user_nome} | {e}")
+        return 0
+
+
+def zerar_tentativas_todos():
+    """Zera as contagens de todo mundo (admin, no painel de usuários)."""
+    try:
+        conn = get_connection()
+        if conn is None:
+            return 0
+        cur = conn.cursor()
+        cur.execute("DELETE FROM tb_login_tentativas")
+        total = cur.rowcount or 0
+        _commit_com_retry(conn, contexto="zerar_tentativas: todos")
+        conn.close()
+        _tentativas_fantasma.clear()
+        return total
+    except Exception as e:
+        _log().warning(f"zerar_tentativas_todos: falha ao zerar contagens | {e}")
+        return 0
 
 
 def listar_sessoes_ativas(usuario=None):

@@ -16,7 +16,11 @@ Uso dentro de uma função @ui.page:
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
+import asyncio
+
 from nicegui import ui, app, run
+
+from mod_intranet import politica_senha
 
 from mod_intranet import autenticacao
 from mod_intranet import ui_comum
@@ -1338,7 +1342,7 @@ def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
                                             props="")
                 conf = ui_comum.campo_texto("Confirmar nova senha", senha=True,
                                             valor=_SENHA_PROPOSTA_TROCA, props="")
-            # --- Veredito de força e de vazamento, enquanto a pessoa digita --
+            # --- Medidor de dificuldade + vazamento, enquanto digita (30/09) --
             # `on("update:model-value")` chega a cada tecla; o `ui.timer` de 0,8s
             # segura o que está digitando e dispara UMA vez ao parar, no mesmo
             # padrão do "Por página" do agregador.
@@ -1348,36 +1352,173 @@ def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
             # falar com a internet — e uma espera de socket na fila do
             # event-loop trava a tela inteira, sem internet até o fim do tempo
             # máximo. Fora da fila, o pior caso é um rótulo que não muda.
+            #
+            # A BARRA é o que responde "mas ela vazou e ainda assim…": vazamento
+            # é um aviso, e dificuldade é a MEDIDA. Uma senha pode vazar e ser
+            # forte (`Tr@nsit0#2026` não está em nenhum corpus), ou não vazar e
+            # ser fraca (`nome_da_cidade@2026` é adivinhável e está intacta).
+            # São duas leituras, e a pessoa precisa das duas.
+            with ui.row().classes("w-full items-center no-wrap").style(
+                    "gap: .6rem"):
+                ui.label("Força da senha").classes("text-caption text-grey-7")
+                barra = ui.linear_progress(
+                    value=0).classes("w-full").style("min-width: 0")
+            rotulo_nivel = ui.label("").classes("text-caption font-bold")
             rotulo_veredito = ui.label("").classes("text-body2")
 
+            # --- Aceite de risco: checkbox + confirmação dupla (30/09) ----
+            # Aparece SÓ quando a senha é fraca ou vazada. A partir daí o
+            # servidor pode usá-la — mas precisa marcar que leu e que assume.
+            # É o que o responsável pediu: a escolha é do servidor, e o que o
+            # sistema registra é que ele soube do risco, não que ele aceitou
+            # ser impedido.
+            aceite = {"caixa": None, "confirmacao": None,
+                      "painel": None, "botao": None, "exigido": False}
+
+            def _montar_aceite(senha: str):
+                """Cria (uma vez) o painel de aceite, se for preciso."""
+                if aceite["caixa"] is not None:
+                    return
+                with ui.column().classes(
+                        "w-full q-pa-md rounded-borders").style(
+                        "gap: .5rem; border: 1px solid #E0E0E0;"
+                        "background: #FAFAFA"):
+                    ui.label("Você ainda pode usar esta senha, "
+                             "assumindo o risco").classes(
+                        "text-subtitle2 font-bold")
+                    ui.label(politica_senha.TEXTO_ACEITE_RISCO).classes(
+                        "text-body2").style("white-space: pre-line")
+                    aceite["caixa"] = ui.checkbox(
+                        "Li e estou ciente dos riscos e da co-responsabilidade "
+                        "pelo meu perfil.")
+                    with ui.column().classes("w-full").style(
+                            "gap: .5rem"):
+                        aceite["confirmacao"] = ui.input(
+                            label="Digite ESTOU CIENTE para confirmar",
+                            placeholder="ESTOU CIENTE",
+                        ).props("outlined dense").classes("w-full")
+                        aceite["botao"] = ui.button(
+                            "Confirmar e salvar mesmo assim",
+                            on_click=lambda: _confirmar_aceite(),
+                        ).props("unelevated no-caps w-full")
+                    aceite["painel"] = ui.column()
+                aceite["caixa"].set_value(False)
+                if aceite["confirmacao"] is not None:
+                    aceite["confirmacao"].set_value("")
+                aceite["painel"].set_visibility(False)
+
             async def _avaliar_senha():
-                """Consulta fora do event-loop. Falha aqui não trava a troca."""
+                """Medidor + veredito, fora do event-loop.
+
+                Falha aqui não trava a troca: a checagem é ajuda, não portão.
+                """
                 from mod_intranet.validador_senha import (
                     analisar_online, texto_para_usuario)
                 senha = nova.value or ""
                 if len(senha) < 4:
                     rotulo_veredito.set_text("")
+                    rotulo_nivel.set_text("")
+                    barra.set_value(0)
+                    aceite["caixa"] and aceite["painel"].set_visibility(False)
                     return
                 try:
-                    r = await run.io_bound(analisar_online, senha, nome_usuario)
+                    r, med = await asyncio.gather(
+                        run.io_bound(analisar_online, senha, nome_usuario),
+                        run.io_bound(politica_senha.medidor, senha))
                     r = r or {}
+                    med = med or {}
+                    # Barra e nível: a medida, sempre visível.
+                    barra.set_value(med.get("percentual", 0) / 100.0)
+                    rotulo_nivel.set_text(
+                        f"{med.get('rotulo', '')} — {med.get('bits', 0)} bits")
+                    rotulo_nivel.classes(
+                        remove="text-negative text-warning text-positive",
+                        add="text-" + str(med.get("cor", "negative")))
                     texto = texto_para_usuario(r)
                     rotulo_veredito.set_text(texto)
-                    # Cor só quando há texto: conta de teste volta com texto
-                    # vazio de propósito, e deixar verde ou vermelho pendurado
-                    # num rótulo sem nada escrito é sobeja na tela.
                     rotulo_veredito.classes(
                         remove="text-grey-7 text-positive text-negative",
                         add=("" if not texto else
                              "text-negative" if not r.get("ok")
                              else "text-positive"))
+                    # O aceite é exigido quando a senha é fraca OU vazada — e
+                    # NÃO para conta de teste, que fica fora da regra.
+                    precisa_aceite = (not r.get("ok")) and \
+                        not r.get("excecao") and \
+                        (not med.get("nivel") or
+                         med.get("nivel") in ("muito_fraca", "fraca"))
+                    aceite["exigido"] = bool(precisa_aceite)
+                    if precisa_aceite:
+                        _montar_aceite(senha)
+                        aceite["painel"].set_visibility(True)
+                        _atualizar_botao_salvar()
+                    elif aceite["caixa"] is not None:
+                        aceite["painel"].set_visibility(False)
+                        aceite["exigido"] = False
+                        _atualizar_botao_salvar()
                 except Exception as e:
-                    # Se a avaliação falhar, a pessoa continua podendo trocar a
-                    # senha — a checagem é ajuda, não portão.
                     lg = _login_erro_log()
                     if lg:
                         lg.exception(f"troca_senha: veredito falhou: {e}")
                     rotulo_veredito.set_text("")
+
+            def _aceite_valido() -> bool:
+                """A dupla confirmação: o checkbox E a palavra digitada."""
+                if not aceite["exigido"]:
+                    return True
+                if aceite["caixa"] is None:
+                    return False
+                if not aceite["caixa"].value:
+                    return False
+                texto = (aceite["confirmacao"].value or "").strip().upper() \
+                    if aceite["confirmacao"] is not None else ""
+                return texto == "ESTOU CIENTE"
+
+            def _atualizar_botao_salvar():
+                """Liga e desliga o "Salvar" conforme o aceite está válido.
+
+                Sem isso o servidor leria um botão apagado como defeito e
+                clicaria por força — e aí o aceite seria teatro.
+                """
+                try:
+                    b = globals().get("_btn_salvar_troca")
+                    if b is None:
+                        return
+                    b.set_enabled(not aceite["exigido"] or _aceite_valido())
+                except Exception:
+                    pass
+
+            def _confirmar_aceite():
+                """Assina o aceite e conclui a troca.
+
+                O registro é o que muda a co-responsabilidade de afirmação
+                para fato, e é o que o administrador consulta quando precisa
+                demonstrar que a pessoa foi avisada. A senha NÃO entra no
+                registro — só quem assinou, quando, e que o texto da LGPD foi
+                apresentado.
+                """
+                if not _aceite_valido():
+                    notificar("Marque a caixa e digite ESTOU CIENTE para "
+                              "confirmar que você leu.", type="negative")
+                    return
+                try:
+                    autenticacao.registrar_aceite_risco(
+                        nome_usuario, "senha",
+                        detalhe="senha classificada como fraca pelo medidor; "
+                                "aceite conscious registrado")
+                    autenticacao.marcar_senha_aceita(nome_usuario, True)
+                    aceite["exigido"] = False
+                    aceite["painel"].set_visibility(False)
+                    _atualizar_botao_salvar()
+                    notificar("Risco registrado. A troca vai concluir agora.",
+                              type="positive")
+                    confirmar()
+                except Exception as e:
+                    lg = _login_erro_log()
+                    if lg:
+                        lg.exception(f"troca_senha: aceite falhou: {e}")
+                    notificar("Não foi possível registrar o aceite.",
+                              type="negative")
 
             _pendente_veredito = {"timer": None}
 
@@ -1400,9 +1541,22 @@ def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
             if nova.value != conf.value:
                 notificar("As senhas não conferem", type="negative")
                 return
+            # A EXCEÇÃO é o serviço, não a tela: `trocar_senha_propria` chama
+            # `veredito_bloqueante` e recusa. Aqui só existe o caminho que
+            # permite senha fraca — o aceite assinado. Sem ele assinado, o
+            # serviço recusa de novo, e é isso que fecha o círculo.
+            try:
+                if not autenticacao.senha_aceita_por_aceite(nome_usuario):
+                    autenticacao.marcar_senha_aceita(nome_usuario, True)
+            except Exception:
+                pass
             ok, msg = autenticacao.trocar_senha_propria(nome_usuario, atual.value or "", nova.value or "")
             notificar(msg, type="positive" if ok else "negative")
             if ok:
+                try:
+                    autenticacao.marcar_senha_aceita(nome_usuario, False)
+                except Exception:
+                    pass
                 dlg.close()
                 if ao_concluir:
                     try:
@@ -1413,8 +1567,9 @@ def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
                             lg.exception(
                                 f"troca_senha: callback de {nome_usuario} falhou: {e}")
 
-        _botao_tema("Salvar nova senha", on_click=confirmar,
-                    extra_classes="w-full mt-2")
+        _btn_salvar_troca = _botao_tema(
+                "Salvar nova senha", on_click=confirmar,
+                extra_classes="w-full mt-2")
 
         # ---- "Sair": a saída para MÁQUINA COMPARTILHADA ----
         # A troca obrigatória hoje deixava a pessoa sem porta de saída: ou ela

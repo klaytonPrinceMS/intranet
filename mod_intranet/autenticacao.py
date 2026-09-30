@@ -332,19 +332,46 @@ def obter_email_usuario(user_nome):
 
 
 def autenticar(user_nome, senha):
-    """Retorna (ok: bool, msg: str). Em caso de sucesso msg é o perfil."""
+    """Retorna (ok: bool, msg: str). Em caso de sucesso msg é o perfil.
+
+    **Tentativas de login (30/09/2026):** login errado não bloqueia a conta —
+    aumenta a espera. Quem erra três vezes espera alguns segundos; um ataque de
+    dicionário espera cada vez mais, até o teto, e a conta continua existindo
+    para o dia em que a pessoa lembrar a senha. A decisão é do responsável
+    (30/09/2026): bloqueio por tentativas vira chamado no DTI toda vez que um
+    servidor troca de senha e digita a antiga duas vezes.
+
+    A mensagem é a **mesma** em qualquer falha — "Usuário ou senha inválidos" —
+    porque dizer qual dos dois falhou entrega ao atacante a lista de logins
+    válidos. O atraso, esse, é intencional e não é informação de nada.
+    """
     if not user_nome or not senha:
         return False, "Informe usuário e senha"
-    row = usuario_existe(user_nome.strip())
+    user_nome = user_nome.strip()
+    row = usuario_existe(user_nome)
     if not row:
+        # Conta inexistente também conta tentativa: sem isso o atacante
+        # testaria logins inexistentes de graça, e é assim que se descobre a
+        # lista de usuários válidos.
+        _contar_falha_login(user_nome)
         return False, "Usuário ou senha inválidos"
     senha_bd, perfil, ativo = row
     try:
         if not verificar_senha(senha, senha_bd):
+            falhas = _contar_falha_login(user_nome)
             audit_log(user_nome, "intranet", "login_falha", f"Tentativa de login inválida para {user_nome}")
-            return False, "Usuário ou senha inválidos"
+            aviso = _texto_atraso_login(falhas)
+            return False, (f"Usuário ou senha inválidos. {aviso}" if aviso
+                           else "Usuário ou senha inválidos")
     except Exception:
         return False, "Erro interno ao validar credenciais"
+    # Login certo zera a contagem: sem isso a penalidade vazaria para a sessão
+    # seguinte de quem entrou corretamente.
+    try:
+        from mod_intranet import politica_senha as _ps
+        _ps.zerar_tentativas(user_nome)
+    except Exception:
+        pass
     if not ativo:
         return False, "Usuário bloqueado. Procure o administrador."
 
@@ -369,6 +396,96 @@ def autenticar(user_nome, senha):
         # transformaria todo servidor em "usuário bloqueado" no primeiro dia.
         pass
     return True, perfil
+
+
+def marcar_senha_aceita(user_nome, aceito=True):
+    """Marca (ou desmarca) que a pessoa assinou o aceite de senha fraca.
+
+    A marca vive na sessão, não no banco: vale para a troca que está em curso.
+    Gravar "esta pessoa usa senha fraca" para sempre no cadastro seria um
+    estigma que ninguém pediu e que ninguém consegue apagar — e ela não é
+    verdade: a pessoa pode trocar a senha amanhã. O que fica PARA sempre é o
+    **registro do aceite** (quem assinou, quando, sobre o quê), que é prova do
+    aviso, não rótulo permanente da pessoa.
+    """
+    try:
+        from nicegui import app as _app
+        if aceito:
+            _app.storage.user["senha_aceita"] = True
+        else:
+            # A marca é da SESSÃO e vale só para a troca em curso. Trocar a
+            # senha forte de novo não pode carregar pendência nenhuma.
+            _app.storage.user.pop("senha_aceita", None)
+        return True
+    except Exception as e:
+        try:
+            import logging
+            logging.getLogger(__name__).warning(
+                f"autenticacao: falha ao marcar aceite de {user_nome}: {e}")
+        except Exception:
+            pass
+        return False
+
+
+def senha_aceita_por_aceite(user_nome=""):
+    """A pessoa assinou o aceite nesta sessão?"""
+    try:
+        from nicegui import app as _app
+        return bool(_app.storage.user.get("senha_aceita"))
+    except Exception:
+        return False
+
+
+def registrar_aceite_risco(user_nome, escopo="senha", detalhe=""):
+    """Grava o aceite na auditoria. A SENHA NUNCA entra no registro.
+
+    O que fica é: quem assinou, quando, em que tela e que o texto da LGPD foi
+    apresentado. É o documento que comprova o dever do controlador (Art. 6º,
+    VI e VII, e Art. 46) e a ciência do servidor — os dois lados da questão.
+    """
+    try:
+        from mod_intranet.bd_manipulador import audit_log
+        audit_log(user_nome, "intranet", "aceite_risco_senha",
+                  f"Aceite de senha de risco — escopo={escopo}. "
+                  f"LGPD: Art. 6º VI/VII e Art. 46 (medidas de segurança do "
+                  f"controlador) + co-responsabilidade do titular. "
+                  f"Detalhe: {detalhe[:200] if detalhe else 'sem detalhe'}")
+        return True
+    except Exception as e:
+        try:
+            import logging
+            logging.getLogger(__name__).exception(
+                f"autenticacao: falha ao registrar aceite de {user_nome}: {e}")
+        except Exception:
+            pass
+        return False
+
+
+def _contar_falha_login(user_nome):
+    """Conta o erro e devolve o total na janela. 0 se a contagem falhar."""
+    try:
+        from mod_intranet import politica_senha as _ps
+        return int(_ps.registrar_falha(user_nome) or 0)
+    except Exception:
+        try:
+            import logging
+            logging.getLogger(__name__).warning(
+                "autenticacao: não foi possível contar tentativa de login de "
+                f"{user_nome}")
+        except Exception:
+            pass
+        return 0
+
+
+def _texto_atraso_login(falhas):
+    """O aviso de 'muitas tentativas', ou "" quando ainda não é o caso."""
+    try:
+        from mod_intranet import politica_senha as _ps
+        if int(falhas or 0) < _ps.tentativas_maximas():
+            return ""
+        return _ps.texto_atraso(_ps.calcular_atraso(falhas))
+    except Exception:
+        return ""
 
 
 def _podar_sessoes(user_nome):
@@ -539,7 +656,17 @@ def trocar_senha_propria(user_nome, senha_atual, nova_senha):
                                                  veredito_bloqueante)
         if (user_nome or "").strip().lower() not in CONTAS_DE_TESTE:
             veredito = veredito_bloqueante(nova_senha, user_nome)
-            if veredito is not None and not veredito.get("ok"):
+            # ACEITE ASSINADO (30/09/2026): senha fraca ou vazada é recusada
+            # por padrão, mas a pessoa PODE usar assim mesmo — desde que
+            # tenha lido o texto da LGPD e confirmado que assume. A troca de
+            # senha é decisão do servidor; o que o sistema registra é que ele
+            # soube do risco antes de decidir.
+            #
+            # O aceite é DA SESSÃO e valida só esta troca: não vira rótulo
+            # permanente no cadastro, porque amanhã a pessoa pode trocar a
+            # senha e a marca antiga não deve pesar.
+            if (veredito is not None and not veredito.get("ok")
+                    and not senha_aceita_por_aceite(user_nome)):
                 motivos = veredito.get("bloqueios") or ["Senha fraca demais."]
                 return False, motivos[0]
             # Troca forçada que mantém a mesma senha não é troca nenhuma: é
