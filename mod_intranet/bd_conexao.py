@@ -550,6 +550,26 @@ def init_db():
                     "('migracao_versao_intranet_260930_troca_bloqueada', '1') "
                     "ON CONFLICT DO NOTHING")
 
+    # Bump do `intranet` em 30/09/2026, marcador próprio. Mesmo dia, quarta
+    # alteração. Saiu da tela a referência interna que tinha vazado para o
+    # usuário: o rótulo de veredito dizia "Conta de teste do AGENTS.md 8.2",
+    # que é jargão de quem escreve o código, lido por servidor no balcão. A
+    # isomorphicidade com a camada de bloqueio fica no código e em
+    # `docs/modulos/intranet.md`; na tela, nada. E a situação da consulta
+    # (`sem_internet`, `limite_requisicoes`) passou a ser traduzida por
+    # `_SITUACAO_PT_BR` em vez de expor o identificador cru.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_intranet_260930_texto_pela_tela'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:intranet', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_intranet_260930_texto_pela_tela', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_usuarios_260929'")
     if (cur.fetchone()[0] or 0) == 0:

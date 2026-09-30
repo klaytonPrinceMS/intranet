@@ -661,13 +661,43 @@ def veredito_bloqueante(senha: str, nome_usuario: str = "") -> dict:
         return None
 
 
+# Como a consulta de vazamento TERMINOU, em português de gente. A chave bruta
+# (`sem_internet`, `limite_requisicoes`) é identificador de código e nunca deve
+# aparecer na tela: a pessoa não sabe o que é "requisicoes" e não precisa
+# saber — o que importa é se a senha foi aceita, e por quê.
+_SITUACAO_PT_BR = {
+    "sem_internet": "este sistema não tem acesso à internet",
+    "desligada": "a consulta está desligada",
+    "indisponivel": "o serviço de consulta não respondeu",
+    "limite_requisicoes": "o serviço de consulta pediu para esperar",
+    "erro": "a consulta falhou",
+    "nao_consultada": "a consulta não foi feita",
+    "conta_de_teste": "",
+    "cache": "",
+    "ok": "",
+    "vazia": "",
+}
+
+
 def texto_para_usuario(veredito: dict) -> str:
-    """O veredito em uma frase, para `ui.notify`."""
+    """O veredito em uma frase, para a tela. Texto para PESSOAS.
+
+    Duas regras que às vezes se confundem:
+
+    - **Nada de jargão.** Nome de arquivo, número de seção e palavra de
+      identificador não vão para a tela. Quem lê esta mensagem é servidor da
+      prefeitura no balcão, não quem escreve o código; a explicação de por
+      que a regra existe fica no código e na documentação, onde serve.
+    - **Conta de teste não recebe aviso.** `qacomum`/`qamaster` entram com a
+      senha `123456` e ficam fora da regra de propósito. Não há nada a avisar
+      nesse caso, e um aviso ali só ocuparia a tela — então devolve vazio e a
+      tela limpa o rótulo. Quem precisa saber por quê lê o código e a
+      documentação.
+    """
     try:
         v = veredito or {}
         if v.get("excecao"):
-            return ("Conta de teste do AGENTS.md §8.2 — a regra de força não se "
-                    "aplica.")
+            return ""
         partes: list[str] = []
         for b in (v.get("bloqueios") or [])[:3]:
             partes.append(b)
@@ -676,8 +706,8 @@ def texto_para_usuario(veredito: dict) -> str:
         situacao = v.get("consulta_online")
         if situacao in ("sem_internet", "desligada", "indisponivel", "erro",
                         "limite_requisicoes", "nao_consultada"):
-            partes.append("A consulta de vazamentos foi ignorada "
-                          f"({situacao.replace('_', ' ')}) — a senha foi "
+            partes.append("Não foi possível consultar vazamentos porque "
+                          f"{_SITUACAO_PT_BR.get(situacao, '')} — a senha foi "
                           "avaliada só pela força.")
         return " ".join(partes) if partes else (
             "Senha forte." if v.get("ok") else "Senha recusada.")

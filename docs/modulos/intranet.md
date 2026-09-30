@@ -188,6 +188,12 @@ número errado. Linha sem `-` é ignorada com `warning` no log.
 
 ## Primeiro acesso: senha e telefone (27/09/2026)
 
+> **ATUALIZADO em 30/09/2026** — a troca de senha deixou de ser um modal sobre
+> a página montada e virou um **guard de servidor**, com tela própria. A tabela
+> abaixo e as linhas `1a`/`1b` descrevem o desenho **antigo**; o que vale hoje
+> está em [A troca obrigatória passou a bloquear](#a-troca-obrigatória-passou-a-bloquear)
+> e em [Força e vazamento de senha](#força-e-vazamento-de-senha-30092026).
+
 > **EN:** `pagina_restrita` calls `_primeiro_acesso` after the layout is built.
 > It chains **two** mandatory steps — password, then phone numbers — and only
 > opens the second when the first was really completed. The server sheet of the
@@ -292,6 +298,154 @@ liberacao_provisoria=liberacao_provisoria)` e desempacota os **três** valores
 `_confirmar()` (`telas.py:1169-1187`) é o que o botão "Salvar telefones" chama, e é o
 **guardião** do `liberacao_provisoria`: só ele pode passar `True`, e só depois das
 **duas** travas.
+
+## A troca obrigatória passou a bloquear (30/09/2026)
+
+> **EN:** The mandatory password change used to be a modal drawn **on top of the
+> already-built page**. `_montar_layout` ran first — header, drawer and the menu
+> with every module — then the dialog opened over it, and `pagina_restrita`
+> returned the user, so the caller's `with` went on and rendered the whole
+> screen. `persistent` stops the modal from being **closed**; it never stopped
+> the user from **navigating**. A reported symptom: pressing "back" moved to
+> another module. The change is now enforced on the server.
+>
+> **PT-BR:** A troca obrigatória era um modal desenhado **por cima da página já
+> montada**. `_montar_layout` rodava primeiro — cabeçalho, drawer e o menu com
+> todos os módulos —, o diálogo abria sobre ele e `pagina_restrita` devolvia o
+> usuário, então o `with` do chamador continuava e desenhava a tela inteira. O
+> `persistent` só impedia o modal de ser **fechado**; nunca impediu a pessoa de
+> **navegar**. Um sintoma relatado: apertar "voltar" levava a outro módulo. A
+> trava passou para o servidor.
+
+`pagina_restrita` é o **único** ponto por onde passa toda rota protegida do
+projeto, e o guard fica **antes** de `_montar_layout`:
+
+```
+pagina_restrita()
+   ├─ sem sessão / sessão revogada  → /login
+   ├─ _pendencia_de_troca(nome)     → /troca-obrigatoria   ← o guard novo
+   ├─ validar_acesso_modulo         → /
+   ├─ _montar_layout(...)           ← nunca chega aqui com pendência
+   └─ _primeiro_acesso(nome)        ← só telefone e dados
+```
+
+`tela_troca_obrigatoria()` monta **uma tela solta**: sem cabeçalho, sem drawer,
+sem menu. Três garantias, as três verificadas no navegador:
+
+| Garantia | Como |
+|:---|:---|
+| Não há o que navegar | A tela solta não tem **nenhum** `<a href>` — não há link nem botão de módulo |
+| Não é porta de entrada | Sem `usuario_logado()`, vai para `/login` |
+| Não é beco sem saída | Sem pendência, vai para `/`; `pagina_restrita` não é chamada aqui, senão as duas rotas se devolveriam para sempre |
+
+Rotas testadas com a pendência armada — `/`, `/blog`, `/auditoria`,
+`/configuracoes`, `/estoque` e `/agregador-noticias` caem **todas** em
+`/troca-obrigatoria`, com `drawer` ausente. Depois da troca, a navegação volta
+(`/` com 16 itens de menu).
+
+**"Sair e entrar com outro usuário"** — os dois diálogos (senha e credenciais)
+ganharam essa saída, para **máquina compartilhada**: quem abriu o sistema e não
+quer assumir o login de outra pessoa precisa poder simplesmente liberar o
+equipamento. Chama o `_logout` do cabeçalho, que encerra a sessão no banco e
+limpa o `app.storage.user` — só fechar o modal deixaria a sessão viva, e quem
+viesse depois entraria sem passar pela tela de login.
+
+`_primeiro_acesso` **deixou de abrir os diálogos de senha**: eles só nascem na
+tela solta. O passo seguinte (telefone e dados) continua em `/`, dentro de
+`_primeiro_acesso`, depois que a senha já foi trocada. A tela solta tem uma
+responsabilidade só.
+
+---
+
+## Força e vazamento de senha (30/09/2026)
+
+> **EN:** `validador_senha.py` checks password strength and whether the password
+> appears in known breaches. The path that **blocks** a change is fully
+> offline, so changing a password never depends on the network — which is what
+> a municipality running on a closed local network needs.
+>
+> **PT-BR:** `validador_senha.py` verifica a força da senha e se ela aparece em
+> vazamentos conhecidos. O caminho que **bloqueia** uma troca é totalmente
+> offline, então trocar senha nunca depende da rede — que é o que uma
+> prefeitura em rede local fechada precisa.
+
+### Duas camadas, e só uma decide
+
+| Camada | O que faz | Rede |
+|:---|:---|:---|
+| `analisar_offline()` | Entropia total de Shannon, teclado, sequência, repetição, nome do usuário, ano, padrões do órgão | **não** |
+| `analisar_online()` | Consulta de vazamento por k-anonimato | sim, e nunca bloqueia |
+
+`veredito_bloqueante()` é o que `trocar_senha_propria` chama, e ele é **offline
+por contrato** (medido: **0,003 s**). Ele só olha o veredito de vazamento no
+cache — local, no banco — então uma senha já consultada continua bloqueada
+**sem internet**. Quem decide é a análise de força.
+
+A camada de vazamento só informa, e foi desenhada para **não poder travar**:
+sai por `run.io_bound` (fora do event-loop), tem tempo máximo próprio (conexão
+1 s, leitura 2 s), **zero retries**, é precedida por sondagem de internet com
+cache de 15 min, e qualquer falha vira `indisponivel` em vez de exceção.
+
+Comportamento sem internet, medido:
+
+| Situação | Resultado |
+|:---|:---|
+| Senha nunca consultada | `sem_internet` em **0,029 s** — ignorada, senha forte é aceita |
+| Senha já consultada | `cache` em **0,006 s** — o veredito sobrevive sem rede |
+
+### Consulta por k-anonimato
+
+Manda-se só os **5 primeiros caracteres** do SHA-1 (hex, maiúsculo) e a
+comparação do pedaço que falta é feita aqui. São 1.048.576 prefixos possíveis,
+então um prefixo é compartilhado por centenas de senhas. A senha em claro
+**nunca sai do servidor** — nem completa, nem em hash.
+
+Medido nesta máquina:
+
+| Senha | Vazou | Ocorrências |
+|:---|:--:|---:|
+| `123456` | sim | 210.461.208 |
+| `password` | sim | 52.372.427 |
+| aleatória de 16 caracteres | não | 0 |
+
+### Por que a lista de senhas vazadas NÃO está no banco
+
+Os quatro motivos estão em `validador_senha.motivos_sem_corpus()`. Em resumo:
+o veredito de uma tabela local é **fotografia de uma data**; o corpus não cabe
+numa base de prefeitura e **não evita** o trabalho da chamada viva; `AGENTS.md`
+§7 e §8.3 proíbem segredo no git imutável e replicado; e é tratamento de dado
+pessoal em massa (LGPD) numa intranet que não tem essa função.
+
+O que **é** gravado, e é defensável:
+
+| Tabela | O que é |
+|:---|:---|
+| `tb_senha_vazamento_cache` | Memória das **consultas feitas**: par (prefixo, sufixo) do SHA-1 e a contagem |
+| `tb_senha_padrao_organizacao` | **Padrões de nomeação do próprio órgão** — `prefeitura`, `municipio`, `detran`… Configuração do município, revisável, não dado de terceiro |
+
+Chaves de configuração: `senha_consultar_vazamento` (1), `senha_sondar_internet`
+(1) e `senha_tamanho_minimo` (6).
+
+### Contas de teste: a regra não se aplica — e a tela não diz nada
+
+`qacomum` e `qamaster` (`validador_senha.CONTAS_DE_TESTE`) entram com a senha
+`123456` e ficam **fora** da regra de força. Sem essa isenção o primeiro acesso
+delas seria um beco sem saída: troca obrigatória com a senha recusada.
+
+A isenção vale nos **dois lados**, e essa simetria é o ponto: se ficasse só na
+camada de bloqueio, o serviço deixaria passar e a tela acusaria em vermelho —
+a pessoa leria que foi recusado e o sistema gravaria assim mesmo. Por isso
+`analisar_offline()` devolve `ok=True` e sem `bloqueios` para elas.
+
+**Na tela não aparece nada.** `texto_para_usuario()` devolve vazio para conta
+de teste, e o rótulo é limpo. A justificativa fica aqui e no código — quem lê
+esta documentação é quem escreve o sistema; quem loga não precisa saber por que
+uma conta de teste escapa da regra, e um aviso ali só ocuparia a tela.
+
+Da mesma forma, a situação da consulta (`sem_internet`, `limite_requisicoes`) é
+traduzida por `_SITUACAO_PT_BR` antes de aparecer. **Nome de arquivo e número
+de seção não vão para a tela**: quem lê a mensagem é servidor da prefeitura no
+balcão, não quem escreve o código.
 
 ### As DUAS travas (27/09/2026)
 

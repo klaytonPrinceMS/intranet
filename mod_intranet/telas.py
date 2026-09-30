@@ -1363,9 +1363,14 @@ def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
                     r = r or {}
                     texto = texto_para_usuario(r)
                     rotulo_veredito.set_text(texto)
+                    # Cor só quando há texto: conta de teste volta com texto
+                    # vazio de propósito, e deixar verde ou vermelho pendurado
+                    # num rótulo sem nada escrito é sobeja na tela.
                     rotulo_veredito.classes(
                         remove="text-grey-7 text-positive text-negative",
-                        add="text-negative" if not r.get("ok") else "text-positive")
+                        add=("" if not texto else
+                             "text-negative" if not r.get("ok")
+                             else "text-positive"))
                 except Exception as e:
                     # Se a avaliação falhar, a pessoa continua podendo trocar a
                     # senha — a checagem é ajuda, não portão.
