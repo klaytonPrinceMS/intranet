@@ -174,6 +174,24 @@ class BotaoFabrica:
                 btn.classes(classes)
             if tooltip:
                 btn.tooltip(tooltip)
+            # A ESCOLHA DA PESSOA por último, e só nas variantes TEMATIZADAS.
+            #
+            # `aplicar_no_botao` precisa vir depois do `.style()` acima:
+            # estilo inline vence CSS, então escrever a cor antes seria
+            # sobrescrito na sequência. Nas variantes de ESTADO
+            # (`neutro`, `restaurar`, `restaurar_fill`, `perigo`,
+            # `icone_branco`, `texto_branco`) e quando `cor=` foi informado
+            # pelo chamador, não se mexe: vermelho de "excluir" é vermelho em
+            # qualquer estilo, e uma cor explícita é decisão de quem chamou.
+            if v in self.TEMATIZADAS and not cor:
+                try:
+                    from mod_intranet import preview_estilos
+                    preview_estilos.aplicar_no_botao(
+                        btn, chave_modulo=self.chave_modulo)
+                except Exception:
+                    _log().warning(f"botao: estilo visual indisponível para "
+                                   f"'{self.chave_modulo}', mantendo cor do "
+                                   f"módulo")
             return btn
         except Exception as e:
             _log().exception(f"botao: falha ao montar botão {rotulo!r} "

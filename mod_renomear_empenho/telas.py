@@ -1910,7 +1910,7 @@ def _tela_solicitacao(usuario_logado, eh_admin, _btn_cls, _btn_style):
                                                       variante="solido", chave_modulo="empenhos")
                                             botao("Cancelar ZIP", icone="undo",
                                                       on_click=lambda g=grupo: _volta(g),
-                                                      variante="texto", cor="orange-9",
+                                                      variante="texto",
                                                       chave_modulo="empenhos")
                                         if status in ("pendente", "zip_gerado"):
                                             botao("Recusar", icone="block",

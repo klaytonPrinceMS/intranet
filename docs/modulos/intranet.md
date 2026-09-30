@@ -299,6 +299,88 @@ liberacao_provisoria=liberacao_provisoria)` e desempacota os **três** valores
 **guardião** do `liberacao_provisoria`: só ele pode passar `True`, e só depois das
 **duas** travas.
 
+## A cor dos botões é uma só para todo o sistema (30/09/2026)
+
+> **EN:** Every button in the system follows the same rule. If the user picked a
+> style, every button takes that style's colour; if the user picked "Padrão",
+> every button takes the colour the administrator configured.
+>
+> **PT-BR:** Todo botão do sistema segue a mesma regra. Se a pessoa escolheu um
+> estilo, todos os botões tomam a cor desse estilo; se escolheu "Padrão", todos
+> tomam a cor que o administrador configurou.
+
+### O defeito, e por que era estrutural
+
+O botão do diálogo "Duplicar usuário" saía **teal fixo** numa tela inteira azul.
+Não era um botão com a cor errada: era o **único botão que não ouvia** a escolha
+da pessoa.
+
+A causa era o `BotaoFabrica` escrever `background-color` em **estilo inline**
+com a cor do módulo, e **estilo inline vence CSS** — nenhuma custom property
+chegava naquele botão. A regra do estilo já funcionava para o cabeçalho e para
+tudo que usava o token; o botão padronizado estava do lado de fora disso.
+
+### A correção: um ponto único de resolução
+
+```
+preview_estilos.cor_do_botao(padrao)
+   ├─ pessoa escolheu estilo?  → paleta do estilo, `primaria_q` (contraste 4,5:1)
+   └─ "Padrão"/sem escolha?    → cor_principal do administrador
+```
+
+`aplicar_no_botao()` é chamado pela fábrica **por último**, depois do
+`.style()` — escrever antes seria sobrescrito na sequência. E só nas variantes
+**tematizadas** (`primario`, `secundario`, `texto`, `icone`).
+
+### O que NÃO mexe
+
+Cor de **estado** é cor de estado, em qualquer estilo:
+
+| Cor | Significado | Segue o estilo? |
+|:---|:---|:--:|
+| `negative` | apagar, recusar, excluir | **não** |
+| `warning` | restaurar | **não** |
+| `grey-*` | neutro | **não** |
+| `primario`/`secundario`/`texto`/`icone` | ação normal | **sim** |
+
+Pintar o botão de "excluir" de azul esconderia o que a ação faz. É o mesmo
+raciocínio do botão de aviso âmbar: a cor carrega significado, e_significado_
+não é decoração.
+
+### Inventário (levantado por AST, todo o sistema)
+
+31 chamadas passavam `cor=`. Depois da correção:
+
+| Situação | Antes | Depois |
+|:---|---:|:---|
+| Cor de **estado** (`negative`, `warning`, `grey`) | 10 | 10 — mantida |
+| Cor de **marca** chumbada (`teal-8`, `green-8`, `orange-9`, `primary`…) | 18 | **0** |
+| Passagem interna da fábrica | 2 | 2 — não é ponto de chamada |
+| Props `color=` fora da fábrica | 0 | 0 |
+
+Os 18 removidos estavam em `mod_gest_cad_usuario` (13), `mod_solicita_impressao`
+(4) e `mod_renomear_empenho` (1).
+
+### `PADRAO_ADM` deixou de ser `None`
+
+Havia um segundo defeito, do mesmo underp: com `PADRAO_ADM = None`, a comparação
+`p == PADRAO_ADM` nunca era verdadeira, e aí **"Padrão" caía na paleta default do
+protótipo** (verde) em vez da cor do administrador. Escolher "Padrão" e receber
+uma cor que ninguém configurou é a mesma confusão do botão verde.
+
+Agora `PADRAO_ADM = PADRAO_PADRAO`, e "Padrão" significa exatamente o que a
+pessoa lê: a cor configurada pelo administrador.
+
+| Escolha | Cor do botão |
+|:---|:---|
+| (sem escolha) / `padrao` | `cor_principal` do administrador |
+| `azul` | `#1668d8` |
+| `verde` | `#0f7a6d` |
+| `roxo` | `#7c3aed` |
+| `preto` | `#111111` |
+
+---
+
 ## A troca obrigatória passou a bloquear (30/09/2026)
 
 > **EN:** The mandatory password change used to be a modal drawn **on top of the

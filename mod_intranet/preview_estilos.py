@@ -117,12 +117,17 @@ PADRAO_PADRAO = "verde"
 PADRAO_LOGIN = "verde"
 
 # Padrão que absorve a cor do admin (`cor_principal`/`cor_fundo` de tb_config).
-# No protótipo é `None` de propósito: a comparação só é honesta se os quatro
-# aparecerem com a identidade deles — a cor da prefeitura hoje é quase preta
-# e zerava justamente o azul do Facebook. Depois de escolher, basta colocar a
-# chave escolhida aqui (ex.: PADRAO_ADM = "whatsapp") e a cor do admin volta a
-# valer sem tocar em mais nada.
-PADRAO_ADM = None
+#
+# Deixou de ser `None` em 30/09/2026. Enquanto era `None`, a comparação
+# `p == PADRAO_ADM` nunca era verdadeira, e aí "Padrão" caía no estilo default
+# do protótipo — **verde** — em vez da cor do administrador. Era o defeito do
+# print: com "Padrão" escolhido, a tela estava na cor do admin (quase preta) e
+# o botão do diálogo aparecia verde. Escolher "Padrão" e receber uma cor que o
+# administrador nunca configurou é a mesma confusão.
+#
+# Agora `PADRAO_ADM` aponta para a chave default, então "Padrão" significa
+# exatamente o que a pessoa lê: a cor que o administrador configurou.
+PADRAO_ADM = PADRAO_PADRAO
 
 # ---------------------------------------------------------------------------
 #  Paleta de cada padrão. `escuro` decide se a Home recebe as classes de tema
@@ -229,6 +234,11 @@ def _defs_css(paleta: dict) -> str:
     linhas = "\n".join(
         f"    --pe-{k}: {paleta[k]};" for k in chaves if k in paleta)
     q_primaria = paleta.get("primaria_q", paleta["primaria"])
+    # ATENÇÃO: `--q-primary` é só o PONTO DE PARTIDA. Ver
+    # `aplicar_no_botao()` — o botão padronizado do sistema lê a paleta do
+    # estilo que estiver em vigor e escreve a cor nele. Nenhum botão tem cor
+    # fixa: quem escolhe o estilo escolhe a cor de todos eles.
+    #
     # `.q-dialog` entrou na lista em 30/09/2026 porque o diálogo é a primeira
     # coisa que mostrou o furo: o Quasar monta modal num PORTAL no `body`, fora
     # do `.q-layout`, e a regra antiga cobria só o layout. Resultado era o botão
@@ -453,6 +463,106 @@ def tela_login(padrao: str, *, icone: str, titulo: str, subtitulo: str,
 # evita JavaScript direto, que o projeto proíbe.
 COOKIE_ESTILO = "estilo_visual"
 ROTA_TROCA = "/estilo-visual"
+
+
+def paleta_do_estilo(padrao: str = "") -> dict:
+    """A paleta de um estilo, ou a do ADMINISTRADOR quando não há escolha.
+
+    É a função que o botão do sistema consulta para saber a cor. Ela é o
+    **ponto único** onde "quem escolheu o estilo" vira uma cor concreta, e é
+    por isso que a regra vale para o sistema inteiro em vez de valer por botão.
+    """
+    try:
+        # Sem escolha — ou escolha "padrao" — quem decide é o ADMINISTRADOR.
+        # Sem este desvio, "Padrão" caía na paleta default do protótipo em vez
+        # da cor configurada, e era assim que "Padrão + azul" rendia botão
+        # verde. A cor do admin tem de ser a que a pessoa vê no cabeçalho.
+        if not padrao or padrao == CHAVE_PADRAO:
+            from mod_intranet.bd_conexao import get_config
+            paleta = dict(_CORES[PADRAO_ADM])
+            paleta["primaria"] = (get_config("cor_principal", "") or
+                                  paleta["primaria"])
+            paleta["primaria_q"] = paleta["primaria"]
+            paleta["chave"] = PADRAO_ADM
+            return paleta
+        p = padrao if padrao in CHAVES else PADRAO_ADM
+        paleta = dict(_CORES[p])
+        paleta["chave"] = p
+        return paleta
+    except Exception:
+        try:
+            import logging
+            logging.getLogger(__name__).exception(
+                "preview_estilos: paleta do estilo indisponível")
+        except Exception:
+            pass
+        return dict(_CORES[PADRAO_PADRAO])
+
+
+def cor_do_botao(padrao: str = "") -> str:
+    """A cor de fundo de TODOS os botões do sistema, já resolvida.
+
+    Resolution única, do maior para o menor:
+
+    1. **Padrão do administrador.** Sem escolha da pessoa, a cor vem de
+       `cor_principal`, que é o que o print mostrava: azul.
+    2. **Estilo escolhido pela pessoa** (`estilo_visual`), com o mesmo cuidado
+       de contraste que o cabeçalho usa — `primaria_q` é a variante
+       escurecida, para o texto branco bater 4,5:1 (WCAG AA).
+
+    Ela já resolve o caso "Padrão" do print, que é o mais comum: a pessoa não
+    escolheu nada, então vale a cor do administrador, e o botão do diálogo
+    precisa ser azul como todo o resto da tela.
+    """
+    try:
+        paleta = paleta_do_estilo(padrao)
+        return (paleta.get("primaria_q") or paleta.get("primaria")
+                or "#1565C0")
+    except Exception:
+        return "#1565C0"
+
+
+def aplicar_no_botao(elemento, *, chave_modulo: str = "intranet"):
+    """Escreve a cor do estilo em vigor no botão. Chame DEPOIS de `.style()`.
+
+    Existe porque **estilo inline vence CSS**. A fábrica de botões escreve
+    `background-color` inline com a cor do módulo, e nenhuma custom property
+    chega naquele botão. Por isso o botão do diálogo "Duplicar usuário" saía
+    teal fixo enquanto a tela inteira estava azul — não era o botão estar
+    "errado", era ele ser o único que não ouvia a escolha da pessoa.
+
+    Não mexe em cor de ESTADO (apagar, restaurar, aviso): o vermelho de
+    "excluir" é o mesmo em qualquer estilo, e pintar esse botão de azul
+    esconderia o que a ação faz.
+    """
+    if elemento is None:
+        return None
+    try:
+        padrao = estilo_efetivo()
+    except Exception:
+        padrao = ""
+    try:
+        from mod_intranet.tema_modulo import ler_tema
+        tema = ler_tema(chave_modulo) or {}
+    except Exception:
+        tema = {}
+    # Cor do módulo só entra quando a pessoa NÃO escolheu estilo — aí quem
+    # manda é o administrador, como manda em todo o resto da tela.
+    if not padrao:
+        admin = tema.get("cor_botao", "") or ""
+        if admin:
+            return elemento
+    cor = cor_do_botao(padrao)
+    try:
+        elemento.style(f"background-color:{cor};color:#FFFFFF;")
+    except Exception:
+        try:
+            import logging
+            logging.getLogger(__name__).exception(
+                "preview_estilos: falha ao aplicar a cor no botão")
+        except Exception:
+            pass
+    return elemento
 
 
 def _request_atual():

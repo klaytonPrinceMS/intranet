@@ -441,44 +441,39 @@ def _painel_usuarios(ator: str, termo_compartilhado=None, refreshers=None):
 
                     with ui.row().style("gap: 0.25rem"):
                         botao_icone("edit", on_click=lambda _, n=nome: _dlg_editar(ator, n, render),
-                                    cor="primary", tooltip="Editar dados e acessos",
+                                    tooltip="Editar dados e acessos",
                                     chave_modulo="usuarios")
                         botao_icone("content_copy",
                                     on_click=lambda _, n=nome: _dlg_duplicar(ator, n, render),
-                                    cor="teal-8",
                                     tooltip="Duplicar usuário e suas configurações de acesso",
                                     chave_modulo="usuarios")
                         botao_icone("devices_other",
                                     on_click=lambda _, n=nome: _dlg_sessoes(ator, n),
-                                    cor="indigo-8",
                                     tooltip=f"Sessões: {sessoes_cnt.get(nome, 0)} ativa(s) + histórico recente",
                                     chave_modulo="usuarios")
                         if nome != ator:
                             if not deletado and ativo:
                                 botao_icone("vpn_key", on_click=lambda _, n=nome: _dlg_senha(ator, n),
-                                            cor="amber-8", tooltip="Redefinir senha (provisória)",
+                                            tooltip="Redefinir senha (provisória)",
                                             chave_modulo="usuarios")
                                 botao_icone("block",
                                             on_click=lambda _, n=nome: (_gest_bloq(ator, n, True), render()),
-                                            cor="orange-9", tooltip="Bloquear",
+                                            tooltip="Bloquear",
                                             chave_modulo="usuarios")
                             else:
                                 botao_icone("settings_backup_restore",
                                             on_click=lambda _, n=nome: (_gest_bloq(ator, n, False), render()),
-                                            cor="green-8",
                                             tooltip="Restaurar conta" +
                                                     (" (remove exclusão lógica)" if deletado else ""),
                                             chave_modulo="usuarios")
                             if deletado:
                                 botao_icone("delete_forever",
                                             on_click=lambda _, n=nome: _dlg_excluir_definitivo(ator, n, render),
-                                            cor="red-8",
                                             tooltip="Excluir definitivamente (LGPD — irreversível)",
                                             chave_modulo="usuarios")
                             else:
                                 botao_icone("delete_outline",
                                             on_click=lambda _, n=nome: _dlg_excluir(ator, n, render),
-                                            cor="orange-9",
                                             tooltip="Excluir (lógico) — pede motivo e move para a lista de excluídos",
                                             chave_modulo="usuarios")
                         else:
@@ -585,7 +580,7 @@ def _dlg_sessoes_seguro(ator, nome):
                                 ui.label(mac).classes("text-caption font-mono text-grey-6")
                                 botao_icone("logout", on_click=lambda _, i=sid: (
                                     gest.encerrar_sessao(ator, i), refresh_interno()),
-                                    cor="red-8", tooltip=f"Encerrar (entrada {login[:16]})",
+                                    tooltip=f"Encerrar (entrada {login[:16]})",
                                     chave_modulo="usuarios")
 
                 hist = gest.listar_historico_sessoes(nome, limite=10)
@@ -613,7 +608,7 @@ def _dlg_sessoes_seguro(ator, nome):
 
             with ui.row().classes("w-full justify-between mt-3"):
                 botao("Encerrar TODAS as sessões", variante="primario", compacto=True,
-                      icone="sensors_off", cor="deep-purple-8",
+                      icone="sensors_off",
                       on_click=lambda: (gest.encerrar_todas_sessoes(ator, nome),
                                         refresh_interno()),
                       chave_modulo="usuarios")
@@ -1047,7 +1042,7 @@ def _dlg_excluir_seguro(ator, nome, refresh):
             botao("Cancelar", on_click=dlg.close, variante="texto",
                   chave_modulo="usuarios")
             botao("Excluir (lógico)", variante="primario", compacto=True,
-                  icone="delete_outline", cor="orange-9", on_click=excluir,
+                  icone="delete_outline", on_click=excluir,
                   chave_modulo="usuarios")
     dlg.open()
 
@@ -1118,8 +1113,9 @@ def _dlg_duplicar(ator, origem, refresh):
     Diálogo de duplicação: novo login herda o perfil global e os acessos
     por módulo do usuário origem (pré-selecionados); shell padronizado
     (`dialogo_card`), notificações via `notificar` e rodapé padrão com
-    "Duplicar usuário" (teal-8 + ícone content_copy). O label do campo de
-    senha mostra o mínimo vigente via `gest.senha_minima()`.
+    "Duplicar usuário" (ícone `content_copy`, **sem cor fixa** — segue a cor
+    escolhida por quem está usando; ver `preview_estilos.cor_do_botao`). O
+    label do campo de senha mostra o mínimo vigente via `gest.senha_minima()`.
     """
     try:
         _dlg_duplicar_seguro(ator, origem, refresh)
@@ -1253,12 +1249,11 @@ def _painel_sessoes(ator: str, refreshers=None):
                         ui.label(disp).classes("text-caption")
                         botao_icone("cancel_schedule_send", on_click=lambda _, u=usuario: (
                             gest.encerrar_todas_sessoes(ator, u), refresh()),
-                            cor="deep-purple-8",
                             tooltip=f"Encerrar TODAS as sessões de {usuario}",
                             chave_modulo="usuarios")
                         botao_icone("logout", on_click=lambda _, i=sid: (
                             gest.encerrar_sessao(ator, i), refresh()),
-                            cor="red-8", tooltip="Encerrar esta sessão",
+                            tooltip="Encerrar esta sessão",
                             chave_modulo="usuarios")
         except Exception:
             log.exception("painel_sessoes: falha ao atualizar sessões ativas")

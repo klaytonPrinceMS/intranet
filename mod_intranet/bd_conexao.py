@@ -290,9 +290,27 @@ def init_db():
                     "WHERE chave LIKE 'versao_modulo:%'")
     cur.execute("INSERT INTO tb_config (chave, valor) "
                      "VALUES ('migracao_padronizacao_260908', '1') ON CONFLICT DO NOTHING")
-    # Migração 260913 — solicita_impressao: seeds iniciais + bump de versão (sem reexecutar 260908)
-    cur.execute("UPDATE tb_config SET valor='1.0.260913' "
-                "WHERE chave='versao_modulo:solicita_impressao' AND valor != '1.0.260913'")
+    # Migração 260913 — solicita_impressao: seeds iniciais + bump de versão.
+    #
+    # ESTA LINHA ERA SOLTA (sem marcador) e é a razão de a versão deste módulo
+    # não conseguir segurar um bump: rodava a CADA `init_db`, e o
+    # `valor != '1.0.260913'` faz dela um REBAIXAMENTO — ela escrevia 13/09
+    # por cima de qualquer versão mais nova. Foi assim que o bump de 30/09
+    # apareceu como 1.0.260930 numa rodada e como 1.0.260913 na seguinte.
+    # A §4.2 é explícita: migração tem de ser idempotente e não pode
+    # sobrescrever versão que já evoluiu (ou que o admin tenha mexido).
+    # Agora tem marcador próprio e só cria a linha quando ela NÃO existe
+    # (`ON CONFLICT DO NOTHING`) — nunca rebaixa, e quem vier depois (o bump
+    # de 30/09, mais abaixo) tem a palavra final.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_solicita_impressao_260913'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:solicita_impressao', '1.0.260913') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_solicita_impressao_260913', '1') "
+                    "ON CONFLICT DO NOTHING")
     # Migração 13/09/2026 — bump versão do módulo empenhos (padrão PIC + contagem padronizada + CSS docs)
     cur.execute("SELECT COUNT(*) FROM tb_config WHERE chave='migracao_versao_empenhos_260913'")
     if (cur.fetchone()[0] or 0) == 0:
@@ -548,6 +566,77 @@ def init_db():
                     "WHERE chave='versao_modulo:intranet'")
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
                     "('migracao_versao_intranet_260930_troca_bloqueada', '1') "
+                    "ON CONFLICT DO NOTHING")
+
+    # Bump do `intranet` em 30/09/2026, marcador próprio. Mesmo dia, quinta
+    # alteração: A COR DE TODOS OS BOTÕES passou a ser a mesma para todos: a
+    # pessoa escolhe o estilo e ele vale em toda a tela. A causa era o botão
+    # padronizado escrever `background-color` INLINE com a cor do módulo —
+    # e estilo inline vence CSS, então nenhuma custom property chegava nele.
+    # Agora `preview_estilos.aplicar_no_botao` escreve a cor do estilo escolhido
+    # por último, depois do `.style()` da fábrica.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_intranet_260930_cor_unica_botao'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:intranet', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_intranet_260930_cor_unica_botao', '1') "
+                    "ON CONFLICT DO NOTHING")
+
+    # Bump do `usuarios` em 30/09/2026, marcador próprio. O código deste módulo
+    # mudou no mesmo dia, pela MESMA alteração que o do `intranet`: tirou da
+    # tela as 13 cores de MARCA chumbadas das chamadas de botão (`teal-8`,
+    # `green-8`, `orange-9`, `primary`, `indigo-8`, `red-8`, `amber-8`,
+    # `deep-purple-8`) e deixou a cor do estilo escolhido chegar em todo botão.
+    # As cores de ESTADO (`negative`, `warning`, `grey-*`) ficaram: o vermelho
+    # de "excluir" é vermelho em qualquer estilo.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_usuarios_260930_cor_botao'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:usuarios', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_usuarios_260930_cor_botao', '1') "
+                    "ON CONFLICT DO NOTHING")
+
+    # Bump do `empenhos` em 30/09/2026, marcador próprio. Mesmo motivo, mudou
+    # uma chamada só: "Cancelar ZIP" estava com `cor="orange-9"` — laranja de
+    # marca, para uma ação que não é estado nem alerta.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_empenhos_260930_cor_botao'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:empenhos', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:empenhos'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_empenhos_260930_cor_botao', '1') "
+                    "ON CONFLICT DO NOTHING")
+
+    # Bump do `solicita_impressao` em 30/09/2026, marcador próprio. Mesmo
+    # motivo, 4 chamadas: "Reenviar", "Autorizar" (em duas telas) e
+    # "Confirmar impressão", com `cor="primary"`/`cor="green-8"`. Este módulo
+    # é a exceção da §4.2 — a versão dele mora na PRÓPRIA
+    # `tb_configuracoes_modulo`; a migração de hoje escreve a central, que é a
+    # que o rodapé lê, e a exceção segue de pé para quem mexer nele.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_solicita_impressao_260930_cor_botao'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:solicita_impressao', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:solicita_impressao'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_solicita_impressao_260930_cor_botao', '1') "
                     "ON CONFLICT DO NOTHING")
 
     # Bump do `intranet` em 30/09/2026, marcador próprio. Mesmo dia, quarta

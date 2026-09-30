@@ -1014,13 +1014,13 @@ def _card_grupo(g, usuario_logado, eh_admin, pode_cancelar=False,
                 if pode_cancelar and status == "recusado":
                     botao("Reenviar", icone="replay",
                               on_click=lambda gr=grupo_id: _reenviar_grupo(gr, usuario_logado, atualizar),
-                              variante="texto", compacto=True, cor="primary",
+                              variante="texto", compacto=True,
                               chave_modulo="solicita_impressao")
                 if pode_autorizar and status in ("aguardando_autorizacao", "excedente_cota",
                                                  "pendente"):
                     botao("Autorizar", icone="check",
                               on_click=lambda gr=grupo_id: _autorizar_grupo(gr, usuario_logado, atualizar),
-                              variante="texto", compacto=True, cor="green-8",
+                              variante="texto", compacto=True,
                               chave_modulo="solicita_impressao")
                     botao("Recusar", icone="block",
                               on_click=lambda gr=grupo_id: _recusar_grupo(gr, usuario_logado, atualizar),
@@ -1533,7 +1533,7 @@ def _card_admin_grupo(g, usuario_logado, atualizar):
                 if status in ("pendente", "aguardando_autorizacao", "excedente_cota"):
                     botao("Autorizar", icone="check",
                           on_click=lambda gr=grupo_id: _autorizar_grupo(gr, usuario_logado, atualizar),
-                          variante="texto", compacto=True, cor="green-8",
+                          variante="texto", compacto=True,
                           chave_modulo="solicita_impressao")
                     botao("Recusar", icone="block",
                           on_click=lambda gr=grupo_id: _recusar_grupo(gr, usuario_logado, atualizar),
@@ -1548,7 +1548,7 @@ def _card_admin_grupo(g, usuario_logado, atualizar):
                         ui.label("impressão iniciada").classes("text-caption text-orange-7")
                     botao("Confirmar impressão", icone="done_all",
                           on_click=lambda gr=grupo_id: _confirmar_impressao_grupo(gr, usuario_logado, atualizar),
-                          variante="texto", compacto=True, cor="green-8",
+                          variante="texto", compacto=True,
                           chave_modulo="solicita_impressao").tooltip("Marca impresso e apaga arquivos do servidor")
                     botao("Recusar", icone="block",
                           on_click=lambda gr=grupo_id: _recusar_grupo(gr, usuario_logado, atualizar),
