@@ -260,14 +260,28 @@ def aplicar(padrao: str = "", cor_principal: str = "#000000",
             cor_fundo: str = "#EEEEEE") -> dict:
     """Aplica o padrão: injeta as custom properties e a folha de estilo.
 
-    Devolve a paleta efetiva, para a tela usar as cores. `cor_principal`/
-    `cor_fundo` do admin só entram no padrão apontado por `PADRAO_ADM` — ver o
-    comentário dessa constante.
+    Devolve a paleta efetiva, para a tela usar as cores.
+
+    **A cor do administrador só entra em "Padrão"** — nunca num estilo concreto.
+
+    A regra é `if not padrao or padrao == CHAVE_PADRAO`, e não
+    `p == PADRAO_ADM`. A diferença não é de estilo, é de correção: com
+    `PADRAO_ADM` apontando para uma chave que é TAMBÉM um estilo concreto
+    (`PADRAO_ADM = PADRAO_PADRAO = "verde"`), o login — que pede `verde` por
+    decisão do responsável — passava a receber `cor_principal`, e a cor preta
+    do admin cobria o teal do WhatsApp. Foi a regressão de 30/09/2026: o login
+    "perdeu a configuração e ficou preto".
+
+    Com a regra por `padrao`, as duas perguntas ficam separadas e não colidem:
+
+    - a pessoa escolheu um estilo? → vale o estilo, e o admin não interfere;
+    - a pessoa ficou em "Padrão"? → vale a cor que o administrador configurou.
     """
     p = padrao if padrao in CHAVES else PADRAO_PADRAO
     paleta = dict(_CORES[p])
     paleta["chave"] = p
-    if p == PADRAO_ADM:
+    if not padrao or padrao == CHAVE_PADRAO:
+        # Sem escolha da pessoa: quem manda é o administrador.
         paleta["primaria"] = cor_principal or paleta["primaria"]
         paleta["fundo"] = cor_fundo or paleta["fundo"]
     try:

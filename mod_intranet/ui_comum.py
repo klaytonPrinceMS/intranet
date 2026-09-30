@@ -370,12 +370,33 @@ def dialogo_card(titulo="", largura="w-[560px]", *, chave_modulo="intranet",
 
 LARGURA_DIALOGO_FORMULARIO = "w-[88vw] max-w-[1600px]"
 
+# Diálogo de TEXTO LONGO: o aceite de risco, a confirmação dupla, avisos
+# jurídicos. Aqui o problema é o oposto do formulário de campos — o conteúdo é
+# uma coluna de prosa, e `88vw` transformava cada parágrafo em uma linha de 15
+# palavras, com o resto da largura vazio e rolagem horizontal para o texto
+# longo (30/09/2026). Ler um termo de responsabilidade em linha de 1.400px é
+# exatamente o contrário de ler.
+#
+# 760px é a medida de leitura que o responsável pediu: 640px já resolvia o
+# estouro, mas sobrava aperto para o texto da LGPD, que é longo. 760px continua
+# dentro da faixa confortável (45-75 caracteres) e dá espaço para o termo de
+# responsabilidade sem esticar a linha. `92vw` continua no mobile, onde não
+# há largura sobrando.
+LARGURA_DIALOGO_TEXTO = "w-[92vw] max-w-[760px]"
+
 # 300px por causa do telefone: a linha DDI (190px fixos) + número precisa de
 # ~300px de célula, senão o campo do número vira um palito. Com 260px sobrariam
 # 60px para o número — pior que ficar em coluna única.
+#
+# `minmax(300px, 1fr)` com `auto-fit` é o que distribui os campos em colunas.
+# `1fr` como teto MOBILE é o que estourava a largura: `1fr` significa "uma
+# fração do espaço disponível", e quando o conteúdo tem `min-width` maior que
+# a fração, a grade cresce além do cartão em vez de encolher. Por isso o teto
+# `100%`: a coluna nunca passa da largura do cartão.
 CSS_GRADE_CAMPOS = ("display: grid; grid-template-columns: "
                     "repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; "
                     "align-items: start;")
+CSS_GRADE_CAMPOS_CELL = "min-width: 0;"
 
 # Blocos informativos são texto corrido, não campo: 320px evita que fiquem
 # espremidos ao lado das três colunas do formulário.
@@ -386,7 +407,8 @@ CSS_GRADE_AVISOS = ("display: grid; grid-template-columns: "
 
 @contextmanager
 def dialogo_formulario(titulo="", *, chave_modulo="intranet", largura=None,
-                       descricao="", sem_descricao=False, sem_separador=False):
+                       descricao="", sem_descricao=False, sem_separador=False,
+                       largura_texto=False):
     """Abre um diálogo de FORMULÁRIO largo, com teto de altura e rolagem interna.
 
     Mesma moldura do `dialogo_card`, com o esqueleto que resolve o formulário
@@ -430,9 +452,12 @@ def dialogo_formulario(titulo="", *, chave_modulo="intranet", largura=None,
     """
     from nicegui import ui
     try:
-        with Dialogo(titulo, largura or LARGURA_DIALOGO_FORMULARIO,
-                     chave_modulo=chave_modulo, max_altura=True,
-                     sem_separador=sem_separador) as (dlg, card):
+        with Dialogo(
+                    titulo,
+                    largura or (LARGURA_DIALOGO_TEXTO if largura_texto
+                                else LARGURA_DIALOGO_FORMULARIO),
+                    chave_modulo=chave_modulo, max_altura=True,
+                    sem_separador=sem_separador) as (dlg, card):
             # O `max-h-[90vh]` vem do `max_altura=True` acima. O `flex flex-col`
             # é o que transforma o cartão em coluna para o miolo poder dividir
             # a altura com o que estiver fora dele.

@@ -250,18 +250,21 @@ def page_login(request: Request):
         ui.colors(primary=cor)
         fundo_login = get_config("cor_fundo", "#EEEEEE") or "#EEEEEE"
 
-        # ===== PROVISÓRIO: padrão visual — remover no fim =====
-        # O LOGIN é FIXO no estilo `verde` (WhatsApp), por decisão do
-        # responsável: ele não segue a preferência do usuário nem aceita
-        # `?estilo=`. A escolha de estilo vale para os MÓDULOS INTERNOS, e é
-        # dela que o rodapé de cada tela cuida. Por isso o login é sempre o
-        # mesmo para todo mundo — inclusive quem já está logado em outro
-        # navegador.
+        # ===== LOGIN SEMPRE NO PADRÃO DO WHATSAPP (decisão do responsável) =====
+        # O login é FIXO no estilo `verde`, por decisão do responsável: ele não
+        # segue a preferência do usuário nem aceita `?estilo=`, e NEM a cor
+        # configurada pelo administrador.
+        #
+        # Por isso `cor_principal` e `cor_fundo` são passados VAZIOS. Passá-los
+        # preenchidos foi o que deixou o login preto em 30/09/2026: o `aplicar`
+        # via a cor do admin quando o padrão pedido colidia com o padrão do
+        # admin, e `#000000` cobria o teal do WhatsApp. Quem pede um estilo
+        # CONCRETO não recebe cor de administrador — essa é a regra agora.
         from mod_intranet import preview_estilos as _pv
         padrao_visual = _pv.PADRAO_LOGIN
-        paleta = _pv.aplicar(padrao_visual, cor_principal=cor, cor_fundo=fundo_login)
+        paleta = _pv.aplicar(padrao_visual)
         fundo_login = (paleta or {}).get("fundo") or fundo_login
-        # ===== FIM PROVISÓRIO =====
+        # ===== FIM =====
 
         ui.query("body").style(f"background:{fundo_login}")
         try:

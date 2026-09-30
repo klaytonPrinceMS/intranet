@@ -458,7 +458,8 @@ def analisar_offline(senha: str, nome_usuario: str = "") -> dict:
         if _eh_conta_de_teste(nome_usuario):
             return {"ok": True, "nivel": "conta_de_teste", "bits": round(bits, 1),
                     "bloqueios": [], "avisos": [], "vazou": False, "vezes": 0,
-                    "consulta_online": "conta_de_teste", "excecao": True}
+                    "consulta_online": "conta_de_teste", "excecao": True,
+                    "inaceitavel": False}
 
         try:
             tamanho_minimo = int(_config(CHAVE_TAMANHO_MINIMO,
@@ -531,6 +532,23 @@ def analisar_offline(senha: str, nome_usuario: str = "") -> dict:
         else:
             nivel = "forte"
 
+        # PISO DE 0,5 (30/09/2026, decisão do responsável). Abaixo dele a senha
+        # não é usável e `inaceitavel` é verdadeiro — nenhum aceite destrava,
+        # porque não é risco que a pessoa assume: é senha que não serve.
+        #
+        # `inaceitavel` é o que separa "não pode" de "pode, se você assinar".
+        # Vazamento e palavra do órgão NÃO marcam: uma senha forte que vazou
+        # continua forte, e o que sobra ali é risco residual — exatamente o que
+        # o aceite cobre.
+        from mod_intranet import politica_senha as _ps
+        abaixo_do_piso = not _ps.acima_do_piso(
+            {"percentual": min(100, int(bits))})
+        if abaixo_do_piso:
+            bloqueios.append(
+                f"A senha está abaixo de "
+                f"{int(_ps.FORCA_MINIMA * 100)}% de força. Escolha uma senha "
+                f"mais longa ou com mais variedade de caracteres.")
+
         return {
             "ok": not bloqueios,
             "nivel": nivel,
@@ -541,6 +559,7 @@ def analisar_offline(senha: str, nome_usuario: str = "") -> dict:
             "vezes": 0,
             "consulta_online": "nao_consultada",
             "excecao": _eh_conta_de_teste(nome_usuario),
+            "inaceitavel": bool(abaixo_do_piso),
         }
     except Exception:
         logger.exception("validador_senha: analise offline falhou")
@@ -548,7 +567,8 @@ def analisar_offline(senha: str, nome_usuario: str = "") -> dict:
         # trancar o usuario fora da propria senha.
         return {"ok": True, "nivel": "indisponivel", "bits": 0.0,
                 "bloqueios": [], "avisos": [], "vazou": False, "vezes": 0,
-                "consulta_online": "erro", "excecao": False}
+                "consulta_online": "erro", "excecao": False,
+                "inaceitavel": False}
 
 
 def analisar_online(senha: str, nome_usuario: str = "") -> dict:
@@ -591,18 +611,22 @@ def analisar_online(senha: str, nome_usuario: str = "") -> dict:
         r["vazou"] = bool(vazou)
         r["vezes"] = int(vezes or 0)
         r["consulta_online"] = situacao
+        r["inaceitavel"] = bool(r.get("inaceitavel"))
 
         if vazou:
-            aviso = (f"Esta senha apareceu {vezes:,} vez(es) em vazamentos "
-                     "conhecidos.".replace(",", "."))
+            aviso = (f"Esta senha foi exposta {vezes:,} vez(es) em vazamentos "
+                     "de dados conhecidos.".replace(",", "."))
             if not r["ok"]:
                 r["bloqueios"].insert(0, aviso)
             else:
                 r["avisos"].insert(0, aviso)
-            r["nivel"] = "fraca"
-            r["ok"] = False
+            # Vazamento NÃO derruba a senha abaixo do piso: a força é o que
+            # mede dificuldade, e uma senha forte que vazou continua sendo
+            # forte. O que ela deixa de ser é ACEITÁVEL sem assinatura — é
+            # exatamente o caso de risco que o aceite cobre.
         elif situacao == "ok":
-            r["avisos"].append("Não apareceu nos vazamentos consultados.")
+            r["avisos"].append(
+                "Senha liberada, nunca foi exposta em vazamentos de dados")
         return r
     except Exception:
         logger.exception("validador_senha: analise online falhou")

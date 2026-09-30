@@ -352,6 +352,46 @@ ninguém pode apagar é estigma, não registro.
 O que fica para sempre é a **auditoria**: quem assinou, quando, e que o texto da
 LGPD foi apresentado. **A senha nunca entra no registro.**
 
+### O PISO DE 0,5: abaixo disso não há saída (30/09/2026)
+
+`politica_senha.FORCA_MINIMA = 0.5`. A barra e a força usam a **mesma escala**
+(`percentual` = bits sobre 100), então "acima de 0,5" e "barra acima de 50%"
+são a mesma coisa — o que aparece na tela é o que o serviço decide.
+
+| Regra | Efeito |
+|:---|:---|
+| `forca ≤ 0,5` | **`inaceitavel`** — nenhum aceite destrava. Bloqueio definitivo |
+| `forca > 0,5` + risco residual | O aceite libera: checkbox + `ESTOU CIENTE` |
+| `forca > 0,5` + sem risco | Liberada direto |
+
+O campo `inaceitavel` é a diferença entre **"não pode"** e **"pode, se você
+assinar"**. Sem ele, o aceite virava escapão para senha fraca — que era
+exatamente o desenho anterior, e o que o responsável inverteu.
+
+Vazamento **não** marca `inaceitavel`: uma senha forte que vazou continua
+forte, e o que sobra ali é risco residual — o caso que o aceite cobre.
+
+### Medidor e contagem de vazamento: sempre visíveis
+
+Uma versão anterior os escondia atrás do checkbox. Isso foi invertido em
+30/09/2026: esconder a informação que **decide se a senha pode ser usada** é o
+contrário de informar — a pessoa só descobria que a senha era fraca *depois*
+de marcar a caixa.
+
+O que o checkbox revela é o **termo de responsabilidade**, que é longo e só
+interessa a quem decidiu ler. O botão "Salvar" continua sendo a confirmação
+dupla: só aparece com o checkbox marcado, senha acima do piso e, havendo
+risco, `ESTOU CIENTE` digitado.
+
+### Textos da tela (30/09/2026, redação do responsável)
+
+| Situação | Texto |
+|:---|:---|
+| Abaixo do piso | **"Esta senha não pode ser usada."** |
+| Vazada | "Esta senha foi exposta N vezes em vazamentos de dados conhecidos." |
+| Vazada mas forte | Liberada com o aceite e o aviso acima |
+| Limpa | "Senha liberada, nunca foi exposta em vazamentos de dados" |
+
 ### O texto do aceite e a LGPD
 
 `politica_senha.TEXTO_ACEITE_RISCO` (bilíngue, EN no topo / PT-BR abaixo)
@@ -411,6 +451,57 @@ espera entra na mensagem, e `qacomum` continua entrando com a senha certa.
 
 `tb_login_tentativas` fica no banco do módulo **`usuarios`** — que é o dono do
 login — e não no central.
+
+---
+
+## O login e a troca de senha são SEMPRE no padrão do WhatsApp (30/09/2026)
+
+> **EN:** The login screen and the mandatory password-change screen are always
+> in the WhatsApp pattern, regardless of the colour the administrator
+> configured and regardless of the user's own style choice.
+>
+> **PT-BR:** A tela de login e a de troca de senha obrigatória são sempre no
+> padrão do WhatsApp, independentemente da cor configurada pelo administrador e
+> da preferência do usuário.
+
+`preview_estilos.PADRAO_LOGIN = "verde"`.
+
+### A regressão do login preto (30/09/2026)
+
+O login "perdeu a configuração e ficou preto" — e a causa foi uma mudança do
+mesmo dia, não do `preview_estilos`:
+
+```python
+PADRAO_ADM = PADRAO_PADRAO      # "verde"
+```
+
+Dentro de `aplicar()`, o teste era `if p == PADRAO_ADM:` para decidir se a cor
+do administrador entrava. Com `PADRAO_ADM` apontando para uma chave que também
+é um **estilo concreto**, o login — que pede `"verde"` por decisão do
+responsável — passava a receber `cor_principal`, e o `#000000` do admin
+cobria o teal do WhatsApp.
+
+A correção não foi trocar a constante, foi trocar o **teste**:
+
+```python
+if not padrao or padrao == CHAVE_PADRAO:   # em vez de: if p == PADRAO_ADM:
+    paleta["primaria"] = cor_principal or paleta["primaria"]
+```
+
+A regra passa a ser sobre **o que foi pedido**, e não sobre uma chave
+comparada: um estilo concreto nunca recebe cor de administrador. As duas
+perguntas ficam separadas e não colidem mais.
+
+Por isso `main.py` chama `_pv.aplicar(padrao_visual)` **sem** `cor_principal`
+e sem `cor_fundo`: passar preenchidos foi justamente o que deixou o login
+preto.
+
+### O fundo da tela de troca
+
+Vem da **paleta do estilo** (`paleta["fundo"]`), não de `cor_fundo` do
+admin — que é `#EEEEEE` e deixava a tela morta. `tela_troca_obrigatoria`
+aplica `PADRAO_LOGIN` e usa o fundo dela, para que a continuação da entrada no
+sistema pareça um sistema só, e não dois.
 
 ---
 

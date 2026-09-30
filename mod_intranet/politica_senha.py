@@ -51,6 +51,18 @@ CHAVE_ATRASO_MAXIMO = "login_atraso_maximo_seg"
 # Faixas do medidor. Os limites são de bits TOTAIS (comprimento x entropia),
 # e não de "caracteres especiais": uma senha de 20 caracteres sorteados vale
 # mais do que uma de 10 com símbolos. Ver `validador_senha._entropia`.
+# --- PISO DE FORÇA: abaixo disto a senha não é usável (30/09/2026) ---
+# Decisão do responsável: **0,5** da barra é o corte. Abaixo disso a senha
+# simplesmente não pode ser usada — sem aceite, sem exceção, sem saída. O
+# aceite de risco deixou de ser para senha fraca e passou a ser para senha
+# BOA COM RISCO: passa de 0,5, mas aparece em vazamento, ou tem palavra do
+# órgão, ou tem ano, ou tem o nome do usuário.
+#
+# Isso inverte o desenho anterior, e a inversão é o ponto: antes a pessoa podia
+# aceitar uma senha de 15 bits. Agora o sistema recusa, e o que ela pode
+# aceitar é o risco residual de uma senha decente.
+FORCA_MINIMA = 0.5
+
 # Piso de 75 bits para "Muito forte" é ALTÍSSIMO para senha humana: uma senha
 # de 20 caracteres bem variados dá ~76. Colocar o patamar em 75 fazia quase toda
 # senha boa cair no topo e a barra deixar de distinguir. Os pisos medem o que o
@@ -90,6 +102,22 @@ def classificar(bits: float) -> tuple[str, str, str]:
             return chave, rotulo, cor
     chave, rotulo, cor = FAIXAS[0][1:]
     return chave, rotulo, cor
+
+
+def forca(medidor: dict) -> float:
+    """A força como fração de 0 a 1 — a mesma escala da barra na tela."""
+    try:
+        return max(0.0, min(1.0, float((medidor or {}).get("percentual", 0)) / 100.0))
+    except Exception:
+        return 0.0
+
+
+def acima_do_piso(medidor: dict) -> bool:
+    """A senha passa do piso de 0,5? Abaixo disso ela não é usável."""
+    try:
+        return forca(medidor) >= FORCA_MINIMA
+    except Exception:
+        return False
 
 
 def medidor(senha: str) -> dict:
@@ -252,35 +280,36 @@ def tentativas_de(user_nome: str) -> int:
 # de fato estabelece, e — tão importante quanto isso — pelo que ela NÃO
 # estabelece. Um texto de aceite que só cita artigo para assustar é propaganda,
 # não informação, e a prefeitura não pode fazer isso com servidor público.
+TEXTO_ACEITE_RISCO_EN = """\
+By checking the box, you take responsibility for this access and for its use.
+
+You are aware that:
+
+1. The chosen password appears in known public breaches and can be guessed by
+   attack. With it, whoever obtains it can read, change and delete what is
+   under your profile — including other people's data.
+
+2. The municipality is the DATA CONTROLLER of the personal data handled here
+   and adopts security measures to protect it. This follows Brazilian Law
+   13.709/2018 (LGPD), in particular Art. 6º, VI and VII (security and
+   prevention) and Art. 46, which requires technical and administrative
+   measures against unauthorized access.
+
+3. The CO-RESPONSIBILITY is yours. The law does not transfer to the system the
+   task of guessing your password: choosing an easy password is your own act,
+   and the consequences for your profile are yours.
+
+4. If your account is breached through a weak or leaked password, improper use
+   will be attributed to your profile — not to the municipality, which
+   advises and offers a password change at any time.
+
+5. You may change this password whenever you want, at any time, without
+   justification."""
+
+# O que a PESSOA lê na tela. Só PT-BR: mostrar os dois idiomas empilhados
+# duplicava o texto na tela e empurrava o botão para fora de vista — e o texto
+# em inglês não ia fazer sentido para servidor de prefeitura nenhuma.
 TEXTO_ACEITE_RISCO = """\
-Strong
-Ao marcar a caixa, você assume a responsabilidade por este acesso e pelo uso
-que for feito com ele.
-
-Você está ciente de que:
-
-1. A senha escolhida aparece em vazamentos públicos conhecidos e pode ser
-   deduzida por ataque. Com ela, quem a obtiver pode ler, alterar e apagar o
-   que está sob o seu perfil — inclusive dados de outros servidores.
-
-2. A prefeitura é a CONTROLADORA dos dados pessoais aqui tratados e adota
-   medidas de segurança para protegê-los. Isso decorre da Lei nº 13.709/2018
-   (LGPD), em especial do Art. 6º, VI e VII (segurança e prevenção) e do
-   Art. 46, que exige medidas técnicas e administrativas contra acessos não
-   autorizados.
-
-3. A CO-RESPONSABILIDADE é sua. A lei não transfere ao sistema a tarefa de
-   adivinhar a sua senha: escolher senha fácil é ato seu, e as consequências
-   sobre o seu perfil são suas.
-
-4. Se a sua conta for invadida por senha fraca ou vazada, o uso indevido
-   será atribuído ao seu perfil — e não à prefeitura, que orienta e oferece
-   troca de senha a qualquer momento.
-
-5. Você pode trocar esta senha quando quiser, em qualquer momento, sem
-   justificar.
-
-PT-BR
 Ao marcar a caixa, você assume a responsabilidade por este acesso e pelo uso
 que for feito com ele.
 

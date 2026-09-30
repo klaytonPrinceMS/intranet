@@ -665,10 +665,16 @@ def trocar_senha_propria(user_nome, senha_atual, nova_senha):
             # O aceite é DA SESSÃO e valida só esta troca: não vira rótulo
             # permanente no cadastro, porque amanhã a pessoa pode trocar a
             # senha e a marca antiga não deve pesar.
-            if (veredito is not None and not veredito.get("ok")
-                    and not senha_aceita_por_aceite(user_nome)):
-                motivos = veredito.get("bloqueios") or ["Senha fraca demais."]
-                return False, motivos[0]
+            if (veredito is not None and not veredito.get("ok")):
+                # PISO DE FORÇA: abaixo de 0,5 a senha não é usável e
+                # NENHUM aceite destrava — `inaceitavel` é a diferença que
+                # separa "não pode" de "pode, se você assinar".
+                if veredito.get("inaceitavel"):
+                    motivos = veredito.get("bloqueios") or ["Senha fraca demais."]
+                    return False, motivos[0]
+                if not senha_aceita_por_aceite(user_nome):
+                    motivos = veredito.get("bloqueios") or ["Senha fraca demais."]
+                    return False, motivos[0]
             # Troca forçada que mantém a mesma senha não é troca nenhuma: é
             # o usuário passando pela tela sem mudar nada. Não precisa
             # reautenticar: o `autenticar` do topo já confirmou `senha_atual`.
