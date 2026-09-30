@@ -528,6 +528,28 @@ def init_db():
                     "('migracao_versao_intranet_260930_dialogo_topo', '1') "
                     "ON CONFLICT DO NOTHING")
 
+    # Bump do `intranet` em 30/09/2026, marcador próprio. Mesmo dia, terceira
+    # alteração. A troca obrigatória PAROU de ser decorativa: o diálogo era um
+    # modal sobre a página já montada (`_montar_layout` rodava antes, e
+    # `pagina_restrita` devolvia o usuário, então o chamador desenhava a tela
+    # inteira), e `persistent` só impedia fechar o modal — não impedia navegar.
+    # Quem não quisesse trocar a senha clicava em "voltar" e navegava. Agora o
+    # guard fica no servidor: enquanto houver pendência, a página não é montada
+    # e a pessoa vai para a tela solta `/troca-obrigatoria`, sem menu. E essa
+    # tela ganhou "Sair", que encerra a sessão de verdade para o caso de
+    # máquina compartilhada.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_intranet_260930_troca_bloqueada'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:intranet', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_intranet_260930_troca_bloqueada', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_usuarios_260929'")
     if (cur.fetchone()[0] or 0) == 0:

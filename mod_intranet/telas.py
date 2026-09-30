@@ -60,6 +60,82 @@ def usuario_logado():
     return app.storage.user.get("usuario")
 
 
+ROTA_TROCA_OBRIGATORIA = "/troca-obrigatoria"
+
+
+def _pendencia_de_troca(nome_usuario: str) -> str:
+    """O que está pendente para este usuário: `credenciais`, `senha` ou "".
+
+    Fail-soft de propósito: se a consulta ao banco falhar, devolve "" e a
+    pessoa entra normalmente. Um banco instável não pode transformar o primeiro
+    acesso em parede — o gestor do sistema cairia no mesmo buraco que o usuário.
+    """
+    try:
+        if autenticacao.precisa_trocar_credenciais(nome_usuario):
+            return "credenciais"
+        if autenticacao.precisa_trocar_senha(nome_usuario):
+            return "senha"
+        return ""
+    except Exception as e:
+        try:
+            _login_erro_log().exception(
+                f"pendencia_de_troca: falha ao consultar '{nome_usuario}': {e}")
+        except Exception:
+            pass
+        return ""
+
+
+def tela_troca_obrigatoria():
+    """Tela SOLTA da troca obrigatória, sem layout e sem menu.
+
+    Fica numa rota própria (`/troca-obrigatoria`) e é de lá que `pagina_restrita`
+    manda quem tem pendência. Três consequências, e todas importam:
+
+    - **Não há o que navegar.** Sem cabeçalho, sem drawer, sem menu de módulos,
+      não existe botão de módulo para clicar nem link para seguir. A pergunta
+      "dá para contornar a troca?" deixa de ter resposta pela interface.
+    - **Só com sessão.** Sem `usuario_logado`, vai para `/login` — a tela da
+      troca não vira uma porta de entrada.
+    - **Só a troca.** Se não houver pendência (a pessoa já trocou e recarregou,
+      ou o `Sair` devolveu para o login), vai para `/`. Sem isso, o caminho de
+      volta seria um beco sem saída: `pagina_restrita` devolveria para cá, e
+      esta tela devolveria para cá.
+
+    O passo seguinte do primeiro acesso (telefone e dados) NÃO mora aqui: ele
+    roda em `/`, dentro de `_primeiro_acesso`, depois que a senha já foi
+    trocada. Assim o encadeamento continua o de sempre e esta tela tem uma
+    única responsabilidade.
+    """
+    user = usuario_logado()
+    if not user:
+        ui.navigate.to("/login")
+        return
+    nome = user.get("nome", "")
+    pendencia = _pendencia_de_troca(nome)
+    if not pendencia:
+        ui.navigate.to("/")
+        return
+
+    # Sem `_montar_layout`: é essa a razão de a tela existir separada. A
+    # `cor_fundo` vem do admin para não ficar um cartão branco solto no vazio.
+    try:
+        fundo = _obter_config('cor_fundo', ui_comum.CORES["fundo"]) \
+            or ui_comum.CORES["fundo"]
+        ui.query("body").classes("bg-grey-2")
+        ui.query("body").style(f"background:{fundo}")
+    except Exception:
+        pass
+
+    def _voltar_ao_inicio(_novo_nome=None):
+        """Troca concluída: entra no sistema de verdade."""
+        ui.navigate.to("/")
+
+    if pendencia == "credenciais":
+        _dialogo_troca_credenciais(nome, ao_concluir=_voltar_ao_inicio)
+    else:
+        _dialogo_troca_senha(nome, ao_concluir=_voltar_ao_inicio)
+
+
 def pagina_restrita(titulo_modulo: str, chave_modulo: str = None):
     """Guard de autenticação + layout completo. Retorna dict do usuário ou None.
 
@@ -91,6 +167,26 @@ def pagina_restrita(titulo_modulo: str, chave_modulo: str = None):
         # adota agora (nova linha com IP/UA deste acesso) e passa a ser revogável
         user["sessao"] = autenticacao.registrar_login(user["nome"], "sistema")
         app.storage.user["usuario"] = user
+
+    # ===== TROCA OBRIGATÓRIA PENDENTE: a página NÃO pode ser montada =====
+    # Este é o único ponto por onde passa TODA rota protegida, então é aqui que
+    # a troca obrigatória vira de verdade obrigatória.
+    #
+    # Antes o diálogo era só um modal sobre a página já montada: `_montar_layout`
+    # rodava primeiro (cabeçalho, drawer e menu com todos os módulos), o
+    # diálogo abria por cima e `pagina_restrita` devolvia o usuário — o `with`
+    # do chamador continuava e desenhava a tela inteira. O `persistent` só
+    # impedia FECHAR o diálogo; ele não impede NAVEGAR. O usuário relatou
+    # exatamente isso: clicou em "voltar" e navegou entre páginas que o sistema
+    # já tinha pré-carregado.
+    #
+    # A correção é do lado do servidor, não do modal: enquanto a pendência
+    # existir, ninguém chega a montar layout nenhum. Botão "voltar", URL
+    # digitada, link pré-carregado — todos passam por aqui e voltamos para a
+    # tela da troca. Um modal que se pode contornar não é uma trava.
+    if (_pendencia_de_troca(user["nome"])):
+        ui.navigate.to(ROTA_TROCA_OBRIGATORIA)
+        return None
 
     papel_mod = autenticacao.papel_no_modulo(user["nome"], chave_modulo) if chave_modulo else None
     rotulo_perfil = f"{papel_mod.replace('_', ' ')} · neste módulo" if papel_mod \
@@ -1172,6 +1268,17 @@ def _dialogo_troca_credenciais_completo(nome_usuario: str, ao_concluir=None):
         # mesmo com o formulário rolado até o fim
         _botao_tema("Salvar credenciais", on_click=confirmar,
                     extra_classes="w-full mt-2 shrink-0")
+
+        # Mesma saída de máquina compartilhada da troca de senha (30/09/2026):
+        # quem abriu o sistema e não quer assumir o login de outra pessoa
+        # precisa poder simplesmente sair. `_logout` encerra a sessão de
+        # verdade — só fechar o modal deixaria a sessão viva para quem viesse
+        # depois, entrando sem passar pela tela de login.
+        ui.separator().classes("w-full")
+        ui.label("Não quer continuar agora?") \
+            .classes("text-caption text-grey-7")
+        _botao_tema("Sair e entrar com outro usuário", variante="contorno",
+                    on_click=_logout, extra_classes="w-full mt-1 shrink-0")
     # persistent: não fecha com ESC/clique fora — a troca é realmente obrigatória
     dlg.props("persistent")
     dlg.open()
@@ -1303,6 +1410,24 @@ def _dialogo_troca_senha(nome_usuario: str, ao_concluir=None):
 
         _botao_tema("Salvar nova senha", on_click=confirmar,
                     extra_classes="w-full mt-2")
+
+        # ---- "Sair": a saída para MÁQUINA COMPARTILHADA ----
+        # A troca obrigatória hoje deixava a pessoa sem porta de saída: ou ela
+        # troca a senha de alguém else's, ou fica presa. Em balcão de
+        # atendimento, recepção e sala compartilhada isso é o caminho natural —
+        # a pessoa abriu o sistema, viu que não pode ficar com a senha alheia e
+        # precisa simplesmente liberar a máquina para o próximo.
+        #
+        # Sai de verdade: encerra a sessão no banco e limpa o `storage.user`
+        # (é o mesmo `_logout` do cabeçalho). Só fechar o modal não bastaria —
+        # a sessão continuaria viva e quem viesse depois entraria direto, sem
+        # passar pela tela de login.
+        ui.separator().classes("w-full")
+        ui.label("Não quer trocar agora?") \
+            .classes("text-caption text-grey-7")
+        _botao_tema("Sair e entrar com outro usuário", variante="contorno",
+                    on_click=_logout, extra_classes="w-full mt-1")
+
     # persistent: não fecha com ESC/clique fora — a troca é realmente obrigatória
     dlg.props("persistent")
     dlg.open()
@@ -1783,13 +1908,13 @@ def _primeiro_acesso(nome_usuario: str):
                 lg.exception(f"primeiro_acesso: falha ao verificar pendência "
                              f"de dados de {alvo}: {e}")
 
+    # NÃO TENTA ABRIR OS DIÁLOGOS DE SENHA AQUI (30/09/2026).
+    # Quem tem pendência nunca chega a este ponto: `pagina_restrita` já mandou
+    # para `ROTA_TROCA_OBRIGATORIA` antes de montar o layout. Deixá-los aqui
+    # daria a impressão de que a troca é aplicada sobre a página montada —
+    # que é exatamente o furo que o usuário achou: clicou em "voltar" e navegou.
+    # Aqui só sobra o que vem DEPOIS da troca: telefone e dados.
     try:
-        if autenticacao.precisa_trocar_credenciais(nome_usuario):
-            _dialogo_troca_credenciais(nome_usuario, ao_concluir=abrir_telefones)
-            return
-        if autenticacao.precisa_trocar_senha(nome_usuario):
-            _dialogo_troca_senha(nome_usuario, ao_concluir=abrir_telefones)
-            return
         abrir_telefones()
     except Exception as e:
         lg = _login_erro_log()

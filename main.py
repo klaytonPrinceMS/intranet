@@ -1347,6 +1347,26 @@ def page_configuracoes():
         notificar("Erro ao carregar as Configurações.", tipo="error")
 
 
+# ================== TROCA OBRIGATÓRIA ==================
+# Rota SOLTA, sem layout e sem menu (30/09/2026). `pagina_restrita` manda para
+# cá todo mundo que ainda tem troca de senha ou de credenciais pendente — e
+# como a página não é montada, não há botão de módulo nem link para contornar a
+# troca. Antes o diálogo era um modal sobre a tela pronta: dava para clicar em
+# "voltar" e navegar normalmente, e a troca só era obrigatória no papel.
+# Ela NÃO chama `pagina_restrita` de propósito — seria laço infinito entre as
+# duas rotas.
+@ui.page("/troca-obrigatoria")
+def page_troca_obrigatoria():
+    try:
+        from mod_intranet.telas import tela_troca_obrigatoria
+        tela_troca_obrigatoria()
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_troca_obrigatoria: erro ao renderizar a troca obrigatória: %s", e)
+        notificar("Erro ao abrir a troca de senha — recarregue a página.",
+                  tipo="error")
+
+
 # ================== START ==================
 # Re-registra slugs customizados persistidos em tb_modulos (idempotente):
 # as rotas padrão já foram registradas pelos decorators fixos acima.
