@@ -1093,6 +1093,36 @@ def init_db():
                     "('migracao_versao_usuarios_261001_troca_provisoria', '1') "
                     "ON CONFLICT DO NOTHING")
 
+    # Bump do `usuarios` em 01/10/2026 — COLETOR QUE JUNTA AS DUAS PARTES.
+    #
+    # Os dois coletores que existiam pecam em complementos opostos, e nenhum
+    # dos dois serve:
+    #   - `coleta_folha.py` pede remuneracao e ficha de contracheque, mas trata
+    #     PAGINA VAZIA como fim de folha. O portal limitando a resposta e isso
+    #     pareceu "acabou": gravou **650 de 1165** servidores e batizou de folha
+    #     completa.
+    #   - `coletar_folha_simples.py` acerta o fim da folha, mas pede MENOS
+    #     colunas: deixa `vldefault` e `cdContraCheque` de fora. A folha
+    #     coletada por ele perde a remuneracao — que e o historico gravado por
+    #     `carga_folha.definir_remuneracao` e o numero que o card de Dados
+    #     Abertos mostra (mediana e folha bruta).
+    #
+    # `coletar_folha_completa.py` junta as duas: folha INTEIRA E com
+    # remuneracao. E tem saidas que FALHAM em vez de gravar folha truncada
+    # (2 = veio menos do que o portal anunciou, 3 = portal nao informou
+    # `recordsFiltered`): truncar e chamar aquilo de completo foi o defeito.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_usuarios_261001_coleta_completa'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:usuarios', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_usuarios_261001_coleta_completa', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_lista_telefonica_261001_origem_unidade'")
     if (cur.fetchone()[0] or 0) == 0:
