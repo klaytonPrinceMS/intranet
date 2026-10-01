@@ -52,6 +52,7 @@ PREFIXO_POR_CHAVE = {
     "agregador_noticias": "agregador_noticias",
     "os": "os",
     "estoque": "estoque",
+    "dados_abertos": "dados_abertos",
 }
 
 
@@ -91,6 +92,8 @@ PADROES_TEMA = {
            "cor_titulo": "#212121", "btn_tamanho": "medium"},
     "estoque": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
                 "cor_titulo": "#212121", "btn_tamanho": "medium"},
+    "dados_abertos": {"cor_botao": "#000000", "cor_texto_botao": "#FFFFFF",
+                      "cor_titulo": "#212121", "btn_tamanho": "medium"},
 }
 
 

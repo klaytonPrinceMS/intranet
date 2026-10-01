@@ -167,8 +167,9 @@ def main() -> int:
             cfg = json.load(fh)
         check(cfg.get("ativo") is True,
               "fonte_folha.json tem ativo=true (esta instalacao popula a folha)")
-        check(cfg.get("origem") == "portal",
-              "fonte_folha.json usa origem=portal")
+        check(cfg.get("origem") == "csv",
+              "fonte_folha.json usa origem=csv (a folha e lida do arquivo "
+              "local; ver o _leia_me 1b — mudanca de 01/10/2026)")
         check(bool(cfg.get("portal_url")),
               "fonte_folha.json tem portal_url preenchido")
         endpoints = cfg.get("portal_endpoints") or {}

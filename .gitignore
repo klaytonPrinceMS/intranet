@@ -182,7 +182,22 @@ cython_debug/
 .cursorindexingignore
 
 # ===== Intranet Modular (AGENTS.md §2.2) =====
+# Ambientes virtuais — NUNCA commitar (AGENTS.md §7).
+# O AGENTS.md documenta `.venv/` (path Linux, `.venv/bin/python`); nesta
+# máquina Windows o ambiente real é `venv/` (`.venv` não existe). As DUAS
+# formas precisam estar bloqueadas, senão o próximo `git add -A` sobe
+# thousands de binários e o clone de todo mundo quebra.
+# Já cobertas acima pelo bloco "Environments" do template do GitHub
+# (linhas .venv / venv/); repetidas aqui, ancoradas na raiz, para o ignore
+# não depender de ninguém mexer naquele bloco.
+/.venv/
+/.venv
+/venv/
+/venv
+
 # Bancos SQLite por módulo — NUNCA commitar
+# (a negação `!**/.gitkeep` abaixo reabriria arquivos dentro de venv/,
+#  então ela vem DEPOIS e é restrita aos .gitkeep versionados)
 *.db
 *.db-wal
 *.db-shm
@@ -212,6 +227,15 @@ mod_tecnico/software/*
 backup/*
 logs/*
 !**/.gitkeep
+
+# ---- Estado de execução da carga da folha (NÃO commitar) ----
+# `.ultima_carga.json` é o "digital" (hash) do arquivo que a última carga leu.
+# Se ele fosse versionado, um clone novo encontraria o MESMO CSV com o MESMO
+# digital, `carga_automatica` responderia "folha inalterada — nada a fazer" e o
+# banco nasceria com o cadastro de servidores VAZIO. É o marcador que impede o
+# primeiro boot de acontecer (AGENTS.md §4.2 usa marcador de migração; aqui o
+# marcador é de arquivo e precisa nascer junto com o banco, não com o clone).
+mod_gest_cad_usuario/dados/.ultima_carga.json
 
 # ---- Artefatos gerados por testes/E2E (não commitados) ----
 assets/test/test-results/

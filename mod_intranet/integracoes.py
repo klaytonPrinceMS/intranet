@@ -389,3 +389,41 @@ def unidades_do_organograma_por_nome():
         logger.warning("integracoes.unidades_do_organograma_por_nome: "
                        "falha (%s) — devolvendo {}", exc)
         return {}
+
+
+# ================== Dados abertos (mod_dados_abertos) ==================
+
+
+def folha_de_servidores_publica() -> dict:
+    """EN: The server sheet as published, straight from the file.
+
+    PT-BR: A folha de servidores como a FONTE a publica, lida do arquivo.
+
+    É o que alimenta o card "Servidores Públicos" do módulo de Dados Abertos.
+    Devolve o dicionário cru (`origem`, `url`, `competencia`, `coletado_em`,
+    `total`, `aviso`, `servidores`) — **sem** gravar, **sem** auditar e
+    **sem** passar pelo cadastro: o dado aberto mostra o que a fonte
+    publica, não o que o sistema gravou depois.
+
+    A costura existe porque o arquivo mora em
+    `mod_gest_cad_usuario/dados/`, e Dados Abertos não pode abrir a pasta de
+    outro módulo (AGENTS.md §2). Quem sabe o caminho e o formato do arquivo é
+    o módulo que o coletou — por isso o `import` é de
+    `mod_gest_cad_usuario.carga_folha`, lazy, e não do `bd_manipulador`: a
+    folha é um ARQUIVO, não uma tabela do banco de usuários.
+
+    `{}` em qualquer falha, e um dicionário com `erro` preenchido quando a
+    folha existe mas veio vazia — quem chama mostra "fonte indisponível" em
+    vez de um zero que parece dado.
+    """
+    try:
+        from mod_gest_cad_usuario.carga_folha import folha_arquivo_atual
+        folha = folha_arquivo_atual()
+        if not folha:
+            return {"erro": "folha de servidores indisponivel ou vazia",
+                    "servidores": []}
+        return folha
+    except Exception as exc:
+        logger.warning("integracoes.folha_de_servidores_publica: falha (%s) "
+                       "— devolvendo folha vazia", exc)
+        return {"erro": str(exc), "servidores": []}

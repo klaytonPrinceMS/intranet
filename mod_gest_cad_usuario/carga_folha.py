@@ -804,6 +804,22 @@ def carga_automatica(forcar: bool = False, config: str | None = None) -> dict:
             "total": len(folha["servidores"]),
             "erros": resumo.get("erros", [])[:20],
         })
+        # O que MUDOU, e não só o que sobrou (01/10/2026). Sem estes três o
+        # relatório respondia "criados 0, bloqueados 0" numa folha em que 40
+        # salários tinham mudado e 600 continuavam iguais — e quem lê o log do
+        # boot não distinguiria "a folha não mudou" de "a carga não rodou".
+        #   nomes_corrigidos — o nome do portal discordou do cadastro e o
+        #                      sistema corrigiu (objetivo, sem perguntar)
+        #   vinculos_gravados/remuneracoes — vínculo, situação e salário
+        #                      reescritos com a competência da folha
+        #   inalterados      — quantos já estavam certos (o "de nada" que
+        #                      prova que a travessia rodou mesmo)
+        relatorio.update({
+            "nomes_corrigidos": resumo.get("nomes_corrigidos", 0),
+            "vinculos_gravados": resumo.get("vinculos_gravados", 0),
+            "remuneracoes": resumo.get("remuneracoes", 0),
+            "inalterados": resumo.get("inalterados", 0),
+        })
         _registrar_carga({
             "digital": digital,
             "em": datetime.now().isoformat(timespec="seconds"),
@@ -823,6 +839,51 @@ def carga_automatica(forcar: bool = False, config: str | None = None) -> dict:
         except Exception:
             pass
         return relatorio
+
+
+def folha_arquivo_atual() -> dict:
+    """A folha de servidores como está no ARQUIVO, sem gravar nada (01/10/2026).
+
+    Lê o mesmo arquivo que a carga lê — o `dados/funcionarios.json` quando ele
+    existe, e o CSV configurado em `fonte_folha.json` quando não — e devolve
+    o dicionário cru: `origem`, `url`, `competencia`, `coletado_em`, `total`,
+    `aviso` e a lista `servidores`.
+
+    **Por que existe, e por que aqui:** quem publica dado público sobre a folha
+    é o módulo de Dados Abertos, e ele NÃO pode ler um arquivo que mora na
+    pasta deste módulo (AGENTS.md §2: módulo de negócio não alcança outro). A
+    costura oficial é `mod_intranet/integracoes.folha_de_servidores_publica()`,
+    que chama ESTA função. O conhecimento do arquivo — nome, caminho, formato,
+    delimitador, colunas — fica aqui, com quem escreveu o arquivo; lá fora só
+    circula o dicionário.
+
+    **O que ela NÃO faz:** não grava, não audita, não bloqueia, não calcula
+    média. É a leitura mais burra possível, porque é a que a tela de dados
+    abertos precisa: mostrar o que a fonte publica, e não o que o cadastro
+    Virou depois. `{}` em qualquer falha (fail-soft) — quem chama decide o
+    que mostrar quando não há folha.
+
+    EN: The server sheet as it sits in the FILE, writing nothing.
+    """
+    try:
+        if os.path.exists(ARQUIVO_PADRAO):
+            with open(ARQUIVO_PADRAO, encoding="utf-8") as f:
+                folha = json.load(f)
+            if isinstance(folha, dict):
+                return folha
+        # Sem o JSON: cai no CSV configurado — a mesma folha, em outro formato.
+        cfg, _aviso = carregar_config()
+        if not cfg.get("caminho_csv"):
+            return {}
+        caminho = cfg["caminho_csv"]
+        if not os.path.isabs(caminho):
+            caminho = os.path.join(RAIZ_REPO, caminho)
+        if not os.path.exists(caminho):
+            return {}
+        return ler_csv_configuravel(caminho, cfg) or {}
+    except Exception as e:
+        _log(f"  nao deu para ler a folha do arquivo ({e})")
+        return {}
 
 
 def main() -> int:

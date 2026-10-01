@@ -973,6 +973,101 @@ def init_db():
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('contador_acessos_total', '0') ON CONFLICT DO NOTHING")
     except Exception:
         pass
+    # POR QUE ESTE BLOCO VAI NO FIM, E NÃO COM OS OUTROS BUMPS (01/10/2026)
+    #
+    # Descobriram-se dois defeitos ao rodar o boot de um banco NOVO:
+    #
+    # 1. **Um bump no meio da lista é apagado pelo que vem depois.** As
+    #    migrações antigas deste arquivo (260929/260930) fazem
+    #    `INSERT ... ON CONFLICT DO NOTHING` seguido de `UPDATE` INCONDICIONAL.
+    #    Num banco novo, o marcador delas ainda não existe, então elas rodam
+    #    depois e sobrescrevem a versão que o bump de hoje gravou. O sintoma é
+    #    `versao_modulo:intranet` valendo 1.0.260930 num banco criado hoje, com
+    #    o marcador `..._261001_dados_abertos` gravado como se o bump tivesse
+    #    acontecido. Num banco JÁ existente o defeito não aparece (os
+    #    marcadores antigos existem e pulam) — que é por que ele passou
+    #    despercebido: só a instalação nova via.
+    #
+    # 2. **O mesmo bug já atingia os bumps de 261001 anteriores**
+    #    (`tempo_carga_folha`, `vigia_servidor`), que estão no meio do arquivo.
+    #    Eles foram corrigidos de fato pela migração de hoje, que é a última a
+    #    falar do `intranet`.
+    #
+    # A REGRA que daqui para frente: **bump de versão fica no FIM da sequência
+    # de migrações**, imediatamente antes do `commit`. Assim o número de hoje
+    # é o último a escrever, tanto no banco novo quanto no banco em uso.
+    # Nenhuma migração de versão ANTERIOR pode estar abaixo deste ponto.
+    #
+    # São cinco módulos tocados, e a §4.2 exige um marcador PRÓPRIO para cada um.
+    #
+    #   intranet           — `bd_criador.py` (init do módulo novo + folha lida em
+    #                        TODO boot), `autenticacao.py` (MODULOS_SISTEMA),
+    #                        `tema_modulo.py` (prefixo e padrão), `repositorio.py`
+    #                        (MODULOS_BD) e `integracoes.py` (10ª função da
+    #                        fachada: `folha_de_servidores_publica`)
+    #   dados_abertos      — módulo NOVO (bd_manipulador/telas/telas_administracao)
+    #   usuarios           — `carga_folha.py`: leitor público da folha
+    #                        (`folha_arquivo_atual`) e o relatório que agora diz
+    #                        o que MUDOU (nomes corrigidos, vínculos, salários,
+    #                        inalterados) — sem isso o log do boot respondia
+    #                        "criados 0, bloqueados 0" numa folha em que 40
+    #                        salários tinham mudado
+    #   lista_telefonica   — `tb_unidade.origem`: distingue unidade que veio da
+    #                        folha de unidade que o ADMINISTRADOR cadastrou, para
+    #                        que a sincronização deixe de desligar a unidade
+    #                        manual que o administrador acabou de criar
+    #   solicita_impressao — SEM bump: nada foi alterado nele. Ele já consumia a
+    #                        hierarquia pela fachada
+    #                        (`integracoes.listar_unidades_organograma`) e continua
+    #                        consumindo; a garantia de que respeita a lista
+    #                        telefônica é a regra, não uma linha nova daqui.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_intranet_261001_dados_abertos'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:intranet', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_intranet_261001_dados_abertos', '1') "
+                    "ON CONFLICT DO NOTHING")
+
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_dados_abertos_261001_nascimento'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:dados_abertos', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:dados_abertos'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_dados_abertos_261001_nascimento', '1') "
+                    "ON CONFLICT DO NOTHING")
+
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_usuarios_261001_folha_todo_boot'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:usuarios', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_usuarios_261001_folha_todo_boot', '1') "
+                    "ON CONFLICT DO NOTHING")
+
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_lista_telefonica_261001_origem_unidade'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:lista_telefonica', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:lista_telefonica'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_lista_telefonica_261001_origem_unidade', '1') "
+                    "ON CONFLICT DO NOTHING")
     conn.commit()
     conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
     conn.close()

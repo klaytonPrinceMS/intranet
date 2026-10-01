@@ -101,6 +101,17 @@ padrão adotado é aviso amigável, não erro).
 | 7 | `espelhar_cadastro_na_lista_telefonica(ator="sistema")` (`:124`) | `mod_gest_cad_usuario.leitura_lista.listar_para_lista_telefonica` + `mod_lista_telefonica.bd_manipulador.sincronizar_contatos_do_cadastro` | `mod_lista_telefonica/telas.py:636` (botão "Sincronizar cadastro", só admin) · `mod_lista_telefonica/telas.py:690` (reespelhamento automático, silencioso) |
 | 8 | `telefones_de_recado_para_lista()` (`:156`) | `mod_gest_cad_usuario.leitura_lista.listar_para_lista_telefonica` (só os `recado=True`) | `mod_lista_telefonica/telas.py:576` (cache por desenho da tela; escreve **"deixe recado"** no cartão) |
 | 9 | `modulo_habilitado(chave)` (`:182`) | `mod_intranet.autenticacao.modulos_registrados` (`tb_modulos.ativo`) | chamador genérico — módulo desconhecido conta como **desligado** |
+| 10 | `folha_de_servidores_publica()` (01/10/2026) | `mod_gest_cad_usuario.carga_folha.folha_arquivo_atual` (lê `dados/funcionarios.json`, ou o CSV configurado) | `mod_dados_abertos/telas.py` — card "Servidores Públicos" em `/dados-abertos` |
+
+!!! note "A 10ª função é a única que entrega um ARQUIVO, e não uma linha de banco"
+    As funções 1–9 devolvem linha de tabela ou booleano; a 10ª devolve o
+    **dicionário cru** da folha pública (`origem`, `url`, `competencia`,
+    `coletado_em`, `total`, `aviso`, `servidores`). Por isso o `import` é de
+    `mod_gest_cad_usuario.carga_folha` e não do `bd_manipulador`: a folha é um
+    arquivo coletado do portal, não uma tabela do banco de usuários — e é ela,
+    e não o cadastro, que o dado aberto precisa mostrar. Em falha, devolve
+    `{"erro": ..., "servidores": []}`: a tela escreve "fonte indisponível"
+    em vez de mostrar zero, que pareceria dado.
 
 !!! note "`espelhar_cadastro_na_lista_telefonica()` é a única que atravessa os DOIS lados"
     As funções 1–6, 8 e 9 são **ponte de leitura**: o núcleo lê o banco do outro

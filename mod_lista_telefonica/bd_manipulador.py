@@ -220,6 +220,32 @@ def init_db():
                 ativo INTEGER NOT NULL DEFAULT 1
             )
         """)
+        # ---- Origem da unidade: 'folha' ou 'manual' (01/10/2026) ----
+        # A lista telefônica é a DONA do organograma: é daqui que todo módulo
+        # que precisa de secretaria/setor tira a hierarquia (pela fachada do
+        # núcleo). A folha de servidores é a FONTE inicial — ela cria o que a
+        # prefeitura tem — mas o administrador pode cadastrar unidade que a
+        # folha ainda não publica (uma secretaria recém-criada, um setor em
+        # Implantação). Sem esta marca, a próxima sincronização desligava a
+        # unidade manual, porque "não está na folha" e "não deveria existir"
+        # eram a mesma condição.
+        # A marca é o que separa as duas perguntas:
+        #   origem='folha'   -> a folha manda: se sumiu dela, desativa.
+        #   origem='manual'  -> o administrador manda: a folha não desativa.
+        cur.execute("PRAGMA table_info(tb_unidade)")
+        _cols_unidade = {r[1] for r in cur.fetchall()}
+        if "origem" not in _cols_unidade:
+            cur.execute("ALTER TABLE tb_unidade ADD COLUMN origem "
+                        "TEXT NOT NULL DEFAULT 'manual'")
+        # Banco já existente: as unidades que existiam antes desta coluna já
+        # foram criadas pelo administrador ou pela folha — sem distinguir. O
+        # padrão 'manual' as PRESERVA, que é o lado seguro: desativar por engano
+        # some secretaria da tela; manter uma unidade a mais é só uma pasta
+        # vazia, e o administrador desativa quando quiser.
+        cur.execute("UPDATE tb_unidade SET origem='folha' "
+                    "WHERE (origem IS NULL OR TRIM(origem)='') AND ativo=1 "
+                    "AND id IN (SELECT parent_id FROM tb_unidade "
+                    "WHERE parent_id IS NOT NULL)")
         cur.execute("""
             CREATE TABLE IF NOT EXISTS tb_contato (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -458,11 +484,23 @@ def _pai_valido(tipo, parent_id):
     return True, ""
 
 
-def criar_unidade(nome, tipo, parent_id=None, telefone="", ator="sistema"):
+def criar_unidade(nome, tipo, parent_id=None, telefone="", ator="sistema",
+                  origem="manual"):
+    """EN: Creates one organogram unit. `origem` marks who owns it.
+
+    PT-BR: Cria uma unidade do organograma. `origem` marca quem manda nela.
+
+    `origem='manual'` (padrão) é a criação pelo ADMINISTRADOR — a folha não
+    desliga o que ele cadastrou. `origem='folha'` é a criação pela
+    sincronização da folha de servidores, e aí a folha manda: se a unidade
+    sumir da folha, é desativada na próxima carga (nunca apagada).
+    """
     try:
         nome = (nome or "").strip()
         if len(nome) < 2:
             return False, "Nome muito curto"
+        if origem not in ("folha", "manual"):
+            origem = "manual"
         ok_pai, motivo = _pai_valido(tipo, parent_id)
         if not ok_pai:
             return False, motivo
@@ -482,11 +520,12 @@ def criar_unidade(nome, tipo, parent_id=None, telefone="", ator="sistema"):
             else:
                 cur.execute("SELECT COALESCE(MAX(ordem),0) FROM tb_unidade WHERE parent_id=?", (parent_id,))
             prox = (cur.fetchone()[0] or 0) + 1
-            cur.execute("INSERT INTO tb_unidade (nome, tipo, parent_id, ordem, telefone) VALUES (?, ?, ?, ?, ?)",
-                        (nome, tipo, parent_id, prox, (telefone or "").strip()))
+            cur.execute("INSERT INTO tb_unidade (nome, tipo, parent_id, ordem, telefone, origem) VALUES (?, ?, ?, ?, ?, ?)",
+                        (nome, tipo, parent_id, prox, (telefone or "").strip(),
+                         origem))
             nid = cur.lastrowid
             _commit_com_retry(conn, "criar_unidade")
-            _audit(ator, "criar_unidade", nome, f"{tipo} id={nid} pai={parent_id}")
+            _audit(ator, "criar_unidade", nome, f"{tipo} id={nid} pai={parent_id} origem={origem}")
             return True, f"Unidade '{nome}' criada (id {nid})"
         except Exception:
             _rollback_seguro(conn, "criar_unidade")
@@ -1623,6 +1662,32 @@ def renomear_usuario(nome_atual: str, novo_nome: str):
         return None
 
 
+def _origens_por_unidade():
+    """EN: `{unidade_id: 'folha'|'manual'}` — fail-soft `{}` on any failure.
+
+    PT-BR: `{unidade_id: 'folha'|'manual'}` — `{}` em qualquer falha.
+
+    Banco sem a coluna `origem` (instalação anterior a 01/10/2026 que não
+    passou pelo `init_db`) devolve vazio, e o chamador trata a ausência como
+    'manual' — o lado que preserva a unidade em vez de desligá-la.
+    """
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id, origem FROM tb_unidade")
+            return {linha[0]: (linha[1] or "manual") for linha in cur.fetchall()}
+        finally:
+            conn.close()
+    except Exception as e:
+        try:
+            _log().warning(f"_origens_por_unidade: falha ({e}) — "
+                           f"assumindo 'manual' (preserva)")
+        except Exception:
+            pass
+        return {}
+
+
 def sincronizar_organograma(plano, aplicar=True, ator="sistema"):
     """Grava o organograma recebido da folha de servidores, nesta lista.
 
@@ -1667,6 +1732,16 @@ def sincronizar_organograma(plano, aplicar=True, ator="sistema"):
             finally:
                 conn.close()
 
+        def _marcar_origem(unidade_id, valor):
+            """Grava a origem sem reabrir a unidade nem mexer na ordem."""
+            conn = get_connection()
+            try:
+                conn.execute("UPDATE tb_unidade SET origem=? WHERE id=?",
+                             (valor, int(unidade_id)))
+                _commit_com_retry(conn, "sincronizar_organograma_origem")
+            finally:
+                conn.close()
+
         reais = set()
         for item in plano or []:
             nome = (item[0] or "").strip()
@@ -1679,6 +1754,10 @@ def sincronizar_organograma(plano, aplicar=True, ator="sistema"):
             reais.add(chave)
             achada = por_chave.get(chave)
             if achada:
+                # A folha volta a ser dona desta unidade: é ela que decide o
+                # que desativa daqui para frente.
+                if aplicar:
+                    _marcar_origem(achada[0], "folha")
                 if not achada[6]:  # existe mas está desligada -> a unidade voltou
                     if aplicar:
                         _ativar(achada[0], 1)
@@ -1687,7 +1766,8 @@ def sincronizar_organograma(plano, aplicar=True, ator="sistema"):
                     id_por_nome.setdefault(_norm(nome), achada[0])
                 continue
             if aplicar:
-                ok, msg = criar_unidade(nome, tipo, pai_id, "", ator)
+                ok, msg = criar_unidade(nome, tipo, pai_id, "", ator,
+                                        origem="folha")
                 if not ok:
                     resumo["erros"].append(f"{tipo} '{nome}': {msg}")
                     continue
@@ -1712,8 +1792,27 @@ def sincronizar_organograma(plano, aplicar=True, ator="sistema"):
         # contato apontando para a unidade, e apagar deixaria órfão.
         # Só conta/desativa o que está LIGADO, para rodar duas vezes não
         # inflar o contador.
+        #
+        # **EXCETO a unidade que o ADMINISTRADOR cadastrou** (01/10/2026). A
+        # lista telefônica é a dona do organograma, e a folha é só a fonte
+        # INICIAL: o administrador pode criar uma secretaria ou um setor que a
+        # folha ainda não publica, e aí a folha não tem opinião sobre ele —
+        # tratá-lo como "sumiu da folha" desligaria, na carga seguinte, a
+        # unidade que o administrador acabou de criar. É o mesmo motivo pelo
+        # qual o desativamento nunca apaga: some da tela é pior do que sobrar
+        # uma pasta vazia.
+        #
+        # `listar_todas_unidades` traz colunas fixas (id, nome, tipo, parent_id,
+        # ordem, telefone, ativo) e a origem é lida à parte — acrescentar uma
+        # coluna ao SELECT mudaria a posição em que o chamador lê `ativo`, que
+        # é `[6]` em todo o código do módulo e da fachada.
+        origem_por_id = _origens_por_unidade()
         for u in existentes:
             if (u[3], _norm(u[1])) in reais or not u[6]:
+                continue
+            if (origem_por_id.get(u[0]) or "manual") != "folha":
+                resumo["preservadas_manual"] = resumo.get(
+                    "preservadas_manual", 0) + 1
                 continue
             if aplicar:
                 _ativar(u[0], 0)

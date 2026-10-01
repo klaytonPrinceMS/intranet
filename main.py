@@ -1095,6 +1095,32 @@ if rotas_modulos is not None:
     rotas_modulos.REGISTRO_MODULOS["estoque"] = page_estoque
 
 
+@ui.page("/dados-abertos")
+def page_dados_abertos():
+    """EN: Route /dados-abertos — the grid of public-dataset cards.
+
+    PT-BR: Rota /dados-abertos — a grade de cards de dados públicos.
+
+    Não entra em `ACESSO_PADRAO_NOVO_USUARIO`: dado público por lei não expõe
+    a intranet sozinho. `pagina_restrita` já barra quem não tem o vínculo.
+    """
+    try:
+        from mod_intranet.telas import pagina_restrita
+        user = pagina_restrita("Dados Abertos", chave_modulo="dados_abertos")
+        if not user:
+            return
+        from mod_dados_abertos.telas import mostrar_tela
+        mostrar_tela(user["nome"], user.get("perfil", ""))
+    except Exception as e:
+        observabilidade.get_logger("intranet").exception(
+            "page_dados_abertos: erro ao renderizar Dados Abertos: %s", e)
+        notificar("Erro ao carregar a página de Dados Abertos.", tipo="error")
+
+
+if rotas_modulos is not None:
+    rotas_modulos.REGISTRO_MODULOS["dados_abertos"] = page_dados_abertos
+
+
 @app.get("/api/attachments/{caminho:path}")
 def fallback_attachments(caminho: str):
     """EN: Fallback for broken /api/attachments/* exported from Trello/Notion.
@@ -1324,6 +1350,19 @@ def page_admin_modulo(chave_modulo: str):
             if not eh_admin:
                 notificar("Acesso restrito a administradores", type="negative")
                 ui.navigate.to("/estoque")
+            else:
+                mostrar_administracao(nome)
+
+        elif chave_modulo == "dados_abertos":
+            eh_admin = (perfil == "administrador_geral"
+                        or autenticacao.eh_admin_do_modulo(nome, "dados_abertos"))
+            from mod_dados_abertos.telas_administracao import mostrar_administracao
+            from mod_intranet.tema_modulo import ler_tema
+            ui.colors(primary=ler_tema("dados_abertos",
+                                       cor_botao="#000000")["cor_botao"])
+            if not eh_admin:
+                notificar("Acesso restrito a administradores", type="negative")
+                ui.navigate.to("/dados-abertos")
             else:
                 mostrar_administracao(nome)
 
