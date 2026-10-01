@@ -221,7 +221,10 @@ def init_db():
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('cotadisco_global_gb', '10')")
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES ('backup_interval_hours', '12')")
     for _chave_mod, _ver in (
-        ("usuarios", "1.0.260918"),
+        # `usuarios`: a coleta da folha parava na página 20 e não gravava nada
+        # (retry sem `OSError` + parcial só em memória). Ver a migração
+        # `migracao_versao_usuarios_261001_coleta_resiliente`.
+        ("usuarios", "1.0.261001"),
         ("auditoria", "1.0.260908"),
         ("editar_pdf", "1.0.260908"),
         ("empenhos", "1.0.260913"),
@@ -416,6 +419,28 @@ def init_db():
                     "WHERE chave='versao_modulo:usuarios'")
         cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
                     "('migracao_versao_usuarios_261001_intervalo_csv', '1') "
+                    "ON CONFLICT DO NOTHING")
+
+    # Bump do `usuarios` em 01/10/2026 — COLETA QUE NÃO MORRIA MAIS.
+    # A coleta da folha parava por volta da página 20 (425 a 525 servidores) e
+    # não deixava arquivo nenhum. Duas causas, ambas em `coleta_folha.py`:
+    # o retry do `_post` cobria só `URLError`/`TimeoutError`/`ValueError`, e o
+    # portal responde ao excesso derrubando a conexão — `RemoteDisconnected`,
+    # que é `OSError` —, então a exceção subia e matava o processo; e o
+    # parcial era só memória, então a falha levava a folha toda junto. Agora o
+    # retry cobre a família de erro de conexão, o backoff é 3/8/20/45 s com
+    # pausa de 30 s quando a conexão cai, e o parcial é gravado a cada página.
+    # Medido: 1.165 servidores da competência 08/2026, do primeiro ao último.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_usuarios_261001_coleta_resiliente'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:usuarios', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_usuarios_261001_coleta_resiliente', '1') "
                     "ON CONFLICT DO NOTHING")
 
     # Bump do `auditoria` em 01/10/2026 — CONEXÃO DE GRAVAÇÃO REUTILIZADA.

@@ -48,9 +48,11 @@ COMO USAR
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import os
 import random
+import ssl
 import sys
 import time
 import urllib.error
@@ -148,7 +150,40 @@ def _intervalo_cfg(chave_min, chave_max, padrao_min, padrao_max, legado=None):
 INTERVALO_MIN_S, INTERVALO_MAX_S = _intervalo_cfg(
     "portal_intervalo_min_s", "portal_intervalo_max_s", 1.0, 5.0,
     legado="portal_intervalo_s")
-TENTATIVAS = 3
+TENTATIVAS = 4
+
+# BACKOFF DEVOLVE PROGRESSIVO (01/10/2026)
+#
+# A coleta morria por volta da página 20 (425 a 525 servidores) e não deixava
+# arquivo nenhum. A causa NÃO era o portal fora do ar: `_post` só repetia a
+# tentativa em `URLError`, `TimeoutError` e `ValueError`, e o portal responde
+# ao excesso de requisições derrubando a conexão no meio da resposta — o que
+# chega como `http.client.RemoteDisconnected` (herda de `ConnectionResetError`,
+# logo de `OSError`). Essa exceção escapava do `except`, subia e matava o
+# processo com as ~500 fichas já lidas na memória.
+#
+# A espera de 1s/2s/4s era curta demais para um servidor que está pedindo para
+# receber menos. Agora é 3s/8s/20s/45s, e a queda de conexão — que é o portal
+# dizendo "e plenty" — ganha uma pausa longa antes de repetir.
+#
+# `PAUSA_CONEXAO_S` é a resposta a esse sinal: 30s antes de tentar a página de
+# novo. A espera é do COLETOR, não do banco, então mora aqui.
+BACKOFF_S = (3, 8, 20, 45)
+PAUSA_CONEXAO_S = 30.0
+
+# A FAMÍLIA INTEIRA DE ERRO DE CONEXÃO (01/10/2026)
+#
+# `OSError` é a superclasse que costura quase tudo: `URLError`,
+# `RemoteDisconnected`, `IncompleteRead`, `SSLError` e `TimeoutError` (no
+# Windows) descendem dela. Fica nomeada à parte porque `TimeoutError` no
+# Windows é `OSError` e em outros sistemas não — nomear os dois deixa o
+# comportamento igual em qualquer SO, que é o que um coletor precisa ser.
+_ERROS_TRANSIENTES = (
+    OSError,
+    urllib.error.URLError,
+    http.client.HTTPException,
+    ssl.SSLError,
+)
 
 
 def _esperar_entre_requisicoes() -> float:
@@ -185,6 +220,11 @@ ARQUIVO_PADRAO = os.path.join(DIR_DADOS, "funcionarios.json")
 # juntos, sempre, para que ninguém confira uma folha de um mês com os dados
 # do outro.
 ARQUIVO_CSV = os.path.join(DIR_DADOS, "funcionarios.csv")
+# Estado de EXECUÇÃO da coleta (01/10/2026): onde a folha está sendo lida.
+# Mora em `dados/` — que já é fora do git — porque carrega nome e matrícula de
+# servidor real, exatamente como os outros dois. É apagado no fim da coleta
+# bem-sucedida; se sobrar, é porque a coleta morreu, e é aí que serve.
+ARQUIVO_PARCIAL = os.path.join(DIR_DADOS, "funcionarios.parcial.json")
 
 
 def _garantir_dir_dados() -> None:
@@ -220,9 +260,28 @@ def _post(opener, url: str, corpo: dict) -> dict:
 
     The page declares `charset=iso-8859-1` and the accents really are encoded
     that way, so `json.loads(resp)` on the raw bytes raises UnicodeDecodeError
-    on the first accented name. Every name in the sheet is unaccented anyway
-    (`Ana Beatriz Souza Rocha`), which is how the source stores them. The name
-    here is fictitious: the real sheet stays out of git.
+    on the first accented name. Every name in the sheet is unaccented anyway,
+    which is how the source stores them. The name here is fictitious: the real
+    sheet stays out of git.
+
+    A EXCEÇÃO QUE NÃO ERA EXCEÇÃO (01/10/2026)
+        Repetir aqui não era `URLError`/`TimeoutError`/`ValueError` — era uma
+        família maior. `http.client.RemoteDisconnected` (que herda de
+        `OSError`), `IncompleteRead`, `HTTPException`, `ssl.SSLError` e o
+        próprio `OSError` subiam direto e matavam o processo. O sintoma era
+       collected: a coleta parava na página 20 e não gravava nada.
+
+    `OSError` é a SUPERCLASSE que costura tudo: `URLError`, `RemoteDisconnected`,
+    `IncompleteRead`, `SSLError` e `TimeoutError` (em Windows) descendem dela.
+    Fica também a lista explícita, porque `RemoteDisconnected` é
+    `ConnectionResetError`, não `URLError`, e a distinção de família importa
+    para escolher a espera: queda de conexão é sinal de PORTAL PEDINDO PARA,
+    e ganha a pausa longa.
+
+    A diferença entre as duas esperas: erro de rede comum repete em
+    `BACKOFF_S`; queda de conexão repete em `BACKOFF_S` DEPOIS de
+    `PAUSA_CONEXAO_S`, porque recuar rápido contra um servidor que acabou de
+    recusar é o caminho mais curto para ser bloqueado de vez.
     """
     dados = json.dumps(corpo).encode("utf-8")
     req = urllib.request.Request(
@@ -233,11 +292,28 @@ def _post(opener, url: str, corpo: dict) -> dict:
         try:
             bruto = opener.open(req, timeout=90).read()
             return json.loads(bruto.decode("iso-8859-1"))
-        except (urllib.error.URLError, TimeoutError, ValueError) as e:
+        except _ERROS_TRANSIENTES as e:
             ultima = e
-            espera = 2 ** tentativa
+            # Queda de conexão: o portal respondeu e cortou. Tratar como
+            # erro passageiro e repetir já é o que derruba a coleta.
+            caiu = isinstance(e, (http.client.RemoteDisconnected,
+                                   ConnectionResetError,
+                                   http.client.IncompleteRead))
+            if caiu:
+                _log(f"  o portal fechou a conexão ({e.__class__.__name__}); "
+                     f"pausa de {PAUSA_CONEXAO_S:.0f}s para não ser "
+                     f"tratado como robô")
+                time.sleep(PAUSA_CONEXAO_S)
+            espera = BACKOFF_S[min(tentativa, len(BACKOFF_S) - 1)]
             _log(f"  falha ({e.__class__.__name__}), nova tentativa em {espera}s")
             time.sleep(espera)
+        except ValueError as e:
+            # Resposta que não é JSON: não adianta repetir igual, porque a
+            # página voltou com outra coisa (erro do portal, HTML de manutenção).
+            ultima = e
+            _log(f"  resposta fora do formato esperado "
+                 f"({e.__class__.__name__}); tentando de novo em 10s")
+            time.sleep(10)
     raise RuntimeError(f"portal não respondeu após {TENTATIVAS} tentativas: {ultima}")
 
 
@@ -307,6 +383,61 @@ def _normalizar(linha: dict) -> dict:
     }
 
 
+def _gravar_parcial(servidores, competencia, proximo_inicio):
+    """Grava o que já foi lido, para a coleta não morrer sem deixar nada.
+
+    Arquivo à parte do `funcionarios.json` porque este é estado de EXECUÇÃO,
+    não resultado: ele existe para ser lido pela próxima tentativa e pode ser
+    apagado sem perda. Um `.tmp` seguido de troca é o que garante que uma
+    queda no meio da escrita não deixe um JSON pela metade — o próximo
+    `json.load` cairia em exceção e a retomada perderia o que já tinha.
+    """
+    try:
+        _garantir_dir_dados()
+        tmp = f"{ARQUIVO_PARCIAL}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"competencia": competencia,
+                       "proximo_inicio": proximo_inicio,
+                       "coletado_em": datetime.now(timezone.utc).isoformat(
+                           timespec="seconds"),
+                       "servidores": servidores},
+                      f, ensure_ascii=False)
+        os.replace(tmp, ARQUIVO_PARCIAL)
+        return True
+    except Exception as e:
+        # Perder o parcial NÃO pode derrubar a coleta: o que vale é a folha
+        # final, e ela ainda está sendo montada na memória.
+        _log(f"  (não consegui gravar o parcial: {e})")
+        return False
+
+
+def _ler_parcial(competencia):
+    """Devolve (servidores, vistos, proximo_inicio) do parcial, ou vazio.
+
+    Só reaproveita quando a COMPETÊNCIA é a mesma: o parcial é de uma
+    referência de folha, e continuar uma 07/2026 a partir de onde parou uma
+    08/2026 mistura dois meses e produz uma folha que não existe no portal.
+    """
+    try:
+        if not os.path.exists(ARQUIVO_PARCIAL):
+            return [], set(), 0
+        with open(ARQUIVO_PARCIAL, encoding="utf-8") as f:
+            bruto = json.load(f)
+        if (bruto.get("competencia") or "") != (competencia or ""):
+            _log("  o parcial é de outra competência; recomeçando do zero")
+            return [], set(), 0
+        servidores = bruto.get("servidores") or []
+        vistos = {s.get("matricula") for s in servidores if s.get("matricula")}
+        inicio = int(bruto.get("proximo_inicio") or 0)
+        if servidores and inicio:
+            _log(f"  retomando de onde parou: {len(servidores)} servidores já "
+                 f"lidos, próxima página em {inicio}")
+        return servidores, vistos, inicio
+    except Exception as e:
+        _log(f"  parcial ilegível ({e}); recomeçando do zero")
+        return [], set(), 0
+
+
 def coletar(competencia: str | None = None) -> dict:
     """Walks every page and returns the sheet as a dict."""
     opener = _abrir()
@@ -318,7 +449,7 @@ def coletar(competencia: str | None = None) -> dict:
         _log(f"competência mais recente: {competencia}")
 
     _log("lendo a folha (página de 25, 1,2s entre requisições)...")
-    servidores, vistos, inicio = [], set(), 0
+    servidores, vistos, inicio = _ler_parcial(competencia)
     while True:
         lote = _pagina(opener, competencia, inicio)
         if not lote:
@@ -339,6 +470,17 @@ def coletar(competencia: str | None = None) -> dict:
         if novos == 0:
             break
         _log(f"  {len(servidores)} servidores")
+        # GRAVA O PARCIAL A CADA PAGINA (01/10/2026)
+        #
+        # Perder ~500 fichas não era o portal recusando: era o processo
+        # morrendo com tudo acumulado SÓ na memória. O `return` só acontecia
+        # no fim do laço, então qualquer exceção levava a folha inteira junto.
+        #
+        # Gravar a cada página custa um `json.dump` de algumas centenas de KB
+        # e transforma a falha em perda de UMA página em vez da folha. A
+        # próxima rodada pode ler este arquivo e continuar de onde parou, sem
+        # refazer as 20 primeiras páginas de requisição.
+        _gravar_parcial(servidores, competencia, inicio)
         inicio += PAGINA
         # Espera VARIÁVEL (01/10/2026): ver `_intervalo_cfg`. O valor
         # sorteado vai para o log, porque uma coleta que demora ~3 minutos
@@ -352,7 +494,7 @@ def coletar(competencia: str | None = None) -> dict:
             _log("  limite de segurança de 20.000 registros atingido")
             break
 
-    return {
+    folha = {
         "origem": CFG.get("origem_rotulo") or f"Portal ({RAIZ})",
         "url": REFERER,
         "competencia": competencia,
@@ -363,6 +505,15 @@ def coletar(competencia: str | None = None) -> dict:
                   "contracheque, também publicação legal."),
         "servidores": servidores,
     }
+    # O parcial cumpriu o papel e agora é iscaso: deixá-lo faria a próxima
+    # coleta retomar de um `proximo_inicio` que já passou da folha inteira, e
+    # o operador veria "retomando de onde parou" numa folha já completa.
+    try:
+        if os.path.exists(ARQUIVO_PARCIAL):
+            os.remove(ARQUIVO_PARCIAL)
+    except Exception as e:
+        _log(f"  (não consegui apagar o parcial: {e})")
+    return folha
 
 
 COLUNAS_CSV = ("matricula", "nome", "unidade", "lotacao", "cargo",
