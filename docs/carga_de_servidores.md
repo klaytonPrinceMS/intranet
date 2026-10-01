@@ -2,30 +2,47 @@
 
 # Carga de Servidores
 
-> !!! warning "ESTA INSTALAÇÃO ESTÁ LIGADA — e é temporário (30–31/09/2026)"
+> !!! warning "ESTA INSTALAÇÃO ESTÁ LIGADA — e é temporário (01/10/2026)"
 >     O padrão do produto **continua sendo desligado** (`CONFIG_PADRAO`,
 >     `carga_folha.py:409`), e as seções abaixo descrevem esse padrão. Mas
->     **esta instalação foi posta em `"ativo": true` com `"origem": "portal"`**
->     por decisão do responsável, para que o cadastro de servidores **nascesse
->     junto com o banco** em vez de ficar vazio até o agendador das 03:00.
+>     **esta instalação foi posta em `"ativo": true`** por decisão do
+>     responsável, para que o cadastro de servidores **nasça junto com o
+>     banco** em vez de ficar vazio até o agendador das 03:00.
 >
->     Três consequências que este documento precisa registrar, porque é o
->     contrário do que a §1 e a §2 mandam:
+>     **E `origem` é `"csv"`, não `"portal"`** — que é o desenho que o próprio
+>     sistema prefere e o que resolve o problema de depender do servidor de
+>     terceiro:
 >
->     1. **A carga virou passo de boot**, não só agendador
->        (`mod_intranet/bd_criador.py:2.1`), logo depois do `init_users()` — a
->        folha escreve em `tb_usuarios`, que só existe depois dele.
->     2. **A primeira carga é lenta: ~25–35 minutos** para ~1.165 servidores.
->        Não é a coleta do portal (essa leva ~100 s): é a gravação, a ~1,4 s por
->        servidor, e **~60% disso é `audit_log`** (0,28 s por chamada, três por
->        servidor), porque `registrar_auditoria` abre uma conexão nova do banco
->        de auditoria a cada escrita. Correção pendente.
->     3. **A §2 (checklist antes de publicar um clone) vale para o produto, não
->        para este arquivo**: aqui `portal_url` está preenchido **de propósito**.
+>     | | `origem: "portal"` | `origem: "csv"` (aqui) |
+>     |:---|:---|:---|
+>     | De onde vem a folha | requisição a cada carga | arquivo local `dados/` |
+>     | Ler a folha | ~88 s de coleta | **0,02 s** |
+>     | Gravar no banco | ~1,13 s/servidor — **igual nos dois** | ~1,13 s/servidor |
+>     | Cai se o portal cair | sim, e a carga não grava | não |
+>     | Carga no boot | atrasa o servidor | instantânea |
 >
->     A remoção está combinada: voltar a `"ativo": false` e `"origem": "csv"`
->     devolve o comportamento de sistema publicado. O `_leia_me` dentro do
->     próprio `fonte_folha.json` avisa quem abrir o arquivo.
+>     A linha do meio é a que importa para não prometer o que não é: **trocar
+>     a origem resolve a leitura, não a gravação.** Uma carga completa de
+>     ~1.165 servidores leva **~22 minutos** nos dois casos. Foi por isso que a
+>     primeira carga foi para o inicializador **com fail-soft** e não como
+>     passo bloqueante: quem vir o console parado por meia hora precisa ler
+>     que o servidor está esperando por educação, e não travado.
+>
+>     A folha foi **coletada uma vez** (`coleta_folha.py --atualizar`, ~3 min
+>     com a faixa de 1 s–5 s) e está em `mod_gest_cad_usuario/dados/`,
+>     **fora do git**. Atualizar de novo é ato deliberado:
+>
+>     ```bash
+>     .venv/Scripts/python mod_gest_cad_usuario/coleta_folha.py --atualizar
+>     ```
+>
+>     **O resto desta página descreve o padrão desligado.** Onde ela diz que o
+>     padrão é não tocar em rede nenhuma, a diferença real é que aqui a rede é
+>     tocada **uma vez, à mão**, e nunca no boot nem às 03:00.
+>
+>     A remoção está combinada: voltar a `"ativo": false` devolve o
+>     comportamento de sistema publicado. O `_leia_me` dentro do próprio
+>     `fonte_folha.json` avisa quem abrir o arquivo.
 
 > Documenta a **carga da folha de servidores**: o
 > **CSV como contrato**, a configuração em `fonte_folha.json`, as **três travas**
@@ -41,6 +58,47 @@
 >     o que o sistema faz com ele. Quem quiser saber de onde veio a folha
 >     consulta a sua própria fonte, que é uma decisão da sua instituição, não
 >     um detalhe do produto.
+
+---
+
+## 0. A coleta do portal é uma vez (01/10/2026)
+
+> **A coleta do portal é ato deliberado, e acontece uma vez.** O que roda
+> sozinho — boot e agendador das 03:00 — lê o arquivo local.
+
+| Etapa | Comando | Rede | Tempo medido |
+|:---|:---|:---:|:---|
+| Coletar do portal | `coleta_folha.py --atualizar` | sim, **47 requisições** | ~3 min |
+| Carregar no banco | `carga_folha.py --aplicar` | **não** | ~1,4 s/servidor |
+
+**Por que o intervalo é variável (1 s a 5 s).** Era fixo em 1,2 s. Intervalo
+fixo é a assinatura de acesso automatizado: mesmo tempo entre toda requisição,
+sempre. Comportamento de máquina é o que uma prefeitura não quer ver batendo
+no portal 47 vezes seguidas, e é também o que faz o servidor de terceiro
+decidir limitar ou bloquear. A espera é **sorteada na faixa** a cada página, e o
+valor sorteado vai para o log a cada 10 páginas — quem lê o log precisa poder
+reconstituir o ritmo, e ver que está esperando por educação é diferente de
+achar que travou. As chaves são `portal_intervalo_min_s` e
+`portal_intervalo_max_s`; o `portal_intervalo_s` antigo continua aceito e vira
+uma faixa degenerada, para uma configuração existente não virar `None`.
+
+**Por que "uma vez" e não "todo dia".** Com `origem: "portal"`, cada carga
+recoletaria a folha inteira — e foi o que aconteceu na prática: a carga travava
+em poucos servidores e o acesso ao portal passou a falhar, exatamente como
+quem reage a um visitante que insiste. Ler o CSV local tira o portal da
+equação do boot e das 03:00, e é o que o `carga_folha` prefere desde o começo:
+*o CSV é um contrato seu e não depende de terceiro*.
+
+**Para atualizar a folha**, quando o portal publicar competência nova:
+
+```bash
+.venv/Scripts/python mod_gest_cad_usuario/coleta_folha.py --atualizar
+.venv/Scripts/python mod_gest_cad_usuario/carga_folha.py --aplicar
+```
+
+O primeiro comando escreve `dados/funcionarios.json` e `dados/funcionarios.csv`
+(juntos, de propósito — ninguém confere uma folha de um mês com os dados do
+outro). O segundo grava no banco.
 
 ---
 
