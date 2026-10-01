@@ -24,9 +24,18 @@ O QUE ESTE SCRIPT NÃO FAZ — E POR QUÊ
 BASE LEGAL
     Lei 12.527/2011 (Lei de Acesso à Informação). A prefeitura é OBRIGADA a
     publicar a relação nominal dos servidores com cargo e lotação. O
-    User-Agent se identifica por essa razão, e o intervalo entre requisições
-    é de 1,2 s — 47 requisições para a folha inteira não é tráfego que
-    atrapalha ninguém, mas também não se disfarça de visita humana.
+    User-Agent se identifica por essa razão.
+
+    O intervalo entre requisições é VARIÁVEL, sorteado na faixa configurada
+    (padrão 1 s a 5 s, média ~3 s) — 47 requisições para a folha inteira, com
+    ~3 minutos de espera somada. Intervalo FIXO é o que denuncia acesso
+    automatizado: mesmo tempo entre toda requisição é a assinatura de robô.
+    Variável não é só educação: é o que faz o tráfego não parecer programa.
+
+    A coleta é uma ÚNICA VEZ. Ela escreve `dados/funcionarios.json` e
+    `dados/funcionarios.csv`, e a carga passa a ler o arquivo local
+    (`origem: "csv"`) — sem tocar mais no portal. Para atualizar a folha de
+    novo, é `coleta_folha.py --atualizar`, de propósito e não por acidente.
 
 COMO USAR
     python mod_gest_cad_usuario/coleta_folha.py --atualizar
@@ -41,6 +50,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
 import sys
 import time
 import urllib.error
@@ -96,8 +106,56 @@ USER_AGENT = (CFG.get("portal_user_agent")
 # empty page for anything else — `length=1` and `length=100` both return zero
 # records, `length=25` returns 25. Discovered the hard way; do not "optimize".
 PAGINA = 25
-INTERVALO_S = CFG.get("portal_intervalo_s") or 1.2
+
+# INTERVALO VARIÁVEL ENTRE REQUISIÇÕES (01/10/2026, por decisão do responsável)
+#
+# Antes era um intervalo FIXO de 1,2 s. Intervalo fixo é o que faz um acesso
+# parecer máquina: mesmo tempo, sempre, sem variação — é a assinatura de robô
+# que a prefeitura não quer ver batendo no portal 47 vezes seguidas. Agora
+# cada espera é sorteada na faixa, com média ~3 s.
+#
+# A folha inteira leva ~3 minutos com esta faixa, e é um custo que se paga
+# UMA vez: a coleta escreve `dados/funcionarios.json` e `dados/funcionarios.csv`,
+# e a carga passa a ler o arquivo local (`origem: "csv"`), sem tocar mais no
+# portal.
+def _intervalo_cfg(chave_min, chave_max, padrao_min, padrao_max, legado=None):
+    """Lê a faixa do intervalo da configuração, com piso e teto garantidos.
+
+    Aceita tanto as chaves novas (`*_min_s` / `*_max_s`) quanto o
+    `portal_intervalo_s` antigo: um valor fixo legado vira uma faixa
+    degenerada, e assim uma configuração existente continua valendo em vez de
+    virar `None`. Piso de 0,1 s porque um intervalo abaixo disso é um
+    laço apertado contra servidor de terceiro; teto nunca menor que o piso,
+    porque uma faixa invertidasortearia valores inválidos.
+    """
+    def numero(chave):
+        try:
+            bruto = CFG.get(chave)
+            return float(bruto) if bruto not in (None, "") else None
+        except (TypeError, ValueError):
+            return None
+
+    fixo = numero(legado) if legado else None
+    lo = numero(chave_min)
+    hi = numero(chave_max)
+    lo = lo if lo is not None else (fixo if fixo is not None else padrao_min)
+    hi = hi if hi is not None else (fixo if fixo is not None else padrao_max)
+    lo = max(0.1, lo)
+    hi = max(lo, hi)
+    return lo, hi
+
+
+INTERVALO_MIN_S, INTERVALO_MAX_S = _intervalo_cfg(
+    "portal_intervalo_min_s", "portal_intervalo_max_s", 1.0, 5.0,
+    legado="portal_intervalo_s")
 TENTATIVAS = 3
+
+
+def _esperar_entre_requisicoes() -> float:
+    """Espera sorteada na faixa e devolve quanto esperou (para o log)."""
+    espera = random.uniform(INTERVALO_MIN_S, INTERVALO_MAX_S)
+    time.sleep(espera)
+    return espera
 
 # Colunas PEDIDAS ao grid. A resposta traz mais do que estas, e `vldefault`
 # e `cdContraCheque` estão entre elas de propósito: a remuneração e a ficha de
@@ -282,7 +340,14 @@ def coletar(competencia: str | None = None) -> dict:
             break
         _log(f"  {len(servidores)} servidores")
         inicio += PAGINA
-        time.sleep(INTERVALO_S)
+        # Espera VARIÁVEL (01/10/2026): ver `_intervalo_cfg`. O valor
+        # sorteado vai para o log, porque uma coleta que demora ~3 minutos
+        # precisa deixar visível que está esperando por educação e não
+        # travada — e porque quem lê o log depois precisa poder reconstituir
+        # o ritmo das requisições.
+        espera = _esperar_entre_requisicoes()
+        if len(servidores) % (PAGINA * 10) == 0:
+            _log(f"  ... aguardou {espera:.1f}s antes da próxima página")
         if inicio > 20000:
             _log("  limite de segurança de 20.000 registros atingido")
             break

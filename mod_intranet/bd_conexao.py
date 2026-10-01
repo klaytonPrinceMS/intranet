@@ -400,6 +400,24 @@ def init_db():
                     "('migracao_versao_usuarios_260930_carga_folha', '1') "
                     "ON CONFLICT DO NOTHING")
 
+    # Bump do `usuarios` em 01/10/2026 — COLETA COM INTERVALO VARIÁVEL.
+    # O intervalo fixo de 1,2 s virou espera sorteada na faixa 1 s–5 s, e a
+    # `fonte_folha.json` passou a `origem: "csv"`: a folha é coletada UMA vez
+    # para `dados/`, e a carga passa a ler o arquivo local — medido 0,02 s para
+    # 1.165 servidores, contra ~88 s de coleta pela rede. É a decisão que tira
+    # o boot e as 03:00 da dependência do servidor de terceiro.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_usuarios_261001_intervalo_csv'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:usuarios', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_usuarios_261001_intervalo_csv', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     # Bump do `intranet` em 01/10/2026 — a MENSAGEM da primeira carga da folha
     # dizia "~2 min" onde o medido é ~25–35 min. Parece comentário, mas é a
     # linha que alguém lê no console enquanto espera o servidor subir, e um
