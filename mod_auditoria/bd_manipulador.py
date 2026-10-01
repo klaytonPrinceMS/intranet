@@ -7,6 +7,7 @@ Cada módulo que grava auditoria tem sua própria tabela:
 A descoberta é automática: a tela lista todas as tabelas encontradas.
 """
 import os
+import threading
 import time
 
 from mod_intranet import observabilidade
@@ -386,6 +387,72 @@ def _aquecer_auditoria_sync(modulos=None) -> int:
         return 0
 
 
+# Conexão de gravação da auditoria, por thread. Criada preguiçosamente no
+# primeiro `registrar_auditoria` da thread; ver `_conexao_de_gravacao`.
+_conexao_gravacao_tl = None
+
+
+def _conexao_de_gravacao():
+    """Conexão PRIVADA e reutilizada, por thread, só para `registrar_auditoria`.
+
+    EN: Private, reused, per-thread connection used only for audit writes.
+
+    MEDIDO EM 01/10/2026 — por que isto existe:
+        `registrar_auditoria` é chamada ~3 vezes por servidor na carga da
+        folha, e cada chamada abria uma conexão NOVA do banco de auditoria
+        (mais dois `PRAGMA`). Custo medido: **0,28 s por registro**, contra
+        milissegundos do próprio `INSERT` — ou seja, ~60% do tempo de uma
+        carga de 1.165 servidores era abrir e fechar conexão.
+
+    POR QUE NÃO SE CACHEIA `get_auditoria_connection`
+        Porque o contrato dela é "a chamada é DONA da conexão e pode
+        fechar" — e há quem feche (`bd_manipulador.py:369`, entre outros).
+        Cachear por cima devolveria uma conexão já fechada para quem só
+        queria ler. Por isso a conexão cacheada é **privada deste
+        caminho**: nunca é devolvida a ninguém, e por isso ninguém a fecha.
+
+    Por que `threading.local` e não uma global: o FastAPI/NiceGUI chama a
+    auditoria de várias threads, e uma conexão `sqlite3` compartilhada entre
+    threads seria a origem clássica de "cannot operate on a closed database"
+    e de `ProgrammingError`.
+
+    A conexão é **descartada e reaberta** quando dá erro, para que uma
+    conexão morta (arquivo trocado, banco removido) não contamine a carga
+    inteira.
+    """
+    global _conexao_gravacao_tl
+    if _conexao_gravacao_tl is None:
+        _conexao_gravacao_tl = threading.local()
+    conn = getattr(_conexao_gravacao_tl, "conn", None)
+    if conn is not None:
+        try:
+            # Um SELECT trivial é a prova barata de que a conexão continua viva.
+            conn.execute("SELECT 1").fetchone()
+            return conn
+        except Exception:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    conn = get_auditoria_connection()
+    _conexao_gravacao_tl.conn = conn
+    return conn
+
+
+def _descartar_conexao_gravacao():
+    """Joga fora a conexão cacheada da thread (usado quando ela morre)."""
+    global _conexao_gravacao_tl
+    if _conexao_gravacao_tl is None:
+        return
+    conn = getattr(_conexao_gravacao_tl, "conn", None)
+    if conn is not None:
+        try:
+            conn.close()
+        except Exception:
+            pass
+    _conexao_gravacao_tl.conn = None
+
+
 def registrar_auditoria(usuario, modulo, acao, descricao, hash_arquivo=None,
                         ip=None, user_agent=None, client_hostname=None,
                         timestamp=None):
@@ -396,12 +463,17 @@ def registrar_auditoria(usuario, modulo, acao, descricao, hash_arquivo=None,
     A tabela é criada automaticamente (e registrada em tb_auditoria_meta)
     caso ainda não exista, de modo que novos módulos passam a auditar
     sem nenhuma edição no módulo de auditoria.
+
+    A conexão aqui é a privada e reutilizada de `_conexao_de_gravacao` —
+    por isso esta função NÃO a fecha no `finally` (fechar a exigiria
+    reabrir na próxima chamada, que é o custo que se quer eliminar).
     """
     if timestamp is None:
         import datetime as _dt
         timestamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    reabrir = False
     try:
-        conn = get_auditoria_connection()
+        conn = _conexao_de_gravacao()
     except Exception:
         log.exception(f"registrar_auditoria: falha ao abrir conexão ({modulo}/{acao})")
         return
@@ -449,11 +521,12 @@ def registrar_auditoria(usuario, modulo, acao, descricao, hash_arquivo=None,
             conn.rollback()
         except Exception:
             pass
+        # A conexão pode ter morrido (banco removido/trocado). Descartar faz a
+        # próxima chamada reabrir em vez de falhar para sempre.
+        reabrir = True
     finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
+        if reabrir:
+            _descartar_conexao_gravacao()
 
 
 def contar_registros(tabela=None):

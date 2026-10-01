@@ -418,6 +418,25 @@ def init_db():
                     "('migracao_versao_usuarios_261001_intervalo_csv', '1') "
                     "ON CONFLICT DO NOTHING")
 
+    # Bump do `auditoria` em 01/10/2026 — CONEXÃO DE GRAVAÇÃO REUTILIZADA.
+    # `registrar_auditoria` abria uma conexão nova do banco de auditoria a cada
+    # registro (mais dois PRAGMA). Medido: **280 ms -> 2,4 ms** por registro, e
+    # a carga da folha — que audita ~3 vezes por servidor — saiu de ~30 min
+    # para minutos. A correção é uma conexão privada por thread, e NÃO um cache
+    # em `get_auditoria_connection`, porque o contrato dela é "a chamada é dona
+    # da conexão e pode fechá-la" (e há quem feche).
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_auditoria_261001_conexao_gravacao'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:auditoria', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:auditoria'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_auditoria_261001_conexao_gravacao', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     # Bump do `intranet` em 01/10/2026 — a MENSAGEM da primeira carga da folha
     # dizia "~2 min" onde o medido é ~25–35 min. Parece comentário, mas é a
     # linha que alguém lê no console enquanto espera o servidor subir, e um
