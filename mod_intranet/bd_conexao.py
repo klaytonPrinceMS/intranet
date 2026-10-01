@@ -454,6 +454,24 @@ def init_db():
                     "('migracao_versao_intranet_261001_tempo_carga_folha', '1') "
                     "ON CONFLICT DO NOTHING")
 
+    # Bump do `intranet` em 01/10/2026 — VIGIA DO SERVIDOR (arquivo novo).
+    # `mod_intranet/vigia_servidor.py`: observa a porta 8080 e reinicia o
+    # servidor se ela ficar muda. Não mata processo nenhum — um laço que
+    # também "enferruja" processos transforma uma sondagem ruim em queda.
+    # Mesma data do bump de cima, então a versão não muda de número; o
+    # marcador é que torna a alteração rastreável.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_intranet_261001_vigia_servidor'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:intranet', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_intranet_261001_vigia_servidor', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     # POR QUE ESCRETO LITERAL E NÃO UM `for` COM f-string
     #     O marcador `migracao_versao_<chave>_<data>` é o que faz a §4.2
     #     verificável: é nele que o `teste_versionamento_modulo.py` procura para
