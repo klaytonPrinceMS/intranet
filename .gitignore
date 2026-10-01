@@ -228,14 +228,30 @@ backup/*
 logs/*
 !**/.gitkeep
 
-# ---- Estado de execução da carga da folha (NÃO commitar) ----
-# `.ultima_carga.json` é o "digital" (hash) do arquivo que a última carga leu.
-# Se ele fosse versionado, um clone novo encontraria o MESMO CSV com o MESMO
-# digital, `carga_automatica` responderia "folha inalterada — nada a fazer" e o
-# banco nasceria com o cadastro de servidores VAZIO. É o marcador que impede o
+# ---- A FOLHA DE SERVIDORES: DADO REAL, NUNCA NO GIT (AGENTS.md §8.3) ----
+# Tudo em `mod_gest_cad_usuario/dados/` é dado de servidor REAL: nome, matrícula
+# de 6 dígitos, cargo, unidade, situação e remuneração individual, colhidos do
+# Portal da Transparência sob a Lei 12.527/2011. Publicar isso é a mesma coisa
+# que publicar a folha na internet — e a intranet recebe esse dado do portal, não
+# precisa que o repositório o carregue.
+#
+#   funcionarios.csv / .json          a folha que a carga lê
+#   funcionarios.parcial.json        retomada de coleta interrompida
+#   Servidores.xls                   relatório bruto do portal
+#   backup_folha_*                   cópia de segurança da folha
+#   .ultima_carga.json               "digital" do arquivo da última carga
+#
+# O `.ultima_carga.json` tem um motivo próprio e mais sutil: se ele fosse
+# versionado, um clone novo encontraria o MESMO CSV com o MESMO digital,
+# `carga_automatica` responderia "folha inalterada — nada a fazer" e o banco
+# nasceria com o cadastro de servidores VAZIO. É o marcador que impede o
 # primeiro boot de acontecer (AGENTS.md §4.2 usa marcador de migração; aqui o
 # marcador é de arquivo e precisa nascer junto com o banco, não com o clone).
-mod_gest_cad_usuario/dados/.ultima_carga.json
+#
+# COMO A FOLHA CHEGA NUMA MÁQUINA NOVA: rodando o coletor
+#   python mod_gest_cad_usuario/coletar_folha_completa.py
+# ou baixando o XLS do portal e deixando em `dados/`. Não pelo git.
+mod_gest_cad_usuario/dados/
 
 # ---- Artefatos gerados por testes/E2E (não commitados) ----
 assets/test/test-results/

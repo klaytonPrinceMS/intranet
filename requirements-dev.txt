@@ -21,6 +21,17 @@ pytest-cov>=7.0.0
 pytest-env>=1.1.0
 faker>=22.0
 
+# --- Leitura de planilha do portal (dev-only) ---
+# `xlrd` 2.x lê .xls BINÁRIO (OLE2/BIFF), que é o formato do relatório de
+# servidores que o portal de transparência publica ("baixar arquivos.xls").
+#
+# Fica AQUI, e não no requirements.txt, por um motivo que é do produto: o
+# sistema em execução NUNCA lê XLS. A cadeia é coletor -> JSON/CSV em
+# `dados/` -> carga -> banco. O XLS é ponte de PREPARAÇÃO, e só de quem está
+# montando a folha pela primeira vez. `pandas` também resolveria e custaria
+# ~50 MB para uma conversão pontual — `xlrd` sozinho faz o trabalho.
+xlrd>=2.0.1
+
 # --- Lint / análise estática de código Python ---
 # pyflakes: checker PASSIVO de Python — detecta "undefined name" (variável
 # usada antes de existir no escopo), redefinition e f-string sem placeholder.

@@ -243,10 +243,37 @@ def main():
     ap.add_argument("--competencia", default=None,
                     help="MM/AAAA (padrao: a mais recente que o portal "
                          "informar)")
+    ap.add_argument("--forcar", action="store_true",
+                    help="coleta mesmo com 'ativo': false em fonte_folha.json")
     args = ap.parse_args()
 
     with open(CFG_ARQ, encoding="utf-8") as fh:
         cfg = json.load(fh)
+
+    # O INTERRUPTOR QUE ANTES NAO EXISTIA (01/10/2026)
+    #
+    # `fonte_folha.json` tem o `ativo`, e ele era lido ONLY pela carga — o que
+    # desligava a populacao do cadastro mas NAO impedia ninguem de rodar o
+    # coletor. Ou seja: desligar a fonte na configuracao e, na pratica, nao
+    # desligava a captura. E a captura e a unica parte desta cadeia que fala
+    # com o servidor de terceiro: a carga le o arquivo local.
+    #
+    # Isso importa por um motivo que nao e de codigo: o portal e o servidor
+    # PRINCIPAL da prefeitura, e a coleta faz requisicao a cada 4 a 9 s.
+    # Quem administra aquele servidor registra a carga. Uma opcao de
+    # configuracao que parece desligar a captura e nao desliga e pior do que
+    # nao ter a opcao — ela da a impressao de que o problema foi resolvido.
+    #
+    # Aqui o coletor PARA, sem abrir uma unica conexao, e diz como forcar.
+    if not cfg.get("ativo") and not args.forcar:
+        log("FONTE DESATIVADA em fonte_folha.json ('ativo': false).")
+        log("Nada foi pedido ao portal — nenhuma conexao foi aberta.")
+        log("A carga da folha segue normal: ela le o arquivo local em dados/,")
+        log("e nao toca no portal.")
+        log("")
+        log("Se a coleta for mesmo necessaria, rode com --forcar — e o que")
+        log("estaquinha o servidor principal da prefeitura.")
+        return 4
     raiz = (cfg.get("portal_url") or "").rstrip("/")
     pontos = cfg.get("portal_endpoints") or {}
     url_grid = raiz + (pontos.get("folha") or "")
