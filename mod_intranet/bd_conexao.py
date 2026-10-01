@@ -381,6 +381,25 @@ def init_db():
     #   mod_lista_telefonica — diálogos Novo contato, Nova unidade e Reordenar
     #   mod_tecnico         — diálogo de listagem de arquivos
     #
+    # Bump do `usuarios` em 30/09/2026 — PRIMEIRA CARGA DA FOLHA NO BOOT.
+    # `mod_intranet/bd_criador.py` passou a chamar `carga_automatica()` logo
+    # depois do `init_users()`, para que o cadastro de servidores nasça junto
+    # com o banco em vez de ficar vazio até o agendador das 03:00. Marcador
+    # PRÓPRIO (`carga_folha`), e não um dos de hoje, porque este é um desenho
+    # novo — inicializador, não agendador — e a §4.2 exige um bump rastreável
+    # por alteração, não por dia.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_usuarios_260930_carga_folha'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:usuarios', '1.0.260930') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.260930' "
+                    "WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_usuarios_260930_carga_folha', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     # POR QUE ESCRETO LITERAL E NÃO UM `for` COM f-string
     #     O marcador `migracao_versao_<chave>_<data>` é o que faz a §4.2
     #     verificável: é nele que o `teste_versionamento_modulo.py` procura para

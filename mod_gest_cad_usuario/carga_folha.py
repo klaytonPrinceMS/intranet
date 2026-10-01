@@ -682,6 +682,66 @@ def carregar_folha(cfg):
     return ler_csv_configuravel(caminho, cfg)
 
 
+def servidores_no_cadastro() -> int:
+    """Quantos servidores da folha já estão no cadastro de usuários.
+
+    A contagem é sobre quem tem **vínculo gravado**, que é o que a folha
+    preenche (`sincronizar`, `carga_folha.py:242`) e o que o seed **não**
+    preenche. Isso evita a lista de nomes de fábrica — que mudaria a cada
+    renomeação de conta, e cuja lista explícita seria uma constante para
+    manter. Um cadastro recém-criado tem os servidores de fábrica sem
+    vínculo, então a conta começa em zero, que é exatamente o estado de
+    "ainda não carregou".
+
+    EN: How many sheet servers are already in the user register.
+    """
+    try:
+        from mod_gest_cad_usuario import bd_manipulador as bd
+        conn = bd.get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM tb_usuarios "
+                        "WHERE vinculo IS NOT NULL AND TRIM(vinculo) <> ''")
+            return int(cur.fetchone()[0] or 0)
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    except Exception as e:
+        try:
+            _log(f"  nao deu para contar os servidores no cadastro ({e})")
+        except Exception:
+            pass
+        return 0
+
+
+def primeira_carga_pendente() -> bool:
+    """A carga da folha ainda nunca rodou neste banco? (30/09/2026)
+
+    É o que separa o **primeiro boot** dos outros. A coleta do portal leva
+    ~100 s e quase 50 requisições; pagar isso a cada reinício tornaria o
+    servidor impraticável de subir. E o custo é real: com a folha já no
+    cadastro, o agendador das 03:00 (com as três travas) é quem atualiza —
+    que é o desenho que o `AGENTS.md` e o `docs/carga_de_servidores.md`
+    já descrevem.
+
+    **Por que o estado é o cadastro, e não um arquivo de marcador:** o banco é
+    o que o administrador reinstala, apaga e recria. Um marcador em arquivo
+    sobreviveria a `DELETE FROM tb_usuarios` e deixaria a installation com o
+    banco vazio e a carga pulada — que é justamente o estado ruim que este
+    passo existe para evitar.
+
+    EN: True when the sheet has never been loaded into this database.
+    """
+    try:
+        return servidores_no_cadastro() == 0
+    except Exception:
+        # Falhou a contagem: carrega. Uma folha a mais é desperdício de tempo;
+        # um cadastro de servidores vazio é o sistema quebrado.
+        return True
+
+
 def carga_automatica(forcar: bool = False, config: str | None = None) -> dict:
     """Uma passada da carga, sozinha, sem prompt. Chamada pelo agendador.
 

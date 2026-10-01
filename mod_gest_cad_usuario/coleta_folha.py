@@ -369,6 +369,13 @@ def main() -> int:
 
     try:
         reaproveitando = False
+        # `dados/` é gitignored (AGENTS.md §1 e §8.3), então numa instalação
+        # nova ele NUNCA existe — e a coleta abre `args.saida` para escrita
+        # direto. Sem esta linha, o primeiro `open(..., "w")` morre com
+        # `[Errno 2]` e a folha some depois de 100 segundos de coleta. Foi
+        # exatamente o que aconteceu na instalação limpa: `_garantir_dir_dados`
+        # existia desde sempre e não era chamada de lugar nenhum.
+        _garantir_dir_dados()
         if os.path.exists(args.saida) and not args.atualizar:
             with open(args.saida, encoding="utf-8") as f:
                 anterior = json.load(f)

@@ -46,6 +46,52 @@ def inicializar_bancos():
     from mod_gest_cad_usuario.bd_manipulador import init_db as init_users
     init_users()          # db_mod_gest_cad_usuario.db + seed master/master
 
+    # 2.1) PRIMEIRA CARGA DA FOLHA DE SERVIDORES (30/09/2026)
+    #
+    # Fica AQUI, e não no `main.py`, por um motivo que a ordem acima já
+    # impõe: a folha escreve em `tb_usuarios`, que só existe depois do
+    # `init_users()` da linha de cima. Colocar a carga no inicializador
+    # garante que o cadastro de servidores nasce JUNTO com o banco — um
+    # banco recém-criado já entra com a folha dentro, e não com o vazio
+    # esperando o agendador das 03:00 rodar.
+    #
+    # `primeira_carga_pendente()` é o que impede o custo a cada boot: a
+    # coleta do portal leva ~100 s e quase 50 requisições, e pagar isso em
+    # todo reinício tornaria o servidor impraticável de subir. Ela pergunta
+    # ao BANCO ("já tem servidor com vínculo?"), e não a um arquivo de
+    # marcador — porque o banco é o que se apaga e se recria, e um
+    # marcador sobreviveria à dele, deixando a instalação com cadastro vazio
+    # e carga pulada, que é o estado ruim que este passo existe para evitar.
+    #
+    # Fail-soft de propósito: banco de servidores vazio é defeito, mas
+    # derrubar o boot por causa disso é pior — o sistema sobe, fica sem a
+    # folha e o log diz exatamente por quê.
+    try:
+        from mod_gest_cad_usuario.carga_folha import (
+            carga_automatica, primeira_carga_pendente,
+        )
+        if primeira_carga_pendente():
+            print("[carga_folha] cadastro sem servidores — primeira carga "
+                  "no boot (pode levar ~2 min)...", flush=True)
+            _rel = carga_automatica()
+            _n = _rel.get("criados", 0)
+            if _rel.get("rodou"):
+                print(f"[carga_folha] primeira carga concluida: {_n} "
+                      f"servidor(es) criado(s), "
+                      f"{_rel.get('secretarias_criadas', 0)} secretaria(s) — "
+                      f"competencia {_rel.get('competencia') or '?'}", flush=True)
+            else:
+                print(f"[carga_folha] primeira carga NAO rodou: "
+                      f"{_rel.get('motivo') or 'sem motivo'}. O sistema sobe "
+                      f"sem a folha e o agendador das 03:00 tenta de novo.",
+                      flush=True)
+        else:
+            print("[carga_folha] folha ja carregada — boot nao recoleta.",
+                  flush=True)
+    except Exception as _e_folha:
+        print(f"[carga_folha] aviso: primeira carga falhou (fail-soft): "
+              f"{_e_folha}", flush=True)
+
     from mod_edit_pdf.bd_manipulador import init_db_pdf
     init_db_pdf()         # db_mod_edit_pdf.db
 
