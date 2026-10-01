@@ -336,10 +336,14 @@ def gravar_csv(servidores: list) -> None:
     os.replace(tmp, ARQUIVO_CSV)
 
 
-def coletar(competencia: str, url: str, url_referer: str) -> list:
-    """Percorre a folha inteira, uma página por vez, e devolve os servidores."""
-    opener = abrir(url_referer)
+def coletar(competencia: str, url: str, opener) -> tuple[list, int | None]:
+    """Percorre a folha inteira, uma página por vez, e devolve os servidores.
 
+    O `opener` vem de fora de propósito: abrir a página do portal é o que pega
+    o cookie de sessão, e abrir DUAS vezes (uma para descobrir a competência e
+    outra para ler) cria duas sessões — a segunda pode não valer e o grid volta
+    vazio, que é o mesmo sintoma de "não há servidores".
+    """
     servidores, vistos, inicio = ler_parcial(competencia)
     total = None
     inicio_espera = time.monotonic()
@@ -388,7 +392,30 @@ def coletar(competencia: str, url: str, url_referer: str) -> list:
                 f"{len(servidores)}: folha completa")
             break
 
-    return servidores
+    return servidores, total
+
+
+def conferir(servidores: list, total: int | None) -> None:
+    """Não grava folha incompleta sem avisar.
+
+    A versão anterior gravava 650 de 1165 e informava "650 servidores" como se
+    fosse a folha. O total do portal é a referência, e uma diferença grande
+    demais significa que o portal segurou páginas — o arquivo ficaria errado e
+    ninguém saberia, porque o CSV abre bem e parece folha.
+    """
+    if not isinstance(total, int) or total <= 0:
+        log(f"AVISO: o portal nao anunciou o total; segue com "
+            f"{len(servidores)} servidores conferidos so pela leitura")
+        return
+    if len(servidores) >= total:
+        log(f"conferencia ok: {len(servidores)} lidos para {total} anunciados")
+        return
+    falta = total - len(servidores)
+    log(f"AVISO: o portal anunciou {total} e vieram {len(servidores)}; "
+        f"faltam {falta}. O parcial ficou salvo — rodar de novo completa.")
+    raise RuntimeError(
+        f"folha incompleta: {len(servidores)} de {total}. "
+        f"Nada foi gravado para nao substituir a folha boa por uma parcial.")
 
 
 def main() -> int:
@@ -399,9 +426,8 @@ def main() -> int:
     args = ap.parse_args()
 
     cfg = carregar_config()
-    url, url_referer = montar_urls(cfg)
-    competencia = args.competencia or cfg.get("portal_competencia_padrao") \
-        or "auto"
+    url, url_competencia, url_referer = montar_urls(cfg)
+    competencia = args.competencia or "auto"
 
     if args.esperar > 0:
         log(f"esperando {args.esperar:.0f}s antes de comecar "
@@ -409,14 +435,16 @@ def main() -> int:
         time.sleep(args.esperar)
 
     try:
+        log("abrindo a pagina do portal")
+        opener = abrir(url_referer)
+
         if competencia == "auto":
             log("descobrindo a competencia mais recente")
-            opener = abrir(url_referer)
-            competencia = competencia_mais_recente(opener, url)
+            competencia = competencia_mais_recente(opener, url_competencia)
             log(f"competencia: {competencia}")
 
-        log("abrindo a pagina do portal")
-        servidores = coletar(competencia, url, url_referer)
+        servidores, total = coletar(competencia, url, opener)
+        conferir(servidores, total)
 
         gravar_json(servidores, competencia)
         gravar_csv(servidores)

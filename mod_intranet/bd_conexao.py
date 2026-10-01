@@ -431,6 +431,27 @@ def init_db():
     # retry cobre a família de erro de conexão, o backoff é 3/8/20/45 s com
     # pausa de 30 s quando a conexão cai, e o parcial é gravado a cada página.
     # Medido: 1.165 servidores da competência 08/2026, do primeiro ao último.
+    # Bump do `usuarios` em 01/10/2026 — COLETOR QUE CONFIA NO PORTAL.
+    # `coletar_folha_simples.py` nasce da leitura do portal ao vivo, e corrige
+    # o defeito que a versão anterior escondia: ela ignorava `recordsFiltered`
+    # (o total que o portal ANUNCA em toda resposta) e tratava "página vazia"
+    # como fim da folha. Com o portal limitando, isso gravava 650 de 1165 e
+    # imprimia "650 servidores" como se fosse a folha completa. Agora a página
+    # vazia só encerra quando `inicio >= total`, folha incompleta não é gravada,
+    # e o total é conferido antes de escrever. Medido no portal: 1.165
+    # servidores na competência 08/2026, `length` travado em 25, 47 páginas.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_usuarios_261001_coleta_total'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:usuarios', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_usuarios_261001_coleta_total', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_usuarios_261001_coleta_resiliente'")
     if (cur.fetchone()[0] or 0) == 0:
