@@ -1057,6 +1057,42 @@ def init_db():
                     "('migracao_versao_usuarios_261001_folha_todo_boot', '1') "
                     "ON CONFLICT DO NOTHING")
 
+    # Bump do `usuarios` em 01/10/2026 — SENHA PROVISÓRIA SEMPRE ASSIMILADA
+    # (o seu teste em uso, 14:26).
+    #
+    # O que foi encontrado: com as 653 contas criadas, NENHUMA tinha
+    # `forcar_troca:<nome>` = '1'. 652 delas seguiam com a senha `123456`.
+    # O AGENTS.md §8.2 documenta troca forçada no 1º acesso para `qacomum` e
+    # `qamaster` — a documentação estava certa e o código não.
+    #
+    # A causa foi dupla:
+    #   1. `marcar_trocar_senha` só rodava na CRIAÇÃO da conta. Uma conta que
+    #      já existia passava pelo caminho de reconciliação — que reconcilia
+    #      os ACESSOS e nunca a senha — e entrava sem troca obrigatória. É o
+    #      caso de qualquer instalação recriada de backup, restaurada, ou que
+    #      perdeu o banco central (que foi o que aconteceu às 14:26: as chaves
+    #      `forcar_troca:*` vivem em `db_mod_intranet.db` e foram com ele).
+    #   2. As 650 contas da folha já nascem marcadas (`criar_usuario`), então o
+    #      número "0 pendentes" no caso real veio do item 1 e da perda do banco
+    #      central, e não da carga.
+    #
+    # A correção (em `mod_gest_cad_usuario/bd_manipulador.py`) é
+    # `_assegurar_troca_de_senha_provisoria`, chamada na reconciliação do
+    # seed: confere o **hash** e reassina a troca só enquanto a senha ainda for
+    # a provisória. Quem já trocou tem a flag em '0' e não é tocado — por isso
+    # a conferência é pelo hash, e não pela ausência da chave.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_usuarios_261001_troca_provisoria'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:usuarios', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:usuarios'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_usuarios_261001_troca_provisoria', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     cur.execute("SELECT COUNT(*) FROM tb_config "
                 "WHERE chave='migracao_versao_lista_telefonica_261001_origem_unidade'")
     if (cur.fetchone()[0] or 0) == 0:

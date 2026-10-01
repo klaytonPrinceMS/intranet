@@ -228,6 +228,59 @@ def init_db():
         _log().exception(f"init_db: falha no bootstrap | {e}")
 
 
+SENHA_PROVISORIA_LOCAL = "123456"
+
+
+def _assegurar_troca_de_senha_provisoria(conn, user_nome):
+    """Reassina a troca obrigatória de quem AINDA tem a senha provisória.
+
+    EN: Re-signs the forced change for whoever still holds the provisional
+    password.
+
+    PT-BR: Reassina a troca obrigatória de quem ainda tem a senha provisória.
+
+    **A regra:** a troca é exigida enquanto a senha for a provisória, e
+    NUNCA depois de trocada. Por isso a conferência é pelo **hash** (bcrypt
+    compara, não descriptografa) e não pela ausência da chave — uma chave
+    que sumiu tem de dar direito a quem já trocou, e não a quem nunca trocou.
+
+    Quem já trocou tem a flag em '0' (é o que `marcar_trocar_senha(nome, False)`
+    grava ao concluir) e sai daqui intocado.
+
+    O custo é uma comparação bcrypt por conta, e por isso isto roda só onde a
+    conta está em dúvida — na reconciliação do seed. Fazer isso para as 650
+    contas da folha a cada boot custaria minutos de CPU para provar o que já
+    está provado: elas são criadas com a flag (`criar_usuario`,
+    `bd_manipulador.py:1846`), e a troca concluída grava o '0'.
+
+    Nunca levanta: uma falha aqui não pode derrubar o `init_db`.
+    """
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT user_senha FROM tb_usuarios WHERE user_nome=?",
+                    (user_nome,))
+        linha = cur.fetchone()
+        if not linha or not linha[0]:
+            return False
+        import bcrypt
+        bruto = linha[0].encode() if isinstance(linha[0], str) else linha[0]
+        if not bcrypt.checkpw(SENHA_PROVISORIA_LOCAL.encode(), bruto):
+            return False
+        from mod_intranet.autenticacao import marcar_trocar_senha
+        marcar_trocar_senha(user_nome, True)
+        _log().info(
+            f"{user_nome}: senha ainda e a provisoria — troca obrigatoria "
+            f"reassinada")
+        return True
+    except Exception as e:
+        try:
+            _log().warning(
+                f"_assegurar_troca_de_senha_provisoria({user_nome}): {e}")
+        except Exception:
+            pass
+        return False
+
+
 def _init_db_seguro():
     """Runs the real init_db bootstrap inside a protected wrapper.
 
@@ -620,6 +673,19 @@ def _init_db_seguro():
                 )
             cur.execute("DELETE FROM tb_acesso_usuario WHERE user_nome='qacomum' AND modulo_chave='blog' AND liberado_por='sistema'")
             _commit_com_retry(conn, contexto="init_db:reconcilia_qacomum")
+            # ASSIMILA A FALHA DE SENHA (01/10/2026). O `marcar_trocar_senha`
+            # acima só roda na CRIAÇÃO. Numa instalação em que a conta já
+            # existia — recriada de um backup, restaurada, ou o caso real de
+            # 01/10/2026, em que o banco central foi recriado e as chaves
+            # `forcar_troca:*` foram com ele — o seed reconcilia os ACESSOS e
+            # nunca a senha. Resultado: a conta de fábrica entrava na intranet
+            # com `123456` e sem troca obrigatória, que é o oposto do que o
+            # AGENTS.md §8.2 documenta para ela.
+            #
+            # Só reassina quando a senha AINDA é a provisória. Quem já trocou
+            # tem a flag em '0' e não é tocado — e é por isso que a conferência
+            # é pelo hash, e não pela ausência da chave.
+            _assegurar_troca_de_senha_provisoria(conn, "qacomum")
         if not obter_usuario("qamaster"):
             cur.execute(
                 "INSERT INTO tb_usuarios (user_nome, user_senha, user_perfil, user_ativo, user_nome_completo) VALUES (?, ?, 'administrador_geral', 1, ?)",
@@ -627,6 +693,9 @@ def _init_db_seguro():
             )
             _commit_com_retry(conn, contexto="init_db:seed_qamaster")
             marcar_trocar_senha("qamaster", True)
+        else:
+            # Mesma assimilação da senha provisória, mesmo motivo acima.
+            _assegurar_troca_de_senha_provisoria(conn, "qamaster")
     except Exception as e:
         _rollback_seguro(conn, contexto="init_db:seed_qa")
         _log().exception(f"init_db: falha ao semear QA | {e}")
