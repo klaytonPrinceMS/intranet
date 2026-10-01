@@ -146,17 +146,7 @@ venv.bak/
 # mkdocs documentation
 /site
 
-# Dados de servidores — NUNCA versionar (28/09/2026)
-# `mod_gest_cad_usuario/dados/` guarda a FOLHA REAL de servidores (matrícula,
-# nome, secretaria, cargo, remuneração) no formato que a prefeitura ou a
-# empresa configurou em `fonte_folha.json`. As ferramentas (.py) vão para o
-# git; os DADOS não.
-#
-# Nome, matrícula, cargo e remuneração de servidor público são informação
-# pública por lei — mas "pública" quer dizer publicada no portal da
-# transparência, não publicada no histórico do git, que é replicado para
-# todo mundo que clona e nunca apaga.
-mod_gest_cad_usuario/dados/
+
 # mypy
 .mypy_cache/
 .dmypy.json
