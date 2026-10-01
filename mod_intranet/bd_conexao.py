@@ -400,6 +400,23 @@ def init_db():
                     "('migracao_versao_usuarios_260930_carga_folha', '1') "
                     "ON CONFLICT DO NOTHING")
 
+    # Bump do `intranet` em 01/10/2026 — a MENSAGEM da primeira carga da folha
+    # dizia "~2 min" onde o medido é ~25–35 min. Parece comentário, mas é a
+    # linha que alguém lê no console enquanto espera o servidor subir, e um
+    # número errado ali faz o administrador achar que o boot travou e matar
+    # o processo. A §4.2 não faz exceção para texto, então o bump vem junto.
+    cur.execute("SELECT COUNT(*) FROM tb_config "
+                "WHERE chave='migracao_versao_intranet_261001_tempo_carga_folha'")
+    if (cur.fetchone()[0] or 0) == 0:
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('versao_modulo:intranet', '1.0.261001') "
+                    "ON CONFLICT DO NOTHING")
+        cur.execute("UPDATE tb_config SET valor='1.0.261001' "
+                    "WHERE chave='versao_modulo:intranet'")
+        cur.execute("INSERT INTO tb_config (chave, valor) VALUES "
+                    "('migracao_versao_intranet_261001_tempo_carga_folha', '1') "
+                    "ON CONFLICT DO NOTHING")
+
     # POR QUE ESCRETO LITERAL E NÃO UM `for` COM f-string
     #     O marcador `migracao_versao_<chave>_<data>` é o que faz a §4.2
     #     verificável: é nele que o `teste_versionamento_modulo.py` procura para

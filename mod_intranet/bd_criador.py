@@ -55,8 +55,10 @@ def inicializar_bancos():
     # banco recém-criado já entra com a folha dentro, e não com o vazio
     # esperando o agendador das 03:00 rodar.
     #
-    # `primeira_carga_pendente()` é o que impede o custo a cada boot: a
-    # coleta do portal leva ~100 s e quase 50 requisições, e pagar isso em
+    # `primeira_carga_pendente()` é o que impede o custo a cada boot. E o
+    # custo é grande: **medido em 31/10/2026, ~25–35 minutos** para ~1.165
+    # servidores — dos quais ~100 s são a coleta do portal (quase 50
+    # requisições) e o resto é gravação, a ~2 s por servidor. Pagar isso em
     # todo reinício tornaria o servidor impraticável de subir. Ela pergunta
     # ao BANCO ("já tem servidor com vínculo?"), e não a um arquivo de
     # marcador — porque o banco é o que se apaga e se recria, e um
@@ -71,8 +73,14 @@ def inicializar_bancos():
             carga_automatica, primeira_carga_pendente,
         )
         if primeira_carga_pendente():
-            print("[carga_folha] cadastro sem servidores — primeira carga "
-                  "no boot (pode levar ~2 min)...", flush=True)
+            # O número é medido, não estimado: quem está olhando este console
+            # precisa saber que vai esperar meia hora, e não vai achar que o
+            # servidor travou. "Não responsivo até o fim" é o sintoma real.
+            print("[carga_folha] cadastro sem servidores — primeira carga no "
+                  "boot. Leva ~25 a 35 min (medido em 31/10/2026, ~1.165 "
+                  "servidores); o servidor NÃO responde até terminar. Isso só "
+                  "acontece no primeiro boot de um banco recém-criado.",
+                  flush=True)
             _rel = carga_automatica()
             _n = _rel.get("criados", 0)
             if _rel.get("rodou"):
