@@ -2,11 +2,35 @@
 
 # Carga de Servidores
 
-> Documenta a **carga da folha de servidores** como ela existe em 28/09/2026: o
-> **CSV como contrato**, a configuração em `fonte_folha.json` (que nasce
-> **desligada**), as **três travas** da rotina agendada, a regra de **nunca
-> sobrescrever** cadastro existente e o porquê de `mod_gest_cad_usuario/dados/`
-> estar fora do git.
+> !!! warning "ESTA INSTALAÇÃO ESTÁ LIGADA — e é temporário (30–31/09/2026)"
+>     O padrão do produto **continua sendo desligado** (`CONFIG_PADRAO`,
+>     `carga_folha.py:409`), e as seções abaixo descrevem esse padrão. Mas
+>     **esta instalação foi posta em `"ativo": true` com `"origem": "portal"`**
+>     por decisão do responsável, para que o cadastro de servidores **nascesse
+>     junto com o banco** em vez de ficar vazio até o agendador das 03:00.
+>
+>     Três consequências que este documento precisa registrar, porque é o
+>     contrário do que a §1 e a §2 mandam:
+>
+>     1. **A carga virou passo de boot**, não só agendador
+>        (`mod_intranet/bd_criador.py:2.1`), logo depois do `init_users()` — a
+>        folha escreve em `tb_usuarios`, que só existe depois dele.
+>     2. **A primeira carga é lenta: ~25–35 minutos** para ~1.165 servidores.
+>        Não é a coleta do portal (essa leva ~100 s): é a gravação, a ~1,4 s por
+>        servidor, e **~60% disso é `audit_log`** (0,28 s por chamada, três por
+>        servidor), porque `registrar_auditoria` abre uma conexão nova do banco
+>        de auditoria a cada escrita. Correção pendente.
+>     3. **A §2 (checklist antes de publicar um clone) vale para o produto, não
+>        para este arquivo**: aqui `portal_url` está preenchido **de propósito**.
+>
+>     A remoção está combinada: voltar a `"ativo": false` e `"origem": "csv"`
+>     devolve o comportamento de sistema publicado. O `_leia_me` dentro do
+>     próprio `fonte_folha.json` avisa quem abrir o arquivo.
+
+> Documenta a **carga da folha de servidores**: o
+> **CSV como contrato**, a configuração em `fonte_folha.json`, as **três travas**
+> da rotina agendada, a regra de **nunca sobrescrever** cadastro existente e o
+> porquê de `mod_gest_cad_usuario/dados/` estar fora do git.
 >
 > !!! danger "Esta página descreve o FORMATO, não a origem"
 >     O sistema é publicado em git para qualquer prefeitura, empresa ou

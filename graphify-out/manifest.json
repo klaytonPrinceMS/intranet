@@ -594,15 +594,15 @@
     "semantic_hash": ""
   },
   "mod_intranet/bd_conexao.py": {
-    "mtime": 1790775223.4293382,
-    "seen": 1790785562.815534,
-    "ast_hash": "ee38bcb231599f57ca1f3bcddd460ff5",
+    "mtime": 1790796316.1254678,
+    "seen": 1790853103.5548384,
+    "ast_hash": "9eb59c99fc400ac09d5c704dcb6d9507",
     "semantic_hash": ""
   },
   "mod_intranet/bd_criador.py": {
-    "mtime": 1790689802.4694452,
-    "seen": 1790694056.6629634,
-    "ast_hash": "b3465a5f6cbba564848a24ac5348ae57",
+    "mtime": 1790796151.8610399,
+    "seen": 1790853103.5548398,
+    "ast_hash": "6b10b75bb64b6cbafbbc4cc31765fb98",
     "semantic_hash": ""
   },
   "mod_intranet/bd_manipulador.py": {
@@ -1236,9 +1236,9 @@
     "semantic_hash": ""
   },
   "docs/registro_de_mudancas/index.md": {
-    "mtime": 1790794784.1267984,
-    "seen": 1790794915.1467571,
-    "ast_hash": "a1299b84d420c2a12ec173a69bcfa14b",
+    "mtime": 1790853060.8215601,
+    "seen": 1790853103.5550685,
+    "ast_hash": "dce8011c2c9e5dfc8c2411a4e25e0f2a",
     "semantic_hash": ""
   },
   "docs/requisitos.md": {
@@ -1956,21 +1956,21 @@
     "semantic_hash": ""
   },
   "mod_gest_cad_usuario/carga_folha.py": {
-    "mtime": 1790689802.4694452,
-    "seen": 1790694056.6629477,
-    "ast_hash": "7700edea88e7eede2b8c1ced03fdb5a0",
+    "mtime": 1790796102.0571446,
+    "seen": 1790853103.5548222,
+    "ast_hash": "50a92f8622cfa161a39036a3089aad39",
     "semantic_hash": ""
   },
   "mod_gest_cad_usuario/coleta_folha.py": {
-    "mtime": 1790689802.4694452,
-    "seen": 1790694056.6629488,
-    "ast_hash": "1d7d278febf8bb7e3320f94f9381916d",
+    "mtime": 1790796068.9778407,
+    "seen": 1790853103.5548236,
+    "ast_hash": "799ef7acdc9d267908abaa9c364de864",
     "semantic_hash": ""
   },
   "mod_gest_cad_usuario/fonte_folha.json": {
-    "mtime": 1790689802.4694452,
-    "seen": 1790694056.66295,
-    "ast_hash": "7ca31bd54f1a34e19576fe07341aac38",
+    "mtime": 1790796174.4228768,
+    "seen": 1790853103.554825,
+    "ast_hash": "0162032dd21be10618643f16efe48a29",
     "semantic_hash": ""
   },
   "mod_os/__init__.py": {
@@ -1998,9 +1998,9 @@
     "semantic_hash": ""
   },
   "docs/carga_de_servidores.md": {
-    "mtime": 1790689802.4363415,
-    "seen": 1790694056.6631105,
-    "ast_hash": "0e05dba4b9a972e4a752ff357ec9ec13",
+    "mtime": 1790853036.1711671,
+    "seen": 1790853103.5550168,
+    "ast_hash": "1d57a7b45323e51c9301dcaef74aa17e",
     "semantic_hash": ""
   },
   "assets/test/teste_versionamento_modulo.py": {
@@ -2037,6 +2037,12 @@
     "mtime": 1790792461.2473903,
     "seen": 1790794491.2087724,
     "ast_hash": "2fadb2f59eddf9fb2870e876cf7f2f3c",
+    "semantic_hash": ""
+  },
+  "assets/test/test_carga_folha_primeira.py": {
+    "mtime": 1790852490.7094395,
+    "seen": 1790853103.5546665,
+    "ast_hash": "ff63081f18728a8527dcac0513446ab4",
     "semantic_hash": ""
   }
 }
